@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # Redis - 用于队列和缓存
+  redis:
+    image: redis:7-alpine
+    container_name: cuemate-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - cuemate-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ASR Gateway Service
+  asr-gateway:
+    build:
+      context: .
+      dockerfile: infra/docker/asr-gateway/Dockerfile
+    container_name: cuemate-asr-gateway
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - ASR_PORT=3001
+      - ASR_HOST=0.0.0.0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
+      - PRIMARY_ASR_PROVIDER=deepgram
+      - FALLBACK_ASR_PROVIDER=whisper
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/asr-gateway/models:/app/models
+    networks:
+      - cuemate-network
+    restart: unless-stopped
+
+  # LLM Router Service
+  llm-router:
+    build:
+      context: .
+      dockerfile: infra/docker/llm-router/Dockerfile
+    container_name: cuemate-llm-router
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - LLM_PORT=3002
+      - LLM_HOST=0.0.0.0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MOONSHOT_API_KEY=${MOONSHOT_API_KEY}
+      - GLM_API_KEY=${GLM_API_KEY}
+      - QWEN_API_KEY=${QWEN_API_KEY}
+      - PRIMARY_LLM_PROVIDER=openai
+      - ROUTING_STRATEGY=primary-fallback
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - cuemate-network
+    restart: unless-stopped
+
+  # RAG Service
+  rag-service:
+    build:
+      context: .
+      dockerfile: infra/docker/rag-service/Dockerfile
+    container_name: cuemate-rag-service
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - RAG_PORT=3003
+      - RAG_HOST=0.0.0.0
+      - VECTOR_STORE_TYPE=chroma
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - EMBEDDINGS_PROVIDER=openai
+    volumes:
+      - chroma_data:/app/chroma_data
+      - ./services/rag-service/documents:/app/documents
+    networks:
+      - cuemate-network
+    restart: unless-stopped
+
+  # Main Gateway (optional)
+  gateway:
+    image: nginx:alpine
+    container_name: cuemate-gateway
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - asr-gateway
+      - llm-router
+      - rag-service
+    networks:
+      - cuemate-network
+    restart: unless-stopped
+
+networks:
+  cuemate-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  chroma_data:

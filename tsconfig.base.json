@@ -1,0 +1,33 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "commonjs",
+        "lib": [
+            "ES2022"
+        ],
+        "baseUrl": ".",
+        "sourceMap": true,
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "paths": {
+            "@cuemate/core-prompts": [
+                "packages/core-prompts/src"
+            ],
+            "@cuemate/ui-kit": [
+                "packages/ui-kit/src"
+            ],
+            "@cuemate/sdk": [
+                "packages/cml-sdk/src"
+            ]
+        }
+    }
+}
