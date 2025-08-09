@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events';
 import PQueue from 'p-queue';
-import { logger } from '../utils/logger.js';
 import { Config } from '../config/index.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse } from '../providers/base.js';
+import { logger } from '../utils/logger.js';
 
 export interface ProviderStatus {
   id: string;
@@ -46,7 +46,7 @@ export class LLMManager extends EventEmitter {
 
   async complete(request: CompletionRequest): Promise<CompletionResponse> {
     const strategy = this.config.routing.strategy;
-    
+
     switch (strategy) {
       case 'primary-fallback':
         return this.primaryFallbackStrategy(request);
@@ -106,7 +106,7 @@ export class LLMManager extends EventEmitter {
     }
 
     const [providerId, provider] = availableProviders[0];
-    
+
     try {
       this.requestCount.set(providerId, (this.requestCount.get(providerId) || 0) + 1);
       return await this.executeWithTimeout(provider, request, providerId);
@@ -131,12 +131,12 @@ export class LLMManager extends EventEmitter {
 
     const promises = availableProviders.map(([id, provider]) =>
       this.executeWithTimeout(provider, request, id)
-        .then(response => ({ success: true, response, providerId: id }))
-        .catch(error => ({ success: false, error, providerId: id }))
+        .then((response) => ({ success: true, response, providerId: id }))
+        .catch((error) => ({ success: false, error, providerId: id })),
     );
 
     const results = await Promise.race(promises);
-    
+
     if ('response' in results && results.success) {
       logger.info(`Fastest provider: ${results.providerId}`);
       return results.response;
@@ -148,24 +148,24 @@ export class LLMManager extends EventEmitter {
   private async executeWithTimeout(
     provider: BaseLLMProvider,
     request: CompletionRequest,
-    providerId: string
+    providerId: string,
   ): Promise<CompletionResponse> {
     const startTime = Date.now();
-    
+
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('Request timeout')), this.config.routing.timeout);
     });
 
     try {
-      const response = await Promise.race([
-        provider.complete(request),
+      const raced = await Promise.race<CompletionResponse | never>([
+        this.queue.add(() => provider.complete(request)) as Promise<CompletionResponse>,
         timeoutPromise,
       ]);
 
       const latency = Date.now() - startTime;
       this.updateProviderStatus(providerId, true, null, latency);
-      
-      return response;
+
+      return raced as CompletionResponse;
     } catch (error) {
       throw error;
     }
@@ -195,7 +195,7 @@ export class LLMManager extends EventEmitter {
     providerId: string,
     success: boolean,
     error: any = null,
-    latency?: number
+    latency?: number,
   ) {
     const status = this.providerStatus.get(providerId) || {
       id: providerId,

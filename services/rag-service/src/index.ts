@@ -1,17 +1,17 @@
-import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import multipart from '@fastify/multipart';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
+import Fastify from 'fastify';
 import { config } from './config/index.js';
-import { logger } from './utils/logger.js';
-import { VectorStore } from './stores/vector-store.js';
 import { DocumentProcessor } from './processors/document-processor.js';
-import { EmbeddingService } from './services/embedding-service.js';
 import { createRoutes } from './routes/index.js';
+import { EmbeddingService } from './services/embedding-service.js';
+import { VectorStore } from './stores/vector-store.js';
+import { logger } from './utils/logger.js';
 
 async function buildServer() {
   const fastify = Fastify({
-    logger: logger,
+    logger: true,
     trustProxy: true,
     bodyLimit: 10485760, // 10MB
   });
@@ -61,12 +61,12 @@ async function buildServer() {
 async function start() {
   try {
     const fastify = await buildServer();
-    
+
     const port = config.server.port;
     const host = config.server.host;
-    
+
     await fastify.listen({ port, host });
-    
+
     logger.info(`🚀 RAG Service running at http://${host}:${port}`);
   } catch (err) {
     logger.error(err);

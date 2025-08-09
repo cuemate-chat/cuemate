@@ -1,22 +1,6 @@
 version: '3.8'
 
 services:
-  # Redis - 用于队列和缓存
-  redis:
-    image: redis:7-alpine
-    container_name: cuemate-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
-    networks:
-      - cuemate-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # ASR Gateway Service
   asr-gateway:
@@ -30,14 +14,10 @@ services:
       - NODE_ENV=production
       - ASR_PORT=3001
       - ASR_HOST=0.0.0.0
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
       - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
       - PRIMARY_ASR_PROVIDER=deepgram
       - FALLBACK_ASR_PROVIDER=whisper
-    depends_on:
-      redis:
-        condition: service_healthy
+    # Redis 已移除，若需启用请在此处添加依赖
     volumes:
       - ./services/asr-gateway/models:/app/models
     networks:
@@ -56,17 +36,13 @@ services:
       - NODE_ENV=production
       - LLM_PORT=3002
       - LLM_HOST=0.0.0.0
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - MOONSHOT_API_KEY=${MOONSHOT_API_KEY}
       - GLM_API_KEY=${GLM_API_KEY}
       - QWEN_API_KEY=${QWEN_API_KEY}
       - PRIMARY_LLM_PROVIDER=openai
       - ROUTING_STRATEGY=primary-fallback
-    depends_on:
-      redis:
-        condition: service_healthy
+    # Redis 已移除，若需启用请在此处添加依赖
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -93,23 +69,7 @@ services:
       - cuemate-network
     restart: unless-stopped
 
-  # Main Gateway (optional)
-  gateway:
-    image: nginx:alpine
-    container_name: cuemate-gateway
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./infra/nginx/certs:/etc/nginx/certs:ro
-    depends_on:
-      - asr-gateway
-      - llm-router
-      - rag-service
-    networks:
-      - cuemate-network
-    restart: unless-stopped
+  # Nginx 网关已移除（可选）
 
   # Web API (SQLite)
   web-api:
@@ -136,5 +96,4 @@ networks:
     driver: bridge
 
 volumes:
-  redis_data:
   chroma_data:

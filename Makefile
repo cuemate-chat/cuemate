@@ -26,7 +26,6 @@ dev-desktop: ## Start desktop app in development mode
 
 dev-services: ## Start backend services
 	@echo "${BLUE}Starting backend services...${NC}"
-	docker-compose up redis
 	cd services/asr-gateway && pnpm dev &
 	cd services/llm-router && pnpm dev &
 	cd services/rag-service && pnpm dev &
@@ -57,21 +56,22 @@ clean: ## Clean all build artifacts
 	rm -rf packages/*/dist
 	@echo "${GREEN}Cleaned successfully!${NC}"
 
-docker-up: ## Start all services with Docker
+
+docker-up: ## Start core services with Docker (web-api only)
 	@echo "${BLUE}Starting Docker services...${NC}"
-	docker-compose up -d
+	docker compose -f infra/docker/docker-compose.yml up -d web-api
 	@echo "${GREEN}Services started!${NC}"
 	@echo "ASR Gateway: http://localhost:3001"
 	@echo "LLM Router: http://localhost:3002"
 	@echo "RAG Service: http://localhost:3003"
 
-docker-down: ## Stop all Docker services
+docker-down: ## Stop Docker services (web-api)
 	@echo "${BLUE}Stopping Docker services...${NC}"
-	docker-compose down
+	docker compose -f infra/docker/docker-compose.yml down
 	@echo "${GREEN}Services stopped!${NC}"
 
-docker-logs: ## Show Docker logs
-	docker-compose logs -f
+docker-logs: ## Show Docker logs (web-api)
+	docker compose -f infra/docker/docker-compose.yml logs -f web-api
 
 docker-clean: ## Clean Docker volumes and images
 	@echo "${RED}Warning: This will delete all data!${NC}"

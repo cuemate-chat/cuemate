@@ -1,4 +1,4 @@
-import { ChromaClient, Collection } from 'chromadb';
+import { ChromaClient, type Collection } from 'chromadb';
 import { v4 as uuidv4 } from 'uuid';
 import { Config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
@@ -32,16 +32,16 @@ export class VectorStore {
         this.client = new ChromaClient({
           path: this.config.chromaPath,
         });
-        
+
         // 获取或创建默认集合
         await this.getOrCreateCollection(this.config.defaultCollection);
-        
+
         logger.info('Vector store initialized');
       } else {
         throw new Error(`Vector store type ${this.config.type} not implemented`);
       }
     } catch (error) {
-      logger.error('Failed to initialize vector store:', error);
+      logger.error({ err: error as any }, 'Failed to initialize vector store');
       throw error;
     }
   }
@@ -56,44 +56,40 @@ export class VectorStore {
     }
 
     try {
-      const collection = await this.client.getOrCreateCollection({
+      const clientAny = this.client as any;
+      const collection = await clientAny.getOrCreateCollection({
         name,
         metadata: { created_at: new Date().toISOString() },
       });
-      
+
       this.collections.set(name, collection);
       return collection;
     } catch (error) {
-      logger.error(`Failed to get/create collection ${name}:`, error);
+      logger.error({ err: error as any }, `Failed to get/create collection ${name}`);
       throw error;
     }
   }
 
-  async addDocuments(
-    documents: Document[],
-    collectionName?: string
-  ): Promise<string[]> {
+  async addDocuments(documents: Document[], collectionName?: string): Promise<string[]> {
     const collection = await this.getOrCreateCollection(
-      collectionName || this.config.defaultCollection
+      collectionName || this.config.defaultCollection,
     );
 
-    const ids = documents.map(doc => doc.id || uuidv4());
-    const contents = documents.map(doc => doc.content);
-    const metadatas = documents.map(doc => doc.metadata);
-    const embeddings = documents
-      .filter(doc => doc.embedding)
-      .map(doc => doc.embedding!);
+    const ids = documents.map((doc) => doc.id || uuidv4());
+    const contents = documents.map((doc) => doc.content);
+    const metadatas = documents.map((doc) => doc.metadata);
+    const embeddings = documents.filter((doc) => doc.embedding).map((doc) => doc.embedding!);
 
     try {
       if (embeddings.length > 0) {
-        await collection.add({
+        await (collection as any).add({
           ids,
           documents: contents,
           metadatas,
           embeddings,
         });
       } else {
-        await collection.add({
+        await (collection as any).add({
           ids,
           documents: contents,
           metadatas,
@@ -103,7 +99,7 @@ export class VectorStore {
       logger.info(`Added ${documents.length} documents to ${collectionName}`);
       return ids;
     } catch (error) {
-      logger.error('Failed to add documents:', error);
+      logger.error({ err: error as any }, 'Failed to add documents');
       throw error;
     }
   }
@@ -112,14 +108,14 @@ export class VectorStore {
     query: string,
     topK: number = 5,
     filter?: Record<string, any>,
-    collectionName?: string
+    collectionName?: string,
   ): Promise<SearchResult[]> {
     const collection = await this.getOrCreateCollection(
-      collectionName || this.config.defaultCollection
+      collectionName || this.config.defaultCollection,
     );
 
     try {
-      const results = await collection.query({
+      const results: any = await (collection as any).query({
         queryTexts: [query],
         nResults: topK,
         where: filter,
@@ -129,14 +125,14 @@ export class VectorStore {
         return [];
       }
 
-      return results.documents[0].map((doc, i) => ({
+      return (results.documents[0] as string[]).map((doc: string, i: number) => ({
         id: results.ids[0][i],
         content: doc || '',
         metadata: results.metadatas[0][i] || {},
         score: results.distances ? 1 - results.distances[0][i] : 1,
       }));
     } catch (error) {
-      logger.error('Search failed:', error);
+      logger.error({ err: error as any }, 'Search failed');
       throw error;
     }
   }
@@ -145,14 +141,14 @@ export class VectorStore {
     embedding: number[],
     topK: number = 5,
     filter?: Record<string, any>,
-    collectionName?: string
+    collectionName?: string,
   ): Promise<SearchResult[]> {
     const collection = await this.getOrCreateCollection(
-      collectionName || this.config.defaultCollection
+      collectionName || this.config.defaultCollection,
     );
 
     try {
-      const results = await collection.query({
+      const results: any = await (collection as any).query({
         queryEmbeddings: [embedding],
         nResults: topK,
         where: filter,
@@ -162,31 +158,28 @@ export class VectorStore {
         return [];
       }
 
-      return results.documents[0].map((doc, i) => ({
+      return (results.documents[0] as string[]).map((doc: string, i: number) => ({
         id: results.ids[0][i],
         content: doc || '',
         metadata: results.metadatas[0][i] || {},
         score: results.distances ? 1 - results.distances[0][i] : 1,
       }));
     } catch (error) {
-      logger.error('Embedding search failed:', error);
+      logger.error({ err: error as any }, 'Embedding search failed');
       throw error;
     }
   }
 
-  async deleteDocuments(
-    ids: string[],
-    collectionName?: string
-  ): Promise<void> {
+  async deleteDocuments(ids: string[], collectionName?: string): Promise<void> {
     const collection = await this.getOrCreateCollection(
-      collectionName || this.config.defaultCollection
+      collectionName || this.config.defaultCollection,
     );
 
     try {
-      await collection.delete({ ids });
+      await (collection as any).delete({ ids });
       logger.info(`Deleted ${ids.length} documents from ${collectionName}`);
     } catch (error) {
-      logger.error('Failed to delete documents:', error);
+      logger.error({ err: error as any }, 'Failed to delete documents');
       throw error;
     }
   }
@@ -194,14 +187,14 @@ export class VectorStore {
   async updateDocument(
     id: string,
     document: Partial<Document>,
-    collectionName?: string
+    collectionName?: string,
   ): Promise<void> {
     const collection = await this.getOrCreateCollection(
-      collectionName || this.config.defaultCollection
+      collectionName || this.config.defaultCollection,
     );
 
     try {
-      await collection.update({
+      await (collection as any).update({
         ids: [id],
         documents: document.content ? [document.content] : undefined,
         metadatas: document.metadata ? [document.metadata] : undefined,
@@ -209,7 +202,7 @@ export class VectorStore {
       });
       logger.info(`Updated document ${id} in ${collectionName}`);
     } catch (error) {
-      logger.error('Failed to update document:', error);
+      logger.error({ err: error as any }, 'Failed to update document');
       throw error;
     }
   }
@@ -220,10 +213,11 @@ export class VectorStore {
     }
 
     try {
-      const collections = await this.client.listCollections();
-      return collections.map(c => c.name);
+      const clientAny = this.client as any;
+      const collections: any[] = await clientAny.listCollections();
+      return collections.map((c: any) => (typeof c === 'string' ? c : c.name));
     } catch (error) {
-      logger.error('Failed to list collections:', error);
+      logger.error({ err: error as any }, 'Failed to list collections');
       throw error;
     }
   }
@@ -234,30 +228,28 @@ export class VectorStore {
     }
 
     try {
-      await this.client.deleteCollection({ name });
+      const clientAny = this.client as any;
+      await clientAny.deleteCollection({ name });
       this.collections.delete(name);
       logger.info(`Deleted collection ${name}`);
     } catch (error) {
-      logger.error(`Failed to delete collection ${name}:`, error);
+      logger.error({ err: error as any }, `Failed to delete collection ${name}`);
       throw error;
     }
   }
 
   async getCollectionStats(name?: string): Promise<any> {
-    const collection = await this.getOrCreateCollection(
-      name || this.config.defaultCollection
-    );
+    const collection = await this.getOrCreateCollection(name || this.config.defaultCollection);
 
     try {
-      const count = await collection.count();
+      const count = await (collection as any).count();
       return {
         name: name || this.config.defaultCollection,
         documentCount: count,
       };
     } catch (error) {
-      logger.error('Failed to get collection stats:', error);
+      logger.error({ err: error as any }, 'Failed to get collection stats');
       throw error;
     }
   }
 }
-
