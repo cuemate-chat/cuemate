@@ -111,6 +111,26 @@ services:
       - cuemate-network
     restart: unless-stopped
 
+  # Web API (SQLite)
+  web-api:
+    build:
+      context: .
+      dockerfile: infra/docker/web-api/Dockerfile
+    container_name: cuemate-web-api
+    environment:
+      - NODE_ENV=production
+      - WEB_API_PORT=3004
+      - WEB_API_HOST=0.0.0.0
+      - SQLITE_PATH=/data/cuemate.db
+      - JWT_SECRET=${JWT_SECRET:-dev-secret}
+    volumes:
+      - ./data/sqlite:/data
+    ports:
+      - "3004:3004"
+    networks:
+      - cuemate-network
+    restart: unless-stopped
+
 networks:
   cuemate-network:
     driver: bridge

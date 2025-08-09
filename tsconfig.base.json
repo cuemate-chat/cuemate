@@ -13,6 +13,9 @@
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
         "moduleResolution": "node",
+        "types": [
+            "node"
+        ],
         "allowSyntheticDefaultImports": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
@@ -27,6 +30,9 @@
             ],
             "@cuemate/sdk": [
                 "packages/cml-sdk/src"
+            ],
+            "@cuemate/data-sqlite": [
+                "packages/data-sqlite/src"
             ]
         }
     }

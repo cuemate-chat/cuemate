@@ -1,5 +1,5 @@
 # Build stage
-FROM node:23-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -19,7 +19,7 @@ COPY services/asr-gateway ./
 RUN pnpm build
 
 # Production stage
-FROM node:23-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 RUN npm install -g pnpm && apk add --no-cache dumb-init
