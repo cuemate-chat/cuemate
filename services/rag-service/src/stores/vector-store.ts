@@ -29,9 +29,7 @@ export class VectorStore {
   async initialize(): Promise<void> {
     try {
       if (this.config.type === 'chroma') {
-        this.client = new ChromaClient({
-          path: this.config.chromaPath,
-        });
+        this.client = new ChromaClient({ path: this.config.chromaPath });
 
         // 获取或创建默认集合
         await this.getOrCreateCollection(this.config.defaultCollection);

@@ -1,5 +1,4 @@
 import cors from '@fastify/cors';
-import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
 import Fastify from 'fastify';
 import { config } from './config/index.js';
@@ -22,9 +21,7 @@ async function buildServer() {
     credentials: true,
   });
 
-  await fastify.register(helmet, {
-    contentSecurityPolicy: false,
-  });
+  // 已移除 helmet（开发期可选），避免 fastify 版本不匹配导致启动失败
 
   await fastify.register(multipart, {
     limits: {

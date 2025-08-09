@@ -13,7 +13,9 @@ const configSchema = z.object({
   }),
   vectorStore: z.object({
     type: z.enum(['chroma', 'pgvector', 'milvus']).default('chroma'),
-    chromaPath: z.string().default('./chroma_data'),
+    // 注意：JS 客户端仅支持 HTTP API，不支持本地目录路径
+    // 默认指向本机 8000 端口的 Chroma Server
+    chromaPath: z.string().default('http://localhost:8000'),
     chromaHost: z.string().optional(),
     chromaPort: z.number().optional(),
     defaultCollection: z.string().default('default'),
@@ -54,7 +56,7 @@ export const config = configSchema.parse({
   },
   vectorStore: {
     type: (process.env.VECTOR_STORE_TYPE as any) || 'chroma',
-    chromaPath: process.env.CHROMA_PATH || './chroma_data',
+    chromaPath: process.env.CHROMA_PATH || 'http://localhost:8000',
     chromaHost: process.env.CHROMA_HOST,
     chromaPort: process.env.CHROMA_PORT ? parseInt(process.env.CHROMA_PORT) : undefined,
     defaultCollection: process.env.DEFAULT_COLLECTION || 'default',

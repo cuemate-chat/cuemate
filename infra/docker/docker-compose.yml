@@ -1,11 +1,22 @@
-version: '3.8'
-
 services:
+  # Chroma Vector DB (for RAG)
+  chroma:
+    image: ghcr.io/chroma-core/chroma:0.5.4
+    container_name: cuemate-chroma
+    ports:
+      - "8000:8000"
+    environment:
+      - CHROMA_SERVER_CORS_ALLOW_ORIGINS=["*"]
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - cuemate-network
+    restart: unless-stopped
 
   # ASR Gateway Service
   asr-gateway:
     build:
-      context: .
+      context: ../..
       dockerfile: infra/docker/asr-gateway/Dockerfile
     container_name: cuemate-asr-gateway
     ports:
@@ -19,7 +30,7 @@ services:
       - FALLBACK_ASR_PROVIDER=whisper
     # Redis 已移除，若需启用请在此处添加依赖
     volumes:
-      - ./services/asr-gateway/models:/app/models
+      - ../../services/asr-gateway/models:/app/models
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -27,7 +38,7 @@ services:
   # LLM Router Service
   llm-router:
     build:
-      context: .
+      context: ../..
       dockerfile: infra/docker/llm-router/Dockerfile
     container_name: cuemate-llm-router
     ports:
@@ -50,7 +61,7 @@ services:
   # RAG Service
   rag-service:
     build:
-      context: .
+      context: ../..
       dockerfile: infra/docker/rag-service/Dockerfile
     container_name: cuemate-rag-service
     ports:
@@ -62,11 +73,14 @@ services:
       - VECTOR_STORE_TYPE=chroma
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - EMBEDDINGS_PROVIDER=openai
+      - CHROMA_PATH=http://chroma:8000
     volumes:
       - chroma_data:/app/chroma_data
-      - ./services/rag-service/documents:/app/documents
+      - ../../services/rag-service/documents:/app/documents
     networks:
       - cuemate-network
+    depends_on:
+      - chroma
     restart: unless-stopped
 
   # Nginx 网关已移除（可选）
@@ -74,7 +88,7 @@ services:
   # Web API (SQLite)
   web-api:
     build:
-      context: .
+      context: ../..
       dockerfile: infra/docker/web-api/Dockerfile
     container_name: cuemate-web-api
     environment:
@@ -84,7 +98,7 @@ services:
       - SQLITE_PATH=/data/cuemate.db
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
     volumes:
-      - ./data/sqlite:/data
+      - ../../data/sqlite:/data
     ports:
       - "3004:3004"
     networks:

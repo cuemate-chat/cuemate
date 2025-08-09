@@ -1,16 +1,14 @@
-import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
-import helmet from '@fastify/helmet';
-import rateLimit from '@fastify/rate-limit';
+import Fastify from 'fastify';
 import { Server } from 'socket.io';
 import { config } from './config/index.js';
-import { logger } from './utils/logger.js';
+import { createSocketHandlers } from './handlers/socket.js';
+import { AudioProcessor } from './processors/audio.js';
 import { DeepgramProvider } from './providers/deepgram.js';
 import { WhisperProvider } from './providers/whisper.js';
-import { AudioProcessor } from './processors/audio.js';
-import { createSocketHandlers } from './handlers/socket.js';
 import { createHttpRoutes } from './routes/http.js';
+import { logger } from './utils/logger.js';
 
 async function buildServer() {
   const fastify = Fastify({
@@ -24,14 +22,9 @@ async function buildServer() {
     credentials: true,
   });
 
-  await fastify.register(helmet, {
-    contentSecurityPolicy: false,
-  });
+  // 已移除 helmet（开发期可选），避免 fastify 版本不匹配导致启动失败
 
-  await fastify.register(rateLimit, {
-    max: 100,
-    timeWindow: '1 minute',
-  });
+  // 已移除 rateLimit（开发期可选），避免 fastify 版本不匹配导致启动失败
 
   await fastify.register(websocket);
 
@@ -81,12 +74,12 @@ async function buildServer() {
 async function start() {
   try {
     const { fastify } = await buildServer();
-    
+
     const port = config.server.port;
     const host = config.server.host;
-    
+
     await fastify.listen({ port, host });
-    
+
     logger.info(`🚀 ASR Gateway running at http://${host}:${port}`);
     logger.info(`📡 WebSocket endpoint: ws://${host}:${port}`);
   } catch (err) {
