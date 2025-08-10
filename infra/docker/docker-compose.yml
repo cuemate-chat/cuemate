@@ -105,6 +105,24 @@ services:
       - cuemate-network
     restart: unless-stopped
 
+  # Web 前端（静态站 - Nginx）
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/docker/web/Dockerfile
+      args:
+        WEB_API_BASE: ${WEB_API_BASE:-http://web-api:3004}
+    container_name: cuemate-web
+    ports:
+      - "80:80"
+    environment:
+      - VITE_WEB_API_BASE=${WEB_API_BASE:-http://web-api:3004}
+    depends_on:
+      - web-api
+    networks:
+      - cuemate-network
+    restart: unless-stopped
+
 networks:
   cuemate-network:
     driver: bridge

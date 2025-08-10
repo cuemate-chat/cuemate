@@ -8,10 +8,10 @@ repository = ""
 edition = "2021"
 
 [build-dependencies]
-tauri-build = { version = "1.6", features = [] }
+tauri-build = { version = "1", features = [] }
 
 [dependencies]
-tauri = { version = "1.6", features = [
+tauri = { version = "1", features = [
   "shell-open",
   "system-tray",
   "window-all",

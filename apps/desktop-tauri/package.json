@@ -10,6 +10,9 @@
         "tauri": "tauri",
         "tauri:dev": "tauri dev",
         "tauri:build": "tauri build",
+        "tauri:build:mac-arm64": "arch -arm64 pnpm dlx @tauri-apps/cli-darwin-arm64@1.6.3 tauri build --target aarch64-apple-darwin",
+        "tauri:build:mac-x64": "pnpm dlx @tauri-apps/cli-darwin-x64@1.6.3 tauri build --target x86_64-apple-darwin",
+        "tauri:build:win": "pnpm dlx @tauri-apps/cli-win32-x64-msvc@1.6.3 tauri build --target x86_64-pc-windows-msvc",
         "lint": "eslint src --ext ts,tsx",
         "format": "prettier --write src"
     },
@@ -26,6 +29,8 @@
     },
     "devDependencies": {
         "@tauri-apps/cli": "^1.6.3",
+        "@tauri-apps/cli-darwin-arm64": "1.6.3",
+        "@rollup/rollup-darwin-arm64": "4.46.2",
         "@types/react": "^18.3.11",
         "@types/react-dom": "^18.3.1",
         "@vitejs/plugin-react": "^4.3.4",
