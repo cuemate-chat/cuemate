@@ -9,6 +9,7 @@
         "declarationMap": true
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "src/types/**/*.d.ts"
     ]
 }
