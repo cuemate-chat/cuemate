@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Logo from '../assets/CueMate.png';
 
 export default function SubmitPrompt() {
   const [title, setTitle] = useState('');
@@ -13,6 +14,9 @@ export default function SubmitPrompt() {
   return (
     <div className="min-h-screen grid place-items-center p-6">
       <form onSubmit={onSubmit} className="w-full max-w-2xl space-y-4 bg-slate-900 p-6 rounded-xl border border-slate-800">
+        <div className="flex justify-center">
+          <img src={Logo} alt="CueMate" className="h-10" />
+        </div>
         <h1 className="text-xl font-semibold">提交押题</h1>
         <input className="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700" placeholder="标题" value={title} onChange={(e)=>setTitle(e.target.value)} />
         <textarea className="w-full min-h-[200px] px-3 py-2 rounded bg-slate-800 border border-slate-700" placeholder="内容或提示词（prompt）" value={content} onChange={(e)=>setContent(e.target.value)} />
