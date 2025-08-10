@@ -1,4 +1,4 @@
-import { ChromaClient, type Collection } from 'chromadb';
+import { ChromaClient } from 'chromadb';
 import { v4 as uuidv4 } from 'uuid';
 import { Config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
@@ -18,8 +18,8 @@ export interface SearchResult {
 }
 
 export class VectorStore {
-  private client: ChromaClient | null = null;
-  private collections: Map<string, Collection> = new Map();
+  private client: any = null;
+  private collections: Map<string, any> = new Map();
   private config: Config['vectorStore'];
 
   constructor(config: Config['vectorStore']) {
@@ -44,7 +44,7 @@ export class VectorStore {
     }
   }
 
-  async getOrCreateCollection(name: string): Promise<Collection> {
+  async getOrCreateCollection(name: string): Promise<any> {
     if (!this.client) {
       throw new Error('Vector store not initialized');
     }

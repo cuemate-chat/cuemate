@@ -90,6 +90,11 @@ chroma_data/
 logs/
 *.log
 
+# ide
+.vscode/
+.cursor/
+.idea/
+
 # private file
 PROJECT.md
 technology.md

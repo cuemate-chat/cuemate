@@ -17,18 +17,18 @@ async function start() {
   try {
     await app.register(helmet, { contentSecurityPolicy: false });
   } catch (err) {
-    app.log?.warn?.('helmet register failed, skip in dev:', err);
+    app.log.warn({ err }, 'helmet register failed, skip in dev');
   }
   // 已移除 rateLimit（开发期可选），避免 fastify 版本不匹配导致启动失败
   await app.register(jwt, { secret: process.env.JWT_SECRET || 'dev-secret' });
 
   // 初始化 SQLite（better-sqlite3）
-  const db = initSqlite(process.env.SQLITE_PATH || './cuemate.db');
-  app.decorate('db', db);
+  const db = await initSqlite(process.env.SQLITE_PATH || './cuemate.db');
+  app.decorate('db', db as any);
 
   // 路由
-  registerAuthRoutes(app);
-  registerPromptRoutes(app);
+  registerAuthRoutes(app as any);
+  registerPromptRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 

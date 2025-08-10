@@ -1,12 +1,11 @@
-// 在本地开发时不直接 import 原生模块，避免安装失败导致类型报错
-export function initSqlite(path: string) {
-  // 动态加载 better-sqlite3（容器/生产环境）
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const Database = require('better-sqlite3');
-  const { applySchema } = require('./db.js');
+// 使用 ESM 友好的动态导入以兼容 NodeNext（无 require）
+export async function initSqlite(path: string) {
+  const DatabaseModule = await import('better-sqlite3');
+  const { applySchema } = await import('./db.js');
+  const Database: any = (DatabaseModule as any).default ?? (DatabaseModule as any);
   const db = new Database(path);
   applySchema(db);
   return db;
 }
 
-export type Db = ReturnType<typeof initSqlite>;
+export type Db = Awaited<ReturnType<typeof initSqlite>>;

@@ -7,12 +7,12 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/rag-service/package.json ./services/rag-service/package.json
 
 # 安装依赖（仅 rag-service 作用域）
-RUN pnpm install --frozen-lockfile --filter @cuemate/rag-service...
+RUN pnpm install --no-frozen-lockfile --filter @cuemate/rag-service...
 
 # 复制源码并构建
 COPY services/rag-service ./services/rag-service
 COPY tsconfig.base.json ./tsconfig.base.json
-RUN pnpm -r --filter @cuemate/rag-service build || pnpm -r --filter @cuemate/rag-service build --force
+RUN pnpm -r --filter @cuemate/rag-service build
 
 FROM node:22-bookworm-slim
 WORKDIR /app
@@ -21,7 +21,7 @@ RUN npm install -g pnpm && apt-get update && apt-get install -y dumb-init && rm 
 # 使用工作区锁文件执行按包生产安装，确保运行时依赖完整
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/rag-service/package.json ./services/rag-service/package.json
-RUN pnpm install --prod --frozen-lockfile --filter @cuemate/rag-service...
+RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/rag-service...
 
 # 复制构建产物
 COPY --from=builder /app/services/rag-service/dist ./services/rag-service/dist
