@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { signin } from '../api/auth';
 import { storage } from '../api/http';
-import Logo from '../assets/CueMate.png';
 import LeftImage from '../assets/login-left.png';
+import Logo from '../assets/logo-background.png';
 
 export default function Login() {
   const [account, setAccount] = useState(''); // 用户名/邮箱/ID 任一
@@ -54,8 +54,8 @@ export default function Login() {
       <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* 左侧：顶部 Logo + 插画（居左） */}
-          <div className="hidden md:flex flex-col items-start p-12 bg-blue-50">
-            <img src={Logo} alt="CueMate" className="h-8 mb-6" />
+          <div className="hidden md:flex flex-col items-start p-12 bg-[#e5eefc]">
+            <img src={Logo} alt="CueMate" className="h-8 mb-6 bg-transparent" />
             <img src={LeftImage} alt="illustration" className="w-full h-auto object-contain" />
           </div>
 

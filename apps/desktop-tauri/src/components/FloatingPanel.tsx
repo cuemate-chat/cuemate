@@ -2,7 +2,7 @@ import { appWindow } from '@tauri-apps/api/window';
 import { motion } from 'framer-motion';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import Logo from '../assets/CueMate.png';
+import Logo from '../assets/logo-background.png';
 
 interface FloatingPanelProps {
   children: React.ReactNode;

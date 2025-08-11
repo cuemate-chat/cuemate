@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Logo from '../assets/CueMate.png';
+import Logo from '../assets/logo-background.png';
 
 export default function SubmitPrompt() {
   const [title, setTitle] = useState('');

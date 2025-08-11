@@ -5,9 +5,3 @@ export async function signin(account: string, password: string) {
   storage.setToken((data as any).token);
   return data;
 }
-
-export async function signup(name: string, email: string, password: string) {
-  const data = await http.post('/auth/signup', { name, email, password });
-  storage.setToken((data as any).token);
-  return data;
-}
