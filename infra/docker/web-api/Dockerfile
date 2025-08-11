@@ -30,7 +30,7 @@ COPY --from=builder /app/services/web-api/dist ./services/web-api/dist
 COPY --from=builder /app/packages/data-sqlite/dist ./packages/data-sqlite/dist
 
 WORKDIR /app/services/web-api
-USER node
+
 EXPOSE 3004
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/index.js"]

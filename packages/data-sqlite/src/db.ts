@@ -11,6 +11,17 @@ export function applySchema(db: any): void {
     );
   `);
 
+  // 先设置基础 PRAGMA，避免在事务内设置 WAL 模式导致报错
+  try {
+    db.pragma('foreign_keys = ON');
+    // WAL 在部分环境可能需要在未开启事务时设置；如失败可降级为 DELETE
+    try {
+      db.pragma('journal_mode = WAL');
+    } catch {
+      db.pragma('journal_mode = DELETE');
+    }
+  } catch {}
+
   const applied: number[] = db
     .prepare('SELECT version FROM __migrations ORDER BY version ASC')
     .all()

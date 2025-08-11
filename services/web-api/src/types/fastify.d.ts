@@ -6,4 +6,7 @@ declare module 'fastify' {
     jwt: import('@fastify/jwt').JWT;
     db: any;
   }
+  interface FastifyRequest {
+    jwtVerify(): Promise<{ uid: string; email?: string }>;
+  }
 }

@@ -3,9 +3,6 @@ export const name = '001_init';
 
 export function up(db: any): void {
   db.exec(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA foreign_keys = ON;
-
     -- 用户
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -15,38 +12,28 @@ export function up(db: any): void {
       created_at INTEGER NOT NULL
     );
 
-    -- 简历
-    CREATE TABLE IF NOT EXISTS resumes (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      title TEXT NOT NULL,
-      content TEXT NOT NULL,
-      created_at INTEGER NOT NULL,
-      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-    );
-
     -- 岗位
     CREATE TABLE IF NOT EXISTS jobs (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
       title TEXT NOT NULL,
-      company TEXT,
       description TEXT,
       status TEXT DEFAULT 'active',
-      resume_id TEXT,
       created_at INTEGER NOT NULL,
-      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY(resume_id) REFERENCES resumes(id) ON DELETE SET NULL
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
-    -- 岗位训练 Prompts
-    CREATE TABLE IF NOT EXISTS job_prompts (
+    -- 简历
+    CREATE TABLE IF NOT EXISTS resumes (
       id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
       job_id TEXT NOT NULL,
-      type TEXT NOT NULL DEFAULT 'training',
+      title TEXT NOT NULL,
       content TEXT NOT NULL,
       created_at INTEGER NOT NULL,
-      FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+      UNIQUE(job_id)
     );
 
     -- 用户通用模板/押题
@@ -108,7 +95,6 @@ export function up(db: any): void {
     -- 索引
     CREATE INDEX IF NOT EXISTS idx_jobs_user ON jobs(user_id);
     CREATE INDEX IF NOT EXISTS idx_prompts_user ON prompts(user_id);
-    CREATE INDEX IF NOT EXISTS idx_job_prompts_job ON job_prompts(job_id);
     CREATE INDEX IF NOT EXISTS idx_interviews_job ON interviews(job_id);
     CREATE INDEX IF NOT EXISTS idx_questions_interview ON interview_questions(interview_id);
     CREATE INDEX IF NOT EXISTS idx_reviews_score ON interview_reviews(score_id);

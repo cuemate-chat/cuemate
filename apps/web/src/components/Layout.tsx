@@ -1,9 +1,29 @@
 import { ArrowPathRoundedSquareIcon, ChatBubbleLeftRightIcon, HomeIcon, ListBulletIcon, PlusCircleIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import Logo from '../assets/logo-background.png';
 import UserMenu from './UserMenu';
 
 export default function Layout() {
+  const { pathname } = useLocation();
+
+  const getActiveKey = (): string | null => {
+    if (pathname.startsWith('/settings')) return null; // 账户 & 设置 页面不选中任何菜单
+    if (pathname === '/' || pathname.startsWith('/home')) return '/home';
+    if (pathname.startsWith('/jobs/new')) return '/jobs/new';
+    if (pathname.startsWith('/jobs')) return '/jobs';
+    if (pathname.startsWith('/prompts')) return '/prompts';
+    if (pathname.startsWith('/reviews')) return '/reviews';
+    if (pathname.startsWith('/help')) return '/help';
+    return '/home';
+  };
+  const activeKey = getActiveKey();
+
+  const linkCls = (key: string) =>
+    `flex items-center gap-2 px-3 py-[6px] rounded-lg transition-colors ${
+      activeKey === key
+        ? 'bg-[rgba(59,130,246,0.12)] text-[#1d4ed8] font-medium shadow-sm'
+        : 'text-[#3b82f6] hover:text-[#1d4ed8] hover:bg-[rgba(59,130,246,0.08)]'
+    }`;
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       {/* NavBar */}
@@ -13,28 +33,28 @@ export default function Layout() {
              <img src={Logo} alt="CueMate" className="h-8 bg-transparent" />
           </span>
         </div>
-        <nav className="container flex items-center justify-center gap-8 text-[#3b82f6] text-sm">
-          <Link to="/home" className="hover:text-[#1d4ed8] flex items-center gap-2">
+        <nav className="container flex items-center justify-center gap-8 text-sm">
+          <Link to="/home" className={linkCls('/home')}>
             <HomeIcon className="w-5 h-5" />
             主页
           </Link>
-          <Link to="/jobs/new" className="hover:text-[#1d4ed8] flex items-center gap-2">
+          <Link to="/jobs/new" className={linkCls('/jobs/new')}>
             <PlusCircleIcon className="w-5 h-5" />
             新建岗位
           </Link>
-          <Link to="/jobs" className="hover:text-[#1d4ed8] flex items-center gap-2">
+          <Link to="/jobs" className={linkCls('/jobs')}>
             <ListBulletIcon className="w-5 h-5" />
             岗位列表
           </Link>
-          <Link to="/prompts" className="hover:text-[#1d4ed8] flex items-center gap-2">
+          <Link to="/prompts" className={linkCls('/prompts')}>
             <ChatBubbleLeftRightIcon className="w-5 h-5" />
             面试押题
           </Link>
-          <Link to="/reviews" className="hover:text-[#1d4ed8] flex items-center gap-2">
+          <Link to="/reviews" className={linkCls('/reviews')}>
             <ArrowPathRoundedSquareIcon className="w-5 h-5" />
             面试复盘
           </Link>
-          <Link to="/help" className="hover:text-[#1d4ed8] flex items-center gap-2">
+          <Link to="/help" className={linkCls('/help')}>
             <QuestionMarkCircleIcon className="w-5 h-5" />
             帮助中心
           </Link>
