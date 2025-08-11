@@ -3,12 +3,15 @@ import { signin } from '../api/auth';
 import { storage } from '../api/http';
 import LeftImage from '../assets/login-left.png';
 import Logo from '../assets/logo-background.png';
+import { message } from '../components/Message';
 
 export default function Login() {
   const [account, setAccount] = useState(''); // 用户名/邮箱/ID 任一
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // 初次加载：恢复本地记住的账号/密码/勾选状态
   useEffect(() => {
@@ -35,15 +38,25 @@ export default function Login() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signin(account, password);
-    if (remember) {
-      storage.setRememberEnabled(true);
-      storage.setRemember(account);
-      storage.setRememberPassword(password);
-    } else {
-      storage.clearRememberAll();
+    setErrorMsg(null);
+    setSubmitting(true);
+    try {
+      await signin(account, password);
+      if (remember) {
+        storage.setRememberEnabled(true);
+        storage.setRemember(account);
+        storage.setRememberPassword(password);
+      } else {
+        storage.clearRememberAll();
+      }
+      message.success('登录成功');
+    } catch (err: any) {
+      const msg = err?.message || '账号或密码错误';
+      setErrorMsg(msg);
+      message.error(msg);
+    } finally {
+      setSubmitting(false);
     }
-    alert('登录成功');
   };
 
   return (
@@ -108,10 +121,16 @@ export default function Login() {
                   )}
                 </button>
               </div>
+              {errorMsg && (
+                <div className="p-3 rounded bg-red-50 text-red-600 text-sm border border-red-200">
+                  {errorMsg}
+                </div>
+              )}
               <button
-                className="w-full py-2.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors"
+                disabled={submitting}
+                className="w-full py-2.5 rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium transition-colors"
               >
-                登录
+                {submitting ? '登录中…' : '登录'}
               </button>
               <div className="flex items-center justify-between text-sm text-gray-500">
                 <label className="inline-flex items-center space-x-2">

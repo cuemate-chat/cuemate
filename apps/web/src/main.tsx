@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { MessageContainer } from './components/Message';
 import Login from './pages/Login';
 import SubmitPrompt from './pages/SubmitPrompt';
 import './styles.css';
@@ -14,6 +15,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
+      <MessageContainer />
     </BrowserRouter>
   </React.StrictMode>,
 );

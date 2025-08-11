@@ -49,6 +49,25 @@ input, button { @apply outline-none; }
 /* 提升卡片层级，避免被背景覆盖 */
 .login-bg > * { position: relative; z-index: 1; }
 
+/* 全局消息样式 */
+.msg-wrap {
+  position: fixed; inset: 16px 16px auto auto; top: 16px; right: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  z-index: 9999;
+}
+.msg-item {
+  min-width: 220px; max-width: 420px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  color: #0f172a; font-size: 14px; font-weight: 500;
+  background: #fff; border: 1px solid #e2e8f0;
+}
+.msg-item.msg-success { background: #ecfdf5; border-color: #34d399; color: #065f46; }
+.msg-item.msg-error   { background: #fef2f2; border-color: #f87171; color: #7f1d1d; }
+.msg-item.msg-warning { background: #fffbeb; border-color: #fbbf24; color: #78350f; }
+.msg-item.msg-info    { background: #eff6ff; border-color: #60a5fa; color: #1e3a8a; }
+
 /* 新增右上角四分之一圆 */
 .login-bg .quarter-circle {
     position: absolute;
