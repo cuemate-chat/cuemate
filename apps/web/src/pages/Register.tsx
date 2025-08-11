@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../assets/CueMate.png';
+import { register } from '../lib/auth';
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: 调用后端注册接口
-    alert(`注册: ${email}`);
+    await register(name, email, password);
+    alert('注册成功');
   };
 
   return (
