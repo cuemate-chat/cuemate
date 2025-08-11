@@ -13,7 +13,12 @@ config();
 async function start() {
   const app = Fastify({ logger: true });
 
-  await app.register(cors, { origin: '*', credentials: true });
+  await app.register(cors, {
+    origin: true, // 反射请求源，配合凭证
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
   try {
     await app.register(helmet, { contentSecurityPolicy: false });
   } catch (err) {

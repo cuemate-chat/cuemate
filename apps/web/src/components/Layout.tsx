@@ -1,3 +1,4 @@
+import { ArrowPathRoundedSquareIcon, ChatBubbleLeftRightIcon, HomeIcon, ListBulletIcon, PlusCircleIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import { Link, Outlet } from 'react-router-dom';
 import Logo from '../assets/logo-background.png';
 import UserMenu from './UserMenu';
@@ -12,10 +13,31 @@ export default function Layout() {
              <img src={Logo} alt="CueMate" className="h-8 bg-transparent" />
           </span>
         </div>
-        <nav className="flex items-center space-x-6 text-[#3b82f6] text-sm">
-          <Link to="/home" className="hover:text-[#4f46e5]">首页</Link>
-          <Link to="/tasks" className="hover:text-[#4f46e5]">任务</Link>
-          <Link to="/settings" className="hover:text-[#4f46e5]">设置</Link>
+        <nav className="container flex items-center justify-center gap-8 text-[#3b82f6] text-sm">
+          <Link to="/home" className="hover:text-[#1d4ed8] flex items-center gap-2">
+            <HomeIcon className="w-5 h-5" />
+            主页
+          </Link>
+          <Link to="/jobs/new" className="hover:text-[#1d4ed8] flex items-center gap-2">
+            <PlusCircleIcon className="w-5 h-5" />
+            新建岗位
+          </Link>
+          <Link to="/jobs" className="hover:text-[#1d4ed8] flex items-center gap-2">
+            <ListBulletIcon className="w-5 h-5" />
+            岗位列表
+          </Link>
+          <Link to="/prompts" className="hover:text-[#1d4ed8] flex items-center gap-2">
+            <ChatBubbleLeftRightIcon className="w-5 h-5" />
+            面试押题
+          </Link>
+          <Link to="/reviews" className="hover:text-[#1d4ed8] flex items-center gap-2">
+            <ArrowPathRoundedSquareIcon className="w-5 h-5" />
+            面试复盘
+          </Link>
+          <Link to="/help" className="hover:text-[#1d4ed8] flex items-center gap-2">
+            <QuestionMarkCircleIcon className="w-5 h-5" />
+            帮助中心
+          </Link>
         </nav>
         <div className="ml-4 relative">
           <UserMenu />
@@ -23,7 +45,7 @@ export default function Layout() {
       </header>
 
       {/* RouterView */}
-      <main className="flex-1 container mx-auto px-6 py-6">
+      <main className="flex-1 container px-6 py-6">
         <Outlet />
       </main>
 

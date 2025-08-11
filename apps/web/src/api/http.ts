@@ -53,4 +53,5 @@ export async function request(path: string, init: RequestInit = {}) {
 export const http = {
   get: (p: string) => request(p, { method: 'GET' }),
   post: (p: string, body?: any) => request(p, { method: 'POST', body: JSON.stringify(body ?? {}) }),
+  put: (p: string, body?: any) => request(p, { method: 'PUT', body: JSON.stringify(body ?? {}) }),
 };

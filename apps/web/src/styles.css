@@ -2,9 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-slate-950 text-slate-100; }
-input, button { @apply outline-none; }
-
 /* 登录页背景图案（柔和波浪 + 云朵遮罩） */
 .login-bg {
   position: relative;

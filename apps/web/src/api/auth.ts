@@ -14,3 +14,19 @@ export async function fetchMe() {
   if ((data as any).user) storage.setUser((data as any).user);
   return data;
 }
+
+export async function updateMe(payload: {
+  name?: string;
+  email?: string;
+  theme?: 'light' | 'dark' | 'system';
+  locale?: string;
+  timezone?: string;
+}) {
+  const data = await http.post('/auth/update-setting', payload);
+  if ((data as any).user) storage.setUser((data as any).user);
+  return data;
+}
+
+export async function changePassword(oldPassword: string, newPassword: string) {
+  return http.post('/auth/change-password', { oldPassword, newPassword });
+}
