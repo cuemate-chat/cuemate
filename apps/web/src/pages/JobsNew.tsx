@@ -22,8 +22,7 @@ export default function JobsNew() {
   const [resumeText, setResumeText] = useState('');
   const [resumeMeta, setResumeMeta] = useState<{ name: string; size: number; type: string } | null>(null);
 
-  // Step3: 提交态
-  const [submitting, setSubmitting] = useState(false);
+  // Step3: 提交态由 progress 控制
   const [progress, setProgress] = useState(0);
   const progressTimerRef = useRef<number | null>(null);
 
@@ -54,7 +53,7 @@ export default function JobsNew() {
     if (current === 1) {
       // 进入第三步并开始进度
       setCurrent(2);
-      setSubmitting(true);
+      // 开始提交
       setProgress(1);
       if (progressTimerRef.current) window.clearInterval(progressTimerRef.current);
       progressTimerRef.current = window.setInterval(() => {
@@ -75,14 +74,14 @@ export default function JobsNew() {
           progressTimerRef.current = null;
         }
         setProgress(100);
-        setSubmitting(false);
+        // 提交完成
         globalMessage.success('准备完成，已生成面试任务');
       } catch (e: any) {
         if (progressTimerRef.current) {
           window.clearInterval(progressTimerRef.current);
           progressTimerRef.current = null;
         }
-        setSubmitting(false);
+        // 提交失败
         setProgress(0);
         setCurrent(1);
         globalMessage.error(e?.message || '创建岗位失败');
@@ -99,7 +98,7 @@ export default function JobsNew() {
       window.clearInterval(progressTimerRef.current);
       progressTimerRef.current = null;
     }
-    setSubmitting(false);
+    // 重置提交态
     setProgress(0);
     setJobName('');
     setJobDesc('');

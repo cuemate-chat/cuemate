@@ -9,6 +9,7 @@ export function registerJobRoutes(app: FastifyInstance) {
     resumeTitle: z.string().max(200).optional(),
     resumeContent: z.string().min(1).max(5000),
   });
+  const updateSchema = createSchema;
 
   const handleCreate = async (req: any, reply: any) => {
     try {
@@ -45,18 +46,98 @@ export function registerJobRoutes(app: FastifyInstance) {
     }
   };
 
-  // 兼容两种路径
   app.post('/jobs/new', handleCreate);
-  // 岗位列表 GET /jobs
+  // 岗位列表 GET /jobs（联表返回简历，前端一次性拿到详情）
   app.get('/jobs', async (req, reply) => {
     try {
       const payload = await req.jwtVerify();
       const rows = app.db
         .prepare(
-          'SELECT id, title, description, status, created_at FROM jobs WHERE user_id = ? ORDER BY created_at DESC',
+          `SELECT j.id, j.title, j.description, j.status, j.created_at,
+                  r.id AS resumeId, r.title AS resumeTitle, r.content AS resumeContent
+             FROM jobs j LEFT JOIN resumes r ON r.job_id = j.id
+            WHERE j.user_id = ?
+            ORDER BY j.created_at DESC`,
         )
         .all(payload.uid);
       return { items: rows };
+    } catch (err) {
+      return reply.code(401).send({ error: '未认证' });
+    }
+  });
+
+  // 岗位详情 GET /jobs/:id
+  app.get('/jobs/:id', async (req, reply) => {
+    try {
+      const payload = await req.jwtVerify();
+      const id = (req.params as any)?.id as string;
+      const row = app.db
+        .prepare(
+          `SELECT j.id, j.title, j.description, j.status, j.created_at,
+                  r.id AS resumeId, r.title AS resumeTitle, r.content AS resumeContent
+             FROM jobs j LEFT JOIN resumes r ON r.job_id = j.id
+            WHERE j.id = ? AND j.user_id = ?`,
+        )
+        .get(id, payload.uid);
+      if (!row) return reply.code(404).send({ error: '岗位不存在' });
+      return { job: row };
+    } catch (err) {
+      return reply.code(401).send({ error: '未认证' });
+    }
+  });
+
+  // 更新岗位与简历 PUT /jobs/:id
+  app.put('/jobs/:id', async (req, reply) => {
+    try {
+      const payload = await req.jwtVerify();
+      const id = (req.params as any)?.id as string;
+      const body = updateSchema.parse(req.body);
+      // 先检查归属
+      const owned = app.db
+        .prepare('SELECT id FROM jobs WHERE id = ? AND user_id = ?')
+        .get(id, payload.uid);
+      if (!owned) return reply.code(404).send({ error: '岗位不存在' });
+
+      app.db
+        .prepare('UPDATE jobs SET title=?, description=? WHERE id=? AND user_id=?')
+        .run(body.title, body.description, id, payload.uid);
+      // 简历若不存在则补一条
+      const r = app.db
+        .prepare('SELECT id FROM resumes WHERE job_id=? AND user_id=?')
+        .get(id, payload.uid);
+      if (r) {
+        app.db
+          .prepare('UPDATE resumes SET title=?, content=? WHERE id=? AND user_id=?')
+          .run(body.resumeTitle || `${body.title}-简历`, body.resumeContent, r.id, payload.uid);
+      } else {
+        const resumeId = randomUUID();
+        const now = Date.now();
+        app.db
+          .prepare(
+            'INSERT INTO resumes (id, user_id, job_id, title, content, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+          )
+          .run(
+            resumeId,
+            payload.uid,
+            id,
+            body.resumeTitle || `${body.title}-简历`,
+            body.resumeContent,
+            now,
+          );
+      }
+      return { success: true };
+    } catch (err) {
+      return reply.code(401).send({ error: '未认证' });
+    }
+  });
+
+  // 删除岗位 DELETE /jobs/:id（级联删除简历）
+  app.delete('/jobs/:id', async (req, reply) => {
+    try {
+      const payload = await req.jwtVerify();
+      const id = (req.params as any)?.id as string;
+      const ret = app.db.prepare('DELETE FROM jobs WHERE id=? AND user_id=?').run(id, payload.uid);
+      return { success: ret.changes > 0 };
     } catch (err) {
       return reply.code(401).send({ error: '未认证' });
     }

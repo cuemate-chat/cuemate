@@ -1,3 +1,4 @@
+import { message as globalMessage } from '../components/Message';
 import { WEB_API_BASE } from '../config';
 
 const TOKEN_KEY = 'auth_token';
@@ -44,14 +45,27 @@ export async function request(path: string, init: RequestInit = {}) {
   };
   const token = storage.getToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${WEB_API_BASE}${path}`, { ...init, headers });
-  const data = await res.json().catch(() => undefined);
-  if (!res.ok) throw new Error((data as any)?.error || '请求失败');
-  return data;
+  try {
+    const res = await fetch(`${WEB_API_BASE}${path}`, { ...init, headers });
+    const data = await res.json().catch(() => undefined);
+    if (!res.ok) {
+      const errMsg = (data as any)?.error || `请求失败 (${res.status})`;
+      // 全局错误提示
+      globalMessage.error(errMsg);
+      throw new Error(errMsg);
+    }
+    return data;
+  } catch (e: any) {
+    // 网络错误等无法到达服务器
+    const errMsg = e?.message || '网络异常，请稍后重试';
+    globalMessage.error(errMsg);
+    throw e;
+  }
 }
 
 export const http = {
   get: (p: string) => request(p, { method: 'GET' }),
   post: (p: string, body?: any) => request(p, { method: 'POST', body: JSON.stringify(body ?? {}) }),
   put: (p: string, body?: any) => request(p, { method: 'PUT', body: JSON.stringify(body ?? {}) }),
+  delete: (p: string) => request(p, { method: 'DELETE' }),
 };
