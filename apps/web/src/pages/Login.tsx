@@ -11,14 +11,13 @@ export default function Login() {
   const [account, setAccount] = useState(''); // 用户名/邮箱/ID 任一
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
-  const [remember, setRemember] = useState(false);
+  const [remember, setRemember] = useState(() => storage.getRememberEnabled() === '1');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // 初次加载：恢复本地记住的账号/密码/勾选状态
+  // 初次加载：根据本地“记住我”恢复账号/密码
   useEffect(() => {
     const enabled = storage.getRememberEnabled() === '1';
-    setRemember(enabled);
     if (enabled) {
       const acc = storage.getRemember();
       const pwd = storage.getRememberPassword();
@@ -27,8 +26,13 @@ export default function Login() {
     }
   }, []);
 
-  // 勾选“记住我”或输入变更时，实时同步到本地
+  // 勾选“记住我”或输入变更时，实时同步到本地（跳过首次运行）
+  const didInitRef = React.useRef(false);
   useEffect(() => {
+    if (!didInitRef.current) {
+      didInitRef.current = true;
+      return;
+    }
     if (remember) {
       storage.setRememberEnabled(true);
       storage.setRemember(account);

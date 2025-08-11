@@ -66,7 +66,7 @@ export default function UserMenu() {
     );
   }
 
-  const initials = getUserInitials(username);
+  const initials = getUserInitials(user?.id || username);
 
 
   const onSettings = () => {
