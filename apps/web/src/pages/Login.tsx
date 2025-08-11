@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { signin } from '../api/auth';
 import { storage } from '../api/http';
 import LeftImage from '../assets/login-left.png';
@@ -6,6 +7,7 @@ import Logo from '../assets/logo-background.png';
 import { message } from '../components/Message';
 
 export default function Login() {
+  const navigate = useNavigate();
   const [account, setAccount] = useState(''); // 用户名/邮箱/ID 任一
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
@@ -50,6 +52,7 @@ export default function Login() {
         storage.clearRememberAll();
       }
       message.success('登录成功');
+      navigate('/home', { replace: true });
     } catch (err: any) {
       const msg = err?.message || '账号或密码错误';
       setErrorMsg(msg);
@@ -127,6 +130,7 @@ export default function Login() {
                 </div>
               )}
               <button
+                type="submit"
                 disabled={submitting}
                 className="w-full py-2.5 rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium transition-colors"
               >

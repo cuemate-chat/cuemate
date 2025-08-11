@@ -1,6 +1,7 @@
 import { WEB_API_BASE } from '../config';
 
 const TOKEN_KEY = 'auth_token';
+const USER_KEY = 'auth_user';
 const REMEMBER_KEY = 'remember_account';
 const REMEMBER_PWD_KEY = 'remember_password';
 const REMEMBER_ENABLED_KEY = 'remember_enabled';
@@ -9,6 +10,17 @@ export const storage = {
   getToken: (): string | null => localStorage.getItem(TOKEN_KEY),
   setToken: (t: string) => localStorage.setItem(TOKEN_KEY, t),
   clearToken: () => localStorage.removeItem(TOKEN_KEY),
+  setUser: (u: any) => localStorage.setItem(USER_KEY, JSON.stringify(u ?? null)),
+  getUser: (): any | null => {
+    const raw = localStorage.getItem(USER_KEY);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  },
+  clearUser: () => localStorage.removeItem(USER_KEY),
   setRemember: (acc: string) => localStorage.setItem(REMEMBER_KEY, acc),
   getRemember: (): string | null => localStorage.getItem(REMEMBER_KEY),
   clearRemember: () => localStorage.removeItem(REMEMBER_KEY),
