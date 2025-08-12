@@ -64,38 +64,21 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         })
         .parse((req as any).body || {});
 
-      // 找到或创建 interview
-      let interview = (app as any).db
-        .prepare(
-          'SELECT id FROM interviews WHERE job_id=? AND user_id=? ORDER BY started_at DESC LIMIT 1',
-        )
-        .get(body.jobId, payload.uid);
-      const now = Date.now();
-      if (!interview) {
-        const { randomUUID } = await import('crypto');
-        const interviewId = randomUUID();
-        (app as any).db
-          .prepare(
-            `INSERT INTO interviews (id, job_id, user_id, language, theme, started_at, ended_at) VALUES (?, ?, ?, 'zh', 'light', ?, NULL)`,
-          )
-          .run(interviewId, body.jobId, payload.uid, now);
-        interview = { id: interviewId } as any;
-      }
-
       const { randomUUID } = await import('crypto');
       const qid = randomUUID();
+      const now = Date.now();
       (app as any).db
         .prepare(
-          'INSERT INTO interview_questions (id, interview_id, question, answer, created_at, tag_id) VALUES (?, ?, ?, ?, ?, ?)',
+          'INSERT INTO interview_questions (id, job_id, question, answer, created_at, tag_id) VALUES (?, ?, ?, ?, ?, ?)',
         )
-        .run(qid, interview.id, body.title, body.description || '', now, body.tagId || null);
+        .run(qid, body.jobId, body.title, body.description || '', now, body.tagId || null);
 
       return { id: qid };
     } catch (err) {
       return reply.code(401).send({ error: '未认证' });
     }
   });
-  // 分页查询：按 jobId 关联查询（interview_questions -> interviews）
+  // 分页查询：按 jobId 查询（interview_questions 直接挂 job_id）
   app.get('/interview-questions', async (req, reply) => {
     try {
       const payload = await (req as any).jwtVerify();
@@ -114,7 +97,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
       const offset = (page - 1) * pageSize;
 
       // 构造 where 子句
-      const where: string[] = ['i.user_id = ?', 'i.job_id = ?'];
+      const where: string[] = ['j.user_id = ?', 'q.job_id = ?'];
       const args: any[] = [payload.uid, jobId];
       if (day) {
         // 传入格式 yyyy-mm-dd，计算当天 00:00:00~23:59:59
@@ -140,7 +123,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         .prepare(
           `SELECT COUNT(1) as cnt
              FROM interview_questions q
-             JOIN interviews i ON q.interview_id = i.id
+             JOIN jobs j ON q.job_id = j.id
             WHERE ${where.join(' AND ')}`,
         )
         .get(...args);
@@ -155,7 +138,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
                   q.tag_id,
                   t.name AS tag
              FROM interview_questions q
-             JOIN interviews i ON q.interview_id = i.id
+             JOIN jobs j ON q.job_id = j.id
         LEFT JOIN tags t ON q.tag_id = t.id
             WHERE ${where.join(' AND ')}
             ORDER BY q.created_at DESC
@@ -180,8 +163,8 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
                   q.answer   AS description,
                   q.created_at
              FROM interview_questions q
-             JOIN interviews i ON q.interview_id = i.id
-            WHERE q.id=? AND i.user_id = ?`,
+             JOIN jobs j ON q.job_id = j.id
+            WHERE q.id=? AND j.user_id = ?`,
         )
         .get(id, payload.uid);
       if (!row) return reply.code(404).send({ error: '不存在' });
@@ -206,7 +189,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
       // 校验归属
       const own = (app as any).db
         .prepare(
-          `SELECT q.id FROM interview_questions q JOIN interviews i ON q.interview_id = i.id WHERE q.id=? AND i.user_id=?`,
+          `SELECT q.id FROM interview_questions q JOIN jobs j ON q.job_id = j.id WHERE q.id=? AND j.user_id=?`,
         )
         .get(id, payload.uid);
       if (!own) return reply.code(404).send({ error: '不存在或无权限' });
@@ -227,7 +210,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
       // 校验归属
       const own = (app as any).db
         .prepare(
-          `SELECT q.id FROM interview_questions q JOIN interviews i ON q.interview_id = i.id WHERE q.id=? AND i.user_id=?`,
+          `SELECT q.id FROM interview_questions q JOIN jobs j ON q.job_id = j.id WHERE q.id=? AND j.user_id=?`,
         )
         .get(id, payload.uid);
       if (!own) return reply.code(404).send({ error: '不存在或无权限' });

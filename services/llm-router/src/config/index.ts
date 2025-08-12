@@ -119,7 +119,11 @@ export const config = configSchema.parse({
   routing: {
     strategy: (process.env.ROUTING_STRATEGY as any) || 'primary-fallback',
     primaryProvider: process.env.PRIMARY_LLM_PROVIDER || 'openai',
-    fallbackProviders: process.env.FALLBACK_LLM_PROVIDERS?.split(',') || ['moonshot', 'glm', 'qwen'],
+    fallbackProviders: process.env.FALLBACK_LLM_PROVIDERS?.split(',') || [
+      'moonshot',
+      'glm',
+      'qwen',
+    ],
     timeout: parseInt(process.env.LLM_TIMEOUT || '30000'),
     retryAttempts: parseInt(process.env.RETRY_ATTEMPTS || '2'),
     retryDelay: parseInt(process.env.RETRY_DELAY || '1000'),
@@ -130,7 +134,8 @@ export const config = configSchema.parse({
     maxSize: parseInt(process.env.CACHE_MAX_SIZE || '100'),
   },
   prompts: {
-    systemPrompt: process.env.SYSTEM_PROMPT || '你是一个专业的面试助手，帮助用户准备和应对各种面试问题。',
+    systemPrompt:
+      process.env.SYSTEM_PROMPT || '你是一个专业的面试助手，帮助用户准备和应对各种面试问题。',
     maxContextLength: parseInt(process.env.MAX_CONTEXT_LENGTH || '4000'),
     responseFormats: {
       concise: process.env.FORMAT_CONCISE || '用一句话简洁回答',

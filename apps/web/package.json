@@ -12,6 +12,7 @@
     },
     "dependencies": {
         "@ant-design/icons": "^5.3.7",
+        "@ant-design/plots": "^2.6.3",
         "@heroicons/react": "^2.1.5",
         "antd": "^5.19.0",
         "clsx": "^2.1.1",

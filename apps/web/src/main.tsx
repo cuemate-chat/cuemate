@@ -11,10 +11,11 @@ import JobsNew from './pages/JobsNew';
 import Login from './pages/Login';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Questions from './pages/Questions';
+import ReviewDetail from './pages/ReviewDetail';
+import ReviewsList from './pages/ReviewsList';
 import Settings from './pages/Settings';
 import UserAgreement from './pages/UserAgreement';
 import './styles.css';
-const Reviews = Help;
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
@@ -26,7 +27,8 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/jobs/new" element={<JobsNew />} />
           <Route path="/jobs" element={<JobsList />} />
           <Route path="/questions" element={<Questions />} />
-          <Route path="/reviews" element={<Reviews />} />
+          <Route path="/reviews" element={<ReviewsList />} />
+          <Route path="/reviews/:id" element={<ReviewDetail />} />
           <Route path="/help" element={<Help />} />
           <Route path="/legal/user-agreement" element={<UserAgreement />} />
           <Route path="/legal/privacy" element={<PrivacyPolicy />} />

@@ -8,6 +8,7 @@ import Fastify from 'fastify';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerJobRoutes } from './routes/jobs.js';
 import { registerInterviewQuestionRoutes } from './routes/questions.js';
+import { registerReviewRoutes } from './routes/reviews.js';
 
 config();
 
@@ -36,6 +37,7 @@ async function start() {
   registerAuthRoutes(app as any);
   registerInterviewQuestionRoutes(app as any);
   registerJobRoutes(app as any);
+  registerReviewRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 
