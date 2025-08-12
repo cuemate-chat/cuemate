@@ -1,9 +1,9 @@
-import { BulbFilled, CheckCircleFilled, CloseCircleFilled, InfoCircleFilled, QuestionCircleFilled } from '@ant-design/icons';
+import { BulbFilled, CheckCircleFilled, CloseCircleFilled, IdcardOutlined, InfoCircleFilled, QuestionCircleFilled, UserOutlined } from '@ant-design/icons';
 import { Badge, Button, Card, Empty, Tabs } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, RadarChart, ResponsiveContainer, Radar as RRadar, Tooltip as RTooltip } from 'recharts';
+import { Cell, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, RadarChart, ResponsiveContainer, Radar as RRadar, Tooltip as RTooltip } from 'recharts';
 import { getInterviewDetail } from '../api/reviews';
 
 export default function ReviewDetail() {
@@ -270,33 +270,121 @@ function InsightTab({ data }: any) {
   if (!ins) return <Empty description="暂无剖析" />;
   return (
     <div className="space-y-4">
-      <Card>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-3xl font-semibold text-slate-900">{ins.interviewer_score ?? '--'} 分</div>
-          <div className="md:col-span-2 text-slate-800 whitespace-pre-line">{ins.interviewer_summary || '—'}</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* 左卡片：契合度圆形环图（完整圆） */}
+        <Card className="md:col-span-1 border-blue-100" style={{ backgroundColor: '#F5FAFF' }}>
+          <div className="relative w-full" style={{ height: 220 }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'filled', value: Math.max(0, Math.min(100, Number(ins.interviewer_score) || 0)) },
+                    { name: 'empty', value: 100 - Math.max(0, Math.min(100, Number(ins.interviewer_score) || 0)) },
+                  ]}
+                  startAngle={90}
+                  endAngle={-270}
+                  innerRadius="70%"
+                  outerRadius="88%"
+                  dataKey="value"
+                  stroke="none"
+                >
+                  <Cell fill="#3b82f6" />
+                  <Cell fill="#E2E8F0" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="text-4xl font-extrabold text-blue-600">
+                {Math.max(0, Math.min(100, Number(ins.interviewer_score) || 0))}
+              </div>
+              <div className="text-slate-500 text-sm mt-1">契合度(%)</div>
+            </div>
+          </div>
+        </Card>
+        <Card className="md:col-span-2 border-blue-100" style={{ backgroundColor: '#F5FAFF' }}>
+          <div className="h-[220px] flex items-center justify-center text-center">
+            <div className="max-w-[92%] text-slate-800 leading-7 font-semibold">“{ins.interviewer_summary || '—'}”</div>
+          </div>
+        </Card>
+      </div>
+      <Card
+        className="border-blue-100"
+        style={{ backgroundColor: '#F5FAFF' }}
+        title={
+          <div className="flex items-center gap-2">
+            <UserOutlined style={{ color: '#3b82f6' }} />
+            <span className="text-blue-700 font-medium">面试官</span>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          <div className="rounded-md border p-3" style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }}>
+            <div className="inline-block text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">面试官角色</div>
+            <div className="mt-2 text-slate-800">{ins.interviewer_role || '—'}</div>
+          </div>
+          <div className="rounded-md border p-3" style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }}>
+            <div className="inline-block text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">MBTI 类型</div>
+            <div className="mt-2 text-slate-800">{ins.interviewer_mbti || '—'}</div>
+          </div>
+          <div className="rounded-md border p-3" style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }}>
+            <div className="inline-block text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">个人特质</div>
+            <div className="mt-2 text-slate-800 whitespace-pre-line">{ins.interviewer_personality || '—'}</div>
+          </div>
+          <div className="rounded-md border p-3" style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }}>
+            <div className="inline-block text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">对候选人的偏好</div>
+            <div className="mt-2 text-slate-800 whitespace-pre-line">{ins.interviewer_preference || '—'}</div>
+          </div>
         </div>
       </Card>
-      <Card title="面试官">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <div><span className="text-slate-500">角色</span>：{ins.interviewer_role || '—'}</div>
-            <div><span className="text-slate-500">MBTI</span>：{ins.interviewer_mbti || '—'}</div>
-            <div><span className="text-slate-500">个人特质</span>：{ins.interviewer_personality || '—'}</div>
-            <div><span className="text-slate-500">对候选人的偏好</span>：{ins.interviewer_preference || '—'}</div>
+      {/* 候选人（样式同沟通策略，蓝色主题） */}
+      <Card
+        className="border-blue-100"
+        style={{ backgroundColor: '#F5FAFF' }}
+        title={
+          <div className="flex items-center gap-2">
+            <IdcardOutlined style={{ color: '#3b82f6' }} />
+            <span className="text-blue-700 font-medium">候选人</span>
           </div>
-          <div className="space-y-2">
-            <div className="font-medium">候选人</div>
-            <div><span className="text-slate-500">MBTI</span>：{ins.candidate_mbti || '—'}</div>
-            <div><span className="text-slate-500">个人特质</span>：{ins.candidate_personality || '—'}</div>
-            <div><span className="text-slate-500">求职偏好</span>：{ins.candidate_job_preference || '—'}</div>
+        }
+      >
+        <div className="space-y-3">
+          <div className="rounded-md border p-3" style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }}>
+            <div className="inline-block text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">MBTI 类型</div>
+            <div className="mt-2 text-slate-800">{ins.candidate_mbti || '—'}</div>
+          </div>
+          <div className="rounded-md border p-3" style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }}>
+            <div className="inline-block text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">个人特质</div>
+            <div className="mt-2 text-slate-800 whitespace-pre-line">{ins.candidate_personality || '—'}</div>
+          </div>
+          <div className="rounded-md border p-3" style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }}>
+            <div className="inline-block text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">求职偏好</div>
+            <div className="mt-2 text-slate-800 whitespace-pre-line">{ins.candidate_job_preference || '—'}</div>
           </div>
         </div>
       </Card>
-      <Card title="沟通策略">
-        <div className="space-y-2">
-          <div>提前准备技术细节：{ins.strategy_prepare_details || '—'}</div>
-          <div>展示对业务的理解：{ins.strategy_business_understanding || '—'}</div>
-          <div>保持逻辑清晰：{ins.strategy_keep_logical || '—'}</div>
+      <Card
+        className="border-green-100"
+        style={{ backgroundColor: '#F6FBF9' }}
+        title={
+          <div className="flex items-center gap-2">
+            <BulbFilled style={{ color: '#16a34a' }} />
+            <span className="text-emerald-700 font-medium">沟通策略</span>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          <div className="rounded-md border p-3" style={{ backgroundColor: '#ECFDF5', borderColor: '#BBF7D0' }}>
+            <div className="inline-block text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">提前准备技术细节</div>
+            <div className="mt-2 text-slate-800 whitespace-pre-line">{ins.strategy_prepare_details || '—'}</div>
+          </div>
+          <div className="rounded-md border p-3" style={{ backgroundColor: '#ECFDF5', borderColor: '#BBF7D0' }}>
+            <div className="inline-block text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">展示对业务的理解</div>
+            <div className="mt-2 text-slate-800 whitespace-pre-line">{ins.strategy_business_understanding || '—'}</div>
+          </div>
+          <div className="rounded-md border p-3" style={{ backgroundColor: '#ECFDF5', borderColor: '#BBF7D0' }}>
+            <div className="inline-block text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">保持逻辑清晰</div>
+            <div className="mt-2 text-slate-800 whitespace-pre-line">{ins.strategy_keep_logical || '—'}</div>
+          </div>
         </div>
       </Card>
     </div>
