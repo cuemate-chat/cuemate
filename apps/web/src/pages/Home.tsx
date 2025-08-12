@@ -69,6 +69,8 @@ export default function Home() {
                 placeholder="请选择岗位"
                 options={selectOptions}
                 onChange={(v) => setCurrentJob(v)}
+                showSearch
+                filterOption={(input, option) => (option?.label as string).toLowerCase().includes(input.toLowerCase())}
               />
             </div>
 

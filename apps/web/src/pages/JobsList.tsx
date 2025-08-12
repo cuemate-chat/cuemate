@@ -74,8 +74,8 @@ export default function JobsList() {
   return (
     <div className="grid grid-cols-12 gap-6">
       {/* 左侧列表 */}
-      <div className="col-span-12 md:col-span-3">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm h-full max-h-[calc(100vh-190px)] overflow-y-auto">
+      <div className="col-span-12 md:col-span-3 min-h-0">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm h-[calc(100vh-175px)] min-h-0 overflow-y-auto">
           <div className="text-sm text-slate-600 mb-2">岗位列表</div>
           <div className="space-y-2">
             {items.map((it) => (
@@ -102,7 +102,7 @@ export default function JobsList() {
             </div>
             <div>
               <div className="text-sm text-slate-600 mb-1">岗位描述</div>
-              <Input.TextArea rows={6} maxLength={5000} value={description} onChange={(e) => setDescription(e.target.value)} disabled={!selectedId} />
+              <Input.TextArea rows={8} maxLength={5000} value={description} onChange={(e) => setDescription(e.target.value)} disabled={!selectedId} />
               <div className="text-right text-xs text-slate-500">{description.length} / 5000</div>
             </div>
             <div>

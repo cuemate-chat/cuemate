@@ -27,7 +27,6 @@ export async function listJobs(): Promise<{
   return http.get('/jobs');
 }
 
-// 不再需要单独的 getJob（列表已包含简历详情）。保留以兼容旧逻辑
 export async function getJob(jobId: string): Promise<{ job: any }> {
   return http.get(`/jobs/${jobId}`);
 }

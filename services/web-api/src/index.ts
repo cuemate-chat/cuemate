@@ -6,8 +6,8 @@ import jwt from '@fastify/jwt';
 import { config } from 'dotenv';
 import Fastify from 'fastify';
 import { registerAuthRoutes } from './routes/auth.js';
-import { registerInterviewQuestionRoutes } from './routes/interview-questions.js';
 import { registerJobRoutes } from './routes/jobs.js';
+import { registerInterviewQuestionRoutes } from './routes/questions.js';
 
 config();
 

@@ -195,13 +195,13 @@ export default function JobsNew() {
             </div>
             <div>
               <div className="text-sm text-slate-600 mb-1">简历文本</div>
-              <TextArea maxLength={5000}
+              <TextArea maxLength={20000}
                 rows={10}
                 placeholder="可直接粘贴你的简历到这里，特别是遇到解析失败的时候"
                 value={resumeText}
                 onChange={(e) => setResumeText(e.target.value)}
               />
-              <div className="text-right text-xs text-slate-500">{resumeText.length} / 5000</div>
+              <div className="text-right text-xs text-slate-500">{resumeText.length} / 20000</div>
             </div>
           </div>
         )}
@@ -227,7 +227,7 @@ export default function JobsNew() {
         {/* 底部操作区 */}
         <div className="mt-8 flex items-center justify-between">
           <Button onClick={() => (current === 0 ? nav('/home') : handlePrev())}>
-            {current === 0 ? '返回首页' : '上一步'}
+            {current === 0 ? '返回主页' : '上一步'}
           </Button>
           {current < 2 && (
             <Button type="primary" onClick={handleNext} disabled={(current === 0 && !canNext1) || (current === 1 && !canNext2)}>
