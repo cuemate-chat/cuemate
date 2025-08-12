@@ -1,17 +1,10 @@
 import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
 
 export function registerReviewRoutes(app: FastifyInstance) {
-  // 面试复盘列表（按开始时间倒序）
+  // 面试复盘列表（按开始时间倒序，无分页，前端统一滚动展示）
   app.get('/interviews', async (req, reply) => {
     try {
       const payload = await (req as any).jwtVerify();
-      const schema = z.object({
-        page: z.coerce.number().min(1).default(1),
-        pageSize: z.coerce.number().min(1).max(50).default(10),
-      });
-      const { page, pageSize } = schema.parse((req as any).query || {});
-      const offset = (page - 1) * pageSize;
 
       const totalRow = (app as any).db
         .prepare('SELECT COUNT(1) as cnt FROM interviews WHERE user_id=?')
@@ -35,13 +28,13 @@ export function registerReviewRoutes(app: FastifyInstance) {
                   -- 优/缺点条目总数
                   (SELECT COUNT(1) FROM interview_advantages ia WHERE ia.interview_id = i.id) AS advantages_total
              FROM interviews i
-             JOIN jobs j ON i.job_id = j.id
+        LEFT JOIN jobs j ON j.id = i.job_id
         LEFT JOIN interview_scores s ON s.interview_id = i.id
             WHERE i.user_id = ?
             ORDER BY i.started_at DESC
-            LIMIT ? OFFSET ?`,
+            `,
         )
-        .all(payload.uid, pageSize, offset);
+        .all(payload.uid);
       return { items: rows, total };
     } catch (err) {
       return reply.code(401).send({ error: '未认证' });

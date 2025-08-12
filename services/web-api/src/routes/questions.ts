@@ -54,7 +54,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
   });
   app.post('/interview-questions', async (req, reply) => {
     try {
-      const payload = await (req as any).jwtVerify();
+      await (req as any).jwtVerify();
       const body = z
         .object({
           jobId: z.string().min(1),
