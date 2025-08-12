@@ -1,4 +1,4 @@
-import { BulbFilled, CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
+import { BulbFilled, CheckCircleFilled, CloseCircleFilled, InfoCircleFilled, QuestionCircleFilled } from '@ant-design/icons';
 import { Badge, Button, Card, Empty, Tabs } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
@@ -183,30 +183,82 @@ function QATab({ data }: any) {
   if (!list.length) return <Empty description="暂无问题条目" />;
   return (
     <div className="space-y-4">
-      {list.map((q) => (
-        <Card key={q.id}>
-          <div className="text-slate-900 font-medium">{q.asked_question || q.question}</div>
-          <div className="mt-1 text-slate-700">答：{q.candidate_answer || q.answer || '—'}</div>
-          <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-            <div>
-              <div className="text-slate-500">考察点</div>
-              <div className="text-slate-800 whitespace-pre-line">{q.key_points || '—'}</div>
-            </div>
-            <div>
-              <div className="text-slate-500">回答评价</div>
-              <div className="text-slate-800 whitespace-pre-line">{q.assessment || '—'}</div>
-            </div>
-            <div>
-              <div className="text-slate-500">参考回答</div>
-              <div className="text-slate-800 whitespace-pre-line">{q.reference_answer || '—'}</div>
+      {list.map((q, idx) => (
+        <Card key={q.id} className="relative">
+          {/* 左上角序号角标 */}
+          <div className="pointer-events-none absolute left-0 top-0">
+            <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">{idx + 1}</div>
+            <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
+          </div>
+          {/* 右上角时间 */}
+          <div className="absolute right-3 top-2 text-xs text-slate-400">{dayjs(q.created_at).format('YYYY-MM-DD HH:mm')}</div>
+          <div className="pl-4 md:pl-6">
+          {/* 问题标题行 */}
+          <div className="flex items-start gap-2">
+            <QuestionCircleFilled style={{ color: '#fa8c16' }} className="mt-0.5" />
+            <div className="text-slate-900 font-medium">
+              问：“{q.asked_question || q.question}”
             </div>
           </div>
-          <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-            <div className="text-red-600">缺点：{q.cons || '—'}</div>
-            <div className="text-green-700">优点：{q.pros || '—'}</div>
-            <div className="text-slate-700">建议：{q.suggestions || '—'}</div>
+
+          {/* 回答块（浅绿气泡） */}
+          <div className="mt-3 flex items-start gap-2">
+            <InfoCircleFilled style={{ color: '#52c41a' }} className="mt-0.5" />
+            <div
+              className="flex-1 text-slate-700"
+            >
+              答：“{q.candidate_answer || q.answer || '—'}”
+            </div>
           </div>
-          <div className="mt-2 text-xs text-slate-400">时间：{dayjs(q.created_at).format('YYYY-MM-DD HH:mm')}</div>
+
+          {/* 两列：考察点 + 回答评价（浅黄块） */}
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="rounded-md border p-3" style={{ backgroundColor: '#FFF7E6', borderColor: '#FFE7BA' }}>
+              <div className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: '#FFE7BA', color: '#ad6800' }}>
+                考察点
+              </div>
+              <div className="mt-2 text-slate-800 whitespace-pre-line">{q.key_points || '—'}</div>
+            </div>
+            <div className="rounded-md border p-3" style={{ backgroundColor: '#FFF7E6', borderColor: '#FFE7BA' }}>
+              <div className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: '#FFE7BA', color: '#ad6800' }}>
+                回答评价
+              </div>
+              <div className="mt-2 text-slate-800 whitespace-pre-line">{q.assessment || '—'}</div>
+            </div>
+          </div>
+
+          {/* 参考回答（浅绿块） */}
+          <div className="mt-3 rounded-md border p-3" style={{ backgroundColor: '#F6FFED', borderColor: '#B7EB8F' }}>
+            <div className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: '#D9F7BE', color: '#237804' }}>
+              参考回答
+            </div>
+            <div className="mt-2 text-slate-800 whitespace-pre-line">{q.reference_answer || '—'}</div>
+          </div>
+
+          {/* 优点 / 缺点 / 建议（样式同上，仅颜色区分） */}
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            {/* 优点：绿色 */}
+            <div className="rounded-md border p-3" style={{ backgroundColor: '#F6FBF9', borderColor: '#BBF7D0' }}>
+              <div className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: '#DCFCE7', color: '#166534' }}>
+                <CheckCircleFilled style={{ color: '#16a34a' }} /> 优点
+              </div>
+              <div className="mt-2 text-slate-800 whitespace-pre-line">{q.pros || '—'}</div>
+            </div>
+            {/* 缺点：红色 */}
+            <div className="rounded-md border p-3" style={{ backgroundColor: '#FEFCFB', borderColor: '#FECACA' }}>
+              <div className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: '#FEE2E2', color: '#991b1b' }}>
+                <CloseCircleFilled style={{ color: '#ef4444' }} /> 缺点
+              </div>
+              <div className="mt-2 text-slate-800 whitespace-pre-line">{q.cons || '—'}</div>
+            </div>
+          </div>
+          <div className="mt-3 rounded-md border p-3" style={{ backgroundColor: '#F5FAFF', borderColor: '#BFDBFE' }}>
+            <div className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: '#DBEAFE', color: '#1d4ed8' }}>
+              <BulbFilled style={{ color: '#3b82f6' }} /> 建议
+            </div>
+            <div className="mt-2 text-slate-800 whitespace-pre-line">{q.suggestions || '—'}</div>
+          </div>
+          </div>
         </Card>
       ))}
     </div>
