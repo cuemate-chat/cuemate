@@ -19,10 +19,6 @@ async function buildServer() {
     credentials: true,
   });
 
-  // 已移除 helmet（开发期可选），避免 fastify 版本不匹配导致启动失败
-
-  // 已移除 rateLimit（开发期可选），避免 fastify 版本不匹配导致启动失败
-
   // 初始化 LLM 提供者
   const providers = await initializeProviders(config);
 

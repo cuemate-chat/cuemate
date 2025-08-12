@@ -1,7 +1,6 @@
 // 使用包名导入；tsconfig.paths 已指向源码目录（仅供类型解析），运行时由构建或容器解析
 import { initSqlite } from '@cuemate/data-sqlite';
 import cors from '@fastify/cors';
-import helmet from '@fastify/helmet';
 import jwt from '@fastify/jwt';
 import { config } from 'dotenv';
 import Fastify from 'fastify';
@@ -21,12 +20,6 @@ async function start() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-  try {
-    await app.register(helmet, { contentSecurityPolicy: false });
-  } catch (err) {
-    app.log.warn({ err }, 'helmet register failed, skip in dev');
-  }
-  // 已移除 rateLimit（开发期可选），避免 fastify 版本不匹配导致启动失败
   await app.register(jwt, { secret: process.env.JWT_SECRET || 'dev-secret' });
 
   // 初始化 SQLite（better-sqlite3）

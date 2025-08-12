@@ -22,10 +22,6 @@ async function buildServer() {
     credentials: true,
   });
 
-  // 已移除 helmet（开发期可选），避免 fastify 版本不匹配导致启动失败
-
-  // 已移除 rateLimit（开发期可选），避免 fastify 版本不匹配导致启动失败
-
   await fastify.register(websocket);
 
   // 初始化 Socket.IO
