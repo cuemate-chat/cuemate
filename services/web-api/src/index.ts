@@ -6,8 +6,8 @@ import jwt from '@fastify/jwt';
 import { config } from 'dotenv';
 import Fastify from 'fastify';
 import { registerAuthRoutes } from './routes/auth.js';
+import { registerInterviewQuestionRoutes } from './routes/interview-questions.js';
 import { registerJobRoutes } from './routes/jobs.js';
-import { registerPromptRoutes } from './routes/prompts.js';
 
 config();
 
@@ -34,7 +34,7 @@ async function start() {
 
   // 路由
   registerAuthRoutes(app as any);
-  registerPromptRoutes(app as any);
+  registerInterviewQuestionRoutes(app as any);
   registerJobRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));

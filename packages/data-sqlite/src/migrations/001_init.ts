@@ -36,17 +36,6 @@ export function up(db: any): void {
       UNIQUE(job_id)
     );
 
-    -- 用户通用模板/押题
-    CREATE TABLE IF NOT EXISTS prompts (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      job_id TEXT NOT NULL,
-      title TEXT NOT NULL,
-      content TEXT NOT NULL,
-      created_at INTEGER NOT NULL,
-      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-    );
-
     -- 面试
     CREATE TABLE IF NOT EXISTS interviews (
       id TEXT PRIMARY KEY,
@@ -60,7 +49,7 @@ export function up(db: any): void {
       FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
-    -- 面试问题
+    -- 面试押题
     CREATE TABLE IF NOT EXISTS interview_questions (
       id TEXT PRIMARY KEY,
       interview_id TEXT NOT NULL,
@@ -94,7 +83,6 @@ export function up(db: any): void {
 
     -- 索引
     CREATE INDEX IF NOT EXISTS idx_jobs_user ON jobs(user_id);
-    CREATE INDEX IF NOT EXISTS idx_prompts_user ON prompts(user_id);
     CREATE INDEX IF NOT EXISTS idx_interviews_job ON interviews(job_id);
     CREATE INDEX IF NOT EXISTS idx_questions_interview ON interview_questions(interview_id);
     CREATE INDEX IF NOT EXISTS idx_reviews_score ON interview_reviews(score_id);

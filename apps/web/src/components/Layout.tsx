@@ -11,7 +11,7 @@ export default function Layout() {
     if (pathname === '/' || pathname.startsWith('/home')) return '/home';
     if (pathname.startsWith('/jobs/new')) return '/jobs/new';
     if (pathname.startsWith('/jobs')) return '/jobs';
-    if (pathname.startsWith('/prompts')) return '/prompts';
+    if (pathname.startsWith('/questions')) return '/questions';
     if (pathname.startsWith('/reviews')) return '/reviews';
     if (pathname.startsWith('/help')) return '/help';
     return '/home';
@@ -46,7 +46,7 @@ export default function Layout() {
             <ListBulletIcon className="w-5 h-5" />
             岗位列表
           </Link>
-          <Link to="/prompts" className={linkCls('/prompts')}>
+          <Link to="/questions" className={linkCls('/questions')}>
             <ChatBubbleLeftRightIcon className="w-5 h-5" />
             面试押题
           </Link>
