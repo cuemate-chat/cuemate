@@ -1,11 +1,11 @@
-import { Input, Modal, Select, Switch } from 'antd';
+import { Input, Modal, Pagination, Select, Switch, Tree } from 'antd';
 import 'antd/dist/reset.css';
 import { useEffect, useMemo, useState } from 'react';
 import { deleteModel, listModels, selectUserModel, upsertModel } from '../api/models';
 import { message } from '../components/Message';
 import { findProvider, providerManifests } from '../providers';
 
-type Scope = 'public' | 'private' | 'local';
+type Scope = 'public' | 'private';
 
 // 说明：旧的硬编码提供商列表已移除，改为通过 providers 目录的 manifest.ts 自动收集
 
@@ -14,20 +14,44 @@ type Scope = 'public' | 'private' | 'local';
 export default function ModelSettings() {
   const [loading, setLoading] = useState(false);
   const [list, setList] = useState<any[]>([]);
-  const [filter, setFilter] = useState<{ type?: string; keyword?: string }>({ type: 'llm' });
+  const [filter, setFilter] = useState<{ type?: string; keyword?: string; scope?: 'public'|'private'; providerId?: string }>({ type: 'llm' });
   const [editing, setEditing] = useState<any | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(9);
+  const [total, setTotal] = useState(0);
+  const [selectedTitle, setSelectedTitle] = useState<string>('全部模型');
+  const [selectedKeys, setSelectedKeys] = useState<string[]>(['all']);
+  const PAGE_HEIGHT = 675;
 
   const providers = useMemo(() => ({
-    public: providerManifests.filter(p=>p.scope==='public').map(p=>({ value:p.id, label:p.name })),
-    private: providerManifests.filter(p=>p.scope==='private').map(p=>({ value:p.id, label:p.name })),
-    local: providerManifests.filter(p=>p.scope==='local').map(p=>({ value:p.id, label:p.name })),
+    public: providerManifests.filter(p=>p.scope==='public'),
+    private: providerManifests.filter(p=>p.scope==='private'),
   }), []);
+
+  const treeData = useMemo(()=>{
+    const iconNode = (svg?: string) => {
+      if (!svg) return null;
+      const src = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+      return <img src={src} alt="" style={{ width: 16, height: 16 }} />;
+    };
+    const map = (scope: 'public'|'private', title: string) => ({
+      key: `scope:${scope}`,
+      title,
+      children: providers[scope].map(p=>({ key: `provider:${p.id}`, title: <div className="flex items-center gap-2">{iconNode(p.icon)}<span>{p.name}</span></div> })),
+    });
+    return [
+      { key: 'all', title: '全部模型', children: [map('public','公有模型'), map('private','私有模型')] },
+    ];
+  }, [providers]);
 
   const fetchList = async () => {
     setLoading(true);
     try {
-      const res: any = await listModels({ type: filter.type, keyword: filter.keyword });
-      setList(res.list || []);
+      const res: any = await listModels({ type: filter.type, keyword: filter.keyword, scope: filter.scope, provider: filter.providerId });
+      const all = (res.list || []) as any[];
+      setTotal(all.length);
+      const start = (page - 1) * pageSize;
+      setList(all.slice(start, start + pageSize));
     } catch (e: any) {
       message.error(e?.message || '获取模型失败');
     } finally {
@@ -35,43 +59,89 @@ export default function ModelSettings() {
     }
   };
 
-  useEffect(() => { fetchList(); }, [filter.type, filter.keyword]);
+  useEffect(() => { fetchList(); }, [filter.type, filter.keyword, filter.scope, filter.providerId, page, pageSize]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          <Select value={filter.type} style={{ width: 160 }} onChange={(v: string)=>setFilter(f=>({...f,type: v}))} options={[{value:'llm',label:'大语言模型'}]} />
-          <Input.Search allowClear placeholder="搜索模型" style={{ width: 260 }} onSearch={(v)=>setFilter(f=>({...f,keyword:v}))} />
+    <div className="grid grid-cols-12 gap-4">
+      {/* 左侧树 */}
+      <aside className="col-span-3 bg-white border border-slate-200 rounded-xl p-3" style={{ height: PAGE_HEIGHT, overflowY: 'auto' }}>
+        <div className="flex items-center mb-2">
+          <div className="text-slate-800 font-medium">大模型供应商</div>
         </div>
-        <button className="px-3 py-2 rounded-lg bg-blue-600 text-white shadow-sm" onClick={()=>setEditing({ scope:'public', type:'llm', params: [] })}>添加模型</button>
-      </div>
+        <Tree
+          defaultExpandAll
+          selectedKeys={selectedKeys as any}
+          onSelect={(keys)=>{
+            const k = (keys?.[0] as string) || 'all';
+            setSelectedKeys(keys as string[]);
+            if (k==='all') setFilter(f=>({...f, scope: undefined, providerId: undefined }));
+            else if (k.startsWith('scope:')) setFilter(f=>({...f, scope: k.split(':')[1] as any, providerId: undefined }));
+            else if (k.startsWith('provider:')) setFilter(f=>({...f, providerId: k.split(':')[1] }));
+            setPage(1);
+            // 设置右侧标题
+            if (k==='all') setSelectedTitle('全部模型');
+            else if (k.startsWith('scope:')) {
+              const sc = k.split(':')[1];
+              setSelectedTitle(sc==='public' ? '公有模型' : '私有模型');
+            } else if (k.startsWith('provider:')) {
+              const pid = k.split(':')[1];
+              setSelectedTitle(findProvider(pid)?.name || '全部模型');
+            }
+          }}
+          treeData={treeData as any}
+        />
+      </aside>
 
-      {/* 分组：公有/私有/本地 */}
-      {(['public','private','local'] as Scope[]).map((scope)=> (
-        <section key={scope} className="bg-white border border-slate-200 rounded-xl">
-          <header className="px-4 py-2 border-b border-slate-200 text-slate-800 font-medium">{scope==='public'?'公有模型':scope==='private'?'私有模型':'本地模型'}</header>
-          <div className="p-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {loading && <div className="text-slate-500 text-sm">加载中…</div>}
-            {list.filter(m=>m.scope===scope).map(m=> (
+      {/* 右侧卡片 + 搜索 + 分页 */}
+      <section className="col-span-9" style={{ height: PAGE_HEIGHT }}>
+        <div className="mb-3 flex justify-between items-center">
+          <div className="text-slate-900 font-semibold text-lg">{selectedTitle}</div>
+          <div className="flex items-center gap-2">
+            <Input.Search allowClear placeholder="搜索模型" style={{ width: 300 }} onSearch={(v)=>{ setFilter(f=>({...f, keyword:v||undefined })); setPage(1); }} />
+            <button className="h-8 px-4 rounded-lg bg-blue-600 text-white shadow-sm" onClick={()=>setEditing({ scope:'public', type:'llm', params: [] })}>添加模型</button>
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-4" style={{ height: PAGE_HEIGHT - 56, overflowY: 'auto' }}>
+          {loading && <div className="text-slate-500 text-sm">加载中…</div>}
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {list.map((m)=> (
               <div key={m.id} className="border rounded-xl p-4 bg-white shadow-sm">
                 <div className="flex items-center justify-between">
-                  <div className="font-medium text-slate-900">{m.name}</div>
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const icon = findProvider(m.provider)?.icon;
+                      if (icon) {
+                        const src = `data:image/svg+xml;utf8,${encodeURIComponent(icon)}`;
+                        return <img src={src} alt="" className="w-5 h-5" />;
+                      }
+                      return null;
+                    })()}
+                    <div className="font-medium text-slate-900">{m.name}</div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${m.scope==='public'?'bg-blue-50 text-blue-700':'bg-amber-50 text-amber-700'}`}>{m.scope==='public'?'公有':'私有'}</span>
+                  </div>
                   <div className="flex items-center gap-2">
                     <button className="text-blue-600" onClick={()=>setEditing(m)}>编辑</button>
                     <button className="text-red-600" onClick={async()=>{ await deleteModel(m.id); message.success('已删除'); fetchList(); }}>删除</button>
                     <button className="text-slate-700" onClick={async()=>{ await selectUserModel(m.id); message.success('已绑定为当前模型'); }}>绑定</button>
                   </div>
                 </div>
-                <div className="text-xs text-slate-600 mt-2">{m.provider} · {m.model_name}</div>
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600">
+                  <div>供应商标识：{m.provider}</div>
+                  <div>模型类型：{m.type || 'llm'}</div>
+                  <div>基础模型：{m.model_name}</div>
+                  <div>版本号：{m.version || '-'}</div>
+                  <div>创建者：{m.created_by || '-'}</div>
+                  <div>创建时间：{m.created_at ? new Date(m.created_at).toLocaleString() : '-'}</div>
+                </div>
               </div>
             ))}
-            {!list.filter(m=>m.scope===scope).length && (
-              <div className="text-slate-500 text-sm">暂无数据</div>
-            )}
           </div>
-        </section>
-      ))}
+          <div className="mt-4 flex items-center justify-center gap-3 text-sm text-slate-500">
+            <span>共 {total} 条</span>
+            <Pagination current={page} pageSize={pageSize} total={total} onChange={(p)=>{ setPage(p); }} showSizeChanger={false} showTotal={(t)=>`共 ${t} 条`} />
+          </div>
+        </div>
+      </section>
 
       <EditModal open={!!editing} data={editing} onClose={()=>setEditing(null)} onOk={async(v:any)=>{ await upsertModel(v); setEditing(null); message.success('已保存'); fetchList(); }} providers={providers} />
     </div>
@@ -98,7 +168,7 @@ function EditModal({ open, data, onClose, onOk, providers }: any) {
           <div className="text-right text-slate-700">权限</div>
           <div className="col-span-2 flex items-center gap-3">
             <label className="flex items-center gap-2 text-sm"><Switch checked={form.scope==='public'} onChange={(v)=>setForm((f:any)=>({...f,scope:v?'public':'private'}))}/> 公有</label>
-            <label className="flex items-center gap-2 text-sm"><Switch checked={form.scope==='local'} onChange={(v)=>setForm((f:any)=>({...f,scope:v?'local':'private'}))}/> 本地</label>
+            <label className="flex items-center gap-2 text-sm"><Switch checked={form.scope==='private'} onChange={(v)=>setForm((f:any)=>({...f,scope:v?'private':'public'}))}/> 私有</label>
           </div>
         </div>
         <div className="grid grid-cols-3 items-center gap-2">
@@ -118,7 +188,7 @@ function EditModal({ open, data, onClose, onOk, providers }: any) {
                 provider:v,
                 params: getDefaultParamsByProvider(v),
               }))}
-              options={[...providers.public, ...providers.private, ...providers.local]}
+              options={[...providers.public, ...providers.private]}
               showSearch
             />
           </div>

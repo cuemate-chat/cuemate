@@ -78,12 +78,15 @@ export default function JobsList() {
         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm h-[calc(100vh-175px)] min-h-0 overflow-y-auto">
           <div className="text-sm text-slate-600 mb-2">岗位列表</div>
           <div className="space-y-2">
-            {items.map((it) => (
+            {items.map((it, idx) => (
               <button
                 key={it.id}
                 onClick={() => selectJob(it.id)}
-                className={`w-full text-left px-3 py-2 rounded border ${selectedId === it.id ? 'border-blue-400 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`}
+                className={`relative w-full text-left pl-9 pr-3 py-2 rounded border ${selectedId === it.id ? 'border-blue-400 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`}
               >
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-5 h-5 rounded bg-slate-200 text-[10px] text-slate-700 font-medium">
+                  {idx + 1}
+                </span>
                 {it.title}
               </button>
             ))}

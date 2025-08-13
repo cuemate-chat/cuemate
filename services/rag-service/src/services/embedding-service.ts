@@ -16,11 +16,9 @@ export class EmbeddingService {
         model: this.config.openaiModel,
         input: texts,
       });
-      return res.data.map(d => d.embedding as number[]);
+      return res.data.map((d) => d.embedding as number[]);
     }
-    logger.warn('Using zero embeddings for local provider');
+    logger.warn('Using zero embeddings for private provider');
     return texts.map(() => []);
   }
 }
-
-

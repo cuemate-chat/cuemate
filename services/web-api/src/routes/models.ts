@@ -46,7 +46,7 @@ export function registerModelRoutes(app: FastifyInstance) {
     name: z.string().min(1),
     provider: z.string().min(1),
     type: z.string().default('llm'),
-    scope: z.enum(['public', 'private', 'local']).default('public'),
+    scope: z.enum(['public', 'private']).default('public'),
     model_name: z.string().min(1),
     version: z.string().optional(),
     base_url: z.string().optional(),

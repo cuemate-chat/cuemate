@@ -1,10 +1,10 @@
-import { ProviderManifest } from '../types';
 import Icon from '../../assets/llm/ollama_icon_svg?raw';
+import { ProviderManifest } from '../types';
 
 const manifest: ProviderManifest = {
   id: 'ollama',
   name: 'Ollama',
-  scope: 'local',
+  scope: 'private',
   kind: 'llm',
   icon: Icon,
   modelNamePlaceholder: '如 llama3.1:8b / deepseek-r1:7b',

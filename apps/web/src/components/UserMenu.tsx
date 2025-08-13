@@ -1,3 +1,4 @@
+import { ArrowRightOnRectangleIcon, Cog6ToothIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchMe } from '../api/auth';
@@ -74,6 +75,11 @@ export default function UserMenu() {
     setOpen(false);
   };
 
+  const onModelSettings = () => {
+    navigate('/settings/models');
+    setOpen(false);
+  };
+
   const onLogout = () => {
     storage.clearToken();
     storage.clearUser();
@@ -95,11 +101,14 @@ export default function UserMenu() {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-44 rounded-lg border border-slate-200 bg-white shadow-xl overflow-hidden select-none z-[100]">
           <button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700" onClick={onSettings}>
-            <span className="i-settings" /> 账户 & 设置
+            <Cog6ToothIcon className="w-4 h-4" /> 账户设置
+          </button>
+          <button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700" onClick={onModelSettings}>
+            <Squares2X2Icon className="w-4 h-4" /> 模型设置
           </button>
           <div className="h-px bg-slate-200" />
           <button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 text-red-600 flex items-center gap-2" onClick={onLogout}>
-            <span className="i-logout" /> 退出登录
+            <ArrowRightOnRectangleIcon className="w-4 h-4" /> 退出登录
           </button>
         </div>
       )}

@@ -11,9 +11,9 @@ export function up(db: any): void {
     CREATE TABLE IF NOT EXISTS models (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,                   -- 展示名称
-      provider TEXT NOT NULL,               -- 提供商标识，如 openai/deepseek/azure/ollama 等
+      provider TEXT NOT NULL,               -- 供应商标识，如 openai/deepseek/azure/ollama 等
       type TEXT NOT NULL DEFAULT 'llm',     -- 模型类型：llm/asr/embedding/vision
-      scope TEXT NOT NULL DEFAULT 'public', -- public / private / local
+      scope TEXT NOT NULL DEFAULT 'public', -- public / private
       model_name TEXT NOT NULL,             -- 具体模型与版本，如 deepseek-r1:1.5b / gpt-4o-mini 等
       version TEXT,                         -- 版本号（可选）
       base_url TEXT,                        -- 兼容 OpenAI API 的 Base URL（部分厂商必填）

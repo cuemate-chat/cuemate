@@ -1,4 +1,4 @@
-export type ProviderScope = 'public' | 'private' | 'local';
+export type ProviderScope = 'public' | 'private';
 export type ModelKind = 'llm' | 'asr' | 'embedding' | 'vision';
 
 export interface ProviderField {

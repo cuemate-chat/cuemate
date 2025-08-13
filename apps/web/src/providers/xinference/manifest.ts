@@ -4,7 +4,7 @@ import { ProviderManifest } from '../types';
 const manifest: ProviderManifest = {
   id: 'xinference',
   name: 'Xorbits Inference',
-  scope: 'local',
+  scope: 'private',
   kind: 'llm',
   icon: Icon,
   modelNamePlaceholder: '部署的模型名称',

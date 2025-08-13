@@ -184,7 +184,7 @@ export default function Settings() {
 
           {/* 当前绑定模型 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="text-slate-800 font-medium">当前模型</div>
+            <div className="text-slate-800 font-medium">大模型提供商</div>
             <div className="md:col-span-2">
               <div className="w-full md:w-96">
                 <AntSelect
