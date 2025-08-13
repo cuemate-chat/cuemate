@@ -6,6 +6,7 @@ import { config } from 'dotenv';
 import Fastify from 'fastify';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerJobRoutes } from './routes/jobs.js';
+import { registerModelRoutes } from './routes/models.js';
 import { registerInterviewQuestionRoutes } from './routes/questions.js';
 import { registerReviewRoutes } from './routes/reviews.js';
 
@@ -31,6 +32,7 @@ async function start() {
   registerInterviewQuestionRoutes(app as any);
   registerJobRoutes(app as any);
   registerReviewRoutes(app as any);
+  registerModelRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 

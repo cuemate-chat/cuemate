@@ -1,4 +1,4 @@
-import { ArrowPathRoundedSquareIcon, ChatBubbleLeftRightIcon, HomeIcon, ListBulletIcon, PlusCircleIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import { ArrowPathRoundedSquareIcon, ChatBubbleLeftRightIcon, HomeIcon, ListBulletIcon, PlusCircleIcon, QuestionMarkCircleIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import Logo from '../assets/logo-background.png';
 import UserMenu from './UserMenu';
@@ -57,6 +57,10 @@ export default function Layout() {
           <Link to="/help" className={linkCls('/help')}>
             <QuestionMarkCircleIcon className="w-5 h-5" />
             帮助中心
+          </Link>
+          <Link to="/settings/models" className={linkCls('/settings/models')}>
+            <Squares2X2Icon className="w-5 h-5" />
+            模型设置
           </Link>
         </nav>
         <div className="ml-4 relative">

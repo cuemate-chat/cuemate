@@ -5,6 +5,7 @@ import 'antd/dist/reset.css';
 import { useEffect, useState } from 'react';
 import { changePassword, fetchMe, updateMe } from '../api/auth';
 import { storage } from '../api/http';
+import { listModels, selectUserModel } from '../api/models';
 import { message } from '../components/Message';
 
 type Theme = 'light' | 'dark' | 'system';
@@ -19,8 +20,10 @@ export default function Settings() {
     locale: 'zh-CN',
     version: 'v0.1.0',
     timezone: 'Asia/Shanghai',
+    selected_model_id: '',
   });
   const [saving, setSaving] = useState(false);
+  const [modelOptions, setModelOptions] = useState<{label:string,value:string}[]>([]);
 
   useEffect(() => {
     const u = storage.getUser();
@@ -66,8 +69,19 @@ export default function Settings() {
       locale: u.locale || 'zh-CN',
       version: 'v0.1.0',
       timezone: u.timezone || 'Asia/Shanghai',
+      selected_model_id: u.selected_model_id || '',
     });
   }
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res: any = await listModels({ type: 'llm' });
+        const opts = (res.list || []).map((m: any) => ({ label: `${m.name} (${m.model_name})`, value: m.id }));
+        setModelOptions(opts);
+      } catch {}
+    })();
+  }, []);
 
 
   return (
@@ -168,6 +182,25 @@ export default function Settings() {
             </div>
           </div>
 
+          {/* 当前绑定模型 */}
+          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            <div className="text-slate-800 font-medium">当前模型</div>
+            <div className="md:col-span-2">
+              <div className="w-full md:w-96">
+                <AntSelect
+                  value={form.selected_model_id}
+                  onChange={(v)=>setForm(f=>({...f, selected_model_id: v}))}
+                  options={modelOptions}
+                  className="w-full"
+                />
+              </div>
+              <p className="text-xs text-slate-600 mt-2">为当前账号绑定一个模型。你也可以前往“模型设置”页面管理模型。</p>
+              <div className="mt-2">
+                <button className="px-3 py-1.5 rounded-lg bg-blue-600 text-white" onClick={async()=>{ if(!form.selected_model_id) return; await selectUserModel(form.selected_model_id); message.success('已绑定'); }}>立即绑定</button>
+              </div>
+            </div>
+          </div>
+
           {/* 政策协议 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div className="text-slate-800 font-medium">政策协议</div>
@@ -228,7 +261,7 @@ export default function Settings() {
           <button
             disabled={saving}
             onClick={() => {
-              const payload: any = { name: form.name, email: form.email, theme: form.theme, locale: form.locale, timezone: form.timezone };
+              const payload: any = { name: form.name, email: form.email, theme: form.theme, locale: form.locale, timezone: form.timezone, selected_model_id: form.selected_model_id };
               // 直接复用 onSave 逻辑
               (async () => {
                 setSaving(true);

@@ -3,6 +3,7 @@ import PQueue from 'p-queue';
 import { Config } from '../config/index.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse } from '../providers/base.js';
 import { logger } from '../utils/logger.js';
+import { UserProviderRegistry } from './user-provider-registry.js';
 
 export interface ProviderStatus {
   id: string;
@@ -20,6 +21,7 @@ export class LLMManager extends EventEmitter {
   private queue: PQueue;
   private providerStatus: Map<string, ProviderStatus>;
   private requestCount: Map<string, number>;
+  private userRegistry: UserProviderRegistry;
 
   constructor(providers: Map<string, BaseLLMProvider>, config: Config) {
     super();
@@ -28,9 +30,24 @@ export class LLMManager extends EventEmitter {
     this.queue = new PQueue({ concurrency: 10 });
     this.providerStatus = new Map();
     this.requestCount = new Map();
+    this.userRegistry = new UserProviderRegistry(config);
 
     // 初始化提供者状态
     this.initializeProviderStatus();
+  }
+
+  // 为“按用户绑定模型”预留：某些请求会携带 metadata.userId，根据 userId 动态选择 provider
+  private async getProviderForUser(userId?: string): Promise<BaseLLMProvider | null> {
+    if (!userId) return null;
+    const cached = this.userRegistry.get(userId);
+    if (cached) return cached;
+    try {
+      const p = await this.userRegistry.loadFromWebApi(userId);
+      return p || null;
+    } catch (e) {
+      logger.warn('load user provider failed', e as any);
+      return null;
+    }
   }
 
   private initializeProviderStatus() {
@@ -45,6 +62,11 @@ export class LLMManager extends EventEmitter {
   }
 
   async complete(request: CompletionRequest): Promise<CompletionResponse> {
+    // 如果按用户绑定模型已启用，可在此优先返回用户 Provider
+    const userProvider = await this.getProviderForUser(request.metadata?.userId);
+    if (userProvider) {
+      return this.executeWithTimeout(userProvider, request, userProvider.getName());
+    }
     const strategy = this.config.routing.strategy;
 
     switch (strategy) {

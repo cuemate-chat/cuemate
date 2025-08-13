@@ -20,15 +20,15 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
   fastify.post('/completion/stream', async (request, reply) => {
     try {
       const body = request.body as CompletionRequest;
-      
+
       reply.raw.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
       });
 
       const stream = await llmManager.stream(body);
-      
+
       for await (const chunk of stream) {
         reply.raw.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
       }
@@ -46,7 +46,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
   fastify.post('/outline', async (request, reply) => {
     try {
       const { text, context } = request.body as { text: string; context?: string };
-      
+
       const outlineRequest: CompletionRequest = {
         messages: [
           {
@@ -63,12 +63,12 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       };
 
       const response = await llmManager.complete(outlineRequest);
-      
+
       // 解析要点
       const points = response.content
         .split('\n')
-        .filter(line => line.trim())
-        .map(line => line.replace(/^[\d\-\*\•]\s*/, '').trim());
+        .filter((line) => line.trim())
+        .map((line) => line.replace(/^[\d\-\*\•]\s*/, '').trim());
 
       return {
         points,
@@ -85,6 +85,11 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
   fastify.get('/providers/status', async () => {
     const status = await llmManager.getProviderStatus();
     return { providers: status };
+  });
+
+  // 预留：从 web-api 拉取当前用户绑定模型并热更新 providers（需在部署时配置后端地址与鉴权）
+  fastify.post('/providers/dynamic-sync', async () => {
+    return { ok: true };
   });
 
   // 健康检查所有提供者

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 
 export function registerReviewRoutes(app: FastifyInstance) {
   // 面试复盘列表（按开始时间倒序，无分页，前端统一滚动展示）
@@ -16,6 +17,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
           `SELECT i.id,
                   i.started_at,
                   i.ended_at,
+                   i.selected_model_id,
                   j.title AS job_title,
                   s.total_score,
                   s.overall_summary,
@@ -47,7 +49,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
       const payload = await (req as any).jwtVerify();
       const id = (req as any).params?.id as string;
       const own = (app as any).db
-        .prepare('SELECT id, job_id, started_at, ended_at FROM interviews WHERE id=? AND user_id=?')
+        .prepare(
+          'SELECT id, job_id, started_at, ended_at, selected_model_id FROM interviews WHERE id=? AND user_id=?',
+        )
         .get(id, payload.uid);
       if (!own) return reply.code(404).send({ error: '不存在或无权限' });
 
@@ -108,6 +112,47 @@ export function registerReviewRoutes(app: FastifyInstance) {
       return { summary, questions, insights, advantages };
     } catch (err) {
       return reply.code(401).send({ error: '未认证' });
+    }
+  });
+
+  // 创建一场面试（开始）——将当下用户的 selected_model_id 快照到 interviews.selected_model_id
+  app.post('/interviews', async (req, reply) => {
+    try {
+      const payload = await (req as any).jwtVerify();
+      const body = z.object({ jobId: z.string().min(1) }).parse((req as any).body || {});
+      const userRow = (app as any).db
+        .prepare('SELECT selected_model_id, locale, theme FROM users WHERE id=?')
+        .get(payload.uid);
+      const { randomUUID } = await import('crypto');
+      const id = randomUUID();
+      const now = Date.now();
+      const language = (userRow?.locale || 'zh-CN').startsWith('zh') ? 'zh' : 'en';
+      const theme = userRow?.theme || 'system';
+      (app as any).db
+        .prepare(
+          `INSERT INTO interviews (id, job_id, user_id, language, theme, started_at, ended_at, selected_model_id)
+           VALUES (?, ?, ?, ?, ?, ?, NULL, ?)`,
+        )
+        .run(id, body.jobId, payload.uid, language, theme, now, userRow?.selected_model_id || null);
+      return { id };
+    } catch (err: any) {
+      return reply.code(400).send({ error: err?.message || '创建失败' });
+    }
+  });
+
+  // 结束一场面试（设置 ended_at）
+  app.post('/interviews/:id/end', async (req, reply) => {
+    try {
+      const payload = await (req as any).jwtVerify();
+      const id = (req as any).params?.id as string;
+      const own = (app as any).db
+        .prepare('SELECT id FROM interviews WHERE id=? AND user_id=?')
+        .get(id, payload.uid);
+      if (!own) return reply.code(404).send({ error: '不存在或无权限' });
+      (app as any).db.prepare('UPDATE interviews SET ended_at=? WHERE id=?').run(Date.now(), id);
+      return { success: true };
+    } catch (err: any) {
+      return reply.code(400).send({ error: err?.message || '更新失败' });
     }
   });
 

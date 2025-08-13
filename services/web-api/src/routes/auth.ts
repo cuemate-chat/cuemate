@@ -37,7 +37,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
       const payload = await (req as any).jwtVerify();
       const row = (app as any).db
         .prepare(
-          'SELECT id, email, name, created_at, theme, locale, timezone FROM users WHERE id = ?',
+          'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id FROM users WHERE id = ?',
         )
         .get(payload.uid);
       if (!row) return reply.code(404).send({ error: '用户不存在' });
@@ -75,12 +75,16 @@ export function registerAuthRoutes(app: FastifyInstance) {
         args.push(body.timezone);
       }
 
+      if (typeof body.selected_model_id === 'string') {
+        fields.push('selected_model_id=?');
+        args.push(body.selected_model_id);
+      }
       if (fields.length === 0) return { success: true };
       args.push(payload.uid);
       (app as any).db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).run(...args);
       const row = (app as any).db
         .prepare(
-          'SELECT id, email, name, created_at, theme, locale, timezone FROM users WHERE id = ?',
+          'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id FROM users WHERE id = ?',
         )
         .get(payload.uid);
       return { success: true, user: row };

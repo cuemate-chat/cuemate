@@ -44,6 +44,12 @@ const configSchema = z.object({
       maxTokens: z.number().default(2000),
       temperature: z.number().default(0.7),
     }),
+    dynamic: z.array(z.any()).default([]),
+  }),
+  webApiInternal: z.object({
+    baseUrl: z.string().default('http://localhost:3004'),
+    serviceKey: z.string().optional(),
+    cacheTtlMs: z.number().default(5 * 60 * 1000),
   }),
   routing: z.object({
     strategy: z.enum(['primary-fallback', 'load-balance', 'fastest']).default('primary-fallback'),
@@ -115,6 +121,11 @@ export const config = configSchema.parse({
       maxTokens: parseInt(process.env.QWEN_MAX_TOKENS || '2000'),
       temperature: parseFloat(process.env.QWEN_TEMPERATURE || '0.7'),
     },
+  },
+  webApiInternal: {
+    baseUrl: process.env.WEB_API_INTERNAL_BASE || 'http://localhost:3004',
+    serviceKey: process.env.SERVICE_KEY,
+    cacheTtlMs: parseInt(process.env.USER_MODEL_CACHE_TTL || String(5 * 60 * 1000)),
   },
   routing: {
     strategy: (process.env.ROUTING_STRATEGY as any) || 'primary-fallback',
