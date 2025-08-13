@@ -15,6 +15,7 @@ export function up(db: any): void {
       type TEXT NOT NULL DEFAULT 'llm',     -- 模型类型：llm/asr/embedding/vision
       scope TEXT NOT NULL DEFAULT 'public', -- public / private
       model_name TEXT NOT NULL,             -- 具体模型与版本，如 deepseek-r1:1.5b / gpt-4o-mini 等
+      icon TEXT,                            -- 图标（可选，SVG 文本或 URL）
       version TEXT,                         -- 版本号（可选）
       base_url TEXT,                        -- 兼容 OpenAI API 的 Base URL（部分厂商必填）
       api_url TEXT,                         -- 非 OpenAI 兼容时的专有地址（预留）

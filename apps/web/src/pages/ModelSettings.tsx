@@ -1,15 +1,9 @@
-import { Input, Modal, Pagination, Select, Switch, Tree } from 'antd';
+import { Input, Modal, Pagination, Select, Switch, Tabs, Tree } from 'antd';
 import 'antd/dist/reset.css';
 import { useEffect, useMemo, useState } from 'react';
 import { deleteModel, listModels, selectUserModel, upsertModel } from '../api/models';
 import { message } from '../components/Message';
 import { findProvider, providerManifests } from '../providers';
-
-type Scope = 'public' | 'private';
-
-// 说明：旧的硬编码提供商列表已移除，改为通过 providers 目录的 manifest.ts 自动收集
-
-// 同上：私有/本地提供商也统一走自动收集
 
 export default function ModelSettings() {
   const [loading, setLoading] = useState(false);
@@ -17,15 +11,20 @@ export default function ModelSettings() {
   const [filter, setFilter] = useState<{ type?: string; keyword?: string; scope?: 'public'|'private'; providerId?: string }>({ type: 'llm' });
   const [editing, setEditing] = useState<any | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(9);
+  const pageSize = 9;
   const [total, setTotal] = useState(0);
   const [selectedTitle, setSelectedTitle] = useState<string>('全部模型');
   const [selectedKeys, setSelectedKeys] = useState<string[]>(['all']);
   const PAGE_HEIGHT = 675;
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const providers = useMemo(() => ({
-    public: providerManifests.filter(p=>p.scope==='public'),
-    private: providerManifests.filter(p=>p.scope==='private'),
+    public: providerManifests
+      .filter(p=>p.scope==='public')
+      .map(p=>({ id: p.id, name: p.name, icon: p.icon })),
+    private: providerManifests
+      .filter(p=>p.scope==='private')
+      .map(p=>({ id: p.id, name: p.name, icon: p.icon })),
   }), []);
 
   const treeData = useMemo(()=>{
@@ -98,7 +97,19 @@ export default function ModelSettings() {
           <div className="text-slate-900 font-semibold text-lg">{selectedTitle}</div>
           <div className="flex items-center gap-2">
             <Input.Search allowClear placeholder="搜索模型" style={{ width: 300 }} onSearch={(v)=>{ setFilter(f=>({...f, keyword:v||undefined })); setPage(1); }} />
-            <button className="h-8 px-4 rounded-lg bg-blue-600 text-white shadow-sm" onClick={()=>setEditing({ scope:'public', type:'llm', params: [] })}>添加模型</button>
+            <button
+              className="h-8 px-4 rounded-lg bg-blue-600 text-white shadow-sm"
+              onClick={()=>{
+                const k = selectedKeys[0] || 'all';
+                if (k && k.startsWith('provider:')) {
+                  // 已选中具体供应商，直接进入表单
+                  const pid = k.split(':')[1];
+                  setEditing({ scope: filter.scope || 'public', type:'llm', provider: pid, params: getDefaultParamsByProvider(pid) });
+                } else {
+                  setPickerOpen(true);
+                }
+              }}
+            >添加模型</button>
           </div>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-4" style={{ height: PAGE_HEIGHT - 56, overflowY: 'auto' }}>
@@ -137,13 +148,36 @@ export default function ModelSettings() {
             ))}
           </div>
           <div className="mt-4 flex items-center justify-center gap-3 text-sm text-slate-500">
-            <span>共 {total} 条</span>
             <Pagination current={page} pageSize={pageSize} total={total} onChange={(p)=>{ setPage(p); }} showSizeChanger={false} showTotal={(t)=>`共 ${t} 条`} />
           </div>
         </div>
       </section>
 
-      <EditModal open={!!editing} data={editing} onClose={()=>setEditing(null)} onOk={async(v:any)=>{ await upsertModel(v); setEditing(null); message.success('已保存'); fetchList(); }} providers={providers} />
+      <EditModal
+        open={!!editing}
+        data={editing}
+        onClose={()=>setEditing(null)}
+        onOk={async(v:any)=>{
+          const payload = {
+            ...v,
+            icon: v.icon ?? `/logo-icon.png`,
+            // API URL 优先取凭证里的 base_url
+            api_url: v.base_url ?? null,
+            version: v.version ?? v.model_name,
+          };
+          await upsertModel(payload);
+          setEditing(null);
+          message.success('已保存');
+          fetchList();
+        }}
+      />
+      <ProviderPicker
+        open={pickerOpen}
+        onClose={()=>setPickerOpen(false)}
+        onPick={(pid: string)=>{ setPickerOpen(false); setEditing({ scope: filter.scope || 'public', type:'llm', provider: pid, params: getDefaultParamsByProvider(pid) }); }}
+        providers={providers}
+        filterKey={selectedKeys[0] || 'all'}
+      />
     </div>
   );
 }
@@ -153,78 +187,182 @@ function getDefaultParamsByProvider(pid?: string) {
   return m?.defaultParams || [];
 }
 
-function EditModal({ open, data, onClose, onOk, providers }: any) {
+function EditModal({ open, data, onClose, onOk }: any) {
   const [form, setForm] = useState<any>(data || { scope: 'public', type: 'llm', params: [] });
   useEffect(()=>{ setForm(data || { scope:'public', type:'llm', params: [] }); }, [data]);
 
-  return (
-    <Modal open={open} onCancel={onClose} onOk={()=>onOk(form)} title={`添加 ${form.provider || ''}`} okText="保存">
-      <div className="space-y-3">
-        <div className="grid grid-cols-3 items-center gap-2">
-          <div className="text-right text-slate-700">模型名称</div>
-          <div className="col-span-2"><Input value={form.name} onChange={(e)=>setForm((f:any)=>({...f,name:e.target.value}))} /></div>
-        </div>
-        <div className="grid grid-cols-3 items-center gap-2">
-          <div className="text-right text-slate-700">权限</div>
-          <div className="col-span-2 flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm"><Switch checked={form.scope==='public'} onChange={(v)=>setForm((f:any)=>({...f,scope:v?'public':'private'}))}/> 公有</label>
-            <label className="flex items-center gap-2 text-sm"><Switch checked={form.scope==='private'} onChange={(v)=>setForm((f:any)=>({...f,scope:v?'private':'public'}))}/> 私有</label>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 items-center gap-2">
-          <div className="text-right text-slate-700">模型类型</div>
-          <div className="col-span-2">
-            <Select value={form.type} style={{ width: 220 }} onChange={(v)=>setForm((f:any)=>({...f,type:v}))} options={[{value:'llm',label:'大语言模型'}]} />
-          </div>
-        </div>
-        <div className="grid grid-cols-3 items-center gap-2">
-          <div className="text-right text-slate-700">提供商</div>
-          <div className="col-span-2">
-            <Select
-              value={form.provider}
-              style={{ width: 320 }}
-              onChange={(v: string)=>setForm((f: any)=>({
-                ...f,
-                provider:v,
-                params: getDefaultParamsByProvider(v),
-              }))}
-              options={[...providers.public, ...providers.private]}
-              showSearch
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-3 items-center gap-2">
-          <div className="text-right text-slate-700">基础模型</div>
-          <div className="col-span-2"><Input placeholder="如 deepseek-r1:1.5b 或 gpt-4o-mini" value={form.model_name} onChange={(e)=>setForm((f:any)=>({...f,model_name:e.target.value}))} /></div>
-        </div>
-        <div className="grid grid-cols-3 items-center gap-2">
-          <div className="text-right text-slate-700">凭证</div>
-          <div className="col-span-2 space-y-2">
-            {(findProvider(form.provider)?.credentialFields || []).map((f) => (
-              <Input
-                key={f.key}
-                type={f.type === 'password' ? 'password' : 'text'}
-                placeholder={f.placeholder || ''}
-                value={(form as any)[f.key] || ''}
-                onChange={(e)=>setForm((prev:any)=>({ ...prev, [f.key]: e.target.value }))}
-              />
-            ))}
-          </div>
-        </div>
+  // 初始化：从 provider manifest 预置默认参数到表格
+  useEffect(()=>{
+    if (data?.provider && (!data?.params || data.params.length === 0)) {
+      const preset = getDefaultParamsByProvider(data.provider);
+      setForm((f:any)=>({ ...f, params: preset && preset.length ? preset : f.params }));
+    }
+  }, [data?.provider]);
 
-        <div className="pt-2">
-          <div className="text-slate-800 font-medium mb-2">高级设置</div>
-          <div className="space-y-2">
-            {form.params?.map((p:any, idx:number)=> (
-              <div key={idx} className="grid grid-cols-3 items-center gap-2">
-                <Input value={p.label} onChange={(e)=>updateParam(setForm, idx, { label: e.target.value })} placeholder="显示名称" />
-                <Input value={p.param_key} onChange={(e)=>updateParam(setForm, idx, { param_key: e.target.value })} placeholder="参数键" />
-                <Input value={p.value} onChange={(e)=>updateParam(setForm, idx, { value: e.target.value })} placeholder="默认值" />
-              </div>
-            ))}
-          </div>
+  return (
+    <Modal
+      open={open}
+      onCancel={onClose}
+      onOk={()=>onOk(form)}
+      okText="保存"
+      cancelText="取消"
+      title={(
+        <div className="flex items-center gap-2">
+          <span className="text-slate-400">选择供应商</span>
+          <span className="text-slate-400">-＞</span>
+          {(() => {
+            const p = findProvider(form.provider || '');
+            if (!p) return <span className="font-medium">添加</span>;
+            const icon = p.icon ? `data:image/svg+xml;utf8,${encodeURIComponent(p.icon)}` : '';
+            return (
+              <span className="flex items-center gap-2 font-medium">
+                {p.icon && <img src={icon} alt="" className="w-4 h-4" />}
+                添加 {p.name}
+              </span>
+            );
+          })()}
         </div>
-      </div>
+      )}
+      width={800}
+    >
+      <Tabs
+        items={[
+          {
+            key: 'basic',
+            label: '基础信息',
+            children: (
+              <div className="space-y-5 pt-2 w-full">
+                {/* 模型名称：上下结构 */}
+                <div className="w-full">
+                  <div className="mb-1 text-slate-700">模型名称<span className="text-red-500"> *</span></div>
+                  <Input value={form.name} onChange={(e)=>setForm((f:any)=>({...f,name:e.target.value}))} placeholder="请给基础模型设置一个名称" maxLength={64} showCount style={{ width: '100%' }} />
+                </div>
+                {/* 模型情况：上下结构 */}
+                <div className="w-full">
+                  <div className="mb-2 text-slate-700">模型情况<span className="text-red-500"> *</span></div>
+                  <div className="grid grid-cols-2 gap-3 w-full">
+                    <button className={`border rounded-lg px-3 py-2 text-left ${form.scope==='private' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`} onClick={()=>setForm((f:any)=>({...f, scope: 'private'}))}>
+                      <div className="font-medium">私有</div>
+                      <div className="text-xs text-slate-500">私有部署为主，数据在您的设备或自有环境内处理与存储</div>
+                    </button>
+                    <button className={`border rounded-lg px-3 py-2 text-left ${form.scope==='public' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`} onClick={()=>setForm((f:any)=>({...f, scope: 'public'}))}>
+                      <div className="font-medium">公有</div>
+                      <div className="text-xs text-slate-500">线上大模型，数据在供应商的云端处理与存储（默认存本地，供应商不主动收集）</div>
+                    </button>
+                  </div>
+                </div>
+                {/* 模型类型：上下结构 */}
+                <div className="w-full">
+                  <div className="mb-1 text-slate-700">模型类型<span className="text-red-500"> *</span></div>
+                  <Select value={form.type} placeholder="请选择模型类型" style={{ width: '100%' }} onChange={(v)=>setForm((f:any)=>({...f,type:v}))} options={[{value:'llm',label:'大语言模型'}]} />
+                </div>
+                {/* 基础模型：标题与红字同一行，输入在下方 */}
+                <div className="w-full">
+                  <div className="mb-1 flex items-center justify-between">
+                    <div className="text-slate-700">基础模型<span className="text-red-500"> *</span></div>
+                    <div className="text-xs text-red-500">列表中未列出的模型，直接输入模型名称，回车即可添加 *</div>
+                  </div>
+                  <Select
+                    mode="tags"
+                    value={form.model_name ? [form.model_name] : []}
+                    onChange={(vals)=>setForm((f:any)=>({...f, model_name: (vals as string[])[(vals as string[]).length-1] || ''}))}
+                    options={(findProvider(form.provider)?.baseModels || []).map(m => ({ value: m, label: m }))}
+                    showSearch
+                    style={{ width: '100%' }}
+                    placeholder="自定义输入基础模型后回车即可"
+                  />
+                </div>
+                {/* 凭证：选择基础模型后显示，纵向排列 */}
+                {!!form.model_name && (
+                  <div className="w-full">
+                    <div className="mb-1 text-slate-700">凭证<span className="text-red-500"> *</span></div>
+                    <div className="space-y-2">
+                      {(
+                        (findProvider(form.provider)?.credentialFieldsPerModel?.[form.model_name] ||
+                         findProvider(form.provider)?.credentialFieldsPerModel?.default ||
+                         findProvider(form.provider)?.credentialFields || [])
+                      ).map((f) => (
+                        <Input
+                          key={f.key}
+                          type={f.type === 'password' ? 'password' : 'text'}
+                          placeholder={f.placeholder || ''}
+                          value={(form as any)[f.key] || ''}
+                          onChange={(e)=>setForm((prev:any)=>({ ...prev, [f.key]: e.target.value }))}
+                          style={{ width: '100%' }}
+                          status={(f.required && !(form as any)[f.key]) ? 'error' as any : undefined}
+                          addonBefore={<span className="text-slate-700">{f.label}</span>}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: 'advanced',
+            label: '高级设置',
+            children: (
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-slate-800">模型参数</div>
+                  <button
+                    className="text-blue-600"
+                    onClick={()=>addParamRow(setForm)}
+                  >+ 添加</button>
+                </div>
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  {/* 表头 */}
+                  <div className="grid grid-cols-12 bg-slate-50 text-slate-600 text-sm px-3 py-2">
+                    <div className="col-span-3">显示名称</div>
+                    <div className="col-span-3">参数</div>
+                    <div className="col-span-2">组件类型</div>
+                    <div className="col-span-2">默认值</div>
+                    <div className="col-span-1 text-center">必填</div>
+                    <div className="col-span-1 text-center">操作</div>
+                  </div>
+                  {/* 行 */}
+                  {(form.params || []).map((p:any, idx:number)=> (
+                    <div key={idx} className="grid grid-cols-12 gap-2 items-center px-3 py-2 border-t border-slate-200">
+                      <div className="col-span-3">
+                        <Input value={p.label} onChange={(e)=>updateParam(setForm, idx, { label: e.target.value })} placeholder="温度" />
+                      </div>
+                      <div className="col-span-3">
+                        <Input value={p.param_key} onChange={(e)=>updateParam(setForm, idx, { param_key: e.target.value })} placeholder="temperature / max_tokens" />
+                      </div>
+                      <div className="col-span-2">
+                        <Select
+                          style={{ width: '100%' }}
+                          value={p.ui_type || 'input'}
+                          onChange={(v:string)=>updateParam(setForm, idx, { ui_type: v })}
+                          options={[
+                            { value: 'input', label: '输入框' },
+                            { value: 'slider', label: '滑块' },
+                            { value: 'switch', label: '开关' },
+                            { value: 'select', label: '下拉选择' },
+                          ]}
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Input value={p.value} onChange={(e)=>updateParam(setForm, idx, { value: e.target.value })} placeholder="0.7 / 800" />
+                      </div>
+                      <div className="col-span-1 flex justify-center">
+                        <Switch size="small" checked={!!p.required} onChange={(v)=>updateParam(setForm, idx, { required: v })} />
+                      </div>
+                      <div className="col-span-1 text-center">
+                        <button className="text-red-600" onClick={()=>removeParamRow(setForm, idx)}>删除</button>
+                      </div>
+                    </div>
+                  ))}
+                  {!(form.params || []).length && (
+                    <div className="text-center text-slate-500 py-6">暂无参数，点击右上角“添加”创建</div>
+                  )}
+                </div>
+              </div>
+            ),
+          },
+        ]}
+      />
     </Modal>
   );
 }
@@ -237,4 +375,49 @@ function updateParam(setForm: any, i: number, delta: any) {
   });
 }
 
+function addParamRow(setForm: any) {
+  setForm((f: any) => {
+    const params = [...(f.params || [])];
+    params.push({ label: '', param_key: '', ui_type: 'input', value: '', required: false });
+    return { ...f, params };
+  });
+}
 
+function removeParamRow(setForm: any, index: number) {
+  setForm((f: any) => {
+    const params = [...(f.params || [])];
+    params.splice(index, 1);
+    return { ...f, params };
+  });
+}
+
+function ProviderPicker({ open, onClose, onPick, providers, filterKey }: any) {
+  // 根据左侧当前节点过滤
+  let list: any[] = [];
+  if (filterKey?.startsWith('scope:')) {
+    const sc = filterKey.split(':')[1];
+    list = providers[sc] || [];
+  } else {
+    list = [...providers.public, ...providers.private];
+  }
+
+  return (
+    <Modal open={open} onCancel={onClose} footer={null} title="选择供应商" width={900}>
+      <div className="grid grid-cols-2 gap-3">
+        {list.map((p) => (
+          <button
+            key={p.id}
+            onClick={()=>onPick(p.id)}
+            className="flex items-center border rounded-lg px-4 py-3 hover:bg-slate-50"
+          >
+            {p.icon && (() => {
+              const src = `data:image/svg+xml;utf8,${encodeURIComponent(p.icon)}`;
+              return <img src={src} alt="" className="w-6 h-6" />;
+            })()}
+            <span className="ml-3 font-medium text-slate-800">{p.name}</span>
+          </button>
+        ))}
+      </div>
+    </Modal>
+  );
+}

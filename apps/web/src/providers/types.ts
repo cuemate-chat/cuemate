@@ -27,6 +27,8 @@ export interface ProviderManifest {
   kind: ModelKind; // 模型类型
   icon?: string; // 图标 URL（可选）
   modelNamePlaceholder?: string;
+  baseModels?: string[]; // 该提供商支持的“基础模型/版本”列表
+  credentialFieldsPerModel?: Record<string, ProviderField[]>; // 针对不同基础模型定制凭据字段
   credentialFields: ProviderField[]; // API URL、API Key 等
   defaultParams: ProviderParam[]; // 默认高级参数
 }

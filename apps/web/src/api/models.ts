@@ -1,7 +1,15 @@
 import { http } from './http';
 
 export function listModels(params: any) {
-  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+  const src = params || {};
+  const clean: Record<string, string> = {};
+  Object.keys(src).forEach((k) => {
+    const v = src[k];
+    if (v !== undefined && v !== null && v !== '') {
+      clean[k] = String(v);
+    }
+  });
+  const qs = Object.keys(clean).length ? '?' + new URLSearchParams(clean).toString() : '';
   return http.get('/models' + qs);
 }
 
