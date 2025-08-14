@@ -50,9 +50,7 @@ export function registerModelRoutes(app: FastifyInstance) {
     model_name: z.string().min(1),
     icon: z.string().optional(),
     version: z.string().optional(),
-    base_url: z.string().optional(),
-    api_url: z.string().optional(),
-    api_key: z.string().optional(),
+    credentials: z.any().optional(),
     params: z
       .array(
         z.object({
@@ -75,8 +73,8 @@ export function registerModelRoutes(app: FastifyInstance) {
     const now = Date.now();
     (app as any).db
       .prepare(
-        `INSERT OR REPLACE INTO models (id, name, provider, type, scope, model_name, icon, version, base_url, api_url, api_key, created_by, is_enabled, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, COALESCE((SELECT created_at FROM models WHERE id=?), ?), ?)`,
+        `INSERT OR REPLACE INTO models (id, name, provider, type, scope, model_name, icon, version, credentials, created_by, is_enabled, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, COALESCE((SELECT created_at FROM models WHERE id=?), ?), ?)`,
       )
       .run(
         id,
@@ -87,9 +85,7 @@ export function registerModelRoutes(app: FastifyInstance) {
         body.model_name,
         body.icon || null,
         body.version || body.model_name || null,
-        body.base_url || null,
-        body.api_url || null,
-        body.api_key || null,
+        body.credentials ? JSON.stringify(body.credentials) : null,
         'admin',
         id,
         now,

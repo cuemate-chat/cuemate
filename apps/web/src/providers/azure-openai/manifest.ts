@@ -8,14 +8,24 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   modelNamePlaceholder: '部署名称，如 gpt-4o-mini 部署',
+  baseModels: ['Azure OpenAI', 'gpt-4', 'gpt-4o', 'gpt-4o-mini'],
   credentialFields: [
     {
       key: 'base_url',
       label: 'Endpoint',
       type: 'text',
+      required: true,
       placeholder: 'https://{resource}.openai.azure.com',
     },
+    {
+      key: 'api_version',
+      label: 'API Version',
+      required: true,
+      type: 'text',
+      placeholder: '如 2024-06-01',
+    },
     { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { key: 'deployment_name', label: 'Deployment name', required: true, type: 'text' },
   ],
   defaultParams: [
     {
@@ -27,11 +37,12 @@ const manifest: ProviderManifest = {
       extra: { min: 0, max: 1, step: 0.1 },
     },
     {
-      label: '最大输出 Token',
+      label: '输出最大 tokens',
       param_key: 'max_tokens',
-      ui_type: 'input',
-      value: '2000',
-      default_value: '2000',
+      ui_type: 'slider',
+      value: '800',
+      default_value: '800',
+      extra: { min: 256, max: 8192, step: 128 },
     },
   ],
 };

@@ -1,9 +1,10 @@
-import { Button, Card, DatePicker, Input, Modal, Pagination, Select, Spin, Table } from 'antd';
+import { Button, Card, DatePicker, Input, Modal, Select, Spin, Table } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { listJobs } from '../api/jobs';
 import { createInterviewQuestion, createTag, deleteInterviewQuestion, deleteTag, listInterviewQuestions, listTags, updateInterviewQuestion, updateTag } from '../api/questions';
 import { message as globalMessage } from '../components/Message';
+import PaginationBar from '../components/PaginationBar';
 
 export default function Prompts() {
   const [jobs, setJobs] = useState<Array<{ id: string; title: string }>>([]);
@@ -36,6 +37,7 @@ export default function Prompts() {
   const [appliedTitle, setAppliedTitle] = useState<string | undefined>(undefined);
   const [appliedDesc, setAppliedDesc] = useState<string | undefined>(undefined);
   const [appliedTagId, setAppliedTagId] = useState<string | undefined>(undefined);
+  const requestIdRef = useRef(0);
 
   // 下拉搜索：按 label 文本模糊匹配（忽略大小写）
   const selectFilterOption = (input: string, option?: any) => {
@@ -60,23 +62,46 @@ export default function Prompts() {
     })();
   }, []);
 
-  useEffect(() => {
+  const reloadList = async (targetPage?: number) => {
+    const reqId = ++requestIdRef.current;
     if (!jobId) return;
-    (async () => {
-      setLoading(true);
-      try {
-        const data = await listInterviewQuestions(jobId, page, pageSize, {
+    setLoading(true);
+    try {
+      const curPage = targetPage ?? page;
+      const data = await listInterviewQuestions(jobId, curPage, pageSize, {
+        day: appliedDay,
+        title: appliedTitle,
+        description: appliedDesc,
+        tagId: appliedTagId,
+      });
+      const totalCount = data.total || 0;
+      const lastPage = Math.max(1, Math.ceil(totalCount / pageSize));
+      if (curPage > lastPage) {
+        const newPage = lastPage;
+        const data2 = await listInterviewQuestions(jobId, newPage, pageSize, {
           day: appliedDay,
           title: appliedTitle,
           description: appliedDesc,
           tagId: appliedTagId,
         });
-        setItems(data.items || []);
-        setTotal(data.total || 0);
-      } finally {
-        setLoading(false);
+        if (requestIdRef.current === reqId) {
+          setItems(data2.items || []);
+          setTotal(data2.total || 0);
+          setPage(newPage);
+        }
+        return;
       }
-    })();
+      if (requestIdRef.current === reqId) {
+        setItems(data.items || []);
+        setTotal(totalCount);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    reloadList();
   }, [jobId, page, appliedDay, appliedTitle, appliedDesc, appliedTagId]);
 
   // 标签列表（用于筛选与管理）
@@ -104,14 +129,7 @@ export default function Prompts() {
       await updateInterviewQuestion(current.id, { title: editTitle, description: editDesc, tagId: editTagId ?? null });
       globalMessage.success('已保存修改');
       setOpen(false);
-      const data = await listInterviewQuestions(jobId!, page, pageSize, {
-        day: appliedDay,
-        title: appliedTitle,
-        description: appliedDesc,
-        tagId: appliedTagId,
-      });
-      setItems(data.items || []);
-      setTotal(data.total || 0);
+      await reloadList();
     } catch (e: any) {
       globalMessage.error(e?.message || '保存失败');
     }
@@ -123,14 +141,7 @@ export default function Prompts() {
       await deleteInterviewQuestion(current.id);
       globalMessage.success('已删除');
       setOpen(false);
-      const data = await listInterviewQuestions(jobId!, page, pageSize, {
-        day: appliedDay,
-        title: appliedTitle,
-        description: appliedDesc,
-        tagId: appliedTagId,
-      });
-      setItems(data.items || []);
-      setTotal(data.total || 0);
+      await reloadList();
     } catch (e: any) {
       globalMessage.error(e?.message || '删除失败');
     }
@@ -240,9 +251,7 @@ export default function Prompts() {
                           e.stopPropagation();
                           await deleteInterviewQuestion(it.id);
                           globalMessage.success('成功删除该条押题数据！');
-                          const data = await listInterviewQuestions(jobId!, page, pageSize);
-                          setItems(data.items || []);
-                          setTotal(data.total || 0);
+                          await reloadList();
                         }}>删除</Button>
                       </div>
                     </div>
@@ -250,8 +259,7 @@ export default function Prompts() {
                 ))}
               </div>
               <div className="mt-4 flex items-center justify-end gap-3 text-sm text-slate-500">
-                <span>共 {total} 条</span>
-                <Pagination current={page} pageSize={pageSize} total={total} onChange={(p) => setPage(p)} />
+                <PaginationBar page={page} pageSize={pageSize} total={total} onChange={(p)=> setPage(p)} />
               </div>
             </>
           )}

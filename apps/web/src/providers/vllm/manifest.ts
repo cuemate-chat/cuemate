@@ -7,8 +7,18 @@ const manifest: ProviderManifest = {
   scope: 'private',
   kind: 'llm',
   icon: Icon,
-  modelNamePlaceholder: '部署的模型名称',
-  credentialFields: [{ key: 'base_url', label: 'API URL', type: 'text', required: true }],
+  modelNamePlaceholder: '如 facebook/opt-125m / BAAI/Aquila-7B',
+  baseModels: ['facebook/opt-125m', 'BAAI/Aquila-7B', 'BAAI/AquilaChat-7B'],
+  credentialFields: [
+    {
+      key: 'base_url',
+      label: 'API URL',
+      type: 'text',
+      required: true,
+      placeholder: '默认 http://localhost:8000/v1',
+    },
+    { key: 'api_key', label: 'API Key', type: 'password', required: true },
+  ],
   defaultParams: [
     {
       label: '温度',
@@ -17,6 +27,14 @@ const manifest: ProviderManifest = {
       value: '0.7',
       default_value: '0.7',
       extra: { min: 0, max: 1, step: 0.1 },
+    },
+    {
+      label: '输出最大 tokens',
+      param_key: 'max_tokens',
+      ui_type: 'slider',
+      value: '800',
+      default_value: '800',
+      extra: { min: 256, max: 8192, step: 128 },
     },
   ],
 };

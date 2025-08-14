@@ -7,9 +7,15 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  modelNamePlaceholder: '如 gpt-4o-mini / o3 / o4-mini',
+  modelNamePlaceholder: '如 gpt-5',
+  baseModels: ['gpt-5'],
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text', placeholder: '可选，OpenAI 兼容 Base URL' },
+    {
+      key: 'base_url',
+      label: 'API URL',
+      type: 'text',
+      placeholder: '默认 https://api.openai.com/v1（可选，代理 Base URL）',
+    },
     { key: 'api_key', label: 'API Key', required: true, type: 'password' },
   ],
   defaultParams: [
@@ -22,19 +28,12 @@ const manifest: ProviderManifest = {
       extra: { min: 0, max: 1, step: 0.1 },
     },
     {
-      label: '最大输出 Token',
+      label: '输出最大 tokens',
       param_key: 'max_tokens',
-      ui_type: 'input',
-      value: '2000',
-      default_value: '2000',
-    },
-    {
-      label: 'Top P',
-      param_key: 'top_p',
       ui_type: 'slider',
-      value: '1',
-      default_value: '1',
-      extra: { min: 0, max: 1, step: 0.05 },
+      value: '800',
+      default_value: '800',
+      extra: { min: 256, max: 8192, step: 128 },
     },
   ],
 };

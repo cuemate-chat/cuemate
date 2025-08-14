@@ -7,9 +7,17 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  modelNamePlaceholder: '请输入模型名称',
+  modelNamePlaceholder: '如 Phi-4 / Llama-3.3-70B-Instruct',
+  baseModels: [
+    'Phi-4',
+    'DeepSeek-R1-Distill-Qwen-32B',
+    'maestrale-chat-v0.4-beta',
+    'Llama-3.3-70B-Instruct',
+    'Llama-3.1-8B-Instruct',
+    'DeepSeek-Coder-6.7B-Instruct',
+  ],
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text' },
+    { key: 'base_url', label: 'API URL', type: 'text', placeholder: '可选，OpenAI 兼容 Base URL' },
     { key: 'api_key', label: 'API Key', required: true, type: 'password' },
   ],
   defaultParams: [
@@ -20,6 +28,14 @@ const manifest: ProviderManifest = {
       value: '0.7',
       default_value: '0.7',
       extra: { min: 0, max: 1, step: 0.1 },
+    },
+    {
+      label: '输出最大 tokens',
+      param_key: 'max_tokens',
+      ui_type: 'slider',
+      value: '800',
+      default_value: '800',
+      extra: { min: 256, max: 8192, step: 128 },
     },
   ],
 };

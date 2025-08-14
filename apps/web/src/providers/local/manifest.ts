@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   modelNamePlaceholder: '如 llama3.1:8b（配合 Ollama/vLLM/xInference 等）',
+  baseModels: ['llama3.1:8b'],
   credentialFields: [
     {
       key: 'base_url',

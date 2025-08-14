@@ -100,7 +100,7 @@ export default function Settings() {
               <span>语言</span>
             </div>
             <div className="md:col-span-2">
-              <div className="w-full md:w-80">
+              <div className="w-full">
                 <AntSelect
                   value={form.locale}
                   onChange={(v)=>setForm(f=>({...f, locale: v}))}
@@ -153,7 +153,7 @@ export default function Settings() {
               <span>时区</span>
             </div>
             <div className="md:col-span-2">
-              <div className="w-full md:w-80">
+              <div className="w-full">
                 <AntSelect
                   value={form.timezone}
                   onChange={(v)=>setForm(f=>({...f, timezone: v}))}
@@ -186,17 +186,37 @@ export default function Settings() {
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div className="text-slate-800 font-medium">大模型供应商</div>
             <div className="md:col-span-2">
-              <div className="w-full md:w-96">
+              <div className="w-full">
                 <AntSelect
                   value={form.selected_model_id}
                   onChange={(v)=>setForm(f=>({...f, selected_model_id: v}))}
                   options={modelOptions}
                   className="w-full"
+                  popupMatchSelectWidth
+                  style={{ height: 40 }}
                 />
               </div>
               <p className="text-xs text-slate-600 mt-2">为当前账号绑定一个模型。你也可以前往“模型设置”页面管理模型。</p>
               <div className="mt-2">
-                <button className="px-3 py-1.5 rounded-lg bg-blue-600 text-white" onClick={async()=>{ if(!form.selected_model_id) return; await selectUserModel(form.selected_model_id); message.success('已绑定'); }}>立即绑定</button>
+                <button
+                  className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm"
+                  onClick={async()=>{
+                    if(!form.selected_model_id) return;
+                    try {
+                      await selectUserModel(form.selected_model_id);
+                      // 绑定后立即拉取用户并落地缓存与表单，确保前端与数据库一致
+                      const res = await fetchMe();
+                      const user = (res as any).user;
+                      if (user) {
+                        storage.setUser(user);
+                        initForm(user);
+                      }
+                      message.success('已绑定');
+                    } catch (e:any) {
+                      message.error(e?.message || '绑定失败');
+                    }
+                  }}
+                >立即绑定</button>
               </div>
             </div>
           </div>

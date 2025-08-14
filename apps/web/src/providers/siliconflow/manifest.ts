@@ -7,9 +7,19 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  modelNamePlaceholder: '请输入模型名称',
+  modelNamePlaceholder: '如 Qwen2.5-7B-Instruct / DeepSeek-R1-Distill-Qwen-7B',
+  baseModels: [
+    'deepseek-ai/DeepSeek-R1-Distill-Llama-8B',
+    'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B',
+    'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
+    'Qwen/Qwen2.5-7B-Instruct',
+    'Qwen/Qwen2.5-Coder-7B-Instruct',
+    'internlm/internlm2_5-7b-chat',
+    'Qwen/Qwen2-1.5B-Instruct',
+    'THUDM/glm-4-9b-chat',
+  ],
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text' },
+    { key: 'base_url', label: 'API URL', type: 'text', placeholder: '可选，OpenAI 兼容 Base URL' },
     { key: 'api_key', label: 'API Key', required: true, type: 'password' },
   ],
   defaultParams: [
@@ -20,6 +30,14 @@ const manifest: ProviderManifest = {
       value: '0.7',
       default_value: '0.7',
       extra: { min: 0, max: 1, step: 0.1 },
+    },
+    {
+      label: '输出最大 tokens',
+      param_key: 'max_tokens',
+      ui_type: 'slider',
+      value: '800',
+      default_value: '800',
+      extra: { min: 256, max: 8192, step: 128 },
     },
   ],
 };

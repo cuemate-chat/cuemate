@@ -1,9 +1,10 @@
 import { DeleteOutlined, EditOutlined, EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
-import { Input, Modal, Pagination, Select, Switch, Tabs, Tree } from 'antd';
+import { Input, Modal, Select, Switch, Tabs, Tree } from 'antd';
 import 'antd/dist/reset.css';
-import { useEffect, useMemo, useState } from 'react';
-import { deleteModel, listModels, selectUserModel, upsertModel } from '../api/models';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { deleteModel, getModel, listModels, selectUserModel, upsertModel } from '../api/models';
 import { message } from '../components/Message';
+import PaginationBar from '../components/PaginationBar';
 import { findProvider, providerManifests } from '../providers';
 
 export default function ModelSettings() {
@@ -18,6 +19,7 @@ export default function ModelSettings() {
   const [selectedKeys, setSelectedKeys] = useState<string[]>(['all']);
   const PAGE_HEIGHT = 675;
   const [pickerOpen, setPickerOpen] = useState(false);
+  const requestIdRef = useRef(0);
 
   const providers = useMemo(() => ({
     public: providerManifests
@@ -45,13 +47,30 @@ export default function ModelSettings() {
   }, [providers]);
 
   const fetchList = async () => {
+    const reqId = ++requestIdRef.current;
     setLoading(true);
     try {
       const res: any = await listModels({ type: filter.type, keyword: filter.keyword, scope: filter.scope, provider: filter.providerId });
       const all = (res.list || []) as any[];
-      setTotal(all.length);
-      const start = (page - 1) * pageSize;
-      setList(all.slice(start, start + pageSize));
+      const totalCount = all.length;
+      const lastPage = Math.max(1, Math.ceil(totalCount / pageSize));
+
+      if (page > lastPage) {
+        const newPage = lastPage;
+        if (requestIdRef.current === reqId) {
+          setTotal(totalCount);
+          const startIdx = (newPage - 1) * pageSize;
+          setList(all.slice(startIdx, startIdx + pageSize));
+          setPage(newPage);
+        }
+        return;
+      }
+
+      if (requestIdRef.current === reqId) {
+        setTotal(totalCount);
+        const start = (page - 1) * pageSize;
+        setList(all.slice(start, start + pageSize));
+      }
     } catch (e: any) {
       message.error(e?.message || '获取模型失败');
     } finally {
@@ -67,13 +86,26 @@ export default function ModelSettings() {
         try { await selectUserModel(m.id); } catch {}
       }
     } catch {}
+    try {
+      const res: any = await getModel(m.id);
+      const detail = res || {};
+      if (detail.model) {
+        const normalizedParams = (detail.params || []).map((p: any) => ({
+          ...p,
+          required: !!p.required,
+        }));
+        setEditing({ ...detail.model, params: normalizedParams });
+        return;
+      }
+    } catch {}
     setEditing(m);
   }
 
   async function handleDelete(id: string) {
     await deleteModel(id);
     message.success('已删除');
-    fetchList();
+    // 删除后立即刷新，保障页码回退逻辑生效
+    await fetchList();
   }
 
   useEffect(() => { fetchList(); }, [filter.type, filter.keyword, filter.scope, filter.providerId, page, pageSize]);
@@ -182,7 +214,7 @@ export default function ModelSettings() {
               );})}
           </div>
           <div className="mt-4 flex items-center justify-center gap-3 text-sm text-slate-500">
-             <Pagination current={page} pageSize={6} total={total} onChange={(p)=>{ setPage(p); }} showSizeChanger={false} showTotal={(t)=>`共 ${t} 条`} />
+             <PaginationBar page={page} pageSize={pageSize} total={total} onChange={(p)=> setPage(p)} />
           </div>
         </div>
       </section>
@@ -192,13 +224,31 @@ export default function ModelSettings() {
         data={editing}
         onClose={()=>setEditing(null)}
         onOk={async(v:any)=>{
-          const payload = {
+          // 组装 credentials：根据 provider 定义的字段收集
+          const provider = findProvider(v.provider);
+          const fields = (
+            provider?.credentialFieldsPerModel?.[v.model_name] ||
+            provider?.credentialFieldsPerModel?.default ||
+            provider?.credentialFields || []
+          );
+          const credentials: Record<string, any> = {};
+          fields.forEach((f)=>{
+            if (v[f.key] !== undefined && v[f.key] !== '') credentials[f.key] = v[f.key];
+          });
+          const payload: any = {
             ...v,
             icon: v.icon ?? `/logo-icon.png`,
-            // API URL 优先取凭证里的 base_url
-            api_url: v.base_url ?? null,
             version: v.version ?? v.model_name,
+            credentials,
+            params: (v.params || []).map((p: any) => ({
+              ...p,
+              required: !!p.required,
+            })),
           };
+          // 移除旧的字段避免后端误解析
+          delete payload.base_url;
+          delete payload.api_url;
+          delete payload.api_key;
           await upsertModel(payload);
           setEditing(null);
           message.success('已保存');
@@ -223,7 +273,20 @@ function getDefaultParamsByProvider(pid?: string) {
 
 function EditModal({ open, data, onClose, onOk }: any) {
   const [form, setForm] = useState<any>(data || { scope: 'public', type: 'llm', params: [] });
-  useEffect(()=>{ setForm(data || { scope:'public', type:'llm', params: [] }); }, [data]);
+  useEffect(()=>{ 
+    const base = data || { scope:'public', type:'llm', params: [] };
+    // 若包含 credentials(JSON 文本或对象)，展开到表单字段，便于编辑
+    try {
+      const raw = (base as any).credentials;
+      const obj = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+      if (obj && typeof obj === 'object') {
+        const merged = { ...base, ...obj };
+        setForm(merged);
+        return;
+      }
+    } catch {}
+    setForm(base);
+  }, [data]);
 
   // 初始化：从 provider manifest 预置默认参数到表格
   useEffect(()=>{
@@ -245,13 +308,14 @@ function EditModal({ open, data, onClose, onOk }: any) {
           <span className="text-slate-400">选择供应商</span>
           <span className="text-slate-400">-＞</span>
           {(() => {
+            const isEdit = !!(data && data.id);
             const p = findProvider(form.provider || '');
-            if (!p) return <span className="font-medium">添加</span>;
+            if (!p) return <span className="font-medium">{isEdit ? '编辑' : '添加'}</span>;
             const icon = p.icon ? `data:image/svg+xml;utf8,${encodeURIComponent(p.icon)}` : '';
             return (
               <span className="flex items-center gap-2 font-medium">
                 {p.icon && <img src={icon} alt="" className="w-4 h-4" />}
-                添加 {p.name}
+                {isEdit ? '编辑' : '添加'} {p.name}
               </span>
             );
           })()}
@@ -326,9 +390,20 @@ function EditModal({ open, data, onClose, onOk }: any) {
                             onChange={(e)=>setForm((prev:any)=>({ ...prev, [f.key]: e.target.value }))}
                             style={{ width: '100%' }}
                             status={(f.required && !(form as any)[f.key]) ? 'error' as any : undefined}
-                            addonBefore={<span className="text-slate-700">{f.label}</span>}
+                            addonBefore={
+                              <span
+                                className="text-slate-700"
+                                style={{ display: 'inline-block', width: 120 }}
+                              >
+                                {f.label}
+                              </span>
+                            }
                             addonAfter={isPassword ? (
-                              <span className="cursor-pointer" onClick={()=>setForm((prev:any)=>({ ...prev, __show_api_key: !prev.__show_api_key }))}>
+                              <span
+                                className="cursor-pointer"
+                                style={{ display: 'inline-block', width: 28, textAlign: 'center' }}
+                                onClick={()=>setForm((prev:any)=>({ ...prev, __show_api_key: !prev.__show_api_key }))}
+                              >
                                 {form.__show_api_key ? <EyeInvisibleOutlined /> : <EyeOutlined />}
                               </span>
                             ) : undefined}
