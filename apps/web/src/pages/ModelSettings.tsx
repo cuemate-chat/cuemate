@@ -1,3 +1,4 @@
+import { DeleteOutlined, EditOutlined, EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { Input, Modal, Pagination, Select, Switch, Tabs, Tree } from 'antd';
 import 'antd/dist/reset.css';
 import { useEffect, useMemo, useState } from 'react';
@@ -11,7 +12,7 @@ export default function ModelSettings() {
   const [filter, setFilter] = useState<{ type?: string; keyword?: string; scope?: 'public'|'private'; providerId?: string }>({ type: 'llm' });
   const [editing, setEditing] = useState<any | null>(null);
   const [page, setPage] = useState(1);
-  const pageSize = 9;
+  const pageSize = 6;
   const [total, setTotal] = useState(0);
   const [selectedTitle, setSelectedTitle] = useState<string>('全部模型');
   const [selectedKeys, setSelectedKeys] = useState<string[]>(['all']);
@@ -57,6 +58,23 @@ export default function ModelSettings() {
       setLoading(false);
     }
   };
+
+  async function handleEdit(m: any) {
+    // 进入编辑。如果当前用户未绑定模型，则默认绑定一次（后端 /models/select 需要登录态）。
+    try {
+      const me = (JSON.parse(localStorage.getItem('auth_user') || 'null') || {}) as any;
+      if (!me?.selected_model_id) {
+        try { await selectUserModel(m.id); } catch {}
+      }
+    } catch {}
+    setEditing(m);
+  }
+
+  async function handleDelete(id: string) {
+    await deleteModel(id);
+    message.success('已删除');
+    fetchList();
+  }
 
   useEffect(() => { fetchList(); }, [filter.type, filter.keyword, filter.scope, filter.providerId, page, pageSize]);
 
@@ -114,10 +132,19 @@ export default function ModelSettings() {
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-4" style={{ height: PAGE_HEIGHT - 56, overflowY: 'auto' }}>
           {loading && <div className="text-slate-500 text-sm">加载中…</div>}
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {list.map((m)=> (
-              <div key={m.id} className="border rounded-xl p-4 bg-white shadow-sm">
-                <div className="flex items-center justify-between">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+            {list.map((m, idx)=> {
+              const providerCn = findProvider(m.provider)?.name || m.provider;
+              const typeCn = m.type === 'llm' ? '大语言模型' : (m.type || '-');
+              const creatorCn = m.created_by === 'admin' ? '管理员' : (m.created_by || '-');
+              return (
+              <div key={m.id} className="group border p-4 bg-white shadow-sm relative overflow-hidden">
+                {/* 左上角序号角标 */}
+                <div className="pointer-events-none absolute left-0 top-0">
+                  <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">{(page-1)*pageSize + idx + 1}</div>
+                  <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
+                </div>
+                <div className="flex items-center justify-between pl-6">{/* 内容整体右移，避免遮住序号 */}
                   <div className="flex items-center gap-2">
                     {(() => {
                       const icon = findProvider(m.provider)?.icon;
@@ -127,28 +154,35 @@ export default function ModelSettings() {
                       }
                       return null;
                     })()}
-                    <div className="font-medium text-slate-900">{m.name}</div>
+                    <div className="font-semibold text-slate-900 text-base">{m.name}</div>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${m.scope==='public'?'bg-blue-50 text-blue-700':'bg-amber-50 text-amber-700'}`}>{m.scope==='public'?'公有':'私有'}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button className="text-blue-600" onClick={()=>setEditing(m)}>编辑</button>
-                    <button className="text-red-600" onClick={async()=>{ await deleteModel(m.id); message.success('已删除'); fetchList(); }}>删除</button>
-                    <button className="text-slate-700" onClick={async()=>{ await selectUserModel(m.id); message.success('已绑定为当前模型'); }}>绑定</button>
+                  {/* 右上角操作：仅悬停卡片时显示 */}
+                  <div className="hidden group-hover:flex items-center gap-3">
+                    <button className="inline-flex items-center justify-center" title="编辑" onClick={()=>handleEdit(m)}>
+                      <EditOutlined style={{ fontSize: 18, color: '#2563eb' }} />
+                    </button>
+                    <button className="inline-flex items-center justify-center" title="删除" onClick={()=>handleDelete(m.id)}>
+                      <DeleteOutlined style={{ fontSize: 18, color: '#dc2626' }} />
+                    </button>
                   </div>
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600">
-                  <div>供应商标识：{m.provider}</div>
-                  <div>模型类型：{m.type || 'llm'}</div>
-                  <div>基础模型：{m.model_name}</div>
-                  <div>版本号：{m.version || '-'}</div>
-                  <div>创建者：{m.created_by || '-'}</div>
-                  <div>创建时间：{m.created_at ? new Date(m.created_at).toLocaleString() : '-'}</div>
+                {/* 横线分割 */}
+                <div className="my-3 h-px bg-slate-200" />
+                {/* 详情信息：每项不换行，值溢出省略（时间不省略） */}
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm pl-6">
+                  <div className="flex items-baseline gap-1 min-w-0"><span className="text-slate-500 shrink-0 whitespace-nowrap">供应商：</span><span className="text-slate-800 font-medium truncate">{providerCn}</span></div>
+                  <div className="flex items-baseline gap-1 min-w-0"><span className="text-slate-500 shrink-0 whitespace-nowrap">模型类型：</span><span className="text-slate-800 font-medium truncate">{typeCn}</span></div>
+                  <div className="flex items-baseline gap-1 min-w-0"><span className="text-slate-500 shrink-0 whitespace-nowrap">基础模型：</span><span className="text-slate-800 truncate">{m.model_name}</span></div>
+                  <div className="flex items-baseline gap-1 min-w-0"><span className="text-slate-500 shrink-0 whitespace-nowrap">版本号：</span><span className="text-slate-800 truncate">{m.version || '-'}</span></div>
+                  <div className="flex items-baseline gap-1 min-w-0"><span className="text-slate-500 shrink-0 whitespace-nowrap">创建者：</span><span className="text-slate-800 truncate">{creatorCn}</span></div>
+                  <div className="flex items-baseline gap-1 min-w-0"><span className="text-slate-500 shrink-0 whitespace-nowrap">创建时间：</span><span className="text-slate-800 whitespace-nowrap">{m.created_at ? new Date(m.created_at).toLocaleString() : '-'}</span></div>
                 </div>
               </div>
-            ))}
+              );})}
           </div>
           <div className="mt-4 flex items-center justify-center gap-3 text-sm text-slate-500">
-            <Pagination current={page} pageSize={pageSize} total={total} onChange={(p)=>{ setPage(p); }} showSizeChanger={false} showTotal={(t)=>`共 ${t} 条`} />
+             <Pagination current={page} pageSize={6} total={total} onChange={(p)=>{ setPage(p); }} showSizeChanger={false} showTotal={(t)=>`共 ${t} 条`} />
           </div>
         </div>
       </section>
@@ -281,18 +315,26 @@ function EditModal({ open, data, onClose, onOk }: any) {
                         (findProvider(form.provider)?.credentialFieldsPerModel?.[form.model_name] ||
                          findProvider(form.provider)?.credentialFieldsPerModel?.default ||
                          findProvider(form.provider)?.credentialFields || [])
-                      ).map((f) => (
-                        <Input
-                          key={f.key}
-                          type={f.type === 'password' ? 'password' : 'text'}
-                          placeholder={f.placeholder || ''}
-                          value={(form as any)[f.key] || ''}
-                          onChange={(e)=>setForm((prev:any)=>({ ...prev, [f.key]: e.target.value }))}
-                          style={{ width: '100%' }}
-                          status={(f.required && !(form as any)[f.key]) ? 'error' as any : undefined}
-                          addonBefore={<span className="text-slate-700">{f.label}</span>}
-                        />
-                      ))}
+                      ).map((f) => {
+                        const isPassword = f.type === 'password';
+                        return (
+                          <Input
+                            key={f.key}
+                            type={isPassword ? (form.__show_api_key ? 'text' : 'password') : 'text'}
+                            placeholder={f.placeholder || ''}
+                            value={(form as any)[f.key] || ''}
+                            onChange={(e)=>setForm((prev:any)=>({ ...prev, [f.key]: e.target.value }))}
+                            style={{ width: '100%' }}
+                            status={(f.required && !(form as any)[f.key]) ? 'error' as any : undefined}
+                            addonBefore={<span className="text-slate-700">{f.label}</span>}
+                            addonAfter={isPassword ? (
+                              <span className="cursor-pointer" onClick={()=>setForm((prev:any)=>({ ...prev, __show_api_key: !prev.__show_api_key }))}>
+                                {form.__show_api_key ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                              </span>
+                            ) : undefined}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
                 )}

@@ -96,9 +96,10 @@ export function registerModelRoutes(app: FastifyInstance) {
         now,
       );
 
+    // 统一做法：先删后插，避免旧参数残留或丢失
+    const del = (app as any).db.prepare('DELETE FROM model_params WHERE model_id=?');
+    del.run(id);
     if (body.params?.length) {
-      const del = (app as any).db.prepare('DELETE FROM model_params WHERE model_id=?');
-      del.run(id);
       const insert = (app as any).db.prepare(
         `INSERT INTO model_params (id, model_id, label, param_key, ui_type, value, default_value, required, extra, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
