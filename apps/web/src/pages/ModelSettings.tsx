@@ -9,6 +9,7 @@ import { findProvider, providerManifests } from '../providers';
 
 export default function ModelSettings() {
   const [loading, setLoading] = useState(false);
+  const [testingModelId, setTestingModelId] = useState<string | null>(null); // 正在测试的模型ID
   const [list, setList] = useState<any[]>([]);
   const [filter, setFilter] = useState<{ type?: string; keyword?: string; scope?: 'public'|'private'; providerId?: string }>({ type: 'llm' });
   const [editing, setEditing] = useState<any | null>(null);
@@ -111,7 +112,17 @@ export default function ModelSettings() {
   useEffect(() => { fetchList(); }, [filter.type, filter.keyword, filter.scope, filter.providerId, page, pageSize]);
 
   return (
-    <div className="grid grid-cols-12 gap-4">
+    <div className="grid grid-cols-12 gap-4 relative">
+      {/* 测试连通性加载遮罩 */}
+      {testingModelId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="text-slate-700 font-medium">正在测试连通性，请稍候...</div>
+          </div>
+        </div>
+      )}
+      
       {/* 左侧树 */}
       <aside className="col-span-3 bg-white border border-slate-200 rounded-xl p-3" style={{ height: PAGE_HEIGHT, overflowY: 'auto' }}>
         <div className="flex items-center mb-2">
@@ -196,11 +207,14 @@ export default function ModelSettings() {
                   <div className="hidden group-hover:flex items-center gap-3">
                     <button className="inline-flex items-center justify-center" title="测试连通性" onClick={async ()=>{
                       try {
+                        setTestingModelId(m.id); // 显示加载遮罩
                         const res: any = await testModelConnectivity(m.id);
                         message[res?.ok ? 'success' : 'error'](res?.ok ? '连通正常' : '连通失败');
                         fetchList();
                       } catch {
                         message.error('测试失败');
+                      } finally {
+                        setTestingModelId(null); // 隐藏加载遮罩
                       }
                     }}>
                       <LinkOutlined style={{ fontSize: 18, color: '#0ea5e9' }} />

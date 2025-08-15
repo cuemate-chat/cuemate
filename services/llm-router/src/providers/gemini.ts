@@ -1,9 +1,12 @@
-import { OpenAICompatibleConfig, OpenAICompatibleProvider } from './openai-compatible.js';
+import { OpenAICompatibleProvider } from './openai-compatible.js';
 
-export interface GeminiConfig extends Partial<OpenAICompatibleConfig> {
+export interface GeminiConfig {
   apiKey?: string;
   baseUrl?: string;
   model: string;
+  temperature?: number;
+  maxTokens?: number;
+  [key: string]: any; // 允许其他动态字段
 }
 
 export class GeminiProvider extends OpenAICompatibleProvider {
@@ -15,6 +18,12 @@ export class GeminiProvider extends OpenAICompatibleProvider {
       model: cfg.model,
       temperature: cfg.temperature ?? 0.7,
       maxTokens: cfg.maxTokens ?? 2000,
+      // 传递其他动态字段（除了已明确指定的）
+      ...Object.fromEntries(
+        Object.entries(cfg).filter(
+          ([key]) => !['baseUrl', 'apiKey', 'model', 'temperature', 'maxTokens'].includes(key),
+        ),
+      ),
     });
   }
 }

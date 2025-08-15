@@ -175,34 +175,87 @@ export function registerModelRoutes(app: FastifyInstance) {
       const model = (app as any).db.prepare('SELECT * FROM models WHERE id=?').get(id);
       if (!model) return reply.code(404).send({ error: '模型不存在' });
       const creds = model.credentials ? JSON.parse(model.credentials) : {};
+
+      // 从 model_params 表读取所有运行参数
+      const params = (app as any).db.prepare('SELECT * FROM model_params WHERE model_id=?').all(id);
+      const paramsMap: Record<string, any> = {};
+      for (const p of params) {
+        if (p.value) {
+          // 根据参数类型转换值
+          if (p.param_key === 'temperature') {
+            paramsMap[p.param_key] = parseFloat(p.value);
+          } else if (
+            p.param_key === 'max_tokens' ||
+            p.param_key === 'maxTokens' ||
+            p.param_key === 'num_predict'
+          ) {
+            paramsMap[p.param_key] = parseInt(p.value);
+          } else if (p.param_key === 'stream') {
+            paramsMap[p.param_key] = p.value === 'true';
+          } else {
+            // 其他参数保持原值
+            paramsMap[p.param_key] = p.value;
+          }
+        }
+      }
+
       // 调用 llm-router 的动态探测接口
       const base = process.env.LLM_ROUTER_BASE || 'http://llm-router:3002';
+
+      // 构建请求体
+      const requestBody = {
+        id: model.provider,
+        provider: model.provider,
+        // 动态传递所有凭证字段（过滤掉 undefined 和 null）
+        ...Object.fromEntries(
+          Object.entries(creds).filter(([_, value]) => value !== undefined && value !== null),
+        ),
+        model_name: model.model_name,
+        // 传递所有运行参数
+        ...paramsMap,
+        // 传递完整的参数映射，供 provider 使用
+        allParams: paramsMap,
+        mode: 'both',
+      };
+
+      // 调试日志
+      console.log('Testing model connectivity:', {
+        modelId: id,
+        provider: model.provider,
+        modelName: model.model_name,
+        credentials: creds,
+        params: paramsMap,
+        requestBody,
+        llmRouterBase: base,
+      });
+
       try {
+        console.log('Calling llm-router probe endpoint...');
         const res = await fetch(`${base}/providers/probe`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            id: model.provider,
-            provider: model.provider,
-            base_url: creds.base_url || creds.baseUrl,
-            api_key: creds.api_key || creds.apiKey,
-            model_name: model.model_name,
-            temperature: creds.temperature,
-            max_tokens: creds.max_tokens,
-            params: creds,
-            mode: 'both',
-            embed_base_url: creds.embed_base_url || creds.embedBaseUrl,
-            embed_api_key: creds.embed_api_key || creds.embedApiKey,
-            embed_model: creds.embed_model || creds.embedModel,
-          }),
+          body: JSON.stringify(requestBody),
         });
+
+        console.log('llm-router response status:', res.status);
+        console.log('llm-router response headers:', Object.fromEntries(res.headers.entries()));
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('llm-router error response:', errorText);
+          throw new Error(`llm-router responded with status ${res.status}: ${errorText}`);
+        }
+
         const data = (await res.json()) as any;
+        console.log('llm-router response data:', data);
+
         const ok = !!data?.ok;
         (app as any).db
           .prepare('UPDATE models SET status=? WHERE id=?')
           .run(ok ? 'ok' : 'fail', id);
         return { ok, chatOk: data?.chatOk, embedOk: data?.embedOk };
       } catch (e) {
+        console.error('Error calling llm-router:', e);
         (app as any).db.prepare('UPDATE models SET status=? WHERE id=?').run('fail', id);
         return { ok: false, error: (e as any)?.message || 'probe failed' };
       }

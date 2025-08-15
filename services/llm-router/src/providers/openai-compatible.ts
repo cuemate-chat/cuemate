@@ -75,8 +75,24 @@ export class OpenAICompatibleProvider extends BaseLLMProvider {
   async healthCheck(): Promise<boolean> {
     if (!this.client) return false;
     try {
-      await this.client.models.list();
-      return true;
+      // 先尝试 /models
+      try {
+        await this.client.models.list();
+        return true;
+      } catch {}
+      // 退化：做一次最小 chat 请求
+      try {
+        await this.client.chat.completions.create({
+          model: (this.config as any).model,
+          messages: [{ role: 'user', content: 'ping' }],
+          max_tokens: 1,
+          temperature: 0,
+        });
+        return true;
+      } catch (e) {
+        logger.error(`${this.name} healthCheck failed`, e);
+        return false;
+      }
     } catch {
       return false;
     }

@@ -2,15 +2,39 @@ import OpenAI from 'openai';
 import { logger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse } from './base.js';
 
+export interface OpenAIConfig {
+  apiKey?: string;
+  baseUrl?: string;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+  [key: string]: any; // 允许其他动态字段
+}
+
 export class OpenAIProvider extends BaseLLMProvider {
   private client: OpenAI | null = null;
 
-  constructor(config: any) {
-    super('openai', config);
+  constructor(cfg: OpenAIConfig) {
+    super('openai', {
+      apiKey: cfg.apiKey,
+      baseUrl: cfg.baseUrl,
+      model: cfg.model,
+      temperature: cfg.temperature ?? 0.7,
+      maxTokens: cfg.maxTokens ?? 2000,
+      // 传递其他动态字段（除了已明确指定的）
+      ...Object.fromEntries(
+        Object.entries(cfg).filter(
+          ([key]) => !['apiKey', 'baseUrl', 'model', 'temperature', 'maxTokens'].includes(key),
+        ),
+      ),
+    });
 
     if (this.config.apiKey) {
       this.client = new OpenAI({
         apiKey: this.config.apiKey,
+        // 只有当 baseUrl 存在且不是默认值时才传递
+        ...(this.config.baseUrl &&
+          this.config.baseUrl !== 'https://api.openai.com/v1' && { baseURL: this.config.baseUrl }),
       });
     }
   }

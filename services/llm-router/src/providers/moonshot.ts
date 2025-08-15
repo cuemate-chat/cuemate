@@ -1,10 +1,31 @@
 import axios from 'axios';
-import { BaseLLMProvider, CompletionRequest, CompletionResponse } from './base.js';
 import { logger } from '../utils/logger.js';
+import { BaseLLMProvider, CompletionRequest, CompletionResponse } from './base.js';
+
+export interface MoonshotConfig {
+  apiKey?: string;
+  baseUrl?: string;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+  [key: string]: any; // 允许其他动态字段
+}
 
 export class MoonshotProvider extends BaseLLMProvider {
-  constructor(config: any) {
-    super('moonshot', config);
+  constructor(cfg: MoonshotConfig) {
+    super('moonshot', {
+      apiKey: cfg.apiKey,
+      baseUrl: cfg.baseUrl || 'https://api.moonshot.cn/v1',
+      model: cfg.model,
+      temperature: cfg.temperature ?? 0.7,
+      maxTokens: cfg.maxTokens ?? 2000,
+      // 传递其他动态字段（除了已明确指定的）
+      ...Object.fromEntries(
+        Object.entries(cfg).filter(
+          ([key]) => !['apiKey', 'baseUrl', 'model', 'temperature', 'maxTokens'].includes(key),
+        ),
+      ),
+    });
   }
 
   isAvailable(): boolean {
@@ -30,10 +51,10 @@ export class MoonshotProvider extends BaseLLMProvider {
         },
         {
           headers: {
-            'Authorization': `Bearer ${this.config.apiKey}`,
+            Authorization: `Bearer ${this.config.apiKey}`,
             'Content-Type': 'application/json',
           },
-        }
+        },
       );
 
       const latency = Date.now() - startTime;
@@ -41,11 +62,13 @@ export class MoonshotProvider extends BaseLLMProvider {
 
       return {
         content: completion.choices[0]?.message?.content || '',
-        usage: completion.usage ? {
-          promptTokens: completion.usage.prompt_tokens,
-          completionTokens: completion.usage.completion_tokens,
-          totalTokens: completion.usage.total_tokens,
-        } : undefined,
+        usage: completion.usage
+          ? {
+              promptTokens: completion.usage.prompt_tokens,
+              completionTokens: completion.usage.completion_tokens,
+              totalTokens: completion.usage.total_tokens,
+            }
+          : undefined,
         model: completion.model,
         provider: 'moonshot',
         latency,
@@ -73,12 +96,12 @@ export class MoonshotProvider extends BaseLLMProvider {
         },
         {
           headers: {
-            'Authorization': `Bearer ${this.config.apiKey}`,
+            Authorization: `Bearer ${this.config.apiKey}`,
             'Content-Type': 'application/json',
-            'Accept': 'text/event-stream',
+            Accept: 'text/event-stream',
           },
           responseType: 'stream',
-        }
+        },
       );
 
       const stream = response.data;
@@ -121,7 +144,7 @@ export class MoonshotProvider extends BaseLLMProvider {
     try {
       await axios.get(`${this.config.baseUrl}/models`, {
         headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.config.apiKey}`,
         },
         timeout: 5000,
       });
