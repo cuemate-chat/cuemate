@@ -5,15 +5,17 @@ RUN npm install -g pnpm && apt-get update && apt-get install -y python3 make g++
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/web-api/package.json ./services/web-api/package.json
 COPY packages/data-sqlite/package.json ./packages/data-sqlite/package.json
+COPY packages/logger/package.json ./packages/logger/package.json
 ENV INSTALL_FULL_OPTIONALS=true
-RUN pnpm install --no-frozen-lockfile --filter @cuemate/web-api... --filter @cuemate/data-sqlite...
+RUN pnpm install --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cuemate/web-api...
 
 COPY services/web-api ./services/web-api
 COPY packages/data-sqlite ./packages/data-sqlite
+COPY packages/logger ./packages/logger
 # tsc 需要根 tsconfig.base.json
 COPY tsconfig.base.json ./tsconfig.base.json
 # 先构建被依赖包再构建 web-api
-RUN pnpm -r --filter @cuemate/data-sqlite --filter @cuemate/web-api build
+RUN pnpm -r --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cuemate/web-api build
 
 FROM node:20-bookworm-slim
 WORKDIR /app
@@ -23,13 +25,20 @@ RUN npm install -g pnpm && apt-get update && apt-get install -y dumb-init sqlite
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/web-api/package.json ./services/web-api/package.json
 COPY packages/data-sqlite/package.json ./packages/data-sqlite/package.json
+COPY packages/logger/package.json ./packages/logger/package.json
 ENV INSTALL_FULL_OPTIONALS=true
-RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/web-api... --filter @cuemate/data-sqlite...
+RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cuemate/web-api...
 
 COPY --from=builder /app/services/web-api/dist ./services/web-api/dist
 COPY --from=builder /app/packages/data-sqlite/dist ./packages/data-sqlite/dist
+COPY --from=builder /app/packages/logger/dist ./packages/logger/dist
 
 WORKDIR /app/services/web-api
+RUN mkdir -p /opt/cuemate/log/info/web-api \
+    && mkdir -p /opt/cuemate/log/debug/web-api \
+    && mkdir -p /opt/cuemate/log/warn/web-api \
+    && mkdir -p /opt/cuemate/log/error/web-api \
+    && chown -R node:node /opt/cuemate/log
 
 EXPOSE 3004
 ENTRYPOINT ["dumb-init", "--"]

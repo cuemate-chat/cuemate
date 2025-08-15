@@ -1,5 +1,5 @@
 import { createLogger } from '@cuemate/logger';
 
 export const logger = createLogger({
-  service: 'asr-gateway',
+  service: 'web-api',
 });

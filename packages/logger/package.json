@@ -1,0 +1,30 @@
+{
+    "name": "@cuemate/logger",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsx watch src/index.ts",
+        "clean": "rimraf dist"
+    },
+    "dependencies": {
+        "pino": "^9.4.0",
+        "pino-abstract-transport": "^1.1.0",
+        "pino-pretty": "^11.3.0"
+    },
+    "devDependencies": {
+        "tsx": "^4.19.1",
+        "typescript": "^5.5.4",
+        "@types/node": "^20.16.10",
+        "rimraf": "^6.0.1"
+    }
+}

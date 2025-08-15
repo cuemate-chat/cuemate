@@ -69,37 +69,37 @@ export class DeepgramProvider extends EventEmitter {
 
       this.ws.on('message', (data) => {
         try {
-          const response = JSON.parse(data.toString());
+          const response = JSON.parse((data as any).toString());
 
-          if (response.type === 'Results') {
-            const result = response.channel?.alternatives?.[0];
+          if ((response as any).type === 'Results') {
+            const result = (response as any).channel?.alternatives?.[0];
             if (result) {
               const transcript: TranscriptResult = {
                 text: result.transcript,
-                isFinal: response.is_final || false,
+                isFinal: (response as any).is_final || false,
                 confidence: result.confidence,
                 timestamp: Date.now(),
-                duration: response.duration,
+                duration: (response as any).duration,
                 words: result.words,
               };
 
-              this.emit('transcript', transcript);
+              this.emit('transcript', transcript as any);
             }
-          } else if (response.type === 'Metadata') {
-            logger.debug('Deepgram metadata:', response);
-          } else if (response.type === 'Error') {
-            logger.error('Deepgram error:', response);
-            this.emit('error', new Error(response.message));
+          } else if ((response as any).type === 'Metadata') {
+            logger.debug('Deepgram metadata:', response as any);
+          } else if ((response as any).type === 'Error') {
+            logger.error('Deepgram error:', response as any);
+            this.emit('error', new Error((response as any).message));
           }
         } catch (error) {
-          logger.error('Failed to parse Deepgram message:', error);
+          logger.error('Failed to parse Deepgram message:', error as any);
         }
       });
 
       this.ws.on('error', (error) => {
-        logger.error('Deepgram WebSocket error:', error);
-        this.emit('error', error);
-        reject(error);
+        logger.error('Deepgram WebSocket error:', error as any);
+        this.emit('error', error as any);
+        reject(error as any);
       });
 
       this.ws.on('close', (code, reason) => {
@@ -146,7 +146,7 @@ export class DeepgramProvider extends EventEmitter {
       try {
         await this.connect();
       } catch (error) {
-        logger.error('Reconnection failed:', error);
+        logger.error('Reconnection failed:', error as any);
       }
     }, delay);
   }

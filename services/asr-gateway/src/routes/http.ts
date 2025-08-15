@@ -45,7 +45,7 @@ export function createHttpRoutes(
       void { audio, provider, format };
       return { text: '', provider, timestamp: Date.now() } as const;
     } catch (error) {
-      logger.error('Transcription failed:', error);
+      logger.error('Transcription failed:', error as any);
       return reply.code(500).send({ error: 'Transcription failed' });
     }
   });

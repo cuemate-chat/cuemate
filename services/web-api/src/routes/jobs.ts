@@ -1,3 +1,4 @@
+import { withErrorLogging } from '@cuemate/logger';
 import { randomUUID } from 'crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
@@ -11,40 +12,44 @@ export function registerJobRoutes(app: FastifyInstance) {
   });
   const updateSchema = createSchema;
 
-  const handleCreate = async (req: any, reply: any) => {
-    try {
-      const payload = await req.jwtVerify();
-      const body = createSchema.parse(req.body);
-      const now = Date.now();
-      const jobId = randomUUID();
-      const resumeId = randomUUID();
+  const handleCreate = withErrorLogging(
+    app.log as any,
+    'jobs.create',
+    async (req: any, reply: any) => {
+      try {
+        const payload = await req.jwtVerify();
+        const body = createSchema.parse(req.body);
+        const now = Date.now();
+        const jobId = randomUUID();
+        const resumeId = randomUUID();
 
-      // 先创建岗位
-      app.db
-        .prepare(
-          'INSERT INTO jobs (id, user_id, title, description, status, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-        )
-        .run(jobId, payload.uid, body.title, body.description, 'active', now);
+        // 先创建岗位
+        app.db
+          .prepare(
+            'INSERT INTO jobs (id, user_id, title, description, status, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+          )
+          .run(jobId, payload.uid, body.title, body.description, 'active', now);
 
-      // 再创建简历并指向岗位
-      app.db
-        .prepare(
-          'INSERT INTO resumes (id, user_id, job_id, title, content, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-        )
-        .run(
-          resumeId,
-          payload.uid,
-          jobId,
-          body.resumeTitle || `${body.title}-简历`,
-          body.resumeContent,
-          now,
-        );
+        // 再创建简历并指向岗位
+        app.db
+          .prepare(
+            'INSERT INTO resumes (id, user_id, job_id, title, content, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+          )
+          .run(
+            resumeId,
+            payload.uid,
+            jobId,
+            body.resumeTitle || `${body.title}-简历`,
+            body.resumeContent,
+            now,
+          );
 
-      return { jobId, resumeId };
-    } catch (err) {
-      return reply.code(401).send({ error: '未认证' });
-    }
-  };
+        return { jobId, resumeId };
+      } catch (err) {
+        return reply.code(401).send({ error: '未认证' });
+      }
+    },
+  );
 
   app.post('/jobs/new', handleCreate);
   // 岗位列表 GET /jobs（联表返回简历，前端一次性拿到详情）

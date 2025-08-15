@@ -13,6 +13,7 @@
     "format": "prettier --write src"
   },
   "dependencies": {
+    "@cuemate/logger": "workspace:*",
     "fastify": "^4.28.1",
     "@fastify/cors": "^8.5.0",
     "@fastify/env": "^4.3.0",

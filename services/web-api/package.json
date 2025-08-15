@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "fastify": "^4.28.1",
+    "@cuemate/logger": "workspace:*",
     "@fastify/cors": "^8.5.0",
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/jwt": "^7.2.2",

@@ -1,3 +1,4 @@
+import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
@@ -67,61 +68,64 @@ export function registerModelRoutes(app: FastifyInstance) {
       .optional(),
   });
 
-  app.post('/models', async (req) => {
-    const body = upsertSchema.parse((req as any).body || {});
-    const id = body.id || crypto.randomUUID();
-    const now = Date.now();
-    (app as any).db
-      .prepare(
-        `INSERT OR REPLACE INTO models (id, name, provider, type, scope, model_name, icon, version, credentials, created_by, is_enabled, created_at, updated_at)
+  app.post(
+    '/models',
+    withErrorLogging(app.log as any, 'models.upsert', async (req) => {
+      const body = upsertSchema.parse((req as any).body || {});
+      const id = body.id || crypto.randomUUID();
+      const now = Date.now();
+      (app as any).db
+        .prepare(
+          `INSERT OR REPLACE INTO models (id, name, provider, type, scope, model_name, icon, version, credentials, created_by, is_enabled, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, COALESCE((SELECT created_at FROM models WHERE id=?), ?), ?)`,
-      )
-      .run(
-        id,
-        body.name,
-        body.provider,
-        body.type ?? 'llm',
-        body.scope ?? 'public',
-        body.model_name,
-        body.icon || null,
-        body.version || body.model_name || null,
-        body.credentials ? JSON.stringify(body.credentials) : null,
-        'admin',
-        id,
-        now,
-        now,
-      );
+        )
+        .run(
+          id,
+          body.name,
+          body.provider,
+          body.type ?? 'llm',
+          body.scope ?? 'public',
+          body.model_name,
+          body.icon || null,
+          body.version || body.model_name || null,
+          body.credentials ? JSON.stringify(body.credentials) : null,
+          'admin',
+          id,
+          now,
+          now,
+        );
 
-    // 统一做法：先删后插，避免旧参数残留或丢失
-    const del = (app as any).db.prepare('DELETE FROM model_params WHERE model_id=?');
-    del.run(id);
-    if (body.params?.length) {
-      const insert = (app as any).db.prepare(
-        `INSERT INTO model_params (id, model_id, label, param_key, ui_type, value, default_value, required, extra, created_at, updated_at)
+      // 统一做法：先删后插，避免旧参数残留或丢失
+      const del = (app as any).db.prepare('DELETE FROM model_params WHERE model_id=?');
+      del.run(id);
+      if (body.params?.length) {
+        const insert = (app as any).db.prepare(
+          `INSERT INTO model_params (id, model_id, label, param_key, ui_type, value, default_value, required, extra, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      );
-      const tx = (app as any).db.transaction((items: any[]) => {
-        for (const p of items) {
-          insert.run(
-            crypto.randomUUID(),
-            id,
-            p.label || null,
-            p.param_key,
-            p.ui_type || 'slider',
-            p.value != null ? String(p.value) : null,
-            p.default_value != null ? String(p.default_value) : null,
-            p.required ? 1 : 0,
-            p.extra ? JSON.stringify(p.extra) : null,
-            now,
-            now,
-          );
-        }
-      });
-      tx(body.params);
-    }
+        );
+        const tx = (app as any).db.transaction((items: any[]) => {
+          for (const p of items) {
+            insert.run(
+              crypto.randomUUID(),
+              id,
+              p.label || null,
+              p.param_key,
+              p.ui_type || 'slider',
+              p.value != null ? String(p.value) : null,
+              p.default_value != null ? String(p.value) : null,
+              p.required ? 1 : 0,
+              p.extra ? JSON.stringify(p.extra) : null,
+              now,
+              now,
+            );
+          }
+        });
+        tx(body.params);
+      }
 
-    return { id };
-  });
+      return { id };
+    }),
+  );
 
   // 删除
   app.delete('/models/:id', async (req) => {
@@ -132,40 +136,48 @@ export function registerModelRoutes(app: FastifyInstance) {
   });
 
   // 将模型绑定到当前用户
-  app.post('/models/select', async (req, reply) => {
-    try {
-      const payload = await (req as any).jwtVerify();
-      const schema = z.object({ model_id: z.string() });
-      const { model_id } = schema.parse((req as any).body || {});
-      const exists = (app as any).db.prepare('SELECT id FROM models WHERE id=?').get(model_id);
-      if (!exists) return reply.code(404).send({ error: '模型不存在' });
-      (app as any).db
-        .prepare('UPDATE users SET selected_model_id=? WHERE id=?')
-        .run(model_id, payload.uid);
-      return { success: true };
-    } catch {
-      return reply.code(401).send({ error: '未认证' });
-    }
-  });
+  app.post(
+    '/models/select',
+    withErrorLogging(app.log as any, 'models.select', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const schema = z.object({ model_id: z.string() });
+        const { model_id } = schema.parse((req as any).body || {});
+        const exists = (app as any).db.prepare('SELECT id FROM models WHERE id=?').get(model_id);
+        if (!exists) return reply.code(404).send({ error: '模型不存在' });
+        (app as any).db
+          .prepare('UPDATE users SET selected_model_id=? WHERE id=?')
+          .run(model_id, payload.uid);
+        return { success: true };
+      } catch {
+        return reply.code(401).send({ error: '未认证' });
+      }
+    }),
+  );
 
   // 内部接口：根据 userId 返回其绑定模型（受服务密钥保护）
-  app.get('/internal/models/by-user', async (req, reply) => {
-    const query = (req as any).query || {};
-    const userId = query.userId as string;
-    const serviceKey = (req as any).headers['x-service-key'] as string | undefined;
-    if (!process.env.SERVICE_KEY || serviceKey !== process.env.SERVICE_KEY) {
-      return reply.code(401).send({ error: 'unauthorized' });
-    }
-    if (!userId) return reply.code(400).send({ error: 'userId required' });
-    const u = (app as any).db.prepare('SELECT selected_model_id FROM users WHERE id=?').get(userId);
-    if (!u?.selected_model_id) return { model: null };
-    const model = (app as any).db
-      .prepare('SELECT * FROM models WHERE id=?')
-      .get(u.selected_model_id);
-    if (!model) return { model: null };
-    const params = (app as any).db
-      .prepare('SELECT * FROM model_params WHERE model_id=?')
-      .all(model.id);
-    return { model, params };
-  });
+  app.get(
+    '/internal/models/by-user',
+    withErrorLogging(app.log as any, 'models.by-user', async (req, reply) => {
+      const query = (req as any).query || {};
+      const userId = query.userId as string;
+      const serviceKey = (req as any).headers['x-service-key'] as string | undefined;
+      if (!process.env.SERVICE_KEY || serviceKey !== process.env.SERVICE_KEY) {
+        return reply.code(401).send({ error: 'unauthorized' });
+      }
+      if (!userId) return reply.code(400).send({ error: 'userId required' });
+      const u = (app as any).db
+        .prepare('SELECT selected_model_id FROM users WHERE id=?')
+        .get(userId);
+      if (!u?.selected_model_id) return { model: null };
+      const model = (app as any).db
+        .prepare('SELECT * FROM models WHERE id=?')
+        .get(u.selected_model_id);
+      if (!model) return { model: null };
+      const params = (app as any).db
+        .prepare('SELECT * FROM model_params WHERE model_id=?')
+        .all(model.id);
+      return { model, params };
+    }),
+  );
 }

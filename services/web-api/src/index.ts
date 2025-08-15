@@ -1,5 +1,6 @@
 // 使用包名导入；tsconfig.paths 已指向源码目录（仅供类型解析），运行时由构建或容器解析
 import { initSqlite } from '@cuemate/data-sqlite';
+import { fastifyLoggingHooks } from '@cuemate/logger';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import { config } from 'dotenv';
@@ -9,11 +10,12 @@ import { registerJobRoutes } from './routes/jobs.js';
 import { registerModelRoutes } from './routes/models.js';
 import { registerInterviewQuestionRoutes } from './routes/questions.js';
 import { registerReviewRoutes } from './routes/reviews.js';
+import { logger as serviceLogger } from './utils/logger.js';
 
 config();
 
 async function start() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: serviceLogger });
 
   await app.register(cors, {
     origin: true, // 反射请求源，配合凭证
@@ -26,6 +28,12 @@ async function start() {
   // 初始化 SQLite（better-sqlite3）
   const db = await initSqlite(process.env.SQLITE_PATH || './cuemate.db');
   app.decorate('db', db as any);
+
+  // 全局日志钩子
+  const hooks = fastifyLoggingHooks();
+  app.addHook('onRequest', hooks.onRequest as any);
+  app.addHook('onResponse', hooks.onResponse as any);
+  hooks.setErrorHandler(app as any);
 
   // 路由
   registerAuthRoutes(app as any);

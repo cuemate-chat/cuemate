@@ -68,10 +68,10 @@ export class WhisperProvider extends EventEmitter {
         timestamp: Date.now(),
       };
 
-      this.emit('transcript', transcript);
+      this.emit('transcript', transcript as any);
     } catch (error) {
-      logger.error('Whisper transcription failed:', error);
-      this.emit('error', error);
+      logger.error('Whisper transcription failed:', error as any);
+      this.emit('error', error as any);
     } finally {
       this.isProcessing = false;
     }

@@ -1,3 +1,4 @@
+import { fastifyLoggingHooks } from '@cuemate/logger';
 import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
 import Fastify from 'fastify';
@@ -11,8 +12,8 @@ import { createHttpRoutes } from './routes/http.js';
 import { logger } from './utils/logger.js';
 
 async function buildServer() {
-  const fastify = Fastify({
-    logger: true,
+  const fastify: any = Fastify({
+    logger: logger as any,
     trustProxy: true,
   });
 
@@ -48,6 +49,12 @@ async function buildServer() {
 
   // 设置 Socket.IO 处理器
   createSocketHandlers(io, asrProviders, audioProcessor);
+
+  // 全局日志钩子
+  const hooks = fastifyLoggingHooks();
+  fastify.addHook('onRequest', hooks.onRequest as any);
+  fastify.addHook('onResponse', hooks.onResponse as any);
+  hooks.setErrorHandler(fastify as any);
 
   // 设置 HTTP 路由
   createHttpRoutes(fastify, asrProviders);

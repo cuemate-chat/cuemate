@@ -45,7 +45,7 @@ export function createSocketHandlers(
         }
 
         // 处理音频数据
-        const processedAudio = session.audioProcessor.processAudioData(data);
+        const processedAudio = session.audioProcessor.processAudioData(data as any as ArrayBuffer);
 
         if (processedAudio.length === 0) {
           return;
@@ -61,12 +61,22 @@ export function createSocketHandlers(
 
         // 根据配置选择 ASR 提供者
         if (session.provider === 'deepgram' && providers.deepgram.isAvailable()) {
-          await handleDeepgramStream(socket, providers.deepgram, processedAudio, session);
+          await handleDeepgramStream(
+            socket,
+            providers.deepgram,
+            Buffer.from(processedAudio as any),
+            session,
+          );
         } else if (session.provider === 'whisper' || config.fallback.enabled) {
-          await handleWhisperStream(socket, providers.whisper, processedAudio, session);
+          await handleWhisperStream(
+            socket,
+            providers.whisper,
+            Buffer.from(processedAudio as any),
+            session,
+          );
         }
       } catch (error) {
-        logger.error('Error processing audio stream:', error);
+        logger.error('Error processing audio stream:', error as any);
         socket.emit('error', { message: 'Audio processing failed' });
       }
     });
@@ -131,7 +141,7 @@ export function createSocketHandlers(
           sessionId: session.sessionId,
         });
       } catch (error) {
-        logger.error('Failed to start transcription:', error);
+        logger.error('Failed to start transcription:', error as any);
         socket.emit('error', { message: 'Failed to start transcription' });
       }
     });
@@ -146,7 +156,7 @@ export function createSocketHandlers(
         }
         socket.emit('transcription:stopped');
       } catch (error) {
-        logger.error('Failed to stop transcription:', error);
+        logger.error('Failed to stop transcription:', error as any);
       }
     });
 
@@ -169,7 +179,7 @@ export function createSocketHandlers(
 
         socket.emit('provider:switched', { provider });
       } catch (error) {
-        logger.error('Failed to switch provider:', error);
+        logger.error('Failed to switch provider:', error as any);
         socket.emit('error', { message: 'Failed to switch provider' });
       }
     });
@@ -214,7 +224,7 @@ async function handleDeepgramStream(
       await session.activeProvider.sendAudio(audioBuffer as unknown as ArrayBuffer);
     }
   } catch (error) {
-    logger.error('Deepgram streaming failed:', error);
+    logger.error('Deepgram streaming failed:', error as any);
 
     if (config.fallback.enabled) {
       logger.info('Falling back to Whisper');
@@ -235,7 +245,7 @@ async function handleWhisperStream(
       await session.activeProvider.processAudio(audioBuffer as unknown as ArrayBuffer);
     }
   } catch (error) {
-    logger.error('Whisper processing failed:', error);
+    logger.error('Whisper processing failed:', error as any);
     socket.emit('error', { message: 'Local ASR processing failed' });
   }
 }

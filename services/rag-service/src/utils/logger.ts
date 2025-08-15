@@ -1,6 +1,5 @@
-import pino from 'pino';
+import { createLogger } from '@cuemate/logger';
 
-export const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  timestamp: pino.stdTimeFunctions.isoTime,
+export const logger = createLogger({
+  service: 'rag-service',
 });

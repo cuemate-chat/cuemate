@@ -1,3 +1,4 @@
+import { fastifyLoggingHooks } from '@cuemate/logger';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import Fastify from 'fastify';
@@ -9,8 +10,8 @@ import { VectorStore } from './stores/vector-store.js';
 import { logger } from './utils/logger.js';
 
 async function buildServer() {
-  const fastify = Fastify({
-    logger: true,
+  const fastify: any = Fastify({
+    logger: logger as any,
     trustProxy: true,
     bodyLimit: 10485760, // 10MB
   });
@@ -28,6 +29,12 @@ async function buildServer() {
       fileSize: 10 * 1024 * 1024, // 10MB
     },
   });
+
+  // 全局日志钩子
+  const hooks = fastifyLoggingHooks();
+  fastify.addHook('onRequest', hooks.onRequest as any);
+  fastify.addHook('onResponse', hooks.onResponse as any);
+  hooks.setErrorHandler(fastify as any);
 
   // 初始化服务
   const embeddingService = new EmbeddingService(config.embeddings);

@@ -5,13 +5,15 @@ RUN npm install -g pnpm
 # 使用根锁文件安装，仅过滤 asr-gateway
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/asr-gateway/package.json ./services/asr-gateway/package.json
-RUN pnpm install --frozen-lockfile --filter @cuemate/asr-gateway...
+COPY packages/logger/package.json ./packages/logger/package.json
+RUN pnpm install --frozen-lockfile --filter @cuemate/logger --filter @cuemate/asr-gateway...
 
 # 复制源码并构建
 COPY services/asr-gateway ./services/asr-gateway
+COPY packages/logger ./packages/logger
 # tsc 需要根 tsconfig.base.json
 COPY tsconfig.base.json ./tsconfig.base.json
-RUN pnpm -r --filter @cuemate/asr-gateway build
+RUN pnpm -r --filter @cuemate/logger --filter @cuemate/asr-gateway build
 
 FROM node:22-bookworm-slim
 WORKDIR /app
@@ -20,12 +22,20 @@ RUN npm install -g pnpm && apt-get update && apt-get install -y dumb-init && rm 
 # 使用根锁文件执行按包生产安装，确保运行时依赖完整
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/asr-gateway/package.json ./services/asr-gateway/package.json
-RUN pnpm install --prod --frozen-lockfile --filter @cuemate/asr-gateway...
+COPY packages/logger/package.json ./packages/logger/package.json
+RUN pnpm install --prod --frozen-lockfile --filter @cuemate/logger --filter @cuemate/asr-gateway...
 
 # 复制构建产物
 COPY --from=builder /app/services/asr-gateway/dist ./services/asr-gateway/dist
+COPY --from=builder /app/packages/logger/dist ./packages/logger/dist
 
 WORKDIR /app/services/asr-gateway
+# 预创建日志目录并授权给 node 用户
+RUN mkdir -p /opt/cuemate/log/info/asr-gateway \
+    && mkdir -p /opt/cuemate/log/debug/asr-gateway \
+    && mkdir -p /opt/cuemate/log/warn/asr-gateway \
+    && mkdir -p /opt/cuemate/log/error/asr-gateway \
+    && chown -R node:node /opt/cuemate/log
 USER node
 EXPOSE 3001
 ENTRYPOINT ["dumb-init", "--"]

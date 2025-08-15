@@ -1,3 +1,4 @@
+import { fastifyLoggingHooks } from '@cuemate/logger';
 import cors from '@fastify/cors';
 import Fastify from 'fastify';
 import { config } from './config/index.js';
@@ -7,8 +8,8 @@ import { createRoutes } from './routes/index.js';
 import { logger } from './utils/logger.js';
 
 async function buildServer() {
-  const fastify = Fastify({
-    logger: logger,
+  const fastify: any = Fastify({
+    logger: logger as any,
     trustProxy: true,
     bodyLimit: 1048576, // 1MB
   });
@@ -18,6 +19,12 @@ async function buildServer() {
     origin: config.cors.origin,
     credentials: true,
   });
+
+  // 全局日志钩子
+  const hooks = fastifyLoggingHooks();
+  fastify.addHook('onRequest', hooks.onRequest as any);
+  fastify.addHook('onResponse', hooks.onResponse as any);
+  hooks.setErrorHandler(fastify as any);
 
   // 初始化 LLM 提供者
   const providers = await initializeProviders(config);

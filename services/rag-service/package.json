@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "fastify": "^4.28.1",
+    "@cuemate/logger": "workspace:*",
     "@fastify/cors": "^8.5.0",
     "@fastify/multipart": "^8.1.0",
     "@fastify/static": "^6.12.0",
