@@ -44,6 +44,27 @@ export function registerJobRoutes(app: FastifyInstance) {
             now,
           );
 
+        // 同步到 rag-service
+        try {
+          const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+          const items: any[] = [];
+          items.push({
+            id: `job:${jobId}`,
+            content: `${body.title}\n\n${body.description}`,
+            metadata: { type: 'job', jobId, userId: payload.uid, created_at: now },
+          });
+          items.push({
+            id: `resume:${resumeId}`,
+            content: body.resumeContent,
+            metadata: { type: 'resume', jobId, resumeId, userId: payload.uid, created_at: now },
+          });
+          await fetch(`${base}/ingest/batch`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ items }),
+          });
+        } catch {}
+
         return { jobId, resumeId };
       } catch (err) {
         return reply.code(401).send({ error: '未认证' });
@@ -130,6 +151,38 @@ export function registerJobRoutes(app: FastifyInstance) {
             now,
           );
       }
+
+      // 同步到 rag-service（先删除旧，再写新）
+      try {
+        const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        await fetch(`${base}/delete/by-filter`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ where: { jobId: id } }),
+        });
+        const items: any[] = [];
+        items.push({
+          id: `job:${id}`,
+          content: `${body.title}\n\n${body.description}`,
+          metadata: { type: 'job', jobId: id, userId: payload.uid },
+        });
+        const resumeRow = app.db
+          .prepare('SELECT id, content FROM resumes WHERE job_id=? AND user_id=?')
+          .get(id, payload.uid);
+        if (resumeRow) {
+          items.push({
+            id: `resume:${resumeRow.id}`,
+            content: resumeRow.content,
+            metadata: { type: 'resume', jobId: id, resumeId: resumeRow.id, userId: payload.uid },
+          });
+        }
+        await fetch(`${base}/ingest/batch`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ items }),
+        });
+      } catch {}
+
       return { success: true };
     } catch (err) {
       return reply.code(401).send({ error: '未认证' });
@@ -142,6 +195,14 @@ export function registerJobRoutes(app: FastifyInstance) {
       const payload = await req.jwtVerify();
       const id = (req.params as any)?.id as string;
       const ret = app.db.prepare('DELETE FROM jobs WHERE id=? AND user_id=?').run(id, payload.uid);
+      try {
+        const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        await fetch(`${base}/delete/by-filter`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ where: { jobId: id } }),
+        });
+      } catch {}
       return { success: ret.changes > 0 };
     } catch (err) {
       return reply.code(401).send({ error: '未认证' });

@@ -182,6 +182,20 @@ export class VectorStore {
     }
   }
 
+  async deleteByFilter(filter: Record<string, any>, collectionName?: string): Promise<void> {
+    const collection = await this.getOrCreateCollection(
+      collectionName || this.config.defaultCollection,
+    );
+
+    try {
+      await (collection as any).delete({ where: filter });
+      logger.info(`Deleted documents by filter from ${collectionName}`);
+    } catch (error) {
+      logger.error({ err: error as any }, 'Failed to delete by filter');
+      throw error;
+    }
+  }
+
   async updateDocument(
     id: string,
     document: Partial<Document>,

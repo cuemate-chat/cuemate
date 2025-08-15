@@ -1,13 +1,13 @@
 import OpenAI from 'openai';
-import { BaseLLMProvider, CompletionRequest, CompletionResponse } from './base.js';
 import { logger } from '../utils/logger.js';
+import { BaseLLMProvider, CompletionRequest, CompletionResponse } from './base.js';
 
 export class OpenAIProvider extends BaseLLMProvider {
   private client: OpenAI | null = null;
 
   constructor(config: any) {
     super('openai', config);
-    
+
     if (this.config.apiKey) {
       this.client = new OpenAI({
         apiKey: this.config.apiKey,
@@ -40,11 +40,13 @@ export class OpenAIProvider extends BaseLLMProvider {
 
       return {
         content: response.message?.content || '',
-        usage: completion.usage ? {
-          promptTokens: completion.usage.prompt_tokens,
-          completionTokens: completion.usage.completion_tokens,
-          totalTokens: completion.usage.total_tokens,
-        } : undefined,
+        usage: completion.usage
+          ? {
+              promptTokens: completion.usage.prompt_tokens,
+              completionTokens: completion.usage.completion_tokens,
+              totalTokens: completion.usage.total_tokens,
+            }
+          : undefined,
         model: completion.model,
         provider: 'openai',
         latency,

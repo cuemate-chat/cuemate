@@ -88,6 +88,29 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           )
           .run(qid, body.jobId, body.title, body.description || '', now, body.tagId || null);
 
+        // 同步到向量库
+        try {
+          const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+          await fetch(`${base}/ingest/batch`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              items: [
+                {
+                  id: `question:${qid}`,
+                  content: `${body.title}\n\n${body.description || ''}`,
+                  metadata: {
+                    type: 'question',
+                    questionId: qid,
+                    jobId: body.jobId,
+                    tagId: body.tagId || null,
+                  },
+                },
+              ],
+            }),
+          });
+        } catch {}
+
         return { id: qid };
       } catch (err) {
         return reply.code(401).send({ error: '未认证' });
@@ -220,6 +243,27 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         (app as any).db
           .prepare('UPDATE interview_questions SET question=?, answer=?, tag_id=? WHERE id=?')
           .run(body.title, body.description, body.tagId ?? null, id);
+        try {
+          const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+          await fetch(`${base}/delete/by-filter`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ where: { questionId: id } }),
+          });
+          await fetch(`${base}/ingest/batch`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              items: [
+                {
+                  id: `question:${id}`,
+                  content: `${body.title}\n\n${body.description}`,
+                  metadata: { type: 'question', questionId: id },
+                },
+              ],
+            }),
+          });
+        } catch {}
         return { success: true };
       } catch (err) {
         return reply.code(401).send({ error: '未认证' });
@@ -242,6 +286,14 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           .get(id, payload.uid);
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
         (app as any).db.prepare('DELETE FROM interview_questions WHERE id=?').run(id);
+        try {
+          const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+          await fetch(`${base}/delete/by-filter`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ where: { questionId: id } }),
+          });
+        } catch {}
         return { success: true };
       } catch (err) {
         return reply.code(401).send({ error: '未认证' });
