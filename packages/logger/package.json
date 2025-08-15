@@ -9,6 +9,14 @@
         ".": {
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
+        },
+        "./tz": {
+            "types": "./dist/tz.d.ts",
+            "default": "./dist/tz.js"
+        },
+        "./fastify": {
+            "types": "./dist/fastify.d.ts",
+            "default": "./dist/fastify.js"
         }
     },
     "scripts": {

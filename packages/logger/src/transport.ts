@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import build from 'pino-abstract-transport';
+import { getLoggerTimeZone } from './tz.js';
 
 type TransportOptions = {
   baseDir?: string;
@@ -13,11 +14,29 @@ function ensureDir(dir: string) {
   } catch {}
 }
 
-function getDateParts(date: Date) {
-  const yyyy = String(date.getFullYear());
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+function getDateStringInTimeZone(d: Date, timeZone?: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+      .formatToParts(d)
+      .reduce(
+        (acc: Record<string, string>, p) => {
+          acc[p.type] = p.value;
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  } catch {
+    const yyyy = String(d.getFullYear());
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 }
 
 function getLevel(obj: any): 'debug' | 'info' | 'warn' | 'error' {
@@ -52,32 +71,57 @@ function resolveLogPath(
 export default async function transport(options: TransportOptions = {}) {
   const baseDir = options.baseDir || process.env.CUEMATE_LOG_DIR || '/opt/cuemate/log';
   const service = options.service;
+  const timeZone = getLoggerTimeZone();
   ensureDir(baseDir);
   const streams = new Map<string, fs.WriteStream>();
 
-  function getStreamFor(level: string, dateStr: string) {
+  function ensureFile(level: string, dateStr: string) {
     const key = `${level}:${dateStr}`;
     let ws = streams.get(key);
     if (!ws) {
       const filePath = resolveLogPath(baseDir, level, service, dateStr);
-      ws = fs.createWriteStream(filePath, { flags: 'a' });
+      try {
+        fs.closeSync(fs.openSync(filePath, 'a'));
+      } catch {}
+      ws = fs.createWriteStream('/dev/null');
       streams.set(key, ws);
     }
-    return ws;
+    return resolveLogPath(baseDir, level, service, dateStr);
   }
 
   const buildAny: any = build as any;
   return buildAny(
     async function (source: any) {
       for await (const obj of source) {
-        const timeValue: any = (obj as any)?.time || (obj as any)?.timestamp || Date.now();
-        const d = new Date(typeof timeValue === 'string' ? timeValue : Number(timeValue));
-        const dateStr = getDateParts(d);
+        const anyObj = obj as any;
+        const tsText: unknown = anyObj?.ts;
+        const timeValue: unknown = anyObj?.time ?? anyObj?.timestamp;
+        let dateStr: string;
+        if (typeof tsText === 'string' && /^\d{4}-\d{2}-\d{2}/.test(tsText)) {
+          dateStr = tsText.slice(0, 10);
+        } else if (typeof timeValue === 'number') {
+          dateStr = getDateStringInTimeZone(new Date(timeValue), timeZone);
+        } else if (typeof timeValue === 'string') {
+          dateStr = getDateStringInTimeZone(new Date(timeValue), timeZone);
+        } else {
+          dateStr = getDateStringInTimeZone(new Date(), timeZone);
+        }
         const level = getLevel(obj as any);
-        const ws = getStreamFor(level, dateStr);
-        ws.write(JSON.stringify(obj) + '\n');
+        const filePath = ensureFile(level, dateStr);
+        const line = JSON.stringify(obj) + '\n';
+        prependLine(filePath, line);
       }
     },
     { parse: 'ndjson' },
   );
+}
+
+function prependLine(filePath: string, data: string) {
+  try {
+    let existing = '';
+    try {
+      existing = fs.readFileSync(filePath, 'utf8');
+    } catch {}
+    fs.writeFileSync(filePath, data + existing, 'utf8');
+  } catch {}
 }

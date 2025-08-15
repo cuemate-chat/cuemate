@@ -28,9 +28,9 @@ services:
       - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
       - PRIMARY_ASR_PROVIDER=deepgram
       - FALLBACK_ASR_PROVIDER=whisper
-    # Redis 已移除，若需启用请在此处添加依赖
     volumes:
       - ../../services/asr-gateway/models:/app/models
+      - ../../data/logs:/opt/cuemate/log
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -54,6 +54,8 @@ services:
       - PRIMARY_LLM_PROVIDER=openai
       - ROUTING_STRATEGY=primary-fallback
     # Redis 已移除，若需启用请在此处添加依赖
+    volumes:
+      - ../../data/logs:/opt/cuemate/log
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -77,13 +79,12 @@ services:
     volumes:
       - chroma_data:/app/chroma_data
       - ../../services/rag-service/documents:/app/documents
+      - ../../data/logs:/opt/cuemate/log
     networks:
       - cuemate-network
     depends_on:
       - chroma
     restart: unless-stopped
-
-  # Nginx 网关已移除（可选）
 
   # Web API (SQLite)
   web-api:
@@ -99,6 +100,7 @@ services:
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
     volumes:
       - ../../data/sqlite:/data
+      - ../../data/logs:/opt/cuemate/log
     ports:
       - "3004:3004"
     networks:

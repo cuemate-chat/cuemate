@@ -33,6 +33,12 @@
             ],
             "@cuemate/data-sqlite": [
                 "packages/data-sqlite/src"
+            ],
+            "@cuemate/logger": [
+                "packages/logger/src/index.ts"
+            ],
+            "@cuemate/logger/*": [
+                "packages/logger/src/*"
             ]
         }
     }

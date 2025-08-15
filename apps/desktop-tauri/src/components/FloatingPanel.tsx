@@ -2,7 +2,7 @@ import { appWindow } from '@tauri-apps/api/window';
 import { motion } from 'framer-motion';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import Logo from '../assets/logo-background.png';
+import Logo from '../assets/CueMate.png';
 
 interface FloatingPanelProps {
   children: React.ReactNode;
@@ -47,7 +47,7 @@ const FloatingPanel: React.FC<FloatingPanelProps> = ({ children }) => {
       >
         <div className="flex items-center space-x-2">
           <img src={Logo} alt="CueMate" className="h-4 select-none" draggable={false} />
-          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+          <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
           <span className="text-sm font-medium text-gray-300">CueMate</span>
         </div>
         

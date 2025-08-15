@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import pino, { stdTimeFunctions } from 'pino';
+import pino from 'pino';
+import { getLoggerTimeZone, setLoggerTimeZone } from './tz.js';
 
 const DEFAULT_BASE_DIR = process.env.CUEMATE_LOG_DIR || '/opt/cuemate/log';
 
@@ -26,6 +27,9 @@ export type CreateLoggerOptions = {
 export function createLogger(options: CreateLoggerOptions) {
   const isDevelopment = process.env.NODE_ENV !== 'production';
   const baseDir = options.baseDir || DEFAULT_BASE_DIR;
+  const envTz = process.env.CUEMATE_LOG_TZ || process.env.TZ || undefined;
+  if (envTz) setLoggerTimeZone(envTz);
+  void getLoggerTimeZone();
 
   ensureDir(baseDir);
   ensureDir(path.join(baseDir, 'info'));
@@ -53,7 +57,7 @@ export function createLogger(options: CreateLoggerOptions) {
   const logger = (pino as any)({
     level: options.level || (process.env.LOG_LEVEL as any) || 'info',
     base: { service: options.service },
-    timestamp: stdTimeFunctions.isoTime,
+    timestamp: () => `,"ts":"${formatLocalTime(new Date(), getLoggerTimeZone())}"`,
     redact: {
       paths: options.redactPaths || [
         'apiKey',
@@ -99,3 +103,36 @@ function safeJson(input: unknown) {
 }
 
 export { fastifyLoggingHooks } from './fastify.js';
+export { getLoggerTimeZone, setLoggerTimeZone } from './tz.js';
+
+function formatLocalTime(d: Date, timeZone?: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: timeZone,
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+      .formatToParts(d)
+      .reduce(
+        (acc: Record<string, string>, p) => {
+          acc[p.type] = p.value;
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+    return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
+  } catch {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const HH = String(d.getHours()).padStart(2, '0');
+    const MM = String(d.getMinutes()).padStart(2, '0');
+    const SS = String(d.getSeconds()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${HH}:${MM}:${SS}`;
+  }
+}

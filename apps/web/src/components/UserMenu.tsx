@@ -1,4 +1,4 @@
-import { ArrowRightOnRectangleIcon, Cog6ToothIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
+import { ArrowRightOnRectangleIcon, Cog6ToothIcon, DocumentTextIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchMe } from '../api/auth';
@@ -80,6 +80,11 @@ export default function UserMenu() {
     setOpen(false);
   };
 
+  const onLogs = () => {
+    navigate('/settings/logs');
+    setOpen(false);
+  };
+
   const onLogout = () => {
     storage.clearToken();
     storage.clearUser();
@@ -105,6 +110,9 @@ export default function UserMenu() {
           </button>
           <button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700" onClick={onModelSettings}>
             <Squares2X2Icon className="w-4 h-4" /> 模型设置
+          </button>
+          <button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700" onClick={onLogs}>
+            <DocumentTextIcon className="w-4 h-4" /> 日志管理
           </button>
           <div className="h-px bg-slate-200" />
           <button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 text-red-600 flex items-center gap-2" onClick={onLogout}>

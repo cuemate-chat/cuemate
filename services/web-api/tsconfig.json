@@ -12,6 +12,12 @@
     "paths": {
       "@cuemate/data-sqlite": [
         "../../packages/data-sqlite/src"
+      ],
+      "@cuemate/logger": [
+        "../../packages/logger/src"
+      ],
+      "@cuemate/logger/*": [
+        "../../packages/logger/src/*"
       ]
     }
   },

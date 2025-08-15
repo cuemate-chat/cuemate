@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import JobsList from './pages/JobsList';
 import JobsNew from './pages/JobsNew';
 import Login from './pages/Login';
+import Logs from './pages/Logs';
 import ModelSettings from './pages/ModelSettings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Questions from './pages/Questions';
@@ -35,6 +36,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/legal/privacy" element={<PrivacyPolicy />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/models" element={<ModelSettings />} />
+          <Route path="/settings/logs" element={<Logs />} />
         </Route>
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<Navigate to="/home" />} />

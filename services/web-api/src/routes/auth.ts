@@ -1,4 +1,5 @@
 import { withErrorLogging } from '@cuemate/logger';
+import { setLoggerTimeZone } from '@cuemate/logger/tz';
 import bcrypt from 'bcryptjs';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
@@ -93,6 +94,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
             'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id FROM users WHERE id = ?',
           )
           .get(payload.uid);
+        if (row?.timezone) setLoggerTimeZone(row.timezone);
         return { success: true, user: row };
       } catch (err) {
         return reply.code(401).send({ error: '未认证' });
