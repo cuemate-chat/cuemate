@@ -7,7 +7,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { DatePicker, Pagination, Select } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { fetchLogContent, fetchLogs, fetchLogServices, LogLevel } from '../api/logs';
 import { message } from '../components/Message';
 
@@ -21,6 +21,42 @@ export default function Logs() {
   const [total, setTotal] = useState(0);
   const [items, setItems] = useState<Array<{ level: LogLevel; service: string; date: string; size: number; mtimeMs: number }>>([]);
   const [viewing, setViewing] = useState<{ level: LogLevel; service: string; date: string; lines: string[] } | null>(null);
+
+  // 列宽（可调节）
+  type ColKey = 'name' | 'project' | 'level' | 'date' | 'size' | 'action';
+  const [colWidths, setColWidths] = useState<Record<ColKey, number>>({
+    name: 240,
+    project: 240,
+    level: 240,
+    date: 260,
+    size: 240,
+    action: 200,
+  });
+  const resizingRef = useRef<{ key: ColKey; startX: number; startW: number } | null>(null);
+  const MIN_COL_WIDTH = 80;
+
+  const startResize = (key: ColKey, e: React.MouseEvent) => {
+    e.preventDefault();
+    resizingRef.current = { key, startX: e.clientX, startW: colWidths[key] };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
+  const onMouseMove = (e: MouseEvent) => {
+    const r = resizingRef.current;
+    if (!r) return;
+    const delta = e.clientX - r.startX;
+    const next = Math.max(MIN_COL_WIDTH, Math.round(r.startW + delta));
+    setColWidths((prev) => ({ ...prev, [r.key]: next }));
+  };
+
+  const onMouseUp = () => {
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onMouseUp);
+    resizingRef.current = null;
+  };
+
+  const gridCols = `minmax(${colWidths.name}px, 1fr) ${colWidths.project}px ${colWidths.level}px ${colWidths.date}px ${colWidths.size}px ${colWidths.action}px`;
 
   // 项目中文名称映射
   const serviceNameMap: Record<string, string> = {
@@ -106,16 +142,44 @@ export default function Logs() {
       </div>
 
       <div className="border rounded">
-        <div className="grid grid-cols-7 text-xs font-medium bg-slate-50 px-3 py-2 border-b">
-          <div>名称</div>
-          <div>项目</div>
-          <div>级别</div>
-          <div>日期</div>
-          <div>大小</div>
-          <div>操作</div>
+        <div
+          className="grid text-xs font-medium bg-slate-50 px-3 py-2 border-b select-none"
+          style={{ gridTemplateColumns: gridCols }}
+        >
+          <div className="relative">
+            名称
+            <span
+              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+              onMouseDown={(e) => startResize('name', e)}
+            />
+          </div>
+          <div className="relative">
+            项目
+            <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('project', e)} />
+          </div>
+          <div className="relative">
+            级别
+            <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('level', e)} />
+          </div>
+          <div className="relative">
+            日期
+            <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('date', e)} />
+          </div>
+          <div className="relative">
+            大小
+            <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('size', e)} />
+          </div>
+          <div className="relative">
+            操作
+            <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('action', e)} />
+          </div>
         </div>
         {items.map((it, idx) => (
-          <div key={idx} className="grid grid-cols-7 text-sm px-3 py-2 border-b hover:bg-slate-50">
+          <div
+            key={idx}
+            className="grid text-sm px-3 py-2 border-b hover:bg-slate-50"
+            style={{ gridTemplateColumns: gridCols }}
+          >
             <div>{(page - 1) * 10 + idx + 1} . {serviceNameMap[it.service] || it.service}</div>
             <div>{it.service}</div>
             <div><LevelPill lvl={it.level} /></div>
