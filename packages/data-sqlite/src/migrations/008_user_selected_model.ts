@@ -13,6 +13,11 @@ export function up(db: any): void {
     db.exec(`ALTER TABLE models ADD COLUMN credentials TEXT;`);
   } catch {}
 
+  // 增加连通状态字段（ok/fail/NULL）
+  try {
+    db.exec(`ALTER TABLE models ADD COLUMN status TEXT;`);
+  } catch {}
+
   try {
     const rows = db.prepare(`SELECT id, base_url, api_url, api_key FROM models`).all();
     const update = db.prepare(`UPDATE models SET credentials=? WHERE id=?`);
@@ -44,6 +49,7 @@ export function up(db: any): void {
           icon TEXT,
           version TEXT,
           credentials TEXT,
+          status TEXT,
           created_by TEXT,
           is_enabled INTEGER NOT NULL DEFAULT 1,
           created_at INTEGER NOT NULL,
@@ -51,8 +57,8 @@ export function up(db: any): void {
         );
       `);
       db.exec(`
-        INSERT INTO __models_new (id, name, provider, type, scope, model_name, icon, version, credentials, created_by, is_enabled, created_at, updated_at)
-        SELECT id, name, provider, type, scope, model_name, icon, version, credentials, created_by, is_enabled, created_at, updated_at FROM models;
+        INSERT INTO __models_new (id, name, provider, type, scope, model_name, icon, version, credentials, status, created_by, is_enabled, created_at, updated_at)
+        SELECT id, name, provider, type, scope, model_name, icon, version, credentials, status, created_by, is_enabled, created_at, updated_at FROM models;
       `);
       db.exec(`DROP TABLE models;`);
       db.exec(`ALTER TABLE __models_new RENAME TO models;`);

@@ -66,6 +66,7 @@ export function registerModelRoutes(app: FastifyInstance) {
         }),
       )
       .optional(),
+    status: z.string().optional(),
   });
 
   app.post(
@@ -76,8 +77,8 @@ export function registerModelRoutes(app: FastifyInstance) {
       const now = Date.now();
       (app as any).db
         .prepare(
-          `INSERT OR REPLACE INTO models (id, name, provider, type, scope, model_name, icon, version, credentials, created_by, is_enabled, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, COALESCE((SELECT created_at FROM models WHERE id=?), ?), ?)`,
+          `INSERT OR REPLACE INTO models (id, name, provider, type, scope, model_name, icon, version, credentials, status, created_by, is_enabled, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, COALESCE((SELECT created_at FROM models WHERE id=?), ?), ?)`,
         )
         .run(
           id,
@@ -89,6 +90,7 @@ export function registerModelRoutes(app: FastifyInstance) {
           body.icon || null,
           body.version || body.model_name || null,
           body.credentials ? JSON.stringify(body.credentials) : null,
+          body.status || null,
           'admin',
           id,
           now,
@@ -123,6 +125,36 @@ export function registerModelRoutes(app: FastifyInstance) {
         tx(body.params);
       }
 
+      // 保存后自动进行连通测试并更新状态
+      try {
+        const modelRow = (app as any).db.prepare('SELECT * FROM models WHERE id=?').get(id);
+        const creds = modelRow?.credentials ? JSON.parse(modelRow.credentials) : {};
+        const base = process.env.LLM_ROUTER_BASE || 'http://llm-router:3002';
+        const res = await fetch(`${base}/providers/probe`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            id: modelRow.provider,
+            provider: modelRow.provider,
+            base_url: creds.base_url || creds.baseUrl,
+            api_key: creds.api_key || creds.apiKey,
+            model_name: modelRow.model_name,
+            temperature: creds.temperature,
+            max_tokens: creds.max_tokens,
+            params: creds,
+            mode: 'both',
+            embed_base_url: creds.embed_base_url || creds.embedBaseUrl,
+            embed_api_key: creds.embed_api_key || creds.embedApiKey,
+            embed_model: creds.embed_model || creds.embedModel,
+          }),
+        });
+        const data = (await res.json()) as any;
+        const ok = !!data?.ok;
+        (app as any).db
+          .prepare('UPDATE models SET status=? WHERE id=?')
+          .run(ok ? 'ok' : 'fail', id);
+      } catch {}
+
       return { id };
     }),
   );
@@ -134,6 +166,48 @@ export function registerModelRoutes(app: FastifyInstance) {
     (app as any).db.prepare('DELETE FROM model_params WHERE model_id=?').run(id);
     return { success: true };
   });
+
+  // 测试连通性（简单调用 llm-router 的 /providers/health-check 或根据凭证直连）
+  app.post(
+    '/models/:id/test',
+    withErrorLogging(app.log as any, 'models.test', async (req, reply) => {
+      const id = (req.params as any).id;
+      const model = (app as any).db.prepare('SELECT * FROM models WHERE id=?').get(id);
+      if (!model) return reply.code(404).send({ error: '模型不存在' });
+      const creds = model.credentials ? JSON.parse(model.credentials) : {};
+      // 调用 llm-router 的动态探测接口
+      const base = process.env.LLM_ROUTER_BASE || 'http://llm-router:3002';
+      try {
+        const res = await fetch(`${base}/providers/probe`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            id: model.provider,
+            provider: model.provider,
+            base_url: creds.base_url || creds.baseUrl,
+            api_key: creds.api_key || creds.apiKey,
+            model_name: model.model_name,
+            temperature: creds.temperature,
+            max_tokens: creds.max_tokens,
+            params: creds,
+            mode: 'both',
+            embed_base_url: creds.embed_base_url || creds.embedBaseUrl,
+            embed_api_key: creds.embed_api_key || creds.embedApiKey,
+            embed_model: creds.embed_model || creds.embedModel,
+          }),
+        });
+        const data = (await res.json()) as any;
+        const ok = !!data?.ok;
+        (app as any).db
+          .prepare('UPDATE models SET status=? WHERE id=?')
+          .run(ok ? 'ok' : 'fail', id);
+        return { ok, chatOk: data?.chatOk, embedOk: data?.embedOk };
+      } catch (e) {
+        (app as any).db.prepare('UPDATE models SET status=? WHERE id=?').run('fail', id);
+        return { ok: false, error: (e as any)?.message || 'probe failed' };
+      }
+    }),
+  );
 
   // 将模型绑定到当前用户
   app.post(

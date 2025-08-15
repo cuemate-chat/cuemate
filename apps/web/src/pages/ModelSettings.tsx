@@ -1,8 +1,8 @@
-import { DeleteOutlined, EditOutlined, EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, EyeInvisibleOutlined, EyeOutlined, LinkOutlined } from '@ant-design/icons';
 import { Input, Modal, Select, Switch, Tabs, Tree } from 'antd';
 import 'antd/dist/reset.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { deleteModel, getModel, listModels, selectUserModel, upsertModel } from '../api/models';
+import { deleteModel, getModel, listModels, selectUserModel, testModelConnectivity, upsertModel } from '../api/models';
 import { message } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 import { findProvider, providerManifests } from '../providers';
@@ -176,7 +176,7 @@ export default function ModelSettings() {
                   <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">{(page-1)*pageSize + idx + 1}</div>
                   <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
                 </div>
-                <div className="flex items-center justify-between pl-6">{/* 内容整体右移，避免遮住序号 */}
+                <div className="flex items-center justify-between pl-6">
                   <div className="flex items-center gap-2">
                     {(() => {
                       const icon = findProvider(m.provider)?.icon;
@@ -188,9 +188,23 @@ export default function ModelSettings() {
                     })()}
                     <div className="font-semibold text-slate-900 text-base">{m.name}</div>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${m.scope==='public'?'bg-blue-50 text-blue-700':'bg-amber-50 text-amber-700'}`}>{m.scope==='public'?'公有':'私有'}</span>
+                    {m.status && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${m.status==='ok'?'bg-green-50 text-green-700':'bg-red-50 text-red-700'}`}>{m.status==='ok'?'已连通':'不可用'}</span>
+                    )}
                   </div>
                   {/* 右上角操作：仅悬停卡片时显示 */}
                   <div className="hidden group-hover:flex items-center gap-3">
+                    <button className="inline-flex items-center justify-center" title="测试连通性" onClick={async ()=>{
+                      try {
+                        const res: any = await testModelConnectivity(m.id);
+                        message[res?.ok ? 'success' : 'error'](res?.ok ? '连通正常' : '连通失败');
+                        fetchList();
+                      } catch {
+                        message.error('测试失败');
+                      }
+                    }}>
+                      <LinkOutlined style={{ fontSize: 18, color: '#0ea5e9' }} />
+                    </button>
                     <button className="inline-flex items-center justify-center" title="编辑" onClick={()=>handleEdit(m)}>
                       <EditOutlined style={{ fontSize: 18, color: '#2563eb' }} />
                     </button>
@@ -273,6 +287,7 @@ function getDefaultParamsByProvider(pid?: string) {
 
 function EditModal({ open, data, onClose, onOk }: any) {
   const [form, setForm] = useState<any>(data || { scope: 'public', type: 'llm', params: [] });
+  const [pickerOpenInner, setPickerOpenInner] = useState(false);
   useEffect(()=>{ 
     const base = data || { scope:'public', type:'llm', params: [] };
     // 若包含 credentials(JSON 文本或对象)，展开到表单字段，便于编辑
@@ -305,7 +320,12 @@ function EditModal({ open, data, onClose, onOk }: any) {
       cancelText="取消"
       title={(
         <div className="flex items-center gap-2">
-          <span className="text-slate-400">选择供应商</span>
+          <button
+            className="text-blue-600 hover:underline"
+            onClick={() => setPickerOpenInner(true)}
+          >
+            选择供应商
+          </button>
           <span className="text-slate-400">-＞</span>
           {(() => {
             const isEdit = !!(data && data.id);
@@ -323,6 +343,17 @@ function EditModal({ open, data, onClose, onOk }: any) {
       )}
       width={800}
     >
+      {/* 内部供应商选择器 */}
+      <ProviderPicker
+        open={pickerOpenInner}
+        onClose={()=>setPickerOpenInner(false)}
+        onPick={(pid: string)=>{ setPickerOpenInner(false); setForm((f:any)=>({ ...f, provider: pid, params: getDefaultParamsByProvider(pid) })); }}
+        providers={{
+          public: providerManifests.filter(p=>p.scope==='public').map(p=>({ id:p.id, name:p.name, icon:p.icon })),
+          private: providerManifests.filter(p=>p.scope==='private').map(p=>({ id:p.id, name:p.name, icon:p.icon })),
+        }}
+        filterKey={'all'}
+      />
       <Tabs
         items={[
           {

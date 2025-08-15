@@ -1,6 +1,18 @@
 import { FastifyInstance } from 'fastify';
 import { LLMManager } from '../managers/llm-manager.js';
-import { CompletionRequest } from '../providers/base.js';
+import { AzureOpenAIProvider } from '../providers/azure-openai.js';
+import { BaseLLMProvider, CompletionRequest } from '../providers/base.js';
+import { DeepSeekProvider } from '../providers/deepseek.js';
+import { GeminiProvider } from '../providers/gemini.js';
+import { KimiProvider } from '../providers/kimi.js';
+import { OllamaProvider } from '../providers/ollama.js';
+import { OpenAICompatibleProvider } from '../providers/openai-compatible.js';
+import { OpenAIProvider } from '../providers/openai.js';
+import { QwenProvider } from '../providers/qwen.js';
+import { SiliconFlowProvider } from '../providers/siliconflow.js';
+import { TencentProvider } from '../providers/tencent.js';
+import { VolcEngineProvider } from '../providers/volcengine.js';
+import { ZhipuProvider } from '../providers/zhipu.js';
 import { logger } from '../utils/logger.js';
 
 export async function createRoutes(fastify: FastifyInstance, llmManager: LLMManager) {
@@ -101,5 +113,108 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         healthy,
       })),
     };
+  });
+
+  // 动态探测：根据传入配置构造 provider 并执行 healthCheck
+  fastify.post('/providers/probe', async (request, reply) => {
+    try {
+      const body = (request.body as any) || {};
+      const providerId: string = body.provider || body.id || 'custom';
+      const model = body.model_name || body.model;
+      const baseUrl = body.base_url || body.baseUrl;
+      const apiKey = body.api_key || body.apiKey;
+      const temperature = Number(body.temperature ?? body.params?.temperature ?? 0.7);
+      const maxTokens = Number(body.max_tokens ?? body.params?.max_tokens ?? 512);
+      const mode: 'chat' | 'embeddings' | 'both' = (body.mode as any) || 'chat';
+
+      let chatOk: boolean | undefined;
+      let embedOk: boolean | undefined;
+
+      let provider: BaseLLMProvider;
+      switch (providerId) {
+        case 'openai':
+          provider = new OpenAIProvider({ apiKey, model, temperature, maxTokens });
+          break;
+        case 'azure-openai':
+          provider = new AzureOpenAIProvider({ baseUrl, apiKey, model, temperature, maxTokens });
+          break;
+        case 'ollama':
+          provider = new OllamaProvider({ baseUrl, model, temperature, maxTokens });
+          break;
+        case 'deepseek':
+          provider = new DeepSeekProvider({
+            apiKey,
+            model,
+            baseUrl,
+            temperature,
+            maxTokens,
+          } as any);
+          break;
+        case 'kimi':
+          provider = new KimiProvider({ apiKey, baseUrl, model, temperature, maxTokens });
+          break;
+        case 'gemini':
+          provider = new GeminiProvider({ apiKey, baseUrl, model, temperature, maxTokens });
+          break;
+        case 'qwen':
+          provider = new QwenProvider({ apiKey, baseUrl, model, temperature, maxTokens });
+          break;
+        case 'zhipu':
+          provider = new ZhipuProvider({ apiKey, baseUrl, model, temperature, maxTokens });
+          break;
+        case 'siliconflow':
+          provider = new SiliconFlowProvider({ apiKey, baseUrl, model, temperature, maxTokens });
+          break;
+        case 'tencent':
+          provider = new TencentProvider({ apiKey, baseUrl, model, temperature, maxTokens });
+          break;
+        case 'volcengine':
+          provider = new VolcEngineProvider({ apiKey, baseUrl, model, temperature, maxTokens });
+          break;
+        default:
+          provider = new OpenAICompatibleProvider({
+            id: providerId,
+            baseUrl,
+            apiKey,
+            model,
+            temperature,
+            maxTokens,
+          });
+      }
+
+      if (mode === 'chat' || mode === 'both') {
+        try {
+          chatOk = await provider.healthCheck();
+        } catch {
+          chatOk = false;
+        }
+      }
+
+      if (mode === 'embeddings' || mode === 'both') {
+        try {
+          const embedBaseUrl = body.embed_base_url || body.embedBaseUrl || baseUrl;
+          const embedApiKey = body.embed_api_key || body.embedApiKey || apiKey;
+          const embedModel = body.embed_model || body.embedModel || 'text-embedding-3-small';
+          const openai = new (await import('openai')).default({
+            apiKey: embedApiKey,
+            baseURL: embedBaseUrl,
+          });
+          const r = await openai.embeddings.create({ model: embedModel, input: 'ping' });
+          embedOk = !!r && !!(r as any).data?.length;
+        } catch {
+          embedOk = false;
+        }
+      }
+
+      const ok =
+        mode === 'chat'
+          ? !!chatOk
+          : mode === 'embeddings'
+            ? !!embedOk
+            : !!chatOk && (embedOk === undefined ? true : !!embedOk);
+      return { ok, chatOk, embedOk };
+    } catch (error) {
+      return reply.code(200).send({ ok: false, error: (error as any)?.message || 'probe failed' });
+    }
   });
 }

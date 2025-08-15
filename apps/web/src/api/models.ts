@@ -28,3 +28,7 @@ export function deleteModel(id: string) {
 export function selectUserModel(model_id: string) {
   return http.post('/models/select', { model_id });
 }
+
+export function testModelConnectivity(id: string) {
+  return http.post(`/models/${id}/test`, {});
+}
