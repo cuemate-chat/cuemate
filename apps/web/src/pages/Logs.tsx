@@ -1,9 +1,9 @@
 import { EyeIcon } from '@heroicons/react/24/outline';
 import {
-    BugAntIcon,
-    ExclamationTriangleIcon,
-    InformationCircleIcon,
-    XCircleIcon,
+  BugAntIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  XCircleIcon,
 } from '@heroicons/react/24/solid';
 import { DatePicker, Pagination, Select } from 'antd';
 import dayjs from 'dayjs';
@@ -213,10 +213,32 @@ export default function Logs() {
           <div className="bg-white w-[1000px] h-[70vh] max-h-[80vh] rounded shadow-xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="px-4 py-2 border-b flex justify-between items-center">
               <div className="font-medium">{serviceNameMap[viewing.service] || viewing.service} - {viewing.level.toUpperCase()} - {viewing.date}</div>
-              <button onClick={() => setViewing(null)} className="text-slate-500 hover:text-slate-700">关闭</button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => {
+                    const content = viewing.lines.join('\n');
+                    navigator.clipboard.writeText(content).then(() => {
+                      message.success('已复制到剪贴板');
+                    }).catch(() => {
+                      message.error('复制失败');
+                    });
+                  }} 
+                  className="px-3 py-1 text-blue-600 border border-blue-600 rounded hover:bg-blue-50 text-sm"
+                >
+                  复制日志
+                </button>
+                <button onClick={() => setViewing(null)} className="text-slate-500 hover:text-slate-700">关闭</button>
+              </div>
             </div>
-            <div className="flex-1 overflow-auto">
-              <pre className="p-4 text-xs font-mono whitespace-pre overflow-auto min-w-full">{viewing.lines.join('\n')}</pre>
+            <div className="flex-1 overflow-hidden flex flex-col">
+              {/* 内容区域：只显示一遍，但可以垂直滚动 */}
+              <div className="flex-1 overflow-y-auto">
+                <pre className="p-4 text-xs font-mono whitespace-pre" style={{ minWidth: 'max-content' }}>{viewing.lines.join('\n')}</pre>
+              </div>
+              {/* 横向滚动条固定在底部 */}
+              <div className="h-2 overflow-x-auto border-t border-slate-200 bg-slate-50">
+                <div style={{ height: '1px', minWidth: 'max-content' }}></div>
+              </div>
             </div>
           </div>
         </div>

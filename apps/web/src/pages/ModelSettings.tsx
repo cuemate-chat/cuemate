@@ -356,6 +356,7 @@ function EditModal({ open, data, onClose, onOk }: any) {
         </div>
       )}
       width={800}
+      style={{ overflow: 'hidden' }}
     >
       {/* 内部供应商选择器 */}
       <ProviderPicker
@@ -368,13 +369,14 @@ function EditModal({ open, data, onClose, onOk }: any) {
         }}
         filterKey={'all'}
       />
-      <Tabs
-        items={[
-          {
-            key: 'basic',
-            label: '基础信息',
-            children: (
-              <div className="space-y-5 pt-2 w-full">
+      <div className="flex flex-col h-full">
+        <Tabs
+          items={[
+            {
+              key: 'basic',
+              label: '基础信息',
+              children: (
+                <div className="space-y-5 pt-2 w-full overflow-y-auto flex-1">
                 {/* 模型名称：上下结构 */}
                 <div className="w-full">
                   <div className="mb-1 text-slate-700">模型名称<span className="text-red-500"> *</span></div>
@@ -465,7 +467,7 @@ function EditModal({ open, data, onClose, onOk }: any) {
             key: 'advanced',
             label: '高级设置',
             children: (
-              <div className="pt-2">
+              <div className="pt-2 overflow-y-auto flex-1">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-slate-800">模型参数</div>
                   <button
@@ -525,6 +527,7 @@ function EditModal({ open, data, onClose, onOk }: any) {
           },
         ]}
       />
+      </div>
     </Modal>
   );
 }
@@ -563,22 +566,60 @@ function ProviderPicker({ open, onClose, onPick, providers, filterKey }: any) {
     list = [...providers.public, ...providers.private];
   }
 
+  // 复制功能
+  const handleCopy = () => {
+    const content = list.map(p => `${p.name}: ${p.id}`).join('\n');
+    navigator.clipboard.writeText(content).then(() => {
+      message.success('已复制到剪贴板');
+    }).catch(() => {
+      message.error('复制失败');
+    });
+  };
+
   return (
-    <Modal open={open} onCancel={onClose} footer={null} title="选择供应商" width={900}>
-      <div className="grid grid-cols-2 gap-3">
-        {list.map((p) => (
+    <Modal 
+      open={open} 
+      onCancel={onClose} 
+      footer={null} 
+      title="选择供应商" 
+      width={900}
+      style={{ overflow: 'hidden' }}
+    >
+      <div className="flex flex-col h-full">
+        {/* 内容区域 */}
+        <div className="flex-1 overflow-y-auto pb-4">
+          <div className="grid grid-cols-2 gap-3">
+            {list.map((p) => (
+              <button
+                key={p.id}
+                onClick={()=>onPick(p.id)}
+                className="flex items-center border rounded-lg px-4 py-3 hover:bg-slate-50"
+              >
+                {p.icon && (() => {
+                  const src = `data:image/svg+xml;utf8,${encodeURIComponent(p.icon)}`;
+                  return <img src={src} alt="" className="w-6 h-6" />;
+                })()}
+                <span className="ml-3 font-medium text-slate-800">{p.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        {/* 底部按钮区域 */}
+        <div className="flex justify-end gap-2 pt-4 border-t border-slate-200">
           <button
-            key={p.id}
-            onClick={()=>onPick(p.id)}
-            className="flex items-center border rounded-lg px-4 py-3 hover:bg-slate-50"
+            onClick={handleCopy}
+            className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
           >
-            {p.icon && (() => {
-              const src = `data:image/svg+xml;utf8,${encodeURIComponent(p.icon)}`;
-              return <img src={src} alt="" className="w-6 h-6" />;
-            })()}
-            <span className="ml-3 font-medium text-slate-800">{p.name}</span>
+            复制
           </button>
-        ))}
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50"
+          >
+            关闭
+          </button>
+        </div>
       </div>
     </Modal>
   );
