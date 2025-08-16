@@ -103,36 +103,13 @@ export class VectorStore {
   }
 
   async search(
-    query: string,
-    topK: number = 5,
-    filter?: Record<string, any>,
-    collectionName?: string,
+    _query: string,
+    _topK: number = 5,
+    _filter?: Record<string, any>,
+    _collectionName?: string,
   ): Promise<SearchResult[]> {
-    const collection = await this.getOrCreateCollection(
-      collectionName || this.config.defaultCollection,
-    );
-
-    try {
-      const results: any = await (collection as any).query({
-        queryTexts: [query],
-        nResults: topK,
-        where: filter,
-      });
-
-      if (!results.documents[0]) {
-        return [];
-      }
-
-      return (results.documents[0] as string[]).map((doc: string, i: number) => ({
-        id: results.ids[0][i],
-        content: doc || '',
-        metadata: results.metadatas[0][i] || {},
-        score: results.distances ? 1 - results.distances[0][i] : 1,
-      }));
-    } catch (error) {
-      logger.error({ err: error as any }, 'Search failed');
-      throw error;
-    }
+    // 这个方法需要外部传入嵌入向量，不能直接使用 queryTexts
+    throw new Error('Use searchByEmbedding instead of search for text queries');
   }
 
   async searchByEmbedding(

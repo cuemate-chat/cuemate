@@ -17,6 +17,7 @@ import ReviewDetail from './pages/ReviewDetail';
 import ReviewsList from './pages/ReviewsList';
 import Settings from './pages/Settings';
 import UserAgreement from './pages/UserAgreement';
+import VectorKnowledge from './pages/VectorKnowledge';
 import './styles.css';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -37,6 +38,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/models" element={<ModelSettings />} />
           <Route path="/settings/logs" element={<Logs />} />
+          <Route path="/settings/vector-knowledge" element={<VectorKnowledge />} />
         </Route>
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<Navigate to="/home" />} />

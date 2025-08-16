@@ -74,7 +74,7 @@ export async function createJobRoutes(
         userId,
         topK ? parseInt(topK) : 10,
       );
-      return { success: true, results };
+      return { success: true, results, total: results.length };
     } catch (error) {
       app.log.error({ err: error as any }, 'Search failed');
       return { success: false, error: '搜索失败' };

@@ -25,7 +25,7 @@ const configSchema = z.object({
     questionsCollection: z.string().default('questions'),
   }),
   embeddings: z.object({
-    provider: z.enum(['openai', 'local']).default('openai'),
+    provider: z.enum(['openai', 'local', 'mock']).default('mock'),
     openaiApiKey: z.string().optional(),
     openaiModel: z.string().default('text-embedding-3-large'),
     dimensions: z.number().default(3072),
@@ -69,7 +69,7 @@ export const config = configSchema.parse({
     questionsCollection: process.env.QUESTIONS_COLLECTION || 'questions',
   },
   embeddings: {
-    provider: (process.env.EMBEDDINGS_PROVIDER as any) || 'openai',
+    provider: (process.env.EMBEDDINGS_PROVIDER as any) || 'mock',
     openaiApiKey: process.env.OPENAI_API_KEY,
     openaiModel: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-large',
     dimensions: parseInt(process.env.EMBEDDING_DIMENSIONS || '3072'),

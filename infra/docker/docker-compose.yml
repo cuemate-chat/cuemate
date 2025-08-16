@@ -74,7 +74,7 @@ services:
       - RAG_HOST=0.0.0.0
       - VECTOR_STORE_TYPE=chroma
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - EMBEDDINGS_PROVIDER=openai
+      - EMBEDDINGS_PROVIDER=mock
       - CHROMA_PATH=http://chroma:8000
     volumes:
       - chroma_data:/app/chroma_data

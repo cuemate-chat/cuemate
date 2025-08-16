@@ -164,11 +164,21 @@ export async function createDocumentRoutes(
       const k = topK ? parseInt(topK) : deps.config.retrieval.topK;
       const targetCollection = collection || deps.config.vectorStore.defaultCollection;
 
-      const results = await deps.vectorStore.search(query, k, parsedFilter, targetCollection);
+      // 生成查询的嵌入向量
+      const queryEmbedding = await deps.embeddingService.embed([query]);
+
+      // 使用嵌入向量搜索
+      const results = await deps.vectorStore.searchByEmbedding(
+        queryEmbedding[0],
+        k,
+        parsedFilter,
+        targetCollection,
+      );
 
       return {
         success: true,
         results,
+        total: results.length,
         query,
         filter: parsedFilter,
         topK: k,

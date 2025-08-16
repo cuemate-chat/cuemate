@@ -114,8 +114,12 @@ export async function createQuestionRoutes(
 
       const k = topK ? parseInt(topK) : deps.config.retrieval.topK;
 
-      const results = await deps.vectorStore.search(
-        query,
+      // 生成查询的嵌入向量
+      const queryEmbedding = await deps.embeddingService.embed([query]);
+
+      // 使用嵌入向量搜索
+      const results = await deps.vectorStore.searchByEmbedding(
+        queryEmbedding[0],
         k,
         filter,
         deps.config.vectorStore.questionsCollection,
@@ -124,6 +128,7 @@ export async function createQuestionRoutes(
       return {
         success: true,
         results,
+        total: results.length,
         query,
         filter,
         topK: k,
@@ -143,8 +148,11 @@ export async function createQuestionRoutes(
       const k = topK ? parseInt(topK) : deps.config.retrieval.topK;
 
       // 搜索该岗位下的所有押题（使用空查询字符串获取所有相关文档）
-      const results = await deps.vectorStore.search(
-        '',
+      // 对于空查询，我们使用一个通用的嵌入向量
+      const defaultEmbedding = await deps.embeddingService.embed(['']);
+
+      const results = await deps.vectorStore.searchByEmbedding(
+        defaultEmbedding[0],
         k,
         { jobId },
         deps.config.vectorStore.questionsCollection,
@@ -170,8 +178,11 @@ export async function createQuestionRoutes(
     try {
       const k = topK ? parseInt(topK) : deps.config.retrieval.topK;
 
-      const results = await deps.vectorStore.search(
-        '',
+      // 对于空查询，我们使用一个通用的嵌入向量
+      const defaultEmbedding = await deps.embeddingService.embed(['']);
+
+      const results = await deps.vectorStore.searchByEmbedding(
+        defaultEmbedding[0],
         k,
         { tagId },
         deps.config.vectorStore.questionsCollection,
