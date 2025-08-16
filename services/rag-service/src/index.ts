@@ -43,6 +43,16 @@ async function buildServer() {
 
   await vectorStore.initialize();
 
+  // 临时设置一个 mock 嵌入提供者用于测试
+  // TODO: 后续需要从数据库动态获取嵌入模型配置
+  const mockModelConfig = {
+    id: 'mock-embedding',
+    provider: 'mock',
+    model_name: 'mock-embedding',
+    dimensions: config.embeddings.dimensions,
+  };
+  await embeddingService.setModelConfig(mockModelConfig);
+
   // 设置路由
   await createRoutes(fastify, {
     vectorStore,

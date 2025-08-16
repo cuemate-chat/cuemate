@@ -79,25 +79,61 @@ export class VectorStore {
     const embeddings = documents.filter((doc) => doc.embedding).map((doc) => doc.embedding!);
 
     try {
-      if (embeddings.length > 0) {
+      logger.info(
+        `Adding ${documents.length} documents to collection ${collectionName || this.config.defaultCollection}`,
+      );
+      logger.info(`Document IDs: ${ids.join(', ')}`);
+      logger.info(
+        `Has embeddings: ${embeddings.length > 0}, Embedding dimensions: ${embeddings.length > 0 ? embeddings[0]?.length : 'N/A'}`,
+      );
+
+      if (embeddings.length > 0 && embeddings.length === documents.length) {
+        // 所有文档都有嵌入向量
         await (collection as any).add({
           ids,
           documents: contents,
           metadatas,
           embeddings,
         });
-      } else {
+      } else if (embeddings.length === 0) {
+        // 没有嵌入向量，使用 ChromaDB 的默认嵌入函数
         await (collection as any).add({
           ids,
           documents: contents,
           metadatas,
         });
+      } else {
+        // 部分文档有嵌入向量，这种情况不应该发生，记录警告
+        logger.warn(
+          `Partial embeddings detected: ${embeddings.length}/${documents.length} documents have embeddings`,
+        );
+        // 移除没有嵌入向量的文档，只添加有嵌入向量的
+        const validDocs = documents.filter((doc) => doc.embedding);
+        const validIds = validDocs.map((doc) => doc.id || uuidv4());
+        const validContents = validDocs.map((doc) => doc.content);
+        const validMetadatas = validDocs.map((doc) => doc.metadata);
+        const validEmbeddings = validDocs.map((doc) => doc.embedding!);
+
+        if (validDocs.length > 0) {
+          await (collection as any).add({
+            ids: validIds,
+            documents: validContents,
+            metadatas: validMetadatas,
+            embeddings: validEmbeddings,
+          });
+          logger.info(`Added ${validDocs.length} documents with embeddings`);
+        }
       }
 
-      logger.info(`Added ${documents.length} documents to ${collectionName}`);
+      logger.info(
+        `Successfully added ${documents.length} documents to ${collectionName || this.config.defaultCollection}`,
+      );
       return ids;
     } catch (error) {
       logger.error({ err: error as any }, 'Failed to add documents');
+      logger.error(`Collection: ${collectionName || this.config.defaultCollection}`);
+      logger.error(`Documents count: ${documents.length}`);
+      logger.error(`Embeddings count: ${embeddings.length}`);
       throw error;
     }
   }
@@ -223,6 +259,38 @@ export class VectorStore {
       logger.info(`Deleted collection ${name}`);
     } catch (error) {
       logger.error({ err: error as any }, `Failed to delete collection ${name}`);
+      throw error;
+    }
+  }
+
+  async getAllDocuments(
+    topK: number = 1000,
+    filter?: Record<string, any>,
+    collectionName?: string,
+  ): Promise<SearchResult[]> {
+    const collection = await this.getOrCreateCollection(
+      collectionName || this.config.defaultCollection,
+    );
+
+    try {
+      // 使用 get 方法获取所有文档，避免嵌入函数问题
+      const results: any = await (collection as any).get({
+        limit: topK,
+        where: filter,
+      });
+
+      if (!results.documents || results.documents.length === 0) {
+        return [];
+      }
+
+      return results.documents.map((doc: string, i: number) => ({
+        id: results.ids[i],
+        content: doc || '',
+        metadata: results.metadatas[i] || {},
+        score: 1, // 默认相关度为1，因为没有查询
+      }));
+    } catch (error) {
+      logger.error({ err: error as any }, 'Get all documents failed');
       throw error;
     }
   }

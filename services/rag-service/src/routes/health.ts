@@ -19,7 +19,7 @@ export async function createHealthRoutes(
       const vectorStoreStatus = { status: 'connected', collections: collections.length };
 
       // 检查嵌入服务状态
-      const embeddingStatus = { status: 'available', provider: deps.config.embeddings.provider };
+      const embeddingStatus = { status: 'available', provider: 'dynamic' };
 
       return {
         status: 'healthy',
@@ -30,7 +30,7 @@ export async function createHealthRoutes(
         },
         config: {
           vectorStoreType: deps.config.vectorStore.type,
-          embeddingProvider: deps.config.embeddings.provider,
+          embeddingProvider: 'dynamic',
           serverPort: deps.config.server.port,
         },
       };
@@ -58,8 +58,8 @@ export async function createHealthRoutes(
           collectionNames: collections.map((c: any) => c.name),
         },
         embeddings: {
-          provider: deps.config.embeddings.provider,
-          model: deps.config.embeddings.openaiModel,
+          provider: 'dynamic',
+          model: 'dynamic',
           dimensions: deps.config.embeddings.dimensions,
         },
         processing: {
@@ -99,8 +99,8 @@ export async function createHealthRoutes(
         resumesCollection: deps.config.vectorStore.resumesCollection,
       },
       embeddings: {
-        provider: deps.config.embeddings.provider,
-        model: deps.config.embeddings.openaiModel,
+        provider: 'dynamic',
+        model: 'dynamic',
         dimensions: deps.config.embeddings.dimensions,
       },
       processing: {

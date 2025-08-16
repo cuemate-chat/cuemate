@@ -41,3 +41,16 @@ export async function fetchLogContent(params: {
   const res = await http.get('/logs/content?' + qs.toString());
   return res as { level: LogLevel; service: string; date: string; lines: string[] };
 }
+
+export async function clearLogContent(params: {
+  level: LogLevel;
+  service: string;
+  date: string; // yyyy-mm-dd
+}) {
+  const qs = new URLSearchParams();
+  qs.set('level', params.level);
+  qs.set('service', params.service);
+  qs.set('date', params.date);
+  const res = await http.post('/logs/clear?' + qs.toString());
+  return res as { success: boolean };
+}

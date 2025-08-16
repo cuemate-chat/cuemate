@@ -39,13 +39,12 @@ export default function VectorKnowledge() {
   });
   const [tags, setTags] = useState<Array<{ id: string; name: string }>>([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
 
-  // 获取标签列表
+  // 获取标签列表和默认加载所有内容
   useEffect(() => {
     fetchTags();
+    loadAllDocuments(); // 默认加载所有内容
   }, []);
 
   // 当页码改变时重新搜索（暂时禁用，因为 RAG Service 可能不支持 offset）
@@ -54,6 +53,40 @@ export default function VectorKnowledge() {
   //     searchDocuments();
   //   }
   // }, [currentPage, pageSize]);
+
+  const loadAllDocuments = async () => {
+    setLoading(true);
+    try {
+      const base = import.meta.env.VITE_RAG_SERVICE_BASE || 'http://localhost:3003';
+      const url = `${base}/search?query=&topK=1000`; // 空查询返回所有内容
+      
+      console.log('Loading all documents with URL:', url);
+      const response = await fetch(url);
+      console.log('Response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.success) {
+          setDocuments(data.results || []);
+          setTotal(data.total || data.results?.length || 0);
+        } else {
+          console.error('Load all documents failed:', data.error);
+          message.error(data.error || '加载所有文档失败');
+        }
+      } else {
+        const errorText = await response.text();
+        console.error('Load all documents request failed:', response.status, errorText);
+        message.error(`加载所有文档请求失败: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Load all documents error:', error);
+      message.error('加载所有文档出错，请检查网络连接');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchTags = async () => {
     try {
@@ -85,27 +118,28 @@ export default function VectorKnowledge() {
 
   const searchDocuments = async () => {
     if (!filters.query.trim() && filters.type === 'all') {
-      message.warning('请输入搜索关键词或选择数据类型');
+      // 如果没有查询条件，加载所有内容
+      loadAllDocuments();
       return;
     }
 
     setLoading(true);
     try {
       const base = import.meta.env.VITE_RAG_SERVICE_BASE || 'http://localhost:3003';
-      let url = `${base}/search?query=${encodeURIComponent(filters.query)}&topK=${pageSize}`;
+      let url = `${base}/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
       
       // 根据类型选择不同的端点
       if (filters.type === 'jobs') {
-        url = `${base}/jobs/search?query=${encodeURIComponent(filters.query)}&topK=${pageSize}`;
+        url = `${base}/jobs/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
         if (filters.jobId) url += `&jobId=${filters.jobId}`;
         if (filters.userId) url += `&userId=${filters.userId}`;
       } else if (filters.type === 'questions') {
-        url = `${base}/questions/search?query=${encodeURIComponent(filters.query)}&topK=${pageSize}`;
+        url = `${base}/questions/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
         if (filters.jobId) url += `&jobId=${filters.jobId}`;
         if (filters.tagId) url += `&tagId=${filters.tagId}`;
         if (filters.userId) url += `&userId=${filters.userId}`;
       } else if (filters.type === 'documents') {
-        url = `${base}/search?query=${encodeURIComponent(filters.query)}&topK=${pageSize}`;
+        url = `${base}/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
         if (filters.tagId) url += `&filter=${encodeURIComponent(JSON.stringify({ tagId: filters.tagId }))}`;
       }
 
@@ -146,7 +180,6 @@ export default function VectorKnowledge() {
       query: '',
     });
     setDocuments([]);
-    setCurrentPage(1);
     setTotal(0);
   };
 
@@ -312,7 +345,7 @@ export default function VectorKnowledge() {
           <div className="bg-white rounded-lg shadow-sm border border-slate-200">
             <div className="px-6 py-4 border-b border-slate-200">
               <h3 className="text-lg font-medium text-slate-900">
-                搜索结果 (共 {total} 条，当前第 {currentPage} 页)
+                搜索结果 (共 {total} 条)
               </h3>
             </div>
             <div className="divide-y divide-slate-200">
@@ -354,45 +387,22 @@ export default function VectorKnowledge() {
               ))}
             </div>
             
-            {/* 分页组件 */}
-            {total > pageSize && (
-              <div className="px-6 py-4 border-t border-slate-200">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-slate-500">
-                    每页 {pageSize} 条，共 {total} 条
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      上一页
-                    </button>
-                    <span className="px-3 py-1 text-sm text-slate-600">
-                      {currentPage} / {Math.ceil(total / pageSize)}
-                    </span>
-                    <button
-                      onClick={() => setCurrentPage(Math.min(Math.ceil(total / pageSize), currentPage + 1))}
-                      disabled={currentPage >= Math.ceil(total / pageSize)}
-                      className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      下一页
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+
           </div>
         )}
 
         {/* 空状态 */}
-        {!loading && documents.length === 0 && filters.query && (
+        {!loading && documents.length === 0 && (
           <div className="text-center py-12">
             <SearchOutlined className="mx-auto text-6xl text-slate-400" />
-            <h3 className="mt-2 text-sm font-medium text-slate-900">未找到相关结果</h3>
+            <h3 className="mt-2 text-sm font-medium text-slate-900">
+              {filters.query ? '未找到相关结果' : '暂无数据'}
+            </h3>
             <p className="mt-1 text-sm text-slate-500">
-              尝试调整搜索关键词或筛选条件
+              {filters.query 
+                ? '尝试调整搜索关键词或筛选条件'
+                : '请先添加一些岗位、简历或面试押题数据'
+              }
             </p>
           </div>
         )}

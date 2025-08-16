@@ -47,7 +47,9 @@ export function registerJobRoutes(app: FastifyInstance) {
         // 同步到 rag-service
         try {
           const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
-          await fetch(`${base}/jobs/process`, {
+          app.log.info(`Syncing job ${jobId} to RAG service at ${base}/jobs/process`);
+
+          const response = await fetch(`${base}/jobs/process`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
@@ -68,8 +70,20 @@ export function registerJobRoutes(app: FastifyInstance) {
               },
             }),
           });
+
+          if (response.ok) {
+            const result = await response.json();
+            app.log.info(
+              `Successfully synced job ${jobId} to RAG service: ${JSON.stringify(result)}`,
+            );
+          } else {
+            const errorText = await response.text();
+            app.log.error(
+              `Failed to sync job ${jobId} to RAG service: ${response.status} ${errorText}`,
+            );
+          }
         } catch (error) {
-          console.error('Failed to sync to RAG service:', error);
+          app.log.error({ err: error as any }, `Failed to sync job ${jobId} to RAG service`);
         }
 
         return { jobId, resumeId };

@@ -60,6 +60,7 @@ export function registerLogRoutes(app: FastifyInstance) {
       file: string;
       size: number;
       mtimeMs: number;
+      ctimeMs: number;
     }> = [];
 
     const levels = level ? [level] : LEVELS;
@@ -89,14 +90,15 @@ export function registerLogRoutes(app: FastifyInstance) {
               file: filePath,
               size: stat.size,
               mtimeMs: stat.mtimeMs,
+              ctimeMs: stat.birthtimeMs || stat.mtimeMs, // 使用创建时间，如果没有则回退到修改时间
             });
           } catch {}
         }
       }
     }
 
-    // 最新修改时间优先
-    candidates.sort((a, b) => b.mtimeMs - a.mtimeMs);
+    // 最新创建时间优先
+    candidates.sort((a, b) => b.ctimeMs - a.ctimeMs);
 
     const ps = clampPageSize(pageSize);
     const start = (page - 1) * ps;
@@ -136,6 +138,31 @@ export function registerLogRoutes(app: FastifyInstance) {
     } catch (err) {
       (req as any).log.error({ err }, 'read-log-failed');
       return reply.code(404).send({ error: 'not_found' });
+    }
+  });
+
+  // 清理指定日志文件内容
+  app.post('/logs/clear', async (req, reply) => {
+    const schema = z.object({
+      level: z.enum(LEVELS),
+      service: z.string().min(1),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    });
+    const { level, service, date } = schema.parse((req as any).query || {});
+    const filePath = path.join(LOG_BASE_DIR, level, service, date, `${level}.log`);
+
+    try {
+      const stat = fs.statSync(filePath);
+      if (!stat.isFile()) return reply.code(404).send({ error: 'not_found' });
+
+      // 清空文件内容（保留文件，只清空内容）
+      fs.writeFileSync(filePath, '', 'utf8');
+
+      (req as any).log.info({ level, service, date }, 'log-file-cleared');
+      return { success: true, message: '日志文件已清空' };
+    } catch (err) {
+      (req as any).log.error({ err, level, service, date }, 'clear-log-failed');
+      return reply.code(500).send({ error: 'clear_failed', message: '清理日志文件失败' });
     }
   });
 }

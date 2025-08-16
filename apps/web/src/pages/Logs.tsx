@@ -8,7 +8,7 @@ import {
 import { DatePicker, Pagination, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
-import { fetchLogContent, fetchLogs, fetchLogServices, LogLevel } from '../api/logs';
+import { clearLogContent as clearLogContentApi, fetchLogContent, fetchLogs, fetchLogServices, LogLevel } from '../api/logs';
 import { message } from '../components/Message';
 
 export default function Logs() {
@@ -84,6 +84,19 @@ export default function Logs() {
       setViewing(res);
     } catch {
       message.error('读取日志内容失败');
+    }
+  };
+
+  const clearLogContent = async (it: { level: LogLevel; service: string; date: string }) => {
+    try {
+      await clearLogContentApi({ level: it.level, service: it.service, date: it.date });
+      message.success('日志清理成功');
+      // 清理后重新加载当前页
+      fetchLogs({ level: level || undefined, service: service || undefined, date: date || undefined, page, pageSize: 10 })
+        .then((res) => { setItems(res.items); setTotal(res.total); })
+        .catch((err) => { console.error(err); message.error('加载日志失败'); });
+    } catch {
+      message.error('日志清理失败');
     }
   };
 
@@ -188,6 +201,12 @@ export default function Logs() {
             <div>
               <button className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700" onClick={() => readContent(it)}>
                 <EyeIcon className="w-4 h-4" /> 查看
+              </button>
+              <button 
+                className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 ml-2" 
+                onClick={() => clearLogContent(it)}
+              >
+                <XCircleIcon className="w-4 h-4" /> 清理
               </button>
             </div>
           </div>

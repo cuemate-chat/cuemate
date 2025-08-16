@@ -164,6 +164,24 @@ export async function createDocumentRoutes(
       const k = topK ? parseInt(topK) : deps.config.retrieval.topK;
       const targetCollection = collection || deps.config.vectorStore.defaultCollection;
 
+      // 如果查询为空，返回所有文档
+      if (!query || query.trim() === '') {
+        const allResults = await deps.vectorStore.getAllDocuments(
+          k,
+          parsedFilter,
+          targetCollection,
+        );
+        return {
+          success: true,
+          results: allResults,
+          total: allResults.length,
+          query: '',
+          filter: parsedFilter,
+          topK: k,
+          collection: targetCollection,
+        };
+      }
+
       // 生成查询的嵌入向量
       const queryEmbedding = await deps.embeddingService.embed([query]);
 

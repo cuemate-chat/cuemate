@@ -53,7 +53,6 @@ services:
       - QWEN_API_KEY=${QWEN_API_KEY}
       - PRIMARY_LLM_PROVIDER=openai
       - ROUTING_STRATEGY=primary-fallback
-    # Redis 已移除，若需启用请在此处添加依赖
     volumes:
       - ../../data/logs:/opt/cuemate/log
     networks:
@@ -98,6 +97,7 @@ services:
       - WEB_API_HOST=0.0.0.0
       - SQLITE_PATH=/data/cuemate.db
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
+      - RAG_SERVICE_BASE=http://rag-service:3003
     volumes:
       - ../../data/sqlite:/data
       - ../../data/logs:/opt/cuemate/log

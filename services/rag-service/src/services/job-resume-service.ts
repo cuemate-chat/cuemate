@@ -41,6 +41,15 @@ export class JobResumeService {
       // 生成向量嵌入
       const embeddings = await this.embeddingService.embed(chunks);
 
+      // 调试日志
+      logger.info(
+        `Job ${job.id}: Generated ${chunks.length} chunks, ${embeddings.length} embeddings`,
+      );
+      if (embeddings.length > 0) {
+        logger.info(`First embedding dimensions: ${embeddings[0].length}`);
+        logger.info(`First embedding sample: [${embeddings[0].slice(0, 5).join(', ')}...]`);
+      }
+
       // 准备文档数据
       const documents = chunks.map((content, index) => ({
         id: `job:${job.id}:chunk:${index}`,
@@ -79,6 +88,15 @@ export class JobResumeService {
 
       // 生成向量嵌入
       const embeddings = await this.embeddingService.embed(chunks);
+
+      // 调试日志
+      logger.info(
+        `Resume ${resume.id}: Generated ${chunks.length} chunks, ${embeddings.length} embeddings`,
+      );
+      if (embeddings.length > 0) {
+        logger.info(`First embedding dimensions: ${embeddings[0].length}`);
+        logger.info(`First embedding sample: [${embeddings[0].slice(0, 5).join(', ')}...]`);
+      }
 
       // 准备文档数据
       const documents = chunks.map((content, index) => ({
@@ -152,17 +170,20 @@ export class JobResumeService {
         filter.user_id = userId;
       }
 
+      // 生成查询的向量嵌入
+      const queryEmbedding = await this.embeddingService.embed([query]);
+
       // 搜索岗位信息
-      const jobResults = await this.vectorStore.search(
-        query,
+      const jobResults = await this.vectorStore.searchByEmbedding(
+        queryEmbedding[0],
         topK,
         filter,
         this.config.vectorStore.jobsCollection,
       );
 
       // 搜索简历信息
-      const resumeResults = await this.vectorStore.search(
-        query,
+      const resumeResults = await this.vectorStore.searchByEmbedding(
+        queryEmbedding[0],
         topK,
         filter,
         this.config.vectorStore.resumesCollection,

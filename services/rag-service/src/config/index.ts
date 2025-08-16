@@ -25,11 +25,7 @@ const configSchema = z.object({
     questionsCollection: z.string().default('questions'),
   }),
   embeddings: z.object({
-    provider: z.enum(['openai', 'local', 'mock']).default('mock'),
-    openaiApiKey: z.string().optional(),
-    openaiModel: z.string().default('text-embedding-3-large'),
-    dimensions: z.number().default(3072),
-    localModelPath: z.string().optional(),
+    dimensions: z.number().default(1536), // 默认维度，实际从数据库动态获取
   }),
   processing: z.object({
     chunkSize: z.number().default(500),
@@ -69,11 +65,7 @@ export const config = configSchema.parse({
     questionsCollection: process.env.QUESTIONS_COLLECTION || 'questions',
   },
   embeddings: {
-    provider: (process.env.EMBEDDINGS_PROVIDER as any) || 'mock',
-    openaiApiKey: process.env.OPENAI_API_KEY,
-    openaiModel: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-large',
-    dimensions: parseInt(process.env.EMBEDDING_DIMENSIONS || '3072'),
-    localModelPath: process.env.LOCAL_MODEL_PATH,
+    dimensions: parseInt(process.env.EMBEDDING_DIMENSIONS || '1536'),
   },
   processing: {
     chunkSize: parseInt(process.env.CHUNK_SIZE || '500'),
