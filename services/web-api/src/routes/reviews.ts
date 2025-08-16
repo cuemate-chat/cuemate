@@ -130,7 +130,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
         const payload = await (req as any).jwtVerify();
         const body = z.object({ jobId: z.string().min(1) }).parse((req as any).body || {});
         const userRow = (app as any).db
-          .prepare('SELECT selected_model_id, locale, theme FROM users WHERE id=?')
+          .prepare('SELECT selected_model_id, locale, theme, timezone FROM users WHERE id=?')
           .get(payload.uid);
         const { randomUUID } = await import('crypto');
         const id = randomUUID();
@@ -139,8 +139,10 @@ export function registerReviewRoutes(app: FastifyInstance) {
         const theme = userRow?.theme || 'system';
         (app as any).db
           .prepare(
-            `INSERT INTO interviews (id, job_id, user_id, language, theme, started_at, ended_at, selected_model_id)
-           VALUES (?, ?, ?, ?, ?, ?, NULL, ?)`,
+            `INSERT INTO interviews (
+              id, job_id, user_id, language, theme, started_at, ended_at, 
+              selected_model_id, theme, locale, timezone
+            ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)`,
           )
           .run(
             id,
@@ -150,6 +152,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
             theme,
             now,
             userRow?.selected_model_id || null,
+            userRow?.theme || 'system',
+            userRow?.locale || 'zh-CN',
+            userRow?.timezone || 'Asia/Shanghai',
           );
         return { id };
       } catch (err: any) {

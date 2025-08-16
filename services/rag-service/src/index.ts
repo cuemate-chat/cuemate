@@ -48,15 +48,7 @@ async function buildServer() {
     vectorStore,
     documentProcessor,
     embeddingService,
-  });
-
-  // 健康检查
-  fastify.get('/health', async () => {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      collections: await vectorStore.listCollections(),
-    };
+    config,
   });
 
   return fastify;

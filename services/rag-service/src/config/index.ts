@@ -19,6 +19,10 @@ const configSchema = z.object({
     chromaHost: z.string().optional(),
     chromaPort: z.number().optional(),
     defaultCollection: z.string().default('default'),
+    // 专门的集合名称
+    jobsCollection: z.string().default('jobs'),
+    resumesCollection: z.string().default('resumes'),
+    questionsCollection: z.string().default('questions'),
   }),
   embeddings: z.object({
     provider: z.enum(['openai', 'local']).default('openai'),
@@ -60,6 +64,9 @@ export const config = configSchema.parse({
     chromaHost: process.env.CHROMA_HOST,
     chromaPort: process.env.CHROMA_PORT ? parseInt(process.env.CHROMA_PORT) : undefined,
     defaultCollection: process.env.DEFAULT_COLLECTION || 'default',
+    jobsCollection: process.env.JOBS_COLLECTION || 'jobs',
+    resumesCollection: process.env.RESUMES_COLLECTION || 'resumes',
+    questionsCollection: process.env.QUESTIONS_COLLECTION || 'questions',
   },
   embeddings: {
     provider: (process.env.EMBEDDINGS_PROVIDER as any) || 'openai',

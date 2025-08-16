@@ -47,23 +47,30 @@ export function registerJobRoutes(app: FastifyInstance) {
         // 同步到 rag-service
         try {
           const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
-          const items: any[] = [];
-          items.push({
-            id: `job:${jobId}`,
-            content: `${body.title}\n\n${body.description}`,
-            metadata: { type: 'job', jobId, userId: payload.uid, created_at: now },
-          });
-          items.push({
-            id: `resume:${resumeId}`,
-            content: body.resumeContent,
-            metadata: { type: 'resume', jobId, resumeId, userId: payload.uid, created_at: now },
-          });
-          await fetch(`${base}/ingest/batch`, {
+          await fetch(`${base}/jobs/process`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ items }),
+            body: JSON.stringify({
+              job: {
+                id: jobId,
+                title: body.title,
+                description: body.description,
+                user_id: payload.uid,
+                created_at: now,
+              },
+              resume: {
+                id: resumeId,
+                title: body.resumeTitle || `${body.title}-简历`,
+                content: body.resumeContent,
+                job_id: jobId,
+                user_id: payload.uid,
+                created_at: now,
+              },
+            }),
           });
-        } catch {}
+        } catch (error) {
+          console.error('Failed to sync to RAG service:', error);
+        }
 
         return { jobId, resumeId };
       } catch (err) {
@@ -155,33 +162,44 @@ export function registerJobRoutes(app: FastifyInstance) {
       // 同步到 rag-service（先删除旧，再写新）
       try {
         const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
-        await fetch(`${base}/delete/by-filter`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ where: { jobId: id } }),
+
+        // 先删除旧数据
+        await fetch(`${base}/jobs/${id}`, {
+          method: 'DELETE',
         });
-        const items: any[] = [];
-        items.push({
-          id: `job:${id}`,
-          content: `${body.title}\n\n${body.description}`,
-          metadata: { type: 'job', jobId: id, userId: payload.uid },
-        });
+
+        // 获取最新的简历信息
         const resumeRow = app.db
           .prepare('SELECT id, content FROM resumes WHERE job_id=? AND user_id=?')
           .get(id, payload.uid);
+
         if (resumeRow) {
-          items.push({
-            id: `resume:${resumeRow.id}`,
-            content: resumeRow.content,
-            metadata: { type: 'resume', jobId: id, resumeId: resumeRow.id, userId: payload.uid },
+          // 重新处理岗位和简历
+          await fetch(`${base}/jobs/process`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              job: {
+                id,
+                title: body.title,
+                description: body.description,
+                user_id: payload.uid,
+                created_at: Date.now(),
+              },
+              resume: {
+                id: resumeRow.id,
+                title: body.resumeTitle || `${body.title}-简历`,
+                content: resumeRow.content,
+                job_id: id,
+                user_id: payload.uid,
+                created_at: Date.now(),
+              },
+            }),
           });
         }
-        await fetch(`${base}/ingest/batch`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ items }),
-        });
-      } catch {}
+      } catch (error) {
+        console.error('Failed to sync to RAG service:', error);
+      }
 
       return { success: true };
     } catch (err) {
@@ -197,12 +215,12 @@ export function registerJobRoutes(app: FastifyInstance) {
       const ret = app.db.prepare('DELETE FROM jobs WHERE id=? AND user_id=?').run(id, payload.uid);
       try {
         const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
-        await fetch(`${base}/delete/by-filter`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ where: { jobId: id } }),
+        await fetch(`${base}/jobs/${id}`, {
+          method: 'DELETE',
         });
-      } catch {}
+      } catch (error) {
+        console.error('Failed to delete from RAG service:', error);
+      }
       return { success: ret.changes > 0 };
     } catch (err) {
       return reply.code(401).send({ error: '未认证' });

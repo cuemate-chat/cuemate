@@ -51,7 +51,6 @@ export function up(db: any): void {
       id TEXT PRIMARY KEY,
       job_id TEXT NOT NULL,
       user_id TEXT NOT NULL,
-      language TEXT NOT NULL CHECK(language IN ('zh','en','jp','ko','de','fr','auto')),
       theme TEXT NOT NULL CHECK(theme IN ('light','dark','system')),
       started_at INTEGER NOT NULL,
       ended_at INTEGER,

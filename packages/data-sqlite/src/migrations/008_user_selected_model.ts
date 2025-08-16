@@ -2,11 +2,20 @@ export const version = 8;
 export const name = '008_user_selected_model';
 
 export function up(db: any): void {
+  // 给用户表添加字段
   db.exec(`
     ALTER TABLE users ADD COLUMN selected_model_id TEXT;
   `);
+
+  // 给面试表添加冗余字段，避免面试时查询用户表
   db.exec(`
     ALTER TABLE interviews ADD COLUMN selected_model_id TEXT;
+  `);
+  db.exec(`
+    ALTER TABLE interviews ADD COLUMN locale TEXT DEFAULT 'zh-CN';
+  `);
+  db.exec(`
+    ALTER TABLE interviews ADD COLUMN timezone TEXT DEFAULT 'Asia/Shanghai';
   `);
 
   try {

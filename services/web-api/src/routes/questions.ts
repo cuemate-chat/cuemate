@@ -69,7 +69,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
     '/interview-questions',
     withErrorLogging(app.log as any, 'interview-questions.create', async (req, reply) => {
       try {
-        await (req as any).jwtVerify();
+        const payload = await (req as any).jwtVerify();
         const body = z
           .object({
             jobId: z.string().min(1),
@@ -91,25 +91,35 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         // 同步到向量库
         try {
           const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
-          await fetch(`${base}/ingest/batch`, {
+
+          // 获取标签名称
+          let tagName = null;
+          if (body.tagId) {
+            const tagRow = (app as any).db
+              .prepare('SELECT name FROM tags WHERE id = ?')
+              .get(body.tagId);
+            tagName = tagRow?.name || null;
+          }
+
+          await fetch(`${base}/questions/process`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
-              items: [
-                {
-                  id: `question:${qid}`,
-                  content: `${body.title}\n\n${body.description || ''}`,
-                  metadata: {
-                    type: 'question',
-                    questionId: qid,
-                    jobId: body.jobId,
-                    tagId: body.tagId || null,
-                  },
-                },
-              ],
+              question: {
+                id: qid,
+                title: body.title,
+                description: body.description || '',
+                job_id: body.jobId,
+                tag_id: body.tagId || null,
+                tag_name: tagName,
+                user_id: payload.uid,
+                created_at: now,
+              },
             }),
           });
-        } catch {}
+        } catch (error) {
+          console.error('Failed to sync question to RAG service:', error);
+        }
 
         return { id: qid };
       } catch (err) {
@@ -233,10 +243,10 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
             tagId: z.string().nullable().optional(),
           })
           .parse((req as any).body || {});
-        // 校验归属
+        // 校验归属并获取 job_id
         const own = (app as any).db
           .prepare(
-            `SELECT q.id FROM interview_questions q JOIN jobs j ON q.job_id = j.id WHERE q.id=? AND j.user_id=?`,
+            `SELECT q.id, q.job_id FROM interview_questions q JOIN jobs j ON q.job_id = j.id WHERE q.id=? AND j.user_id=?`,
           )
           .get(id, payload.uid);
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
@@ -245,25 +255,41 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           .run(body.title, body.description, body.tagId ?? null, id);
         try {
           const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
-          await fetch(`${base}/delete/by-filter`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ where: { questionId: id } }),
+
+          // 先删除旧的向量数据
+          await fetch(`${base}/questions/${id}`, {
+            method: 'DELETE',
           });
-          await fetch(`${base}/ingest/batch`, {
+
+          // 获取标签名称
+          let tagName = null;
+          if (body.tagId) {
+            const tagRow = (app as any).db
+              .prepare('SELECT name FROM tags WHERE id = ?')
+              .get(body.tagId);
+            tagName = tagRow?.name || null;
+          }
+
+          // 重新处理并存入向量库
+          await fetch(`${base}/questions/process`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
-              items: [
-                {
-                  id: `question:${id}`,
-                  content: `${body.title}\n\n${body.description}`,
-                  metadata: { type: 'question', questionId: id },
-                },
-              ],
+              question: {
+                id,
+                title: body.title,
+                description: body.description,
+                job_id: own.job_id, // 需要获取 job_id
+                tag_id: body.tagId || null,
+                tag_name: tagName,
+                user_id: payload.uid,
+                created_at: Date.now(),
+              },
             }),
           });
-        } catch {}
+        } catch (error) {
+          console.error('Failed to sync updated question to RAG service:', error);
+        }
         return { success: true };
       } catch (err) {
         return reply.code(401).send({ error: '未认证' });
@@ -288,12 +314,12 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         (app as any).db.prepare('DELETE FROM interview_questions WHERE id=?').run(id);
         try {
           const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
-          await fetch(`${base}/delete/by-filter`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ where: { questionId: id } }),
+          await fetch(`${base}/questions/${id}`, {
+            method: 'DELETE',
           });
-        } catch {}
+        } catch (error) {
+          console.error('Failed to delete question from RAG service:', error);
+        }
         return { success: true };
       } catch (err) {
         return reply.code(401).send({ error: '未认证' });

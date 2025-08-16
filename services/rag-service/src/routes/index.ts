@@ -1,58 +1,44 @@
 import type { FastifyInstance } from 'fastify';
+import { Config } from '../config/index.js';
 import { DocumentProcessor } from '../processors/document-processor.js';
 import { EmbeddingService } from '../services/embedding-service.js';
 import { VectorStore } from '../stores/vector-store.js';
 
+// 导入各个功能模块的路由
+import { createDocumentRoutes } from './documents.js';
+import { createHealthRoutes } from './health.js';
+import { createJobRoutes } from './jobs.js';
+import { createQuestionRoutes } from './questions.js';
+
 export async function createRoutes(
   app: FastifyInstance,
   deps: {
-    vectorStore: VectorStore;
     documentProcessor: DocumentProcessor;
     embeddingService: EmbeddingService;
+    vectorStore: VectorStore;
+    config: Config;
   },
 ) {
-  app.post('/ingest', async (req) => {
-    const body = (req as any).body as { content: string; metadata?: Record<string, any> };
-    const chunks = await deps.documentProcessor.splitText(body.content);
-    const embeddings = await deps.embeddingService.embed(chunks);
-    await deps.vectorStore.addDocuments(
-      chunks.map((content, i) => ({
-        content,
-        metadata: body.metadata || {},
-        embedding: embeddings[i],
-      })),
-    );
-    return { ok: true };
-  });
+  // 注册各个功能模块的路由
+  await createDocumentRoutes(app, deps);
+  await createJobRoutes(app, deps);
+  await createQuestionRoutes(app, deps);
+  await createHealthRoutes(app, deps);
 
-  // 批量写入（已分好块并带 metadata）
-  app.post('/ingest/batch', async (req) => {
-    const body = (req as any).body as {
-      items: Array<{ id?: string; content: string; metadata: Record<string, any> }>;
+  // 根路径信息
+  app.get('/', async () => {
+    return {
+      service: 'CueMate RAG Service',
+      version: '1.0.0',
+      description: '向量数据库和检索增强生成服务',
+      endpoints: {
+        documents: '/ingest, /ingest/batch, /delete/by-filter, /search',
+        jobs: '/jobs/process, /jobs/:jobId, /jobs/search',
+        questions:
+          '/questions/process, /questions/:questionId, /questions/search, /questions/by-job/:jobId, /questions/by-tag/:tagId',
+        health: '/health, /status, /config',
+      },
+      documentation: '请参考各个端点的具体实现',
     };
-    const texts = body.items.map((i) => i.content);
-    const embeddings = await deps.embeddingService.embed(texts);
-    await deps.vectorStore.addDocuments(
-      body.items.map((it, i) => ({
-        id: it.id,
-        content: it.content,
-        metadata: it.metadata,
-        embedding: embeddings[i],
-      })),
-    );
-    return { ok: true, count: body.items.length };
-  });
-
-  // 通过过滤条件删除（如按 jobId/resumeId/questionId）
-  app.post('/delete/by-filter', async (req) => {
-    const body = (req as any).body as { where: Record<string, any> };
-    await deps.vectorStore.deleteByFilter(body.where);
-    return { ok: true };
-  });
-
-  app.get('/search', async (req) => {
-    const { q, topK } = req.query as any as { q: string; topK?: number };
-    const results = await deps.vectorStore.search(q, topK || 5);
-    return { results };
   });
 }
