@@ -219,35 +219,41 @@ export function registerModelRoutes(app: FastifyInstance) {
       };
 
       // 调试日志
-      console.log('Testing model connectivity:', {
-        modelId: id,
-        provider: model.provider,
-        modelName: model.model_name,
-        credentials: creds,
-        params: paramsMap,
-        requestBody,
-        llmRouterBase: base,
-      });
+      app.log.debug(
+        {
+          modelId: id,
+          provider: model.provider,
+          modelName: model.model_name,
+          credentials: creds,
+          params: paramsMap,
+          requestBody,
+          llmRouterBase: base,
+        },
+        'Testing model connectivity',
+      );
 
       try {
-        console.log('Calling llm-router probe endpoint...');
+        app.log.debug('Calling llm-router probe endpoint...');
         const res = await fetch(`${base}/providers/probe`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(requestBody),
         });
 
-        console.log('llm-router response status:', res.status);
-        console.log('llm-router response headers:', Object.fromEntries(res.headers.entries()));
+        app.log.debug({ status: res.status }, 'llm-router response status');
+        app.log.debug(
+          { headers: Object.fromEntries(res.headers.entries()) },
+          'llm-router response headers',
+        );
 
         if (!res.ok) {
           const errorText = await res.text();
-          console.error('llm-router error response:', errorText);
+          app.log.error({ errorText }, 'llm-router error response');
           throw new Error(`llm-router responded with status ${res.status}: ${errorText}`);
         }
 
         const data = (await res.json()) as any;
-        console.log('llm-router response data:', data);
+        app.log.debug({ data }, 'llm-router response data');
 
         const ok = !!data?.ok;
         (app as any).db
@@ -255,7 +261,7 @@ export function registerModelRoutes(app: FastifyInstance) {
           .run(ok ? 'ok' : 'fail', id);
         return { ok, chatOk: data?.chatOk, embedOk: data?.embedOk };
       } catch (e) {
-        console.error('Error calling llm-router:', e);
+        app.log.error({ err: e }, 'Error calling llm-router');
         (app as any).db.prepare('UPDATE models SET status=? WHERE id=?').run('fail', id);
         return { ok: false, error: (e as any)?.message || 'probe failed' };
       }

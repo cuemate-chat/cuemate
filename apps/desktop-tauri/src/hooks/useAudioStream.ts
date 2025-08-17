@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useAppStore } from '../store/appStore';
+import { logger } from '../utils/logger';
 import useWebSocketConnection from './useWebSocketConnection';
 
 export default function useAudioStream() {
@@ -8,7 +9,7 @@ export default function useAudioStream() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorRef = useRef<ScriptProcessorNode | AudioWorkletNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  
+
   const { selectedAudioDevice } = useAppStore();
   const { sendAudioData } = useWebSocketConnection();
 
@@ -27,7 +28,7 @@ export default function useAudioStream() {
       };
 
       streamRef.current = await navigator.mediaDevices.getUserMedia(constraints);
-      
+
       // 创建音频上下文
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({
         sampleRate: 48000,
@@ -41,14 +42,14 @@ export default function useAudioStream() {
 
       processorRef.current.onaudioprocess = (e) => {
         const inputData = e.inputBuffer.getChannelData(0);
-        
+
         // 转换为 PCM16
         const pcm16 = new Int16Array(inputData.length);
         for (let i = 0; i < inputData.length; i++) {
           const s = Math.max(-1, Math.min(1, inputData[i]));
-          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
         }
-        
+
         // 发送音频数据
         sendAudioData(pcm16.buffer);
       };
@@ -59,7 +60,7 @@ export default function useAudioStream() {
 
       toast.success('音频采集已开始');
     } catch (error) {
-      console.error('Failed to start audio capture:', error);
+      logger.error('Failed to start audio capture', error);
       toast.error('无法启动音频采集，请检查麦克风权限');
       throw error;
     }
@@ -72,7 +73,7 @@ export default function useAudioStream() {
         sourceRef.current.disconnect();
         sourceRef.current = null;
       }
-      
+
       if (processorRef.current) {
         processorRef.current.disconnect();
         processorRef.current = null;
@@ -86,13 +87,13 @@ export default function useAudioStream() {
 
       // 停止媒体流
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
 
       toast.success('音频采集已停止');
     } catch (error) {
-      console.error('Failed to stop audio capture:', error);
+      logger.error('Failed to stop audio capture', error);
       toast.error('停止音频采集时出错');
     }
   }, []);

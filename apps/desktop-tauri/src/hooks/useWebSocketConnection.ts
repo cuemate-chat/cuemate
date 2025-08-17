@@ -36,7 +36,6 @@ export default function useWebSocketConnection() {
     const socket = socketRef.current;
 
     socket.on('connect', () => {
-      console.log('WebSocket connected');
       setConnected(true);
       setConnectionError(null);
       reconnectAttemptsRef.current = 0;
@@ -44,7 +43,6 @@ export default function useWebSocketConnection() {
     });
 
     socket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
       setConnected(false);
       toast.error('与服务器断开连接');
     });

@@ -201,8 +201,15 @@ export class VectorStore {
     );
 
     try {
-      await (collection as any).delete({ where: filter });
-      logger.info(`Deleted documents by filter from ${collectionName}`);
+      // 如果过滤条件是 ID，直接使用 ids 删除
+      if (filter.id) {
+        await (collection as any).delete({ ids: [filter.id] });
+        logger.info(`Deleted document with ID ${filter.id} from ${collectionName}`);
+      } else {
+        // 否则使用 where 条件删除
+        await (collection as any).delete({ where: filter });
+        logger.info(`Deleted documents by filter from ${collectionName}`);
+      }
     } catch (error) {
       logger.error({ err: error as any }, 'Failed to delete by filter');
       throw error;

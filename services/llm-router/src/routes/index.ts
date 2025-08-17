@@ -214,10 +214,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         try {
           chatOk = await provider.healthCheck();
         } catch (error) {
-          console.error('Chat health check failed:', error);
-          logger.error(
-            `Chat health check failed: ${error instanceof Error ? error.message : String(error)}`,
-          );
+          logger.error({ err: error }, 'Chat health check failed');
           chatOk = false;
         }
       }

@@ -16,35 +16,23 @@ const configSchema = z.object({
     windowMs: z.string().default('1 minute'),
   }),
   providers: z.object({
-    openai: z.object({
-      apiKey: z.string().optional(),
-      model: z.string().default('gpt-4-turbo-preview'),
-      maxTokens: z.number().default(2000),
-      temperature: z.number().default(0.7),
-      streamEnabled: z.boolean().default(true),
-    }),
-    moonshot: z.object({
-      apiKey: z.string().optional(),
-      model: z.string().default('moonshot-v1-8k'),
-      baseUrl: z.string().default('https://api.moonshot.cn/v1'),
-      maxTokens: z.number().default(2000),
-      temperature: z.number().default(0.7),
-    }),
-    glm: z.object({
-      apiKey: z.string().optional(),
-      model: z.string().default('glm-4'),
-      baseUrl: z.string().default('https://open.bigmodel.cn/api/paas/v4'),
-      maxTokens: z.number().default(2000),
-      temperature: z.number().default(0.7),
-    }),
-    qwen: z.object({
-      apiKey: z.string().optional(),
-      model: z.string().default('qwen-max'),
-      baseUrl: z.string().default('https://dashscope.aliyuncs.com/api/v1'),
-      maxTokens: z.number().default(2000),
-      temperature: z.number().default(0.7),
-    }),
-    dynamic: z.array(z.any()).default([]),
+    // 所有提供商配置都从数据库动态获取，schema 只定义基本结构
+    anthropic: z.object({}).optional(),
+    azureOpenai: z.object({}).optional(),
+    base: z.object({}).optional(),
+    deepseek: z.object({}).optional(),
+    gemini: z.object({}).optional(),
+    kimi: z.object({}).optional(),
+    moonshot: z.object({}).optional(),
+    ollama: z.object({}).optional(),
+    openai: z.object({}).optional(),
+    openaiCompatible: z.object({}).optional(),
+    qwen: z.object({}).optional(),
+    siliconflow: z.object({}).optional(),
+    tencent: z.object({}).optional(),
+    vllm: z.object({}).optional(),
+    volcengine: z.object({}).optional(),
+    zhipu: z.object({}).optional(),
   }),
   webApiInternal: z.object({
     baseUrl: z.string().default('http://localhost:3004'),
@@ -73,11 +61,6 @@ const configSchema = z.object({
       detailed: z.string().default('提供详细的回答'),
     }),
   }),
-  redis: z.object({
-    host: z.string().default('localhost'),
-    port: z.number().default(6379),
-    password: z.string().optional(),
-  }),
 });
 
 export const config = configSchema.parse({
@@ -93,34 +76,23 @@ export const config = configSchema.parse({
     windowMs: process.env.RATE_LIMIT_WINDOW || '1 minute',
   },
   providers: {
-    openai: {
-      apiKey: process.env.OPENAI_API_KEY,
-      model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
-      maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '2000'),
-      temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7'),
-      streamEnabled: process.env.OPENAI_STREAM !== 'false',
-    },
-    moonshot: {
-      apiKey: process.env.MOONSHOT_API_KEY,
-      model: process.env.MOONSHOT_MODEL || 'moonshot-v1-8k',
-      baseUrl: process.env.MOONSHOT_BASE_URL || 'https://api.moonshot.cn/v1',
-      maxTokens: parseInt(process.env.MOONSHOT_MAX_TOKENS || '2000'),
-      temperature: parseFloat(process.env.MOONSHOT_TEMPERATURE || '0.7'),
-    },
-    glm: {
-      apiKey: process.env.GLM_API_KEY,
-      model: process.env.GLM_MODEL || 'glm-4',
-      baseUrl: process.env.GLM_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4',
-      maxTokens: parseInt(process.env.GLM_MAX_TOKENS || '2000'),
-      temperature: parseFloat(process.env.GLM_TEMPERATURE || '0.7'),
-    },
-    qwen: {
-      apiKey: process.env.QWEN_API_KEY,
-      model: process.env.QWEN_MODEL || 'qwen-max',
-      baseUrl: process.env.QWEN_BASE_URL || 'https://dashscope.aliyuncs.com/api/v1',
-      maxTokens: parseInt(process.env.QWEN_MAX_TOKENS || '2000'),
-      temperature: parseFloat(process.env.QWEN_TEMPERATURE || '0.7'),
-    },
+    // 空的 providers 对象，所有配置都从数据库动态获取
+    anthropic: {},
+    azureOpenai: {},
+    base: {},
+    deepseek: {},
+    gemini: {},
+    kimi: {},
+    moonshot: {},
+    ollama: {},
+    openai: {},
+    openaiCompatible: {},
+    qwen: {},
+    siliconflow: {},
+    tencent: {},
+    vllm: {},
+    volcengine: {},
+    zhipu: {},
   },
   webApiInternal: {
     baseUrl: process.env.WEB_API_INTERNAL_BASE || 'http://localhost:3004',
@@ -153,11 +125,6 @@ export const config = configSchema.parse({
       points: process.env.FORMAT_POINTS || '列出3-5个要点',
       detailed: process.env.FORMAT_DETAILED || '提供详细的回答',
     },
-  },
-  redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    password: process.env.REDIS_PASSWORD,
   },
 });
 

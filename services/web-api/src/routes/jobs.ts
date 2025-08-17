@@ -88,7 +88,9 @@ export function registerJobRoutes(app: FastifyInstance) {
 
         return { jobId, resumeId };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证' });
+        // 记录详细错误信息到日志
+        app.log.error({ err }, '岗位创建失败');
+        return reply.code(401).send({ error: '未认证：' + err });
       }
     },
   );
@@ -109,7 +111,8 @@ export function registerJobRoutes(app: FastifyInstance) {
         .all(payload.uid);
       return { items: rows };
     } catch (err) {
-      return reply.code(401).send({ error: '未认证' });
+      app.log.error({ err }, '获取岗位列表失败');
+      return reply.code(401).send({ error: '未认证：' + err });
     }
   });
 
@@ -129,7 +132,8 @@ export function registerJobRoutes(app: FastifyInstance) {
       if (!row) return reply.code(404).send({ error: '岗位不存在' });
       return { job: row };
     } catch (err) {
-      return reply.code(401).send({ error: '未认证' });
+      app.log.error({ err }, '获取岗位详情失败');
+      return reply.code(401).send({ error: '未认证：' + err });
     }
   });
 
@@ -212,12 +216,13 @@ export function registerJobRoutes(app: FastifyInstance) {
           });
         }
       } catch (error) {
-        console.error('Failed to sync to RAG service:', error);
+        app.log.error({ err: error }, 'Failed to sync to RAG service');
       }
 
       return { success: true };
     } catch (err) {
-      return reply.code(401).send({ error: '未认证' });
+      app.log.error({ err }, '更新岗位失败');
+      return reply.code(401).send({ error: '未认证：' + err });
     }
   });
 
@@ -233,11 +238,12 @@ export function registerJobRoutes(app: FastifyInstance) {
           method: 'DELETE',
         });
       } catch (error) {
-        console.error('Failed to delete from RAG service:', error);
+        app.log.error({ err: error }, 'Failed to delete from RAG service');
       }
       return { success: ret.changes > 0 };
     } catch (err) {
-      return reply.code(401).send({ error: '未认证' });
+      app.log.error({ err }, '删除岗位失败');
+      return reply.code(401).send({ error: '未认证：' + err });
     }
   });
 }

@@ -6,11 +6,8 @@ import { BaseLLMProvider } from './base.js';
 import { DeepSeekProvider } from './deepseek.js';
 import { GeminiProvider } from './gemini.js';
 import { KimiProvider } from './kimi.js';
-import { MoonshotProvider } from './moonshot.js';
 import { OllamaProvider } from './ollama.js';
 import { OpenAICompatibleProvider } from './openai-compatible.js';
-import { OpenAIProvider } from './openai.js';
-import { QwenProvider } from './qwen.js';
 import { SiliconFlowProvider } from './siliconflow.js';
 import { TencentProvider } from './tencent.js';
 import { VllmProvider } from './vllm.js';
@@ -20,21 +17,6 @@ import { ZhipuProvider } from './zhipu.js';
 export async function initializeProviders(config: Config): Promise<Map<string, BaseLLMProvider>> {
   const providers = new Map<string, BaseLLMProvider>();
 
-  // OpenAI
-  if (config.providers.openai.apiKey) {
-    const openai = new OpenAIProvider(config.providers.openai);
-    providers.set('openai', openai as BaseLLMProvider);
-    logger.info('OpenAI provider initialized');
-  }
-
-  // Moonshot
-  if (config.providers.moonshot.apiKey) {
-    const moonshot = new MoonshotProvider(config.providers.moonshot);
-    providers.set('moonshot', moonshot as BaseLLMProvider);
-    logger.info('Moonshot provider initialized');
-  }
-
-  // 常见厂商（如设置了环境变量则直接启用，便于本地调试；生产以数据库动态为主）
   try {
     if (process.env.DEEPSEEK_API_KEY) {
       const p = new DeepSeekProvider({
@@ -63,15 +45,7 @@ export async function initializeProviders(config: Config): Promise<Map<string, B
       if (p.isAvailable()) providers.set('azure-openai', p as unknown as BaseLLMProvider);
     }
   } catch {}
-  try {
-    if (process.env.QWEN_API_KEY) {
-      const p = new QwenProvider({
-        apiKey: process.env.QWEN_API_KEY,
-        model: process.env.QWEN_MODEL || 'qwen-max',
-      });
-      if (p.isAvailable()) providers.set('qwen', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
+
   try {
     if (process.env.ZHIPU_API_KEY) {
       const p = new ZhipuProvider({

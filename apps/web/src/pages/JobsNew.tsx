@@ -75,7 +75,7 @@ export default function JobsNew() {
         }
         setProgress(100);
         // 提交完成
-        globalMessage.success('准备完成，已生成面试任务');
+        globalMessage.success('创建岗位成功，请进行下一步，创建面试押题吧');
       } catch (e: any) {
         if (progressTimerRef.current) {
           window.clearInterval(progressTimerRef.current);
@@ -237,7 +237,7 @@ export default function JobsNew() {
           {current === 2 && (
             <div className="flex gap-3">
               <Button disabled={progress < 100} onClick={resetAll}>新建另一个岗位</Button>
-              <Button type="primary" disabled={progress < 100} onClick={() => nav('/home')}>回到主页</Button>
+              <Button type="primary" disabled={progress < 100} onClick={() => nav('/settings/vector-knowledge')}>去往向量知识库</Button>
             </div>
           )}
         </div>

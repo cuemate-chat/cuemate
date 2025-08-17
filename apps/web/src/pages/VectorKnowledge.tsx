@@ -1,34 +1,17 @@
 import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
+import { Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
+import { listTags } from '../api/questions';
+import {
+  SearchFilters,
+  VectorDocument,
+  deleteDocument,
+  deleteJob,
+  deleteQuestion,
+  searchAllDocuments,
+  smartSearch
+} from '../api/vector';
 import { message } from '../components/Message';
-
-interface VectorDocument {
-  id: string;
-  content: string;
-  metadata: {
-    type: string;
-    title?: string;
-    jobId?: string;
-    resumeId?: string;
-    questionId?: string;
-    tagId?: string;
-    tagName?: string;
-    userId?: string;
-    chunkIndex?: number;
-    totalChunks?: number;
-    createdAt?: number;
-    source?: string;
-  };
-  score: number;
-}
-
-interface SearchFilters {
-  type: string;
-  query: string;
-  tagId?: string;
-  userId?: string;
-  jobId?: string;
-}
 
 export default function VectorKnowledge() {
   const [documents, setDocuments] = useState<VectorDocument[]>([]);
@@ -40,6 +23,8 @@ export default function VectorKnowledge() {
   const [tags, setTags] = useState<Array<{ id: string; name: string }>>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [total, setTotal] = useState(0);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [currentDetailDoc, setCurrentDetailDoc] = useState<VectorDocument | null>(null);
 
   // 获取标签列表和默认加载所有内容
   useEffect(() => {
@@ -57,31 +42,15 @@ export default function VectorKnowledge() {
   const loadAllDocuments = async () => {
     setLoading(true);
     try {
-      const base = import.meta.env.VITE_RAG_SERVICE_BASE || 'http://localhost:3003';
-      const url = `${base}/search?query=&topK=1000`; // 空查询返回所有内容
+      const result = await searchAllDocuments();
       
-      console.log('Loading all documents with URL:', url);
-      const response = await fetch(url);
-      console.log('Response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Response data:', data);
-        
-        if (data.success) {
-          setDocuments(data.results || []);
-          setTotal(data.total || data.results?.length || 0);
-        } else {
-          console.error('Load all documents failed:', data.error);
-          message.error(data.error || '加载所有文档失败');
-        }
+      if (result.success) {
+        setDocuments(result.results);
+        setTotal(result.total);
       } else {
-        const errorText = await response.text();
-        console.error('Load all documents request failed:', response.status, errorText);
-        message.error(`加载所有文档请求失败: ${response.status}`);
+        message.error(result.error || '加载所有文档失败');
       }
     } catch (error) {
-      console.error('Load all documents error:', error);
       message.error('加载所有文档出错，请检查网络连接');
     } finally {
       setLoading(false);
@@ -90,29 +59,10 @@ export default function VectorKnowledge() {
 
   const fetchTags = async () => {
     try {
-      // 使用正确的 API 基础路径
-      const base = import.meta.env.VITE_API_BASE || 'http://localhost:3004';
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        console.warn('No token found, skipping tags fetch');
-        return;
-      }
-
-      const response = await fetch(`${base}/tags`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setTags(data.items || []);
-      } else if (response.status === 401) {
-        console.warn('Unauthorized, token may be expired');
-      }
+      const data = await listTags();
+      setTags(data.items || []);
     } catch (error) {
-      console.error('Failed to fetch tags:', error);
+      message.error('获取标签失败: ' + error);
     }
   };
 
@@ -125,50 +75,19 @@ export default function VectorKnowledge() {
 
     setLoading(true);
     try {
-      const base = import.meta.env.VITE_RAG_SERVICE_BASE || 'http://localhost:3003';
-      let url = `${base}/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
+      const result = await smartSearch(filters);
       
-      // 根据类型选择不同的端点
-      if (filters.type === 'jobs') {
-        url = `${base}/jobs/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
-        if (filters.jobId) url += `&jobId=${filters.jobId}`;
-        if (filters.userId) url += `&userId=${filters.userId}`;
-      } else if (filters.type === 'questions') {
-        url = `${base}/questions/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
-        if (filters.jobId) url += `&jobId=${filters.jobId}`;
-        if (filters.tagId) url += `&tagId=${filters.tagId}`;
-        if (filters.userId) url += `&userId=${filters.userId}`;
-      } else if (filters.type === 'documents') {
-        url = `${base}/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
-        if (filters.tagId) url += `&filter=${encodeURIComponent(JSON.stringify({ tagId: filters.tagId }))}`;
-      }
-
-      console.log('Searching with URL:', url);
-      const response = await fetch(url);
-      console.log('Response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Response data:', data);
-        
-        if (data.success) {
-          setDocuments(data.results || []);
-          setTotal(data.total || data.results?.length || 0);
-          if (data.results?.length === 0) {
-            message.info('未找到相关数据');
-          }
-        } else {
-          console.error('Search failed:', data.error);
-          message.error(data.error || '搜索失败');
+      if (result.success) {
+        setDocuments(result.results);
+        setTotal(result.total);
+        if (result.results.length === 0) {
+          message.info('未找到相关数据');
         }
       } else {
-        const errorText = await response.text();
-        console.error('Search request failed:', response.status, errorText);
-        message.error(`搜索请求失败: ${response.status}`);
+        message.error(result.error || '搜索失败');
       }
     } catch (error) {
-      console.error('Search error:', error);
-      message.error('搜索出错，请检查网络连接');
+      message.error('搜索出错，请检查网络连接: ' + error);
     } finally {
       setLoading(false);
     }
@@ -178,30 +97,77 @@ export default function VectorKnowledge() {
     setFilters({
       type: 'all',
       query: '',
+      tagId: undefined,
+      jobTitle: undefined,
+      questionTitle: undefined,
     });
     setDocuments([]);
     setTotal(0);
   };
 
-  const getDocumentTitle = (doc: VectorDocument): string => {
+  const getDocumentName = (doc: VectorDocument): string => {
     if (doc.metadata.title) return doc.metadata.title;
-    if (doc.metadata.type === 'job') return '岗位信息';
-    if (doc.metadata.type === 'resume') return '简历内容';
-    if (doc.metadata.type === 'interview_question') return '面试押题';
-    return '文档内容';
+    if (doc.metadata.type === 'job' || doc.metadata.source === 'job_description') return '岗位名称';
+    if (doc.metadata.type === 'resume' || doc.metadata.source === 'resume_content') return '简历名称';
+    if (doc.metadata.type === 'interview_question') return '押题名称';
+    return '文档名称';
+  };
+
+  const showDetail = (doc: VectorDocument) => {
+    setCurrentDetailDoc(doc);
+    setDetailModalVisible(true);
+  };
+
+  const handleDelete = async (doc: VectorDocument) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: '确定要删除这条数据吗？删除后无法恢复。',
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          let result;
+          
+          // 根据文档类型调用相应的删除 API
+          if (doc.metadata.type === 'job') {
+            result = await deleteJob(doc.id);
+          } else if (doc.metadata.type === 'interview_question') {
+            result = await deleteQuestion(doc.id);
+          } else {
+            result = await deleteDocument(doc.id, doc.metadata.type);
+          }
+          
+          if (result.success) {
+            // 从本地状态中移除
+            setDocuments(prev => prev.filter(d => d.id !== doc.id));
+            setTotal(prev => prev - 1);
+            message.success('删除成功');
+          } else {
+            message.error('删除失败: ' + result.error);
+          }
+        } catch (error) {
+          message.error('删除失败: ' + error);
+        }
+      },
+    });
   };
 
   const getDocumentTypeLabel = (type: string): string => {
     switch (type) {
       case 'job': return '岗位';
       case 'resume': return '简历';
+      case 'resume_content': return '简历';
       case 'interview_question': return '押题';
       default: return '文档';
     }
   };
 
-  const formatDate = (timestamp?: number): string => {
+  const formatDate = (timestamp?: number | string): string => {
     if (!timestamp) return '未知时间';
+    if (typeof timestamp === 'string') {
+      return timestamp;
+    }
     return new Date(timestamp).toLocaleString('zh-CN');
   };
 
@@ -226,9 +192,17 @@ export default function VectorKnowledge() {
                   placeholder="输入关键词搜索知识内容..."
                   value={filters.query}
                   onChange={(e) => setFilters({ ...filters, query: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-12 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   onKeyPress={(e) => e.key === 'Enter' && searchDocuments()}
                 />
+                {filters.query && (
+                  <button
+                    onClick={() => setFilters({ ...filters, query: '' })}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <CloseOutlined />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -272,55 +246,59 @@ export default function VectorKnowledge() {
                 {/* 数据类型 */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">数据类型</label>
-                  <select
+                  <Select
                     value={filters.type}
-                    onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(value) => setFilters({ ...filters, type: value })}
+                    className="w-full"
+                    placeholder="选择数据类型"
+                    style={{ height: '42px' }}
                   >
-                    <option value="all">全部类型</option>
-                    <option value="jobs">岗位信息</option>
-                    <option value="questions">面试押题</option>
-                    <option value="documents">通用文档</option>
-                  </select>
+                    <Select.Option value="all">全部类型</Select.Option>
+                    <Select.Option value="jobs">岗位信息</Select.Option>
+                    <Select.Option value="questions">面试押题</Select.Option>
+                    <Select.Option value="resumes">简历信息</Select.Option>
+                  </Select>
                 </div>
 
                 {/* 标签筛选 */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">标签</label>
-                  <select
-                    value={filters.tagId || ''}
-                    onChange={(e) => setFilters({ ...filters, tagId: e.target.value || undefined })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  <Select
+                    value={filters.tagId}
+                    onChange={(value) => setFilters({ ...filters, tagId: value })}
+                    className="w-full"
+                    placeholder="选择标签"
+                    allowClear
+                    style={{ height: '42px' }}
                   >
-                    <option value="">全部标签</option>
                     {tags.map((tag) => (
-                      <option key={tag.id} value={tag.id}>
+                      <Select.Option key={tag.id} value={tag.id}>
                         {tag.name}
-                      </option>
+                      </Select.Option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
-                {/* 用户ID */}
+                {/* 岗位名称 */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">用户ID</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">岗位名称</label>
                   <input
                     type="text"
-                    placeholder="输入用户ID"
-                    value={filters.userId || ''}
-                    onChange={(e) => setFilters({ ...filters, userId: e.target.value || undefined })}
+                    placeholder="输入岗位名称"
+                    value={filters.jobTitle || ''}
+                    onChange={(e) => setFilters({ ...filters, jobTitle: e.target.value || undefined })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
-                {/* 岗位ID */}
+                {/* 押题名称 */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">岗位ID</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">押题名称</label>
                   <input
                     type="text"
-                    placeholder="输入岗位ID"
-                    value={filters.jobId || ''}
-                    onChange={(e) => setFilters({ ...filters, jobId: e.target.value || undefined })}
+                    placeholder="输入押题名称"
+                    value={filters.questionTitle || ''}
+                    onChange={(e) => setFilters({ ...filters, questionTitle: e.target.value || undefined })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -349,45 +327,113 @@ export default function VectorKnowledge() {
               </h3>
             </div>
             <div className="divide-y divide-slate-200">
-              {documents.map((doc) => (
-                <div key={doc.id} className="p-6 hover:bg-slate-50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {getDocumentTypeLabel(doc.metadata.type)}
+              {documents.map((doc, index) => (
+                <div key={doc.id} className="p-6 hover:bg-slate-50 relative">
+                  {/* 左上角序号 */}
+                  <div className="absolute left-0 top-0">
+                    <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
+                      {index + 1}
+                    </div>
+                    <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
+                  </div>
+                  
+                  {/* 右上角按钮 */}
+                  <div className="absolute right-6 top-6 flex items-center gap-2">
+                    <button
+                      onClick={() => showDetail(doc)}
+                      className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    >
+                      详情
+                    </button>
+                    <button
+                      onClick={() => handleDelete(doc)}
+                      className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+                    >
+                      删除
+                    </button>
+                  </div>
+                  
+                  <div className="flex-1 pr-32 ml-8">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {getDocumentTypeLabel(doc.metadata.type)}
+                      </span>
+                      <span className="text-sm text-slate-500">
+                        相关度: {(doc.score * 100).toFixed(1)}%
+                      </span>
+                      {doc.metadata.tagName && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                          {doc.metadata.tagName}
                         </span>
-                        <span className="text-sm text-slate-500">
-                          相关度: {(doc.score * 100).toFixed(1)}%
+                      )}
+                    </div>
+                    
+                    {/* 名称 */}
+                    <h4 className="text-lg font-medium text-slate-900 mb-2">
+                      {getDocumentName(doc)}
+                    </h4>
+                    
+                    {/* 描述内容 */}
+                    <div className="mb-3">
+                      <p className="text-slate-600 whitespace-pre-wrap">
+                        {doc.content.length > 200 ? (
+                          <>
+                            {doc.content.substring(0, 200)}...
+                            <button
+                              onClick={() => {
+                                // 创建弹出框显示完整内容
+                                const modal = document.createElement('div');
+                                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                                modal.innerHTML = `
+                                  <div class="bg-white rounded-lg p-6 max-w-4xl max-h-[80vh] overflow-y-auto">
+                                    <div class="flex justify-between items-center mb-4">
+                                      <h3 class="text-lg font-medium">${getDocumentName(doc)}</h3>
+                                      <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                      </button>
+                                    </div>
+                                    <div class="whitespace-pre-wrap text-sm">${doc.content}</div>
+                                  </div>
+                                `;
+                                document.body.appendChild(modal);
+                                modal.addEventListener('click', (e) => {
+                                  if (e.target === modal) modal.remove();
+                                });
+                              }}
+                              className="ml-2 text-blue-600 hover:text-blue-800 underline"
+                            >
+                              查看完整内容
+                            </button>
+                          </>
+                        ) : (
+                          doc.content
+                        )}
+                      </p>
+                    </div>
+                    
+                    {/* 基础信息 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-slate-500">
+                      <span>ID: {doc.id}</span>
+                      {doc.metadata.source && <span>来源: {doc.metadata.source}</span>}
+                      {doc.metadata.type && <span>类型: {doc.metadata.type}</span>}
+                      <span>创建时间: {doc.metadata.timestamp || doc.metadata.processedAt ? formatDate(doc.metadata.processedAt || doc.metadata.timestamp) : '未知'}</span>
+                      {doc.metadata.chunkIndex !== undefined && (
+                        <span>
+                          分块: {doc.metadata.chunkIndex + 1}/{doc.metadata.totalChunks}
                         </span>
-                        {doc.metadata.tagName && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                            {doc.metadata.tagName}
-                          </span>
-                        )}
-                      </div>
-                      <h4 className="text-lg font-medium text-slate-900 mb-2">
-                        {getDocumentTitle(doc)}
-                      </h4>
-                      <p className="text-slate-600 mb-3 line-clamp-3">{doc.content}</p>
-                      <div className="flex items-center gap-4 text-sm text-slate-500">
-                        <span>ID: {doc.id}</span>
-                        {doc.metadata.createdAt && (
-                          <span>创建时间: {formatDate(doc.metadata.createdAt)}</span>
-                        )}
-                        {doc.metadata.chunkIndex !== undefined && (
-                          <span>
-                            分块: {doc.metadata.chunkIndex + 1}/{doc.metadata.totalChunks}
-                          </span>
-                        )}
-                      </div>
+                      )}
+                      {doc.metadata.category && <span>分类: {doc.metadata.category}</span>}
+                      {doc.metadata.company && <span>公司: {doc.metadata.company}</span>}
+                      {doc.metadata.position && <span>职位: {doc.metadata.position}</span>}
+                      {doc.metadata.location && <span>地点: {doc.metadata.location}</span>}
+                      {doc.metadata.salary && <span>薪资: {doc.metadata.salary}</span>}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            
-
           </div>
         )}
 
@@ -399,13 +445,89 @@ export default function VectorKnowledge() {
               {filters.query ? '未找到相关结果' : '暂无数据'}
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              {filters.query 
-                ? '尝试调整搜索关键词或筛选条件'
-                : '请先添加一些岗位、简历或面试押题数据'
-              }
+              {filters.query ? '请尝试其他关键词或调整筛选条件' : '请先添加一些数据或进行搜索'}
             </p>
           </div>
         )}
+
+        {/* 详情弹窗 */}
+        <Modal
+          title="详细信息"
+          open={detailModalVisible}
+          onCancel={() => setDetailModalVisible(false)}
+          footer={null}
+          width={800}
+        >
+          {currentDetailDoc && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">ID:</label>
+                  <p className="text-sm text-slate-900">{currentDetailDoc.id}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">类型:</label>
+                  <p className="text-sm text-slate-900">{currentDetailDoc.metadata.type}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">来源:</label>
+                  <p className="text-sm text-slate-900">{currentDetailDoc.metadata.source}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">创建时间:</label>
+                  <p className="text-sm text-slate-900">
+                    {currentDetailDoc.metadata.timestamp || currentDetailDoc.metadata.processedAt 
+                      ? formatDate(currentDetailDoc.metadata.processedAt || currentDetailDoc.metadata.timestamp) 
+                      : '未知'}
+                  </p>
+                </div>
+                {currentDetailDoc.metadata.category && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">分类:</label>
+                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.category}</p>
+                  </div>
+                )}
+                {currentDetailDoc.metadata.company && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">公司:</label>
+                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.company}</p>
+                  </div>
+                )}
+                {currentDetailDoc.metadata.position && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">职位:</label>
+                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.position}</p>
+                  </div>
+                )}
+                {currentDetailDoc.metadata.location && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">地点:</label>
+                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.location}</p>
+                  </div>
+                )}
+                {currentDetailDoc.metadata.salary && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">薪资:</label>
+                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.salary}</p>
+                  </div>
+                )}
+                {currentDetailDoc.metadata.requirements && (
+                  <div className="col-span-2">
+                    <label className="text-sm font-medium text-slate-700">要求:</label>
+                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.requirements}</p>
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-slate-700">内容:</label>
+                <div className="mt-2 p-3 bg-slate-50 rounded-lg">
+                  <p className="text-sm text-slate-900 whitespace-pre-wrap">{currentDetailDoc.content}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
     </div>
   );

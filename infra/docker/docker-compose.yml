@@ -47,10 +47,6 @@ services:
       - NODE_ENV=production
       - LLM_PORT=3002
       - LLM_HOST=0.0.0.0
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - MOONSHOT_API_KEY=${MOONSHOT_API_KEY}
-      - GLM_API_KEY=${GLM_API_KEY}
-      - QWEN_API_KEY=${QWEN_API_KEY}
       - PRIMARY_LLM_PROVIDER=openai
       - ROUTING_STRATEGY=primary-fallback
     volumes:
