@@ -14,14 +14,8 @@ export interface VectorDocument {
     chunkIndex?: number;
     totalChunks?: number;
     createdAt?: number;
-    processedAt?: number;
     timestamp?: string;
     source?: string;
-    company?: string;
-    position?: string;
-    location?: string;
-    requirements?: string;
-    salary?: string;
     category?: string;
   };
   score: number;
@@ -183,9 +177,12 @@ export const searchQuestions = async (filters: SearchFilters): Promise<SearchRes
 // 搜索简历信息
 export const searchResumes = async (filters: SearchFilters): Promise<SearchResponse> => {
   try {
-    let url = `${RAG_SERVICE_BASE}/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
+    let url = `${RAG_SERVICE_BASE}/resumes/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
+    if (filters.jobTitle) {
+      url += `&jobTitle=${encodeURIComponent(filters.jobTitle)}`;
+    }
     if (filters.tagId) {
-      url += `&filter=${encodeURIComponent(JSON.stringify({ tagId: filters.tagId }))}`;
+      url += `&tagId=${filters.tagId}`;
     }
 
     const response = await fetch(url);
@@ -292,11 +289,9 @@ export const deleteDocument = async (
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     // 根据文档类型确定集合名称
-    let collection = 'documents';
-    if (type === 'job') {
-      collection = 'jobs';
-    } else if (type === 'interview_question') {
-      collection = 'questions';
+    let collection = 'default';
+    if (!!type) {
+      collection = type;
     }
 
     // 使用 by-filter 端点，通过 ID 过滤删除
@@ -332,7 +327,6 @@ export const deleteDocument = async (
 export const deleteJob = async (docId: string): Promise<{ success: boolean; error?: string }> => {
   try {
     // 使用 by-filter 端点，通过 ID 过滤删除
-    // 由于岗位数据可能存储在 default 集合中，我们先尝试 default 集合
     const url = `${RAG_SERVICE_BASE}/delete/by-filter`;
     const response = await fetch(url, {
       method: 'POST',
@@ -341,7 +335,7 @@ export const deleteJob = async (docId: string): Promise<{ success: boolean; erro
       },
       body: JSON.stringify({
         where: { id: docId },
-        collection: 'default',
+        collection: 'jobs',
       }),
     });
 
@@ -367,7 +361,6 @@ export const deleteQuestion = async (
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     // 使用 by-filter 端点，通过 ID 过滤删除
-    // 由于面试押题数据可能存储在 default 集合中，我们先尝试 default 集合
     const url = `${RAG_SERVICE_BASE}/delete/by-filter`;
     const response = await fetch(url, {
       method: 'POST',
@@ -376,7 +369,7 @@ export const deleteQuestion = async (
       },
       body: JSON.stringify({
         where: { id: docId },
-        collection: 'default',
+        collection: 'questions',
       }),
     });
 
@@ -386,6 +379,44 @@ export const deleteQuestion = async (
         return { success: true };
       } else {
         return { success: false, error: data.error || '删除失败' };
+      }
+    } else {
+      const errorText = await response.text();
+      return { success: false, error: `请求失败: ${response.status} ${errorText}` };
+    }
+  } catch (error) {
+    return { success: false, error: `网络错误: ${error}` };
+  }
+};
+
+// 获取文档的关联信息
+export const getRelatedDocuments = async (
+  docId: string,
+  collection?: string,
+): Promise<{
+  success: boolean;
+  document?: VectorDocument;
+  related?: {
+    jobs?: VectorDocument[];
+    resumes?: VectorDocument[];
+    questions?: VectorDocument[];
+  };
+  error?: string;
+}> => {
+  try {
+    const url = `${RAG_SERVICE_BASE}/documents/${docId}/related${collection ? `?collection=${collection}` : ''}`;
+    const response = await fetch(url);
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        return {
+          success: true,
+          document: data.document,
+          related: data.related,
+        };
+      } else {
+        return { success: false, error: data.error || '获取关联信息失败' };
       }
     } else {
       const errorText = await response.text();

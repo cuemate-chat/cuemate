@@ -141,3 +141,5 @@ curl "http://localhost:3003/jobs/search?q=前端开发&userId=user-456&topK=5"
 - Chroma 数据库需要足够的存储空间
 - 建议在生产环境中启用数据加密
 - 定期备份向量数据库数据
+
+cd /Users/maguohao/chain/CueMate/infra/docker && curl "http://localhost:8000/api/v1/collections" | jq '.[] | {name, id, dimension}'

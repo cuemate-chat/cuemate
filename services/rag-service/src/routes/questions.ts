@@ -43,7 +43,7 @@ export async function createQuestionRoutes(
         id: `question:${question.id}:chunk:${index}`,
         content,
         metadata: {
-          type: 'interview_question',
+          type: 'questions',
           questionId: question.id,
           jobId: question.job_id,
           tagId: question.tag_id || null,
@@ -97,12 +97,13 @@ export async function createQuestionRoutes(
 
   // 搜索相关的面试押题信息
   app.get('/questions/search', async (req) => {
-    const { query, jobId, userId, tagId, topK } = (req as any).query as {
+    const { query, jobId, userId, tagId, topK, questionTitle } = (req as any).query as {
       query: string;
       jobId?: string;
       userId?: string;
       tagId?: string;
       topK?: string;
+      questionTitle?: string;
     };
 
     try {
@@ -111,6 +112,7 @@ export async function createQuestionRoutes(
       if (jobId) filter.jobId = jobId;
       if (userId) filter.userId = userId;
       if (tagId) filter.tagId = tagId;
+      if (questionTitle) filter.title = questionTitle;
 
       const k = topK ? parseInt(topK) : deps.config.retrieval.topK;
 

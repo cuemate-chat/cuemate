@@ -1,5 +1,5 @@
 import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
-import { Modal, Select } from 'antd';
+import { Input, Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import { listTags } from '../api/questions';
 import {
@@ -8,50 +8,72 @@ import {
   deleteDocument,
   deleteJob,
   deleteQuestion,
+  getRelatedDocuments,
   searchAllDocuments,
-  smartSearch
+  searchJobs,
+  searchQuestions,
+  searchResumes
 } from '../api/vector';
 import { message } from '../components/Message';
 
 export default function VectorKnowledge() {
-  const [documents, setDocuments] = useState<VectorDocument[]>([]);
+  const [searchResults, setSearchResults] = useState<VectorDocument[]>([]);
+  const [totalResults, setTotalResults] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
   const [filters, setFilters] = useState<SearchFilters>({
     type: 'all',
     query: '',
+    tagId: undefined,
+    jobTitle: undefined,
+    questionTitle: undefined,
   });
-  const [tags, setTags] = useState<Array<{ id: string; name: string }>>([]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [total, setTotal] = useState(0);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [currentDetailDoc, setCurrentDetailDoc] = useState<VectorDocument | null>(null);
+  const [relatedData, setRelatedData] = useState<{
+    jobs?: VectorDocument[];
+    resumes?: VectorDocument[];
+    questions?: VectorDocument[];
+  } | null>(null);
+  const [activeTab, setActiveTab] = useState('document'); // 控制标签页
+  const [currentTab, setCurrentTab] = useState('jobs'); // 控制主标签页：jobs, resumes, questions
 
   // 获取标签列表和默认加载所有内容
   useEffect(() => {
     fetchTags();
-    loadAllDocuments(); // 默认加载所有内容
-  }, []);
+    loadDocumentsByTab();
+  }, [currentTab]); // 当标签页切换时重新加载数据
 
-  // 当页码改变时重新搜索（暂时禁用，因为 RAG Service 可能不支持 offset）
-  // useEffect(() => {
-  //   if (filters.query.trim() || filters.type !== 'all') {
-  //     searchDocuments();
-  //   }
-  // }, [currentPage, pageSize]);
-
-  const loadAllDocuments = async () => {
-    setLoading(true);
+  // 根据当前标签页加载对应数据
+  const loadDocumentsByTab = async () => {
     try {
-      const result = await searchAllDocuments();
-      
-      if (result.success) {
-        setDocuments(result.results);
-        setTotal(result.total);
+      setLoading(true);
+      let result;
+
+      // 根据当前标签页调用不同的搜索函数
+      if (currentTab === 'jobs') {
+        result = await searchJobs({ ...filters, query: '' });
+      } else if (currentTab === 'resumes') {
+        result = await searchResumes({ ...filters, query: '' });
+      } else if (currentTab === 'questions') {
+        result = await searchQuestions({ ...filters, query: '' });
       } else {
-        message.error(result.error || '加载所有文档失败');
+        result = await searchAllDocuments();
+      }
+
+      if (result.success) {
+        setSearchResults(result.results);
+        setTotalResults(result.total);
+      } else {
+        setSearchResults([]);
+        setTotalResults(0);
+        console.error('加载数据失败:', result.error);
       }
     } catch (error) {
-      message.error('加载所有文档出错，请检查网络连接');
+      console.error('加载数据出错:', error);
+      setSearchResults([]);
+      setTotalResults(0);
     } finally {
       setLoading(false);
     }
@@ -66,28 +88,35 @@ export default function VectorKnowledge() {
     }
   };
 
+  // 搜索文档
   const searchDocuments = async () => {
-    if (!filters.query.trim() && filters.type === 'all') {
-      // 如果没有查询条件，加载所有内容
-      loadAllDocuments();
-      return;
-    }
-
-    setLoading(true);
     try {
-      const result = await smartSearch(filters);
-      
-      if (result.success) {
-        setDocuments(result.results);
-        setTotal(result.total);
-        if (result.results.length === 0) {
-          message.info('未找到相关数据');
-        }
+      setLoading(true);
+      let result;
+
+      // 根据当前标签页调用不同的搜索函数
+      if (currentTab === 'jobs') {
+        result = await searchJobs(filters);
+      } else if (currentTab === 'resumes') {
+        result = await searchResumes(filters);
+      } else if (currentTab === 'questions') {
+        result = await searchQuestions(filters);
       } else {
-        message.error(result.error || '搜索失败');
+        result = await searchAllDocuments();
+      }
+
+      if (result.success) {
+        setSearchResults(result.results);
+        setTotalResults(result.total);
+      } else {
+        setSearchResults([]);
+        setTotalResults(0);
+        console.error('搜索失败:', result.error);
       }
     } catch (error) {
-      message.error('搜索出错，请检查网络连接: ' + error);
+      console.error('搜索出错:', error);
+      setSearchResults([]);
+      setTotalResults(0);
     } finally {
       setLoading(false);
     }
@@ -101,21 +130,37 @@ export default function VectorKnowledge() {
       jobTitle: undefined,
       questionTitle: undefined,
     });
-    setDocuments([]);
-    setTotal(0);
+    setSearchResults([]);
+    setTotalResults(0);
   };
 
   const getDocumentName = (doc: VectorDocument): string => {
     if (doc.metadata.title) return doc.metadata.title;
-    if (doc.metadata.type === 'job' || doc.metadata.source === 'job_description') return '岗位名称';
-    if (doc.metadata.type === 'resume' || doc.metadata.source === 'resume_content') return '简历名称';
-    if (doc.metadata.type === 'interview_question') return '押题名称';
+    if (doc.metadata.type === 'jobs') return '岗位名称';
+    if (doc.metadata.type === 'resumes') return '简历名称';
+    if (doc.metadata.type === 'questions') return '押题名称';
     return '文档名称';
   };
 
-  const showDetail = (doc: VectorDocument) => {
+  const showDetail = async (doc: VectorDocument) => {
     setCurrentDetailDoc(doc);
     setDetailModalVisible(true);
+    setRelatedData(null);
+    
+    try {
+      // 获取关联信息
+      const result = await getRelatedDocuments(doc.id, doc.metadata.type === 'jobs' ? 'jobs' : 
+        doc.metadata.type === 'questions' ? 'questions' : 
+        doc.metadata.type === 'resumes' ? 'resumes' : 'default');
+      
+      if (result.success && result.related) {
+        setRelatedData(result.related);
+      }
+    } catch (error) {
+      console.error('获取关联信息失败:', error);
+    } finally {
+      // setLoadingRelated(false); // This line is removed
+    }
   };
 
   const handleDelete = async (doc: VectorDocument) => {
@@ -130,9 +175,9 @@ export default function VectorKnowledge() {
           let result;
           
           // 根据文档类型调用相应的删除 API
-          if (doc.metadata.type === 'job') {
+          if (doc.metadata.type === 'jobs') {
             result = await deleteJob(doc.id);
-          } else if (doc.metadata.type === 'interview_question') {
+          } else if (doc.metadata.type === 'questions') {
             result = await deleteQuestion(doc.id);
           } else {
             result = await deleteDocument(doc.id, doc.metadata.type);
@@ -140,8 +185,8 @@ export default function VectorKnowledge() {
           
           if (result.success) {
             // 从本地状态中移除
-            setDocuments(prev => prev.filter(d => d.id !== doc.id));
-            setTotal(prev => prev - 1);
+            setSearchResults(prev => prev.filter(d => d.id !== doc.id));
+            setTotalResults(prev => prev - 1);
             message.success('删除成功');
           } else {
             message.error('删除失败: ' + result.error);
@@ -155,10 +200,9 @@ export default function VectorKnowledge() {
 
   const getDocumentTypeLabel = (type: string): string => {
     switch (type) {
-      case 'job': return '岗位';
-      case 'resume': return '简历';
-      case 'resume_content': return '简历';
-      case 'interview_question': return '押题';
+      case 'jobs': return '岗位信息';
+      case 'resumes': return '简历信息';
+      case 'questions': return '押题信息';
       default: return '文档';
     }
   };
@@ -171,6 +215,24 @@ export default function VectorKnowledge() {
     return new Date(timestamp).toLocaleString('zh-CN');
   };
 
+  const getSourceDisplayName = (source: string): string => {
+    switch (source) {
+      case 'job_description': return '岗位描述';
+      case 'resume_content': return '简历内容';
+      case 'interview_question': return '面试押题';
+      default: return source;
+    }
+  };
+
+  const getTypeDisplayName = (type: string): string => {
+    switch (type) {
+      case 'jobs': return '岗位';
+      case 'resumes': return '简历';
+      case 'questions': return '押题';
+      default: return type;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -178,6 +240,42 @@ export default function VectorKnowledge() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900">向量知识库</h1>
           <p className="mt-2 text-slate-600">查询和检索存储在向量数据库中的知识内容</p>
+        </div>
+
+        {/* 主标签页 */}
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setCurrentTab('jobs')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                currentTab === 'jobs'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              岗位信息
+            </button>
+            <button
+              onClick={() => setCurrentTab('resumes')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                currentTab === 'resumes'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              简历信息
+            </button>
+            <button
+              onClick={() => setCurrentTab('questions')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                currentTab === 'questions'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              面试押题
+            </button>
+          </nav>
         </div>
 
         {/* 搜索区域 */}
@@ -242,33 +340,30 @@ export default function VectorKnowledge() {
           {/* 筛选条件 */}
           {showFilters && (
             <div className="mt-6 pt-6 border-t border-slate-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* 数据类型 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 数据类型筛选 */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">数据类型</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">数据类型</label>
                   <Select
                     value={filters.type}
                     onChange={(value) => setFilters({ ...filters, type: value })}
-                    className="w-full"
-                    placeholder="选择数据类型"
                     style={{ height: '42px' }}
                   >
-                    <Select.Option value="all">全部类型</Select.Option>
-                    <Select.Option value="jobs">岗位信息</Select.Option>
-                    <Select.Option value="questions">面试押题</Select.Option>
-                    <Select.Option value="resumes">简历信息</Select.Option>
+                    <Select.Option value="all">全部</Select.Option>
+                    {currentTab === 'jobs' && <Select.Option value="jobs">岗位</Select.Option>}
+                    {currentTab === 'resumes' && <Select.Option value="resumes">简历</Select.Option>}
+                    {currentTab === 'questions' && <Select.Option value="questions">押题</Select.Option>}
                   </Select>
                 </div>
 
                 {/* 标签筛选 */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">标签</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">标签</label>
                   <Select
                     value={filters.tagId}
                     onChange={(value) => setFilters({ ...filters, tagId: value })}
-                    className="w-full"
-                    placeholder="选择标签"
                     allowClear
+                    placeholder="选择标签"
                     style={{ height: '42px' }}
                   >
                     {tags.map((tag) => (
@@ -279,29 +374,39 @@ export default function VectorKnowledge() {
                   </Select>
                 </div>
 
-                {/* 岗位名称 */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">岗位名称</label>
-                  <input
-                    type="text"
-                    placeholder="输入岗位名称"
-                    value={filters.jobTitle || ''}
-                    onChange={(e) => setFilters({ ...filters, jobTitle: e.target.value || undefined })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+                {/* 根据当前标签页显示不同的筛选字段 */}
+                {currentTab === 'jobs' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">岗位名称</label>
+                    <Input
+                      value={filters.jobTitle || ''}
+                      onChange={(e) => setFilters({ ...filters, jobTitle: e.target.value })}
+                      placeholder="输入岗位名称"
+                    />
+                  </div>
+                )}
 
-                {/* 押题名称 */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">押题名称</label>
-                  <input
-                    type="text"
-                    placeholder="输入押题名称"
-                    value={filters.questionTitle || ''}
-                    onChange={(e) => setFilters({ ...filters, questionTitle: e.target.value || undefined })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+                {currentTab === 'questions' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">押题名称</label>
+                    <Input
+                      value={filters.questionTitle || ''}
+                      onChange={(e) => setFilters({ ...filters, questionTitle: e.target.value })}
+                      placeholder="输入押题名称"
+                    />
+                  </div>
+                )}
+
+                {currentTab === 'resumes' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">简历标题</label>
+                    <Input
+                      value={filters.jobTitle || ''}
+                      onChange={(e) => setFilters({ ...filters, jobTitle: e.target.value })}
+                      placeholder="输入简历标题"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* 清除筛选按钮 */}
@@ -319,15 +424,15 @@ export default function VectorKnowledge() {
         </div>
 
         {/* 搜索结果 */}
-        {documents.length > 0 && (
+        {searchResults.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-slate-200">
             <div className="px-6 py-4 border-b border-slate-200">
               <h3 className="text-lg font-medium text-slate-900">
-                搜索结果 (共 {total} 条)
+                搜索结果 (共 {totalResults} 条)
               </h3>
             </div>
             <div className="divide-y divide-slate-200">
-              {documents.map((doc, index) => (
+              {searchResults.map((doc, index) => (
                 <div key={doc.id} className="p-6 hover:bg-slate-50 relative">
                   {/* 左上角序号 */}
                   <div className="absolute left-0 top-0">
@@ -415,20 +520,15 @@ export default function VectorKnowledge() {
                     
                     {/* 基础信息 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-slate-500">
-                      <span>ID: {doc.id}</span>
-                      {doc.metadata.source && <span>来源: {doc.metadata.source}</span>}
-                      {doc.metadata.type && <span>类型: {doc.metadata.type}</span>}
-                      <span>创建时间: {doc.metadata.timestamp || doc.metadata.processedAt ? formatDate(doc.metadata.processedAt || doc.metadata.timestamp) : '未知'}</span>
+                      <span>创建时间: {doc.metadata.timestamp || doc.metadata.createdAt ? formatDate(doc.metadata.createdAt || doc.metadata.timestamp) : '未知'}</span>
+                      {doc.metadata.source && <span>来源: {getSourceDisplayName(doc.metadata.source)}</span>}
+                      {doc.metadata.type && <span>类型: {getTypeDisplayName(doc.metadata.type)}</span>}
                       {doc.metadata.chunkIndex !== undefined && (
                         <span>
                           分块: {doc.metadata.chunkIndex + 1}/{doc.metadata.totalChunks}
                         </span>
                       )}
-                      {doc.metadata.category && <span>分类: {doc.metadata.category}</span>}
-                      {doc.metadata.company && <span>公司: {doc.metadata.company}</span>}
-                      {doc.metadata.position && <span>职位: {doc.metadata.position}</span>}
-                      {doc.metadata.location && <span>地点: {doc.metadata.location}</span>}
-                      {doc.metadata.salary && <span>薪资: {doc.metadata.salary}</span>}
+                      <span className="md:col-span-2 lg:col-span-2">ID: {doc.id}</span>
                     </div>
                   </div>
                 </div>
@@ -438,7 +538,7 @@ export default function VectorKnowledge() {
         )}
 
         {/* 空状态 */}
-        {!loading && documents.length === 0 && (
+        {!loading && searchResults.length === 0 && (
           <div className="text-center py-12">
             <SearchOutlined className="mx-auto text-6xl text-slate-400" />
             <h3 className="mt-2 text-sm font-medium text-slate-900">
@@ -457,74 +557,170 @@ export default function VectorKnowledge() {
           onCancel={() => setDetailModalVisible(false)}
           footer={null}
           width={800}
+          style={{ top: '5%' }}
+          bodyStyle={{ maxHeight: '70vh', overflow: 'auto' }}
         >
           {currentDetailDoc && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700">ID:</label>
-                  <p className="text-sm text-slate-900">{currentDetailDoc.id}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">类型:</label>
-                  <p className="text-sm text-slate-900">{currentDetailDoc.metadata.type}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">来源:</label>
-                  <p className="text-sm text-slate-900">{currentDetailDoc.metadata.source}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">创建时间:</label>
-                  <p className="text-sm text-slate-900">
-                    {currentDetailDoc.metadata.timestamp || currentDetailDoc.metadata.processedAt 
-                      ? formatDate(currentDetailDoc.metadata.processedAt || currentDetailDoc.metadata.timestamp) 
-                      : '未知'}
-                  </p>
-                </div>
-                {currentDetailDoc.metadata.category && (
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">分类:</label>
-                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.category}</p>
-                  </div>
-                )}
-                {currentDetailDoc.metadata.company && (
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">公司:</label>
-                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.company}</p>
-                  </div>
-                )}
-                {currentDetailDoc.metadata.position && (
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">职位:</label>
-                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.position}</p>
-                  </div>
-                )}
-                {currentDetailDoc.metadata.location && (
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">地点:</label>
-                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.location}</p>
-                  </div>
-                )}
-                {currentDetailDoc.metadata.salary && (
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">薪资:</label>
-                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.salary}</p>
-                  </div>
-                )}
-                {currentDetailDoc.metadata.requirements && (
-                  <div className="col-span-2">
-                    <label className="text-sm font-medium text-slate-700">要求:</label>
-                    <p className="text-sm text-slate-900">{currentDetailDoc.metadata.requirements}</p>
-                  </div>
-                )}
+            <div className="space-y-6">
+              {/* 关联信息标签页 */}
+              <div className="border-b border-gray-200">
+                <nav className="-mb-px flex space-x-8">
+                  <button
+                    onClick={() => setActiveTab('document')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'document'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    文档信息
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('resumes')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'resumes'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    相关简历 ({relatedData?.resumes?.length || 0})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('questions')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'questions'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    相关押题 ({relatedData?.questions?.length || 0})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('jobs')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'jobs'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    相关岗位 ({relatedData?.jobs?.length || 0})
+                  </button>
+                </nav>
               </div>
-              
-              <div>
-                <label className="text-sm font-medium text-slate-700">内容:</label>
-                <div className="mt-2 p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-900 whitespace-pre-wrap">{currentDetailDoc.content}</p>
+
+              {/* 标签页内容 */}
+              {activeTab === 'document' && (
+                <div className="space-y-4">
+                  {/* 文档基本信息 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="md:col-span-2">
+                      <span className="font-medium text-gray-700">ID:</span>
+                      <span className="ml-2 text-gray-900 break-all">{currentDetailDoc.id}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">类型:</span>
+                      <span className="ml-2 text-gray-900">{getTypeDisplayName(currentDetailDoc.metadata.type || '')}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">来源:</span>
+                      <span className="ml-2 text-gray-900">{getSourceDisplayName(currentDetailDoc.metadata.source || '')}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">创建时间:</span>
+                      <span className="ml-2 text-gray-900">
+                        {currentDetailDoc.metadata.timestamp || currentDetailDoc.metadata.createdAt
+                          ? formatDate(currentDetailDoc.metadata.createdAt || currentDetailDoc.metadata.timestamp)
+                          : '未知'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 文档内容 */}
+                  <div>
+                    <div className="font-medium text-gray-700 mb-2">内容:</div>
+                    <div className="bg-gray-50 p-4 rounded-md text-sm text-gray-900 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                      {currentDetailDoc.content}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* 相关简历标签页 */}
+              {activeTab === 'resumes' && (
+                <div className="space-y-4">
+                  {relatedData?.resumes && relatedData.resumes.length > 0 ? (
+                    relatedData.resumes.map((resume, index) => (
+                      <div key={resume.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-medium text-gray-900">{resume.metadata.title || '简历标题'}</h4>
+                          <span className="text-xs text-gray-500">#{index + 1}</span>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          <span className="font-medium">ID:</span> {resume.id}
+                        </div>
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
+                          {resume.content}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 py-8">暂无相关简历信息</div>
+                  )}
+                </div>
+              )}
+
+              {/* 相关押题标签页 */}
+              {activeTab === 'questions' && (
+                <div className="space-y-4">
+                  {relatedData?.questions && relatedData.questions.length > 0 ? (
+                    relatedData.questions.map((question, index) => (
+                      <div key={question.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-medium text-gray-900">{question.metadata.title || '押题标题'}</h4>
+                          <span className="text-xs text-gray-500">#{index + 1}</span>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          <span className="font-medium">ID:</span> {question.id}
+                          {question.metadata.tagName && (
+                            <span className="ml-4">
+                              <span className="font-medium">标签:</span> {question.metadata.tagName}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
+                          {question.content}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 py-8">暂无相关押题信息</div>
+                  )}
+                </div>
+              )}
+
+              {/* 相关岗位标签页 */}
+              {activeTab === 'jobs' && (
+                <div className="space-y-4">
+                  {relatedData?.jobs && relatedData.jobs.length > 0 ? (
+                    relatedData.jobs.map((job, index) => (
+                      <div key={job.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-medium text-gray-900">{job.metadata.title || '岗位标题'}</h4>
+                          <span className="text-xs text-gray-500">#{index + 1}</span>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          <span className="font-medium">ID:</span> {job.id}
+                        </div>
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
+                          {job.content}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 py-8">暂无相关岗位信息</div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </Modal>

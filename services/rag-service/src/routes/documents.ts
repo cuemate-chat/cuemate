@@ -273,4 +273,110 @@ export async function createDocumentRoutes(
       return { success: false, error: '搜索失败' };
     }
   });
+
+  // 获取文档的关联信息
+  app.get('/documents/:docId/related', async (req) => {
+    const { docId } = (req as any).params as { docId: string };
+
+    try {
+      // 根据文档ID前缀判断应该从哪个集合中查找
+      let targetCollection = deps.config.vectorStore.defaultCollection;
+
+      if (docId.startsWith('job:')) {
+        targetCollection = deps.config.vectorStore.jobsCollection;
+      } else if (docId.startsWith('resume:')) {
+        targetCollection = deps.config.vectorStore.resumesCollection;
+      } else if (docId.startsWith('question:')) {
+        targetCollection = deps.config.vectorStore.questionsCollection;
+      }
+
+      // 在目标集合中查找文档
+      // 首先尝试使用 get 方法直接按 ID 获取
+      let doc: any = null;
+
+      try {
+        // 使用 getAllDocuments 方法，传递空的过滤条件来获取所有文档，然后按 ID 查找
+        const documents = await deps.vectorStore.getAllDocuments(1000, {}, targetCollection);
+        doc = documents.find((d) => d.id === docId);
+      } catch (error) {
+        app.log.warn(`Failed to get documents from collection ${targetCollection}: ${error}`);
+      }
+
+      if (!doc) {
+        return { success: false, error: '文档不存在' };
+      }
+
+      const relatedData: any = {};
+
+      // 根据文档类型获取关联信息
+      if (doc.metadata.type === 'jobs') {
+        // 岗位信息：获取对应的简历和押题
+        if (doc.metadata.jobId) {
+          // 获取简历信息
+          const resumes = await deps.vectorStore.getAllDocuments(
+            10,
+            { jobId: doc.metadata.jobId },
+            deps.config.vectorStore.resumesCollection,
+          );
+          relatedData.resumes = resumes;
+
+          // 获取押题信息
+          const questions = await deps.vectorStore.getAllDocuments(
+            10,
+            { jobId: doc.metadata.jobId },
+            deps.config.vectorStore.questionsCollection,
+          );
+          relatedData.questions = questions;
+        }
+      } else if (doc.metadata.type === 'resumes') {
+        // 简历信息：获取对应的岗位和押题
+        if (doc.metadata.jobId) {
+          // 获取岗位信息
+          const jobs = await deps.vectorStore.getAllDocuments(
+            10,
+            { id: doc.metadata.jobId },
+            deps.config.vectorStore.jobsCollection,
+          );
+          relatedData.jobs = jobs;
+
+          // 获取押题信息
+          const questions = await deps.vectorStore.getAllDocuments(
+            10,
+            { jobId: doc.metadata.jobId },
+            deps.config.vectorStore.questionsCollection,
+          );
+          relatedData.questions = questions;
+        }
+      } else if (doc.metadata.type === 'questions') {
+        // 押题信息：获取对应的岗位和简历
+        if (doc.metadata.jobId) {
+          // 获取岗位信息
+          const jobs = await deps.vectorStore.getAllDocuments(
+            10,
+            { id: doc.metadata.jobId },
+            deps.config.vectorStore.jobsCollection,
+          );
+          relatedData.jobs = jobs;
+
+          // 获取简历信息
+          const resumes = await deps.vectorStore.getAllDocuments(
+            10,
+            { jobId: doc.metadata.jobId },
+            deps.config.vectorStore.resumesCollection,
+          );
+          relatedData.resumes = resumes;
+        }
+      }
+
+      return {
+        success: true,
+        document: doc,
+        related: relatedData,
+        foundCollection: targetCollection, // 返回找到文档的集合名称，用于调试
+      };
+    } catch (error) {
+      app.log.error({ err: error as any }, 'Failed to get related documents');
+      return { success: false, error: '获取关联信息失败' };
+    }
+  });
 }

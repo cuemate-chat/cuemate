@@ -62,10 +62,11 @@ export async function createJobRoutes(
 
   // 搜索相关的岗位和简历信息
   app.get('/jobs/search', async (req) => {
-    const { query, userId, topK } = (req as any).query as {
+    const { query, userId, topK, jobTitle } = (req as any).query as {
       query: string;
       userId?: string;
       topK?: string;
+      jobTitle?: string;
     };
 
     try {
@@ -73,10 +74,36 @@ export async function createJobRoutes(
         query,
         userId,
         topK ? parseInt(topK) : 10,
+        jobTitle,
       );
       return { success: true, results, total: results.length };
     } catch (error) {
       app.log.error({ err: error as any }, 'Search failed');
+      return { success: false, error: '搜索失败' };
+    }
+  });
+
+  // 搜索简历信息
+  app.get('/resumes/search', async (req) => {
+    const { query, userId, topK, jobTitle, tagId } = (req as any).query as {
+      query: string;
+      userId?: string;
+      topK?: string;
+      jobTitle?: string;
+      tagId?: string;
+    };
+
+    try {
+      const results = await jobResumeService.searchResumes(
+        query,
+        userId,
+        topK ? parseInt(topK) : 10,
+        jobTitle,
+        tagId,
+      );
+      return { success: true, results, total: results.length };
+    } catch (error) {
+      app.log.error({ err: error as any }, 'Resume search failed');
       return { success: false, error: '搜索失败' };
     }
   });

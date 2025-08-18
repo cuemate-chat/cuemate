@@ -55,7 +55,7 @@ export class JobResumeService {
         id: `job:${job.id}:chunk:${index}`,
         content,
         metadata: {
-          type: 'job',
+          type: 'jobs',
           jobId: job.id,
           userId: job.user_id,
           title: job.title,
@@ -103,8 +103,7 @@ export class JobResumeService {
         id: `resume:${resume.id}:chunk:${index}`,
         content,
         metadata: {
-          type: 'resume',
-          resumeId: resume.id,
+          type: 'resumes',
           jobId: resume.job_id,
           userId: resume.user_id,
           title: resume.title,
@@ -163,11 +162,19 @@ export class JobResumeService {
   /**
    * 搜索相关的岗位和简历信息
    */
-  async searchJobResume(query: string, userId?: string, topK: number = 10): Promise<any[]> {
+  async searchJobResume(
+    query: string,
+    userId?: string,
+    topK: number = 10,
+    jobTitle?: string,
+  ): Promise<any[]> {
     try {
       const filter: Record<string, any> = {};
       if (userId) {
         filter.user_id = userId;
+      }
+      if (jobTitle) {
+        filter.title = jobTitle;
       }
 
       // 生成查询的向量嵌入
@@ -196,6 +203,46 @@ export class JobResumeService {
       return allResults.slice(0, topK);
     } catch (error) {
       logger.error({ err: error as any }, 'Search failed');
+      throw error;
+    }
+  }
+
+  /**
+   * 搜索简历信息
+   */
+  async searchResumes(
+    query: string,
+    userId?: string,
+    topK: number = 10,
+    jobTitle?: string,
+    tagId?: string,
+  ): Promise<any[]> {
+    try {
+      const filter: Record<string, any> = {};
+      if (userId) {
+        filter.user_id = userId;
+      }
+      if (jobTitle) {
+        filter.title = jobTitle;
+      }
+      if (tagId) {
+        filter.tagId = tagId;
+      }
+
+      // 生成查询的向量嵌入
+      const queryEmbedding = await this.embeddingService.embed([query]);
+
+      // 搜索简历信息
+      const resumeResults = await this.vectorStore.searchByEmbedding(
+        queryEmbedding[0],
+        topK,
+        filter,
+        this.config.vectorStore.resumesCollection,
+      );
+
+      return resumeResults;
+    } catch (error) {
+      logger.error({ err: error as any }, 'Resume search failed');
       throw error;
     }
   }
