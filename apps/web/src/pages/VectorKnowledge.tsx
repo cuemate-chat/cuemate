@@ -755,7 +755,7 @@ export default function VectorKnowledge() {
                             <span className="font-medium">标签: {question.metadata.tagName}</span>
                           )}
                         </div>
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-52 overflow-y-auto ml-6">
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-2 overflow-y-auto ml-6">
                           {question.content}
                         </div>
                       </div>

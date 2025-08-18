@@ -243,19 +243,8 @@ export const deleteDocument = async (
   type?: string,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const response: any = await http.post('/vectors/delete', { id: docId, type });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        return { success: true };
-      } else {
-        return { success: false, error: data.error || '删除失败' };
-      }
-    } else {
-      const errorText = await response.text();
-      return { success: false, error: `请求失败: ${response.status} ${errorText}` };
-    }
+    const data: any = await http.post('/vectors/delete', { id: docId, type });
+    return data?.success ? { success: true } : { success: false, error: data?.error || '删除失败' };
   } catch (error) {
     return { success: false, error: `网络错误: ${error}` };
   }
@@ -264,19 +253,8 @@ export const deleteDocument = async (
 // 删除岗位
 export const deleteJob = async (docId: string): Promise<{ success: boolean; error?: string }> => {
   try {
-    const response: any = await http.post('/vectors/delete', { id: docId, type: 'jobs' });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        return { success: true };
-      } else {
-        return { success: false, error: data.error || '删除失败' };
-      }
-    } else {
-      const errorText = await response.text();
-      return { success: false, error: `请求失败: ${response.status} ${errorText}` };
-    }
+    const data: any = await http.post('/vectors/delete', { id: docId, type: 'jobs' });
+    return data?.success ? { success: true } : { success: false, error: data?.error || '删除失败' };
   } catch (error) {
     return { success: false, error: `网络错误: ${error}` };
   }
@@ -287,19 +265,8 @@ export const deleteQuestion = async (
   docId: string,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const response: any = await http.post('/vectors/delete', { id: docId, type: 'questions' });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        return { success: true };
-      } else {
-        return { success: false, error: data.error || '删除失败' };
-      }
-    } else {
-      const errorText = await response.text();
-      return { success: false, error: `请求失败: ${response.status} ${errorText}` };
-    }
+    const data: any = await http.post('/vectors/delete', { id: docId, type: 'questions' });
+    return data?.success ? { success: true } : { success: false, error: data?.error || '删除失败' };
   } catch (error) {
     return { success: false, error: `网络错误: ${error}` };
   }
