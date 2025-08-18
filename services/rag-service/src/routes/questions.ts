@@ -40,7 +40,10 @@ export async function createQuestionRoutes(
 
       // 准备文档数据
       const documents = chunks.map((content, index) => ({
-        id: `question:${question.id}:chunk:${index}`,
+        id:
+          chunks.length === 1
+            ? `question:${question.id}`
+            : `question:${question.id}:chunk:${index}`,
         content,
         metadata: {
           type: 'questions',

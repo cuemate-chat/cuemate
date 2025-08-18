@@ -114,21 +114,27 @@ export default function VectorKnowledge() {
     }
   };
 
-  // 搜索文档
-  const searchDocuments = async () => {
+  // 搜索文档（支持传入局部覆盖，便于在交互事件里立刻生效）
+  const searchDocuments = async (overrides?: Partial<SearchFilters>) => {
     try {
       setLoading(true);
       let result;
+      const finalFilters: SearchFilters = overrides
+        ? { ...filters, ...overrides }
+        : filters;
+      if (overrides) {
+        setFilters(finalFilters);
+      }
 
       // 根据当前标签页调用不同的搜索函数，同时应用搜索关键词和筛选条件
       if (currentTab === 'jobs') {
-        result = await searchJobs(filters);
+        result = await searchJobs(finalFilters);
       } else if (currentTab === 'resumes') {
-        result = await searchResumes(filters);
+        result = await searchResumes(finalFilters);
       } else if (currentTab === 'questions') {
-        result = await searchQuestions(filters);
+        result = await searchQuestions(finalFilters);
       } else {
-        result = await searchJobs(filters);
+        result = await searchJobs(finalFilters);
       }
 
       if (result.success) {
@@ -151,7 +157,7 @@ export default function VectorKnowledge() {
 
   // 清除筛选条件
   const clearFilters = () => {
-    setFilters({
+    const newFilters: SearchFilters = {
       type: 'all',
       query: '',
       tagId: undefined,
@@ -163,11 +169,10 @@ export default function VectorKnowledge() {
       questionDescription: undefined,
       createdFrom: undefined,
       createdTo: undefined,
-    });
-    // 清除筛选后重新搜索
-    setTimeout(() => {
-      searchDocuments();
-    }, 100);
+    };
+    setFilters(newFilters);
+    // 清除筛选后立即搜索
+    searchDocuments(newFilters);
   };
 
   const getDocumentName = (doc: VectorDocument): string => {
@@ -331,7 +336,7 @@ export default function VectorKnowledge() {
                 />
                 {filters.query && (
                   <button
-                    onClick={() => setFilters({ ...filters, query: '' })}
+                    onClick={() => searchDocuments({ query: '' })}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
                     <CloseOutlined />
@@ -380,7 +385,7 @@ export default function VectorKnowledge() {
                 {/* 根据当前标签页显示不同的筛选字段 */}
                 {currentTab === 'jobs' && (
                   <>
-                    <div>
+                    <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
                       <div className="flex gap-2">
                         <Input
@@ -388,7 +393,7 @@ export default function VectorKnowledge() {
                           value={filters.createdFrom ? new Date(filters.createdFrom).toISOString().slice(0,10) : ''}
                           onChange={(e) => {
                             const ts = e.target.value ? new Date(e.target.value + 'T00:00:00').getTime() : undefined;
-                            setFilters({ ...filters, createdFrom: ts });
+                            searchDocuments({ createdFrom: ts });
                           }}
                           style={{ height: '42px' }}
                         />
@@ -397,7 +402,7 @@ export default function VectorKnowledge() {
                           value={filters.createdTo ? new Date(filters.createdTo).toISOString().slice(0,10) : ''}
                           onChange={(e) => {
                             const ts = e.target.value ? new Date(e.target.value + 'T23:59:59').getTime() : undefined;
-                            setFilters({ ...filters, createdTo: ts });
+                            searchDocuments({ createdTo: ts });
                           }}
                           style={{ height: '42px' }}
                         />
@@ -408,7 +413,7 @@ export default function VectorKnowledge() {
 
                 {currentTab === 'resumes' && (
                   <>
-                    <div>
+                    <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
                       <div className="flex gap-2">
                         <Input
@@ -416,7 +421,7 @@ export default function VectorKnowledge() {
                           value={filters.createdFrom ? new Date(filters.createdFrom).toISOString().slice(0,10) : ''}
                           onChange={(e) => {
                             const ts = e.target.value ? new Date(e.target.value + 'T00:00:00').getTime() : undefined;
-                            setFilters({ ...filters, createdFrom: ts });
+                            searchDocuments({ createdFrom: ts });
                           }}
                           style={{ height: '42px' }}
                         />
@@ -425,7 +430,7 @@ export default function VectorKnowledge() {
                           value={filters.createdTo ? new Date(filters.createdTo).toISOString().slice(0,10) : ''}
                           onChange={(e) => {
                             const ts = e.target.value ? new Date(e.target.value + 'T23:59:59').getTime() : undefined;
-                            setFilters({ ...filters, createdTo: ts });
+                            searchDocuments({ createdTo: ts });
                           }}
                           style={{ height: '42px' }}
                         />
@@ -440,7 +445,7 @@ export default function VectorKnowledge() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">押题标签</label>
                       <Select
                         value={filters.tagId}
-                        onChange={(value) => setFilters({ ...filters, tagId: value })}
+                        onChange={(value) => searchDocuments({ tagId: value })}
                         allowClear
                         placeholder="选择标签"
                         style={{ height: '42px', width: '100%' }}
@@ -452,7 +457,7 @@ export default function VectorKnowledge() {
                         ))}
                       </Select>
                     </div>
-                    <div>
+                    <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
                       <div className="flex gap-2">
                         <Input
@@ -460,7 +465,7 @@ export default function VectorKnowledge() {
                           value={filters.createdFrom ? new Date(filters.createdFrom).toISOString().slice(0,10) : ''}
                           onChange={(e) => {
                             const ts = e.target.value ? new Date(e.target.value + 'T00:00:00').getTime() : undefined;
-                            setFilters({ ...filters, createdFrom: ts });
+                            searchDocuments({ createdFrom: ts });
                           }}
                           style={{ height: '42px' }}
                         />
@@ -469,7 +474,7 @@ export default function VectorKnowledge() {
                           value={filters.createdTo ? new Date(filters.createdTo).toISOString().slice(0,10) : ''}
                           onChange={(e) => {
                             const ts = e.target.value ? new Date(e.target.value + 'T23:59:59').getTime() : undefined;
-                            setFilters({ ...filters, createdTo: ts });
+                            searchDocuments({ createdTo: ts });
                           }}
                           style={{ height: '42px' }}
                         />
@@ -555,20 +560,23 @@ export default function VectorKnowledge() {
                             {doc.content.substring(0, 200)}...
                             <button
                               onClick={() => {
-                                // 创建弹出框显示完整内容
                                 const modal = document.createElement('div');
                                 modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
                                 modal.innerHTML = `
-                                  <div class="bg-white rounded-lg p-6 max-w-4xl max-h-[80vh] overflow-y-auto">
-                                    <div class="flex justify-between items-center mb-4">
-                                      <h3 class="text-lg font-medium">${getDocumentName(doc)}</h3>
+                                  <div class="bg-white rounded-lg shadow-xl w-[720px] h-[520px] overflow-hidden">
+                                    <div class="flex justify-between items-center px-5 py-3 border-b">
+                                      <h3 class="text-base font-semibold">${getDocumentName(doc)}</h3>
                                       <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                       </button>
                                     </div>
-                                    <div class="whitespace-pre-wrap text-sm">${doc.content}</div>
+                                    <div class="p-5 h-[calc(520px-48px)] overflow-y-auto">
+                                      <div class="text-sm text-gray-600 mb-2"><span class="font-medium">来源:</span> ${getSourceDisplayName(doc.metadata.source || '')}</div>
+                                      <div class="text-sm text-gray-600 mb-2"><span class="font-medium">类型:</span> ${getTypeDisplayName(doc.metadata.type || '')}</div>
+                                      <div class="text-sm text-gray-600 mb-4"><span class="font-medium">创建时间:</span> ${formatDate(doc.metadata.createdAt || doc.metadata.timestamp || '')}</div>
+                                      <div class="bg-gray-50 border rounded-md p-4 text-sm text-gray-900 whitespace-pre-wrap">${doc.content}
+                                      </div>
+                                    </div>
                                   </div>
                                 `;
                                 document.body.appendChild(modal);
@@ -632,49 +640,41 @@ export default function VectorKnowledge() {
         >
           {currentDetailDoc && (
             <div className="space-y-6">
-              {/* 关联信息标签页 */}
+              {/* 顶部标签：按文档类型显示 */}
               <div className="border-b border-gray-200">
                 <nav className="-mb-px flex space-x-8">
-                  <button
-                    onClick={() => setActiveTab('document')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'document'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    文档信息
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('resumes')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'resumes'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    相关简历 ({relatedData?.resumes?.length || 0})
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('questions')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'questions'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    相关押题 ({relatedData?.questions?.length || 0})
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('jobs')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'jobs'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    相关岗位 ({relatedData?.jobs?.length || 0})
-                  </button>
+                  {(() => {
+                    const type = currentDetailDoc.metadata.type;
+                    const tabs: { key: string; label: string }[] = [];
+                    if (type === 'jobs') {
+                      tabs.push({ key: 'document', label: '岗位信息' });
+                      tabs.push({ key: 'resumes', label: `相关简历 (${relatedData?.resumes?.length || 0})` });
+                      tabs.push({ key: 'questions', label: `相关押题 (${relatedData?.questions?.length || 0})` });
+                    } else if (type === 'resumes') {
+                      tabs.push({ key: 'document', label: '简历信息' });
+                      tabs.push({ key: 'jobs', label: `相关岗位 (${relatedData?.jobs?.length || 0})` });
+                      tabs.push({ key: 'questions', label: `相关押题 (${relatedData?.questions?.length || 0})` });
+                    } else if (type === 'questions') {
+                      tabs.push({ key: 'document', label: '押题信息' });
+                      tabs.push({ key: 'jobs', label: `相关岗位 (${relatedData?.jobs?.length || 0})` });
+                      tabs.push({ key: 'resumes', label: `相关简历 (${relatedData?.resumes?.length || 0})` });
+                    } else {
+                      tabs.push({ key: 'document', label: '文档信息' });
+                    }
+                    return tabs.map((t) => (
+                      <button
+                        key={t.key}
+                        onClick={() => setActiveTab(t.key)}
+                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                          activeTab === t.key
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ));
+                  })()}
                 </nav>
               </div>
 
@@ -708,7 +708,7 @@ export default function VectorKnowledge() {
                   {/* 文档内容 */}
                   <div>
                     <div className="font-medium text-gray-700 mb-2">内容:</div>
-                    <div className="bg-gray-50 p-4 rounded-md text-sm text-gray-900 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                    <div className="bg-gray-50 p-4 rounded-md text-sm text-gray-900 whitespace-pre-wrap max-h-70 overflow-y-auto">
                       {currentDetailDoc.content}
                     </div>
                   </div>
@@ -719,20 +719,16 @@ export default function VectorKnowledge() {
               {activeTab === 'resumes' && (
                 <div className="space-y-4">
                   {relatedData?.resumes && relatedData.resumes.length > 0 ? (
-                    relatedData.resumes.map((resume, index) => (
-                      <div key={resume.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-medium text-gray-900">{resume.metadata.title || '简历标题'}</h4>
-                          <span className="text-xs text-gray-500">#{index + 1}</span>
-                        </div>
-                        <div className="text-sm text-gray-600 mb-2">
-                          <span className="font-medium">ID:</span> {resume.id}
-                        </div>
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
-                          {resume.content}
-                        </div>
+                    // 只展示一条的精致卡片
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
+                        <h4 className="font-medium text-slate-900">{relatedData.resumes[0].metadata.title || '简历标题'}</h4>
+                        <span className="text-xs text-slate-500">ID: {relatedData.resumes[0].id}</span>
                       </div>
-                    ))
+                      <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-80 overflow-y-auto">
+                        {relatedData.resumes[0].content}
+                      </div>
+                    </div>
                   ) : (
                     <div className="text-center text-gray-500 py-8">暂无相关简历信息</div>
                   )}
@@ -744,20 +740,22 @@ export default function VectorKnowledge() {
                 <div className="space-y-4">
                   {relatedData?.questions && relatedData.questions.length > 0 ? (
                     relatedData.questions.map((question, index) => (
-                      <div key={question.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-medium text-gray-900">{question.metadata.title || '押题标题'}</h4>
-                          <span className="text-xs text-gray-500">#{index + 1}</span>
+                      <div key={question.id} className="border rounded-lg p-4 relative">
+                        {/* 左上角序号 */}
+                        <div className="absolute left-0 top-0">
+                          <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">{index + 1}</div>
+                          <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
                         </div>
-                        <div className="text-sm text-gray-600 mb-2">
-                          <span className="font-medium">ID:</span> {question.id}
+                        <div className="flex justify-between items-start mb-2 ml-6">
+                          <h4 className="font-medium text-gray-900">{question.metadata.title || '押题标题'}</h4>
+                          <span className="text-xs text-gray-500">ID: {question.id}</span>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2 ml-6">
                           {question.metadata.tagName && (
-                            <span className="ml-4">
-                              <span className="font-medium">标签:</span> {question.metadata.tagName}
-                            </span>
+                            <span className="font-medium">标签: {question.metadata.tagName}</span>
                           )}
                         </div>
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-52 overflow-y-auto ml-6">
                           {question.content}
                         </div>
                       </div>
@@ -772,20 +770,16 @@ export default function VectorKnowledge() {
               {activeTab === 'jobs' && (
                 <div className="space-y-4">
                   {relatedData?.jobs && relatedData.jobs.length > 0 ? (
-                    relatedData.jobs.map((job, index) => (
-                      <div key={job.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-medium text-gray-900">{job.metadata.title || '岗位标题'}</h4>
-                          <span className="text-xs text-gray-500">#{index + 1}</span>
-                        </div>
-                        <div className="text-sm text-gray-600 mb-2">
-                          <span className="font-medium">ID:</span> {job.id}
-                        </div>
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
-                          {job.content}
-                        </div>
+                    // 只展示一条岗位信息的精致卡片
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
+                        <h4 className="font-medium text-slate-900">{relatedData.jobs[0].metadata.title || '岗位标题'}</h4>
+                        <span className="text-xs text-slate-500">ID: {relatedData.jobs[0].id}</span>
                       </div>
-                    ))
+                      <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                        {relatedData.jobs[0].content}
+                      </div>
+                    </div>
                   ) : (
                     <div className="text-center text-gray-500 py-8">暂无相关岗位信息</div>
                   )}

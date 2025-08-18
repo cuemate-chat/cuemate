@@ -52,7 +52,7 @@ export class JobResumeService {
 
       // 准备文档数据
       const documents = chunks.map((content, index) => ({
-        id: `job:${job.id}:chunk:${index}`,
+        id: chunks.length === 1 ? `job:${job.id}` : `job:${job.id}:chunk:${index}`,
         content,
         metadata: {
           type: 'jobs',
@@ -100,7 +100,7 @@ export class JobResumeService {
 
       // 准备文档数据
       const documents = chunks.map((content, index) => ({
-        id: `resume:${resume.id}:chunk:${index}`,
+        id: chunks.length === 1 ? `resume:${resume.id}` : `resume:${resume.id}:chunk:${index}`,
         content,
         metadata: {
           type: 'resumes',

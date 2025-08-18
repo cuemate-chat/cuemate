@@ -1,14 +1,10 @@
 import { Config } from '../config/index.js';
 
 export class DocumentProcessor {
-  constructor(private readonly config: Config['processing']) {}
+  // 仍保留类型签名以便未来扩展，但当前未使用
+  constructor(_config: Config['processing']) {}
 
   async splitText(content: string): Promise<string[]> {
-    const { chunkSize, chunkOverlap } = this.config;
-    const chunks: string[] = [];
-    for (let i = 0; i < content.length; i += chunkSize - chunkOverlap) {
-      chunks.push(content.slice(i, i + chunkSize));
-    }
-    return chunks;
+    return [content];
   }
 }
