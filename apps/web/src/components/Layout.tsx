@@ -1,6 +1,8 @@
 import { ArrowPathRoundedSquareIcon, ChatBubbleLeftRightIcon, HomeIcon, ListBulletIcon, PlusCircleIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import Logo from '../assets/logo-background.png';
+import AppFooter from './Footer';
+import MainView from './Main';
 import UserMenu from './UserMenu';
 
 export default function Layout() {
@@ -65,14 +67,12 @@ export default function Layout() {
       </header>
 
       {/* RouterView */}
-      <main className="flex-1 container px-6 py-6">
+      <MainView>
         <Outlet />
-      </main>
+      </MainView>
 
       {/* Footer */}
-      <footer className="h-12 flex items-center justify-center text-xs text-slate-500 border-t border-slate-200 bg-white">
-        © {new Date().getFullYear()} CueMate. All rights reserved.
-      </footer>
+      <AppFooter />
     </div>
   );
 }

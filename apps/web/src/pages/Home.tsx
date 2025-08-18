@@ -12,7 +12,6 @@ import { Button, Select } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listJobs } from '../api/jobs';
-import heroBg from '../assets/home.png';
 
 export default function Home() {
   const nav = useNavigate();
@@ -25,32 +24,25 @@ export default function Home() {
         const data = await listJobs();
         const items = (data.items || []).map((i: any) => ({ id: i.id, title: i.title }));
         setJobs(items);
-        if (items.length > 0) setCurrentJob(items[0].title);
+        if (items.length > 0) setCurrentJob(items[0].id);
       } catch {
         // 全局 http 已有错误提示
       }
     })();
   }, []);
 
-  const selectOptions = useMemo(() => jobs.map((j) => ({ value: j.title, label: j.title })), [jobs]);
+  const selectOptions = useMemo(() => jobs.map((j) => ({ value: j.id, label: j.title })), [jobs]);
 
   return (
-    <div
-      className="relative overflow-hidden bg-cover bg-center -mx-8 -mt-6 -mb-6"
-      style={{ backgroundImage: `url(${heroBg})` }}
-    >
-      {/* 叠加虚化与蒙版 */}
-      <div className="absolute inset-0 z-0 backdrop-blur-sm bg-gradient-to-br from-white/75 via-white/60 to-blue-50/50" />
-
-      {/* 内容层确保在背景之上 */}
-      <div className="relative z-10">
+    <div>
+      <div className="relative">
 
       {/* Hero Section */}
-      <section className="py-16 md:py-24">
+      <section className="pt-12 md:pt-20 pb-10">
         <div className="container">
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium mb-4">
-              <span className="inline-flex items-center gap-1"><AcademicCapIcon className="w-4 h-4" /> AI 面试教练</span>
+              <span className="inline-flex items-center gap-1"><AcademicCapIcon className="w-4 h-4" /> AI 面试训练</span>
               <span className="text-slate-400">|</span>
               <span className="inline-flex items-center gap-1"><DocumentTextIcon className="w-4 h-4" /> AI 简历优化</span>
             </div>
@@ -84,17 +76,17 @@ export default function Home() {
             <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="rounded-xl bg-white/80 backdrop-blur border border-slate-200 p-4 text-center">
                 <div className="mx-auto mb-1 w-6 h-6 text-blue-600"><CheckCircleIcon /></div>
-                <div className="text-blue-600 text-xl font-semibold">6,000+</div>
+                <div className="text-blue-600 text-xl font-semibold">100 +</div>
                 <div className="text-slate-600 text-sm">收到的 Offer 数量</div>
               </div>
               <div className="rounded-xl bg-white/80 backdrop-blur border border-slate-200 p-4 text-center">
                 <div className="mx-auto mb-1 w-6 h-6 text-blue-600"><ChartBarIcon /></div>
-                <div className="text-blue-600 text-xl font-semibold">86,000+</div>
+                <div className="text-blue-600 text-xl font-semibold">860 +</div>
                 <div className="text-slate-600 text-sm">通过的模拟次数</div>
               </div>
               <div className="rounded-xl bg-white/80 backdrop-blur border border-slate-200 p-4 text-center">
                 <div className="mx-auto mb-1 w-6 h-6 text-blue-600"><BuildingOffice2Icon /></div>
-                <div className="text-blue-600 text-xl font-semibold">4500+</div>
+                <div className="text-blue-600 text-xl font-semibold">45 +</div>
                 <div className="text-slate-600 text-sm">成功入职的公司数量</div>
               </div>
             </div>
@@ -103,7 +95,7 @@ export default function Home() {
       </section>
 
       {/* 功能模块 */}
-      <section className="py-12">
+      <section className="pt-0 pb-12">
         <div className="container grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="rounded-xl bg-white border border-slate-200 p-6 shadow-sm">
             <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 mb-2">
