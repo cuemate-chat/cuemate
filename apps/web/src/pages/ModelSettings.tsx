@@ -18,7 +18,22 @@ export default function ModelSettings() {
   const [total, setTotal] = useState(0);
   const [selectedTitle, setSelectedTitle] = useState<string>('全部模型');
   const [selectedKeys, setSelectedKeys] = useState<string[]>(['all']);
-  const PAGE_HEIGHT = 675;
+  // 中央区域高度：视口 - Header(56) - Footer(48) - Main 上下内边距(48)
+  const MAIN_HEIGHT = 'calc(100vh - 56px - 48px - 48px)';
+  // 纵向间距自适应（行间距）：大屏更大，小屏较小
+  const [rowGap, setRowGap] = useState<number>(16);
+
+  useEffect(() => {
+    const computeGap = () => {
+      const h = window.innerHeight;
+      // 小屏(<=800): 12px, 中屏(<=900): 16px, 大屏: 20px
+      const gap = h > 900 ? 32 : (h > 800 ? 24 : 16);
+      setRowGap(gap);
+    };
+    computeGap();
+    window.addEventListener('resize', computeGap);
+    return () => window.removeEventListener('resize', computeGap);
+  }, []);
   const [pickerOpen, setPickerOpen] = useState(false);
   const requestIdRef = useRef(0);
 
@@ -112,7 +127,7 @@ export default function ModelSettings() {
   useEffect(() => { fetchList(); }, [filter.type, filter.keyword, filter.scope, filter.providerId, page, pageSize]);
 
   return (
-    <div className="grid grid-cols-12 gap-4 relative">
+    <div className="grid grid-cols-12 gap-4 relative" style={{ height: MAIN_HEIGHT }}>
       {/* 测试连通性加载遮罩 */}
       {testingModelId && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -124,7 +139,7 @@ export default function ModelSettings() {
       )}
       
       {/* 左侧树 */}
-      <aside className="col-span-3 bg-white border border-slate-200 rounded-xl p-3" style={{ height: PAGE_HEIGHT, overflowY: 'auto' }}>
+      <aside className="col-span-3 bg-white border border-slate-200 rounded-xl p-3 h-full overflow-y-auto">
         <div className="flex items-center mb-2">
           <div className="text-slate-800 font-medium">大模型供应商</div>
         </div>
@@ -153,7 +168,7 @@ export default function ModelSettings() {
       </aside>
 
       {/* 右侧卡片 + 搜索 + 分页 */}
-      <section className="col-span-9" style={{ height: PAGE_HEIGHT }}>
+      <section className="col-span-9 h-full min-h-0">
         <div className="mb-3 flex justify-between items-center">
           <div className="text-slate-900 font-semibold text-lg">{selectedTitle}</div>
           <div className="flex items-center gap-2">
@@ -173,9 +188,9 @@ export default function ModelSettings() {
             >添加模型</button>
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4" style={{ height: PAGE_HEIGHT - 56, overflowY: 'auto' }}>
+        <div className="bg-white border border-slate-200 rounded-xl p-4 h-[calc(100%-56px)] overflow-y-auto">
           {loading && <div className="text-slate-500 text-sm">加载中…</div>}
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: rowGap }}>
             {list.map((m, idx)=> {
               const providerCn = findProvider(m.provider)?.name || m.provider;
               const typeCn = m.type === 'llm' ? '大语言模型' : (m.type || '-');
