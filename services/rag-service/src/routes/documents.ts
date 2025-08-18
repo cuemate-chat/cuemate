@@ -13,6 +13,63 @@ export async function createDocumentRoutes(
     config: Config;
   },
 ) {
+  // 维度不一致导致无法更新时，重建集合并用我们自己的嵌入重建索引
+  async function recreateCollectionWithEmbeddings(
+    collectionName: string,
+    maxDocs: number = 1000,
+  ): Promise<number> {
+    try {
+      const docs = await deps.vectorStore.getAllDocuments(maxDocs, {}, collectionName);
+      if (!docs || docs.length === 0) return 0;
+
+      const texts = docs.map((d) => d.content || '');
+      const embeddings = await deps.embeddingService.embed(texts);
+
+      // 删除并重建集合
+      await deps.vectorStore.deleteCollection(collectionName);
+      await deps.vectorStore.getOrCreateCollection(collectionName);
+
+      const toAdd = docs.map((d, i) => ({
+        id: d.id,
+        content: d.content,
+        metadata: d.metadata,
+        embedding: embeddings[i],
+      }));
+      await deps.vectorStore.addDocuments(toAdd as any, collectionName);
+      app.log.info(
+        { collectionName, rebuilt: toAdd.length },
+        'Recreated collection with embeddings',
+      );
+      return toAdd.length;
+    } catch (e) {
+      app.log.error({ err: e as any, collectionName }, 'Failed to recreate collection');
+      return 0;
+    }
+  }
+  // 解析筛选条件
+  function parseFilter(filter: string | undefined) {
+    if (!filter) return {};
+
+    try {
+      const rawFilter = JSON.parse(filter);
+      const { createdFrom, createdTo, ...restFilter } = rawFilter || {};
+
+      const parsedFilter: any = { ...restFilter };
+
+      // 处理时间筛选条件
+      if (createdFrom || createdTo) {
+        parsedFilter.needsTimeFilter = true;
+        parsedFilter.timeFrom = createdFrom;
+        parsedFilter.timeTo = createdTo;
+      }
+
+      return parsedFilter;
+    } catch (error) {
+      app.log.warn({ err: error as any }, 'Failed to parse filter');
+      return {};
+    }
+  }
+
   // 处理单个文档
   app.post('/ingest', async (req) => {
     const body = (req as any).body as {
@@ -150,127 +207,339 @@ export async function createDocumentRoutes(
     }
   });
 
-  // 搜索文档
-  app.get('/search', async (req) => {
-    const { query, filter, topK, collection } = (req as any).query as {
-      query: string;
-      filter?: string;
-      topK?: string;
-      collection?: string;
-    };
-
+  // 搜索jobs集合
+  app.get('/search/jobs', async (request, reply) => {
     try {
-      const parsedFilter = filter ? JSON.parse(filter) : {};
-      const k = topK ? parseInt(topK) : deps.config.retrieval.topK;
-      const targetCollection = collection || deps.config.vectorStore.defaultCollection;
+      const { query, filter, k = 1000 } = request.query as any;
 
-      // 如果查询为空，返回所有文档
-      if (!query || query.trim() === '') {
-        let allResults: any[] = [];
-
-        // 如果没有指定集合，查询所有主要集合
-        if (!collection) {
-          const collections = [
-            deps.config.vectorStore.defaultCollection,
-            deps.config.vectorStore.jobsCollection,
-            deps.config.vectorStore.resumesCollection,
-            deps.config.vectorStore.questionsCollection,
-          ];
-
-          // 并行查询所有集合
-          const collectionResults = await Promise.all(
-            collections.map(async (colName) => {
-              try {
-                return await deps.vectorStore.getAllDocuments(k, parsedFilter, colName);
-              } catch (error) {
-                app.log.warn(`Failed to query collection ${colName}:`, error as any);
-                return [];
-              }
-            }),
-          );
-
-          // 合并所有结果
-          allResults = collectionResults.flat();
-        } else {
-          // 查询指定集合
-          allResults = await deps.vectorStore.getAllDocuments(k, parsedFilter, targetCollection);
-        }
-
-        return {
-          success: true,
-          results: allResults,
-          total: allResults.length,
-          query: '',
-          filter: parsedFilter,
-          topK: k,
-          collection: targetCollection,
-        };
-      }
-
-      // 生成查询的嵌入向量
-      const queryEmbedding = await deps.embeddingService.embed([query]);
-
-      // 如果没有指定集合，在所有主要集合中搜索
-      if (!collection) {
-        const collections = [
-          deps.config.vectorStore.defaultCollection,
-          deps.config.vectorStore.jobsCollection,
-          deps.config.vectorStore.resumesCollection,
-          deps.config.vectorStore.questionsCollection,
-        ];
-
-        // 并行在所有集合中搜索
-        const collectionResults = await Promise.all(
-          collections.map(async (colName) => {
-            try {
-              return await deps.vectorStore.searchByEmbedding(
-                queryEmbedding[0],
-                k,
-                parsedFilter,
-                colName,
-              );
-            } catch (error) {
-              app.log.warn(`Failed to search in collection ${colName}:`, error as any);
-              return [];
-            }
-          }),
-        );
-
-        // 合并所有结果并按相关性排序
-        const allResults = collectionResults.flat();
-        allResults.sort((a, b) => b.score - a.score);
-
-        return {
-          success: true,
-          results: allResults.slice(0, k),
-          total: allResults.length,
+      app.log.info(
+        {
           query,
-          filter: parsedFilter,
-          topK: k,
-          collection: 'all',
-        };
-      } else {
-        // 在指定集合中搜索
-        const results = await deps.vectorStore.searchByEmbedding(
-          queryEmbedding[0],
+          filter,
           k,
-          parsedFilter,
-          targetCollection,
+        },
+        'Search jobs request received',
+      );
+
+      // 解析筛选条件
+      const parsedFilter = parseFilter(filter);
+      app.log.info({ parsedFilter }, 'Parsed filter for jobs');
+
+      // 只传递ChromaDB兼容的筛选条件
+      const chromaFilter: any = {};
+      if (parsedFilter.tagId) chromaFilter.tagId = parsedFilter.tagId;
+      if (parsedFilter.jobId) chromaFilter.jobId = parsedFilter.jobId;
+      if (parsedFilter.id) chromaFilter.id = parsedFilter.id;
+
+      // 如果没有搜索条件，直接获取所有文档
+      if (!query) {
+        const results = await deps.vectorStore.getAllDocuments(
+          k,
+          chromaFilter,
+          deps.config.vectorStore.jobsCollection,
         );
 
         return {
           success: true,
           results,
           total: results.length,
-          query,
+          query: '',
           filter: parsedFilter,
           topK: k,
-          collection: targetCollection,
+          collection: 'jobs',
         };
       }
+
+      // 生成查询的嵌入向量
+      const queryEmbedding = await deps.embeddingService.embed([query.trim()]);
+
+      // 搜索jobs集合
+      const searchResults = await deps.vectorStore.searchByEmbedding(
+        queryEmbedding[0],
+        k,
+        chromaFilter,
+        deps.config.vectorStore.jobsCollection,
+        query,
+      );
+
+      // 如果没有命中，但集合有文档，尝试为集合重建嵌入后重试一次
+      if (searchResults.length === 0) {
+        const stats = await deps.vectorStore.getCollectionStats(
+          deps.config.vectorStore.jobsCollection,
+        );
+        if (stats?.documentCount > 0) {
+          await recreateCollectionWithEmbeddings(deps.config.vectorStore.jobsCollection);
+          const retried = await deps.vectorStore.searchByEmbedding(
+            queryEmbedding[0],
+            k,
+            chromaFilter,
+            deps.config.vectorStore.jobsCollection,
+          );
+          if (retried.length > 0) {
+            return {
+              success: true,
+              results: retried,
+              total: retried.length,
+              query: query,
+              filter: parsedFilter,
+              topK: k,
+              collection: 'jobs',
+            };
+          }
+        }
+      }
+
+      // 如果有时间筛选，在应用层过滤
+      if (parsedFilter.needsTimeFilter && (parsedFilter.timeFrom || parsedFilter.timeTo)) {
+        const filtered = searchResults.filter((doc) => {
+          const docTime = doc.metadata?.createdAt || doc.metadata?.timestamp;
+          if (!docTime) return false; // 如果没有时间戳，不显示该文档
+
+          const timestamp = typeof docTime === 'number' ? docTime : new Date(docTime).getTime();
+          if (parsedFilter.timeFrom && timestamp < parsedFilter.timeFrom) return false;
+          if (parsedFilter.timeTo && timestamp > parsedFilter.timeTo) return false;
+          return true;
+        });
+
+        return {
+          success: true,
+          results: filtered,
+          total: filtered.length,
+          query: query,
+          filter: parsedFilter,
+          topK: k,
+          collection: 'jobs',
+        };
+      }
+
+      return {
+        success: true,
+        results: searchResults,
+        total: searchResults.length,
+        query: query,
+        filter: parsedFilter,
+        topK: k,
+        collection: 'jobs',
+      };
     } catch (error) {
-      app.log.error({ err: error as any }, 'Search failed');
-      return { success: false, error: '搜索失败' };
+      app.log.error({ err: error as any }, 'Search jobs failed');
+      return reply.status(500).send({ success: false, error: '搜索jobs失败' });
+    }
+  });
+
+  // 搜索resumes集合
+  app.get('/search/resumes', async (request, reply) => {
+    try {
+      const { query, filter, k = 1000 } = request.query as any;
+
+      app.log.info(
+        {
+          query,
+          filter,
+          k,
+        },
+        'Search resumes request received',
+      );
+
+      // 解析筛选条件
+      const parsedFilter = parseFilter(filter);
+      app.log.info({ parsedFilter }, 'Parsed filter for resumes');
+
+      // 只传递ChromaDB兼容的筛选条件
+      const chromaFilter: any = {};
+      if (parsedFilter.tagId) chromaFilter.tagId = parsedFilter.tagId;
+      if (parsedFilter.jobId) chromaFilter.jobId = parsedFilter.jobId;
+      if (parsedFilter.id) chromaFilter.id = parsedFilter.id;
+
+      // 如果没有搜索条件，直接获取所有文档
+      if (!query) {
+        const results = await deps.vectorStore.getAllDocuments(
+          k,
+          chromaFilter,
+          deps.config.vectorStore.resumesCollection,
+        );
+
+        return {
+          success: true,
+          results,
+          total: results.length,
+          query: '',
+          filter: parsedFilter,
+          topK: k,
+          collection: 'resumes',
+        };
+      }
+
+      // 生成查询的嵌入向量并执行向量检索
+      const queryEmbedding = await deps.embeddingService.embed([query.trim()]);
+
+      let searchResults = await deps.vectorStore.searchByEmbedding(
+        queryEmbedding[0],
+        k,
+        chromaFilter,
+        deps.config.vectorStore.resumesCollection,
+        query,
+      );
+
+      if (searchResults.length === 0) {
+        const stats = await deps.vectorStore.getCollectionStats(
+          deps.config.vectorStore.resumesCollection,
+        );
+        if (stats?.documentCount > 0) {
+          await recreateCollectionWithEmbeddings(deps.config.vectorStore.resumesCollection);
+          searchResults = await deps.vectorStore.searchByEmbedding(
+            queryEmbedding[0],
+            k,
+            chromaFilter,
+            deps.config.vectorStore.resumesCollection,
+            query,
+          );
+        }
+      }
+
+      // 如果有时间筛选，在应用层过滤
+      if (parsedFilter.needsTimeFilter && (parsedFilter.timeFrom || parsedFilter.timeTo)) {
+        const filtered = searchResults.filter((doc) => {
+          const docTime = doc.metadata?.createdAt || doc.metadata?.timestamp;
+          if (!docTime) return false; // 如果没有时间戳，不显示该文档
+
+          const timestamp = typeof docTime === 'number' ? docTime : new Date(docTime).getTime();
+          if (parsedFilter.timeFrom && timestamp < parsedFilter.timeFrom) return false;
+          if (parsedFilter.timeTo && timestamp > parsedFilter.timeTo) return false;
+          return true;
+        });
+
+        return {
+          success: true,
+          results: filtered,
+          total: filtered.length,
+          query: query,
+          filter: parsedFilter,
+          topK: k,
+          collection: 'resumes',
+        };
+      }
+
+      return {
+        success: true,
+        results: searchResults,
+        total: searchResults.length,
+        query: query,
+        filter: parsedFilter,
+        topK: k,
+        collection: 'resumes',
+      };
+    } catch (error) {
+      app.log.error({ err: error as any }, 'Search resumes failed');
+      return reply.status(500).send({ success: false, error: '搜索resumes失败' });
+    }
+  });
+
+  // 搜索questions集合
+  app.get('/search/questions', async (request, reply) => {
+    try {
+      const { query, filter, k = 1000 } = request.query as any;
+
+      app.log.info(
+        {
+          query,
+          filter,
+          k,
+        },
+        'Search questions request received',
+      );
+
+      // 解析筛选条件
+      const parsedFilter = parseFilter(filter);
+      app.log.info({ parsedFilter }, 'Parsed filter for questions');
+
+      // 只传递ChromaDB兼容的筛选条件
+      const chromaFilter: any = {};
+      if (parsedFilter.tagId) chromaFilter.tagId = parsedFilter.tagId;
+      if (parsedFilter.jobId) chromaFilter.jobId = parsedFilter.jobId;
+      if (parsedFilter.id) chromaFilter.id = parsedFilter.id;
+
+      // 如果没有搜索条件，直接获取所有文档
+      if (!query) {
+        const results = await deps.vectorStore.getAllDocuments(
+          k,
+          chromaFilter,
+          deps.config.vectorStore.questionsCollection,
+        );
+
+        return {
+          success: true,
+          results,
+          total: results.length,
+          query: '',
+          filter: parsedFilter,
+          topK: k,
+          collection: 'questions',
+        };
+      }
+
+      // 生成查询的嵌入向量并执行向量检索
+      const queryEmbedding = await deps.embeddingService.embed([query.trim()]);
+
+      let searchResults = await deps.vectorStore.searchByEmbedding(
+        queryEmbedding[0],
+        k,
+        chromaFilter,
+        deps.config.vectorStore.questionsCollection,
+        query,
+      );
+
+      if (searchResults.length === 0) {
+        const stats = await deps.vectorStore.getCollectionStats(
+          deps.config.vectorStore.questionsCollection,
+        );
+        if (stats?.documentCount > 0) {
+          await recreateCollectionWithEmbeddings(deps.config.vectorStore.questionsCollection);
+          searchResults = await deps.vectorStore.searchByEmbedding(
+            queryEmbedding[0],
+            k,
+            chromaFilter,
+            deps.config.vectorStore.questionsCollection,
+            query,
+          );
+        }
+      }
+
+      // 如果有时间筛选，在应用层过滤
+      if (parsedFilter.needsTimeFilter && (parsedFilter.timeFrom || parsedFilter.timeTo)) {
+        const filtered = searchResults.filter((doc) => {
+          const docTime = doc.metadata?.createdAt || doc.metadata?.timestamp;
+          if (!docTime) return false; // 如果没有时间戳，不显示该文档
+
+          const timestamp = typeof docTime === 'number' ? docTime : new Date(docTime).getTime();
+          if (parsedFilter.timeFrom && timestamp < parsedFilter.timeFrom) return false;
+          if (parsedFilter.timeTo && timestamp > parsedFilter.timeTo) return false;
+          return true;
+        });
+
+        return {
+          success: true,
+          results: filtered,
+          total: filtered.length,
+          query: query,
+          filter: parsedFilter,
+          topK: k,
+          collection: 'questions',
+        };
+      }
+
+      return {
+        success: true,
+        results: searchResults,
+        total: searchResults.length,
+        query: query,
+        filter: parsedFilter,
+        topK: k,
+        collection: 'questions',
+      };
+    } catch (error) {
+      app.log.error({ err: error as any }, 'Search questions failed');
+      return reply.status(500).send({ success: false, error: '搜索questions失败' });
     }
   });
 
@@ -314,7 +583,7 @@ export async function createDocumentRoutes(
         if (doc.metadata.jobId) {
           // 获取简历信息
           const resumes = await deps.vectorStore.getAllDocuments(
-            10,
+            1000,
             { jobId: doc.metadata.jobId },
             deps.config.vectorStore.resumesCollection,
           );
@@ -322,7 +591,7 @@ export async function createDocumentRoutes(
 
           // 获取押题信息
           const questions = await deps.vectorStore.getAllDocuments(
-            10,
+            1000,
             { jobId: doc.metadata.jobId },
             deps.config.vectorStore.questionsCollection,
           );
@@ -333,7 +602,7 @@ export async function createDocumentRoutes(
         if (doc.metadata.jobId) {
           // 获取岗位信息
           const jobs = await deps.vectorStore.getAllDocuments(
-            10,
+            1000,
             { id: doc.metadata.jobId },
             deps.config.vectorStore.jobsCollection,
           );
@@ -341,7 +610,7 @@ export async function createDocumentRoutes(
 
           // 获取押题信息
           const questions = await deps.vectorStore.getAllDocuments(
-            10,
+            1000,
             { jobId: doc.metadata.jobId },
             deps.config.vectorStore.questionsCollection,
           );
@@ -352,7 +621,7 @@ export async function createDocumentRoutes(
         if (doc.metadata.jobId) {
           // 获取岗位信息
           const jobs = await deps.vectorStore.getAllDocuments(
-            10,
+            1000,
             { id: doc.metadata.jobId },
             deps.config.vectorStore.jobsCollection,
           );
@@ -360,7 +629,7 @@ export async function createDocumentRoutes(
 
           // 获取简历信息
           const resumes = await deps.vectorStore.getAllDocuments(
-            10,
+            1000,
             { jobId: doc.metadata.jobId },
             deps.config.vectorStore.resumesCollection,
           );

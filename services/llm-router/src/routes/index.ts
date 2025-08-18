@@ -245,7 +245,6 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
             logger.info(`Embeddings test result:`, { embedOk, response: r });
           }
         } catch (error) {
-          console.error('Embeddings test failed:', error);
           logger.error(
             `Embeddings test failed: ${error instanceof Error ? error.message : String(error)}`,
           );

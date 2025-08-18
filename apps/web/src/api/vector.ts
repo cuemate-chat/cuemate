@@ -26,7 +26,13 @@ export interface SearchFilters {
   query: string;
   tagId?: string;
   jobTitle?: string;
+  jobDescription?: string;
+  resumeTitle?: string;
+  resumeDescription?: string;
   questionTitle?: string;
+  questionDescription?: string;
+  createdFrom?: number; // 时间戳（起）
+  createdTo?: number; // 时间戳（止）
 }
 
 export interface SearchResponse {
@@ -38,53 +44,23 @@ export interface SearchResponse {
 
 // 搜索所有文档
 export const searchAllDocuments = async (): Promise<SearchResponse> => {
-  try {
-    const url = `${RAG_SERVICE_BASE}/search?query=&topK=1000`;
-    const response = await fetch(url);
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        const results = data.results || [];
-        return {
-          success: true,
-          results,
-          total: results.length,
-        };
-      } else {
-        return {
-          success: false,
-          results: [],
-          total: 0,
-          error: data.error || '搜索失败',
-        };
-      }
-    } else {
-      const errorText = await response.text();
-      return {
-        success: false,
-        results: [],
-        total: 0,
-        error: `请求失败: ${response.status} ${errorText}`,
-      };
-    }
-  } catch (error) {
-    return {
-      success: false,
-      results: [],
-      total: 0,
-      error: `网络错误: ${error}`,
-    };
-  }
+  return searchJobs({ type: 'jobs', query: '' } as any);
 };
 
 // 搜索岗位信息
 export const searchJobs = async (filters: SearchFilters): Promise<SearchResponse> => {
   try {
     const filterObj: Record<string, any> = {};
-    if (filters.jobTitle) filterObj.title = filters.jobTitle;
+    // 关键词型筛选，后端做包含匹配与打分增强
+    if (filters.jobTitle) filterObj.titleKeyword = filters.jobTitle;
+    if (filters.jobDescription) filterObj.descriptionKeyword = filters.jobDescription;
+    // 时间范围筛选 - 修复时间戳格式
+    if (filters.createdFrom || filters.createdTo) {
+      if (filters.createdFrom) filterObj.createdFrom = filters.createdFrom;
+      if (filters.createdTo) filterObj.createdTo = filters.createdTo;
+    }
 
-    let url = `${RAG_SERVICE_BASE}/search?query=${encodeURIComponent(filters.query || '')}&topK=1000&collection=jobs`;
+    let url = `${RAG_SERVICE_BASE}/search/jobs?query=${encodeURIComponent(filters.query || '')}&k=1000`;
     if (Object.keys(filterObj).length > 0) {
       url += `&filter=${encodeURIComponent(JSON.stringify(filterObj))}`;
     }
@@ -131,10 +107,16 @@ export const searchJobs = async (filters: SearchFilters): Promise<SearchResponse
 export const searchQuestions = async (filters: SearchFilters): Promise<SearchResponse> => {
   try {
     const filterObj: Record<string, any> = {};
-    if (filters.tagId) filterObj.tagId = filters.tagId;
-    if (filters.questionTitle) filterObj.title = filters.questionTitle;
+    if (filters.tagId) filterObj.tagId = filters.tagId; // 仅押题页支持标签
+    if (filters.questionTitle) filterObj.titleKeyword = filters.questionTitle;
+    if (filters.questionDescription) filterObj.descriptionKeyword = filters.questionDescription;
+    // 时间范围筛选 - 修复时间戳格式
+    if (filters.createdFrom || filters.createdTo) {
+      if (filters.createdFrom) filterObj.createdFrom = filters.createdFrom;
+      if (filters.createdTo) filterObj.createdTo = filters.createdTo;
+    }
 
-    let url = `${RAG_SERVICE_BASE}/search?query=${encodeURIComponent(filters.query || '')}&topK=1000&collection=questions`;
+    let url = `${RAG_SERVICE_BASE}/search/questions?query=${encodeURIComponent(filters.query || '')}&k=1000`;
     if (Object.keys(filterObj).length > 0) {
       url += `&filter=${encodeURIComponent(JSON.stringify(filterObj))}`;
     }
@@ -181,10 +163,15 @@ export const searchQuestions = async (filters: SearchFilters): Promise<SearchRes
 export const searchResumes = async (filters: SearchFilters): Promise<SearchResponse> => {
   try {
     const filterObj: Record<string, any> = {};
-    if (filters.jobTitle) filterObj.title = filters.jobTitle;
-    if (filters.tagId) filterObj.tagId = filters.tagId;
+    if (filters.resumeTitle) filterObj.titleKeyword = filters.resumeTitle;
+    if (filters.resumeDescription) filterObj.descriptionKeyword = filters.resumeDescription;
+    // 时间范围筛选 - 修复时间戳格式
+    if (filters.createdFrom || filters.createdTo) {
+      if (filters.createdFrom) filterObj.createdFrom = filters.createdFrom;
+      if (filters.createdTo) filterObj.createdTo = filters.createdTo;
+    }
 
-    let url = `${RAG_SERVICE_BASE}/search?query=${encodeURIComponent(filters.query || '')}&topK=1000&collection=resumes`;
+    let url = `${RAG_SERVICE_BASE}/search/resumes?query=${encodeURIComponent(filters.query || '')}&k=1000`;
     if (Object.keys(filterObj).length > 0) {
       url += `&filter=${encodeURIComponent(JSON.stringify(filterObj))}`;
     }
@@ -227,50 +214,13 @@ export const searchResumes = async (filters: SearchFilters): Promise<SearchRespo
   }
 };
 
-// 通用搜索
+// 通用搜索：根据type分发到对应路由
 export const searchDocuments = async (filters: SearchFilters): Promise<SearchResponse> => {
-  try {
-    let url = `${RAG_SERVICE_BASE}/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
-    if (filters.tagId) {
-      url += `&filter=${encodeURIComponent(JSON.stringify({ tagId: filters.tagId }))}`;
-    }
-
-    const response = await fetch(url);
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        const results = data.results || [];
-        return {
-          success: true,
-          results,
-          total: results.length,
-        };
-      } else {
-        return {
-          success: false,
-          results: [],
-          total: 0,
-          error: data.error || '搜索失败',
-        };
-      }
-    } else {
-      const errorText = await response.text();
-      return {
-        success: false,
-        results: [],
-        total: 0,
-        error: `请求失败: ${response.status} ${errorText}`,
-      };
-    }
-  } catch (error) {
-    return {
-      success: false,
-      results: [],
-      total: 0,
-      error: `网络错误: ${error}`,
-    };
-  }
+  if (filters.type === 'jobs') return searchJobs(filters);
+  if (filters.type === 'resumes') return searchResumes(filters);
+  if (filters.type === 'questions') return searchQuestions(filters);
+  // 默认：返回空集或某一集合
+  return searchJobs({ ...filters, type: 'jobs' });
 };
 
 // 智能搜索（根据类型选择不同的搜索方法）

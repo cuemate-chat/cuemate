@@ -9,7 +9,6 @@ import {
   deleteJob,
   deleteQuestion,
   getRelatedDocuments,
-  searchAllDocuments,
   searchJobs,
   searchQuestions,
   searchResumes
@@ -27,7 +26,13 @@ export default function VectorKnowledge() {
     query: '',
     tagId: undefined,
     jobTitle: undefined,
+    jobDescription: undefined,
+    resumeTitle: undefined,
+    resumeDescription: undefined,
     questionTitle: undefined,
+    questionDescription: undefined,
+    createdFrom: undefined,
+    createdTo: undefined,
   });
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [currentDetailDoc, setCurrentDetailDoc] = useState<VectorDocument | null>(null);
@@ -51,7 +56,7 @@ export default function VectorKnowledge() {
       setLoading(true);
       let result;
 
-      // 根据当前标签页调用不同的搜索函数
+      // 根据当前标签页调用不同的搜索函数，同时应用当前筛选条件
       if (currentTab === 'jobs') {
         result = await searchJobs({ ...filters, query: '' });
       } else if (currentTab === 'resumes') {
@@ -59,24 +64,45 @@ export default function VectorKnowledge() {
       } else if (currentTab === 'questions') {
         result = await searchQuestions({ ...filters, query: '' });
       } else {
-        result = await searchAllDocuments();
+        result = await searchJobs({ ...filters, query: '' });
       }
 
       if (result.success) {
-        setSearchResults(result.results);
-        setTotalResults(result.total);
+        const list = result.results || [];
+        setSearchResults(list);
+        setTotalResults(list.length);
       } else {
         setSearchResults([]);
         setTotalResults(0);
-        console.error('加载数据失败:', result.error);
       }
     } catch (error) {
-      console.error('加载数据出错:', error);
       setSearchResults([]);
       setTotalResults(0);
     } finally {
       setLoading(false);
     }
+  };
+
+  // 标签页切换处理
+  const handleTabChange = (tab: string) => {
+    setCurrentTab(tab);
+    // 切换标签页时重置筛选条件
+    setFilters({
+      type: 'all',
+      query: '',
+      tagId: undefined,
+      jobTitle: undefined,
+      jobDescription: undefined,
+      resumeTitle: undefined,
+      resumeDescription: undefined,
+      questionTitle: undefined,
+      questionDescription: undefined,
+      createdFrom: undefined,
+      createdTo: undefined,
+    });
+    // 清空搜索结果
+    setSearchResults([]);
+    setTotalResults(0);
   };
 
   const fetchTags = async () => {
@@ -94,7 +120,7 @@ export default function VectorKnowledge() {
       setLoading(true);
       let result;
 
-      // 根据当前标签页调用不同的搜索函数
+      // 根据当前标签页调用不同的搜索函数，同时应用搜索关键词和筛选条件
       if (currentTab === 'jobs') {
         result = await searchJobs(filters);
       } else if (currentTab === 'resumes') {
@@ -102,19 +128,20 @@ export default function VectorKnowledge() {
       } else if (currentTab === 'questions') {
         result = await searchQuestions(filters);
       } else {
-        result = await searchAllDocuments();
+        result = await searchJobs(filters);
       }
 
       if (result.success) {
-        setSearchResults(result.results);
-        setTotalResults(result.total);
+        const list = result.results || [];
+        setSearchResults(list);
+        setTotalResults(list.length);
       } else {
         setSearchResults([]);
         setTotalResults(0);
-        console.error('搜索失败:', result.error);
+        message.error('搜索失败:' + result.error);
       }
     } catch (error) {
-      console.error('搜索出错:', error);
+      message.error('搜索出错:' + error);
       setSearchResults([]);
       setTotalResults(0);
     } finally {
@@ -122,16 +149,25 @@ export default function VectorKnowledge() {
     }
   };
 
+  // 清除筛选条件
   const clearFilters = () => {
     setFilters({
       type: 'all',
       query: '',
       tagId: undefined,
       jobTitle: undefined,
+      jobDescription: undefined,
+      resumeTitle: undefined,
+      resumeDescription: undefined,
       questionTitle: undefined,
+      questionDescription: undefined,
+      createdFrom: undefined,
+      createdTo: undefined,
     });
-    setSearchResults([]);
-    setTotalResults(0);
+    // 清除筛选后重新搜索
+    setTimeout(() => {
+      searchDocuments();
+    }, 100);
   };
 
   const getDocumentName = (doc: VectorDocument): string => {
@@ -157,7 +193,7 @@ export default function VectorKnowledge() {
         setRelatedData(result.related);
       }
     } catch (error) {
-      console.error('获取关联信息失败:', error);
+      message.error('获取关联信息失败:' + error);
     } finally {
       // setLoadingRelated(false); // This line is removed
     }
@@ -246,7 +282,7 @@ export default function VectorKnowledge() {
         <div className="border-b border-gray-200 mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
-              onClick={() => setCurrentTab('jobs')}
+              onClick={() => handleTabChange('jobs')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 currentTab === 'jobs'
                   ? 'border-blue-500 text-blue-600'
@@ -256,7 +292,7 @@ export default function VectorKnowledge() {
               岗位信息
             </button>
             <button
-              onClick={() => setCurrentTab('resumes')}
+              onClick={() => handleTabChange('resumes')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 currentTab === 'resumes'
                   ? 'border-blue-500 text-blue-600'
@@ -266,7 +302,7 @@ export default function VectorKnowledge() {
               简历信息
             </button>
             <button
-              onClick={() => setCurrentTab('questions')}
+              onClick={() => handleTabChange('questions')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 currentTab === 'questions'
                   ? 'border-blue-500 text-blue-600'
@@ -341,82 +377,115 @@ export default function VectorKnowledge() {
           {showFilters && (
             <div className="mt-6 pt-6 border-t border-slate-200">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* 数据类型筛选 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">数据类型</label>
-                  <Select
-                    value={filters.type}
-                    onChange={(value) => setFilters({ ...filters, type: value })}
-                    style={{ height: '42px' }}
-                  >
-                    <Select.Option value="all">全部</Select.Option>
-                    {currentTab === 'jobs' && <Select.Option value="jobs">岗位</Select.Option>}
-                    {currentTab === 'resumes' && <Select.Option value="resumes">简历</Select.Option>}
-                    {currentTab === 'questions' && <Select.Option value="questions">押题</Select.Option>}
-                  </Select>
-                </div>
-
-                {/* 标签筛选 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">标签</label>
-                  <Select
-                    value={filters.tagId}
-                    onChange={(value) => setFilters({ ...filters, tagId: value })}
-                    allowClear
-                    placeholder="选择标签"
-                    style={{ height: '42px' }}
-                  >
-                    {tags.map((tag) => (
-                      <Select.Option key={tag.id} value={tag.id}>
-                        {tag.name}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </div>
-
                 {/* 根据当前标签页显示不同的筛选字段 */}
                 {currentTab === 'jobs' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">岗位名称</label>
-                    <Input
-                      value={filters.jobTitle || ''}
-                      onChange={(e) => setFilters({ ...filters, jobTitle: e.target.value })}
-                      placeholder="输入岗位名称"
-                    />
-                  </div>
-                )}
-
-                {currentTab === 'questions' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">押题名称</label>
-                    <Input
-                      value={filters.questionTitle || ''}
-                      onChange={(e) => setFilters({ ...filters, questionTitle: e.target.value })}
-                      placeholder="输入押题名称"
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="date"
+                          value={filters.createdFrom ? new Date(filters.createdFrom).toISOString().slice(0,10) : ''}
+                          onChange={(e) => {
+                            const ts = e.target.value ? new Date(e.target.value + 'T00:00:00').getTime() : undefined;
+                            setFilters({ ...filters, createdFrom: ts });
+                          }}
+                          style={{ height: '42px' }}
+                        />
+                        <Input
+                          type="date"
+                          value={filters.createdTo ? new Date(filters.createdTo).toISOString().slice(0,10) : ''}
+                          onChange={(e) => {
+                            const ts = e.target.value ? new Date(e.target.value + 'T23:59:59').getTime() : undefined;
+                            setFilters({ ...filters, createdTo: ts });
+                          }}
+                          style={{ height: '42px' }}
+                        />
+                      </div>
+                    </div>
+                  </>
                 )}
 
                 {currentTab === 'resumes' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">简历标题</label>
-                    <Input
-                      value={filters.jobTitle || ''}
-                      onChange={(e) => setFilters({ ...filters, jobTitle: e.target.value })}
-                      placeholder="输入简历标题"
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="date"
+                          value={filters.createdFrom ? new Date(filters.createdFrom).toISOString().slice(0,10) : ''}
+                          onChange={(e) => {
+                            const ts = e.target.value ? new Date(e.target.value + 'T00:00:00').getTime() : undefined;
+                            setFilters({ ...filters, createdFrom: ts });
+                          }}
+                          style={{ height: '42px' }}
+                        />
+                        <Input
+                          type="date"
+                          value={filters.createdTo ? new Date(filters.createdTo).toISOString().slice(0,10) : ''}
+                          onChange={(e) => {
+                            const ts = e.target.value ? new Date(e.target.value + 'T23:59:59').getTime() : undefined;
+                            setFilters({ ...filters, createdTo: ts });
+                          }}
+                          style={{ height: '42px' }}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {currentTab === 'questions' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">押题标签</label>
+                      <Select
+                        value={filters.tagId}
+                        onChange={(value) => setFilters({ ...filters, tagId: value })}
+                        allowClear
+                        placeholder="选择标签"
+                        style={{ height: '42px', width: '100%' }}
+                      >
+                        {tags.map((tag) => (
+                          <Select.Option key={tag.id} value={tag.id}>
+                            {tag.name}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="date"
+                          value={filters.createdFrom ? new Date(filters.createdFrom).toISOString().slice(0,10) : ''}
+                          onChange={(e) => {
+                            const ts = e.target.value ? new Date(e.target.value + 'T00:00:00').getTime() : undefined;
+                            setFilters({ ...filters, createdFrom: ts });
+                          }}
+                          style={{ height: '42px' }}
+                        />
+                        <Input
+                          type="date"
+                          value={filters.createdTo ? new Date(filters.createdTo).toISOString().slice(0,10) : ''}
+                          onChange={(e) => {
+                            const ts = e.target.value ? new Date(e.target.value + 'T23:59:59').getTime() : undefined;
+                            setFilters({ ...filters, createdTo: ts });
+                          }}
+                          style={{ height: '42px' }}
+                        />
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
 
-              {/* 清除筛选按钮 */}
-              <div className="mt-4 flex justify-end">
+              {/* 筛选操作按钮 */}
+              <div className="mt-4 flex justify-end gap-2">
                 <button
                   onClick={clearFilters}
-                  className="px-4 py-2 text-slate-600 hover:text-slate-800 flex items-center gap-2"
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                 >
-                  <CloseOutlined />
-                  清除筛选
+                  × 清除筛选
                 </button>
               </div>
             </div>
@@ -559,7 +628,7 @@ export default function VectorKnowledge() {
           width={960}
           centered
           zIndex={5000}
-          bodyStyle={{ height: '60vh', overflow: 'auto' }}
+          styles={{ body: { height: '60vh', overflow: 'auto' } }}
         >
           {currentDetailDoc && (
             <div className="space-y-6">

@@ -32,7 +32,8 @@ export async function createRoutes(
       version: '1.0.0',
       description: '向量数据库和检索增强生成服务',
       endpoints: {
-        documents: '/ingest, /ingest/batch, /delete/by-filter, /search',
+        documents:
+          '/ingest, /ingest/batch, /delete/by-filter, /search/jobs, /search/resumes, /search/questions',
         jobs: '/jobs/process, /jobs/:jobId, /jobs/search',
         questions:
           '/questions/process, /questions/:questionId, /questions/search, /questions/by-job/:jobId, /questions/by-tag/:tagId',

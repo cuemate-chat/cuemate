@@ -158,7 +158,7 @@ export function registerLogRoutes(app: FastifyInstance) {
       // 清空文件内容（保留文件，只清空内容）
       fs.writeFileSync(filePath, '', 'utf8');
 
-      (req as any).log.info({ level, service, date }, 'log-file-cleared');
+      (req as any).log.debug({ level, service, date }, 'log-file-cleared');
       return { success: true, message: '日志文件已清空' };
     } catch (err) {
       (req as any).log.error({ err, level, service, date }, 'clear-log-failed');

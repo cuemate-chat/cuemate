@@ -153,31 +153,93 @@ export class VectorStore {
     topK: number = 5,
     filter?: Record<string, any>,
     collectionName?: string,
+    query?: string,
   ): Promise<SearchResult[]> {
     const collection = await this.getOrCreateCollection(
       collectionName || this.config.defaultCollection,
     );
 
     try {
-      const results: any = await (collection as any).query({
-        queryEmbeddings: [embedding],
-        nResults: topK,
-        where: filter,
-      });
-
-      if (!results.documents[0]) {
+      // 如果没有传入向量，直接返回空结果，避免误报100%相关度
+      if (!embedding || embedding.length === 0) {
         return [];
       }
 
-      return (results.documents[0] as string[]).map((doc: string, i: number) => ({
-        id: results.ids[0][i],
-        content: doc || '',
-        metadata: results.metadatas[0][i] || {},
-        score: results.distances ? 1 - results.distances[0][i] : 1,
-      }));
+      // 获取集合中的文档总数
+      const count = await (collection as any).count();
+
+      // 使用较小值作为n_results参数
+      const n_results = Math.min(topK, count);
+
+      // 使用include_metadata=true确保返回元数据，使用include_distances=true确保返回相关度分数
+      const results: any = await (collection as any).query({
+        queryEmbeddings: [embedding],
+        nResults: n_results,
+        where: filter,
+        include_metadata: true,
+        include_distances: true,
+      });
+
+      if (!results.documents[0]) {
+        // 未命中则返回空结果
+        return [];
+      }
+
+      const q = (query || '').toLowerCase();
+      const queryChars = q.split('').filter((ch) => !/\s/.test(ch));
+
+      const searchResults = (results.documents[0] as string[]).map((doc: string, i: number) => {
+        // ChromaDB的distances是L2距离，需要转换为相似度分数（0-1之间）
+        const distance = results.distances ? results.distances[0][i] : 0;
+        // 使用指数衰减将距离转换为相似度分数
+        let score = Math.exp(-distance);
+
+        // 基于字符的覆盖率得分：统计文本内字符频次，逐个匹配查询字符，可重复匹配
+        let overlapRatio = 0;
+        if (queryChars.length > 0) {
+          const text = (doc || '').toLowerCase();
+          const charToCount: Record<string, number> = {};
+          for (const ch of text) {
+            if (/\s/.test(ch)) continue;
+            charToCount[ch] = (charToCount[ch] || 0) + 1;
+          }
+          let matchedChars = 0;
+          for (const ch of queryChars) {
+            if (charToCount[ch] && charToCount[ch] > 0) {
+              matchedChars++;
+              charToCount[ch] = charToCount[ch] - 1;
+            }
+          }
+          overlapRatio = matchedChars / queryChars.length; // 0~1
+
+          // 无任何字符重叠则直接置0，避免瞎匹配
+          if (overlapRatio === 0) {
+            score = 0;
+          } else {
+            // 轻量融合：短查询时取重叠率与向量分数的最大值，使“3/33/333”等直觉更合理
+            if (queryChars.length <= 5) {
+              score = Math.max(score, overlapRatio);
+            }
+          }
+        }
+
+        return {
+          id: results.ids[0][i],
+          content: doc || '',
+          metadata: results.metadatas[0][i] || {},
+          score,
+        };
+      });
+
+      // 过滤掉相关度过低的结果并按相关度排序
+      // 只保留相关度大于0的结果，确保返回的都是真正相关的内容
+      return searchResults
+        .filter((result: SearchResult) => result.score > 0)
+        .sort((a, b) => b.score - a.score);
     } catch (error) {
       logger.error({ err: error as any }, 'Embedding search failed');
-      throw error;
+      // 出错时返回空结果，避免误导性的满分
+      return [];
     }
   }
 
@@ -290,12 +352,18 @@ export class VectorStore {
         return [];
       }
 
-      return results.documents.map((doc: string, i: number) => ({
-        id: results.ids[i],
-        content: doc || '',
-        metadata: results.metadatas[i] || {},
-        score: 1, // 默认相关度为1，因为没有查询
-      }));
+      return results.documents.map((doc: string, i: number) => {
+        const content = doc || '';
+        const metadata = results.metadatas[i] || {};
+
+        // 如果没有查询词，返回相关度为1
+        return {
+          id: results.ids[i],
+          content,
+          metadata,
+          score: 1,
+        };
+      });
     } catch (error) {
       logger.error({ err: error as any }, 'Get all documents failed');
       throw error;
