@@ -166,11 +166,36 @@ export async function createDocumentRoutes(
 
       // 如果查询为空，返回所有文档
       if (!query || query.trim() === '') {
-        const allResults = await deps.vectorStore.getAllDocuments(
-          k,
-          parsedFilter,
-          targetCollection,
-        );
+        let allResults: any[] = [];
+
+        // 如果没有指定集合，查询所有主要集合
+        if (!collection) {
+          const collections = [
+            deps.config.vectorStore.defaultCollection,
+            deps.config.vectorStore.jobsCollection,
+            deps.config.vectorStore.resumesCollection,
+            deps.config.vectorStore.questionsCollection,
+          ];
+
+          // 并行查询所有集合
+          const collectionResults = await Promise.all(
+            collections.map(async (colName) => {
+              try {
+                return await deps.vectorStore.getAllDocuments(k, parsedFilter, colName);
+              } catch (error) {
+                app.log.warn(`Failed to query collection ${colName}:`, error as any);
+                return [];
+              }
+            }),
+          );
+
+          // 合并所有结果
+          allResults = collectionResults.flat();
+        } else {
+          // 查询指定集合
+          allResults = await deps.vectorStore.getAllDocuments(k, parsedFilter, targetCollection);
+        }
+
         return {
           success: true,
           results: allResults,
@@ -185,23 +210,64 @@ export async function createDocumentRoutes(
       // 生成查询的嵌入向量
       const queryEmbedding = await deps.embeddingService.embed([query]);
 
-      // 使用嵌入向量搜索
-      const results = await deps.vectorStore.searchByEmbedding(
-        queryEmbedding[0],
-        k,
-        parsedFilter,
-        targetCollection,
-      );
+      // 如果没有指定集合，在所有主要集合中搜索
+      if (!collection) {
+        const collections = [
+          deps.config.vectorStore.defaultCollection,
+          deps.config.vectorStore.jobsCollection,
+          deps.config.vectorStore.resumesCollection,
+          deps.config.vectorStore.questionsCollection,
+        ];
 
-      return {
-        success: true,
-        results,
-        total: results.length,
-        query,
-        filter: parsedFilter,
-        topK: k,
-        collection: targetCollection,
-      };
+        // 并行在所有集合中搜索
+        const collectionResults = await Promise.all(
+          collections.map(async (colName) => {
+            try {
+              return await deps.vectorStore.searchByEmbedding(
+                queryEmbedding[0],
+                k,
+                parsedFilter,
+                colName,
+              );
+            } catch (error) {
+              app.log.warn(`Failed to search in collection ${colName}:`, error as any);
+              return [];
+            }
+          }),
+        );
+
+        // 合并所有结果并按相关性排序
+        const allResults = collectionResults.flat();
+        allResults.sort((a, b) => b.score - a.score);
+
+        return {
+          success: true,
+          results: allResults.slice(0, k),
+          total: allResults.length,
+          query,
+          filter: parsedFilter,
+          topK: k,
+          collection: 'all',
+        };
+      } else {
+        // 在指定集合中搜索
+        const results = await deps.vectorStore.searchByEmbedding(
+          queryEmbedding[0],
+          k,
+          parsedFilter,
+          targetCollection,
+        );
+
+        return {
+          success: true,
+          results,
+          total: results.length,
+          query,
+          filter: parsedFilter,
+          topK: k,
+          collection: targetCollection,
+        };
+      }
     } catch (error) {
       app.log.error({ err: error as any }, 'Search failed');
       return { success: false, error: '搜索失败' };

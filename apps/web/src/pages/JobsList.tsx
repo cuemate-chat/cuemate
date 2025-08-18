@@ -117,7 +117,7 @@ export default function JobsList() {
 
           {/* 操作按钮 */}
           <div className="mt-6 flex items-center justify-between">
-            <Button onClick={() => (window.location.href = '/home')}>返回主页</Button>
+            <Button onClick={() => (window.location.href = '/settings/vector-knowledge')}>去往向量知识库</Button>
             <div className="space-x-3">
               <Button type="primary" disabled={!selectedId || loading} onClick={onSave}>保存修改</Button>
               <Button danger disabled={!selectedId || loading} onClick={onDelete}>删除岗位</Button>
