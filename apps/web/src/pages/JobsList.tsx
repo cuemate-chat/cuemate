@@ -10,6 +10,21 @@ export default function JobsList() {
   const [description, setDescription] = useState('');
   const [resumeContent, setResumeContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [adaptiveRows, setAdaptiveRows] = useState<number>(8);
+  // 计算中间可视区域高度：100vh - Header(56px) - Footer(48px) - Main上下内边距(48px)
+  const MAIN_HEIGHT = 'calc(100vh - 56px - 48px - 48px)';
+
+  // 根据屏幕高度自适应文本域行数：14"≈8行，27"≈11行
+  useEffect(() => {
+    const recomputeRows = () => {
+      const viewportHeight = window.innerHeight;
+      const rows = viewportHeight >= 900 ? 11 : (viewportHeight >= 800 ? 8 : 7);
+      setAdaptiveRows(rows);
+    };
+    recomputeRows();
+    window.addEventListener('resize', recomputeRows);
+    return () => window.removeEventListener('resize', recomputeRows);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -72,10 +87,10 @@ export default function JobsList() {
   };
 
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="grid grid-cols-12 gap-6 overflow-hidden" style={{ height: MAIN_HEIGHT }}>
       {/* 左侧列表 */}
-      <div className="col-span-12 md:col-span-3 min-h-0">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm h-[calc(100vh-175px)] min-h-0 overflow-y-auto">
+      <div className="col-span-12 md:col-span-3 min-h-0 h-full">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm h-full min-h-0 overflow-y-auto">
           <div className="text-sm text-slate-600 mb-2">岗位列表</div>
           <div className="space-y-2">
             {items.map((it, idx) => (
@@ -96,8 +111,8 @@ export default function JobsList() {
       </div>
 
       {/* 右侧详情 */}
-      <div className="col-span-12 md:col-span-9">
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+      <div className="col-span-12 md:col-span-9 h-full min-h-0">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm h-full overflow-auto">
           <div className="grid grid-cols-1 gap-4">
             <div>
               <div className="text-sm text-slate-600 mb-1">岗位名称</div>
@@ -105,12 +120,12 @@ export default function JobsList() {
             </div>
             <div>
               <div className="text-sm text-slate-600 mb-1">岗位描述</div>
-              <Input.TextArea rows={8} maxLength={5000} value={description} onChange={(e) => setDescription(e.target.value)} disabled={!selectedId} />
+              <Input.TextArea rows={adaptiveRows} maxLength={5000} value={description} onChange={(e) => setDescription(e.target.value)} disabled={!selectedId} />
               <div className="text-right text-xs text-slate-500">{description.length} / 5000</div>
             </div>
             <div>
               <div className="text-sm text-slate-600 mb-1">简历信息（文本）</div>
-              <Input.TextArea rows={8} maxLength={5000} value={resumeContent} onChange={(e) => setResumeContent(e.target.value)} placeholder="简历正文" disabled={!selectedId} />
+              <Input.TextArea rows={adaptiveRows} maxLength={5000} value={resumeContent} onChange={(e) => setResumeContent(e.target.value)} placeholder="简历正文" disabled={!selectedId} />
               <div className="text-right text-xs text-slate-500">{resumeContent.length} / 5000</div>
             </div>
           </div>
