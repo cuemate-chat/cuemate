@@ -7,7 +7,7 @@ import { message } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 import { findProvider, providerManifests } from '../providers';
 
-export default function ModelSettings() {
+export default function Models() {
   const [loading, setLoading] = useState(false);
   const [testingModelId, setTestingModelId] = useState<string | null>(null); // 正在测试的模型ID
   const [list, setList] = useState<any[]>([]);
@@ -26,7 +26,7 @@ export default function ModelSettings() {
   useEffect(() => {
     const computeGap = () => {
       const h = window.innerHeight;
-      // 小屏(<=800): 12px, 中屏(<=900): 16px, 大屏: 20px
+      // 小屏(<=800): 16px, 中屏(<=900): 24px, 大屏: 32px
       const gap = h > 900 ? 32 : (h > 800 ? 24 : 16);
       setRowGap(gap);
     };

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { deleteInterview, listInterviews } from '../api/reviews';
 import { message as globalMessage } from '../components/Message';
 
-export default function ReviewsList() {
+export default function Reviews() {
   const nav = useNavigate();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<any[]>([]);

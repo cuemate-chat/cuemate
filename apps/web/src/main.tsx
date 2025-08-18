@@ -10,11 +10,11 @@ import JobsList from './pages/JobsList';
 import JobsNew from './pages/JobsNew';
 import Login from './pages/Login';
 import Logs from './pages/Logs';
-import ModelSettings from './pages/ModelSettings';
+import Models from './pages/Models';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Questions from './pages/Questions';
 import ReviewDetail from './pages/ReviewDetail';
-import ReviewsList from './pages/ReviewsList';
+import Reviews from './pages/Reviews';
 import Settings from './pages/Settings';
 import UserAgreement from './pages/UserAgreement';
 import VectorKnowledge from './pages/VectorKnowledge';
@@ -30,13 +30,13 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/jobs/new" element={<JobsNew />} />
           <Route path="/jobs" element={<JobsList />} />
           <Route path="/questions" element={<Questions />} />
-          <Route path="/reviews" element={<ReviewsList />} />
+          <Route path="/reviews" element={<Reviews />} />
           <Route path="/reviews/:id" element={<ReviewDetail />} />
           <Route path="/help" element={<Help />} />
           <Route path="/legal/user-agreement" element={<UserAgreement />} />
           <Route path="/legal/privacy" element={<PrivacyPolicy />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/settings/models" element={<ModelSettings />} />
+          <Route path="/settings/models" element={<Models />} />
           <Route path="/settings/logs" element={<Logs />} />
           <Route path="/settings/vector-knowledge" element={<VectorKnowledge />} />
         </Route>
