@@ -143,3 +143,9 @@ curl "http://localhost:3003/jobs/search?q=前端开发&userId=user-456&topK=5"
 - 定期备份向量数据库数据
 
 cd /Users/maguohao/chain/CueMate/infra/docker && curl "http://localhost:8000/api/v1/collections" | jq '.[] | {name, id, dimension}'
+
+curl -s "http://localhost:3003/search?query=&topK=10" | jq '.results | length'
+
+curl -s "http://localhost:3003/search?query=&topK=10" | jq '.results[] | {id, type: .metadata.type, jobId: .metadata.jobId, userId: .metadata.userId, title: .metadata.title}'
+
+curl -s "http://localhost:8000/api/v1/collections" | jq '.[] | {name, id}'

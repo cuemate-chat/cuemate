@@ -235,7 +235,7 @@ export default function VectorKnowledge() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ position: 'relative', zIndex: 1 }}>
         {/* 页面标题 */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900">向量知识库</h1>
@@ -464,7 +464,7 @@ export default function VectorKnowledge() {
                         {getDocumentTypeLabel(doc.metadata.type)}
                       </span>
                       <span className="text-sm text-slate-500">
-                        相关度: {(doc.score * 100).toFixed(1)}%
+                        相关度: {(Math.max(0, Math.min(1, Number.isFinite(doc.score) ? doc.score : 0)) * 100).toFixed(1)}%
                       </span>
                       {doc.metadata.tagName && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
@@ -556,9 +556,10 @@ export default function VectorKnowledge() {
           open={detailModalVisible}
           onCancel={() => setDetailModalVisible(false)}
           footer={null}
-          width={800}
-          style={{ top: '5%' }}
-          bodyStyle={{ maxHeight: '70vh', overflow: 'auto' }}
+          width={960}
+          centered
+          zIndex={5000}
+          bodyStyle={{ height: '60vh', overflow: 'auto' }}
         >
           {currentDetailDoc && (
             <div className="space-y-6">

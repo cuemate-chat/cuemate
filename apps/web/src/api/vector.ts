@@ -45,12 +45,11 @@ export const searchAllDocuments = async (): Promise<SearchResponse> => {
     if (response.ok) {
       const data = await response.json();
       if (data.success) {
-        // 过滤掉相似度低于 0 的结果
-        const filteredResults = (data.results || []).filter((doc: VectorDocument) => doc.score > 0);
+        const results = data.results || [];
         return {
           success: true,
-          results: filteredResults,
-          total: filteredResults.length,
+          results,
+          total: results.length,
         };
       } else {
         return {
@@ -82,9 +81,12 @@ export const searchAllDocuments = async (): Promise<SearchResponse> => {
 // 搜索岗位信息
 export const searchJobs = async (filters: SearchFilters): Promise<SearchResponse> => {
   try {
-    let url = `${RAG_SERVICE_BASE}/jobs/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
-    if (filters.jobTitle) {
-      url += `&jobTitle=${encodeURIComponent(filters.jobTitle)}`;
+    const filterObj: Record<string, any> = {};
+    if (filters.jobTitle) filterObj.title = filters.jobTitle;
+
+    let url = `${RAG_SERVICE_BASE}/search?query=${encodeURIComponent(filters.query || '')}&topK=1000&collection=jobs`;
+    if (Object.keys(filterObj).length > 0) {
+      url += `&filter=${encodeURIComponent(JSON.stringify(filterObj))}`;
     }
 
     const response = await fetch(url);
@@ -92,11 +94,11 @@ export const searchJobs = async (filters: SearchFilters): Promise<SearchResponse
     if (response.ok) {
       const data = await response.json();
       if (data.success) {
-        const filteredResults = (data.results || []).filter((doc: VectorDocument) => doc.score > 0);
+        const results = data.results || [];
         return {
           success: true,
-          results: filteredResults,
-          total: filteredResults.length,
+          results,
+          total: results.length,
         };
       } else {
         return {
@@ -128,12 +130,13 @@ export const searchJobs = async (filters: SearchFilters): Promise<SearchResponse
 // 搜索面试押题
 export const searchQuestions = async (filters: SearchFilters): Promise<SearchResponse> => {
   try {
-    let url = `${RAG_SERVICE_BASE}/questions/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
-    if (filters.tagId) {
-      url += `&tagId=${filters.tagId}`;
-    }
-    if (filters.questionTitle) {
-      url += `&questionTitle=${encodeURIComponent(filters.questionTitle)}`;
+    const filterObj: Record<string, any> = {};
+    if (filters.tagId) filterObj.tagId = filters.tagId;
+    if (filters.questionTitle) filterObj.title = filters.questionTitle;
+
+    let url = `${RAG_SERVICE_BASE}/search?query=${encodeURIComponent(filters.query || '')}&topK=1000&collection=questions`;
+    if (Object.keys(filterObj).length > 0) {
+      url += `&filter=${encodeURIComponent(JSON.stringify(filterObj))}`;
     }
 
     const response = await fetch(url);
@@ -141,11 +144,11 @@ export const searchQuestions = async (filters: SearchFilters): Promise<SearchRes
     if (response.ok) {
       const data = await response.json();
       if (data.success) {
-        const filteredResults = (data.results || []).filter((doc: VectorDocument) => doc.score > 0);
+        const results = data.results || [];
         return {
           success: true,
-          results: filteredResults,
-          total: filteredResults.length,
+          results,
+          total: results.length,
         };
       } else {
         return {
@@ -177,12 +180,13 @@ export const searchQuestions = async (filters: SearchFilters): Promise<SearchRes
 // 搜索简历信息
 export const searchResumes = async (filters: SearchFilters): Promise<SearchResponse> => {
   try {
-    let url = `${RAG_SERVICE_BASE}/resumes/search?query=${encodeURIComponent(filters.query)}&topK=1000`;
-    if (filters.jobTitle) {
-      url += `&jobTitle=${encodeURIComponent(filters.jobTitle)}`;
-    }
-    if (filters.tagId) {
-      url += `&tagId=${filters.tagId}`;
+    const filterObj: Record<string, any> = {};
+    if (filters.jobTitle) filterObj.title = filters.jobTitle;
+    if (filters.tagId) filterObj.tagId = filters.tagId;
+
+    let url = `${RAG_SERVICE_BASE}/search?query=${encodeURIComponent(filters.query || '')}&topK=1000&collection=resumes`;
+    if (Object.keys(filterObj).length > 0) {
+      url += `&filter=${encodeURIComponent(JSON.stringify(filterObj))}`;
     }
 
     const response = await fetch(url);
@@ -190,11 +194,11 @@ export const searchResumes = async (filters: SearchFilters): Promise<SearchRespo
     if (response.ok) {
       const data = await response.json();
       if (data.success) {
-        const filteredResults = (data.results || []).filter((doc: VectorDocument) => doc.score > 0);
+        const results = data.results || [];
         return {
           success: true,
-          results: filteredResults,
-          total: filteredResults.length,
+          results,
+          total: results.length,
         };
       } else {
         return {
@@ -236,11 +240,11 @@ export const searchDocuments = async (filters: SearchFilters): Promise<SearchRes
     if (response.ok) {
       const data = await response.json();
       if (data.success) {
-        const filteredResults = (data.results || []).filter((doc: VectorDocument) => doc.score > 0);
+        const results = data.results || [];
         return {
           success: true,
-          results: filteredResults,
-          total: filteredResults.length,
+          results,
+          total: results.length,
         };
       } else {
         return {
