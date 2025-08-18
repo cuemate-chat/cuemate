@@ -26,14 +26,14 @@ export function registerJobRoutes(app: FastifyInstance) {
         // 先创建岗位
         app.db
           .prepare(
-            'INSERT INTO jobs (id, user_id, title, description, status, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO jobs (id, user_id, title, description, status, created_at, vector_status) VALUES (?, ?, ?, ?, ?, ?, 0)',
           )
           .run(jobId, payload.uid, body.title, body.description, 'active', now);
 
         // 再创建简历并指向岗位
         app.db
           .prepare(
-            'INSERT INTO resumes (id, user_id, job_id, title, content, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO resumes (id, user_id, job_id, title, content, created_at, vector_status) VALUES (?, ?, ?, ?, ?, ?, 0)',
           )
           .run(
             resumeId,
@@ -76,6 +76,10 @@ export function registerJobRoutes(app: FastifyInstance) {
             app.log.info(
               `Successfully synced job ${jobId} to RAG service: ${JSON.stringify(result)}`,
             );
+            try {
+              app.db.prepare('UPDATE jobs SET vector_status=1 WHERE id=?').run(jobId);
+              app.db.prepare('UPDATE resumes SET vector_status=1 WHERE id=?').run(resumeId);
+            } catch {}
           } else {
             const errorText = await response.text();
             app.log.error(
@@ -150,7 +154,7 @@ export function registerJobRoutes(app: FastifyInstance) {
       if (!owned) return reply.code(404).send({ error: '岗位不存在' });
 
       app.db
-        .prepare('UPDATE jobs SET title=?, description=? WHERE id=? AND user_id=?')
+        .prepare('UPDATE jobs SET title=?, description=?, vector_status=0 WHERE id=? AND user_id=?')
         .run(body.title, body.description, id, payload.uid);
       // 简历若不存在则补一条
       const r = app.db
@@ -158,14 +162,16 @@ export function registerJobRoutes(app: FastifyInstance) {
         .get(id, payload.uid);
       if (r) {
         app.db
-          .prepare('UPDATE resumes SET title=?, content=? WHERE id=? AND user_id=?')
+          .prepare(
+            'UPDATE resumes SET title=?, content=?, vector_status=0 WHERE id=? AND user_id=?',
+          )
           .run(body.resumeTitle || `${body.title}-简历`, body.resumeContent, r.id, payload.uid);
       } else {
         const resumeId = randomUUID();
         const now = Date.now();
         app.db
           .prepare(
-            'INSERT INTO resumes (id, user_id, job_id, title, content, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO resumes (id, user_id, job_id, title, content, created_at, vector_status) VALUES (?, ?, ?, ?, ?, ?, 0)',
           )
           .run(
             resumeId,
@@ -214,6 +220,10 @@ export function registerJobRoutes(app: FastifyInstance) {
               },
             }),
           });
+          try {
+            app.db.prepare('UPDATE jobs SET vector_status=1 WHERE id=?').run(id);
+            app.db.prepare('UPDATE resumes SET vector_status=1 WHERE id=?').run(resumeRow.id);
+          } catch {}
         }
       } catch (error) {
         app.log.error({ err: error }, 'Failed to sync to RAG service');
@@ -237,6 +247,11 @@ export function registerJobRoutes(app: FastifyInstance) {
         await fetch(`${base}/jobs/${id}`, {
           method: 'DELETE',
         });
+        try {
+          // 回写向量同步状态
+          app.db.prepare('UPDATE jobs SET vector_status=0 WHERE id=?').run(id);
+          app.db.prepare('UPDATE resumes SET vector_status=0 WHERE job_id=?').run(id);
+        } catch {}
       } catch (error) {
         app.log.error({ err: error }, 'Failed to delete from RAG service');
       }

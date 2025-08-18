@@ -564,8 +564,12 @@ export async function createDocumentRoutes(
       let doc: any = null;
 
       try {
-        // 使用 getAllDocuments 方法，传递空的过滤条件来获取所有文档，然后按 ID 查找
-        const documents = await deps.vectorStore.getAllDocuments(1000, {}, targetCollection);
+        // 精确查询：仅按 ID 获取，避免遗漏
+        const documents = await deps.vectorStore.getAllDocuments(
+          1,
+          { id: docId },
+          targetCollection,
+        );
         doc = documents.find((d) => d.id === docId);
       } catch (error) {
         app.log.warn(`Failed to get documents from collection ${targetCollection}: ${error}`);

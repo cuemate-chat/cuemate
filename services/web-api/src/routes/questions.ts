@@ -84,7 +84,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         const now = Date.now();
         (app as any).db
           .prepare(
-            'INSERT INTO interview_questions (id, job_id, question, answer, created_at, tag_id) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO interview_questions (id, job_id, question, answer, created_at, tag_id, vector_status) VALUES (?, ?, ?, ?, ?, ?, 0)',
           )
           .run(qid, body.jobId, body.title, body.description || '', now, body.tagId || null);
 
@@ -117,6 +117,11 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
               },
             }),
           });
+          try {
+            (app as any).db
+              .prepare('UPDATE interview_questions SET vector_status=1 WHERE id=?')
+              .run(qid);
+          } catch {}
         } catch (error) {
           app.log.error({ err: error }, 'Failed to sync question to RAG service');
         }
@@ -186,6 +191,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
                   q.question AS title,
                   q.answer   AS description,
                   q.created_at,
+                  q.vector_status,
                   q.tag_id,
                   t.name AS tag
              FROM interview_questions q
@@ -215,7 +221,8 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
             `SELECT q.id,
                   q.question AS title,
                   q.answer   AS description,
-                  q.created_at
+                  q.created_at,
+                  q.vector_status
              FROM interview_questions q
              JOIN jobs j ON q.job_id = j.id
             WHERE q.id=? AND j.user_id = ?`,
@@ -251,7 +258,9 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           .get(id, payload.uid);
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
         (app as any).db
-          .prepare('UPDATE interview_questions SET question=?, answer=?, tag_id=? WHERE id=?')
+          .prepare(
+            'UPDATE interview_questions SET question=?, answer=?, tag_id=?, vector_status=0 WHERE id=?',
+          )
           .run(body.title, body.description, body.tagId ?? null, id);
         try {
           const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
@@ -287,6 +296,11 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
               },
             }),
           });
+          try {
+            (app as any).db
+              .prepare('UPDATE interview_questions SET vector_status=1 WHERE id=?')
+              .run(id);
+          } catch {}
         } catch (error) {
           app.log.error({ err: error }, 'Failed to sync updated question to RAG service');
         }
@@ -317,6 +331,11 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           await fetch(`${base}/questions/${id}`, {
             method: 'DELETE',
           });
+          try {
+            (app as any).db
+              .prepare('UPDATE interview_questions SET vector_status=0 WHERE id=?')
+              .run(id);
+          } catch {}
         } catch (error) {
           app.log.error({ err: error }, 'Failed to delete question from RAG service');
         }

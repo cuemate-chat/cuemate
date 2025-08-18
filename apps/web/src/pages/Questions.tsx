@@ -232,13 +232,16 @@ export default function Prompts() {
                     {/* 标题 + 标签（右上角对齐，但不遮挡内容） */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="text-base font-semibold text-slate-800 break-words line-clamp-2 min-h-[3.25rem] pr-2">{it.title}</div>
-                      {it.tag && (
-                        <div className="shrink-0">
+                      <div className="shrink-0 flex flex-col items-end gap-1">
+                        {it.tag && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full shadow-sm">
                             {it.tag}
                           </span>
-                        </div>
-                      )}
+                        )}
+                        <span className={`px-2 py-0.5 rounded text-[11px] ${it.vector_status ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}>
+                          {it.vector_status ? '已同步' : '未同步'}
+                        </span>
+                      </div>
                     </div>
                     {/* 分割线 */}
                     <div className="my-2 border-t border-slate-200"></div>
@@ -270,7 +273,7 @@ export default function Prompts() {
       <Modal open={open} onCancel={() => setOpen(false)} title="押题详情" footer={null} width={720}>
         {current && (
           <div className="space-y-3">
-            <div className="text-xs text-slate-500">创建时间：{dayjs(current.created_at).format('YYYY-MM-DD HH:mm')}</div>
+            <div className="text-xs text-slate-500">创建时间：{dayjs(current.created_at).format('YYYY-MM-DD HH:mm')} <span className="ml-3 text-red-500">{current.vector_status ? '已同步到向量库' : '未同步到向量库，保存后自动同步'}</span></div>
             <div>
               <div className="text-sm mb-1">标签</div>
               <Select

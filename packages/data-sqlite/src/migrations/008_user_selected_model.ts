@@ -99,6 +99,43 @@ export function up(db: any): void {
         'active',
         now,
       );
+
+      db.prepare(
+        `INSERT INTO resumes (id, user_id, job_id, title, content, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      ).run(
+        'resume_demo_001',
+        'admin',
+        'job_demo_001',
+        'Java技术经理-简历',
+        '简历内容：示例 – 拥有10年开发及架构经验，熟悉Spring生态、Redis、Kafka、MySQL等，具备分布式架构与微服务落地经验。',
+        now,
+      );
+
+      db.prepare(
+        `INSERT INTO interview_questions (id, job_id, question, answer, created_at)
+         VALUES (?, ?, ?, ?, ?)`,
+      ).run(
+        'question_demo_001',
+        'job_demo_001',
+        '你在项目里如何进行数据库性能优化？',
+        '常用手段包括：索引优化、慢SQL分析、读写分离、连接池参数调优、热点数据缓存等。',
+        now,
+      );
     }
+  } catch {}
+
+  // 为向量库同步状态增加标记字段（默认 false）
+  try {
+    db.exec(`ALTER TABLE jobs ADD COLUMN vector_status INTEGER NOT NULL DEFAULT 0`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE resumes ADD COLUMN vector_status INTEGER NOT NULL DEFAULT 0`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE interview_questions ADD COLUMN vector_status INTEGER NOT NULL DEFAULT 0`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE interviews ADD COLUMN vector_status INTEGER NOT NULL DEFAULT 0`);
   } catch {}
 }

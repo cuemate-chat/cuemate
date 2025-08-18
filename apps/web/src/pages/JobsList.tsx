@@ -4,7 +4,7 @@ import { deleteJob, listJobs, updateJob } from '../api/jobs';
 import { message as globalMessage } from '../components/Message';
 
 export default function JobsList() {
-  const [items, setItems] = useState<Array<{ id: string; title: string; description: string; created_at: number; resumeTitle?: string; resumeContent?: string }>>([]);
+  const [items, setItems] = useState<Array<{ id: string; title: string; description: string; created_at: number; resumeTitle?: string; resumeContent?: string; vector_status?: number }>>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -117,7 +117,14 @@ export default function JobsList() {
 
           {/* 操作按钮 */}
           <div className="mt-6 flex items-center justify-between">
-            <Button onClick={() => (window.location.href = '/settings/vector-knowledge')}>去往向量知识库</Button>
+            <div className="flex items-center gap-3">
+              <Button onClick={() => (window.location.href = '/settings/vector-knowledge')}>去往向量知识库</Button>
+              {selectedId && (
+                <span className="text-xs text-red-500">
+                  {items.find(i=>i.id===selectedId)?.vector_status ? '已同步到向量库' : '未同步到向量库，点击保存修改按钮即可同步至向量库'}
+                </span>
+              )}
+            </div>
             <div className="space-x-3">
               <Button type="primary" disabled={!selectedId || loading} onClick={onSave}>保存修改</Button>
               <Button danger disabled={!selectedId || loading} onClick={onDelete}>删除岗位</Button>

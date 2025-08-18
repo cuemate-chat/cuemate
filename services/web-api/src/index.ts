@@ -11,6 +11,7 @@ import { registerLogRoutes } from './routes/logs.js';
 import { registerModelRoutes } from './routes/models.js';
 import { registerInterviewQuestionRoutes } from './routes/questions.js';
 import { registerReviewRoutes } from './routes/reviews.js';
+import { registerVectorRoutes } from './routes/vectors.js';
 import { logger as serviceLogger } from './utils/logger.js';
 
 config();
@@ -47,6 +48,7 @@ async function start() {
   registerReviewRoutes(app as any);
   registerModelRoutes(app as any);
   registerLogRoutes(app as any);
+  registerVectorRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 

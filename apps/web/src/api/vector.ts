@@ -1,3 +1,4 @@
+import { http } from './http';
 const RAG_SERVICE_BASE = import.meta.env.VITE_RAG_SERVICE_BASE || 'http://localhost:3003';
 
 export interface VectorDocument {
@@ -242,24 +243,7 @@ export const deleteDocument = async (
   type?: string,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    // 根据文档类型确定集合名称
-    let collection = 'default';
-    if (!!type) {
-      collection = type;
-    }
-
-    // 使用 by-filter 端点，通过 ID 过滤删除
-    const url = `${RAG_SERVICE_BASE}/delete/by-filter`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        where: { id: docId },
-        collection: collection,
-      }),
-    });
+    const response: any = await http.post('/vectors/delete', { id: docId, type });
 
     if (response.ok) {
       const data = await response.json();
@@ -280,18 +264,7 @@ export const deleteDocument = async (
 // 删除岗位
 export const deleteJob = async (docId: string): Promise<{ success: boolean; error?: string }> => {
   try {
-    // 使用 by-filter 端点，通过 ID 过滤删除
-    const url = `${RAG_SERVICE_BASE}/delete/by-filter`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        where: { id: docId },
-        collection: 'jobs',
-      }),
-    });
+    const response: any = await http.post('/vectors/delete', { id: docId, type: 'jobs' });
 
     if (response.ok) {
       const data = await response.json();
@@ -314,18 +287,7 @@ export const deleteQuestion = async (
   docId: string,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    // 使用 by-filter 端点，通过 ID 过滤删除
-    const url = `${RAG_SERVICE_BASE}/delete/by-filter`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        where: { id: docId },
-        collection: 'questions',
-      }),
-    });
+    const response: any = await http.post('/vectors/delete', { id: docId, type: 'questions' });
 
     if (response.ok) {
       const data = await response.json();
