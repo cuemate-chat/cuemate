@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createJob } from '../api/jobs';
 import image from '../assets/login-left3.png';
+import CollapsibleSidebar from '../components/CollapsibleSidebar';
 import { message as globalMessage } from '../components/Message';
 
 const { TextArea } = Input;
@@ -13,6 +14,7 @@ import { JOB_EXAMPLES, JobExample } from '../data/jobExamples';
 export default function JobsNew() {
   const nav = useNavigate();
   const [current, setCurrent] = useState(0);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Step1: 基本信息
   const [jobName, setJobName] = useState('');
@@ -126,26 +128,46 @@ export default function JobsNew() {
 
         {/* Step 内容 */}
         {current === 0 && (
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="mt-6 flex gap-6">
             {/* 左侧示例 */}
-            <div className="md:col-span-3">
-              <div className="rounded-lg border border-slate-200 overflow-hidden">
-                <div className="px-4 py-3 bg-slate-50 text-slate-600">示例岗位</div>
-                <div className="p-3 space-y-2">
-                  {JOB_EXAMPLES.map((ex) => (
-                    <button
-                      key={ex.name}
-                      onClick={() => fillExample(ex)}
-                      className="w-full text-left px-3 py-2 rounded border border-slate-200 hover:bg-slate-50"
-                    >
-                      {ex.name}
-                    </button>
-                  ))}
-                </div>
+            <CollapsibleSidebar
+              isCollapsed={sidebarCollapsed}
+              onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+              title="示例岗位"
+              className="h-[600px]"
+            >
+              <div className="p-4 space-y-2 overflow-y-auto h-full">
+                {JOB_EXAMPLES.map((ex, index) => (
+                  <button
+                    key={ex.name}
+                    onClick={() => fillExample(ex)}
+                    className="w-full text-left px-4 py-3 rounded-lg border border-slate-200 
+                               hover:border-blue-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 
+                               transition-all duration-200 group transform hover:scale-[1.02] 
+                               active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 
+                                      flex items-center justify-center text-white text-sm font-medium
+                                      group-hover:shadow-lg transition-all duration-200">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium text-slate-800 group-hover:text-blue-700 transition-colors">
+                          {ex.name}
+                        </div>
+                        <div className="text-xs text-slate-500 group-hover:text-blue-600 transition-colors mt-1">
+                          点击填充到表单
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
               </div>
-            </div>
+            </CollapsibleSidebar>
+            
             {/* 右侧表单 */}
-            <div className="md:col-span-9">
+            <div className="flex-1 min-w-0">
               <div className="space-y-4">
                 <div>
                   <div className="text-sm text-slate-600 mb-1">岗位名称</div>
@@ -213,7 +235,7 @@ export default function JobsNew() {
               <div className="text-sm text-slate-600 mb-1">简历文本</div>
               <TextArea
                 maxLength={20000}
-                rows={10}
+                rows={13}
                 placeholder="可直接粘贴你的简历到这里，特别是遇到解析失败的时候"
                 value={resumeText}
                 onChange={(e) => setResumeText(e.target.value)}

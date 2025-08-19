@@ -239,48 +239,77 @@ export function registerJobRoutes(app: FastifyInstance) {
   // 删除岗位 DELETE /jobs/:id（级联删除简历、押题、向量库数据）
   app.delete('/jobs/:id', async (req, reply) => {
     try {
-      const payload = await req.jwtVerify();
+      // 1. JWT验证
+      let payload;
+      try {
+        payload = await req.jwtVerify();
+        app.log.info(`User ${payload.uid} attempting to delete job`);
+      } catch (jwtError) {
+        app.log.error({ err: jwtError }, 'JWT verification failed');
+        return reply.code(401).send({ error: 'JWT验证失败，请重新登录' });
+      }
+
+      // 2. 参数验证
       const id = (req.params as any)?.id as string;
+      if (!id) {
+        app.log.error('Job ID is missing from request params');
+        return reply.code(400).send({ error: '岗位ID不能为空' });
+      }
 
-      // 开始事务
-      const transaction = app.db.transaction(() => {
-        // 1. 删除面试押题数据
-        const questionsDeleted = app.db
-          .prepare('DELETE FROM interview_questions WHERE job_id=? AND user_id=?')
-          .run(id, payload.uid);
+      app.log.info(`Starting cascading delete for job ${id} by user ${payload.uid}`);
 
-        // 2. 删除简历数据
-        const resumesDeleted = app.db
-          .prepare('DELETE FROM resumes WHERE job_id=? AND user_id=?')
-          .run(id, payload.uid);
+      // 3. 开始事务
+      let deleteResult;
+      try {
+        const transaction = app.db.transaction(() => {
+          // 1. 删除面试押题数据
+          const questionsDeleted = app.db
+            .prepare('DELETE FROM interview_questions WHERE job_id=?')
+            .run(id);
 
-        // 3. 删除岗位数据
-        const jobsDeleted = app.db
-          .prepare('DELETE FROM jobs WHERE id=? AND user_id=?')
-          .run(id, payload.uid);
+          // 2. 删除简历数据
+          const resumesDeleted = app.db
+            .prepare('DELETE FROM resumes WHERE job_id=? AND user_id=?')
+            .run(id, payload.uid);
 
-        return {
-          questionsDeleted: questionsDeleted.changes,
-          resumesDeleted: resumesDeleted.changes,
-          jobsDeleted: jobsDeleted.changes,
-        };
-      });
+          // 3. 删除岗位数据
+          const jobsDeleted = app.db
+            .prepare('DELETE FROM jobs WHERE id=? AND user_id=?')
+            .run(id, payload.uid);
 
-      // 执行事务
-      const deleteResult = transaction();
+          return {
+            questionsDeleted: questionsDeleted.changes,
+            resumesDeleted: resumesDeleted.changes,
+            jobsDeleted: jobsDeleted.changes,
+          };
+        });
+
+        // 执行事务
+        deleteResult = transaction();
+        app.log.info(`Database transaction completed for job ${id}:`, deleteResult);
+      } catch (dbError: any) {
+        app.log.error({ err: dbError }, `Database transaction failed for job ${id}`);
+        return reply.code(500).send({ error: '数据库操作失败：' + dbError.message });
+      }
 
       // 4. 删除向量库中的所有相关数据（岗位、简历、押题）
       try {
         const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        app.log.info(`Attempting to delete vector data for job ${id} from ${base}`);
 
         // 使用RAG服务的deleteJobData方法删除所有相关向量数据
-        await fetch(`${base}/jobs/${id}`, {
+        const response = await fetch(`${base}/jobs/${id}`, {
           method: 'DELETE',
         });
 
-        app.log.info(`Successfully deleted all vector data for job ${id}`);
-      } catch (error) {
-        app.log.error({ err: error }, `Failed to delete vector data for job ${id}`);
+        if (response.ok) {
+          app.log.info(`Successfully deleted all vector data for job ${id}`);
+        } else {
+          const errorText = await response.text();
+          app.log.warn(`RAG service returned ${response.status}: ${errorText}`);
+        }
+      } catch (vectorError) {
+        app.log.error({ err: vectorError }, `Failed to delete vector data for job ${id}`);
         // 即使向量库删除失败，也不影响数据库删除的成功
       }
 
@@ -291,9 +320,10 @@ export function registerJobRoutes(app: FastifyInstance) {
         deleted: deleteResult,
         message: `已删除岗位及 ${deleteResult.resumesDeleted} 条简历、${deleteResult.questionsDeleted} 条押题数据`,
       };
-    } catch (err) {
+    } catch (err: any) {
       app.log.error({ err }, '删除岗位失败');
-      return reply.code(401).send({ error: '未认证：' + err });
+      // 不要返回401，除非确实是认证问题
+      return reply.code(500).send({ error: '删除岗位失败：' + err.message });
     }
   });
 }
