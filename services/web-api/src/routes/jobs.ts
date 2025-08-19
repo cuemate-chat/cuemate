@@ -106,7 +106,7 @@ export function registerJobRoutes(app: FastifyInstance) {
       const payload = await req.jwtVerify();
       const rows = app.db
         .prepare(
-          `SELECT j.id, j.title, j.description, j.status, j.created_at,
+          `SELECT j.id, j.title, j.description, j.status, j.created_at, j.vector_status,
                   r.id AS resumeId, r.title AS resumeTitle, r.content AS resumeContent
              FROM jobs j LEFT JOIN resumes r ON r.job_id = j.id
             WHERE j.user_id = ?
@@ -127,7 +127,7 @@ export function registerJobRoutes(app: FastifyInstance) {
       const id = (req.params as any)?.id as string;
       const row = app.db
         .prepare(
-          `SELECT j.id, j.title, j.description, j.status, j.created_at,
+          `SELECT j.id, j.title, j.description, j.status, j.created_at, j.vector_status,
                   r.id AS resumeId, r.title AS resumeTitle, r.content AS resumeContent
              FROM jobs j LEFT JOIN resumes r ON r.job_id = j.id
             WHERE j.id = ? AND j.user_id = ?`,

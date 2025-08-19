@@ -59,7 +59,9 @@ export default function JobsList() {
       // 更新本地列表缓存
       setItems((prev) =>
         prev.map((it) =>
-          it.id === selectedId ? { ...it, title, description, resumeContent } : it,
+          it.id === selectedId
+            ? { ...it, title, description, resumeContent, vector_status: 1 }
+            : it,
         ),
       );
       globalMessage.success('已保存修改');
