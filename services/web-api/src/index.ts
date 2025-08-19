@@ -9,6 +9,7 @@ import { registerAuthRoutes } from './routes/auth.js';
 import { registerJobRoutes } from './routes/jobs.js';
 import { registerLogRoutes } from './routes/logs.js';
 import { registerModelRoutes } from './routes/models.js';
+import { registerPresetQuestionRoutes } from './routes/preset-questions.js';
 import { registerInterviewQuestionRoutes } from './routes/questions.js';
 import { registerReviewRoutes } from './routes/reviews.js';
 import { registerVectorRoutes } from './routes/vectors.js';
@@ -43,6 +44,7 @@ async function start() {
 
   // 路由
   registerAuthRoutes(app as any);
+  registerPresetQuestionRoutes(app as any);
   registerInterviewQuestionRoutes(app as any);
   registerJobRoutes(app as any);
   registerReviewRoutes(app as any);

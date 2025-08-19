@@ -6,6 +6,7 @@ import { up as up5, version as v5 } from './005_add_tags.js';
 import { up as up6, version as v6 } from './006_enhance_reviews.js';
 import { up as up7, version as v7 } from './007_models.js';
 import { up as up8, version as v8 } from './008_user_selected_model.js';
+import { up as up9, version as v9 } from './009_preset_questions.js';
 
 export interface Migration {
   version: number;
@@ -22,4 +23,5 @@ export const migrations: Migration[] = [
   { version: v6, name: '006_enhance_reviews', up: up6 },
   { version: v7, name: '007_models', up: up7 },
   { version: v8, name: '008_user_selected_model', up: up8 },
+  { version: v9, name: '009_preset_questions', up: up9 },
 ];

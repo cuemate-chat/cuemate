@@ -11,6 +11,7 @@ import JobsNew from './pages/JobsNew';
 import Login from './pages/Login';
 import Logs from './pages/Logs';
 import Models from './pages/Models';
+import PresetQuestions from './pages/PresetQuestions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Questions from './pages/Questions';
 import ReviewDetail from './pages/ReviewDetail';
@@ -36,6 +37,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/jobs/new" element={<JobsNew />} />
           <Route path="/jobs" element={<JobsList />} />
           <Route path="/questions" element={<Questions />} />
+          <Route path="/preset-questions" element={<PresetQuestions />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/reviews/:id" element={<ReviewDetail />} />
           <Route path="/help" element={<Help />} />

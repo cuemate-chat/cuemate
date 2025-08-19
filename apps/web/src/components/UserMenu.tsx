@@ -3,6 +3,7 @@ import {
   Cog6ToothIcon,
   CubeIcon,
   DocumentTextIcon,
+  QueueListIcon,
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -103,6 +104,11 @@ export default function UserMenu() {
     setOpen(false);
   };
 
+  const onPresetQuestions = () => {
+    navigate('/preset-questions');
+    setOpen(false);
+  };
+
   const onLogout = () => {
     storage.clearToken();
     storage.clearUser();
@@ -155,6 +161,12 @@ export default function UserMenu() {
             onClick={onLogs}
           >
             <DocumentTextIcon className="w-4 h-4" /> 日志管理
+          </button>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+            onClick={onPresetQuestions}
+          >
+            <QueueListIcon className="w-4 h-4" /> 预置题库
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
