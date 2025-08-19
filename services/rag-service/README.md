@@ -32,7 +32,8 @@ RAG Service 是一个专门处理岗位和简历信息的向量化服务，将�
 - `POST /ingest` - 单文档处理
 - `POST /ingest/batch` - 批量文档处理
 - `POST /delete/by-filter` - 按条件删除
-- `GET /search` - 通用搜索
+- `GET /search/jobs` - 搜索 jobs 集合（不传 query 时返回前 k 条）
+- `GET /search/resumes` - 搜索 resumes 集合（不传 query 时返回前 k 条）
 
 ## 环境变量配置
 
@@ -109,23 +110,23 @@ curl -X POST http://localhost:3003/jobs/process \
       "id": "job-123",
       "title": "前端开发工程师",
       "description": "负责公司产品的前端开发工作...",
-      "userId": "user-456",
-      "createdAt": 1640995200000
+      "user_id": "user-456",
+      "created_at": 1640995200000
     },
     "resume": {
       "id": "resume-789",
       "title": "张三的简历",
       "content": "个人技能：React, Vue, TypeScript...",
-      "jobId": "job-123",
-      "userId": "user-456",
-      "createdAt": 1640995200000
+      "job_id": "job-123",
+      "user_id": "user-456",
+      "created_at": 1640995200000
     }
   }'
 ```
 
 ### 搜索相关岗位和简历
 ```bash
-curl "http://localhost:3003/jobs/search?q=前端开发&userId=user-456&topK=5"
+curl "http://localhost:3003/jobs/search?query=前端开发&userId=user-456&topK=5"
 ```
 
 ## 部署说明
@@ -142,10 +143,25 @@ curl "http://localhost:3003/jobs/search?q=前端开发&userId=user-456&topK=5"
 - 建议在生产环境中启用数据加密
 - 定期备份向量数据库数据
 
-cd /Users/maguohao/chain/CueMate/infra/docker && curl "http://localhost:8000/api/v1/collections" | jq '.[] | {name, id, dimension}'
+### 常用诊断命令
 
-curl -s "http://localhost:3003/search?query=&topK=10" | jq '.results | length'
-
-curl -s "http://localhost:3003/search?query=&topK=10" | jq '.results[] | {id, type: .metadata.type, jobId: .metadata.jobId, userId: .metadata.userId, title: .metadata.title}'
-
+```bash
+# 查看 Chroma 集合列表
 curl -s "http://localhost:8000/api/v1/collections" | jq '.[] | {name, id}'
+
+# 统计 jobs 集合文档数量（不传 query 时返回前 k 条）
+curl -s "http://localhost:3003/search/jobs?k=1000" | jq '.results | length'
+
+# 列出 jobs 集合前 10 条概要
+curl -s "http://localhost:3003/search/jobs?k=10" | jq '.results[] | {id, jobId: .metadata.jobId, userId: .metadata.userId, title: .metadata.title}'
+
+# 统计 resumes 集合文档数量
+curl -s "http://localhost:3003/search/resumes?k=1000" | jq '.results | length'
+
+# 列出 resumes 集合前 10 条概要
+curl -s "http://localhost:3003/search/resumes?k=10" | jq '.results[] | {id, jobId: .metadata.jobId, userId: .metadata.userId, title: .metadata.title}'
+
+# 基于关键词检索（示例）
+curl -s "http://localhost:3003/search/jobs?query=前端开发&k=5" | jq '.results | length'
+curl -s "http://localhost:3003/search/resumes?query=React&k=5" | jq '.results | length'
+```

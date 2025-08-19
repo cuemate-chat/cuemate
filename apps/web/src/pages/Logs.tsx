@@ -5,11 +5,12 @@ import {
   InformationCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/24/solid';
-import { DatePicker, Pagination, Select } from 'antd';
+import { DatePicker, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import { clearLogContent as clearLogContentApi, fetchLogContent, fetchLogs, fetchLogServices, LogLevel } from '../api/logs';
 import { message } from '../components/Message';
+import PaginationBar from '../components/PaginationBar';
 
 export default function Logs() {
   const [services, setServices] = useState<string[]>([]);
@@ -218,13 +219,7 @@ export default function Logs() {
 
       <div className="flex justify-between items-center mt-3 text-sm">
         <div className="text-slate-500">共 {total} 条</div>
-        <Pagination
-          current={page}
-          pageSize={10}
-          total={total}
-          showSizeChanger={false}
-          onChange={(p) => setPage(p)}
-        />
+        <PaginationBar page={page} pageSize={10} total={total} onChange={(p) => setPage(p)} />
       </div>
 
       {viewing && (
