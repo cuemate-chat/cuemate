@@ -1,6 +1,16 @@
 import { Pagination } from 'antd';
 
-export default function PaginationBar({ page, pageSize = 6, total, onChange }: { page: number; pageSize?: number; total: number; onChange: (p: number) => void; }) {
+export default function PaginationBar({
+  page,
+  pageSize = 6,
+  total,
+  onChange,
+}: {
+  page: number;
+  pageSize?: number;
+  total: number;
+  onChange: (p: number) => void;
+}) {
   return (
     <Pagination
       current={page}
@@ -12,5 +22,3 @@ export default function PaginationBar({ page, pageSize = 6, total, onChange }: {
     />
   );
 }
-
-

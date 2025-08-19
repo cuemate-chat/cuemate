@@ -14,7 +14,11 @@ export default function MainView({ children }: PropsWithChildren) {
           {/* 背景图：固定定位，严格铺满中央区域，避免横向/纵向滚动 */}
           <div
             className="fixed left-0 right-0 z-0 bg-cover bg-center bg-no-repeat"
-            style={{ top: '56px', height: 'calc(100vh - 56px - 48px)', backgroundImage: `url(${heroBg})` }}
+            style={{
+              top: '56px',
+              height: 'calc(100vh - 56px - 48px)',
+              backgroundImage: `url(${heroBg})`,
+            }}
           />
           {/* 柔化蒙版 */}
           <div
@@ -30,11 +34,5 @@ export default function MainView({ children }: PropsWithChildren) {
     );
   }
 
-  return (
-    <main className="flex-1 container px-6 py-6">
-      {children}
-    </main>
-  );
+  return <main className="flex-1 container px-6 py-6">{children}</main>;
 }
-
-

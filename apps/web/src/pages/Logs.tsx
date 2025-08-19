@@ -8,7 +8,13 @@ import {
 import { DatePicker, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
-import { clearLogContent as clearLogContentApi, fetchLogContent, fetchLogs, fetchLogServices, LogLevel } from '../api/logs';
+import {
+  clearLogContent as clearLogContentApi,
+  fetchLogContent,
+  fetchLogs,
+  fetchLogServices,
+  LogLevel,
+} from '../api/logs';
 import { message } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 
@@ -20,8 +26,15 @@ export default function Logs() {
   const [date, setDate] = useState<string>(''); // yyyy-mm-dd
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [items, setItems] = useState<Array<{ level: LogLevel; service: string; date: string; size: number; mtimeMs: number }>>([]);
-  const [viewing, setViewing] = useState<{ level: LogLevel; service: string; date: string; lines: string[] } | null>(null);
+  const [items, setItems] = useState<
+    Array<{ level: LogLevel; service: string; date: string; size: number; mtimeMs: number }>
+  >([]);
+  const [viewing, setViewing] = useState<{
+    level: LogLevel;
+    service: string;
+    date: string;
+    lines: string[];
+  } | null>(null);
 
   // 列宽（可调节）
   type ColKey = 'name' | 'project' | 'level' | 'date' | 'size' | 'action';
@@ -74,9 +87,21 @@ export default function Logs() {
   }, []);
 
   useEffect(() => {
-    fetchLogs({ level: level || undefined, service: service || undefined, date: date || undefined, page, pageSize: 10 })
-      .then((res) => { setItems(res.items); setTotal(res.total); })
-      .catch((err) => { console.error(err); message.error('加载日志失败'); });
+    fetchLogs({
+      level: level || undefined,
+      service: service || undefined,
+      date: date || undefined,
+      page,
+      pageSize: 10,
+    })
+      .then((res) => {
+        setItems(res.items);
+        setTotal(res.total);
+      })
+      .catch((err) => {
+        console.error(err);
+        message.error('加载日志失败');
+      });
   }, [service, level, date, page]);
 
   const readContent = async (it: { level: LogLevel; service: string; date: string }) => {
@@ -93,9 +118,21 @@ export default function Logs() {
       await clearLogContentApi({ level: it.level, service: it.service, date: it.date });
       message.success('日志清理成功');
       // 清理后重新加载当前页
-      fetchLogs({ level: level || undefined, service: service || undefined, date: date || undefined, page, pageSize: 10 })
-        .then((res) => { setItems(res.items); setTotal(res.total); })
-        .catch((err) => { console.error(err); message.error('加载日志失败'); });
+      fetchLogs({
+        level: level || undefined,
+        service: service || undefined,
+        date: date || undefined,
+        page,
+        pageSize: 10,
+      })
+        .then((res) => {
+          setItems(res.items);
+          setTotal(res.total);
+        })
+        .catch((err) => {
+          console.error(err);
+          message.error('加载日志失败');
+        });
     } catch {
       message.error('日志清理失败');
     }
@@ -104,14 +141,21 @@ export default function Logs() {
   const LevelPill = ({ lvl }: { lvl: LogLevel }) => {
     const map: Record<LogLevel, { Icon: any; color: string; bg: string; text: string }> = {
       info: { Icon: InformationCircleIcon, color: 'text-blue-600', bg: 'bg-blue-50', text: 'INFO' },
-      warn: { Icon: ExclamationTriangleIcon, color: 'text-amber-600', bg: 'bg-amber-50', text: 'WARN' },
+      warn: {
+        Icon: ExclamationTriangleIcon,
+        color: 'text-amber-600',
+        bg: 'bg-amber-50',
+        text: 'WARN',
+      },
       error: { Icon: XCircleIcon, color: 'text-red-600', bg: 'bg-red-50', text: 'ERROR' },
       debug: { Icon: BugAntIcon, color: 'text-slate-600', bg: 'bg-slate-100', text: 'DEBUG' },
     };
     const cfg = map[lvl];
     const Icon = cfg.Icon;
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${cfg.bg} ${cfg.color}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${cfg.bg} ${cfg.color}`}
+      >
         <Icon className="w-3.5 h-3.5" /> {cfg.text}
       </span>
     );
@@ -126,29 +170,44 @@ export default function Logs() {
           <label className="block text-xs text-slate-500 mb-1">项目</label>
           <Select
             value={service || undefined}
-            onChange={(v) => { setService(v || ''); setPage(1); }}
+            onChange={(v) => {
+              setService(v || '');
+              setPage(1);
+            }}
             allowClear
             placeholder="全部"
             style={{ width: 260, height: 36 }}
-            options={[{ label: '全部', value: '' }, ...services.map((s) => ({ label: serviceNameMap[s] || s, value: s }))]}
+            options={[
+              { label: '全部', value: '' },
+              ...services.map((s) => ({ label: serviceNameMap[s] || s, value: s })),
+            ]}
           />
         </div>
         <div className="flex flex-col">
           <label className="block text-xs text-slate-500 mb-1">级别</label>
           <Select
             value={level || undefined}
-            onChange={(v) => { setLevel((v || '') as any); setPage(1); }}
+            onChange={(v) => {
+              setLevel((v || '') as any);
+              setPage(1);
+            }}
             allowClear
             placeholder="全部"
             style={{ width: 260, height: 36 }}
-            options={[{ label: '全部', value: '' }, ...levels.map((lv) => ({ label: lv.toUpperCase(), value: lv }))]}
+            options={[
+              { label: '全部', value: '' },
+              ...levels.map((lv) => ({ label: lv.toUpperCase(), value: lv })),
+            ]}
           />
         </div>
         <div className="flex flex-col">
           <label className="block text-xs text-slate-500 mb-1">日期</label>
           <DatePicker
             value={date ? dayjs(date) : null}
-            onChange={(d) => { setDate(d ? d.format('YYYY-MM-DD') : ''); setPage(1); }}
+            onChange={(d) => {
+              setDate(d ? d.format('YYYY-MM-DD') : '');
+              setPage(1);
+            }}
             style={{ width: 260, height: 36 }}
             placeholder="选择日期"
           />
@@ -169,23 +228,38 @@ export default function Logs() {
           </div>
           <div className="relative">
             项目
-            <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('project', e)} />
+            <span
+              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+              onMouseDown={(e) => startResize('project', e)}
+            />
           </div>
           <div className="relative">
             级别
-            <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('level', e)} />
+            <span
+              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+              onMouseDown={(e) => startResize('level', e)}
+            />
           </div>
           <div className="relative">
             日期
-            <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('date', e)} />
+            <span
+              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+              onMouseDown={(e) => startResize('date', e)}
+            />
           </div>
           <div className="relative">
             大小
-            <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('size', e)} />
+            <span
+              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+              onMouseDown={(e) => startResize('size', e)}
+            />
           </div>
           <div className="relative">
             操作
-            <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('action', e)} />
+            <span
+              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+              onMouseDown={(e) => startResize('action', e)}
+            />
           </div>
         </div>
         {items.map((it, idx) => (
@@ -194,17 +268,24 @@ export default function Logs() {
             className="grid text-sm px-3 py-2 border-b hover:bg-slate-50"
             style={{ gridTemplateColumns: gridCols }}
           >
-            <div>{(page - 1) * 10 + idx + 1} . {serviceNameMap[it.service] || it.service}</div>
+            <div>
+              {(page - 1) * 10 + idx + 1} . {serviceNameMap[it.service] || it.service}
+            </div>
             <div>{it.service}</div>
-            <div><LevelPill lvl={it.level} /></div>
+            <div>
+              <LevelPill lvl={it.level} />
+            </div>
             <div>{it.date}</div>
             <div>{(it.size / 1024).toFixed(1)} KB</div>
             <div>
-              <button className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700" onClick={() => readContent(it)}>
+              <button
+                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                onClick={() => readContent(it)}
+              >
                 <EyeIcon className="w-4 h-4" /> 查看
               </button>
-              <button 
-                className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 ml-2" 
+              <button
+                className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 ml-2"
                 onClick={() => clearLogContent(it)}
               >
                 <XCircleIcon className="w-4 h-4" /> 清理
@@ -212,9 +293,7 @@ export default function Logs() {
             </div>
           </div>
         ))}
-        {items.length === 0 && (
-          <div className="text-center text-slate-500 py-6">暂无数据</div>
-        )}
+        {items.length === 0 && <div className="text-center text-slate-500 py-6">暂无数据</div>}
       </div>
 
       <div className="flex justify-between items-center mt-3 text-sm">
@@ -223,31 +302,53 @@ export default function Logs() {
       </div>
 
       {viewing && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setViewing(null)}>
-          <div className="bg-white w-[1000px] h-[70vh] max-h-[80vh] rounded shadow-xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          onClick={() => setViewing(null)}
+        >
+          <div
+            className="bg-white w-[1000px] h-[70vh] max-h-[80vh] rounded shadow-xl overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-4 py-2 border-b flex justify-between items-center">
-              <div className="font-medium">{serviceNameMap[viewing.service] || viewing.service} - {viewing.level.toUpperCase()} - {viewing.date}</div>
+              <div className="font-medium">
+                {serviceNameMap[viewing.service] || viewing.service} - {viewing.level.toUpperCase()}{' '}
+                - {viewing.date}
+              </div>
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={() => {
                     const content = viewing.lines.join('\n');
-                    navigator.clipboard.writeText(content).then(() => {
-                      message.success('已复制到剪贴板');
-                    }).catch(() => {
-                      message.error('复制失败');
-                    });
-                  }} 
+                    navigator.clipboard
+                      .writeText(content)
+                      .then(() => {
+                        message.success('已复制到剪贴板');
+                      })
+                      .catch(() => {
+                        message.error('复制失败');
+                      });
+                  }}
                   className="px-3 py-1 text-blue-600 border border-blue-600 rounded hover:bg-blue-50 text-sm"
                 >
                   复制日志
                 </button>
-                <button onClick={() => setViewing(null)} className="text-slate-500 hover:text-slate-700">关闭</button>
+                <button
+                  onClick={() => setViewing(null)}
+                  className="text-slate-500 hover:text-slate-700"
+                >
+                  关闭
+                </button>
               </div>
             </div>
             <div className="flex-1 overflow-hidden flex flex-col">
               {/* 内容区域：只显示一遍，但可以垂直滚动 */}
               <div className="flex-1 overflow-y-auto">
-                <pre className="p-4 text-xs font-mono whitespace-pre" style={{ minWidth: 'max-content' }}>{viewing.lines.join('\n')}</pre>
+                <pre
+                  className="p-4 text-xs font-mono whitespace-pre"
+                  style={{ minWidth: 'max-content' }}
+                >
+                  {viewing.lines.join('\n')}
+                </pre>
               </div>
               {/* 横向滚动条固定在底部 */}
               <div className="h-2 overflow-x-auto border-t border-slate-200 bg-slate-50">
@@ -260,5 +361,3 @@ export default function Logs() {
     </div>
   );
 }
-
-

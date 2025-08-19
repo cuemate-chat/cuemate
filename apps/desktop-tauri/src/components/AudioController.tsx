@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
-import { Mic, MicOff, Settings, Volume2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAppStore } from '../store/appStore';
+import { Mic, MicOff, Settings, Volume2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useAppStore } from '../store/appStore';
 
 interface AudioControllerProps {
   isRecording: boolean;

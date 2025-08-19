@@ -1,4 +1,11 @@
-import { ArrowPathRoundedSquareIcon, ChatBubbleLeftRightIcon, HomeIcon, ListBulletIcon, PlusCircleIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowPathRoundedSquareIcon,
+  ChatBubbleLeftRightIcon,
+  HomeIcon,
+  ListBulletIcon,
+  PlusCircleIcon,
+  QuestionMarkCircleIcon,
+} from '@heroicons/react/24/outline';
 import { Link, useLocation } from 'react-router-dom';
 import Logo from '../assets/logo-background.png';
 import UserMenu from './UserMenu';
@@ -29,7 +36,7 @@ export default function Header() {
     <header className="h-14 px-6 flex items-center justify-between border-b border-slate-200 bg-[#e5eefc] text-[#3b82f6] sticky top-0 z-[2000]">
       <div className="flex items-center space-x-3">
         <span className="font-semibold text-slate-800">
-           <img src={Logo} alt="CueMate" className="h-8 bg-transparent" />
+          <img src={Logo} alt="CueMate" className="h-8 bg-transparent" />
         </span>
       </div>
       <nav className="container flex items-center justify-center gap-8 text-sm">
@@ -64,5 +71,3 @@ export default function Header() {
     </header>
   );
 }
-
-

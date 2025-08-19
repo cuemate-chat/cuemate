@@ -11,7 +11,7 @@ import {
   getRelatedDocuments,
   searchJobs,
   searchQuestions,
-  searchResumes
+  searchResumes,
 } from '../api/vector';
 import { message } from '../components/Message';
 
@@ -119,9 +119,7 @@ export default function VectorKnowledge() {
     try {
       setLoading(true);
       let result;
-      const finalFilters: SearchFilters = overrides
-        ? { ...filters, ...overrides }
-        : filters;
+      const finalFilters: SearchFilters = overrides ? { ...filters, ...overrides } : filters;
       if (overrides) {
         setFilters(finalFilters);
       }
@@ -187,13 +185,20 @@ export default function VectorKnowledge() {
     setCurrentDetailDoc(doc);
     setDetailModalVisible(true);
     setRelatedData(null);
-    
+
     try {
       // 获取关联信息
-      const result = await getRelatedDocuments(doc.id, doc.metadata.type === 'jobs' ? 'jobs' : 
-        doc.metadata.type === 'questions' ? 'questions' : 
-        doc.metadata.type === 'resumes' ? 'resumes' : 'default');
-      
+      const result = await getRelatedDocuments(
+        doc.id,
+        doc.metadata.type === 'jobs'
+          ? 'jobs'
+          : doc.metadata.type === 'questions'
+            ? 'questions'
+            : doc.metadata.type === 'resumes'
+              ? 'resumes'
+              : 'default',
+      );
+
       if (result.success && result.related) {
         setRelatedData(result.related);
       }
@@ -214,7 +219,7 @@ export default function VectorKnowledge() {
       onOk: async () => {
         try {
           let result;
-          
+
           // 根据文档类型调用相应的删除 API
           if (doc.metadata.type === 'jobs') {
             result = await deleteJob(doc.id);
@@ -223,11 +228,11 @@ export default function VectorKnowledge() {
           } else {
             result = await deleteDocument(doc.id, doc.metadata.type);
           }
-          
+
           if (result.success) {
             // 从本地状态中移除
-            setSearchResults(prev => prev.filter(d => d.id !== doc.id));
-            setTotalResults(prev => prev - 1);
+            setSearchResults((prev) => prev.filter((d) => d.id !== doc.id));
+            setTotalResults((prev) => prev - 1);
             message.success('删除成功');
           } else {
             message.error('删除失败: ' + result.error);
@@ -241,10 +246,14 @@ export default function VectorKnowledge() {
 
   const getDocumentTypeLabel = (type: string): string => {
     switch (type) {
-      case 'jobs': return '岗位信息';
-      case 'resumes': return '简历信息';
-      case 'questions': return '押题信息';
-      default: return '文档';
+      case 'jobs':
+        return '岗位信息';
+      case 'resumes':
+        return '简历信息';
+      case 'questions':
+        return '押题信息';
+      default:
+        return '文档';
     }
   };
 
@@ -258,25 +267,36 @@ export default function VectorKnowledge() {
 
   const getSourceDisplayName = (source: string): string => {
     switch (source) {
-      case 'job_description': return '岗位描述';
-      case 'resume_content': return '简历内容';
-      case 'interview_question': return '面试押题';
-      default: return source;
+      case 'job_description':
+        return '岗位描述';
+      case 'resume_content':
+        return '简历内容';
+      case 'interview_question':
+        return '面试押题';
+      default:
+        return source;
     }
   };
 
   const getTypeDisplayName = (type: string): string => {
     switch (type) {
-      case 'jobs': return '岗位';
-      case 'resumes': return '简历';
-      case 'questions': return '押题';
-      default: return type;
+      case 'jobs':
+        return '岗位';
+      case 'resumes':
+        return '简历';
+      case 'questions':
+        return '押题';
+      default:
+        return type;
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ position: 'relative', zIndex: 1 }}>
+      <div
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+        style={{ position: 'relative', zIndex: 1 }}
+      >
         {/* 页面标题 */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900">向量知识库</h1>
@@ -373,8 +393,8 @@ export default function VectorKnowledge() {
                   : 'border-slate-300 text-slate-600 hover:bg-slate-50'
               }`}
             >
-            <FilterOutlined />
-            筛选
+              <FilterOutlined />
+              筛选
             </button>
           </div>
 
@@ -386,22 +406,36 @@ export default function VectorKnowledge() {
                 {currentTab === 'jobs' && (
                   <>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        创建时间
+                      </label>
                       <div className="flex gap-2">
                         <Input
                           type="date"
-                          value={filters.createdFrom ? new Date(filters.createdFrom).toISOString().slice(0,10) : ''}
+                          value={
+                            filters.createdFrom
+                              ? new Date(filters.createdFrom).toISOString().slice(0, 10)
+                              : ''
+                          }
                           onChange={(e) => {
-                            const ts = e.target.value ? new Date(e.target.value + 'T00:00:00').getTime() : undefined;
+                            const ts = e.target.value
+                              ? new Date(e.target.value + 'T00:00:00').getTime()
+                              : undefined;
                             searchDocuments({ createdFrom: ts });
                           }}
                           style={{ height: '42px' }}
                         />
                         <Input
                           type="date"
-                          value={filters.createdTo ? new Date(filters.createdTo).toISOString().slice(0,10) : ''}
+                          value={
+                            filters.createdTo
+                              ? new Date(filters.createdTo).toISOString().slice(0, 10)
+                              : ''
+                          }
                           onChange={(e) => {
-                            const ts = e.target.value ? new Date(e.target.value + 'T23:59:59').getTime() : undefined;
+                            const ts = e.target.value
+                              ? new Date(e.target.value + 'T23:59:59').getTime()
+                              : undefined;
                             searchDocuments({ createdTo: ts });
                           }}
                           style={{ height: '42px' }}
@@ -414,22 +448,36 @@ export default function VectorKnowledge() {
                 {currentTab === 'resumes' && (
                   <>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        创建时间
+                      </label>
                       <div className="flex gap-2">
                         <Input
                           type="date"
-                          value={filters.createdFrom ? new Date(filters.createdFrom).toISOString().slice(0,10) : ''}
+                          value={
+                            filters.createdFrom
+                              ? new Date(filters.createdFrom).toISOString().slice(0, 10)
+                              : ''
+                          }
                           onChange={(e) => {
-                            const ts = e.target.value ? new Date(e.target.value + 'T00:00:00').getTime() : undefined;
+                            const ts = e.target.value
+                              ? new Date(e.target.value + 'T00:00:00').getTime()
+                              : undefined;
                             searchDocuments({ createdFrom: ts });
                           }}
                           style={{ height: '42px' }}
                         />
                         <Input
                           type="date"
-                          value={filters.createdTo ? new Date(filters.createdTo).toISOString().slice(0,10) : ''}
+                          value={
+                            filters.createdTo
+                              ? new Date(filters.createdTo).toISOString().slice(0, 10)
+                              : ''
+                          }
                           onChange={(e) => {
-                            const ts = e.target.value ? new Date(e.target.value + 'T23:59:59').getTime() : undefined;
+                            const ts = e.target.value
+                              ? new Date(e.target.value + 'T23:59:59').getTime()
+                              : undefined;
                             searchDocuments({ createdTo: ts });
                           }}
                           style={{ height: '42px' }}
@@ -442,7 +490,9 @@ export default function VectorKnowledge() {
                 {currentTab === 'questions' && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">押题标签</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        押题标签
+                      </label>
                       <Select
                         value={filters.tagId}
                         onChange={(value) => searchDocuments({ tagId: value })}
@@ -458,22 +508,36 @@ export default function VectorKnowledge() {
                       </Select>
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        创建时间
+                      </label>
                       <div className="flex gap-2">
                         <Input
                           type="date"
-                          value={filters.createdFrom ? new Date(filters.createdFrom).toISOString().slice(0,10) : ''}
+                          value={
+                            filters.createdFrom
+                              ? new Date(filters.createdFrom).toISOString().slice(0, 10)
+                              : ''
+                          }
                           onChange={(e) => {
-                            const ts = e.target.value ? new Date(e.target.value + 'T00:00:00').getTime() : undefined;
+                            const ts = e.target.value
+                              ? new Date(e.target.value + 'T00:00:00').getTime()
+                              : undefined;
                             searchDocuments({ createdFrom: ts });
                           }}
                           style={{ height: '42px' }}
                         />
                         <Input
                           type="date"
-                          value={filters.createdTo ? new Date(filters.createdTo).toISOString().slice(0,10) : ''}
+                          value={
+                            filters.createdTo
+                              ? new Date(filters.createdTo).toISOString().slice(0, 10)
+                              : ''
+                          }
                           onChange={(e) => {
-                            const ts = e.target.value ? new Date(e.target.value + 'T23:59:59').getTime() : undefined;
+                            const ts = e.target.value
+                              ? new Date(e.target.value + 'T23:59:59').getTime()
+                              : undefined;
                             searchDocuments({ createdTo: ts });
                           }}
                           style={{ height: '42px' }}
@@ -515,7 +579,7 @@ export default function VectorKnowledge() {
                     </div>
                     <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
                   </div>
-                  
+
                   {/* 右上角按钮 */}
                   <div className="absolute right-6 top-6 flex items-center gap-2">
                     <button
@@ -531,14 +595,18 @@ export default function VectorKnowledge() {
                       删除
                     </button>
                   </div>
-                  
+
                   <div className="flex-1 pr-32 ml-8">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {getDocumentTypeLabel(doc.metadata.type)}
                       </span>
                       <span className="text-sm text-slate-500">
-                        相关度: {(Math.max(0, Math.min(1, Number.isFinite(doc.score) ? doc.score : 0)) * 100).toFixed(1)}%
+                        相关度:{' '}
+                        {(
+                          Math.max(0, Math.min(1, Number.isFinite(doc.score) ? doc.score : 0)) * 100
+                        ).toFixed(1)}
+                        %
                       </span>
                       {doc.metadata.tagName && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
@@ -546,12 +614,12 @@ export default function VectorKnowledge() {
                         </span>
                       )}
                     </div>
-                    
+
                     {/* 名称 */}
                     <h4 className="text-lg font-medium text-slate-900 mb-2">
                       {getDocumentName(doc)}
                     </h4>
-                    
+
                     {/* 描述内容 */}
                     <div className="mb-3">
                       <p className="text-slate-600 whitespace-pre-wrap">
@@ -561,7 +629,8 @@ export default function VectorKnowledge() {
                             <button
                               onClick={() => {
                                 const modal = document.createElement('div');
-                                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                                modal.className =
+                                  'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
                                 modal.innerHTML = `
                                   <div class="bg-white rounded-lg shadow-xl w-[720px] h-[520px] overflow-hidden">
                                     <div class="flex justify-between items-center px-5 py-3 border-b">
@@ -594,12 +663,21 @@ export default function VectorKnowledge() {
                         )}
                       </p>
                     </div>
-                    
+
                     {/* 基础信息 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-slate-500">
-                      <span>创建时间: {doc.metadata.timestamp || doc.metadata.createdAt ? formatDate(doc.metadata.createdAt || doc.metadata.timestamp) : '未知'}</span>
-                      {doc.metadata.source && <span>来源: {getSourceDisplayName(doc.metadata.source)}</span>}
-                      {doc.metadata.type && <span>类型: {getTypeDisplayName(doc.metadata.type)}</span>}
+                      <span>
+                        创建时间:{' '}
+                        {doc.metadata.timestamp || doc.metadata.createdAt
+                          ? formatDate(doc.metadata.createdAt || doc.metadata.timestamp)
+                          : '未知'}
+                      </span>
+                      {doc.metadata.source && (
+                        <span>来源: {getSourceDisplayName(doc.metadata.source)}</span>
+                      )}
+                      {doc.metadata.type && (
+                        <span>类型: {getTypeDisplayName(doc.metadata.type)}</span>
+                      )}
                       {doc.metadata.chunkIndex !== undefined && (
                         <span>
                           分块: {doc.metadata.chunkIndex + 1}/{doc.metadata.totalChunks}
@@ -648,16 +726,34 @@ export default function VectorKnowledge() {
                     const tabs: { key: string; label: string }[] = [];
                     if (type === 'jobs') {
                       tabs.push({ key: 'document', label: '岗位信息' });
-                      tabs.push({ key: 'resumes', label: `相关简历 (${relatedData?.resumes?.length || 0})` });
-                      tabs.push({ key: 'questions', label: `相关押题 (${relatedData?.questions?.length || 0})` });
+                      tabs.push({
+                        key: 'resumes',
+                        label: `相关简历 (${relatedData?.resumes?.length || 0})`,
+                      });
+                      tabs.push({
+                        key: 'questions',
+                        label: `相关押题 (${relatedData?.questions?.length || 0})`,
+                      });
                     } else if (type === 'resumes') {
                       tabs.push({ key: 'document', label: '简历信息' });
-                      tabs.push({ key: 'jobs', label: `相关岗位 (${relatedData?.jobs?.length || 0})` });
-                      tabs.push({ key: 'questions', label: `相关押题 (${relatedData?.questions?.length || 0})` });
+                      tabs.push({
+                        key: 'jobs',
+                        label: `相关岗位 (${relatedData?.jobs?.length || 0})`,
+                      });
+                      tabs.push({
+                        key: 'questions',
+                        label: `相关押题 (${relatedData?.questions?.length || 0})`,
+                      });
                     } else if (type === 'questions') {
                       tabs.push({ key: 'document', label: '押题信息' });
-                      tabs.push({ key: 'jobs', label: `相关岗位 (${relatedData?.jobs?.length || 0})` });
-                      tabs.push({ key: 'resumes', label: `相关简历 (${relatedData?.resumes?.length || 0})` });
+                      tabs.push({
+                        key: 'jobs',
+                        label: `相关岗位 (${relatedData?.jobs?.length || 0})`,
+                      });
+                      tabs.push({
+                        key: 'resumes',
+                        label: `相关简历 (${relatedData?.resumes?.length || 0})`,
+                      });
                     } else {
                       tabs.push({ key: 'document', label: '文档信息' });
                     }
@@ -689,17 +785,24 @@ export default function VectorKnowledge() {
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">类型:</span>
-                      <span className="ml-2 text-gray-900">{getTypeDisplayName(currentDetailDoc.metadata.type || '')}</span>
+                      <span className="ml-2 text-gray-900">
+                        {getTypeDisplayName(currentDetailDoc.metadata.type || '')}
+                      </span>
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">来源:</span>
-                      <span className="ml-2 text-gray-900">{getSourceDisplayName(currentDetailDoc.metadata.source || '')}</span>
+                      <span className="ml-2 text-gray-900">
+                        {getSourceDisplayName(currentDetailDoc.metadata.source || '')}
+                      </span>
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">创建时间:</span>
                       <span className="ml-2 text-gray-900">
                         {currentDetailDoc.metadata.timestamp || currentDetailDoc.metadata.createdAt
-                          ? formatDate(currentDetailDoc.metadata.createdAt || currentDetailDoc.metadata.timestamp)
+                          ? formatDate(
+                              currentDetailDoc.metadata.createdAt ||
+                                currentDetailDoc.metadata.timestamp,
+                            )
                           : '未知'}
                       </span>
                     </div>
@@ -722,8 +825,12 @@ export default function VectorKnowledge() {
                     // 只展示一条的精致卡片
                     <div className="border rounded-lg overflow-hidden">
                       <div className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
-                        <h4 className="font-medium text-slate-900">{relatedData.resumes[0].metadata.title || '简历标题'}</h4>
-                        <span className="text-xs text-slate-500">ID: {relatedData.resumes[0].id}</span>
+                        <h4 className="font-medium text-slate-900">
+                          {relatedData.resumes[0].metadata.title || '简历标题'}
+                        </h4>
+                        <span className="text-xs text-slate-500">
+                          ID: {relatedData.resumes[0].id}
+                        </span>
                       </div>
                       <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-80 overflow-y-auto">
                         {relatedData.resumes[0].content}
@@ -743,11 +850,15 @@ export default function VectorKnowledge() {
                       <div key={question.id} className="border rounded-lg p-4 relative">
                         {/* 左上角序号 */}
                         <div className="absolute left-0 top-0">
-                          <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">{index + 1}</div>
+                          <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
+                            {index + 1}
+                          </div>
                           <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
                         </div>
                         <div className="flex justify-between items-start mb-2 ml-6">
-                          <h4 className="font-medium text-gray-900">{question.metadata.title || '押题标题'}</h4>
+                          <h4 className="font-medium text-gray-900">
+                            {question.metadata.title || '押题标题'}
+                          </h4>
                           <span className="text-xs text-gray-500">ID: {question.id}</span>
                         </div>
                         <div className="text-sm text-gray-600 mb-2 ml-6">
@@ -773,7 +884,9 @@ export default function VectorKnowledge() {
                     // 只展示一条岗位信息的精致卡片
                     <div className="border rounded-lg overflow-hidden">
                       <div className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
-                        <h4 className="font-medium text-slate-900">{relatedData.jobs[0].metadata.title || '岗位标题'}</h4>
+                        <h4 className="font-medium text-slate-900">
+                          {relatedData.jobs[0].metadata.title || '岗位标题'}
+                        </h4>
                         <span className="text-xs text-slate-500">ID: {relatedData.jobs[0].id}</span>
                       </div>
                       <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-60 overflow-y-auto">

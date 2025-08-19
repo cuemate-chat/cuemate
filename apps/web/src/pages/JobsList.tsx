@@ -1,10 +1,10 @@
 import { Button, Input } from 'antd';
 import { useEffect, useState } from 'react';
-import { deleteJob, listJobs, updateJob } from '../api/jobs';
+import { deleteJob, listJobs, updateJob, type JobWithResume } from '../api/jobs';
 import { message as globalMessage } from '../components/Message';
 
 export default function JobsList() {
-  const [items, setItems] = useState<Array<{ id: string; title: string; description: string; created_at: number; resumeTitle?: string; resumeContent?: string; vector_status?: number }>>([]);
+  const [items, setItems] = useState<JobWithResume[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -18,7 +18,7 @@ export default function JobsList() {
   useEffect(() => {
     const recomputeRows = () => {
       const viewportHeight = window.innerHeight;
-      const rows = viewportHeight >= 900 ? 11 : (viewportHeight >= 800 ? 8 : 7);
+      const rows = viewportHeight >= 900 ? 11 : viewportHeight >= 800 ? 8 : 7;
       setAdaptiveRows(rows);
     };
     recomputeRows();
@@ -57,7 +57,11 @@ export default function JobsList() {
     try {
       await updateJob(selectedId, { title, description, resumeContent });
       // 更新本地列表缓存
-      setItems((prev) => prev.map((it) => (it.id === selectedId ? { ...it, title, description, resumeContent } : it)));
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === selectedId ? { ...it, title, description, resumeContent } : it,
+        ),
+      );
       globalMessage.success('已保存修改');
     } catch (e: any) {
       globalMessage.error(e?.message || '保存失败');
@@ -76,7 +80,9 @@ export default function JobsList() {
       if (next.length) selectJob(next[0].id);
       else {
         setSelectedId(null);
-        setTitle(''); setDescription(''); setResumeContent('');
+        setTitle('');
+        setDescription('');
+        setResumeContent('');
       }
       globalMessage.success('已删除岗位');
     } catch (e: any) {
@@ -116,16 +122,33 @@ export default function JobsList() {
           <div className="grid grid-cols-1 gap-4">
             <div>
               <div className="text-sm text-slate-600 mb-1">岗位名称</div>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} disabled={!selectedId} />
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                disabled={!selectedId}
+              />
             </div>
             <div>
               <div className="text-sm text-slate-600 mb-1">岗位描述</div>
-              <Input.TextArea rows={adaptiveRows} maxLength={5000} value={description} onChange={(e) => setDescription(e.target.value)} disabled={!selectedId} />
+              <Input.TextArea
+                rows={adaptiveRows}
+                maxLength={5000}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={!selectedId}
+              />
               <div className="text-right text-xs text-slate-500">{description.length} / 5000</div>
             </div>
             <div>
               <div className="text-sm text-slate-600 mb-1">简历信息（文本）</div>
-              <Input.TextArea rows={adaptiveRows} maxLength={5000} value={resumeContent} onChange={(e) => setResumeContent(e.target.value)} placeholder="简历正文" disabled={!selectedId} />
+              <Input.TextArea
+                rows={adaptiveRows}
+                maxLength={5000}
+                value={resumeContent}
+                onChange={(e) => setResumeContent(e.target.value)}
+                placeholder="简历正文"
+                disabled={!selectedId}
+              />
               <div className="text-right text-xs text-slate-500">{resumeContent.length} / 5000</div>
             </div>
           </div>
@@ -133,16 +156,24 @@ export default function JobsList() {
           {/* 操作按钮 */}
           <div className="mt-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button onClick={() => (window.location.href = '/settings/vector-knowledge')}>去往向量知识库</Button>
+              <Button onClick={() => (window.location.href = '/settings/vector-knowledge')}>
+                去往向量知识库
+              </Button>
               {selectedId && (
                 <span className="text-xs text-red-500">
-                  {items.find(i=>i.id===selectedId)?.vector_status ? '已同步到向量库' : '未同步到向量库，点击保存修改按钮即可同步至向量库'}
+                  {items.find((i) => i.id === selectedId)?.vector_status
+                    ? '已同步到向量库'
+                    : '未同步到向量库，点击保存修改按钮即可同步至向量库'}
                 </span>
               )}
             </div>
             <div className="space-x-3">
-              <Button type="primary" disabled={!selectedId || loading} onClick={onSave}>保存修改</Button>
-              <Button danger disabled={!selectedId || loading} onClick={onDelete}>删除岗位</Button>
+              <Button type="primary" disabled={!selectedId || loading} onClick={onSave}>
+                保存修改
+              </Button>
+              <Button danger disabled={!selectedId || loading} onClick={onDelete}>
+                删除岗位
+              </Button>
             </div>
           </div>
         </div>
@@ -150,5 +181,3 @@ export default function JobsList() {
     </div>
   );
 }
-
-

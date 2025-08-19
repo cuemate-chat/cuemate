@@ -20,7 +20,9 @@ export default function JobsNew() {
 
   // Step2: 简历
   const [resumeText, setResumeText] = useState('');
-  const [resumeMeta, setResumeMeta] = useState<{ name: string; size: number; type: string } | null>(null);
+  const [resumeMeta, setResumeMeta] = useState<{ name: string; size: number; type: string } | null>(
+    null,
+  );
 
   // Step3: 提交态由 progress 控制
   const [progress, setProgress] = useState(0);
@@ -35,8 +37,14 @@ export default function JobsNew() {
     };
   }, []);
 
-  const canNext1 = useMemo(() => jobName.trim().length > 0 && jobDesc.trim().length > 0, [jobName, jobDesc]);
-  const canNext2 = useMemo(() => resumeText.trim().length > 0 || !!resumeMeta, [resumeText, resumeMeta]);
+  const canNext1 = useMemo(
+    () => jobName.trim().length > 0 && jobDesc.trim().length > 0,
+    [jobName, jobDesc],
+  );
+  const canNext2 = useMemo(
+    () => resumeText.trim().length > 0 || !!resumeMeta,
+    [resumeText, resumeMeta],
+  );
 
   const fillExample = (ex: JobExample) => {
     if (!jobName) setJobName(ex.name);
@@ -60,9 +68,10 @@ export default function JobsNew() {
         setProgress((p) => Math.min(95, p + Math.random() * 5 + 1));
       }, 250);
       try {
-        const resumeContent = (resumeText.trim().length > 0)
-          ? resumeText.trim().slice(0, 5000)
-          : `文件：${resumeMeta?.name ?? '未命名'}（${resumeMeta ? (resumeMeta.size / 1024 / 1024).toFixed(2) : '0'}MB）\n暂存占位，建议粘贴简历文本以获得更好处理效果。`;
+        const resumeContent =
+          resumeText.trim().length > 0
+            ? resumeText.trim().slice(0, 5000)
+            : `文件：${resumeMeta?.name ?? '未命名'}（${resumeMeta ? (resumeMeta.size / 1024 / 1024).toFixed(2) : '0'}MB）\n暂存占位，建议粘贴简历文本以获得更好处理效果。`;
         await createJob({
           title: jobName.trim(),
           description: jobDesc.trim().slice(0, 5000),
@@ -112,7 +121,8 @@ export default function JobsNew() {
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
         <Steps
           current={current}
-          items={[{ title: '填写岗位信息' }, { title: '选择简历' }, { title: '准备完成' }]} />
+          items={[{ title: '填写岗位信息' }, { title: '选择简历' }, { title: '准备完成' }]}
+        />
 
         {/* Step 内容 */}
         {current === 0 && (
@@ -139,7 +149,8 @@ export default function JobsNew() {
               <div className="space-y-4">
                 <div>
                   <div className="text-sm text-slate-600 mb-1">岗位名称</div>
-                  <Input maxLength={200}
+                  <Input
+                    maxLength={200}
                     placeholder="请输入岗位名称"
                     value={jobName}
                     onChange={(e) => setJobName(e.target.value)}
@@ -148,7 +159,8 @@ export default function JobsNew() {
                 </div>
                 <div>
                   <div className="text-sm text-slate-600 mb-1">岗位描述</div>
-                  <TextArea maxLength={5000}
+                  <TextArea
+                    maxLength={5000}
                     placeholder="请描述岗位职责、任职要求等，AI 将根据描述生成模拟面试题与流程"
                     value={jobDesc}
                     onChange={(e) => setJobDesc(e.target.value)}
@@ -182,20 +194,25 @@ export default function JobsNew() {
                   }
                   setResumeMeta({ name: file.name, size: file.size, type: file.type });
                   if (!resumeText) {
-                    setResumeText(`已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n如需参与后续 AI 处理，请将简历文本粘贴到下方输入框。`);
+                    setResumeText(
+                      `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n如需参与后续 AI 处理，请将简历文本粘贴到下方输入框。`,
+                    );
                   }
                   return false; // 阻止上传到服务器
                 }}
                 showUploadList={false}
               >
-                <p className="ant-upload-drag-icon"><PaperClipIcon className="w-6 h-6" /></p>
+                <p className="ant-upload-drag-icon">
+                  <PaperClipIcon className="w-6 h-6" />
+                </p>
                 <p className="ant-upload-text">拖拽简历到此处上传，或点击选择文件</p>
                 <p className="ant-upload-hint">也可直接将简历文本粘贴到下方输入框</p>
               </Upload.Dragger>
             </div>
             <div>
               <div className="text-sm text-slate-600 mb-1">简历文本</div>
-              <TextArea maxLength={20000}
+              <TextArea
+                maxLength={20000}
                 rows={10}
                 placeholder="可直接粘贴你的简历到这里，特别是遇到解析失败的时候"
                 value={resumeText}
@@ -208,18 +225,27 @@ export default function JobsNew() {
 
         {current === 2 && (
           <div className="mt-10 flex flex-col items-center justify-center py-12">
-            <div className="w-[620px] max-w-full aspect-[16/9] rounded-md mb-6" >
+            <div className="w-[620px] max-w-full aspect-[16/9] rounded-md mb-6">
               <img src={image} alt="illustration" className="w-full h-auto object-contain" />
             </div>
             <div className="w-full max-w-xl mx-auto">
               <div className="h-2 bg-slate-200 rounded overflow-hidden">
-                <div className="h-full bg-blue-500 transition-all duration-200" style={{ width: `${progress}%` }} />
+                <div
+                  className="h-full bg-blue-500 transition-all duration-200"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
               <div className="mt-2 text-center text-sm text-slate-600">{progress}%</div>
             </div>
             <div className="text-center mt-4">
-              <div className="text-xl font-semibold mb-2">{progress >= 100 ? '准备完成' : '准备中…'}</div>
-              <div className="text-slate-600">{progress >= 100 ? '已生成面试岗位，模拟面试试一番，熟悉熟悉流程吧！' : '正在上传简历并写入岗位信息…'}</div>
+              <div className="text-xl font-semibold mb-2">
+                {progress >= 100 ? '准备完成' : '准备中…'}
+              </div>
+              <div className="text-slate-600">
+                {progress >= 100
+                  ? '已生成面试岗位，模拟面试试一番，熟悉熟悉流程吧！'
+                  : '正在上传简历并写入岗位信息…'}
+              </div>
             </div>
           </div>
         )}
@@ -230,14 +256,26 @@ export default function JobsNew() {
             {current === 0 ? '返回主页' : '上一步'}
           </Button>
           {current < 2 && (
-            <Button type="primary" onClick={handleNext} disabled={(current === 0 && !canNext1) || (current === 1 && !canNext2)}>
+            <Button
+              type="primary"
+              onClick={handleNext}
+              disabled={(current === 0 && !canNext1) || (current === 1 && !canNext2)}
+            >
               下一步
             </Button>
           )}
           {current === 2 && (
             <div className="flex gap-3">
-              <Button disabled={progress < 100} onClick={resetAll}>新建另一个岗位</Button>
-              <Button type="primary" disabled={progress < 100} onClick={() => nav('/settings/vector-knowledge')}>去往向量知识库</Button>
+              <Button disabled={progress < 100} onClick={resetAll}>
+                新建另一个岗位
+              </Button>
+              <Button
+                type="primary"
+                disabled={progress < 100}
+                onClick={() => nav('/settings/vector-knowledge')}
+              >
+                去往向量知识库
+              </Button>
             </div>
           )}
         </div>
@@ -245,5 +283,3 @@ export default function JobsNew() {
     </div>
   );
 }
-
-

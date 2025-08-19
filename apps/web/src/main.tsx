@@ -25,7 +25,13 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route element={<AuthGuard><Layout /></AuthGuard>}>
+        <Route
+          element={
+            <AuthGuard>
+              <Layout />
+            </AuthGuard>
+          }
+        >
           <Route path="/home" element={<Home />} />
           <Route path="/jobs/new" element={<JobsNew />} />
           <Route path="/jobs" element={<JobsList />} />
@@ -47,5 +53,3 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     </BrowserRouter>
   </React.StrictMode>,
 );
-
-

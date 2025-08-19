@@ -2,7 +2,16 @@ import { Button, Card, DatePicker, Input, Modal, Select, Spin, Table } from 'ant
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import { listJobs } from '../api/jobs';
-import { createInterviewQuestion, createTag, deleteInterviewQuestion, deleteTag, listInterviewQuestions, listTags, updateInterviewQuestion, updateTag } from '../api/questions';
+import {
+  createInterviewQuestion,
+  createTag,
+  deleteInterviewQuestion,
+  deleteTag,
+  listInterviewQuestions,
+  listTags,
+  updateInterviewQuestion,
+  updateTag,
+} from '../api/questions';
 import { message as globalMessage } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 
@@ -126,7 +135,11 @@ export default function Prompts() {
   const onSave = async () => {
     if (!current) return;
     try {
-      await updateInterviewQuestion(current.id, { title: editTitle, description: editDesc, tagId: editTagId ?? null });
+      await updateInterviewQuestion(current.id, {
+        title: editTitle,
+        description: editDesc,
+        tagId: editTagId ?? null,
+      });
       globalMessage.success('已保存修改');
       setOpen(false);
       await reloadList();
@@ -159,7 +172,10 @@ export default function Prompts() {
             {jobs.map((it, idx) => (
               <button
                 key={it.id}
-                onClick={() => { setJobId(it.id); setPage(1); }}
+                onClick={() => {
+                  setJobId(it.id);
+                  setPage(1);
+                }}
                 className={`relative w-full text-left pl-9 pr-3 py-2 rounded border ${jobId === it.id ? 'border-blue-400 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`}
               >
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-5 h-5 rounded bg-blue-100 text-[10px] text-blue-700 font-medium">
@@ -182,12 +198,16 @@ export default function Prompts() {
               <DatePicker
                 placeholder="按日期过滤"
                 value={filterDay ? (dayjs as any)(filterDay) : undefined}
-                onChange={(d) => { setFilterDay(d ? d.format('YYYY-MM-DD') : undefined); }}
+                onChange={(d) => {
+                  setFilterDay(d ? d.format('YYYY-MM-DD') : undefined);
+                }}
               />
               <Input
                 placeholder="按名称"
                 value={filterTitle}
-                onChange={(e) => { setFilterTitle(e.target.value); }}
+                onChange={(e) => {
+                  setFilterTitle(e.target.value);
+                }}
                 onPressEnter={applyFilters}
                 allowClear
                 style={{ width: 160 }}
@@ -195,7 +215,9 @@ export default function Prompts() {
               <Input
                 placeholder="按描述"
                 value={filterDesc}
-                onChange={(e) => { setFilterDesc(e.target.value); }}
+                onChange={(e) => {
+                  setFilterDesc(e.target.value);
+                }}
                 onPressEnter={applyFilters}
                 allowClear
                 style={{ width: 160 }}
@@ -205,19 +227,45 @@ export default function Prompts() {
                 allowClear
                 value={filterTagId}
                 onChange={(v) => setFilterTagId(v)}
-                options={tags.map(t => ({ value: t.id, label: t.name }))}
+                options={tags.map((t) => ({ value: t.id, label: t.name }))}
                 style={{ width: 160 }}
                 showSearch
                 filterOption={selectFilterOption}
               />
               <Button onClick={() => setTagMgrOpen(true)}>管理标签</Button>
               <Button onClick={applyFilters}>筛选</Button>
-              <Button onClick={() => { setFilterDay(undefined); setFilterTitle(''); setFilterDesc(''); setFilterTagId(undefined); setAppliedDay(undefined); setAppliedTitle(undefined); setAppliedDesc(undefined); setAppliedTagId(undefined); setPage(1); }}>重置</Button>
-              <Button type="primary" disabled={!jobId} onClick={() => { setNewTitle(''); setNewDesc(''); setCreateOpen(true); }}>新建押题</Button>
+              <Button
+                onClick={() => {
+                  setFilterDay(undefined);
+                  setFilterTitle('');
+                  setFilterDesc('');
+                  setFilterTagId(undefined);
+                  setAppliedDay(undefined);
+                  setAppliedTitle(undefined);
+                  setAppliedDesc(undefined);
+                  setAppliedTagId(undefined);
+                  setPage(1);
+                }}
+              >
+                重置
+              </Button>
+              <Button
+                type="primary"
+                disabled={!jobId}
+                onClick={() => {
+                  setNewTitle('');
+                  setNewDesc('');
+                  setCreateOpen(true);
+                }}
+              >
+                新建押题
+              </Button>
             </div>
           </div>
           {loading ? (
-            <div className="py-20 text-center"><Spin /></div>
+            <div className="py-20 text-center">
+              <Spin />
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -231,38 +279,60 @@ export default function Prompts() {
                     </div>
                     {/* 标题 + 标签（右上角对齐，但不遮挡内容） */}
                     <div className="flex items-start justify-between gap-3">
-                      <div className="text-base font-semibold text-slate-800 break-words line-clamp-2 min-h-[3.25rem] pr-2">{it.title}</div>
+                      <div className="text-base font-semibold text-slate-800 break-words line-clamp-2 min-h-[3.25rem] pr-2">
+                        {it.title}
+                      </div>
                       <div className="shrink-0 flex flex-col items-end gap-1">
                         {it.tag && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full shadow-sm">
                             {it.tag}
                           </span>
                         )}
-                        <span className={`px-2 py-0.5 rounded text-[11px] ${it.vector_status ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[11px] ${it.vector_status ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}
+                        >
                           {it.vector_status ? '已同步' : '未同步'}
                         </span>
                       </div>
                     </div>
                     {/* 分割线 */}
                     <div className="my-2 border-t border-slate-200"></div>
-                    <div className="text-sm text-slate-600 mt-2 line-clamp-4 break-words leading-5 min-h-[5rem]" title={it.description}>{it.description}</div>
+                    <div
+                      className="text-sm text-slate-600 mt-2 line-clamp-4 break-words leading-5 min-h-[5rem]"
+                      title={it.description}
+                    >
+                      {it.description}
+                    </div>
                     <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
                       <span>{dayjs(it.created_at).format('YYYY-MM-DD HH:mm')}</span>
                       <div className="space-x-2">
-                        <Button size="small" onClick={() => openModal(it)}>编辑</Button>
-                        <Button size="small" danger onClick={async (e) => {
-                          e.stopPropagation();
-                          await deleteInterviewQuestion(it.id);
-                          globalMessage.success('成功删除该条押题数据！');
-                          await reloadList();
-                        }}>删除</Button>
+                        <Button size="small" onClick={() => openModal(it)}>
+                          编辑
+                        </Button>
+                        <Button
+                          size="small"
+                          danger
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await deleteInterviewQuestion(it.id);
+                            globalMessage.success('成功删除该条押题数据！');
+                            await reloadList();
+                          }}
+                        >
+                          删除
+                        </Button>
                       </div>
                     </div>
                   </Card>
                 ))}
               </div>
               <div className="mt-4 flex items-center justify-end gap-3 text-sm text-slate-500">
-                <PaginationBar page={page} pageSize={pageSize} total={total} onChange={(p)=> setPage(p)} />
+                <PaginationBar
+                  page={page}
+                  pageSize={pageSize}
+                  total={total}
+                  onChange={(p) => setPage(p)}
+                />
               </div>
             </>
           )}
@@ -273,7 +343,12 @@ export default function Prompts() {
       <Modal open={open} onCancel={() => setOpen(false)} title="押题详情" footer={null} width={720}>
         {current && (
           <div className="space-y-3">
-            <div className="text-xs text-slate-500">创建时间：{dayjs(current.created_at).format('YYYY-MM-DD HH:mm')} <span className="ml-3 text-red-500">{current.vector_status ? '已同步到向量库' : '未同步到向量库，保存后自动同步'}</span></div>
+            <div className="text-xs text-slate-500">
+              创建时间：{dayjs(current.created_at).format('YYYY-MM-DD HH:mm')}{' '}
+              <span className="ml-3 text-red-500">
+                {current.vector_status ? '已同步到向量库' : '未同步到向量库，保存后自动同步'}
+              </span>
+            </div>
             <div>
               <div className="text-sm mb-1">标签</div>
               <Select
@@ -281,7 +356,7 @@ export default function Prompts() {
                 placeholder="选择标签"
                 value={editTagId}
                 onChange={(v) => setEditTagId(v)}
-                options={tags.map(t => ({ value: t.id, label: t.name }))}
+                options={tags.map((t) => ({ value: t.id, label: t.name }))}
                 className="w-full"
                 style={{ height: 40 }}
                 showSearch
@@ -290,23 +365,42 @@ export default function Prompts() {
             </div>
             <div>
               <div className="text-sm mb-1">问题</div>
-              <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} maxLength={200} />
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                maxLength={200}
+              />
             </div>
             <div>
               <div className="text-sm mb-1">问题描述</div>
-              <Input.TextArea rows={12} value={editDesc} onChange={(e) => setEditDesc(e.target.value)} maxLength={5000} />
+              <Input.TextArea
+                rows={12}
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+                maxLength={5000}
+              />
             </div>
             <div className="pt-2 flex justify-end gap-2">
               <Button onClick={() => setOpen(false)}>取消</Button>
-              <Button danger onClick={onDelete}>删除</Button>
-              <Button type="primary" onClick={onSave}>编辑保存</Button>
+              <Button danger onClick={onDelete}>
+                删除
+              </Button>
+              <Button type="primary" onClick={onSave}>
+                编辑保存
+              </Button>
             </div>
           </div>
         )}
       </Modal>
 
       {/* 标签管理弹窗 */}
-      <Modal open={tagMgrOpen} onCancel={() => setTagMgrOpen(false)} title="标签管理" footer={null} width={880}>
+      <Modal
+        open={tagMgrOpen}
+        onCancel={() => setTagMgrOpen(false)}
+        title="标签管理"
+        footer={null}
+        width={880}
+      >
         <div className="space-y-3">
           <div className="flex gap-2">
             <Input
@@ -333,10 +427,18 @@ export default function Prompts() {
                 const res = await listTags();
                 setTags(res.items || []);
               }}
-            >新增</Button>
+            >
+              新增
+            </Button>
           </div>
           {/* 固定高度表格，支持编辑/删除与序号显示 */}
-          <TagTable tags={tags} onRefresh={async () => { const res = await listTags(); setTags(res.items || []); }} />
+          <TagTable
+            tags={tags}
+            onRefresh={async () => {
+              const res = await listTags();
+              setTags(res.items || []);
+            }}
+          />
         </div>
       </Modal>
 
@@ -349,14 +451,14 @@ export default function Prompts() {
         width={720}
       >
         <div className="space-y-3">
-            <div>
+          <div>
             <div className="text-sm mb-1">标签</div>
             <Select
               allowClear
               placeholder="选择标签"
               value={newTagId}
               onChange={(v) => setNewTagId(v)}
-              options={tags.map(t => ({ value: t.id, label: t.name }))}
+              options={tags.map((t) => ({ value: t.id, label: t.name }))}
               className="w-full"
               style={{ height: 40 }}
               showSearch
@@ -369,20 +471,36 @@ export default function Prompts() {
           </div>
           <div>
             <div className="text-sm mb-1">问题描述</div>
-            <Input.TextArea rows={12} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} maxLength={1000} />
+            <Input.TextArea
+              rows={12}
+              value={newDesc}
+              onChange={(e) => setNewDesc(e.target.value)}
+              maxLength={1000}
+            />
             <div className="text-right text-xs text-slate-500">{newDesc.length} / 1000</div>
           </div>
           <div className="pt-2 flex justify-end gap-2">
             <Button onClick={() => setCreateOpen(false)}>取消</Button>
-            <Button type="primary" disabled={!jobId || !newTitle.trim()} onClick={async () => {
-              if (!jobId) return;
-              await createInterviewQuestion({ jobId, title: newTitle.trim(), description: newDesc, tagId: newTagId ?? null });
-              globalMessage.success('已成功创建押题内容！');
-              setCreateOpen(false);
-              const data = await listInterviewQuestions(jobId!, page, pageSize);
-              setItems(data.items || []);
-              setTotal(data.total || 0);
-            }}>保存</Button>
+            <Button
+              type="primary"
+              disabled={!jobId || !newTitle.trim()}
+              onClick={async () => {
+                if (!jobId) return;
+                await createInterviewQuestion({
+                  jobId,
+                  title: newTitle.trim(),
+                  description: newDesc,
+                  tagId: newTagId ?? null,
+                });
+                globalMessage.success('已成功创建押题内容！');
+                setCreateOpen(false);
+                const data = await listInterviewQuestions(jobId!, page, pageSize);
+                setItems(data.items || []);
+                setTotal(data.total || 0);
+              }}
+            >
+              保存
+            </Button>
           </div>
         </div>
       </Modal>
@@ -391,13 +509,19 @@ export default function Prompts() {
 }
 
 // 标签管理表格组件
-function TagTable({ tags, onRefresh }: { tags: Array<{id:string; name:string; created_at?: number}>; onRefresh: () => Promise<void> }) {
+function TagTable({
+  tags,
+  onRefresh,
+}: {
+  tags: Array<{ id: string; name: string; created_at?: number }>;
+  onRefresh: () => Promise<void>;
+}) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>('');
   const [search, setSearch] = useState('');
 
   const filtered = tags
-    .filter(t => t.name.toLowerCase().includes(search.toLowerCase()))
+    .filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
 
   const columns: any[] = [
@@ -406,13 +530,15 @@ function TagTable({ tags, onRefresh }: { tags: Array<{id:string; name:string; cr
       dataIndex: 'index',
       width: 100,
       align: 'center' as const,
-      render: (_: any, __: any, index: number) => <span className="text-slate-500">{index + 1}</span>,
+      render: (_: any, __: any, index: number) => (
+        <span className="text-slate-500">{index + 1}</span>
+      ),
     },
     {
       title: '标签名',
       dataIndex: 'name',
       width: 200,
-      render: (_: any, record: any) => (
+      render: (_: any, record: any) =>
         editingKey === record.id ? (
           <Input
             value={editingName}
@@ -421,14 +547,13 @@ function TagTable({ tags, onRefresh }: { tags: Array<{id:string; name:string; cr
           />
         ) : (
           <span>{record.name}</span>
-        )
-      ),
+        ),
     },
     {
       title: '创建时间',
       dataIndex: 'created_at',
       width: 220,
-      render: (v: number) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-',
+      render: (v: number) => (v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-'),
     },
     {
       title: '操作',
@@ -438,21 +563,55 @@ function TagTable({ tags, onRefresh }: { tags: Array<{id:string; name:string; cr
         <div className="space-x-2">
           {editingKey === record.id ? (
             <>
-              <Button size="small" type="primary" onClick={async () => {
-                const v = editingName.trim();
-                if (!v) return;
-                if (v.length > 20) { globalMessage.warning('标签名称最多20个字'); return; }
-                await updateTag(record.id, v);
-                setEditingKey(null);
-                setEditingName('');
-                await onRefresh();
-              }}>保存</Button>
-              <Button size="small" onClick={() => { setEditingKey(null); setEditingName(''); }}>取消</Button>
+              <Button
+                size="small"
+                type="primary"
+                onClick={async () => {
+                  const v = editingName.trim();
+                  if (!v) return;
+                  if (v.length > 20) {
+                    globalMessage.warning('标签名称最多20个字');
+                    return;
+                  }
+                  await updateTag(record.id, v);
+                  setEditingKey(null);
+                  setEditingName('');
+                  await onRefresh();
+                }}
+              >
+                保存
+              </Button>
+              <Button
+                size="small"
+                onClick={() => {
+                  setEditingKey(null);
+                  setEditingName('');
+                }}
+              >
+                取消
+              </Button>
             </>
           ) : (
             <>
-              <Button size="small" onClick={() => { setEditingKey(record.id); setEditingName(record.name); }}>编辑</Button>
-              <Button size="small" danger onClick={async () => { await deleteTag(record.id); await onRefresh(); }}>删除</Button>
+              <Button
+                size="small"
+                onClick={() => {
+                  setEditingKey(record.id);
+                  setEditingName(record.name);
+                }}
+              >
+                编辑
+              </Button>
+              <Button
+                size="small"
+                danger
+                onClick={async () => {
+                  await deleteTag(record.id);
+                  await onRefresh();
+                }}
+              >
+                删除
+              </Button>
             </>
           )}
         </div>
@@ -466,7 +625,7 @@ function TagTable({ tags, onRefresh }: { tags: Array<{id:string; name:string; cr
         <Input
           placeholder="搜索标签名（模糊匹配）"
           value={search}
-          onChange={(e)=>setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           allowClear
           style={{ width: 260 }}
         />
@@ -481,5 +640,3 @@ function TagTable({ tags, onRefresh }: { tags: Array<{id:string; name:string; cr
     </div>
   );
 }
-
-

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm build:*)",
+      "Bash(claude config --list)",
+      "Bash(claude config)",
+      "Bash(claude config list)",
+      "Bash(claude config get apiKey)",
+      "Bash(grep:*)",
+      "Bash(claude config remove customApiKeyResponses)",
+      "Bash(claude config remove:*)",
+      "Bash(claude config get:*)",
+      "Bash(pnpm run:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

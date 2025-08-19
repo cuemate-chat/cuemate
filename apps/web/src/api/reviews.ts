@@ -19,7 +19,7 @@ export async function listInterviews(
   pageSize = 10,
 ): Promise<{ items: InterviewListItem[]; total: number }> {
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-  return http.get(`/interviews?${params.toString()}`);
+  return await http.get<{ items: InterviewListItem[]; total: number }>(`/interviews?${params.toString()}`);
 }
 
 export async function getInterviewDetail(id: string): Promise<any> {

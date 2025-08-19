@@ -1,32 +1,36 @@
+import type {
+  ChangePasswordRequest,
+  LoginRequest,
+  LoginResponse,
+  UpdateUserRequest,
+  User,
+} from '../types';
 import { http, storage } from './http';
 
-export async function signin(account: string, password: string) {
-  const data = await http.post('/auth/signin', { account, password });
-  storage.setToken((data as any).token);
-  if ((data as any).user) {
-    storage.setUser((data as any).user);
-  }
-  return data;
+export async function signin(account: string, password: string): Promise<LoginResponse> {
+  const request: LoginRequest = { account, password };
+  const response = await http.post<LoginResponse>('/auth/signin', request);
+
+  storage.setToken(response.token);
+  storage.setUser(response.user);
+  return response;
 }
 
-export async function fetchMe() {
-  const data = await http.get('/auth/me');
-  if ((data as any).user) storage.setUser((data as any).user);
-  return data;
+export async function fetchMe(): Promise<User> {
+  const response = await http.get<{ user: User }>('/auth/me');
+  
+  storage.setUser(response.user);
+  return response.user;
 }
 
-export async function updateMe(payload: {
-  name?: string;
-  email?: string;
-  theme?: 'light' | 'dark' | 'system';
-  locale?: string;
-  timezone?: string;
-}) {
-  const data = await http.post('/auth/update-setting', payload);
-  if ((data as any).user) storage.setUser((data as any).user);
-  return data;
+export async function updateMe(payload: UpdateUserRequest): Promise<User> {
+  const response = await http.post<{ user: User }>('/auth/update-setting', payload);
+
+  storage.setUser(response.user);
+  return response.user;
 }
 
-export async function changePassword(oldPassword: string, newPassword: string) {
-  return http.post('/auth/change-password', { oldPassword, newPassword });
+export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {
+  const request: ChangePasswordRequest = { oldPassword, newPassword };
+  await http.post('/auth/change-password', request);
 }

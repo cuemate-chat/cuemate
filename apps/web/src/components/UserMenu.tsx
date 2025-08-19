@@ -1,11 +1,15 @@
-import { ArrowRightOnRectangleIcon, Cog6ToothIcon, CubeIcon, DocumentTextIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
+import {
+  ArrowRightOnRectangleIcon,
+  Cog6ToothIcon,
+  CubeIcon,
+  DocumentTextIcon,
+  Squares2X2Icon,
+} from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchMe } from '../api/auth';
 import { storage } from '../api/http';
 import { message } from './Message';
-
-
 
 function getUserInitials(username: string): string {
   if (!username) return 'U';
@@ -34,7 +38,10 @@ export default function UserMenu() {
   }, []);
 
   useEffect(() => {
-    const onStorage = () => { setToken(storage.getToken()); setUser(storage.getUser()); };
+    const onStorage = () => {
+      setToken(storage.getToken());
+      setUser(storage.getUser());
+    };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
   }, []);
@@ -44,13 +51,20 @@ export default function UserMenu() {
     const t = storage.getToken();
     const u = storage.getUser();
     if (t && !u) {
-      fetchMe().catch(() => {/* 忽略错误，保持现状 */});
+      fetchMe().catch(() => {
+        /* 忽略错误，保持现状 */
+      });
     }
   }, []);
 
   const { isLoggedIn, username } = useMemo(() => {
     if (!token) return { isLoggedIn: false, username: '' };
-    const name = user?.name || user?.username || (user?.email ? user.email.split('@')[0] : undefined) || user?.id || 'User';
+    const name =
+      user?.name ||
+      user?.username ||
+      (user?.email ? user.email.split('@')[0] : undefined) ||
+      user?.id ||
+      'User';
     return { isLoggedIn: true, username: name };
   }, [token, user]);
 
@@ -68,7 +82,6 @@ export default function UserMenu() {
   }
 
   const initials = getUserInitials(user?.id || username);
-
 
   const onSettings = () => {
     navigate('/settings');
@@ -100,30 +113,60 @@ export default function UserMenu() {
 
   return (
     <div className="user-menu" ref={ref}>
-      <div className="user-avatar-container relative" onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}>
+      <div
+        className="user-avatar-container relative"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+      >
         <div className="user-avatar gradient-avatar">{initials}</div>
         <span className="user-name">{username}</span>
-        <svg className={`dropdown-icon ${open ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          className={`dropdown-icon ${open ? 'rotate-180' : ''}`}
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M6 9l6 6 6-6" />
         </svg>
       </div>
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-44 rounded-lg border border-slate-200 bg-white shadow-xl overflow-hidden select-none z-[100]">
-          <button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700" onClick={onSettings}>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+            onClick={onSettings}
+          >
             <Cog6ToothIcon className="w-4 h-4" /> 账户设置
           </button>
-          <button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700" onClick={onModelSettings}>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+            onClick={onModelSettings}
+          >
             <Squares2X2Icon className="w-4 h-4" /> 模型设置
           </button>
-          <button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700" onClick={onLogs}>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+            onClick={onLogs}
+          >
             <DocumentTextIcon className="w-4 h-4" /> 日志管理
           </button>
-          <button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700" onClick={onVectorKnowledge}>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+            onClick={onVectorKnowledge}
+          >
             <CubeIcon className="w-4 h-4" /> 向量知识库
           </button>
           <div className="h-px bg-slate-200" />
-          <button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 text-red-600 flex items-center gap-2" onClick={onLogout}>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 text-red-600 flex items-center gap-2"
+            onClick={onLogout}
+          >
             <ArrowRightOnRectangleIcon className="w-4 h-4" /> 退出登录
           </button>
         </div>
@@ -131,5 +174,3 @@ export default function UserMenu() {
     </div>
   );
 }
-
-

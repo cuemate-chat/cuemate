@@ -1,5 +1,11 @@
-
-import { Cog6ToothIcon, EyeIcon, EyeSlashIcon, GlobeAltIcon, PaintBrushIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import {
+  Cog6ToothIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  GlobeAltIcon,
+  PaintBrushIcon,
+  UserCircleIcon,
+} from '@heroicons/react/24/outline';
 import { Select as AntSelect } from 'antd';
 import 'antd/dist/reset.css';
 import { useEffect, useState } from 'react';
@@ -23,19 +29,21 @@ export default function Settings() {
     selected_model_id: '',
   });
   const [saving, setSaving] = useState(false);
-  const [modelOptions, setModelOptions] = useState<{label:string,value:string}[]>([]);
+  const [modelOptions, setModelOptions] = useState<{ label: string; value: string }[]>([]);
 
   useEffect(() => {
     const u = storage.getUser();
     if (!u) {
-      fetchMe().then((res) => {
-        const user = (res as any).user;
-        if (user) {
-          initForm(user);
-          // 覆盖缓存，确保后续读取的就是服务端的 timezone
-          storage.setUser(user);
-        }
-      }).catch(() => {});
+      fetchMe()
+        .then((res) => {
+          const user = (res as any).user;
+          if (user) {
+            initForm(user);
+            // 覆盖缓存，确保后续读取的就是服务端的 timezone
+            storage.setUser(user);
+          }
+        })
+        .catch(() => {});
     } else {
       initForm(u);
     }
@@ -77,12 +85,16 @@ export default function Settings() {
     (async () => {
       try {
         const res: any = await listModels({ type: 'llm' });
-        const opts = (res.list || []).map((m: any) => ({ label: `${m.name} (${m.model_name})`, value: m.id }));
+        const opts = (res.list || []).map((m: any) => ({
+          label: `${m.name} (${m.model_name})`,
+          value: m.id,
+        }));
         setModelOptions(opts);
-      } catch {}
+      } catch (error) {
+        console.error('Failed to load model options:', error);
+      }
     })();
   }, []);
-
 
   return (
     <div className="space-y-6">
@@ -103,8 +115,11 @@ export default function Settings() {
               <div className="w-full">
                 <AntSelect
                   value={form.locale}
-                  onChange={(v)=>setForm(f=>({...f, locale: v}))}
-                  options={[{value:'zh-CN',label:'简体中文'},{value:'zh-TW',label:'繁體中文'}]}
+                  onChange={(v) => setForm((f) => ({ ...f, locale: v }))}
+                  options={[
+                    { value: 'zh-CN', label: '简体中文' },
+                    { value: 'zh-TW', label: '繁體中文' },
+                  ]}
                   className="w-full"
                   popupMatchSelectWidth
                   style={{ height: 40 }}
@@ -156,13 +171,13 @@ export default function Settings() {
               <div className="w-full">
                 <AntSelect
                   value={form.timezone}
-                  onChange={(v)=>setForm(f=>({...f, timezone: v}))}
+                  onChange={(v) => setForm((f) => ({ ...f, timezone: v }))}
                   options={[
-                    {value:'Asia/Shanghai',label:'北京时间 (UTC+8)'},
-                    {value:'Asia/Hong_Kong',label:'香港时间 (UTC+8)'},
-                    {value:'Asia/Tokyo',label:'日本时间 (UTC+9)'},
-                    {value:'America/Los_Angeles',label:'太平洋时间 (UTC-8)'},
-                    {value:'Europe/London',label:'伦敦时间 (UTC+0)'}
+                    { value: 'Asia/Shanghai', label: '北京时间 (UTC+8)' },
+                    { value: 'Asia/Hong_Kong', label: '香港时间 (UTC+8)' },
+                    { value: 'Asia/Tokyo', label: '日本时间 (UTC+9)' },
+                    { value: 'America/Los_Angeles', label: '太平洋时间 (UTC-8)' },
+                    { value: 'Europe/London', label: '伦敦时间 (UTC+0)' },
                   ]}
                   className="w-full"
                   popupMatchSelectWidth
@@ -178,7 +193,11 @@ export default function Settings() {
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div className="text-slate-800 font-medium">软件版本</div>
             <div className="md:col-span-2">
-              <input value={form.version} disabled className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900" />
+              <input
+                value={form.version}
+                disabled
+                className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
+              />
             </div>
           </div>
 
@@ -189,19 +208,21 @@ export default function Settings() {
               <div className="w-full">
                 <AntSelect
                   value={form.selected_model_id}
-                  onChange={(v)=>setForm(f=>({...f, selected_model_id: v}))}
+                  onChange={(v) => setForm((f) => ({ ...f, selected_model_id: v }))}
                   options={modelOptions}
                   className="w-full"
                   popupMatchSelectWidth
                   style={{ height: 40 }}
                 />
               </div>
-              <p className="text-xs text-slate-600 mt-2">为当前账号绑定一个模型。你也可以前往“模型设置”页面管理模型。</p>
+              <p className="text-xs text-slate-600 mt-2">
+                为当前账号绑定一个模型。你也可以前往“模型设置”页面管理模型。
+              </p>
               <div className="mt-2">
                 <button
                   className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm"
-                  onClick={async()=>{
-                    if(!form.selected_model_id) return;
+                  onClick={async () => {
+                    if (!form.selected_model_id) return;
                     try {
                       await selectUserModel(form.selected_model_id);
                       // 绑定后立即拉取用户并落地缓存与表单，确保前端与数据库一致
@@ -212,11 +233,13 @@ export default function Settings() {
                         initForm(user);
                       }
                       message.success('已绑定');
-                    } catch (e:any) {
+                    } catch (e: any) {
                       message.error(e?.message || '绑定失败');
                     }
                   }}
-                >立即绑定</button>
+                >
+                  立即绑定
+                </button>
               </div>
             </div>
           </div>
@@ -226,8 +249,12 @@ export default function Settings() {
             <div className="text-slate-800 font-medium">政策协议</div>
             <div className="md:col-span-2">
               <div className="flex items-center gap-4 text-sm">
-                <a className="text-blue-700 hover:underline" href="/legal/user-agreement">用户协议</a>
-                <a className="text-blue-700 hover:underline" href="/legal/privacy">隐私政策</a>
+                <a className="text-blue-700 hover:underline" href="/legal/user-agreement">
+                  用户协议
+                </a>
+                <a className="text-blue-700 hover:underline" href="/legal/privacy">
+                  隐私政策
+                </a>
               </div>
             </div>
           </div>
@@ -245,28 +272,44 @@ export default function Settings() {
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div className="text-slate-800 font-medium">ID</div>
             <div className="md:col-span-2">
-              <input value={form.id} disabled className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900" />
+              <input
+                value={form.id}
+                disabled
+                className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
+              />
             </div>
           </div>
           {/* 用户名 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div className="text-slate-800 font-medium">用户名</div>
             <div className="md:col-span-2">
-              <input value={form.name} onChange={(e)=>setForm(f=>({...f,name:e.target.value}))} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900" />
+              <input
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+              />
             </div>
           </div>
           {/* 邮箱 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div className="text-slate-800 font-medium">邮箱</div>
             <div className="md:col-span-2">
-              <input value={form.email} onChange={(e)=>setForm(f=>({...f,email:e.target.value}))} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900" />
+              <input
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+              />
             </div>
           </div>
           {/* 创建时间 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div className="text-slate-800 font-medium">创建时间</div>
             <div className="md:col-span-2">
-              <input value={form.created_at ? new Date(form.created_at).toLocaleString() : ''} disabled className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900" />
+              <input
+                value={form.created_at ? new Date(form.created_at).toLocaleString() : ''}
+                disabled
+                className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
+              />
             </div>
           </div>
           {/* 密码修改 */}
@@ -281,7 +324,14 @@ export default function Settings() {
           <button
             disabled={saving}
             onClick={() => {
-              const payload: any = { name: form.name, email: form.email, theme: form.theme, locale: form.locale, timezone: form.timezone, selected_model_id: form.selected_model_id };
+              const payload: any = {
+                name: form.name,
+                email: form.email,
+                theme: form.theme,
+                locale: form.locale,
+                timezone: form.timezone,
+                selected_model_id: form.selected_model_id,
+              };
               // 直接复用 onSave 逻辑
               (async () => {
                 setSaving(true);
@@ -330,12 +380,16 @@ function PasswordEditor() {
             disabled={!editing}
             className={`w-full rounded-lg border border-slate-300 px-3 pr-10 py-2 text-slate-900 ${!editing ? 'bg-slate-50' : ''}`}
             value={oldPwd}
-            onChange={(e)=>setOldPwd(e.target.value)}
+            onChange={(e) => setOldPwd(e.target.value)}
           />
-          <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700" onClick={()=>setShowOld(v=>!v)}>
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+            onClick={() => setShowOld((v) => !v)}
+          >
             {showOld ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
           </button>
-          {editing && oldPwd.length>0 && oldPwd.length<6 && (
+          {editing && oldPwd.length > 0 && oldPwd.length < 6 && (
             <p className="mt-1 text-xs text-red-600">原密码长度至少 6 位</p>
           )}
         </div>
@@ -346,12 +400,16 @@ function PasswordEditor() {
             disabled={!editing}
             className={`w-full rounded-lg border border-slate-300 px-3 pr-10 py-2 text-slate-900 ${!editing ? 'bg-slate-50' : ''}`}
             value={newPwd}
-            onChange={(e)=>setNewPwd(e.target.value)}
+            onChange={(e) => setNewPwd(e.target.value)}
           />
-          <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700" onClick={()=>setShowNew(v=>!v)}>
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+            onClick={() => setShowNew((v) => !v)}
+          >
             {showNew ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
           </button>
-          {editing && newPwd.length>0 && newPwd.length<6 && (
+          {editing && newPwd.length > 0 && newPwd.length < 6 && (
             <p className="mt-1 text-xs text-red-600">新密码长度至少 6 位</p>
           )}
         </div>
@@ -369,7 +427,9 @@ function PasswordEditor() {
                 return;
               }
               // 保存密码到本页 form（通过自定义事件传递）
-              const ev = new CustomEvent('settings-set-password', { detail: { oldPassword: oldPwd, newPassword: newPwd } });
+              const ev = new CustomEvent('settings-set-password', {
+                detail: { oldPassword: oldPwd, newPassword: newPwd },
+              });
               window.dispatchEvent(ev);
               setEditing(false);
             }
@@ -378,11 +438,11 @@ function PasswordEditor() {
           {editing ? '保存密码' : '修改密码'}
         </button>
         {editing && (
-          <span className="text-xs text-slate-600">不少于 6 位。保存密码后，再点击页面底部“保存”应用其他设置</span>
+          <span className="text-xs text-slate-600">
+            不少于 6 位。保存密码后，再点击页面底部“保存”应用其他设置
+          </span>
         )}
       </div>
     </div>
   );
 }
-
-

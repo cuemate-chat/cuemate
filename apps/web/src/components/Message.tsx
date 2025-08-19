@@ -53,5 +53,3 @@ export const MessageContainer: React.FC = () => {
     document.body,
   );
 };
-
-

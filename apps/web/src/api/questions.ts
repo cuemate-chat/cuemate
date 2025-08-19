@@ -22,11 +22,11 @@ export async function listInterviewQuestions(
   if (filters?.title) params.set('title', filters.title);
   if (filters?.description) params.set('description', filters.description);
   if (filters?.tagId) params.set('tagId', filters.tagId);
-  return http.get(`/interview-questions?${params.toString()}`);
+  return await http.get<{ items: IQItem[]; total: number }>(`/interview-questions?${params.toString()}`);
 }
 
 export async function getInterviewQuestion(id: string): Promise<{ item: IQItem }> {
-  return http.get(`/interview-questions/${id}`);
+  return await http.get<{ item: IQItem }>(`/interview-questions/${id}`);
 }
 
 export async function updateInterviewQuestion(
@@ -46,14 +46,14 @@ export async function createInterviewQuestion(payload: {
   description?: string;
   tagId?: string | null;
 }): Promise<{ id: string }> {
-  return http.post('/interview-questions', payload);
+  return await http.post<{ id: string }>('/interview-questions', payload);
 }
 
 export async function listTags(): Promise<{ items: Array<{ id: string; name: string }> }> {
-  return http.get('/tags');
+  return await http.get<{ items: Array<{ id: string; name: string }> }>('/tags');
 }
 export async function createTag(name: string): Promise<{ id: string }> {
-  return http.post('/tags', { name });
+  return await http.post<{ id: string }>('/tags', { name });
 }
 export async function updateTag(id: string, name: string): Promise<{ success: boolean }> {
   return http.put(`/tags/${id}`, { name });

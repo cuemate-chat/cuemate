@@ -2,9 +2,8 @@ import { http, request } from './http';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-export async function fetchLogServices() {
-  const res = await request('/logs/services');
-  return res as { services: string[]; levels: LogLevel[] };
+export async function fetchLogServices(): Promise<{ services: string[]; levels: LogLevel[] }> {
+  return await request<{ services: string[]; levels: LogLevel[] }>('/logs/services');
 }
 
 export async function fetchLogs(params: {
@@ -20,11 +19,10 @@ export async function fetchLogs(params: {
   if (params.date) qs.set('date', params.date);
   if (params.page) qs.set('page', String(params.page));
   if (params.pageSize) qs.set('pageSize', String(params.pageSize));
-  const res = await http.get('/logs' + (qs.toString() ? `?${qs.toString()}` : ''));
-  return res as {
+  return await http.get<{
     total: number;
     items: Array<{ level: LogLevel; service: string; date: string; size: number; mtimeMs: number }>;
-  };
+  }>('/logs' + (qs.toString() ? `?${qs.toString()}` : ''));
 }
 
 export async function fetchLogContent(params: {
@@ -38,8 +36,7 @@ export async function fetchLogContent(params: {
   qs.set('service', params.service);
   qs.set('date', params.date);
   if (params.tail) qs.set('tail', String(params.tail));
-  const res = await http.get('/logs/content?' + qs.toString());
-  return res as { level: LogLevel; service: string; date: string; lines: string[] };
+  return await http.get<{ level: LogLevel; service: string; date: string; lines: string[] }>('/logs/content?' + qs.toString());
 }
 
 export async function clearLogContent(params: {
