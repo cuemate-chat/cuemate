@@ -48,6 +48,14 @@ export default function Prompts() {
   const [appliedTagId, setAppliedTagId] = useState<string | undefined>(undefined);
   const requestIdRef = useRef(0);
 
+  // 同步向量库弹窗与统计
+  const [syncOpen, setSyncOpen] = useState(false);
+  const [syncStats, setSyncStats] = useState<{
+    total: number;
+    synced: number;
+    unsynced: number;
+  } | null>(null);
+
   // 下拉搜索：按 label 文本模糊匹配（忽略大小写）
   const selectFilterOption = (input: string, option?: any) => {
     const label: string = (option?.label ?? option?.children ?? '').toString();
@@ -199,14 +207,21 @@ export default function Prompts() {
                 placeholder="按日期过滤"
                 value={filterDay ? (dayjs as any)(filterDay) : undefined}
                 onChange={(d) => {
-                  setFilterDay(d ? d.format('YYYY-MM-DD') : undefined);
+                  const v = d ? d.format('YYYY-MM-DD') : undefined;
+                  setFilterDay(v);
+                  setAppliedDay(v);
+                  setPage(1);
                 }}
+                style={{ width: 160 }}
               />
               <Input
                 placeholder="按名称"
                 value={filterTitle}
                 onChange={(e) => {
-                  setFilterTitle(e.target.value);
+                  const v = e.target.value;
+                  setFilterTitle(v);
+                  setAppliedTitle(v.trim() || undefined);
+                  setPage(1);
                 }}
                 onPressEnter={applyFilters}
                 allowClear
@@ -216,7 +231,10 @@ export default function Prompts() {
                 placeholder="按描述"
                 value={filterDesc}
                 onChange={(e) => {
-                  setFilterDesc(e.target.value);
+                  const v = e.target.value;
+                  setFilterDesc(v);
+                  setAppliedDesc(v.trim() || undefined);
+                  setPage(1);
                 }}
                 onPressEnter={applyFilters}
                 allowClear
@@ -226,14 +244,29 @@ export default function Prompts() {
                 placeholder="按标签"
                 allowClear
                 value={filterTagId}
-                onChange={(v) => setFilterTagId(v)}
+                onChange={(v) => {
+                  setFilterTagId(v);
+                  setAppliedTagId(v);
+                  setPage(1);
+                }}
                 options={tags.map((t) => ({ value: t.id, label: t.name }))}
                 style={{ width: 160 }}
                 showSearch
                 filterOption={selectFilterOption}
               />
               <Button onClick={() => setTagMgrOpen(true)}>管理标签</Button>
-              <Button onClick={applyFilters}>筛选</Button>
+              <Button
+                onClick={async () => {
+                  if (!jobId) return;
+                  setSyncOpen(true);
+                  setSyncStats(null);
+                  const { getIQSyncStats } = await import('../api/questions');
+                  const stats = await getIQSyncStats(jobId);
+                  setSyncStats(stats);
+                }}
+              >
+                同步向量库
+              </Button>
               <Button
                 onClick={() => {
                   setFilterDay(undefined);
@@ -391,6 +424,44 @@ export default function Prompts() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* 同步向量库弹窗 */}
+      <Modal open={syncOpen} onCancel={() => setSyncOpen(false)} title="同步向量库" footer={null} width={600}>
+        <div className="space-y-4">
+          <div className="text-sm text-slate-600">查看当前岗位押题在向量库中的同步情况</div>
+          <div className="flex items-center gap-6">
+            <div>
+              <div className="text-xs text-slate-500">总数</div>
+              <div className="text-xl font-semibold">{syncStats?.total ?? '-'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500">已同步</div>
+              <div className="text-xl font-semibold text-green-600">{syncStats?.synced ?? '-'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500">未同步</div>
+              <div className="text-xl font-semibold text-red-500">{syncStats?.unsynced ?? '-'}</div>
+            </div>
+          </div>
+          <div className="pt-2 text-right">
+            <Button
+              type="primary"
+              disabled={!jobId}
+              onClick={async () => {
+                if (!jobId) return;
+                const { syncIQBatch, getIQSyncStats } = await import('../api/questions');
+                const res = await syncIQBatch(jobId);
+                globalMessage.success(`批量同步完成：成功 ${res.success} 条，失败 ${res.failed} 条`);
+                const stats = await getIQSyncStats(jobId);
+                setSyncStats(stats);
+                await reloadList();
+              }}
+            >
+              批量同步
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* 标签管理弹窗 */}

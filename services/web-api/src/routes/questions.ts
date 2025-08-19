@@ -132,6 +132,115 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
       }
     }),
   );
+
+  // 同步统计：返回某岗位押题向量同步情况
+  app.get(
+    '/interview-questions/sync-stats',
+    withErrorLogging(app.log as any, 'interview-questions.sync-stats', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const { jobId } = (req as any).query as { jobId?: string };
+        if (!jobId) return reply.code(400).send({ error: '缺少 jobId' });
+
+        // 校验归属
+        const owned = (app as any).db
+          .prepare('SELECT id FROM jobs WHERE id=? AND user_id=?')
+          .get(jobId, payload.uid);
+        if (!owned) return reply.code(404).send({ error: '岗位不存在或无权限' });
+
+        const total = (app as any).db
+          .prepare('SELECT COUNT(1) AS c FROM interview_questions WHERE job_id=?')
+          .get(jobId)?.c as number;
+        const synced = (app as any).db
+          .prepare(
+            'SELECT COUNT(1) AS c FROM interview_questions WHERE job_id=? AND vector_status=1',
+          )
+          .get(jobId)?.c as number;
+        const unsynced = Math.max(0, (total || 0) - (synced || 0));
+        return { total: total || 0, synced: synced || 0, unsynced };
+      } catch (err: any) {
+        return reply.code(401).send({ error: '未认证:' + err });
+      }
+    }),
+  );
+
+  // 批量同步：将指定岗位的押题全部写入向量库（存在则更新：先删后写）
+  app.post(
+    '/interview-questions/sync-batch',
+    withErrorLogging(app.log as any, 'interview-questions.sync-batch', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const body = z
+          .object({
+            jobId: z.string().min(1),
+          })
+          .parse((req as any).body || {});
+
+        // 校验归属
+        const owned = (app as any).db
+          .prepare('SELECT id FROM jobs WHERE id=? AND user_id=?')
+          .get(body.jobId, payload.uid);
+        if (!owned) return reply.code(404).send({ error: '岗位不存在或无权限' });
+
+        const rows: Array<{
+          id: string;
+          question: string;
+          answer: string;
+          created_at: number;
+          tag_id: string | null;
+          tag_name: string | null;
+        }> = (app as any).db
+          .prepare(
+            `SELECT q.id, q.question, q.answer, q.created_at, q.tag_id, t.name as tag_name
+               FROM interview_questions q
+          LEFT JOIN tags t ON q.tag_id = t.id
+              WHERE q.job_id = ?
+              ORDER BY q.created_at ASC`,
+          )
+          .all(body.jobId);
+
+        const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        let success = 0;
+        let failed = 0;
+        for (const r of rows) {
+          try {
+            // 先删除旧数据（若存在）
+            await fetch(`${base}/questions/${r.id}`, { method: 'DELETE' });
+          } catch {}
+          try {
+            // 重新写入
+            const resp = await fetch(`${base}/questions/process`, {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                question: {
+                  id: r.id,
+                  title: r.question,
+                  description: r.answer || '',
+                  job_id: body.jobId,
+                  tag_id: r.tag_id,
+                  tag_name: r.tag_name,
+                  user_id: payload.uid,
+                  created_at: r.created_at,
+                },
+              }),
+            });
+            if (!resp.ok) throw new Error(`RAG write failed: ${resp.status}`);
+            (app as any).db
+              .prepare('UPDATE interview_questions SET vector_status=1 WHERE id=?')
+              .run(r.id);
+            success++;
+          } catch (e) {
+            failed++;
+            app.log.error({ err: e as any, questionId: r.id }, 'Sync one question failed');
+          }
+        }
+        return { success, failed, total: rows.length };
+      } catch (err: any) {
+        return reply.code(401).send({ error: '未认证:' + err });
+      }
+    }),
+  );
   // 分页查询：按 jobId 查询（interview_questions 直接挂 job_id）
   app.get(
     '/interview-questions',

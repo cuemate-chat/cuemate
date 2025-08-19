@@ -22,7 +22,9 @@ export async function listInterviewQuestions(
   if (filters?.title) params.set('title', filters.title);
   if (filters?.description) params.set('description', filters.description);
   if (filters?.tagId) params.set('tagId', filters.tagId);
-  return await http.get<{ items: IQItem[]; total: number }>(`/interview-questions?${params.toString()}`);
+  return await http.get<{ items: IQItem[]; total: number }>(
+    `/interview-questions?${params.toString()}`,
+  );
 }
 
 export async function getInterviewQuestion(id: string): Promise<{ item: IQItem }> {
@@ -60,4 +62,18 @@ export async function updateTag(id: string, name: string): Promise<{ success: bo
 }
 export async function deleteTag(id: string): Promise<{ success: boolean }> {
   return http.delete(`/tags/${id}`);
+}
+
+// 同步统计
+export async function getIQSyncStats(
+  jobId: string,
+): Promise<{ total: number; synced: number; unsynced: number }> {
+  return await http.get(`/interview-questions/sync-stats?jobId=${encodeURIComponent(jobId)}`);
+}
+
+// 批量同步
+export async function syncIQBatch(
+  jobId: string,
+): Promise<{ success: number; failed: number; total: number }> {
+  return await http.post('/interview-questions/sync-batch', { jobId });
 }
