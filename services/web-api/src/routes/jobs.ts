@@ -236,26 +236,61 @@ export function registerJobRoutes(app: FastifyInstance) {
     }
   });
 
-  // 删除岗位 DELETE /jobs/:id（级联删除简历）
+  // 删除岗位 DELETE /jobs/:id（级联删除简历、押题、向量库数据）
   app.delete('/jobs/:id', async (req, reply) => {
     try {
       const payload = await req.jwtVerify();
       const id = (req.params as any)?.id as string;
-      const ret = app.db.prepare('DELETE FROM jobs WHERE id=? AND user_id=?').run(id, payload.uid);
+
+      // 开始事务
+      const transaction = app.db.transaction(() => {
+        // 1. 删除面试押题数据
+        const questionsDeleted = app.db
+          .prepare('DELETE FROM interview_questions WHERE job_id=? AND user_id=?')
+          .run(id, payload.uid);
+
+        // 2. 删除简历数据
+        const resumesDeleted = app.db
+          .prepare('DELETE FROM resumes WHERE job_id=? AND user_id=?')
+          .run(id, payload.uid);
+
+        // 3. 删除岗位数据
+        const jobsDeleted = app.db
+          .prepare('DELETE FROM jobs WHERE id=? AND user_id=?')
+          .run(id, payload.uid);
+
+        return {
+          questionsDeleted: questionsDeleted.changes,
+          resumesDeleted: resumesDeleted.changes,
+          jobsDeleted: jobsDeleted.changes,
+        };
+      });
+
+      // 执行事务
+      const deleteResult = transaction();
+
+      // 4. 删除向量库中的所有相关数据（岗位、简历、押题）
       try {
         const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+
+        // 使用RAG服务的deleteJobData方法删除所有相关向量数据
         await fetch(`${base}/jobs/${id}`, {
           method: 'DELETE',
         });
-        try {
-          // 回写向量同步状态
-          app.db.prepare('UPDATE jobs SET vector_status=0 WHERE id=?').run(id);
-          app.db.prepare('UPDATE resumes SET vector_status=0 WHERE job_id=?').run(id);
-        } catch {}
+
+        app.log.info(`Successfully deleted all vector data for job ${id}`);
       } catch (error) {
-        app.log.error({ err: error }, 'Failed to delete from RAG service');
+        app.log.error({ err: error }, `Failed to delete vector data for job ${id}`);
+        // 即使向量库删除失败，也不影响数据库删除的成功
       }
-      return { success: ret.changes > 0 };
+
+      app.log.info(`Cascading delete completed for job ${id}:`, deleteResult);
+
+      return {
+        success: deleteResult.jobsDeleted > 0,
+        deleted: deleteResult,
+        message: `已删除岗位及 ${deleteResult.resumesDeleted} 条简历、${deleteResult.questionsDeleted} 条押题数据`,
+      };
     } catch (err) {
       app.log.error({ err }, '删除岗位失败');
       return reply.code(401).send({ error: '未认证：' + err });

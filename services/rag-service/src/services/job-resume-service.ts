@@ -151,8 +151,9 @@ export class JobResumeService {
       // 删除岗位相关的所有数据
       await this.vectorStore.deleteByFilter({ jobId }, this.config.vectorStore.jobsCollection);
       await this.vectorStore.deleteByFilter({ jobId }, this.config.vectorStore.resumesCollection);
+      await this.vectorStore.deleteByFilter({ jobId }, this.config.vectorStore.questionsCollection);
 
-      logger.info(`Deleted all vector data for job ${jobId}`);
+      logger.info(`Deleted all vector data (jobs, resumes, questions) for job ${jobId}`);
     } catch (error) {
       logger.error({ err: error as any }, `Failed to delete job data for ${jobId}`);
       throw error;

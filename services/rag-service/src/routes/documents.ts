@@ -560,7 +560,6 @@ export async function createDocumentRoutes(
       }
 
       // 在目标集合中查找文档
-      // 首先尝试使用 get 方法直接按 ID 获取
       let doc: any = null;
 
       try {
@@ -584,23 +583,27 @@ export async function createDocumentRoutes(
       // 根据文档类型获取关联信息
       if (doc.metadata.type === 'jobs') {
         // 岗位信息：获取对应的简历和押题
-        if (doc.metadata.jobId) {
-          // 获取简历信息
-          const resumes = await deps.vectorStore.getAllDocuments(
-            1000,
-            { jobId: doc.metadata.jobId },
-            deps.config.vectorStore.resumesCollection,
-          );
-          relatedData.resumes = resumes;
+        // 岗位的ID就是jobId，所以用docId来查找关联的简历和押题
+        const jobId = docId;
 
-          // 获取押题信息
-          const questions = await deps.vectorStore.getAllDocuments(
-            1000,
-            { jobId: doc.metadata.jobId },
-            deps.config.vectorStore.questionsCollection,
-          );
-          relatedData.questions = questions;
-        }
+        // 获取简历信息
+        const resumes = await deps.vectorStore.getAllDocuments(
+          1000,
+          { jobId: jobId },
+          deps.config.vectorStore.resumesCollection,
+        );
+        relatedData.resumes = resumes;
+
+        // 获取押题信息
+        const questions = await deps.vectorStore.getAllDocuments(
+          1000,
+          { jobId: jobId },
+          deps.config.vectorStore.questionsCollection,
+        );
+        relatedData.questions = questions;
+
+        // 岗位本身作为jobs返回
+        relatedData.jobs = [doc];
       } else if (doc.metadata.type === 'resumes') {
         // 简历信息：获取对应的岗位和押题
         if (doc.metadata.jobId) {
@@ -620,6 +623,9 @@ export async function createDocumentRoutes(
           );
           relatedData.questions = questions;
         }
+
+        // 简历本身作为resumes返回
+        relatedData.resumes = [doc];
       } else if (doc.metadata.type === 'questions') {
         // 押题信息：获取对应的岗位和简历
         if (doc.metadata.jobId) {
@@ -639,6 +645,9 @@ export async function createDocumentRoutes(
           );
           relatedData.resumes = resumes;
         }
+
+        // 押题本身作为questions返回
+        relatedData.questions = [doc];
       }
 
       return {
