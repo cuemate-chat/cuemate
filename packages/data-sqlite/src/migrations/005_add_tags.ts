@@ -35,6 +35,21 @@ export function up(db: any): void {
     'Vue',
     'TypeScript',
     'Nginx',
+    'Node.js',
+    'Express',
+    'Django',
+    'Flask',
+    'FastAPI',
+    'RESTful',
+    'GraphQL',
+    'WebSocket',
+    'MQTT',
+    'TCP/IP',
+    'HTTP',
+    'HTTPS',
+    'OAuth',
+    'JWT',
+    'OAuth2',
   ];
   const insert = db.prepare('INSERT OR IGNORE INTO tags (id, name, created_at) VALUES (?, ?, ?)');
   builtins.forEach((name: string) => insert.run(randomUUID(), name, now));

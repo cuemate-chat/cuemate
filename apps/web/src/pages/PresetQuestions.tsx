@@ -26,6 +26,36 @@ export default function PresetQuestions() {
   const [page, setPage] = useState(1);
   const pageSize = 8; // 每页8个卡片
 
+  // 自适应文本域行数
+  const [adaptiveRows, setAdaptiveRows] = useState<{ question: number; answer: number }>({ 
+    question: 3, 
+    answer: 6 
+  });
+
+  // 根据屏幕高度自适应计算文本域行数
+  useEffect(() => {
+    const calculateRows = () => {
+      const viewportHeight = window.innerHeight;
+      if (viewportHeight >= 1080) {
+        // 大屏幕：1080p及以上
+        setAdaptiveRows({ question: 4, answer: 8 });
+      } else if (viewportHeight >= 900) {
+        // 中大屏幕：900-1080px
+        setAdaptiveRows({ question: 3, answer: 7 });
+      } else if (viewportHeight >= 768) {
+        // 中屏幕：768-900px
+        setAdaptiveRows({ question: 3, answer: 6 });
+      } else {
+        // 小屏幕：768px以下
+        setAdaptiveRows({ question: 2, answer: 5 });
+      }
+    };
+
+    calculateRows();
+    window.addEventListener('resize', calculateRows);
+    return () => window.removeEventListener('resize', calculateRows);
+  }, []);
+
   // 编辑弹窗
   const [editOpen, setEditOpen] = useState(false);
   const [editCurrent, setEditCurrent] = useState<PresetQuestion | null>(null);
@@ -605,7 +635,7 @@ export default function PresetQuestions() {
             <TextArea
               value={editQuestion}
               onChange={(e) => setEditQuestion(e.target.value)}
-              rows={3}
+              rows={adaptiveRows.question}
               placeholder="输入面试问题..."
             />
           </div>
@@ -614,7 +644,7 @@ export default function PresetQuestions() {
             <TextArea
               value={editAnswer}
               onChange={(e) => setEditAnswer(e.target.value)}
-              rows={6}
+              rows={adaptiveRows.answer}
               placeholder="输入参考答案..."
             />
           </div>
@@ -650,7 +680,7 @@ export default function PresetQuestions() {
             <TextArea
               value={newQuestion}
               onChange={(e) => setNewQuestion(e.target.value)}
-              rows={3}
+              rows={adaptiveRows.question}
               placeholder="输入面试问题..."
             />
           </div>
@@ -659,7 +689,7 @@ export default function PresetQuestions() {
             <TextArea
               value={newAnswer}
               onChange={(e) => setNewAnswer(e.target.value)}
-              rows={6}
+              rows={adaptiveRows.answer}
               placeholder="输入参考答案..."
             />
           </div>

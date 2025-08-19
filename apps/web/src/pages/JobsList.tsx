@@ -11,17 +11,29 @@ export default function JobsList() {
   const [description, setDescription] = useState('');
   const [resumeContent, setResumeContent] = useState('');
   const [loading, setLoading] = useState(false);
-  const [adaptiveRows, setAdaptiveRows] = useState<number>(8);
+  const [adaptiveRows, setAdaptiveRows] = useState<{ desc: number; resume: number }>({ desc: 8, resume: 8 });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // 计算中间可视区域高度：100vh - Header(56px) - Footer(48px) - Main上下内边距(48px)
   const MAIN_HEIGHT = 'calc(100vh - 56px - 48px - 48px)';
 
-  // 根据屏幕高度自适应文本域行数：14"≈8行，27"≈11行
+  // 根据屏幕高度自适应文本域行数
   useEffect(() => {
     const recomputeRows = () => {
       const viewportHeight = window.innerHeight;
-      const rows = viewportHeight >= 900 ? 11 : viewportHeight >= 800 ? 8 : 7;
-      setAdaptiveRows(rows);
+      // 更细致的屏幕尺寸适配
+      if (viewportHeight >= 1080) {
+        // 大屏幕：1080p及以上
+        setAdaptiveRows({ desc: 14, resume: 15 });
+      } else if (viewportHeight >= 900) {
+        // 中大屏幕：900-1080px
+        setAdaptiveRows({ desc: 11, resume: 12 });
+      } else if (viewportHeight >= 768) {
+        // 中屏幕：768-900px
+        setAdaptiveRows({ desc: 8, resume: 9 });
+      } else {
+        // 小屏幕：768px以下
+        setAdaptiveRows({ desc: 7, resume: 8 });
+      }
     };
     recomputeRows();
     window.addEventListener('resize', recomputeRows);
@@ -207,7 +219,7 @@ export default function JobsList() {
             <div>
               <div className="text-sm text-slate-600 mb-1">岗位描述</div>
               <Input.TextArea
-                rows={adaptiveRows}
+                rows={adaptiveRows.desc}
                 maxLength={5000}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -218,7 +230,7 @@ export default function JobsList() {
             <div>
               <div className="text-sm text-slate-600 mb-1">简历信息（文本）</div>
               <Input.TextArea
-                rows={adaptiveRows}
+                rows={adaptiveRows.resume}
                 maxLength={5000}
                 value={resumeContent}
                 onChange={(e) => setResumeContent(e.target.value)}

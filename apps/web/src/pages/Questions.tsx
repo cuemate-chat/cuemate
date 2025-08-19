@@ -27,6 +27,33 @@ export default function Prompts() {
   const pageSize = 6;
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // 自适应文本域行数
+  const [adaptiveTextareaRows, setAdaptiveTextareaRows] = useState<number>(12);
+
+  // 根据屏幕高度自适应计算文本域行数
+  useEffect(() => {
+    const calculateTextareaRows = () => {
+      const viewportHeight = window.innerHeight;
+      if (viewportHeight >= 1080) {
+        // 大屏幕：1080p及以上
+        setAdaptiveTextareaRows(16);
+      } else if (viewportHeight >= 900) {
+        // 中大屏幕：900-1080px
+        setAdaptiveTextareaRows(14);
+      } else if (viewportHeight >= 768) {
+        // 中屏幕：768-900px
+        setAdaptiveTextareaRows(12);
+      } else {
+        // 小屏幕：768px以下
+        setAdaptiveTextareaRows(10);
+      }
+    };
+
+    calculateTextareaRows();
+    window.addEventListener('resize', calculateTextareaRows);
+    return () => window.removeEventListener('resize', calculateTextareaRows);
+  }, []);
+
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState<any | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -527,7 +554,7 @@ export default function Prompts() {
             <div>
               <div className="text-sm mb-1">问题描述</div>
               <Input.TextArea
-                rows={12}
+                rows={adaptiveTextareaRows}
                 value={editDesc}
                 onChange={(e) => setEditDesc(e.target.value)}
                 maxLength={5000}
@@ -674,7 +701,7 @@ export default function Prompts() {
           <div>
             <div className="text-sm mb-1">问题描述</div>
             <Input.TextArea
-              rows={12}
+              rows={adaptiveTextareaRows}
               value={newDesc}
               onChange={(e) => setNewDesc(e.target.value)}
               maxLength={1000}

@@ -30,6 +30,36 @@ export default function JobsNew() {
   const [progress, setProgress] = useState(0);
   const progressTimerRef = useRef<number | null>(null);
 
+  // 自适应行数：根据屏幕高度计算合适的文本域行数
+  const [adaptiveRows, setAdaptiveRows] = useState<{ desc: number; resume: number }>({ desc: 20, resume: 13 });
+
+  // 根据屏幕高度自适应计算文本域行数
+  useEffect(() => {
+    const calculateRows = () => {
+      const viewportHeight = window.innerHeight;
+      // 基于视口高度计算：
+      // - 岗位描述：占用更多空间，适合详细描述
+      // - 简历文本：占用适中空间
+      if (viewportHeight >= 1080) {
+        // 大屏幕：1080p及以上
+        setAdaptiveRows({ desc: 27, resume: 20 });
+      } else if (viewportHeight >= 900) {
+        // 中大屏幕：900-1080px
+        setAdaptiveRows({ desc: 24, resume: 18 });
+      } else if (viewportHeight >= 768) {
+        // 中屏幕：768-900px
+        setAdaptiveRows({ desc: 19, resume: 15 });
+      } else {
+        // 小屏幕：768px以下
+        setAdaptiveRows({ desc: 15, resume: 13 });
+      }
+    };
+
+    calculateRows();
+    window.addEventListener('resize', calculateRows);
+    return () => window.removeEventListener('resize', calculateRows);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (progressTimerRef.current) {
@@ -134,7 +164,7 @@ export default function JobsNew() {
               isCollapsed={sidebarCollapsed}
               onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
               title="示例岗位"
-              className="h-[600px]"
+              className="h-[calc(100vh-280px)] min-h-[500px] max-h-[700px]"
             >
               <div className="p-4 space-y-2 overflow-y-auto h-full">
                 {JOB_EXAMPLES.map((ex, index) => (
@@ -184,7 +214,7 @@ export default function JobsNew() {
                     placeholder="请描述岗位职责、任职要求等，AI 将根据描述生成模拟面试题与流程"
                     value={jobDesc}
                     onChange={(e) => setJobDesc(e.target.value)}
-                    rows={20}
+                    rows={adaptiveRows.desc}
                   />
                   <div className="text-right text-xs text-slate-500">{jobDesc.length} / 5000</div>
                 </div>
@@ -233,7 +263,7 @@ export default function JobsNew() {
               <div className="text-sm text-slate-600 mb-1">简历文本</div>
               <TextArea
                 maxLength={20000}
-                rows={13}
+                rows={adaptiveRows.resume}
                 placeholder="可直接粘贴你的简历到这里，特别是遇到解析失败的时候"
                 value={resumeText}
                 onChange={(e) => setResumeText(e.target.value)}
