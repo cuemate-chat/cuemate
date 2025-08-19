@@ -145,6 +145,7 @@ export default function JobsNew() {
                                hover:border-blue-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 
                                transition-all duration-200 group transform hover:scale-[1.02] 
                                active:scale-[0.98]"
+                    title="点击填充到表单"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 
@@ -155,9 +156,6 @@ export default function JobsNew() {
                       <div className="flex-1">
                         <div className="font-medium text-slate-800 group-hover:text-blue-700 transition-colors">
                           {ex.name}
-                        </div>
-                        <div className="text-xs text-slate-500 group-hover:text-blue-600 transition-colors mt-1">
-                          点击填充到表单
                         </div>
                       </div>
                     </div>

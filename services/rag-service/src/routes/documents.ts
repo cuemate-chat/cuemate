@@ -661,4 +661,55 @@ export async function createDocumentRoutes(
       return { success: false, error: '获取关联信息失败' };
     }
   });
+
+  // 清理所有向量数据
+  app.post('/clean-all', async () => {
+    try {
+      app.log.info('Starting complete vector database cleanup...');
+
+      // 清理所有集合
+      const collections = [
+        deps.config.vectorStore.jobsCollection,
+        deps.config.vectorStore.resumesCollection,
+        deps.config.vectorStore.questionsCollection,
+        deps.config.vectorStore.defaultCollection,
+      ];
+
+      let totalDeleted = 0;
+      const results: Record<string, any> = {};
+
+      for (const collection of collections) {
+        try {
+          // 获取集合中的所有文档
+          const allDocs = await deps.vectorStore.getAllDocuments(10000, {}, collection);
+          if (allDocs && allDocs.length > 0) {
+            // 删除整个集合并重新创建
+            await deps.vectorStore.deleteCollection(collection);
+            await deps.vectorStore.getOrCreateCollection(collection);
+            results[collection] = { deleted: allDocs.length, status: 'success' };
+            totalDeleted += allDocs.length;
+            app.log.info(`Cleaned collection ${collection}: deleted ${allDocs.length} documents`);
+          } else {
+            results[collection] = { deleted: 0, status: 'already_empty' };
+            app.log.info(`Collection ${collection} is already empty`);
+          }
+        } catch (error: any) {
+          results[collection] = { deleted: 0, status: 'error', error: error.message };
+          app.log.error({ err: error as any }, `Failed to clean collection ${collection}`);
+        }
+      }
+
+      app.log.info(`Vector database cleanup completed. Total documents deleted: ${totalDeleted}`);
+
+      return {
+        success: true,
+        message: `向量库清理完成，共删除 ${totalDeleted} 条数据`,
+        totalDeleted,
+        results,
+      };
+    } catch (error: any) {
+      app.log.error({ err: error as any }, 'Failed to clean vector database');
+      return { success: false, error: '清理向量库失败：' + error.message };
+    }
+  });
 }

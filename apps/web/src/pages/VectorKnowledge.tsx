@@ -11,7 +11,7 @@ import {
   getRelatedDocuments,
   searchJobs,
   searchQuestions,
-  searchResumes,
+  searchResumes
 } from '../api/vector';
 import { message } from '../components/Message';
 
@@ -189,8 +189,11 @@ export default function VectorKnowledge() {
     setCurrentDetailDoc(doc);
     setDetailModalVisible(true);
     setRelatedData(null);
+    setActiveTab('document'); // 重置到第一个标签页
 
     try {
+      console.log('正在获取文档关联信息:', doc.id, doc.metadata.type);
+      
       // 获取关联信息
       const result = await getRelatedDocuments(
         doc.id,
@@ -203,13 +206,29 @@ export default function VectorKnowledge() {
               : 'default',
       );
 
+      console.log('获取关联信息结果:', result);
+
       if (result.success && result.related) {
         setRelatedData(result.related);
+        console.log('设置关联数据:', result.related);
+      } else {
+        console.warn('获取关联信息失败或为空:', result.error);
+        // 即使没有关联数据，也要设置一个空的结构
+        setRelatedData({
+          jobs: doc.metadata.type === 'jobs' ? [doc] : [],
+          resumes: doc.metadata.type === 'resumes' ? [doc] : [],
+          questions: doc.metadata.type === 'questions' ? [doc] : [],
+        });
       }
     } catch (error) {
-      message.error('获取关联信息失败:' + error);
-    } finally {
-      // setLoadingRelated(false); // This line is removed
+      console.error('获取关联信息异常:', error);
+      message.error('获取关联信息失败: ' + error);
+      // 设置默认的关联数据结构
+      setRelatedData({
+        jobs: doc.metadata.type === 'jobs' ? [doc] : [],
+        resumes: doc.metadata.type === 'resumes' ? [doc] : [],
+        questions: doc.metadata.type === 'questions' ? [doc] : [],
+      });
     }
   };
 
@@ -934,13 +953,10 @@ export default function VectorKnowledge() {
 }
 
 // 同步状态概览组件
-function SyncStatusOverview() {
+const SyncStatusOverview = () => {
+  const [syncStatus, setSyncStatus] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<{
-    job: { total: number; synced: number; unsynced: number };
-    resume: { total: number; synced: number; unsynced: number };
-    questions: { total: number; synced: number; unsynced: number };
-  } | null>(null);
+  const [cleanLoading, setCleanLoading] = useState(false);
 
   useEffect(() => {
     loadSyncStatus();
@@ -966,29 +982,81 @@ function SyncStatusOverview() {
   };
 
   const handleSyncAll = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const { syncAll } = await import('../api/vector');
       // 不传jobId同步所有数据
       const result = await syncAll('');
       if (result.success) {
-        message.success('一键同步完成！');
-        await loadSyncStatus(); // 重新加载状态
+        message.success('同步完成！');
+        loadSyncStatus(); // 重新加载状态
       } else {
-        message.error('同步失败');
+        message.error('同步失败：' + (result.error || '未知错误'));
       }
-    } catch (error) {
-      message.error('同步出错: ' + error);
+    } catch (error: any) {
+      message.error('同步失败：' + (error.message || '未知错误'));
     } finally {
       setLoading(false);
     }
   };
 
+  const handleCleanAll = async () => {
+    Modal.confirm({
+      title: '确认清空所有向量数据',
+      content: (
+        <div className="space-y-3">
+          <div className="text-red-600 font-medium">
+            此操作将永久删除向量库中的所有数据，且无法恢复！
+          </div>
+          <div className="space-y-2 text-sm text-gray-700">
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">1</span>
+              <span>所有岗位的向量数据</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">2</span>
+              <span>所有简历的向量数据</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">3</span>
+              <span>所有面试押题的向量数据</span>
+            </div>
+          </div>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
+            <div className="font-medium mb-1">⚠️ 重要提醒：</div>
+            <div>清空后，所有向量库数据将被永久清除，需要重新同步才能恢复搜索功能！</div>
+          </div>
+        </div>
+      ),
+      okText: '确认清空',
+      okType: 'danger',
+      cancelText: '取消',
+      width: 500,
+      onOk: async () => {
+        try {
+          setCleanLoading(true);
+          const { cleanAllVectorData } = await import('../api/vector');
+          const result = await cleanAllVectorData();
+          if (result.success) {
+            message.success(result.message);
+            // 刷新同步状态
+            loadSyncStatus();
+          } else {
+            message.error('清空失败：' + (result.error || '未知错误'));
+          }
+        } catch (error: any) {
+          message.error('清空失败：' + (error.message || '未知错误'));
+        } finally {
+          setCleanLoading(false);
+        }
+      },
+    });
+  };
+
   if (!syncStatus) {
     return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-slate-500">加载同步状态中...</p>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -1001,26 +1069,50 @@ function SyncStatusOverview() {
     <div className="space-y-6">
       {/* 一键同步按钮 */}
       <div className="text-center">
-        <button
-          onClick={handleSyncAll}
-          disabled={loading}
-          className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
-            loading
-              ? 'bg-gray-400 text-white cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg transform hover:scale-105'
-          }`}
-        >
-          {loading ? (
-            <div className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              同步中...
-            </div>
-          ) : (
-            '一键同步所有数据'
-          )}
-        </button>
+        <div className="flex gap-4 justify-center">
+          <button
+            onClick={handleSyncAll}
+            disabled={loading}
+            className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
+              loading
+                ? 'bg-gray-400 text-white cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg transform hover:scale-105'
+            }`}
+          >
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                同步中...
+              </div>
+            ) : (
+              '一键同步所有数据'
+            )}
+          </button>
+          
+          <button
+            onClick={handleCleanAll}
+            disabled={cleanLoading}
+            className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
+              cleanLoading
+                ? 'bg-gray-400 text-white cursor-not-allowed'
+                : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg transform hover:scale-105'
+            }`}
+          >
+            {cleanLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                清空中...
+              </div>
+            ) : (
+              '一键清空所有数据'
+            )}
+          </button>
+        </div>
         <p className="mt-2 text-sm text-slate-500">
-          将同步岗位信息、简历信息、面试押题三个模块的数据到向量库
+          一键同步所有数据将同步岗位信息、简历信息、面试押题三个模块的数据到向量库，同步完成后，可以进行搜索。
+        </p>
+        <p className="mt-2 text-sm text-slate-500">
+          一键清空所有数据将清空向量库中的所有数据，清空后需要重新同步才能恢复搜索功能。
         </p>
       </div>
 
@@ -1048,7 +1140,7 @@ function SyncStatusOverview() {
           </div>
           <div className="w-full bg-blue-200 rounded-full h-2 mt-1">
             <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${totalItems > 0 ? (totalSynced / totalItems) * 100 : 0}%` }}
             ></div>
           </div>
@@ -1060,7 +1152,12 @@ function SyncStatusOverview() {
         {/* 岗位信息 */}
         <div className="bg-white border border-slate-200 rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-medium text-slate-900">岗位信息</h4>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm3 2a1 1 0 011-1h4a1 1 0 011 1v1H7V6z" clipRule="evenodd" />
+              </svg>
+              <h4 className="font-medium text-slate-900">岗位信息</h4>
+            </div>
             <span className={`px-2 py-1 text-xs rounded-full ${
               syncStatus.job.unsynced === 0 
                 ? 'bg-green-100 text-green-800' 
@@ -1088,7 +1185,12 @@ function SyncStatusOverview() {
         {/* 简历信息 */}
         <div className="bg-white border border-slate-200 rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-medium text-slate-900">简历信息</h4>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm3 2a1 1 0 011-1h4a1 1 0 011 1v1H7V6z" clipRule="evenodd" />
+              </svg>
+              <h4 className="font-medium text-slate-900">简历信息</h4>
+            </div>
             <span className={`px-2 py-1 text-xs rounded-full ${
               syncStatus.resume.unsynced === 0 
                 ? 'bg-green-100 text-green-800' 
@@ -1116,7 +1218,12 @@ function SyncStatusOverview() {
         {/* 面试押题 */}
         <div className="bg-white border border-slate-200 rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-medium text-slate-900">面试押题</h4>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <h4 className="font-medium text-slate-900">面试押题</h4>
+            </div>
             <span className={`px-2 py-1 text-xs rounded-full ${
               syncStatus.questions.unsynced === 0 
                 ? 'bg-green-100 text-green-800' 
@@ -1143,15 +1250,85 @@ function SyncStatusOverview() {
       </div>
 
       {/* 同步说明 */}
-      <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-        <h4 className="font-medium text-slate-900 mb-2">同步说明</h4>
-        <ul className="text-sm text-slate-600 space-y-1">
-          <li>• 数据库有但向量库没有：新插入到向量库</li>
-          <li>• 数据库有且向量库也有：更新向量库（先删除后插入）</li>
-          <li>• 数据库没有但向量库有：从向量库删除</li>
-          <li>• 同步完成后，所有数据将保持一致性</li>
-        </ul>
+      <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-6 border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <h4 className="text-lg font-semibold text-slate-900">同步说明</h4>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200 shadow-sm">
+              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <div className="font-medium text-green-800 mb-1">新增同步</div>
+                <div className="text-sm text-green-700">数据库有但向量库没有：新插入到向量库</div>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-blue-200 shadow-sm">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <div className="font-medium text-blue-800 mb-1">更新同步</div>
+                <div className="text-sm text-blue-700">数据库有且向量库也有：更新向量库（先删除后插入）</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-orange-200 shadow-sm">
+              <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 001 1h6a1 1 0 001-1V3a2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <div className="font-medium text-orange-800 mb-1">清理同步</div>
+                <div className="text-sm text-orange-700">数据库没有但向量库有：从向量库删除</div>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-purple-200 shadow-sm">
+              <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <div className="font-medium text-purple-800 mb-1">数据一致性</div>
+                <div className="text-sm text-purple-700">同步完成后，所有数据将保持一致性</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <div className="font-medium text-blue-900">AI 面试训练</div>
+              <div className="text-sm text-blue-700">向量知识库所有数据，将用于 AI 面试训练</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
-}
+};

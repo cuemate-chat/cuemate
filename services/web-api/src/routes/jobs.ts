@@ -107,8 +107,15 @@ export function registerJobRoutes(app: FastifyInstance) {
       const rows = app.db
         .prepare(
           `SELECT j.id, j.title, j.description, j.status, j.created_at, j.vector_status,
-                  r.id AS resumeId, r.title AS resumeTitle, r.content AS resumeContent
-             FROM jobs j LEFT JOIN resumes r ON r.job_id = j.id
+                  r.id AS resumeId, r.title AS resumeTitle, r.content AS resumeContent,
+                  COALESCE(q.question_count, 0) AS question_count
+             FROM jobs j 
+             LEFT JOIN resumes r ON r.job_id = j.id
+             LEFT JOIN (
+               SELECT job_id, COUNT(*) AS question_count 
+               FROM interview_questions 
+               GROUP BY job_id
+             ) q ON q.job_id = j.id
             WHERE j.user_id = ?
             ORDER BY j.created_at DESC`,
         )

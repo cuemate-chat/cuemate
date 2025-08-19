@@ -1,6 +1,7 @@
 import { Button, Input, Modal } from 'antd';
 import { useEffect, useState } from 'react';
 import { deleteJob, listJobs, updateJob, type JobWithResume } from '../api/jobs';
+import CollapsibleSidebar from '../components/CollapsibleSidebar';
 import { message as globalMessage } from '../components/Message';
 
 export default function JobsList() {
@@ -145,49 +146,51 @@ export default function JobsList() {
   return (
     <div className="flex gap-6 overflow-hidden" style={{ height: MAIN_HEIGHT }}>
       {/* 左侧列表 */}
-      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'w-0' : 'w-80'} flex-shrink-0 min-h-0 h-full relative`}>
-        {!sidebarCollapsed && (
-          <div className="rounded-lg border border-slate-200 overflow-hidden h-full">
-            <div className="px-4 py-3 bg-slate-50 text-slate-600">岗位列表</div>
-            <div className="p-3 space-y-2 overflow-y-auto h-[calc(100%-60px)]">
-              {items.map((item, index) => (
-                <button
-                  key={item.id}
-                  onClick={() => selectJob(item.id)}
-                  className={`w-full text-left px-3 py-2 rounded border transition-all ${
-                    selectedId === item.id
-                      ? 'bg-blue-50 border-blue-200 text-blue-700'
-                      : 'border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {index + 1} {item.title}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* 折叠按钮 */}
-        <div className={`absolute ${sidebarCollapsed ? '-right-6' : '-right-6'} top-1/2 transform -translate-y-1/2 z-10`}>
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-8 h-8 bg-white border-2 border-slate-300 rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 hover:border-blue-400 transition-all duration-200 group"
-            title={sidebarCollapsed ? '展开岗位列表' : '折叠岗位列表'}
-          >
-            <svg
-              className={`w-4 h-4 text-slate-600 group-hover:text-blue-600 transition-all duration-200 ${
-                sidebarCollapsed ? 'rotate-180' : ''
+      <CollapsibleSidebar
+        isCollapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        title="岗位列表"
+        className="h-full"
+      >
+        <div className="p-4 space-y-2 overflow-y-auto h-full">
+          {items.map((item, index) => (
+            <button
+              key={item.id}
+              onClick={() => selectJob(item.id)}
+              title="点击查看详情"
+              className={`relative w-full text-left pl-10 pr-4 py-3 rounded-lg border transition-all duration-200 group ${
+                selectedId === item.id
+                  ? 'border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm'
+                  : 'border-slate-200 hover:border-blue-300 hover:bg-gradient-to-r hover:from-slate-50 hover:to-blue-50'
               }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              strokeWidth={2.5}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
+              <div className={`absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200 ${
+                selectedId === item.id
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'bg-slate-200 text-slate-600 group-hover:bg-blue-400 group-hover:text-white'
+              }`}>
+                {index + 1}
+              </div>
+              <div className={`font-medium transition-colors duration-200 ${
+                selectedId === item.id ? 'text-blue-700' : 'text-slate-800 group-hover:text-blue-700'
+              }`}>
+                {item.title}
+              </div>
+              {/* 状态指示器 */}
+              <div className={`absolute right-3 top-3 w-2 h-2 rounded-full transition-all duration-200 ${
+                item.vector_status ? 'bg-green-400 shadow-green-400/50 shadow-sm' : 'bg-amber-400 shadow-amber-400/50 shadow-sm'
+              }`}></div>
+            </button>
+          ))}
+          {!items.length && (
+            <div className="text-center py-8 text-slate-500">
+              <div className="text-2xl mb-2">💼</div>
+              <div className="text-sm">暂无岗位</div>
+              <div className="text-xs text-slate-400 mt-1">请先创建岗位</div>
+            </div>
+          )}
         </div>
-      </div>
+      </CollapsibleSidebar>
       
       {/* 右侧详情 */}
       <div className="flex-1 min-w-0">

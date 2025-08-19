@@ -57,10 +57,21 @@ export const getSyncStatus = async (jobId?: string): Promise<SyncStatusResponse>
   return data as SyncStatusResponse;
 };
 
-export const syncAll = async (jobId?: string): Promise<any> => {
-  const body = jobId ? { jobId } : {};
-  return await http.post('/vectors/sync-all', body);
-};
+export async function syncAll(jobId?: string): Promise<any> {
+  const response = await http.post('/vectors/sync-all', { jobId });
+  return response.data;
+}
+
+export async function cleanAllVectorData(): Promise<{
+  success: boolean;
+  message: string;
+  totalDeleted: number;
+  results: any;
+  error?: string;
+}> {
+  const response = await http.post('/vectors/clean-all');
+  return response.data;
+}
 
 // 搜索所有文档
 export const searchAllDocuments = async (): Promise<SearchResponse> => {

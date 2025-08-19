@@ -77,3 +77,10 @@ export async function syncIQBatch(
 ): Promise<{ success: number; failed: number; total: number; deletedExtras?: number }> {
   return await http.post('/interview-questions/sync-batch', { jobId });
 }
+
+// 批量删除岗位的所有押题数据
+export async function deleteAllQuestionsByJob(
+  jobId: string,
+): Promise<{ success: boolean; deleted: number; vectorDeleted: number; message: string }> {
+  return await http.delete(`/interview-questions/job/${jobId}`);
+}

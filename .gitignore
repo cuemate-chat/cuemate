@@ -102,4 +102,5 @@ technology.md
 build.md
 data/sqlite/
 CLAUDE.md
+clean-vector-db.js
 

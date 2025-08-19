@@ -280,6 +280,87 @@ export function registerVectorRoutes(app: FastifyInstance) {
       }
     }),
   );
+
+  // 清空所有向量数据
+  app.post(
+    '/vectors/clean-all',
+    withErrorLogging(app.log as any, 'vectors.clean-all', async (req, reply) => {
+      try {
+        app.log.info('Clean-all endpoint called');
+
+        // JWT验证
+        let payload;
+        try {
+          payload = await (req as any).jwtVerify();
+          app.log.info(`JWT verified for user ${payload.uid}`);
+        } catch (jwtError: any) {
+          app.log.error('JWT verification failed:', jwtError);
+          return reply.code(401).send({ error: 'JWT验证失败：' + jwtError.message });
+        }
+
+        const rag = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        app.log.info(`RAG service URL: ${rag}`);
+
+        app.log.info(`Starting clean-all for user ${payload.uid}`);
+
+        // 调用RAG服务清空所有向量数据
+        try {
+          const ragResponse = await fetch(`${rag}/clean-all`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          app.log.info(`RAG service response status: ${ragResponse.status}`);
+
+          if (!ragResponse.ok) {
+            const errorText = await ragResponse.text();
+            app.log.error(`RAG service clean-all failed: ${ragResponse.status} ${errorText}`);
+            return reply.code(500).send({ error: 'RAG服务清空失败：' + errorText });
+          }
+
+          const result = (await ragResponse.json()) as any;
+          app.log.info('RAG service response:', result);
+
+          // 更新数据库中的vector_status为0
+          if (result.success) {
+            try {
+              app.log.info('Updating database vector_status...');
+
+              const jobsUpdate = (app as any).db
+                .prepare('UPDATE jobs SET vector_status = 0 WHERE user_id = ?')
+                .run(payload.uid);
+              app.log.info(`Updated jobs vector_status: ${jobsUpdate.changes} rows affected`);
+
+              const resumesUpdate = (app as any).db
+                .prepare('UPDATE resumes SET vector_status = 0 WHERE user_id = ?')
+                .run(payload.uid);
+              app.log.info(`Updated resumes vector_status: ${resumesUpdate.changes} rows affected`);
+
+              const questionsUpdate = (app as any).db
+                .prepare('UPDATE interview_questions SET vector_status = 0 WHERE user_id = ?')
+                .run(payload.uid);
+              app.log.info(
+                `Updated questions vector_status: ${questionsUpdate.changes} rows affected`,
+              );
+
+              app.log.info(`Updated vector_status to 0 for user ${payload.uid}`);
+            } catch (dbError: any) {
+              app.log.error('Failed to update vector_status in database:', dbError);
+              // 不阻止返回成功，因为向量库清空已经成功
+            }
+          }
+
+          reply.send(result);
+        } catch (fetchError: any) {
+          app.log.error('Fetch to RAG service failed:', fetchError);
+          return reply.code(500).send({ error: '调用RAG服务失败：' + fetchError.message });
+        }
+      } catch (err: any) {
+        app.log.error('Clean-all failed:', err);
+        return reply.code(500).send({ error: '清空失败：' + err.message });
+      }
+    }),
+  );
   app.post(
     '/vectors/delete',
     withErrorLogging(app.log as any, 'vectors.delete', async (req, reply) => {

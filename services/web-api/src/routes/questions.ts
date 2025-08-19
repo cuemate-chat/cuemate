@@ -487,4 +487,68 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
       }
     }),
   );
+
+  // 批量删除岗位的所有押题数据（包含数据库和向量库）
+  app.delete(
+    '/interview-questions/job/:jobId',
+    withErrorLogging(app.log as any, 'interview-questions.delete-by-job', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const jobId = (req as any).params?.jobId as string;
+        if (!jobId) return reply.code(400).send({ error: '缺少 jobId' });
+
+        // 校验岗位归属
+        const owned = (app as any).db
+          .prepare('SELECT id FROM jobs WHERE id=? AND user_id=?')
+          .get(jobId, payload.uid);
+        if (!owned) return reply.code(404).send({ error: '岗位不存在或无权限' });
+
+        // 获取要删除的押题列表
+        const questions = (app as any).db
+          .prepare('SELECT id FROM interview_questions WHERE job_id=?')
+          .all(jobId);
+
+        const questionIds = questions.map((q: any) => q.id);
+        const totalCount = questionIds.length;
+
+        if (totalCount === 0) {
+          return { success: true, deleted: 0, message: '该岗位没有押题数据' };
+        }
+
+        // 删除数据库中的数据
+        const dbResult = (app as any).db
+          .prepare('DELETE FROM interview_questions WHERE job_id=?')
+          .run(jobId);
+
+        // 删除向量库中的数据
+        let vectorDeleted = 0;
+        const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        
+        for (const qid of questionIds) {
+          try {
+            const response = await fetch(`${base}/questions/${qid}`, {
+              method: 'DELETE',
+            });
+            if (response.ok) {
+              vectorDeleted++;
+            }
+          } catch (error) {
+            app.log.error({ err: error, questionId: qid }, 'Failed to delete question from RAG service');
+          }
+        }
+
+        app.log.info(`Batch deleted ${dbResult.changes} questions from database and ${vectorDeleted} from vector store for job ${jobId}`);
+
+        return {
+          success: true,
+          deleted: dbResult.changes,
+          vectorDeleted,
+          message: `已删除 ${dbResult.changes} 条押题数据，其中 ${vectorDeleted} 条从向量库删除`
+        };
+      } catch (err) {
+        app.log.error({ err }, '批量删除岗位押题失败');
+        return reply.code(500).send({ error: '批量删除失败：' + err });
+      }
+    }),
+  );
 }

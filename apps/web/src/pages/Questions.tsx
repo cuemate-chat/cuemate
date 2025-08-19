@@ -5,6 +5,7 @@ import { listJobs } from '../api/jobs';
 import {
   createInterviewQuestion,
   createTag,
+  deleteAllQuestionsByJob,
   deleteInterviewQuestion,
   deleteTag,
   listInterviewQuestions,
@@ -12,17 +13,19 @@ import {
   updateInterviewQuestion,
   updateTag,
 } from '../api/questions';
+import CollapsibleSidebar from '../components/CollapsibleSidebar';
 import { message as globalMessage } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 
 export default function Prompts() {
-  const [jobs, setJobs] = useState<Array<{ id: string; title: string }>>([]);
+  const [jobs, setJobs] = useState<Array<{ id: string; title: string; question_count?: number }>>([]);
   const [jobId, setJobId] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const pageSize = 6;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState<any | null>(null);
@@ -70,14 +73,79 @@ export default function Prompts() {
     setPage(1);
   };
 
+  // 刷新岗位列表
+  const refreshJobs = async () => {
+    const data = await listJobs();
+    const js = (data.items || []).map((j: any) => ({ 
+      id: j.id, 
+      title: j.title,
+      question_count: j.question_count || 0
+    }));
+    setJobs(js);
+    return js;
+  };
+
   useEffect(() => {
     (async () => {
-      const data = await listJobs();
-      const js = (data.items || []).map((j: any) => ({ id: j.id, title: j.title }));
-      setJobs(js);
+      const js = await refreshJobs();
       if (js.length) setJobId(js[0].id);
     })();
   }, []);
+
+  // 删除岗位的所有押题数据
+  const handleDeleteAllQuestions = async () => {
+    if (!jobId) return;
+    
+    const currentJob = jobs.find(j => j.id === jobId);
+    if (!currentJob) return;
+
+    Modal.confirm({
+      title: '确认删除全部押题',
+      content: (
+        <div className="space-y-3">
+          <div className="text-red-600 font-medium">
+            此操作将永久删除该岗位的所有押题数据，且无法恢复！
+          </div>
+          <div className="space-y-2 text-sm text-gray-700">
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">📋</span>
+              <span>岗位：<strong>{currentJob.title}</strong></span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">📝</span>
+              <span>押题数量：<strong>{currentJob.question_count || 0}</strong> 条</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">🗄️</span>
+              <span>数据库中的押题记录</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">🔍</span>
+              <span>向量库中的对应数据</span>
+            </div>
+          </div>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
+            <div className="font-medium mb-1">⚠️ 重要提醒：</div>
+            <div>删除后，该岗位的所有押题数据将被永久清除，包括数据库和向量库中的相关数据！</div>
+          </div>
+        </div>
+      ),
+      okText: '确认删除全部',
+      okType: 'danger',
+      cancelText: '取消',
+      width: 500,
+      onOk: async () => {
+        try {
+          const result = await deleteAllQuestionsByJob(jobId);
+          globalMessage.success(result.message);
+          await reloadList();
+          await refreshJobs(); // 刷新岗位列表中的数量
+        } catch (e: any) {
+          globalMessage.error(e?.message || '删除失败');
+        }
+      },
+    });
+  };
 
   const reloadList = async (targetPage?: number) => {
     const reqId = ++requestIdRef.current;
@@ -151,6 +219,7 @@ export default function Prompts() {
       globalMessage.success('已保存修改');
       setOpen(false);
       await reloadList();
+      await refreshJobs(); // 刷新岗位列表
     } catch (e: any) {
       globalMessage.error(e?.message || '保存失败');
     }
@@ -163,6 +232,7 @@ export default function Prompts() {
       globalMessage.success('已删除');
       setOpen(false);
       await reloadList();
+      await refreshJobs(); // 刷新岗位列表
     } catch (e: any) {
       globalMessage.error(e?.message || '删除失败');
     }
@@ -171,34 +241,83 @@ export default function Prompts() {
   // 默认选中第一个岗位后会立即拉取右侧数据
 
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="flex gap-6">
       {/* 左侧岗位 */}
-      <div className="col-span-12 md:col-span-3 min-h-0">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm h-[calc(100vh-175px)] min-h-0 overflow-y-auto">
-          <div className="text-sm text-slate-600 mb-2">岗位列表</div>
-          <div className="space-y-2">
-            {jobs.map((it, idx) => (
+      <CollapsibleSidebar
+        isCollapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        title={
+          <div className="flex items-center justify-between w-full">
+            <span>岗位列表</span>
+            {jobId && (
               <button
-                key={it.id}
-                onClick={() => {
-                  setJobId(it.id);
-                  setPage(1);
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteAllQuestions();
                 }}
-                className={`relative w-full text-left pl-9 pr-3 py-2 rounded border ${jobId === it.id ? 'border-blue-400 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`}
+                className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                title="删除当前岗位的所有押题"
               >
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-5 h-5 rounded bg-blue-100 text-[10px] text-blue-700 font-medium">
-                  {idx + 1}
-                </span>
-                {it.title}
+                删除全部押题
               </button>
-            ))}
-            {!jobs.length && <div className="text-xs text-slate-500">暂无岗位</div>}
+            )}
           </div>
+        }
+        className="h-[calc(100vh-175px)]"
+      >
+        <div className="p-4 space-y-2 overflow-y-auto h-full">
+          {jobs.map((it, idx) => (
+            <button
+              key={it.id}
+              onClick={() => {
+                setJobId(it.id);
+                setPage(1);
+              }}
+              title="点击查看面试押题"
+              className={`relative w-full text-left pl-10 pr-12 py-3 rounded-lg border transition-all duration-200 group ${
+                jobId === it.id 
+                  ? 'border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm' 
+                  : 'border-slate-200 hover:border-blue-300 hover:bg-gradient-to-r hover:from-slate-50 hover:to-blue-50'
+              }`}
+            >
+              <div className={`absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200 ${
+                jobId === it.id 
+                  ? 'bg-blue-500 text-white shadow-lg' 
+                  : 'bg-slate-200 text-slate-600 group-hover:bg-blue-400 group-hover:text-white'
+              }`}>
+                {idx + 1}
+              </div>
+              <div className={`font-medium transition-colors duration-200 ${
+                jobId === it.id ? 'text-blue-700' : 'text-slate-800 group-hover:text-blue-700'
+              }`}>
+                {it.title}
+              </div>
+              {/* 押题数量标识 */}
+              <div className={`absolute right-3 top-1/2 -translate-y-1/2 min-w-[20px] h-5 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200 ${
+                (it.question_count || 0) > 0
+                  ? jobId === it.id 
+                    ? 'bg-orange-500 text-white' 
+                    : 'bg-orange-400 text-white group-hover:bg-orange-500'
+                  : jobId === it.id
+                    ? 'bg-slate-300 text-slate-600'
+                    : 'bg-slate-200 text-slate-500 group-hover:bg-slate-300'
+              }`}>
+                {it.question_count || 0}
+              </div>
+            </button>
+          ))}
+          {!jobs.length && (
+            <div className="text-center py-8 text-slate-500">
+              <div className="text-2xl mb-2">📋</div>
+              <div className="text-sm">暂无岗位</div>
+              <div className="text-xs text-slate-400 mt-1">请先创建岗位</div>
+            </div>
+          )}
         </div>
-      </div>
+      </CollapsibleSidebar>
 
       {/* 右侧押题卡片 */}
-      <div className="col-span-12 md:col-span-9 min-h-0">
+      <div className="flex-1 min-w-0">
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm md:h-[calc(100vh-175px)] min-h-0 overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="text-lg font-semibold"></div>
@@ -350,6 +469,7 @@ export default function Prompts() {
                             await deleteInterviewQuestion(it.id);
                             globalMessage.success('成功删除该条押题数据！');
                             await reloadList();
+                            await refreshJobs(); // 刷新岗位列表
                           }}
                         >
                           删除
@@ -579,6 +699,7 @@ export default function Prompts() {
                 const data = await listInterviewQuestions(jobId!, page, pageSize);
                 setItems(data.items || []);
                 setTotal(data.total || 0);
+                await refreshJobs(); // 刷新岗位列表
               }}
             >
               保存

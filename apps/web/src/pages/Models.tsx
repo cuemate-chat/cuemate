@@ -16,6 +16,7 @@ import {
   testModelConnectivity,
   upsertModel,
 } from '../api/models';
+import CollapsibleSidebar from '../components/CollapsibleSidebar';
 import { message } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 import { findProvider, providerManifests } from '../providers';
@@ -36,6 +37,7 @@ export default function Models() {
   const [total, setTotal] = useState(0);
   const [selectedTitle, setSelectedTitle] = useState<string>('全部模型');
   const [selectedKeys, setSelectedKeys] = useState<string[]>(['all']);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // 中央区域高度：视口 - Header(56) - Footer(48) - Main 上下内边距(48)
   const MAIN_HEIGHT = 'calc(100vh - 56px - 48px - 48px)';
   // 纵向间距自适应（行间距）：大屏更大，小屏较小
@@ -175,7 +177,7 @@ export default function Models() {
   }, [filter.type, filter.keyword, filter.scope, filter.providerId, page, pageSize]);
 
   return (
-    <div className="grid grid-cols-12 gap-4 relative" style={{ height: MAIN_HEIGHT }}>
+    <div className="flex gap-4 relative" style={{ height: MAIN_HEIGHT }}>
       {/* 测试连通性加载遮罩 */}
       {testingModelId && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -187,38 +189,42 @@ export default function Models() {
       )}
 
       {/* 左侧树 */}
-      <aside className="col-span-3 bg-white border border-slate-200 rounded-xl p-3 h-full overflow-y-auto">
-        <div className="flex items-center mb-2">
-          <div className="text-slate-800 font-medium">大模型供应商</div>
+      <CollapsibleSidebar
+        isCollapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        title="大模型供应商"
+        className="h-full"
+      >
+        <div className="p-4 h-full overflow-y-auto">
+          <Tree
+            defaultExpandAll
+            selectedKeys={selectedKeys as any}
+            onSelect={(keys) => {
+              const k = (keys?.[0] as string) || 'all';
+              setSelectedKeys(keys as string[]);
+              if (k === 'all') setFilter((f) => ({ ...f, scope: undefined, providerId: undefined }));
+              else if (k.startsWith('scope:'))
+                setFilter((f) => ({ ...f, scope: k.split(':')[1] as any, providerId: undefined }));
+              else if (k.startsWith('provider:'))
+                setFilter((f) => ({ ...f, providerId: k.split(':')[1] }));
+              setPage(1);
+              // 设置右侧标题
+              if (k === 'all') setSelectedTitle('全部模型');
+              else if (k.startsWith('scope:')) {
+                const sc = k.split(':')[1];
+                setSelectedTitle(sc === 'public' ? '公有模型' : '私有模型');
+              } else if (k.startsWith('provider:')) {
+                const pid = k.split(':')[1];
+                setSelectedTitle(findProvider(pid)?.name || '全部模型');
+              }
+            }}
+            treeData={treeData as any}
+          />
         </div>
-        <Tree
-          defaultExpandAll
-          selectedKeys={selectedKeys as any}
-          onSelect={(keys) => {
-            const k = (keys?.[0] as string) || 'all';
-            setSelectedKeys(keys as string[]);
-            if (k === 'all') setFilter((f) => ({ ...f, scope: undefined, providerId: undefined }));
-            else if (k.startsWith('scope:'))
-              setFilter((f) => ({ ...f, scope: k.split(':')[1] as any, providerId: undefined }));
-            else if (k.startsWith('provider:'))
-              setFilter((f) => ({ ...f, providerId: k.split(':')[1] }));
-            setPage(1);
-            // 设置右侧标题
-            if (k === 'all') setSelectedTitle('全部模型');
-            else if (k.startsWith('scope:')) {
-              const sc = k.split(':')[1];
-              setSelectedTitle(sc === 'public' ? '公有模型' : '私有模型');
-            } else if (k.startsWith('provider:')) {
-              const pid = k.split(':')[1];
-              setSelectedTitle(findProvider(pid)?.name || '全部模型');
-            }
-          }}
-          treeData={treeData as any}
-        />
-      </aside>
+      </CollapsibleSidebar>
 
       {/* 右侧卡片 + 搜索 + 分页 */}
-      <section className="col-span-9 h-full min-h-0">
+      <section className="flex-1 h-full min-h-0">
         <div className="mb-3 flex justify-between items-center">
           <div className="text-slate-900 font-semibold text-lg">{selectedTitle}</div>
           <div className="flex items-center gap-2">
