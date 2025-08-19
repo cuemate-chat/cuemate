@@ -94,6 +94,7 @@ logs/
 .vscode/
 .cursor/
 .idea/
+.claude/
 
 # private file
 PROJECT.md
@@ -101,3 +102,4 @@ technology.md
 build.md
 data/sqlite/
 CLAUDE.md
+

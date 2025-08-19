@@ -15,7 +15,13 @@
       "Bash(pnpm run:*)",
       "Bash(sqlite3:*)",
       "Bash(pnpm dev:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(docker logs:*)",
+      "Bash(make:*)",
+      "Bash(docker restart:*)",
+      "Bash(docker-compose:*)",
+      "Bash(curl:*)",
+      "Bash(docker exec:*)"
     ],
     "deny": [],
     "ask": []

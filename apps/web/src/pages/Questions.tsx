@@ -427,35 +427,46 @@ export default function Prompts() {
       </Modal>
 
       {/* 同步向量库弹窗 */}
-      <Modal open={syncOpen} onCancel={() => setSyncOpen(false)} title="同步向量库" footer={null} width={600}>
-        <div className="space-y-4">
-          <div className="text-sm text-slate-600">查看当前岗位押题在向量库中的同步情况</div>
-          <div className="flex items-center gap-6">
-            <div>
+      <Modal open={syncOpen} onCancel={() => setSyncOpen(false)} title="同步向量库" footer={null} width={640}>
+        <div className="space-y-5">
+          <div className="text-[13px] text-slate-600">查看当前岗位押题在向量库中的同步情况</div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="rounded-lg border border-slate-200 p-4 bg-slate-50">
               <div className="text-xs text-slate-500">总数</div>
-              <div className="text-xl font-semibold">{syncStats?.total ?? '-'}</div>
+              <div className="mt-1 text-2xl font-semibold">{syncStats?.total ?? '-'}</div>
             </div>
-            <div>
-              <div className="text-xs text-slate-500">已同步</div>
-              <div className="text-xl font-semibold text-green-600">{syncStats?.synced ?? '-'}</div>
+            <div className="rounded-lg border border-emerald-200 p-4 bg-emerald-50">
+              <div className="text-xs text-emerald-700">已同步</div>
+              <div className="mt-1 text-2xl font-semibold text-emerald-700">{syncStats?.synced ?? '-'}</div>
             </div>
-            <div>
-              <div className="text-xs text-slate-500">未同步</div>
-              <div className="text-xl font-semibold text-red-500">{syncStats?.unsynced ?? '-'}</div>
+            <div className="rounded-lg border border-rose-200 p-4 bg-rose-50">
+              <div className="text-xs text-rose-700">未同步</div>
+              <div className="mt-1 text-2xl font-semibold text-rose-700">{syncStats?.unsynced ?? '-'}</div>
             </div>
           </div>
-          <div className="pt-2 text-right">
+          <div className="pt-2 flex items-center justify-end gap-3">
+            <Button onClick={() => setSyncOpen(false)}>关闭</Button>
             <Button
               type="primary"
               disabled={!jobId}
-              onClick={async () => {
+              onClick={async (e) => {
                 if (!jobId) return;
-                const { syncIQBatch, getIQSyncStats } = await import('../api/questions');
-                const res = await syncIQBatch(jobId);
-                globalMessage.success(`批量同步完成：成功 ${res.success} 条，失败 ${res.failed} 条`);
-                const stats = await getIQSyncStats(jobId);
-                setSyncStats(stats);
-                await reloadList();
+                const btn = e.currentTarget as HTMLButtonElement;
+                btn.disabled = true;
+                btn.innerText = '同步中...';
+                btn.classList.add('animate-pulse');
+                try {
+                  const { syncIQBatch, getIQSyncStats } = await import('../api/questions');
+                  const res = await syncIQBatch(jobId);
+                  globalMessage.success(`批量同步完成：成功 ${res.success} 条，失败 ${res.failed} 条，清理 ${res.deletedExtras || 0} 条残留`);
+                  const stats = await getIQSyncStats(jobId);
+                  setSyncStats(stats);
+                  await reloadList();
+                } finally {
+                  btn.disabled = false;
+                  btn.innerText = '批量同步';
+                  btn.classList.remove('animate-pulse');
+                }
               }}
             >
               批量同步

@@ -42,12 +42,14 @@ export default function VectorKnowledge() {
     questions?: VectorDocument[];
   } | null>(null);
   const [activeTab, setActiveTab] = useState('document'); // 控制标签页
-  const [currentTab, setCurrentTab] = useState('jobs'); // 控制主标签页：jobs, resumes, questions
+  const [currentTab, setCurrentTab] = useState('jobs'); // 控制主标签页：jobs, resumes, questions, sync-status
 
   // 获取标签列表和默认加载所有内容
   useEffect(() => {
     fetchTags();
-    loadDocumentsByTab();
+    if (currentTab !== 'sync-status') {
+      loadDocumentsByTab();
+    }
   }, [currentTab]); // 当标签页切换时重新加载数据
 
   // 根据当前标签页加载对应数据
@@ -86,23 +88,25 @@ export default function VectorKnowledge() {
   // 标签页切换处理
   const handleTabChange = (tab: string) => {
     setCurrentTab(tab);
-    // 切换标签页时重置筛选条件
-    setFilters({
-      type: 'all',
-      query: '',
-      tagId: undefined,
-      jobTitle: undefined,
-      jobDescription: undefined,
-      resumeTitle: undefined,
-      resumeDescription: undefined,
-      questionTitle: undefined,
-      questionDescription: undefined,
-      createdFrom: undefined,
-      createdTo: undefined,
-    });
-    // 清空搜索结果
-    setSearchResults([]);
-    setTotalResults(0);
+    if (tab !== 'sync-status') {
+      // 切换标签页时重置筛选条件
+      setFilters({
+        type: 'all',
+        query: '',
+        tagId: undefined,
+        jobTitle: undefined,
+        jobDescription: undefined,
+        resumeTitle: undefined,
+        resumeDescription: undefined,
+        questionTitle: undefined,
+        questionDescription: undefined,
+        createdFrom: undefined,
+        createdTo: undefined,
+      });
+      // 清空搜索结果
+      setSearchResults([]);
+      setTotalResults(0);
+    }
   };
 
   const fetchTags = async () => {
@@ -336,233 +340,256 @@ export default function VectorKnowledge() {
             >
               面试押题
             </button>
+            <button
+              onClick={() => handleTabChange('sync-status')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                currentTab === 'sync-status'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              同步状态
+            </button>
           </nav>
         </div>
 
-        {/* 搜索区域 */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* 搜索输入框 */}
-            <div className="flex-1">
-              <div className="relative">
-                <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="输入关键词搜索知识内容..."
-                  value={filters.query}
-                  onChange={(e) => setFilters({ ...filters, query: e.target.value })}
-                  className="w-full pl-10 pr-12 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  onKeyPress={(e) => e.key === 'Enter' && searchDocuments()}
-                />
-                {filters.query && (
-                  <button
-                    onClick={() => searchDocuments({ query: '' })}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    <CloseOutlined />
-                  </button>
-                )}
-              </div>
+        {/* 同步状态页面 */}
+        {currentTab === 'sync-status' && (
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-slate-900 mb-2">数据同步状态</h2>
             </div>
-
-            {/* 搜索按钮 */}
-            <button
-              onClick={searchDocuments}
-              disabled={loading}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  搜索中...
-                </>
-              ) : (
-                <>
-                  <SearchOutlined />
-                  搜索
-                </>
-              )}
-            </button>
-
-            {/* 筛选按钮 */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-3 border rounded-lg flex items-center gap-2 ${
-                showFilters
-                  ? 'border-blue-500 text-blue-600 bg-blue-50'
-                  : 'border-slate-300 text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <FilterOutlined />
-              筛选
-            </button>
+            
+            <SyncStatusOverview />
           </div>
+        )}
 
-          {/* 筛选条件 */}
-          {showFilters && (
-            <div className="mt-6 pt-6 border-t border-slate-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* 根据当前标签页显示不同的筛选字段 */}
-                {currentTab === 'jobs' && (
-                  <>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        创建时间
-                      </label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="date"
-                          value={
-                            filters.createdFrom
-                              ? new Date(filters.createdFrom).toISOString().slice(0, 10)
-                              : ''
-                          }
-                          onChange={(e) => {
-                            const ts = e.target.value
-                              ? new Date(e.target.value + 'T00:00:00').getTime()
-                              : undefined;
-                            searchDocuments({ createdFrom: ts });
-                          }}
-                          style={{ height: '42px' }}
-                        />
-                        <Input
-                          type="date"
-                          value={
-                            filters.createdTo
-                              ? new Date(filters.createdTo).toISOString().slice(0, 10)
-                              : ''
-                          }
-                          onChange={(e) => {
-                            const ts = e.target.value
-                              ? new Date(e.target.value + 'T23:59:59').getTime()
-                              : undefined;
-                            searchDocuments({ createdTo: ts });
-                          }}
-                          style={{ height: '42px' }}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {currentTab === 'resumes' && (
-                  <>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        创建时间
-                      </label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="date"
-                          value={
-                            filters.createdFrom
-                              ? new Date(filters.createdFrom).toISOString().slice(0, 10)
-                              : ''
-                          }
-                          onChange={(e) => {
-                            const ts = e.target.value
-                              ? new Date(e.target.value + 'T00:00:00').getTime()
-                              : undefined;
-                            searchDocuments({ createdFrom: ts });
-                          }}
-                          style={{ height: '42px' }}
-                        />
-                        <Input
-                          type="date"
-                          value={
-                            filters.createdTo
-                              ? new Date(filters.createdTo).toISOString().slice(0, 10)
-                              : ''
-                          }
-                          onChange={(e) => {
-                            const ts = e.target.value
-                              ? new Date(e.target.value + 'T23:59:59').getTime()
-                              : undefined;
-                            searchDocuments({ createdTo: ts });
-                          }}
-                          style={{ height: '42px' }}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {currentTab === 'questions' && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        押题标签
-                      </label>
-                      <Select
-                        value={filters.tagId}
-                        onChange={(value) => searchDocuments({ tagId: value })}
-                        allowClear
-                        placeholder="选择标签"
-                        style={{ height: '42px', width: '100%' }}
-                      >
-                        {tags.map((tag) => (
-                          <Select.Option key={tag.id} value={tag.id}>
-                            {tag.name}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        创建时间
-                      </label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="date"
-                          value={
-                            filters.createdFrom
-                              ? new Date(filters.createdFrom).toISOString().slice(0, 10)
-                              : ''
-                          }
-                          onChange={(e) => {
-                            const ts = e.target.value
-                              ? new Date(e.target.value + 'T00:00:00').getTime()
-                              : undefined;
-                            searchDocuments({ createdFrom: ts });
-                          }}
-                          style={{ height: '42px' }}
-                        />
-                        <Input
-                          type="date"
-                          value={
-                            filters.createdTo
-                              ? new Date(filters.createdTo).toISOString().slice(0, 10)
-                              : ''
-                          }
-                          onChange={(e) => {
-                            const ts = e.target.value
-                              ? new Date(e.target.value + 'T23:59:59').getTime()
-                              : undefined;
-                            searchDocuments({ createdTo: ts });
-                          }}
-                          style={{ height: '42px' }}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
+        {/* 搜索区域 - 只在非同步状态页面显示 */}
+        {currentTab !== 'sync-status' && (
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-6">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* 搜索输入框 */}
+              <div className="flex-1">
+                <div className="relative">
+                  <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="输入关键词搜索知识内容..."
+                    value={filters.query}
+                    onChange={(e) => setFilters({ ...filters, query: e.target.value })}
+                    className="w-full pl-10 pr-12 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onKeyPress={(e) => e.key === 'Enter' && searchDocuments()}
+                  />
+                  {filters.query && (
+                    <button
+                      onClick={() => searchDocuments({ query: '' })}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <CloseOutlined />
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* 筛选操作按钮 */}
-              <div className="mt-4 flex justify-end gap-2">
-                <button
-                  onClick={clearFilters}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  × 清除筛选
-                </button>
-              </div>
+              {/* 搜索按钮 */}
+              <button
+                onClick={searchDocuments}
+                disabled={loading}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    搜索中...
+                  </>
+                ) : (
+                  <>
+                    <SearchOutlined />
+                    搜索
+                  </>
+                )}
+              </button>
+
+              {/* 筛选按钮 */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-4 py-3 border rounded-lg flex items-center gap-2 ${
+                  showFilters
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <FilterOutlined />
+                筛选
+              </button>
             </div>
-          )}
-        </div>
 
-        {/* 搜索结果 */}
-        {searchResults.length > 0 && (
+            {/* 筛选条件 */}
+            {showFilters && (
+              <div className="mt-6 pt-6 border-t border-slate-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* 根据当前标签页显示不同的筛选字段 */}
+                  {currentTab === 'jobs' && (
+                    <>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          创建时间
+                        </label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="date"
+                            value={
+                              filters.createdFrom
+                                ? new Date(filters.createdFrom).toISOString().slice(0, 10)
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const ts = e.target.value
+                                ? new Date(e.target.value + 'T00:00:00').getTime()
+                                : undefined;
+                              searchDocuments({ createdFrom: ts });
+                            }}
+                            style={{ height: '42px' }}
+                          />
+                          <Input
+                            type="date"
+                            value={
+                              filters.createdTo
+                                ? new Date(filters.createdTo).toISOString().slice(0, 10)
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const ts = e.target.value
+                                ? new Date(e.target.value + 'T23:59:59').getTime()
+                                : undefined;
+                              searchDocuments({ createdTo: ts });
+                            }}
+                            style={{ height: '42px' }}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {currentTab === 'resumes' && (
+                    <>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          创建时间
+                        </label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="date"
+                            value={
+                              filters.createdFrom
+                                ? new Date(filters.createdFrom).toISOString().slice(0, 10)
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const ts = e.target.value
+                                ? new Date(e.target.value + 'T00:00:00').getTime()
+                                : undefined;
+                              searchDocuments({ createdFrom: ts });
+                            }}
+                            style={{ height: '42px' }}
+                          />
+                          <Input
+                            type="date"
+                            value={
+                              filters.createdTo
+                                ? new Date(filters.createdTo).toISOString().slice(0, 10)
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const ts = e.target.value
+                                ? new Date(e.target.value + 'T23:59:59').getTime()
+                                : undefined;
+                              searchDocuments({ createdTo: ts });
+                            }}
+                            style={{ height: '42px' }}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {currentTab === 'questions' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          押题标签
+                        </label>
+                        <Select
+                          value={filters.tagId}
+                          onChange={(value) => searchDocuments({ tagId: value })}
+                          allowClear
+                          placeholder="选择标签"
+                          style={{ height: '42px', width: '100%' }}
+                        >
+                          {tags.map((tag) => (
+                            <Select.Option key={tag.id} value={tag.id}>
+                              {tag.name}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          创建时间
+                        </label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="date"
+                            value={
+                              filters.createdFrom
+                                ? new Date(filters.createdFrom).toISOString().slice(0, 10)
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const ts = e.target.value
+                                ? new Date(e.target.value + 'T00:00:00').getTime()
+                                : undefined;
+                              searchDocuments({ createdFrom: ts });
+                            }}
+                            style={{ height: '42px' }}
+                          />
+                          <Input
+                            type="date"
+                            value={
+                              filters.createdTo
+                                ? new Date(filters.createdTo).toISOString().slice(0, 10)
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const ts = e.target.value
+                                ? new Date(e.target.value + 'T23:59:59').getTime()
+                                : undefined;
+                              searchDocuments({ createdTo: ts });
+                            }}
+                            style={{ height: '42px' }}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 筛选操作按钮 */}
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    onClick={clearFilters}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    × 清除筛选
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 搜索结果 - 只在非同步状态页面显示 */}
+        {currentTab !== 'sync-status' && searchResults.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-slate-200">
             <div className="px-6 py-4 border-b border-slate-200">
               <h3 className="text-lg font-medium text-slate-900">
@@ -692,8 +719,8 @@ export default function VectorKnowledge() {
           </div>
         )}
 
-        {/* 空状态 */}
-        {!loading && searchResults.length === 0 && (
+        {/* 空状态 - 只在非同步状态页面显示 */}
+        {currentTab !== 'sync-status' && !loading && searchResults.length === 0 && (
           <div className="text-center py-12">
             <SearchOutlined className="mx-auto text-6xl text-slate-400" />
             <h3 className="mt-2 text-sm font-medium text-slate-900">
@@ -901,6 +928,229 @@ export default function VectorKnowledge() {
             </div>
           )}
         </Modal>
+      </div>
+    </div>
+  );
+}
+
+// 同步状态概览组件
+function SyncStatusOverview() {
+  const [loading, setLoading] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<{
+    job: { total: number; synced: number; unsynced: number };
+    resume: { total: number; synced: number; unsynced: number };
+    questions: { total: number; synced: number; unsynced: number };
+  } | null>(null);
+
+  useEffect(() => {
+    loadSyncStatus();
+  }, []);
+
+  const loadSyncStatus = async () => {
+    try {
+      const { getSyncStatus } = await import('../api/vector');
+      // 不传jobId获取汇总统计
+      const status = await getSyncStatus();
+      // 转换API返回的类型格式
+      const jobStats = 'total' in status.job ? status.job : { total: 0, synced: 0, unsynced: 0 };
+      const resumeStats = 'total' in status.resume ? status.resume : { total: 0, synced: 0, unsynced: 0 };
+      
+      setSyncStatus({
+        job: jobStats,
+        resume: resumeStats,
+        questions: status.questions
+      });
+    } catch (error) {
+      console.error('获取同步状态失败:', error);
+    }
+  };
+
+  const handleSyncAll = async () => {
+    setLoading(true);
+    try {
+      const { syncAll } = await import('../api/vector');
+      // 不传jobId同步所有数据
+      const result = await syncAll('');
+      if (result.success) {
+        message.success('一键同步完成！');
+        await loadSyncStatus(); // 重新加载状态
+      } else {
+        message.error('同步失败');
+      }
+    } catch (error) {
+      message.error('同步出错: ' + error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!syncStatus) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-2 text-slate-500">加载同步状态中...</p>
+      </div>
+    );
+  }
+
+  const totalItems = syncStatus.job.total + syncStatus.resume.total + syncStatus.questions.total;
+  const totalSynced = syncStatus.job.synced + syncStatus.resume.synced + syncStatus.questions.synced;
+  const totalUnsynced = totalItems - totalSynced;
+
+  return (
+    <div className="space-y-6">
+      {/* 一键同步按钮 */}
+      <div className="text-center">
+        <button
+          onClick={handleSyncAll}
+          disabled={loading}
+          className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
+            loading
+              ? 'bg-gray-400 text-white cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg transform hover:scale-105'
+          }`}
+        >
+          {loading ? (
+            <div className="flex items-center gap-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              同步中...
+            </div>
+          ) : (
+            '一键同步所有数据'
+          )}
+        </button>
+        <p className="mt-2 text-sm text-slate-500">
+          将同步岗位信息、简历信息、面试押题三个模块的数据到向量库
+        </p>
+      </div>
+
+      {/* 总体统计 */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+        <h3 className="text-lg font-semibold text-blue-900 mb-4">总体同步状态</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{totalItems}</div>
+            <div className="text-sm text-blue-700">总数据量</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{totalSynced}</div>
+            <div className="text-sm text-green-700">已同步</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600">{totalUnsynced}</div>
+            <div className="text-sm text-orange-700">未同步</div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-sm text-blue-700">
+            <span>同步进度</span>
+            <span>{totalItems > 0 ? Math.round((totalSynced / totalItems) * 100) : 0}%</span>
+          </div>
+          <div className="w-full bg-blue-200 rounded-full h-2 mt-1">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${totalItems > 0 ? (totalSynced / totalItems) * 100 : 0}%` }}
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      {/* 各模块详细状态 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* 岗位信息 */}
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-medium text-slate-900">岗位信息</h4>
+            <span className={`px-2 py-1 text-xs rounded-full ${
+              syncStatus.job.unsynced === 0 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-orange-100 text-orange-800'
+            }`}>
+              {syncStatus.job.unsynced === 0 ? '已同步' : `${syncStatus.job.unsynced} 条未同步`}
+            </span>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-600">总数:</span>
+              <span className="font-medium">{syncStatus.job.total}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600">已同步:</span>
+              <span className="font-medium text-green-600">{syncStatus.job.synced}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600">未同步:</span>
+              <span className="font-medium text-orange-600">{syncStatus.job.unsynced}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 简历信息 */}
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-medium text-slate-900">简历信息</h4>
+            <span className={`px-2 py-1 text-xs rounded-full ${
+              syncStatus.resume.unsynced === 0 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-orange-100 text-orange-800'
+            }`}>
+              {syncStatus.resume.unsynced === 0 ? '已同步' : `${syncStatus.resume.unsynced} 条未同步`}
+            </span>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-600">总数:</span>
+              <span className="font-medium">{syncStatus.resume.total}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600">已同步:</span>
+              <span className="font-medium text-green-600">{syncStatus.resume.synced}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600">未同步:</span>
+              <span className="font-medium text-orange-600">{syncStatus.resume.unsynced}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 面试押题 */}
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-medium text-slate-900">面试押题</h4>
+            <span className={`px-2 py-1 text-xs rounded-full ${
+              syncStatus.questions.unsynced === 0 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-orange-100 text-orange-800'
+            }`}>
+              {syncStatus.questions.unsynced === 0 ? '已同步' : `${syncStatus.questions.unsynced} 条未同步`}
+            </span>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-600">总数:</span>
+              <span className="font-medium">{syncStatus.questions.total}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600">已同步:</span>
+              <span className="font-medium text-green-600">{syncStatus.questions.synced}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600">未同步:</span>
+              <span className="font-medium text-orange-600">{syncStatus.questions.unsynced}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 同步说明 */}
+      <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+        <h4 className="font-medium text-slate-900 mb-2">同步说明</h4>
+        <ul className="text-sm text-slate-600 space-y-1">
+          <li>• 数据库有但向量库没有：新插入到向量库</li>
+          <li>• 数据库有且向量库也有：更新向量库（先删除后插入）</li>
+          <li>• 数据库没有但向量库有：从向量库删除</li>
+          <li>• 同步完成后，所有数据将保持一致性</li>
+        </ul>
       </div>
     </div>
   );

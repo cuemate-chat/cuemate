@@ -235,7 +235,39 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
             app.log.error({ err: e as any, questionId: r.id }, 'Sync one question failed');
           }
         }
-        return { success, failed, total: rows.length };
+        // 额外清理：向量库存在但数据库不存在的残留
+        let deletedExtras = 0;
+        try {
+          const filterParam = encodeURIComponent(JSON.stringify({ jobId: body.jobId }));
+          const listResp = await fetch(`${base}/search/questions?filter=${filterParam}&k=10000`);
+          if (listResp.ok) {
+            const listJson: any = await listResp.json();
+            const vecIds: string[] = Array.from(
+              new Set(
+                (listJson?.results || [])
+                  .map((d: any) => d?.metadata?.questionId)
+                  .filter((id: any) => typeof id === 'string' && id.length > 0),
+              ),
+            );
+            const dbIds = new Set(rows.map((r) => r.id));
+            for (const qid of vecIds) {
+              if (!dbIds.has(qid)) {
+                try {
+                  await fetch(`${base}/questions/${qid}`, { method: 'DELETE' });
+                  deletedExtras++;
+                } catch (e) {
+                  app.log.warn(
+                    { err: e as any, questionId: qid },
+                    'Delete extra vector doc failed',
+                  );
+                }
+              }
+            }
+          }
+        } catch (e) {
+          app.log.warn({ err: e as any }, 'List and clean extra vector docs failed');
+        }
+        return { success, failed, total: rows.length, deletedExtras };
       } catch (err: any) {
         return reply.code(401).send({ error: '未认证:' + err });
       }

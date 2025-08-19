@@ -43,6 +43,25 @@ export interface SearchResponse {
   error?: string;
 }
 
+export interface SyncStatusResponse {
+  job: { synced: boolean } | { total: number; synced: number; unsynced: number };
+  resume: { synced: boolean } | { total: number; synced: number; unsynced: number };
+  questions: { total: number; synced: number; unsynced: number };
+}
+
+export const getSyncStatus = async (jobId?: string): Promise<SyncStatusResponse> => {
+  const url = jobId
+    ? `/vectors/sync-status?jobId=${encodeURIComponent(jobId)}`
+    : '/vectors/sync-status';
+  const data = await http.get(url);
+  return data as SyncStatusResponse;
+};
+
+export const syncAll = async (jobId?: string): Promise<any> => {
+  const body = jobId ? { jobId } : {};
+  return await http.post('/vectors/sync-all', body);
+};
+
 // 搜索所有文档
 export const searchAllDocuments = async (): Promise<SearchResponse> => {
   return searchJobs({ type: 'jobs', query: '' } as any);

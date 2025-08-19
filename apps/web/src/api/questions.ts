@@ -74,6 +74,6 @@ export async function getIQSyncStats(
 // 批量同步
 export async function syncIQBatch(
   jobId: string,
-): Promise<{ success: number; failed: number; total: number }> {
+): Promise<{ success: number; failed: number; total: number; deletedExtras?: number }> {
   return await http.post('/interview-questions/sync-batch', { jobId });
 }
