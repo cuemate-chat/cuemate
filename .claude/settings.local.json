@@ -12,7 +12,10 @@
       "Bash(claude config remove customApiKeyResponses)",
       "Bash(claude config remove:*)",
       "Bash(claude config get:*)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(sqlite3:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(lsof:*)"
     ],
     "deny": [],
     "ask": []
