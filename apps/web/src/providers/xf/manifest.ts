@@ -8,10 +8,29 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   modelNamePlaceholder: '如 generalv3.5 / generalv3 / generalv2',
-  baseModels: ['generalv3.5', 'generalv3', 'generalv2'],
+  baseModels: [
+    'generalv3.5',
+    'generalv3', 
+    'generalv2',
+    'generalv1.1',
+    '4.0Ultra',
+    'Max-32K'
+  ],
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text' },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'base_url', 
+      label: 'API URL', 
+      type: 'text',
+      placeholder: '默认 https://spark-api-open.xf-yun.com/v1（讯飞星火API地址）',
+      defaultValue: 'https://spark-api-open.xf-yun.com/v1'
+    },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：讯飞星火平台的API Key，需在讯飞开放平台获取'
+    },
   ],
   defaultParams: [
     {

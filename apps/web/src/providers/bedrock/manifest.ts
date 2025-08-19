@@ -10,18 +10,42 @@ const manifest: ProviderManifest = {
   modelNamePlaceholder:
     '如 anthropic.claude-instant-v1 / meta.llama3-70b-instruct / mistral.mistral-7b-instruct-v0.2',
   baseModels: [
-    'anthropic.claude-3-7-sonnet',
+    'anthropic.claude-3-5-sonnet-20241022-v2:0',
+    'anthropic.claude-3-5-sonnet-20240620-v1:0',
+    'anthropic.claude-3-5-haiku-20241022-v1:0',
+    'anthropic.claude-3-opus-20240229-v1:0',
+    'anthropic.claude-3-sonnet-20240229-v1:0',
+    'anthropic.claude-3-haiku-20240307-v1:0',
     'anthropic.claude-instant-v1',
-    'mistral.mistral-7b-instruct-v0.2',
-    'mistral.mistral-large-2402-v1.0',
-    'meta.llama3-70b-instruct-v1:0',
-    'meta.llama3-8b-instruct-v1:0',
+    'meta.llama3-2-90b-instruct-v1:0',
+    'meta.llama3-2-11b-instruct-v1:0',
+    'meta.llama3-2-3b-instruct-v1:0',
+    'meta.llama3-2-1b-instruct-v1:0',
+    'meta.llama3-1-405b-instruct-v1:0',
+    'meta.llama3-1-70b-instruct-v1:0',
+    'meta.llama3-1-8b-instruct-v1:0',
+    'mistral.mistral-large-2407-v1:0',
+    'mistral.mistral-large-2402-v1:0',
+    'mistral.mistral-7b-instruct-v0:2',
+    'amazon.titan-text-premier-v1:0',
     'amazon.titan-text-express-v1',
     'amazon.titan-text-lite-v1',
   ],
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text', placeholder: '可选，代理 Base URL' },
-    { key: 'api_key', label: 'API Key', type: 'password', required: false },
+    { 
+      key: 'base_url', 
+      label: 'API URL', 
+      type: 'text', 
+      placeholder: '默认 https://bedrock-runtime.us-east-1.amazonaws.com（AWS Bedrock API地址）',
+      defaultValue: 'https://bedrock-runtime.us-east-1.amazonaws.com'
+    },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      type: 'password', 
+      required: false,
+      placeholder: '格式：AWS访问密钥（可选，优先使用IAM角色）'
+    },
   ],
   defaultParams: [
     {

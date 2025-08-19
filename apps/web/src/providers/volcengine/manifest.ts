@@ -18,8 +18,20 @@ const manifest: ProviderManifest = {
     'doubao-pro-128k',
   ],
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text' },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'base_url', 
+      label: 'API URL', 
+      type: 'text',
+      placeholder: '默认 https://ark.cn-beijing.volces.com/api/v3（可选，代理 Base URL）',
+      defaultValue: 'https://ark.cn-beijing.volces.com/api/v3'
+    },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：UUID格式的API Key，需在火山引擎控制台获取'
+    },
   ],
   defaultParams: [
     {

@@ -22,9 +22,16 @@ const manifest: ProviderManifest = {
       label: 'API Version',
       required: true,
       type: 'text',
-      placeholder: '如 2024-06-01',
+      placeholder: '默认 2024-06-01（Azure OpenAI API版本）',
+      defaultValue: '2024-06-01',
     },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：32位字符的16进制密钥，需在Azure控制台获取'
+    },
     { key: 'deployment_name', label: 'Deployment name', required: true, type: 'text' },
   ],
   defaultParams: [

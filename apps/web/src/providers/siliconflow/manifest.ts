@@ -19,8 +19,20 @@ const manifest: ProviderManifest = {
     'THUDM/glm-4-9b-chat',
   ],
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text', placeholder: '可选，OpenAI 兼容 Base URL' },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'base_url', 
+      label: 'API URL', 
+      type: 'text', 
+      placeholder: 'https://api.siliconflow.cn/v1',
+      defaultValue: 'https://api.siliconflow.cn/v1'
+    },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：sk-开头的API Key，需在SiliconFlow平台获取'
+    },
   ],
   defaultParams: [
     {

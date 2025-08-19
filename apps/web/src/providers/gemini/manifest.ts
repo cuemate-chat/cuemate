@@ -9,15 +9,30 @@ const manifest: ProviderManifest = {
   icon: Icon,
   modelNamePlaceholder: '如 gemini-1.5-pro / gemini-1.0-pro-vision',
   baseModels: [
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-pro-002',
     'gemini-1.5-pro',
+    'gemini-1.5-flash-002',
     'gemini-1.5-flash',
+    'gemini-1.5-flash-8b',
     'gemini-1.0-pro',
     'gemini-1.0-pro-vision',
-    'gemini-2.0-flash-exp',
   ],
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text', placeholder: '可选，OpenAI 兼容代理地址' },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'base_url', 
+      label: 'API URL', 
+      type: 'text', 
+      placeholder: 'https://generativelanguage.googleapis.com/v1beta',
+      defaultValue: 'https://generativelanguage.googleapis.com/v1beta'
+    },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：AIzaSy开头的39位字符的API Key，需在Google AI Studio获取'
+    },
   ],
   defaultParams: [
     {

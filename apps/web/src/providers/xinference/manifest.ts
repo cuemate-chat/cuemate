@@ -39,9 +39,16 @@ const manifest: ProviderManifest = {
       label: 'API URL',
       type: 'text',
       required: true,
-      placeholder: '默认 http://localhost:9997/v1',
+      placeholder: '默认 http://localhost:9997/v1（Xinference本地服务API地址）',
+      defaultValue: 'http://localhost:9997/v1',
     },
-    { key: 'api_key', label: 'API Key', type: 'password', required: true },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      type: 'password', 
+      required: true,
+      placeholder: '格式：Xinference服务的API密钥（可选，若未设置可为空）'
+    },
   ],
   defaultParams: [
     {

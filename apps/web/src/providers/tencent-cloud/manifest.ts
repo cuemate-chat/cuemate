@@ -10,8 +10,20 @@ const manifest: ProviderManifest = {
   modelNamePlaceholder: '如 deepseek-v3 / deepseek-r1 / hunyuan-pro',
   baseModels: ['deepseek-v3', 'deepseek-r1', 'hunyuan-pro', 'hunyuan-standard', 'hunyuan-lite'],
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text' },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'base_url', 
+      label: 'API URL', 
+      type: 'text',
+      placeholder: '默认 https://hunyuan.tencentcloudapi.com（腾讯云混元API地址）',
+      defaultValue: 'https://hunyuan.tencentcloudapi.com'
+    },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：腾讯云API密钥，需在腾讯云控制台获取'
+    },
   ],
   defaultParams: [
     {

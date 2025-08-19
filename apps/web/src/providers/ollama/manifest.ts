@@ -48,7 +48,8 @@ const manifest: ProviderManifest = {
       label: 'API URL',
       required: true,
       type: 'text',
-      placeholder: '默认 http://localhost:11434',
+      placeholder: '默认 http://localhost:11434（Ollama本地API地址）',
+      defaultValue: 'http://localhost:11434',
     },
   ],
   defaultParams: [

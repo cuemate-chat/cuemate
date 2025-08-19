@@ -17,8 +17,20 @@ const manifest: ProviderManifest = {
     'deepseek-r1:32b',
   ],
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text', placeholder: '可选，OpenAI 兼容 Base URL' },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'base_url', 
+      label: 'API URL', 
+      type: 'text', 
+      placeholder: '默认 https://api.deepseek.com/v1（可选，代理 Base URL）',
+      defaultValue: 'https://api.deepseek.com/v1'
+    },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：sk-开头的API Key，需在DeepSeek官网获取'
+    },
   ],
   defaultParams: [
     {

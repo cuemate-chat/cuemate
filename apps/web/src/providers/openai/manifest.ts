@@ -32,8 +32,15 @@ const manifest: ProviderManifest = {
       label: 'API URL',
       type: 'text',
       placeholder: '默认 https://api.openai.com/v1（可选，代理 Base URL）',
+      defaultValue: 'https://api.openai.com/v1',
     },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：sk-开头的48位字符的API Key'
+    },
   ],
   defaultParams: [
     {

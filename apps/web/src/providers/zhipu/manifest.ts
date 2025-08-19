@@ -8,15 +8,32 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   modelNamePlaceholder: '如 glm-4 / glm-4v / glm-3-turbo',
-  baseModels: ['glm-4', 'glm-4v', 'glm-3-turbo'],
+  baseModels: [
+    'glm-4-plus',
+    'glm-4-long',
+    'glm-4-air',
+    'glm-4-airx',
+    'glm-4-flash', 
+    'glm-4',
+    'glm-4v',
+    'glm-4v-plus',
+    'glm-3-turbo'
+  ],
   credentialFields: [
     {
       key: 'base_url',
       label: 'API URL',
       type: 'text',
-      placeholder: '默认 https://open.bigmodel.cn/api/paas/v4',
+      placeholder: 'https://open.bigmodel.cn/api/paas/v4',
+      defaultValue: 'https://open.bigmodel.cn/api/paas/v4',
     },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：32位字符.字符串，需在智谱AI开放平台获取'
+    },
   ],
   defaultParams: [
     {

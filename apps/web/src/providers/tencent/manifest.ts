@@ -17,9 +17,27 @@ const manifest: ProviderManifest = {
     'hunyuan-code',
   ],
   credentialFields: [
-    { key: 'app_id', label: 'APP ID', required: true, type: 'text' },
-    { key: 'secret_id', label: 'SecretId', required: true, type: 'password' },
-    { key: 'secret_key', label: 'SecretKey', required: true, type: 'password' },
+    { 
+      key: 'app_id', 
+      label: 'APP ID', 
+      required: true, 
+      type: 'text',
+      placeholder: '格式：10位数字的应用ID，需在腾讯云控制台获取'
+    },
+    { 
+      key: 'secret_id', 
+      label: 'SecretId', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：AKID开头的36位字符，需在腾讯云控制台获取'
+    },
+    { 
+      key: 'secret_key', 
+      label: 'SecretKey', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：32位字符的密钥，需在腾讯云控制台获取'
+    },
   ],
   defaultParams: [
     {

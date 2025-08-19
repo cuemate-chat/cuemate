@@ -27,14 +27,33 @@ const manifest: ProviderManifest = {
         key: 'base_url',
         label: 'API URL',
         type: 'text',
-        placeholder: '可选，OpenAI 兼容 Base URL',
+        placeholder: '默认 https://dashscope.aliyuncs.com/compatible-mode/v1（可选，代理 Base URL）',
+        defaultValue: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
       },
-      { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+      { 
+        key: 'api_key', 
+        label: 'API Key', 
+        required: true, 
+        type: 'password',
+        placeholder: '格式：sk-开头的32位字符，需在阿里云百炼平台获取'
+      },
     ],
   },
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text', placeholder: '可选，OpenAI 兼容 Base URL' },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'base_url', 
+      label: 'API URL', 
+      type: 'text', 
+      placeholder: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      defaultValue: 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+    },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+    },
   ],
   defaultParams: [
     {

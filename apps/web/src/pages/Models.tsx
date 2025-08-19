@@ -238,11 +238,13 @@ export default function Models() {
                 if (k && k.startsWith('provider:')) {
                   // 已选中具体供应商，直接进入表单
                   const pid = k.split(':')[1];
+                  const defaultCredentials = getDefaultCredentialsByProvider(pid);
                   setEditing({
                     scope: filter.scope || 'public',
                     type: 'llm',
                     provider: pid,
                     params: getDefaultParamsByProvider(pid),
+                    ...defaultCredentials,
                   });
                 } else {
                   setPickerOpen(true);
@@ -406,10 +408,6 @@ export default function Models() {
               required: !!p.required,
             })),
           };
-          // 移除旧的字段避免后端误解析
-          delete payload.base_url;
-          delete payload.api_url;
-          delete payload.api_key;
           await upsertModel(payload);
           setEditing(null);
           message.success('已保存');
@@ -421,11 +419,13 @@ export default function Models() {
         onClose={() => setPickerOpen(false)}
         onPick={(pid: string) => {
           setPickerOpen(false);
+          const defaultCredentials = getDefaultCredentialsByProvider(pid);
           setEditing({
             scope: filter.scope || 'public',
             type: 'llm',
             provider: pid,
             params: getDefaultParamsByProvider(pid),
+            ...defaultCredentials,
           });
         }}
         providers={providers}
@@ -440,24 +440,45 @@ function getDefaultParamsByProvider(pid?: string) {
   return m?.defaultParams || [];
 }
 
+function getDefaultCredentialsByProvider(pid?: string) {
+  const m = pid ? findProvider(pid) : undefined;
+  const credentials: Record<string, any> = {};
+  
+  const fields = m?.credentialFields || [];
+  fields.forEach((f) => {
+    if (f.defaultValue) {
+      credentials[f.key] = f.defaultValue;
+    }
+  });
+  
+  return credentials;
+}
+
 function EditModal({ open, data, onClose, onOk }: any) {
   const [form, setForm] = useState<any>(data || { scope: 'public', type: 'llm', params: [] });
   const [pickerOpenInner, setPickerOpenInner] = useState(false);
   useEffect(() => {
     const base = data || { scope: 'public', type: 'llm', params: [] };
+    
+    // 获取provider的默认凭据值
+    const defaultCredentials = base.provider ? getDefaultCredentialsByProvider(base.provider) : {};
+    
     // 若包含 credentials(JSON 文本或对象)，展开到表单字段，便于编辑
     try {
       const raw = (base as any).credentials;
       const obj = typeof raw === 'string' ? JSON.parse(raw) : raw || {};
       if (obj && typeof obj === 'object') {
-        const merged = { ...base, ...obj };
+        const merged = { ...defaultCredentials, ...base, ...obj };
         setForm(merged);
         return;
       }
     } catch (error) {
       console.error('Failed to get model details:', error);
     }
-    setForm(base);
+    
+    // 合并默认值和基础数据
+    const merged = { ...defaultCredentials, ...base };
+    setForm(merged);
   }, [data]);
 
   // 初始化：从 provider manifest 预置默认参数到表格
@@ -507,7 +528,13 @@ function EditModal({ open, data, onClose, onOk }: any) {
         onClose={() => setPickerOpenInner(false)}
         onPick={(pid: string) => {
           setPickerOpenInner(false);
-          setForm((f: any) => ({ ...f, provider: pid, params: getDefaultParamsByProvider(pid) }));
+          const defaultCredentials = getDefaultCredentialsByProvider(pid);
+          setForm((f: any) => ({ 
+            ...f, 
+            provider: pid, 
+            params: getDefaultParamsByProvider(pid),
+            ...defaultCredentials
+          }));
         }}
         providers={{
           public: providerManifests
@@ -631,7 +658,7 @@ function EditModal({ open, data, onClose, onOk }: any) {
                                 isPassword ? (form.__show_api_key ? 'text' : 'password') : 'text'
                               }
                               placeholder={f.placeholder || ''}
-                              value={(form as any)[f.key] || ''}
+                              value={(form as any)[f.key] || f.defaultValue || ''}
                               onChange={(e) =>
                                 setForm((prev: any) => ({ ...prev, [f.key]: e.target.value }))
                               }

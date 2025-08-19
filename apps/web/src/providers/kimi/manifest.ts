@@ -8,15 +8,26 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   modelNamePlaceholder: '如 moonshot-v1-8k / moonshot-v1-32k',
-  baseModels: ['moonshot-v1-8k', 'moonshot-v1-32k'],
+  baseModels: [
+    'moonshot-v1-128k',
+    'moonshot-v1-32k', 
+    'moonshot-v1-8k'
+  ],
   credentialFields: [
     {
       key: 'base_url',
       label: 'API URL',
       type: 'text',
-      placeholder: '默认 https://api.moonshot.cn/v1',
+      placeholder: 'https://api.moonshot.cn/v1',
+      defaultValue: 'https://api.moonshot.cn/v1',
     },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：sk-开头的API Key，需在Kimi开放平台获取'
+    },
   ],
   defaultParams: [
     {

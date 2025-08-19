@@ -11,14 +11,31 @@ const manifest: ProviderManifest = {
   baseModels: [
     'Phi-4',
     'DeepSeek-R1-Distill-Qwen-32B',
+    'DeepSeek-R1-Distill-Qwen-14B',
+    'DeepSeek-R1-Distill-Qwen-7B',
+    'DeepSeek-R1-Distill-Llama-8B',
     'maestrale-chat-v0.4-beta',
     'Llama-3.3-70B-Instruct',
+    'Llama-3.1-70B-Instruct',
     'Llama-3.1-8B-Instruct',
     'DeepSeek-Coder-6.7B-Instruct',
+    'Qwen2.5-72B-Instruct',
   ],
   credentialFields: [
-    { key: 'base_url', label: 'API URL', type: 'text', placeholder: '可选，OpenAI 兼容 Base URL' },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'base_url', 
+      label: 'API URL', 
+      type: 'text', 
+      placeholder: '默认 https://api.regolo.ai/v1（可选，代理 Base URL）',
+      defaultValue: 'https://api.regolo.ai/v1'
+    },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：Regolo平台的API Key，需在官网注册获取'
+    },
   ],
   defaultParams: [
     {

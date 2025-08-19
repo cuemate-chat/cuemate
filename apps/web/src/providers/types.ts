@@ -7,6 +7,7 @@ export interface ProviderField {
   required?: boolean;
   type?: 'text' | 'password' | 'number' | 'select';
   placeholder?: string;
+  defaultValue?: string; // 默认值，会自动填入表单
   options?: Array<{ label: string; value: string }>; // select 用
 }
 

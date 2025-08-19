@@ -7,8 +7,10 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  modelNamePlaceholder: '如 claude-3-5-sonnet / claude-3-7-sonnet',
+  modelNamePlaceholder: '如 claude-4-sonnet / claude-3-5-sonnet',
   baseModels: [
+    'claude-4-sonnet',
+    'claude-4-haiku',
     'claude-3-7-sonnet',
     'claude-3-5-sonnet',
     'claude-3-5-haiku',
@@ -25,8 +27,15 @@ const manifest: ProviderManifest = {
       label: 'API URL',
       type: 'text',
       placeholder: '默认 https://api.anthropic.com（可选，代理 Base URL）',
+      defaultValue: 'https://api.anthropic.com',
     },
-    { key: 'api_key', label: 'API Key', required: true, type: 'password' },
+    { 
+      key: 'api_key', 
+      label: 'API Key', 
+      required: true, 
+      type: 'password',
+      placeholder: '格式：sk-ant-api03-开头的API密钥'
+    },
   ],
   defaultParams: [
     {
