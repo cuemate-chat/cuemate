@@ -6,6 +6,7 @@ import jwt from '@fastify/jwt';
 import { config } from 'dotenv';
 import Fastify from 'fastify';
 import { registerAuthRoutes } from './routes/auth.js';
+import { registerFileRoutes } from './routes/files.js';
 import { registerJobRoutes } from './routes/jobs.js';
 import { registerLogRoutes } from './routes/logs.js';
 import { registerModelRoutes } from './routes/models.js';
@@ -21,10 +22,12 @@ async function start() {
   const app = Fastify({ logger: serviceLogger });
 
   await app.register(cors, {
-    origin: true, // 反射请求源，配合凭证
+    origin: true, // 反射请求源
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['*'],
+    exposedHeaders: ['*'],
+    maxAge: 86400,
   });
   await app.register(jwt, { secret: process.env.JWT_SECRET || 'dev-secret' });
 
@@ -51,6 +54,7 @@ async function start() {
   registerModelRoutes(app as any);
   registerLogRoutes(app as any);
   registerVectorRoutes(app as any);
+  registerFileRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 

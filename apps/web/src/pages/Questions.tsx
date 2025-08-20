@@ -24,7 +24,7 @@ export default function Prompts() {
   const [items, setItems] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 6;
+  const [pageSize, setPageSize] = useState(6);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // 自适应文本域行数
@@ -214,7 +214,7 @@ export default function Prompts() {
 
   useEffect(() => {
     reloadList();
-  }, [jobId, page, appliedDay, appliedTitle, appliedDesc, appliedTagId]);
+  }, [jobId, page, pageSize, appliedDay, appliedTitle, appliedDesc, appliedTagId]);
 
   // 标签列表（用于筛选与管理）
   const [tags, setTags] = useState<Array<{ id: string; name: string }>>([]);
@@ -434,6 +434,8 @@ export default function Prompts() {
                 onClick={() => {
                   setNewTitle('');
                   setNewDesc('');
+                  // 保留上次选择的标签作为默认值
+                  // setNewTagId(undefined);
                   setCreateOpen(true);
                 }}
               >
@@ -512,6 +514,12 @@ export default function Prompts() {
                   pageSize={pageSize}
                   total={total}
                   onChange={(p) => setPage(p)}
+                  onPageSizeChange={(_, size) => {
+                    setPageSize(size);
+                    setPage(1);
+                  }}
+                  showSizeChanger={true}
+                  pageSizeOptions={['6', '12', '18', '24', '50', '100']}
                 />
               </div>
             </>
@@ -752,6 +760,7 @@ function TagTable({
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>('');
   const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState(10);
 
   const filtered = tags
     .filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))
@@ -868,7 +877,16 @@ function TagTable({
         columns={columns}
         dataSource={filtered}
         rowKey="id"
-        pagination={{ pageSize: 10, showTotal: (total) => `共 ${total} 条` }}
+        scroll={{ y: 'calc(50vh - 50px)' }}
+        pagination={{ 
+          pageSize, 
+          showTotal: (total) => `共 ${total} 条`,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50'],
+          onShowSizeChange: (_, size) => {
+            setPageSize(size);
+          }
+        }}
       />
     </div>
   );

@@ -417,6 +417,9 @@ importers:
       '@fastify/jwt':
         specifier: ^7.2.2
         version: 7.2.4
+      '@fastify/multipart':
+        specifier: ^8.3.0
+        version: 8.3.1
       '@fastify/rate-limit':
         specifier: ^10.3.0
         version: 10.3.0
@@ -429,6 +432,12 @@ importers:
       fastify:
         specifier: ^4.28.1
         version: 4.29.1
+      mammoth:
+        specifier: ^1.7.2
+        version: 1.10.0
+      pdf-parse:
+        specifier: ^1.1.1
+        version: 1.1.1
       uuid:
         specifier: ^9.0.1
         version: 9.0.1

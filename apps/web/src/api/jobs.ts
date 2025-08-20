@@ -1,5 +1,6 @@
+import { WEB_API_BASE } from '../config';
+import type { CreateJobRequest, Job, PaginatedResponse } from '../types';
 import { http } from './http';
-import type { Job, CreateJobRequest, PaginatedResponse } from '../types';
 
 export interface CreateJobPayload extends CreateJobRequest {
   resumeTitle?: string;
@@ -37,4 +38,20 @@ export async function updateJob(
 
 export async function deleteJob(jobId: string): Promise<{ success: boolean }> {
   return await http.delete<{ success: boolean }>(`/jobs/${jobId}`);
+}
+
+export async function extractResumeText(file: File): Promise<{ text: string }> {
+  const token = localStorage.getItem('auth_token');
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${WEB_API_BASE}/files/extract-text`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: form,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || '解析失败');
+  }
+  return await res.json();
 }

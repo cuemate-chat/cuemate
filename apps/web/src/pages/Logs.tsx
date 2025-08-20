@@ -25,6 +25,7 @@ export default function Logs() {
   const [level, setLevel] = useState<LogLevel | ''>('');
   const [date, setDate] = useState<string>(''); // yyyy-mm-dd
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [items, setItems] = useState<
     Array<{ level: LogLevel; service: string; date: string; size: number; mtimeMs: number }>
@@ -92,7 +93,7 @@ export default function Logs() {
       service: service || undefined,
       date: date || undefined,
       page,
-      pageSize: 10,
+      pageSize,
     })
       .then((res) => {
         setItems(res.items);
@@ -102,7 +103,7 @@ export default function Logs() {
         console.error(err);
         message.error('加载日志失败');
       });
-  }, [service, level, date, page]);
+  }, [service, level, date, page, pageSize]);
 
   const readContent = async (it: { level: LogLevel; service: string; date: string }) => {
     try {
@@ -123,7 +124,7 @@ export default function Logs() {
         service: service || undefined,
         date: date || undefined,
         page,
-        pageSize: 10,
+        pageSize,
       })
         .then((res) => {
           setItems(res.items);
@@ -298,7 +299,18 @@ export default function Logs() {
 
       <div className="flex justify-between items-center mt-3 text-sm">
         <div className="text-slate-500">共 {total} 条</div>
-        <PaginationBar page={page} pageSize={10} total={total} onChange={(p) => setPage(p)} />
+        <PaginationBar 
+          page={page} 
+          pageSize={pageSize} 
+          total={total} 
+          onChange={(p) => setPage(p)}
+          onPageSizeChange={(_, size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+          showSizeChanger={true}
+          pageSizeOptions={['10', '20', '50', '100']}
+        />
       </div>
 
       {viewing && (

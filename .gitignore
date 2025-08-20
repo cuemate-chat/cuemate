@@ -100,7 +100,7 @@ logs/
 PROJECT.md
 technology.md
 build.md
-data/sqlite/
+/data/
 CLAUDE.md
 clean-vector-db.js
 

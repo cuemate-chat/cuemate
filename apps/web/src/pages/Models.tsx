@@ -33,7 +33,7 @@ export default function Models() {
   }>({ type: 'llm' });
   const [editing, setEditing] = useState<any | null>(null);
   const [page, setPage] = useState(1);
-  const pageSize = 6;
+  const [pageSize, setPageSize] = useState(6);
   const [total, setTotal] = useState(0);
   const [selectedTitle, setSelectedTitle] = useState<string>('全部模型');
   const [selectedKeys, setSelectedKeys] = useState<string[]>(['all']);
@@ -377,12 +377,18 @@ export default function Models() {
               );
             })}
           </div>
-          <div className="mt-4 flex items-center justify-center gap-3 text-sm text-slate-500">
+          <div className="mt-4 flex items-center justify-end gap-3 text-sm text-slate-500">
             <PaginationBar
               page={page}
               pageSize={pageSize}
               total={total}
               onChange={(p) => setPage(p)}
+              onPageSizeChange={(_, size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+              showSizeChanger={true}
+              pageSizeOptions={['6', '12', '18', '24', '50', '100']}
             />
           </div>
         </div>

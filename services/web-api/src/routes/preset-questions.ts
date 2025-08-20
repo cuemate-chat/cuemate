@@ -201,9 +201,10 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
           return reply.code(404).send({ error: '题目不存在' });
         }
 
-        if (existing.is_builtin) {
-          return reply.code(400).send({ error: '内置题目无法修改' });
-        }
+        // 允许编辑内置题目
+        // if (existing.is_builtin) {
+        //   return reply.code(400).send({ error: '内置题目无法修改' });
+        // }
 
         const now = Date.now();
         const updates: string[] = ['updated_at = ?'];
@@ -254,9 +255,10 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
           return reply.code(404).send({ error: '题目不存在' });
         }
 
-        if (existing.is_builtin) {
-          return reply.code(400).send({ error: '内置题目无法删除' });
-        }
+        // 允许删除内置题目
+        // if (existing.is_builtin) {
+        //   return reply.code(400).send({ error: '内置题目无法删除' });
+        // }
 
         (app as any).db.prepare('DELETE FROM preset_questions WHERE id = ?').run(id);
         return { success: true };
@@ -278,17 +280,17 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
           })
           .parse((req as any).body || {});
 
-        // 检查是否包含内置题目
-        const builtinCount =
-          (app as any).db
-            .prepare(
-              `SELECT COUNT(1) as cnt FROM preset_questions WHERE id IN (${body.ids.map(() => '?').join(',')}) AND is_builtin = 1`,
-            )
-            .get(...body.ids)?.cnt || 0;
+        // 允许批量删除内置题目
+        // const builtinCount =
+        //   (app as any).db
+        //     .prepare(
+        //       `SELECT COUNT(1) as cnt FROM preset_questions WHERE id IN (${body.ids.map(() => '?').join(',')}) AND is_builtin = 1`,
+        //     )
+        //     .get(...body.ids)?.cnt || 0;
 
-        if (builtinCount > 0) {
-          return reply.code(400).send({ error: '选中的题目中包含内置题目，无法删除' });
-        }
+        // if (builtinCount > 0) {
+        //   return reply.code(400).send({ error: '选中的题目中包含内置题目，无法删除' });
+        // }
 
         const deletedCount = (app as any).db
           .prepare(

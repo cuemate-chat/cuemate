@@ -1,5 +1,5 @@
 import { CheckIcon, CloudArrowUpIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Button, Card, Checkbox, DatePicker, Input, Modal, Select, Spin, Upload } from 'antd';
+import { Button, Card, Checkbox, DatePicker, Input, Modal, Select, Spin, Table, Upload } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -13,7 +13,7 @@ import {
   PresetQuestion,
   updatePresetQuestion,
 } from '../api/preset-questions';
-import { createTag, deleteTag, listTags } from '../api/questions';
+import { createTag, deleteTag, listTags, updateTag } from '../api/questions';
 import { message as globalMessage } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 
@@ -144,7 +144,7 @@ export default function PresetQuestions() {
 
   useEffect(() => {
     reloadList();
-  }, [page, keyword, filterTagId, filterBuiltin, filterDay, filterQuestion, filterAnswer]);
+  }, [page, pageSize, keyword, filterTagId, filterBuiltin, filterDay, filterQuestion, filterAnswer]);
 
   // 多选处理
   const handleSelectAll = (checked: boolean) => {
@@ -202,7 +202,8 @@ export default function PresetQuestions() {
       setCreateOpen(false);
       setNewQuestion('');
       setNewAnswer('');
-      setNewTagId(undefined);
+      // 保留上次选择的标签作为默认值
+      // setNewTagId(undefined);
       await reloadList();
     } catch (e: any) {
       globalMessage.error(e?.message || '创建失败');
@@ -211,10 +212,6 @@ export default function PresetQuestions() {
 
   // 删除单个
   const onDeleteItem = async (item: PresetQuestion) => {
-    if (item.is_builtin) {
-      globalMessage.warning('内置题目无法删除');
-      return;
-    }
     try {
       await deletePresetQuestion(item.id);
       globalMessage.success('删除成功');
@@ -226,16 +223,6 @@ export default function PresetQuestions() {
 
   // 批量删除
   const onBatchDelete = async () => {
-    const builtinIds = selectedIds.filter((id) => {
-      const item = items.find((i) => i.id === id);
-      return item?.is_builtin;
-    });
-    
-    if (builtinIds.length > 0) {
-      globalMessage.warning('选中的题目中包含内置题目，无法删除');
-      return;
-    }
-
     if (selectedIds.length === 0) {
       globalMessage.warning('请先选择要删除的题目');
       return;
@@ -292,17 +279,6 @@ export default function PresetQuestions() {
       globalMessage.success('标签创建成功');
     } catch (e: any) {
       globalMessage.error(e?.message || '标签创建失败');
-    }
-  };
-
-  const onDeleteTag = async (tagId: string) => {
-    try {
-      await deleteTag(tagId);
-      const res = await listTags();
-      setTags(res.items || []);
-      globalMessage.success('标签删除成功');
-    } catch (e: any) {
-      globalMessage.error(e?.message || '标签删除失败');
     }
   };
 
@@ -467,7 +443,8 @@ export default function PresetQuestions() {
             onClick={() => {
               setNewQuestion('');
               setNewAnswer('');
-              setNewTagId(undefined);
+              // 保留上次选择的标签作为默认值
+              // setNewTagId(undefined);
               setCreateOpen(true);
             }}
           >
@@ -572,6 +549,11 @@ export default function PresetQuestions() {
                       已同步到 {item.synced_jobs.length} 个岗位
                     </div>
                   )}
+                  {item.synced_jobs.length == 0 && (
+                    <div className="text-xs text-slate-500 mt-2">
+                      暂未同步到岗位
+                    </div>
+                  )}
 
                   {/* 时间和操作按钮 */}
                   <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
@@ -580,18 +562,16 @@ export default function PresetQuestions() {
                       <Button size="small" onClick={() => openEditModal(item)}>
                         编辑
                       </Button>
-                      {!item.is_builtin && (
-                        <Button
-                          size="small"
-                          danger
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            onDeleteItem(item);
-                          }}
-                        >
-                          删除
-                        </Button>
-                      )}
+                      <Button
+                        size="small"
+                        danger
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          onDeleteItem(item);
+                        }}
+                      >
+                        删除
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -777,36 +757,52 @@ export default function PresetQuestions() {
 
       {/* 标签管理弹窗 */}
       <Modal
-        title="标签管理"
         open={tagMgrOpen}
         onCancel={() => setTagMgrOpen(false)}
+        title="标签管理"
         footer={null}
-        width={500}
+        width={880}
+        style={{ maxHeight: '80vh' }}
       >
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="新建标签名称"
-              value={newTagName}
-              onChange={(e) => setNewTagName(e.target.value)}
-              onPressEnter={onCreateTag}
-            />
-            <Button type="primary" onClick={onCreateTag}>
-              新建
+        <div className="space-y-3" style={{ maxHeight: '70vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div className="flex gap-2 items-end">
+            <div>
+              <div className="text-sm mb-1">标签名称<span className="text-red-500"> *</span></div>
+              <Input
+                placeholder="新建标签名称（不超过20个字）"
+                value={newTagName}
+                maxLength={20}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v.length <= 20) setNewTagName(v);
+                }}
+                style={{ width: 240 }}
+              />
+            </div>
+            <Button
+              type="primary"
+              onClick={async () => {
+                const v = newTagName.trim();
+                if (!v) return;
+                if (v.length > 20) {
+                  globalMessage.warning('标签名称最多20个字');
+                  return;
+                }
+                await onCreateTag();
+              }}
+            >
+              新增
             </Button>
           </div>
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {tags.map((tag) => (
-              <div key={tag.id} className="flex items-center justify-between p-2 border rounded">
-                <span>{tag.name}</span>
-                <Button size="small" danger onClick={() => onDeleteTag(tag.id)}>
-                  删除
-                </Button>
-              </div>
-            ))}
-            {tags.length === 0 && (
-              <div className="text-center text-slate-500 py-4">暂无标签</div>
-            )}
+          {/* 固定高度表格，支持编辑/删除与序号显示 */}
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <TagTable
+              tags={tags}
+              onRefresh={async () => {
+                const res = await listTags();
+                setTags(res.items || []);
+              }}
+            />
           </div>
         </div>
       </Modal>
@@ -877,6 +873,151 @@ export default function PresetQuestions() {
           </div>
         </div>
       </Modal>
+    </div>
+  );
+}
+
+// 标签管理表格组件
+function TagTable({
+  tags,
+  onRefresh,
+}: {
+  tags: Array<{ id: string; name: string; created_at?: number }>;
+  onRefresh: () => Promise<void>;
+}) {
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<string>('');
+  const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState(10);
+
+  const filtered = tags
+    .filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+
+  const columns: any[] = [
+    {
+      title: '#',
+      dataIndex: 'index',
+      width: 100,
+      align: 'center' as const,
+      render: (_: any, __: any, index: number) => (
+        <span className="text-slate-500">{index + 1}</span>
+      ),
+    },
+    {
+      title: '标签名',
+      dataIndex: 'name',
+      width: 200,
+      render: (_: any, record: any) =>
+        editingKey === record.id ? (
+          <Input
+            value={editingName}
+            maxLength={20}
+            onChange={(e) => setEditingName(e.target.value)}
+          />
+        ) : (
+          <span>{record.name}</span>
+        ),
+    },
+    {
+      title: '创建时间',
+      dataIndex: 'created_at',
+      width: 220,
+      render: (v: number) => (v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-'),
+    },
+    {
+      title: '操作',
+      dataIndex: 'action',
+      width: 180,
+      render: (_: any, record: any) => (
+        <div className="space-x-2">
+          {editingKey === record.id ? (
+            <>
+              <Button
+                size="small"
+                type="primary"
+                onClick={async () => {
+                  const v = editingName.trim();
+                  if (!v) return;
+                  if (v.length > 20) {
+                    globalMessage.warning('标签名称最多20个字');
+                    return;
+                  }
+                  await updateTag(record.id, v);
+                  setEditingKey(null);
+                  setEditingName('');
+                  await onRefresh();
+                }}
+              >
+                保存
+              </Button>
+              <Button
+                size="small"
+                onClick={() => {
+                  setEditingKey(null);
+                  setEditingName('');
+                }}
+              >
+                取消
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="small"
+                onClick={() => {
+                  setEditingKey(record.id);
+                  setEditingName(record.name);
+                }}
+              >
+                编辑
+              </Button>
+              <Button
+                size="small"
+                danger
+                onClick={async () => {
+                  await deleteTag(record.id);
+                  await onRefresh();
+                }}
+              >
+                删除
+              </Button>
+            </>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="border border-slate-200 rounded-lg overflow-hidden" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div className="p-2">
+        <Input
+          placeholder="搜索标签名（模糊匹配）"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          allowClear
+          style={{ width: 260 }}
+        />
+      </div>
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <Table
+          size="small"
+          columns={columns}
+          dataSource={filtered}
+          rowKey="id"
+          scroll={{ y: 'calc(50vh - 50px)' }}
+          pagination={{ 
+            pageSize, 
+            showTotal: (total) => `共 ${total} 条`,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50'],
+            onShowSizeChange: (_, size) => {
+              setPageSize(size);
+            }
+          }}
+        />
+      </div>
     </div>
   );
 }
