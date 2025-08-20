@@ -13,7 +13,7 @@ import {
   PresetQuestion,
   updatePresetQuestion,
 } from '../api/preset-questions';
-import { listTags, createTag, deleteTag } from '../api/questions';
+import { createTag, deleteTag, listTags } from '../api/questions';
 import { message as globalMessage } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 
@@ -24,7 +24,7 @@ export default function PresetQuestions() {
   const [items, setItems] = useState<PresetQuestion[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 8; // 每页8个卡片
+  const [pageSize, setPageSize] = useState(8); // 每页8个卡片，可调整
 
   // 自适应文本域行数
   const [adaptiveRows, setAdaptiveRows] = useState<{ question: number; answer: number }>({ 
@@ -497,7 +497,7 @@ export default function PresetQuestions() {
               disabled={selectedIds.length === 0}
               onClick={() => setSyncOpen(true)}
             >
-              批量同步到岗位
+              批量同步到面试押题
             </Button>
             <Button
               danger
@@ -520,7 +520,7 @@ export default function PresetQuestions() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {items.map((item, idx) => (
-              <Card key={item.id} className="relative h-full">
+              <Card key={item.id} className="relative h-full group hover:shadow-md transition-shadow duration-200">
                 {/* 左上角序号 */}
                 <div className="pointer-events-none absolute left-0 top-0 z-10">
                   <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
@@ -545,17 +545,33 @@ export default function PresetQuestions() {
                   </div>
 
                   {/* 标签和状态 */}
-                  <div className="flex items-center gap-2 mb-2">
-                    {tags.find(t => t.id === item.tag_id) && (
-                      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full">
-                        {tags.find(t => t.id === item.tag_id)?.name}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {tags.find(t => t.id === item.tag_id) && (
+                        <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full">
+                          {tags.find(t => t.id === item.tag_id)?.name}
+                        </span>
+                      )}
+                      <span
+                        className={`px-2 py-0.5 rounded text-[11px] ${item.is_builtin ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}
+                      >
+                        {item.is_builtin ? '内置' : '自定义'}
                       </span>
+                    </div>
+                    {/* 单个删除按钮 */}
+                    {!item.is_builtin && (
+                      <Button 
+                        size="small" 
+                        danger 
+                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteItem(item);
+                        }}
+                      >
+                        删除
+                      </Button>
                     )}
-                    <span
-                      className={`px-2 py-0.5 rounded text-[11px] ${item.is_builtin ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}
-                    >
-                      {item.is_builtin ? '内置' : '自定义'}
-                    </span>
                   </div>
 
                   {/* 答案预览 */}
@@ -570,21 +586,14 @@ export default function PresetQuestions() {
                     </div>
                   )}
 
-                  {/* 操作按钮和时间 */}
+                  {/* 时间和编辑按钮 */}
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-400">
-                      {dayjs(item.created_at).format('MM-DD HH:mm')}
+                      {dayjs(item.created_at).format('YYYY-MM-DD HH:mm')}
                     </span>
-                    <div className="flex gap-1">
-                      <Button size="small" onClick={() => openEditModal(item)}>
-                        编辑
-                      </Button>
-                      {!item.is_builtin && (
-                        <Button size="small" danger onClick={() => onDeleteItem(item)}>
-                          删除
-                        </Button>
-                      )}
-                    </div>
+                    <Button size="small" onClick={() => openEditModal(item)}>
+                      编辑
+                    </Button>
                   </div>
                 </div>
               </Card>
@@ -599,6 +608,12 @@ export default function PresetQuestions() {
                 total={total}
                 pageSize={pageSize}
                 onChange={(p) => setPage(p)}
+                onPageSizeChange={(current, size) => {
+                  setPageSize(size);
+                  setPage(1); // 重置到第一页
+                }}
+                showSizeChanger={true}
+                pageSizeOptions={['8', '16', '24', '32', '50', '100']}
               />
             </div>
           )}
@@ -624,42 +639,53 @@ export default function PresetQuestions() {
         title="编辑预置题目"
         open={editOpen}
         onCancel={() => setEditOpen(false)}
-        onOk={onSaveEdit}
-        okText="保存"
-        cancelText="取消"
-        width={800}
+        footer={null}
+        width={720}
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-1">问题</label>
+            <div className="text-sm mb-1">标签<span className="text-red-500"> *</span></div>
+            <Select
+              placeholder="选择标签"
+              value={editTagId}
+              onChange={setEditTagId}
+              options={tags.map((t) => ({ value: t.id, label: t.name }))}
+              className="w-full"
+              style={{ height: 40 }}
+              status={!editTagId ? 'error' : undefined}
+              showSearch
+              filterOption={selectFilterOption}
+            />
+          </div>
+          <div>
+            <div className="text-sm mb-1">问题<span className="text-red-500"> *</span></div>
             <TextArea
               value={editQuestion}
               onChange={(e) => setEditQuestion(e.target.value)}
               rows={adaptiveRows.question}
               placeholder="输入面试问题..."
+              maxLength={200}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">答案</label>
+            <div className="text-sm mb-1">答案<span className="text-red-500"> *</span></div>
             <TextArea
               value={editAnswer}
               onChange={(e) => setEditAnswer(e.target.value)}
               rows={adaptiveRows.answer}
               placeholder="输入参考答案..."
+              maxLength={5000}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">标签</label>
-            <Select
-              placeholder="选择标签（可选）"
-              allowClear
-              value={editTagId}
-              onChange={setEditTagId}
-              options={tags.map((t) => ({ value: t.id, label: t.name }))}
-              style={{ width: '100%' }}
-              showSearch
-              filterOption={selectFilterOption}
-            />
+          <div className="pt-2 flex justify-end gap-2">
+            <Button onClick={() => setEditOpen(false)}>取消</Button>
+            <Button 
+              type="primary" 
+              onClick={onSaveEdit}
+              disabled={!editTagId || !editQuestion.trim() || !editAnswer.trim()}
+            >
+              保存
+            </Button>
           </div>
         </div>
       </Modal>
@@ -669,42 +695,53 @@ export default function PresetQuestions() {
         title="新增预置题目"
         open={createOpen}
         onCancel={() => setCreateOpen(false)}
-        onOk={onCreateQuestion}
-        okText="创建"
-        cancelText="取消"
-        width={800}
+        footer={null}
+        width={720}
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-1">问题</label>
+            <div className="text-sm mb-1">标签<span className="text-red-500"> *</span></div>
+            <Select
+              placeholder="选择标签"
+              value={newTagId}
+              onChange={setNewTagId}
+              options={tags.map((t) => ({ value: t.id, label: t.name }))}
+              className="w-full"
+              style={{ height: 40 }}
+              status={!newTagId ? 'error' : undefined}
+              showSearch
+              filterOption={selectFilterOption}
+            />
+          </div>
+          <div>
+            <div className="text-sm mb-1">问题<span className="text-red-500"> *</span></div>
             <TextArea
               value={newQuestion}
               onChange={(e) => setNewQuestion(e.target.value)}
               rows={adaptiveRows.question}
               placeholder="输入面试问题..."
+              maxLength={200}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">答案</label>
+            <div className="text-sm mb-1">答案<span className="text-red-500"> *</span></div>
             <TextArea
               value={newAnswer}
               onChange={(e) => setNewAnswer(e.target.value)}
               rows={adaptiveRows.answer}
               placeholder="输入参考答案..."
+              maxLength={5000}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">标签</label>
-            <Select
-              placeholder="选择标签（可选）"
-              allowClear
-              value={newTagId}
-              onChange={setNewTagId}
-              options={tags.map((t) => ({ value: t.id, label: t.name }))}
-              style={{ width: '100%' }}
-              showSearch
-              filterOption={selectFilterOption}
-            />
+          <div className="pt-2 flex justify-end gap-2">
+            <Button onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button 
+              type="primary" 
+              onClick={onCreateQuestion}
+              disabled={!newTagId || !newQuestion.trim() || !newAnswer.trim()}
+            >
+              创建
+            </Button>
           </div>
         </div>
       </Modal>
