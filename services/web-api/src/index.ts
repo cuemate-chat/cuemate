@@ -14,6 +14,7 @@ import { registerPresetQuestionRoutes } from './routes/preset-questions.js';
 import { registerInterviewQuestionRoutes } from './routes/questions.js';
 import { registerReviewRoutes } from './routes/reviews.js';
 import { registerVectorRoutes } from './routes/vectors.js';
+import { registerLicenseRoutes } from './routes/license.js';
 import { logger as serviceLogger } from './utils/logger.js';
 
 config();
@@ -39,6 +40,14 @@ async function start() {
   const db = await initSqlite(process.env.SQLITE_PATH || './cuemate.db');
   app.decorate('db', db as any);
 
+  // 启动时检查并验证 License
+  try {
+    const { validateLicenseAtStartup } = await import('./utils/license-validator.js');
+    await validateLicenseAtStartup(db, app.log);
+  } catch (error: any) {
+    app.log.error('License 检查过程中发生错误:', error);
+  }
+
   // 全局日志钩子
   const hooks = fastifyLoggingHooks();
   app.addHook('onRequest', hooks.onRequest as any);
@@ -55,6 +64,7 @@ async function start() {
   registerLogRoutes(app as any);
   registerVectorRoutes(app as any);
   registerFileRoutes(app as any);
+  registerLicenseRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 

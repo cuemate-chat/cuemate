@@ -63,7 +63,6 @@ export interface ChangePasswordRequest {
 export interface Job {
   id: string;
   title: string;
-  company?: string;
   description?: string;
   requirements?: string;
   status: 'active' | 'inactive' | 'archived';
@@ -78,7 +77,6 @@ export interface JobSummary {
 
 export interface CreateJobRequest {
   title: string;
-  company?: string;
   description?: string;
   requirements?: string;
 }
@@ -153,4 +151,19 @@ export interface LogEntry {
   message: string;
   timestamp: string;
   metadata?: Record<string, any>;
+}
+
+// License 相关类型
+export interface LicenseInfo {
+  id: string;
+  corporation: string;
+  edition: string;
+  expireTime: number;
+  productType: string;
+  authorizeCount: number;
+  licenseVersion: string;
+  applyUser: string;
+  status: string;
+  createdAt: number;
+  updatedAt?: number;
 }

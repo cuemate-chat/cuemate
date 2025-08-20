@@ -22,8 +22,6 @@ async function buildServer() {
     credentials: true,
   });
 
-  // 已移除 helmet（开发期可选），避免 fastify 版本不匹配导致启动失败
-
   await fastify.register(multipart, {
     limits: {
       fileSize: 10 * 1024 * 1024, // 10MB

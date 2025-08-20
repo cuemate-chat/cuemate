@@ -104,6 +104,11 @@ export default function UserMenu() {
     setOpen(false);
   };
 
+  const onLicense = () => {
+    navigate('/settings/license');
+    setOpen(false);
+  };
+
   const onPresetQuestions = () => {
     navigate('/preset-questions');
     setOpen(false);
@@ -173,6 +178,12 @@ export default function UserMenu() {
             onClick={onVectorKnowledge}
           >
             <CubeIcon className="w-4 h-4" /> 向量知识库
+          </button>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+            onClick={onLicense}
+          >
+            <CubeIcon className="w-4 h-4" /> License 管理
           </button>
           <div className="h-px bg-slate-200" />
           <button

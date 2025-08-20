@@ -12,23 +12,24 @@
     "format": "prettier --write src"
   },
   "dependencies": {
-    "fastify": "^4.28.1",
+    "@cuemate/data-sqlite": "workspace:*",
     "@cuemate/logger": "workspace:*",
     "@fastify/cors": "^8.5.0",
+    "@fastify/jwt": "^7.2.2",
     "@fastify/multipart": "^8.3.0",
     "@fastify/rate-limit": "^10.3.0",
-    "@fastify/jwt": "^7.2.2",
-    "zod": "^3.23.8",
-    "dotenv": "^16.4.5",
-    "@cuemate/data-sqlite": "workspace:*",
-    "uuid": "^9.0.1",
     "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.28.1",
     "mammoth": "^1.7.2",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "uuid": "^9.0.1",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20.16.10",
-    "typescript": "^5.5.4",
-    "tsx": "^4.19.1"
+    "@types/uuid": "^9.0.7",
+    "tsx": "^4.19.1",
+    "typescript": "^5.5.4"
   }
 }
