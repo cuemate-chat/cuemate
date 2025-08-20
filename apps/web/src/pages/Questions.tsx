@@ -530,7 +530,7 @@ export default function Prompts() {
               </span>
             </div>
             <div>
-              <div className="text-sm mb-1">标签</div>
+              <div className="text-sm mb-1">标签<span className="text-red-500"> *</span></div>
               <Select
                 allowClear
                 placeholder="选择标签"
@@ -544,7 +544,7 @@ export default function Prompts() {
               />
             </div>
             <div>
-              <div className="text-sm mb-1">问题</div>
+              <div className="text-sm mb-1">问题<span className="text-red-500"> *</span></div>
               <Input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
@@ -552,7 +552,7 @@ export default function Prompts() {
               />
             </div>
             <div>
-              <div className="text-sm mb-1">问题描述</div>
+              <div className="text-sm mb-1">问题描述<span className="text-red-500"> *</span></div>
               <Input.TextArea
                 rows={adaptiveTextareaRows}
                 value={editDesc}
@@ -616,7 +616,7 @@ export default function Prompts() {
                 }
               }}
             >
-              批量同步
+              批量同步当前岗位的押题到向量库
             </Button>
           </div>
         </div>
@@ -631,17 +631,20 @@ export default function Prompts() {
         width={880}
       >
         <div className="space-y-3">
-          <div className="flex gap-2">
-            <Input
-              placeholder="新建标签名称（不超过20个字）"
-              value={newTagName}
-              maxLength={20}
-              onChange={(e) => {
-                const v = e.target.value;
-                if (v.length <= 20) setNewTagName(v);
-              }}
-              style={{ width: 240 }}
-            />
+          <div className="flex gap-2 items-end">
+            <div>
+              <div className="text-sm mb-1">标签名称<span className="text-red-500"> *</span></div>
+              <Input
+                placeholder="新建标签名称（不超过20个字）"
+                value={newTagName}
+                maxLength={20}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v.length <= 20) setNewTagName(v);
+                }}
+                style={{ width: 240 }}
+              />
+            </div>
             <Button
               type="primary"
               onClick={async () => {
@@ -681,7 +684,7 @@ export default function Prompts() {
       >
         <div className="space-y-3">
           <div>
-            <div className="text-sm mb-1">标签</div>
+            <div className="text-sm mb-1">标签<span className="text-red-500"> *</span></div>
             <Select
               allowClear
               placeholder="选择标签"
@@ -695,11 +698,11 @@ export default function Prompts() {
             />
           </div>
           <div>
-            <div className="text-sm mb-1">问题</div>
+            <div className="text-sm mb-1">问题<span className="text-red-500"> *</span></div>
             <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} maxLength={200} />
           </div>
           <div>
-            <div className="text-sm mb-1">问题描述</div>
+            <div className="text-sm mb-1">问题描述<span className="text-red-500"> *</span></div>
             <Input.TextArea
               rows={adaptiveTextareaRows}
               value={newDesc}

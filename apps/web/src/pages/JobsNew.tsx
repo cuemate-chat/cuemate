@@ -198,7 +198,7 @@ export default function JobsNew() {
             <div className="flex-1 min-w-0">
               <div className="space-y-4">
                 <div>
-                  <div className="text-sm text-slate-600 mb-1">岗位名称</div>
+                  <div className="text-sm text-slate-600 mb-1">岗位名称<span className="text-red-500"> *</span></div>
                   <Input
                     maxLength={200}
                     placeholder="请输入岗位名称"
@@ -208,7 +208,7 @@ export default function JobsNew() {
                   />
                 </div>
                 <div>
-                  <div className="text-sm text-slate-600 mb-1">岗位描述</div>
+                  <div className="text-sm text-slate-600 mb-1">岗位描述<span className="text-red-500"> *</span></div>
                   <TextArea
                     maxLength={5000}
                     placeholder="请描述岗位职责、任职要求等，AI 将根据描述生成模拟面试题与流程"
@@ -260,7 +260,7 @@ export default function JobsNew() {
               </Upload.Dragger>
             </div>
             <div>
-              <div className="text-sm text-slate-600 mb-1">简历文本</div>
+              <div className="text-sm text-slate-600 mb-1">简历文本<span className="text-red-500"> *</span></div>
               <TextArea
                 maxLength={20000}
                 rows={adaptiveRows.resume}

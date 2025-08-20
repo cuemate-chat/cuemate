@@ -196,7 +196,6 @@ export default function JobsList() {
           ))}
           {!items.length && (
             <div className="text-center py-8 text-slate-500">
-              <div className="text-2xl mb-2">💼</div>
               <div className="text-sm">暂无岗位</div>
               <div className="text-xs text-slate-400 mt-1">请先创建岗位</div>
             </div>
@@ -209,7 +208,7 @@ export default function JobsList() {
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm h-full overflow-auto">
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <div className="text-sm text-slate-600 mb-1">岗位名称</div>
+              <div className="text-sm text-slate-600 mb-1">岗位名称<span className="text-red-500"> *</span></div>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -217,7 +216,7 @@ export default function JobsList() {
               />
             </div>
             <div>
-              <div className="text-sm text-slate-600 mb-1">岗位描述</div>
+              <div className="text-sm text-slate-600 mb-1">岗位描述<span className="text-red-500"> *</span></div>
               <Input.TextArea
                 rows={adaptiveRows.desc}
                 maxLength={5000}
@@ -228,7 +227,7 @@ export default function JobsList() {
               <div className="text-right text-xs text-slate-500">{description.length} / 5000</div>
             </div>
             <div>
-              <div className="text-sm text-slate-600 mb-1">简历信息（文本）</div>
+              <div className="text-sm text-slate-600 mb-1">简历信息（文本）<span className="text-red-500"> *</span></div>
               <Input.TextArea
                 rows={adaptiveRows.resume}
                 maxLength={5000}

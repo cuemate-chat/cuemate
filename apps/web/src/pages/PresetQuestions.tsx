@@ -539,16 +539,14 @@ export default function PresetQuestions() {
 
                 {/* 内容区域 */}
                 <div className="pt-4 pr-6 pb-2 pl-2">
-                  {/* 问题标题 */}
-                  <div className="text-sm font-semibold text-slate-800 mb-2 line-clamp-2 min-h-[2.5rem]">
-                    {item.question}
-                  </div>
-
-                  {/* 标签和状态 */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
+                  {/* 问题标题 + 标签（右上角对齐，参考面试押题样式） */}
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="text-base font-semibold text-slate-800 break-words line-clamp-2 min-h-[3.25rem] pr-2">
+                      {item.question}
+                    </div>
+                    <div className="shrink-0 flex flex-col items-end gap-1">
                       {tags.find(t => t.id === item.tag_id) && (
-                        <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full shadow-sm">
                           {tags.find(t => t.id === item.tag_id)?.name}
                         </span>
                       )}
@@ -558,42 +556,43 @@ export default function PresetQuestions() {
                         {item.is_builtin ? '内置' : '自定义'}
                       </span>
                     </div>
-                    {/* 单个删除按钮 */}
-                    {!item.is_builtin && (
-                      <Button 
-                        size="small" 
-                        danger 
-                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteItem(item);
-                        }}
-                      >
-                        删除
-                      </Button>
-                    )}
                   </div>
 
+                  {/* 分割线 */}
+                  <div className="my-2 border-t border-slate-200"></div>
+
                   {/* 答案预览 */}
-                  <div className="text-xs text-slate-600 mb-3 line-clamp-3 min-h-[3rem]">
+                  <div className="text-sm text-slate-600 mt-2 line-clamp-4 break-words leading-5 min-h-[5rem]" title={item.answer}>
                     {item.answer}
                   </div>
 
-                  {/* 同步状态 */}
+                  {/* 同步状态（如果有的话，放在时间上方） */}
                   {item.synced_jobs.length > 0 && (
-                    <div className="text-xs text-slate-500 mb-2">
+                    <div className="text-xs text-slate-500 mt-2">
                       已同步到 {item.synced_jobs.length} 个岗位
                     </div>
                   )}
 
-                  {/* 时间和编辑按钮 */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400">
-                      {dayjs(item.created_at).format('YYYY-MM-DD HH:mm')}
-                    </span>
-                    <Button size="small" onClick={() => openEditModal(item)}>
-                      编辑
-                    </Button>
+                  {/* 时间和操作按钮 */}
+                  <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                    <span>{dayjs(item.created_at).format('YYYY-MM-DD HH:mm')}</span>
+                    <div className="space-x-2">
+                      <Button size="small" onClick={() => openEditModal(item)}>
+                        编辑
+                      </Button>
+                      {!item.is_builtin && (
+                        <Button
+                          size="small"
+                          danger
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            onDeleteItem(item);
+                          }}
+                        >
+                          删除
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -602,13 +601,14 @@ export default function PresetQuestions() {
 
           {/* 分页 */}
           {total > 0 && (
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-end mt-6">
               <PaginationBar
                 page={page}
                 total={total}
                 pageSize={pageSize}
                 onChange={(p) => setPage(p)}
                 onPageSizeChange={(current, size) => {
+                  void current;
                   setPageSize(size);
                   setPage(1); // 重置到第一页
                 }}
