@@ -18,6 +18,10 @@ export interface VectorDocument {
     timestamp?: string;
     source?: string;
     category?: string;
+    // 相关数量字段
+    relatedJobs?: number;
+    relatedResumes?: number;
+    relatedQuestions?: number;
   };
   score: number;
 }
