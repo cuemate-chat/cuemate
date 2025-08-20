@@ -411,23 +411,9 @@ export default function Prompts() {
                   setSyncStats(stats);
                 }}
               >
-                同步向量库
+                同步数据到向量库
               </Button>
-              <Button
-                onClick={() => {
-                  setFilterDay(undefined);
-                  setFilterTitle('');
-                  setFilterDesc('');
-                  setFilterTagId(undefined);
-                  setAppliedDay(undefined);
-                  setAppliedTitle(undefined);
-                  setAppliedDesc(undefined);
-                  setAppliedTagId(undefined);
-                  setPage(1);
-                }}
-              >
-                重置
-              </Button>
+
               <Button
                 type="primary"
                 disabled={!jobId}

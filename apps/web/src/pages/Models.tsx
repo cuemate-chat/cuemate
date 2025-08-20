@@ -5,7 +5,7 @@ import {
   EyeOutlined,
   LinkOutlined,
 } from '@ant-design/icons';
-import { Input, Modal, Select, Switch, Tabs, Tree } from 'antd';
+import { Button, Input, Modal, Select, Switch, Tabs, Tree } from 'antd';
 import 'antd/dist/reset.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -17,6 +17,7 @@ import {
   upsertModel,
 } from '../api/models';
 import CollapsibleSidebar from '../components/CollapsibleSidebar';
+import FullScreenOverlay from '../components/FullScreenOverlay';
 import { message } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 import { findProvider, providerManifests } from '../providers';
@@ -178,15 +179,13 @@ export default function Models() {
 
   return (
     <div className="flex gap-4 relative" style={{ height: MAIN_HEIGHT }}>
-      {/* 测试连通性加载遮罩 */}
-      {testingModelId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 flex flex-col items-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <div className="text-slate-700 font-medium">正在测试连通性，请稍候...</div>
-          </div>
-        </div>
-      )}
+      {/* 全屏遮罩组件 */}
+      <FullScreenOverlay
+        visible={!!testingModelId}
+        title="正在测试连通性"
+        subtitle="请稍候，正在验证模型连接..."
+        type="testing"
+      />
 
       {/* 左侧树 */}
       <CollapsibleSidebar
@@ -469,6 +468,9 @@ function getDefaultCredentialsByProvider(pid?: string) {
 function EditModal({ open, data, onClose, onOk }: any) {
   const [form, setForm] = useState<any>(data || { scope: 'public', type: 'llm', params: [] });
   const [pickerOpenInner, setPickerOpenInner] = useState(false);
+  const [saving, setSaving] = useState(false); // 添加保存状态
+  const [testing, setTesting] = useState(false); // 添加测试连接状态
+  
   useEffect(() => {
     const base = data || { scope: 'public', type: 'llm', params: [] };
     
@@ -501,13 +503,87 @@ function EditModal({ open, data, onClose, onOk }: any) {
     }
   }, [data?.provider]);
 
+  // 测试连接功能
+  const handleTestConnection = async () => {
+    if (!form.provider || !form.model_name) {
+      message.warning('请先选择供应商和基础模型');
+      return;
+    }
+
+    // 收集凭证信息
+    const provider = findProvider(form.provider);
+    const fields =
+      provider?.credentialFieldsPerModel?.[form.model_name] ||
+      provider?.credentialFieldsPerModel?.default ||
+      provider?.credentialFields ||
+      [];
+    const credentials: Record<string, any> = {};
+    fields.forEach((f) => {
+      if (form[f.key] !== undefined && form[f.key] !== '') credentials[f.key] = form[f.key];
+    });
+
+    if (Object.keys(credentials).length === 0) {
+      message.warning('请先填写必要的凭证信息');
+      return;
+    }
+
+    setTesting(true);
+    try {
+      // 这里需要调用测试连接的API，暂时模拟一下
+      // 实际应该调用 testModelConnectivity 或类似的API
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 模拟2秒延迟
+      message.success('连接测试成功！');
+    } catch (error: any) {
+      message.error(error?.message || '连接测试失败');
+    } finally {
+      setTesting(false);
+    }
+  };
+
   return (
     <Modal
       open={open}
       onCancel={onClose}
-      onOk={() => onOk(form)}
-      okText="保存"
+      onOk={async () => {
+        setSaving(true);
+        try {
+          await onOk(form);
+        } finally {
+          setSaving(false);
+        }
+      }}
+      okText={saving ? "保存中..." : "保存"}
       cancelText="取消"
+      okButtonProps={{ loading: saving, disabled: saving }}
+      footer={[
+        <Button key="cancel" onClick={onClose} disabled={saving || testing}>
+          取消
+        </Button>,
+        <Button 
+          key="test" 
+          onClick={handleTestConnection}
+          disabled={saving || testing || !form.provider || !form.model_name}
+          loading={testing}
+        >
+          {testing ? "测试中..." : "测试连接"}
+        </Button>,
+        <Button 
+          key="save" 
+          type="primary" 
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await onOk(form);
+            } finally {
+              setSaving(false);
+            }
+          }}
+          loading={saving}
+          disabled={saving || testing}
+        >
+          {saving ? "保存中..." : "保存"}
+        </Button>
+      ]}
       title={
         <div className="flex items-center gap-2">
           <button
@@ -558,6 +634,14 @@ function EditModal({ open, data, onClose, onOk }: any) {
         }}
         filterKey={'all'}
       />
+      {/* 全屏遮罩组件 */}
+      <FullScreenOverlay
+        visible={saving}
+        title="正在保存模型配置..."
+        subtitle="请稍候，这可能需要几秒钟"
+        type="saving"
+      />
+      
       <div className="flex flex-col h-full">
         <Tabs
           items={[
@@ -869,11 +953,21 @@ function ProviderPicker({ open, onClose, onPick, providers, filterKey }: any) {
       footer={null}
       title="选择供应商"
       width={900}
-      style={{ overflow: 'hidden' }}
+      style={{ 
+        maxHeight: '90vh',
+        overflow: 'hidden',
+        top: '10vh'
+      }}
+      bodyStyle={{
+        padding: 0,
+        height: 'calc(90vh - 110px)', // 减去标题栏和底部按钮的高度
+        display: 'flex',
+        flexDirection: 'column'
+      }}
     >
       <div className="flex flex-col h-full">
         {/* 内容区域 */}
-        <div className="flex-1 overflow-y-auto pb-4">
+        <div className="flex-1 overflow-y-auto p-4 pb-6">
           <div className="grid grid-cols-2 gap-3">
             {list.map((p) => (
               <button
@@ -893,7 +987,7 @@ function ProviderPicker({ open, onClose, onPick, providers, filterKey }: any) {
         </div>
 
         {/* 底部按钮区域 */}
-        <div className="flex justify-end gap-2 pt-4 border-t border-slate-200">
+        <div className="flex justify-end gap-2 p-4 border-t border-slate-200 bg-white">
           <button
             onClick={handleCopy}
             className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"

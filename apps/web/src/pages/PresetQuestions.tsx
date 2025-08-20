@@ -70,7 +70,6 @@ export default function PresetQuestions() {
   const [newTagId, setNewTagId] = useState<string | undefined>(undefined);
 
   // 筛选条件
-  const [keyword, setKeyword] = useState('');
   const [filterTagId, setFilterTagId] = useState<string | undefined>(undefined);
   const [filterBuiltin, setFilterBuiltin] = useState<boolean | undefined>(undefined);
   const [filterDay, setFilterDay] = useState<string | undefined>(undefined);
@@ -113,7 +112,6 @@ export default function PresetQuestions() {
       const data = await listPresetQuestions({
         page: curPage,
         pageSize,
-        keyword: keyword.trim() || undefined,
         tag_id: filterTagId,
         is_builtin: filterBuiltin,
         day: filterDay,
@@ -144,7 +142,7 @@ export default function PresetQuestions() {
 
   useEffect(() => {
     reloadList();
-  }, [page, pageSize, keyword, filterTagId, filterBuiltin, filterDay, filterQuestion, filterAnswer]);
+  }, [page, pageSize, filterTagId, filterBuiltin, filterDay, filterQuestion, filterAnswer]);
 
   // 多选处理
   const handleSelectAll = (checked: boolean) => {
@@ -418,19 +416,7 @@ export default function PresetQuestions() {
             ]}
             style={{ width: 120 }}
           />
-          <Button 
-            onClick={() => {
-              setFilterDay(undefined);
-              setFilterQuestion('');
-              setFilterAnswer('');
-              setFilterTagId(undefined);
-              setFilterBuiltin(undefined);
-              setKeyword('');
-              setPage(1);
-            }}
-          >
-            重置
-          </Button>
+
           <Button onClick={() => setTagMgrOpen(true)}>管理标签</Button>
           <Button 
             icon={<CloudArrowUpIcon className="w-4 h-4" />}
