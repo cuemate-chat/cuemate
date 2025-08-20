@@ -969,18 +969,28 @@ function ProviderPicker({ open, onClose, onPick, providers, filterKey }: any) {
         {/* 内容区域 */}
         <div className="flex-1 overflow-y-auto p-4 pb-6">
           <div className="grid grid-cols-2 gap-3">
-            {list.map((p) => (
+            {list.map((p, index) => (
               <button
                 key={p.id}
                 onClick={() => onPick(p.id)}
-                className="flex items-center border rounded-lg px-4 py-3 hover:bg-slate-50"
+                className="flex items-center border rounded-lg hover:bg-slate-50 relative overflow-hidden group"
               >
-                {p.icon &&
-                  (() => {
-                    const src = `data:image/svg+xml;utf8,${encodeURIComponent(p.icon)}`;
-                    return <img src={src} alt="" className="w-6 h-6" />;
-                  })()}
-                <span className="ml-3 font-medium text-slate-800">{p.name}</span>
+                {/* 左侧序号区域 */}
+                <div className="w-12 h-full bg-gradient-to-b from-blue-50 to-blue-100 border-r border-blue-200 flex items-center justify-center transition-all duration-200 group-hover:from-blue-100 group-hover:to-blue-200">
+                  <span className="text-blue-600 text-sm font-semibold group-hover:text-blue-800 transition-colors duration-200">
+                    {index + 1}
+                  </span>
+                </div>
+                
+                {/* 右侧内容区域 */}
+                <div className="flex items-center px-4 py-3 flex-1">
+                  {p.icon &&
+                    (() => {
+                      const src = `data:image/svg+xml;utf8,${encodeURIComponent(p.icon)}`;
+                      return <img src={src} alt="" className="w-6 h-6" />;
+                    })()}
+                  <span className="ml-3 font-medium text-slate-800">{p.name}</span>
+                </div>
               </button>
             ))}
           </div>
