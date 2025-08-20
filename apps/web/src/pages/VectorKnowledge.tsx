@@ -13,6 +13,7 @@ import {
   searchQuestions,
   searchResumes
 } from '../api/vector';
+import FullScreenOverlay from '../components/FullScreenOverlay';
 import { message } from '../components/Message';
 
 export default function VectorKnowledge() {
@@ -43,6 +44,10 @@ export default function VectorKnowledge() {
   } | null>(null);
   const [activeTab, setActiveTab] = useState('document'); // 控制标签页
   const [currentTab, setCurrentTab] = useState('jobs'); // 控制主标签页：jobs, resumes, questions, sync-status
+  
+  // 同步和清空的加载状态
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [cleanLoading, setCleanLoading] = useState(false);
 
   // 获取标签列表和默认加载所有内容
   useEffect(() => {
@@ -379,7 +384,12 @@ export default function VectorKnowledge() {
               <h2 className="text-xl font-semibold text-slate-900 mb-2">数据同步状态</h2>
             </div>
             
-            <SyncStatusOverview />
+            <SyncStatusOverview 
+              onSyncStart={() => setSyncLoading(true)}
+              onSyncEnd={() => setSyncLoading(false)}
+              onCleanStart={() => setCleanLoading(true)}
+              onCleanEnd={() => setCleanLoading(false)}
+            />
           </div>
         )}
 
@@ -947,13 +957,38 @@ export default function VectorKnowledge() {
             </div>
           )}
         </Modal>
+        
+        {/* 全屏遮罩组件 */}
+        <FullScreenOverlay
+          visible={syncLoading}
+          title="正在同步所有数据"
+          subtitle="请稍候，这可能需要几秒钟的时间..."
+          type="loading"
+        />
+        
+        <FullScreenOverlay
+          visible={cleanLoading}
+          title="正在清空所有数据"
+          subtitle="请稍候，正在删除向量库中的所有数据..."
+          type="loading"
+        />
       </div>
     </div>
   );
 }
 
 // 同步状态概览组件
-const SyncStatusOverview = () => {
+const SyncStatusOverview = ({ 
+  onSyncStart, 
+  onSyncEnd, 
+  onCleanStart, 
+  onCleanEnd 
+}: {
+  onSyncStart?: () => void;
+  onSyncEnd?: () => void;
+  onCleanStart?: () => void;
+  onCleanEnd?: () => void;
+}) => {
   const [syncStatus, setSyncStatus] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [cleanLoading, setCleanLoading] = useState(false);
@@ -984,6 +1019,7 @@ const SyncStatusOverview = () => {
   const handleSyncAll = async () => {
     try {
       setLoading(true);
+      onSyncStart?.();
       const { syncAll } = await import('../api/vector');
       // 不传jobId同步所有数据
       const result = await syncAll('');
@@ -997,6 +1033,7 @@ const SyncStatusOverview = () => {
       message.error('同步失败：' + (error.message || '未知错误'));
     } finally {
       setLoading(false);
+      onSyncEnd?.();
     }
   };
 
@@ -1035,6 +1072,7 @@ const SyncStatusOverview = () => {
       onOk: async () => {
         try {
           setCleanLoading(true);
+          onCleanStart?.();
           const { cleanAllVectorData } = await import('../api/vector');
           const result = await cleanAllVectorData();
           if (result.success) {
@@ -1048,6 +1086,7 @@ const SyncStatusOverview = () => {
           message.error('清空失败：' + (error.message || '未知错误'));
         } finally {
           setCleanLoading(false);
+          onCleanEnd?.();
         }
       },
     });
@@ -1072,40 +1111,26 @@ const SyncStatusOverview = () => {
         <div className="flex gap-4 justify-center">
           <button
             onClick={handleSyncAll}
-            disabled={loading}
+            disabled={loading || cleanLoading}
             className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
-              loading
+              loading || cleanLoading
                 ? 'bg-gray-400 text-white cursor-not-allowed'
                 : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg transform hover:scale-105'
             }`}
           >
-            {loading ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                同步中...
-              </div>
-            ) : (
-              '一键同步所有数据'
-            )}
+            一键同步所有数据
           </button>
           
           <button
             onClick={handleCleanAll}
-            disabled={cleanLoading}
+            disabled={loading || cleanLoading}
             className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
-              cleanLoading
+              loading || cleanLoading
                 ? 'bg-gray-400 text-white cursor-not-allowed'
                 : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg transform hover:scale-105'
             }`}
           >
-            {cleanLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                清空中...
-              </div>
-            ) : (
-              '一键清空所有数据'
-            )}
+            一键清空所有数据
           </button>
         </div>
         <p className="mt-2 text-sm text-slate-500">
@@ -1329,6 +1354,7 @@ const SyncStatusOverview = () => {
           </div>
         </div>
       </div>
+      
     </div>
   );
 };

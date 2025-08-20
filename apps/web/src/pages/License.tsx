@@ -199,7 +199,7 @@ export default function License() {
                   </span>
                 </div>
                 <div className="px-3 py-1 bg-white/80 rounded-full">
-                  <span className="text-sm font-medium text-slate-600">授权版本 {license.licenseVersion || 'v1'}</span>
+                  <span className="text-sm font-medium text-slate-600">授权版本： {license.licenseVersion || 'v0.1.0'}</span>
                 </div>
               </div>
 
@@ -333,14 +333,14 @@ export default function License() {
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
               <CloudArrowUpIcon className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">上传新 License</h2>
+            <h2 className="text-xl font-semibold text-slate-900">上传 License</h2>
           </div>
           
           <div className="space-y-6">
             {/* 文件上传方式 */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                上传 License 文件
+                上传 License.key 文件
               </label>
               <div className="relative">
                 <input
