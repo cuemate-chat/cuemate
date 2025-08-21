@@ -406,12 +406,22 @@ export default function JobsNew() {
             <Button onClick={() => (current === 0 ? nav('/home') : handlePrev())}>
               {current === 0 ? '返回主页' : '上一步'}
             </Button>
-            <Button
-              onClick={() => setResumeSampleOpen(true)}
-              className="bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:text-blue-700"
-            >
-              简历示例
-            </Button>
+            {current === 1 && (
+              <Button
+                onClick={() => setResumeSampleOpen(true)}
+                className="bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:text-blue-700"
+              >
+                简历示例
+              </Button>
+            )}
+            {current === 2 && (
+              <Button
+                onClick={() => nav('/home')}
+                className="bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:text-green-700"
+              >
+                准备模拟面试
+              </Button>
+            )}
           </div>
           {current < 2 && (
             <Button
@@ -433,6 +443,13 @@ export default function JobsNew() {
                 onClick={() => nav('/settings/vector-knowledge')}
               >
                 去往向量知识库
+              </Button>
+              <Button
+                disabled={progress < 100}
+                onClick={() => nav('/questions')}
+                className="bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 hover:text-orange-700"
+              >
+                添加面试押题
               </Button>
             </div>
           )}
