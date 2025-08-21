@@ -1,6 +1,7 @@
 import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { getLlmRouterUrl, SERVICE_CONFIG } from '../config/services.js';
 
 export function registerModelRoutes(app: FastifyInstance) {
   // 列表查询（支持按供应商/类型/关键字过滤）
@@ -129,8 +130,7 @@ export function registerModelRoutes(app: FastifyInstance) {
       try {
         const modelRow = (app as any).db.prepare('SELECT * FROM models WHERE id=?').get(id);
         const creds = modelRow?.credentials ? JSON.parse(modelRow.credentials) : {};
-        const base = 'http://localhost:3002';
-        const res = await fetch(`${base}/providers/probe`, {
+        const res = await fetch(getLlmRouterUrl(SERVICE_CONFIG.LLM_ROUTER.ENDPOINTS.PROBE), {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
@@ -199,9 +199,6 @@ export function registerModelRoutes(app: FastifyInstance) {
         }
       }
 
-      // 调用 llm-router 的动态探测接口
-      const base = 'http://localhost:3002';
-
       // 构建请求体
       const requestBody = {
         id: model.provider,
@@ -227,14 +224,14 @@ export function registerModelRoutes(app: FastifyInstance) {
           credentials: creds,
           params: paramsMap,
           requestBody,
-          llmRouterBase: base,
+          llmRouterBase: getLlmRouterUrl(),
         },
         'Testing model connectivity',
       );
 
       try {
         app.log.debug('Calling llm-router probe endpoint...');
-        const res = await fetch(`${base}/providers/probe`, {
+        const res = await fetch(getLlmRouterUrl(SERVICE_CONFIG.LLM_ROUTER.ENDPOINTS.PROBE), {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(requestBody),

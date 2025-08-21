@@ -10,8 +10,9 @@ import { Select } from 'antd';
 import { useEffect, useState } from 'react';
 import { message } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
+import { WEB_API_BASE } from '../config';
 import { LAYOUT_PAGES, getBlockPrice } from '../data/pixelLayout';
-import { getToken } from '../lib/auth';
+import { authedFetch, getToken } from '../lib/auth';
 
 interface PixelAd {
   id: string;
@@ -148,6 +149,10 @@ export default function AdsManagement() {
   const fetchAds = async (page = 1, limit = pageSize, search = '', status = '') => {
     setLoading(true);
     try {
+      const token = getToken();
+      console.log('Current token:', token ? `${token.substring(0, 20)}...` : 'No token');
+      console.log('WEB_API_BASE:', WEB_API_BASE);
+      
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
@@ -155,11 +160,8 @@ export default function AdsManagement() {
         ...(status && { status }),
       });
 
-      const response = await fetch(`/api/pixel-ads?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-        },
-      });
+      const response = await authedFetch(`/pixel-ads?${params}`);
+      console.log('Response status:', response.status);
 
       if (response.ok) {
         const data = await response.json();
@@ -167,6 +169,7 @@ export default function AdsManagement() {
         setTotalCount(data.pagination.total);
       } else {
         const errorData = await response.json();
+        console.error('API Error:', errorData);
         message.error(errorData.error || '获取广告列表失败');
       }
     } catch (error) {
@@ -180,11 +183,10 @@ export default function AdsManagement() {
   // 检查位置是否可用
   const checkPosition = async (x: number, y: number, width: number, height: number, excludeId?: string) => {
     try {
-      const response = await fetch('/api/pixel-ads/check-position', {
+      const response = await authedFetch('/pixel-ads/check-position', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getToken()}`,
         },
         body: JSON.stringify({
           x_position: x,
@@ -286,7 +288,7 @@ export default function AdsManagement() {
         }
       }
 
-      const url = editingAd ? `/api/pixel-ads/${editingAd.id}` : '/api/pixel-ads';
+      const url = editingAd ? `/pixel-ads/${editingAd.id}` : '/pixel-ads';
       const method = editingAd ? 'PUT' : 'POST';
 
       const payload = {
@@ -295,11 +297,10 @@ export default function AdsManagement() {
         // 注意：image_path由后端处理，这里不传递
       };
 
-      const response = await fetch(url, {
+      const response = await authedFetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getToken()}`,
         },
         body: JSON.stringify(payload),
       });
@@ -330,11 +331,8 @@ export default function AdsManagement() {
     }
 
     try {
-      const response = await fetch(`/api/pixel-ads/${ad.id}`, {
+      const response = await authedFetch(`/pixel-ads/${ad.id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-        },
       });
 
       if (response.ok) {
