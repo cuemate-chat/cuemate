@@ -38,7 +38,9 @@ RUN mkdir -p /opt/cuemate/log/info/web-api \
     && mkdir -p /opt/cuemate/log/debug/web-api \
     && mkdir -p /opt/cuemate/log/warn/web-api \
     && mkdir -p /opt/cuemate/log/error/web-api \
-    && chown -R node:node /opt/cuemate/log
+    && mkdir -p /opt/cuemate/pdf \
+    && chown -R node:node /opt/cuemate/log \
+    && chown -R node:node /opt/cuemate/pdf
 
 EXPOSE 3004
 ENTRYPOINT ["dumb-init", "--"]

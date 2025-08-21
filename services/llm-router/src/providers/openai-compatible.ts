@@ -73,7 +73,7 @@ export class OpenAICompatibleProvider extends BaseLLMProvider {
   }
 
   async healthCheck(): Promise<boolean> {
-    if (!this.client) return false;
+    if (!this.client) throw new Error(`${this.name} client not initialized`);
     try {
       // 先尝试 /models
       try {
@@ -91,10 +91,10 @@ export class OpenAICompatibleProvider extends BaseLLMProvider {
         return true;
       } catch (e) {
         logger.error(`${this.name} healthCheck failed`, e);
-        return false;
+        throw e; // 抛出异常以便获取具体错误信息
       }
-    } catch {
-      return false;
+    } catch (error) {
+      throw error; // 抛出异常以便获取具体错误信息
     }
   }
 }

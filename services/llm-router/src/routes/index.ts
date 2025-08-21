@@ -164,6 +164,8 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
 
       let chatOk: boolean | undefined;
       let embedOk: boolean | undefined;
+      let chatError: string | undefined;
+      let embedError: string | undefined;
 
       let provider: BaseLLMProvider;
       switch (providerId) {
@@ -216,6 +218,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         } catch (error) {
           logger.error({ err: error }, 'Chat health check failed');
           chatOk = false;
+          chatError = error instanceof Error ? error.message : String(error);
         }
       }
 
@@ -230,6 +233,10 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
           logger.info(`Embeddings test config:`, { embedBaseUrl, embedApiKey, embedModel });
 
           if (!embedApiKey || !embedBaseUrl) {
+            const missingFields = [];
+            if (!embedApiKey) missingFields.push('API Key');
+            if (!embedBaseUrl) missingFields.push('Base URL');
+            embedError = `缺少必要字段: ${missingFields.join(', ')}`;
             logger.error('Missing required fields for embeddings test:', {
               embedApiKey: !!embedApiKey,
               embedBaseUrl: !!embedBaseUrl,
@@ -245,10 +252,10 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
             logger.info(`Embeddings test result:`, { embedOk, response: r });
           }
         } catch (error) {
-          logger.error(
-            `Embeddings test failed: ${error instanceof Error ? error.message : String(error)}`,
-          );
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error(`Embeddings test failed: ${errorMessage}`);
           embedOk = false;
+          embedError = errorMessage;
         }
       }
 
@@ -258,7 +265,13 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
           : mode === 'embeddings'
             ? !!embedOk
             : !!chatOk && (embedOk === undefined ? true : !!embedOk);
-      return { ok, chatOk, embedOk };
+      
+      // 构建包含错误信息的响应
+      const response: any = { ok, chatOk, embedOk };
+      if (chatError) response.chatError = chatError;
+      if (embedError) response.embedError = embedError;
+      
+      return response;
     } catch (error) {
       return reply.code(200).send({ ok: false, error: (error as any)?.message || 'probe failed' });
     }

@@ -109,16 +109,27 @@ export class OpenAIProvider extends BaseLLMProvider {
 
   async healthCheck(): Promise<boolean> {
     if (!this.client) {
-      return false;
+      throw new Error('OpenAI client not initialized');
     }
 
     try {
-      // 简单的健康检查 - 尝试列出模型
-      await this.client.models.list();
+      // 先尝试列出模型（快速检查API连接性）
+      try {
+        await this.client.models.list();
+      } catch {}
+      
+      // 然后实际测试指定模型是否可用 - 发送一个简单的测试请求
+      await this.client.chat.completions.create({
+        model: this.config.model,
+        messages: [{ role: 'user', content: 'ping' }],
+        temperature: 0,
+        max_tokens: 1,
+      });
       return true;
     } catch (error) {
-      logger.error('OpenAI health check failed:', error);
-      return false;
+      logger.error(`OpenAI health check failed for model ${this.config.model}:`, error);
+      // 抛出异常而不是返回false，这样路由可以捕获具体的错误信息
+      throw error;
     }
   }
 }

@@ -2,7 +2,7 @@ import { withErrorLogging } from '@cuemate/logger';
 import { randomUUID } from 'crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { getRagServiceUrl, getLlmRouterUrl, SERVICE_CONFIG } from '../config/services.js';
+import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 
 export function registerJobRoutes(app: FastifyInstance) {
   const createSchema = z.object({
@@ -341,87 +341,130 @@ export function registerJobRoutes(app: FastifyInstance) {
   });
 
   // 简历优化接口
-  app.post('/jobs/optimize-resume', 
+  app.post(
+    '/jobs/optimize-resume',
     withErrorLogging(app.log as any, 'jobs.optimize-resume', async (req: any, reply: any) => {
       try {
-        await req.jwtVerify();
-        const body = z.object({
-          jobId: z.string(),
-          resumeContent: z.string().min(1),
-          jobDescription: z.string().min(1),
-        }).parse(req.body);
+        const payload = await req.jwtVerify();
+        const body = z
+          .object({
+            jobId: z.string(),
+            resumeContent: z.string().min(1),
+            jobDescription: z.string().min(1),
+          })
+          .parse(req.body);
 
         // 从用户表获取选中的模型ID
-        const user = app.db.prepare('SELECT selected_model_id FROM users WHERE id = ?').get(payload.uid);
+        const user = app.db
+          .prepare('SELECT selected_model_id FROM users WHERE id = ?')
+          .get(payload.uid);
         if (!user || !user.selected_model_id) {
           return reply.code(400).send({ error: '用户未选择大模型，请先在设置中选择一个模型' });
         }
 
         // 获取模型信息
-        const model = app.db.prepare('SELECT * FROM models WHERE id = ?').get(user.selected_model_id);
+        const model = app.db
+          .prepare('SELECT * FROM models WHERE id = ?')
+          .get(user.selected_model_id);
         if (!model) {
           return reply.code(400).send({ error: '所选模型不存在，请重新选择模型' });
         }
 
-        const credentials = model.credentials ? JSON.parse(model.credentials) : {};
-        
-        // 构建优化提示词
-        const optimizePrompt = `请对以下简历进行优化，使其更符合目标岗位要求。请提供：
-1. 具体的优化建议
-2. 优化后的完整简历内容
+        // 获取模型参数配置
+        const modelParams = app.db
+          .prepare('SELECT param_key, value FROM model_params WHERE model_id = ?')
+          .all(user.selected_model_id);
 
-目标岗位描述：
-${body.jobDescription}
-
-当前简历内容：
-${body.resumeContent}
-
-请按照以下格式返回JSON：
-{
-  "suggestions": "详细的优化建议...",
-  "optimizedResume": "优化后的完整简历内容..."
-}`;
-
-        // 根据模型提供商直接调用对应API
-        let llmResponse: Response;
-        const messages = [
-          {
-            role: 'system',
-            content: '你是一个专业的简历优化助手，擅长根据岗位要求优化简历内容。'
-          },
-          {
-            role: 'user', 
-            content: optimizePrompt
+        // 构建参数对象
+        const params: Record<string, any> = {};
+        modelParams.forEach((param: any) => {
+          const value = param.value;
+          // 尝试将字符串转换为数字（对于temperature、max_tokens等）
+          if (!isNaN(Number(value))) {
+            params[param.param_key] = Number(value);
+          } else {
+            params[param.param_key] = value;
           }
-        ];
+        });
 
-        if (model.provider === 'openai' || model.provider === 'deepseek' || model.provider === 'moonshot') {
-          // OpenAI 兼容接口
-          llmResponse = await fetch(`${credentials.base_url || credentials.baseUrl}/v1/chat/completions`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${credentials.api_key || credentials.apiKey}`,
-            },
-            body: JSON.stringify({
-              model: model.model_name,
-              messages,
-              temperature: 0.7,
-              max_tokens: 2000,
-            }),
-          });
-        } else {
-          // 其他提供商暂时返回错误
-          return reply.code(400).send({ error: `暂不支持 ${model.provider} 提供商的简历优化功能` });
+        // 构建优化提示词
+        const optimizePrompt = `作为一名专业的简历优化师，请根据目标岗位要求对以下简历进行全面优化。
+
+        **重要要求：**
+        1. 优化后的简历内容必须详细完整，字数不能少于原简历的80%
+        2. 保留原简历的所有重要信息，在此基础上进行增强和改进
+        3. 针对目标岗位要求，重点突出相关技能和经验
+        4. 优化语言表达，使用更专业和有说服力的词汇
+        5. 完善简历结构，确保逻辑清晰、重点突出
+
+        **目标岗位描述：**
+        ${body.jobDescription}
+
+        **当前简历内容（${body.resumeContent.length}字）：**
+        ${body.resumeContent}
+
+        **请提供：**
+        1. **优化建议**：列出5-10条具体的优化建议，说明为什么要这样改进
+        2. **优化后的完整简历**：基于原简历进行全面优化，确保内容丰富详细，字数不少于原简历的80%
+
+        **输出格式（JSON）：**
+        {
+          "suggestions": "1. [具体建议1]\\n2. [具体建议2]\\n3. [具体建议3]\\n...",
+          "optimizedResume": "[完整的优化后简历内容，必须详细完整，不能过于简化]"
         }
+
+        **注意：优化后的简历必须保持原有的详细程度，在此基础上进行改进，绝不能简化或缩短内容。**`;
+
+        // 直接调用对应的 API（与模型测试使用相同配置）
+        const credentials = model.credentials ? JSON.parse(model.credentials) : {};
+        const baseUrl = (credentials.base_url || credentials.baseUrl || '').replace(/\/+$/, '');
+        const apiKey = credentials.api_key || credentials.apiKey;
+
+        // 检查baseUrl是否已经包含v1
+        let requestUrl = '';
+        if (baseUrl.endsWith('/v1')) {
+          requestUrl = `${baseUrl}/chat/completions`;
+        } else {
+          requestUrl = `${baseUrl}/v1/chat/completions`;
+        }
+
+        const llmResponse = await fetch(requestUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: model.model_name,
+            messages: [
+              {
+                role: 'system',
+                content: '你是一个专业的简历优化助手，擅长根据岗位要求优化简历内容。',
+              },
+              {
+                role: 'user',
+                content: optimizePrompt,
+              },
+            ],
+            // 使用用户配置的参数，如果没有配置则使用默认值
+            temperature: params.temperature || 0.7,
+            max_tokens: Math.max(params.max_tokens || 4000, 4000), // 确保至少4000个token
+            // 添加其他可能的参数
+            ...(params.top_p && { top_p: params.top_p }),
+            ...(params.frequency_penalty && { frequency_penalty: params.frequency_penalty }),
+            ...(params.presence_penalty && { presence_penalty: params.presence_penalty }),
+          }),
+        });
 
         if (!llmResponse.ok) {
           const errorText = await llmResponse.text();
           app.log.error(`LLM service error: ${llmResponse.status} - ${errorText}`);
-          return reply.code(500).send({ error: `调用大模型服务失败: ${errorText}` });
+
+          let errorMessage = `调用大模型服务失败 (${llmResponse.status}): ${errorText}`;
+          return reply.code(500).send({ error: errorMessage });
         }
 
-        const llmResult = await llmResponse.json() as any;
+        const llmResult = (await llmResponse.json()) as any;
         const content = llmResult.choices?.[0]?.message?.content;
 
         if (!content) {
@@ -440,12 +483,32 @@ ${body.resumeContent}
           };
         }
 
+        // 验证优化后简历的长度
+        const originalLength = body.resumeContent.length;
+        const optimizedLength = (result.optimizedResume || content).length;
+        const minRequiredLength = Math.floor(originalLength * 0.8); // 至少80%的长度
+
+        if (optimizedLength < minRequiredLength) {
+          app.log.warn(
+            `Optimized resume too short: ${optimizedLength} chars (original: ${originalLength} chars, required: ${minRequiredLength} chars)`,
+          );
+
+          // 如果优化后的内容太短，返回警告信息
+          return {
+            success: true,
+            suggestions:
+              (result.suggestions || '暂无具体建议') +
+              '\n\n⚠️ 注意：AI生成的简历内容相对较短，建议您在优化后的基础上补充更多详细信息。',
+            optimizedResume: result.optimizedResume || content,
+            warning: `优化后的简历较短（${optimizedLength}字），建议在此基础上补充更多详细信息。原简历${originalLength}字。`,
+          };
+        }
+
         return {
           success: true,
           suggestions: result.suggestions || '暂无具体建议',
           optimizedResume: result.optimizedResume || content,
         };
-
       } catch (err: any) {
         app.log.error({ err }, '简历优化失败');
         if (err.name === 'ZodError') {
@@ -453,6 +516,6 @@ ${body.resumeContent}
         }
         return reply.code(500).send({ error: '简历优化失败：' + err.message });
       }
-    })
+    }),
   );
 }
