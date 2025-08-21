@@ -75,8 +75,7 @@ export default function PixelAds() {
         message.error('获取广告数据失败');
       }
     } catch (error) {
-      console.error('获取广告数据出错:', error);
-      message.error('获取广告数据出错');
+      message.error('获取广告数据出错:' + error);
     } finally {
       setLoading(false);
     }
@@ -294,8 +293,7 @@ export default function PixelAds() {
         }, 100);
       }
     } catch (error) {
-      console.error('全屏切换失败:', error);
-      message.error('全屏功能不可用');
+      message.error('全屏功能不可用:' + error);
     }
   };
 

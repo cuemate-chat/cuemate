@@ -1,3 +1,4 @@
+import { message } from 'antd';
 import type {
   ChangePasswordRequest,
   LoginRequest,
@@ -13,12 +14,23 @@ export async function signin(account: string, password: string): Promise<LoginRe
 
   storage.setToken(response.token);
   storage.setUser(response.user);
+
+  // 登录成功后获取 license 信息
+  try {
+    const licenseResponse = await http.get<{ license: any }>('/license/info');
+    if (licenseResponse.license) {
+      storage.setLicense(licenseResponse.license);
+    }
+  } catch (error) {
+    message.error('获取 license 信息失败:' + error);
+  }
+
   return response;
 }
 
 export async function fetchMe(): Promise<User> {
   const response = await http.get<{ user: User }>('/auth/me');
-  
+
   storage.setUser(response.user);
   return response.user;
 }

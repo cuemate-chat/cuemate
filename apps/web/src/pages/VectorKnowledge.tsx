@@ -93,7 +93,7 @@ export default function VectorKnowledge() {
                 };
               }
             } catch (error) {
-              console.error('获取相关文档失败:', error);
+              message.error('获取相关文档失败:' + error);
             }
             return doc;
           })
@@ -185,7 +185,7 @@ export default function VectorKnowledge() {
                 };
               }
             } catch (error) {
-              console.error('获取相关文档失败:', error);
+              message.error('获取相关文档失败:' + error);
             }
             return doc;
           })
@@ -241,8 +241,6 @@ export default function VectorKnowledge() {
     setActiveTab('document'); // 重置到第一个标签页
 
     try {
-      console.log('正在获取文档关联信息:', doc.id, doc.metadata.type);
-      
       // 获取关联信息
       const result = await getRelatedDocuments(
         doc.id,
@@ -255,13 +253,9 @@ export default function VectorKnowledge() {
               : 'default',
       );
 
-      console.log('获取关联信息结果:', result);
-
       if (result.success && result.related) {
         setRelatedData(result.related);
-        console.log('设置关联数据:', result.related);
       } else {
-        console.warn('获取关联信息失败或为空:', result.error);
         // 即使没有关联数据，也要设置一个空的结构
         setRelatedData({
           jobs: doc.metadata.type === 'jobs' ? [doc] : [],
@@ -270,7 +264,6 @@ export default function VectorKnowledge() {
         });
       }
     } catch (error) {
-      console.error('获取关联信息异常:', error);
       message.error('获取关联信息失败: ' + error);
       // 设置默认的关联数据结构
       setRelatedData({
@@ -1089,7 +1082,7 @@ const SyncStatusOverview = ({
         questions: status.questions
       });
     } catch (error) {
-      console.error('获取同步状态失败:', error);
+      message.error('获取同步状态失败:' + error);
     }
   };
 
@@ -1107,7 +1100,6 @@ const SyncStatusOverview = ({
         message.error('同步失败：' + (result.error || '未知错误'));
       }
     } catch (error: any) {
-      console.error('Sync error:', error);
       let errorMessage = '同步失败：';
       
       if (error.response?.status === 401) {
@@ -1175,7 +1167,6 @@ const SyncStatusOverview = ({
             message.error('清空失败：' + (result.error || '未知错误'));
           }
         } catch (error: any) {
-          console.error('Clean error:', error);
           let errorMessage = '清空失败：';
           
           if (error.response?.status === 401) {

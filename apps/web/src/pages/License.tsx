@@ -1,7 +1,8 @@
 import { CloudArrowUpIcon, DocumentTextIcon, FolderArrowDownIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
+import { storage } from '../api/http';
 import { message } from '../components/Message';
-import { getToken } from '../lib/auth';
+
 
 interface LicenseInfo {
   id: string;
@@ -23,25 +24,35 @@ export default function License() {
   const [uploadingQuestions, setUploadingQuestions] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
 
+
+
   // 获取当前 License 信息
   const fetchLicenseInfo = async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/license/info', {
         headers: {
-          'Authorization': `Bearer ${getToken()}`,
+          'Authorization': `Bearer ${storage.getToken()}`,
         },
       });
       
       if (response.ok) {
         const data = await response.json();
         setLicense(data.license);
+        
+        // 存储 license 信息
+        if (data.license) {
+          storage.setLicense(data.license);
+        }
       } else {
-        const errorData = await response.json();
-        console.error('获取 License 信息失败:', errorData);
+        // 清除无效的 license 信息
+        storage.clearLicense();
+        setLicense(null);
       }
     } catch (error) {
-      console.error('获取 License 信息出错:', error);
+      // 清除无效的 license 信息
+      storage.clearLicense();
+      setLicense(null);
     } finally {
       setLoading(false);
     }
@@ -67,22 +78,27 @@ export default function License() {
       const response = await fetch('/api/license/upload-file', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${getToken()}`,
+          'Authorization': `Bearer ${storage.getToken()}`,
         },
         body: formData,
       });
 
       if (response.ok) {
-        await response.json();
+        const data = await response.json();
         message.success('License 文件上传成功');
+        
+        // 存储新的 license 信息
+        if (data.license) {
+          storage.setLicense(data.license);
+        }
+        
         fetchLicenseInfo(); // 刷新 License 信息
       } else {
         const errorData = await response.json();
         message.error(errorData.error || 'License 文件上传失败');
       }
     } catch (error) {
-      console.error('上传 License 文件出错:', error);
-      message.error('上传 License 文件出错');
+      message.error('上传 License 文件出错：' + error);
     } finally {
       setUploadingFile(false);
       // 清空文件输入
@@ -113,7 +129,7 @@ export default function License() {
       const response = await fetch('/api/license/upload-questions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${getToken()}`,
+          'Authorization': `Bearer ${storage.getToken()}`,
         },
         body: formData,
       });
@@ -126,8 +142,7 @@ export default function License() {
         message.error(errorData.error || '内置题库导入失败');
       }
     } catch (error) {
-      console.error('上传内置题库出错:', error);
-      message.error('上传内置题库出错');
+      message.error('上传内置题库出错：' + error);
     } finally {
       setUploadingQuestions(false);
       // 清空文件输入
@@ -150,6 +165,13 @@ export default function License() {
   };
 
   useEffect(() => {
+    // 先从 localStorage 中恢复 license 信息
+    const storedLicense = storage.getLicense();
+    if (storedLicense) {
+      setLicense(storedLicense);
+    }
+    
+    // 然后从服务器获取最新的 license 信息
     fetchLicenseInfo();
   }, []);
 

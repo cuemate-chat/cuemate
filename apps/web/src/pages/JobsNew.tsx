@@ -321,14 +321,10 @@ export default function JobsNew() {
                         throw new Error('请先登录后再使用文件解析功能');
                       }
 
-                      console.log('开始解析文件:', file.name, '大小:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
                       const res = await extractResumeText(file);
                       setResumeText((res.text || '').slice(0, 20000));
-                      console.log('文件解析成功，文本长度:', res.text?.length || 0);
                       globalMessage.success(`已从文件解析得到文本（${res.text?.length || 0}个字符）`);
                     } catch (err: any) {
-                      console.error('文件解析失败:', err);
-                      
                       // 根据错误类型给出不同的提示
                       let errorMessage = '暂未能自动提取文本，请粘贴简历文本';
                       let placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n未能自动提取文本内容，请将简历文本粘贴到下方输入框以便后续处理。`;

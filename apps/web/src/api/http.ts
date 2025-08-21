@@ -6,6 +6,7 @@ import type { User } from '../types';
 const STORAGE_KEYS = {
   TOKEN: 'auth_token',
   USER: 'auth_user',
+  LICENSE: 'cuemate_license',
   REMEMBER_ACCOUNT: 'remember_account',
   REMEMBER_PASSWORD: 'remember_password',
   REMEMBER_ENABLED: 'remember_enabled',
@@ -54,6 +55,26 @@ export const storage = {
   getRememberEnabled: (): boolean => localStorage.getItem(STORAGE_KEYS.REMEMBER_ENABLED) === '1',
   clearRememberEnabled: (): void => localStorage.removeItem(STORAGE_KEYS.REMEMBER_ENABLED),
 
+  // License 管理
+  getLicense: (): any | null => {
+    const stored = localStorage.getItem(STORAGE_KEYS.LICENSE);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (error) {
+        localStorage.removeItem(STORAGE_KEYS.LICENSE);
+        return null;
+      }
+    }
+    return null;
+  },
+  setLicense: (licenseInfo: any): void => {
+    // 排除敏感字段
+    const { license_key, ...safeLicenseInfo } = licenseInfo;
+    localStorage.setItem(STORAGE_KEYS.LICENSE, JSON.stringify(safeLicenseInfo));
+  },
+  clearLicense: (): void => localStorage.removeItem(STORAGE_KEYS.LICENSE),
+
   // 清除所有记住的信息
   clearRememberAll: (): void => {
     localStorage.removeItem(STORAGE_KEYS.REMEMBER_ACCOUNT);
@@ -80,10 +101,7 @@ class HttpError extends Error {
 /**
  * 统一的 HTTP 请求函数
  */
-export async function request<T = any>(
-  path: string,
-  init: RequestInit = {},
-): Promise<T> {
+export async function request<T = any>(path: string, init: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(init.headers as Record<string, string>),

@@ -100,8 +100,7 @@ export default function Logs() {
         setTotal(res.total);
       })
       .catch((err) => {
-        console.error(err);
-        message.error('加载日志失败');
+        message.error('加载日志失败：' + err);
       });
   }, [service, level, date, page, pageSize]);
 
@@ -131,8 +130,7 @@ export default function Logs() {
           setTotal(res.total);
         })
         .catch((err) => {
-          console.error(err);
-          message.error('加载日志失败');
+          message.error('加载日志失败：' + err);
         });
     } catch {
       message.error('日志清理失败');

@@ -91,7 +91,7 @@ export default function Settings() {
         }));
         setModelOptions(opts);
       } catch (error) {
-        console.error('Failed to load model options:', error);
+        message.error('Failed to load model options:' + error);
       }
     })();
   }, []);

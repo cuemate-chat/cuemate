@@ -2,7 +2,7 @@ import { withErrorLogging } from '@cuemate/logger';
 import { randomUUID } from 'crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
+import { getRagServiceUrl, getLlmRouterUrl, SERVICE_CONFIG } from '../config/services.js';
 
 export function registerJobRoutes(app: FastifyInstance) {
   const createSchema = z.object({
@@ -339,4 +339,120 @@ export function registerJobRoutes(app: FastifyInstance) {
       return reply.code(500).send({ error: '删除岗位失败：' + err.message });
     }
   });
+
+  // 简历优化接口
+  app.post('/jobs/optimize-resume', 
+    withErrorLogging(app.log as any, 'jobs.optimize-resume', async (req: any, reply: any) => {
+      try {
+        await req.jwtVerify();
+        const body = z.object({
+          jobId: z.string(),
+          resumeContent: z.string().min(1),
+          jobDescription: z.string().min(1),
+        }).parse(req.body);
+
+        // 从用户表获取选中的模型ID
+        const user = app.db.prepare('SELECT selected_model_id FROM users WHERE id = ?').get(payload.uid);
+        if (!user || !user.selected_model_id) {
+          return reply.code(400).send({ error: '用户未选择大模型，请先在设置中选择一个模型' });
+        }
+
+        // 获取模型信息
+        const model = app.db.prepare('SELECT * FROM models WHERE id = ?').get(user.selected_model_id);
+        if (!model) {
+          return reply.code(400).send({ error: '所选模型不存在，请重新选择模型' });
+        }
+
+        const credentials = model.credentials ? JSON.parse(model.credentials) : {};
+        
+        // 构建优化提示词
+        const optimizePrompt = `请对以下简历进行优化，使其更符合目标岗位要求。请提供：
+1. 具体的优化建议
+2. 优化后的完整简历内容
+
+目标岗位描述：
+${body.jobDescription}
+
+当前简历内容：
+${body.resumeContent}
+
+请按照以下格式返回JSON：
+{
+  "suggestions": "详细的优化建议...",
+  "optimizedResume": "优化后的完整简历内容..."
+}`;
+
+        // 根据模型提供商直接调用对应API
+        let llmResponse: Response;
+        const messages = [
+          {
+            role: 'system',
+            content: '你是一个专业的简历优化助手，擅长根据岗位要求优化简历内容。'
+          },
+          {
+            role: 'user', 
+            content: optimizePrompt
+          }
+        ];
+
+        if (model.provider === 'openai' || model.provider === 'deepseek' || model.provider === 'moonshot') {
+          // OpenAI 兼容接口
+          llmResponse = await fetch(`${credentials.base_url || credentials.baseUrl}/v1/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${credentials.api_key || credentials.apiKey}`,
+            },
+            body: JSON.stringify({
+              model: model.model_name,
+              messages,
+              temperature: 0.7,
+              max_tokens: 2000,
+            }),
+          });
+        } else {
+          // 其他提供商暂时返回错误
+          return reply.code(400).send({ error: `暂不支持 ${model.provider} 提供商的简历优化功能` });
+        }
+
+        if (!llmResponse.ok) {
+          const errorText = await llmResponse.text();
+          app.log.error(`LLM service error: ${llmResponse.status} - ${errorText}`);
+          return reply.code(500).send({ error: `调用大模型服务失败: ${errorText}` });
+        }
+
+        const llmResult = await llmResponse.json() as any;
+        const content = llmResult.choices?.[0]?.message?.content;
+
+        if (!content) {
+          return reply.code(500).send({ error: '大模型返回内容为空' });
+        }
+
+        // 尝试解析JSON格式的回复
+        let result;
+        try {
+          result = JSON.parse(content);
+        } catch (e) {
+          // 如果不是JSON格式，则简单处理
+          result = {
+            suggestions: '优化建议：' + content.substring(0, 500),
+            optimizedResume: content,
+          };
+        }
+
+        return {
+          success: true,
+          suggestions: result.suggestions || '暂无具体建议',
+          optimizedResume: result.optimizedResume || content,
+        };
+
+      } catch (err: any) {
+        app.log.error({ err }, '简历优化失败');
+        if (err.name === 'ZodError') {
+          return reply.code(400).send({ error: '参数错误' });
+        }
+        return reply.code(500).send({ error: '简历优化失败：' + err.message });
+      }
+    })
+  );
 }

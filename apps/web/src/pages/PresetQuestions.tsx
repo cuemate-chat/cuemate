@@ -1,5 +1,5 @@
 import { CheckIcon, CloudArrowUpIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Button, Card, Checkbox, DatePicker, Input, Modal, Select, Spin, Table, Upload } from 'antd';
+import { Button, Card, Checkbox, DatePicker, Input, message, Modal, Select, Spin, Table, Upload } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -14,6 +14,7 @@ import {
   updatePresetQuestion,
 } from '../api/preset-questions';
 import { createTag, deleteTag, listTags, updateTag } from '../api/questions';
+import LicenseGuard from '../components/LicenseGuard';
 import { message as globalMessage } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 
@@ -348,7 +349,7 @@ export default function PresetQuestions() {
         );
         
         if (result.errors && result.errors.length > 0) {
-          console.warn('导入错误：', result.errors);
+          message.warning('导入错误：' + result.errors);
         }
         
         setImportOpen(false);
@@ -371,7 +372,8 @@ export default function PresetQuestions() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+    <LicenseGuard feature="preset_questions">
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
       {/* 顶部操作栏 */}
       <div className="flex items-center justify-between mb-6">
         <div className="text-lg font-semibold">预置题库</div>
@@ -967,7 +969,8 @@ export default function PresetQuestions() {
           </div>
         </div>
       </Modal>
-    </div>
+      </div>
+    </LicenseGuard>
   );
 }
 

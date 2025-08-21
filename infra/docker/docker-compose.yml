@@ -90,12 +90,12 @@ services:
       - NODE_ENV=production
       - WEB_API_PORT=3004
       - WEB_API_HOST=0.0.0.0
-      - SQLITE_PATH=/data/cuemate.db
+      - SQLITE_PATH=/opt/cuemate/data/cuemate.db
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
       - RAG_SERVICE_URL=http://rag-service:3003
       - LLM_ROUTER_URL=http://llm-router:3002
     volumes:
-      - ../../data/sqlite:/data
+      - ../../data/sqlite:/opt/cuemate/data
       - ../../data/logs:/opt/cuemate/log
     ports:
       - "3004:3004"

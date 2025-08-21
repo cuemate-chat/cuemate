@@ -8,11 +8,11 @@ import {
 } from '@heroicons/react/24/outline';
 import { Select } from 'antd';
 import { useEffect, useState } from 'react';
+import { http } from '../api/http';
+import LicenseGuard from '../components/LicenseGuard';
 import { message } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
-import { WEB_API_BASE } from '../config';
 import { LAYOUT_PAGES, getBlockPrice } from '../data/pixelLayout';
-import { authedFetch, getToken } from '../lib/auth';
 
 interface PixelAd {
   id: string;
@@ -137,7 +137,6 @@ export default function AdsManagement() {
       message.success('图片上传成功');
       return imagePath;
     } catch (error) {
-      console.error('图片上传失败:', error);
       message.error('图片上传失败');
       return '';
     } finally {
@@ -149,10 +148,6 @@ export default function AdsManagement() {
   const fetchAds = async (page = 1, limit = pageSize, search = '', status = '') => {
     setLoading(true);
     try {
-      const token = getToken();
-      console.log('Current token:', token ? `${token.substring(0, 20)}...` : 'No token');
-      console.log('WEB_API_BASE:', WEB_API_BASE);
-      
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
@@ -160,20 +155,10 @@ export default function AdsManagement() {
         ...(status && { status }),
       });
 
-      const response = await authedFetch(`/pixel-ads?${params}`);
-      console.log('Response status:', response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        setAds(data.ads);
-        setTotalCount(data.pagination.total);
-      } else {
-        const errorData = await response.json();
-        console.error('API Error:', errorData);
-        message.error(errorData.error || '获取广告列表失败');
-      }
+      const data = await http.get<{ ads: PixelAd[]; pagination: { total: number } }>(`/pixel-ads?${params}`);
+      setAds(data.ads);
+      setTotalCount(data.pagination.total);
     } catch (error) {
-      console.error('获取广告列表出错:', error);
       message.error('获取广告列表出错');
     } finally {
       setLoading(false);
@@ -183,27 +168,15 @@ export default function AdsManagement() {
   // 检查位置是否可用
   const checkPosition = async (x: number, y: number, width: number, height: number, excludeId?: string) => {
     try {
-      const response = await authedFetch('/pixel-ads/check-position', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          x_position: x,
-          y_position: y,
-          width,
-          height,
-          exclude_id: excludeId,
-        }),
+      const data = await http.post<{ available: boolean }>('/pixel-ads/check-position', {
+        x_position: x,
+        y_position: y,
+        width,
+        height,
+        exclude_id: excludeId,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.available;
-      }
-      return false;
+      return data.available;
     } catch (error) {
-      console.error('检查位置出错:', error);
       return false;
     }
   };
@@ -297,27 +270,19 @@ export default function AdsManagement() {
         // 注意：image_path由后端处理，这里不传递
       };
 
-      const response = await authedFetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        message.success(editingAd ? '广告更新成功' : '广告创建成功');
-        setShowModal(false);
-        setEditingAd(null);
-        setFormData(initialFormData);
-        handleImageRemove(); // 清除图片状态
-        fetchAds(currentPage, pageSize, searchTerm, statusFilter);
+      if (method === 'POST') {
+        await http.post(url, payload);
       } else {
-        const errorData = await response.json();
-        message.error(errorData.error || '操作失败');
+        await http.put(url, payload);
       }
+      
+      message.success(editingAd ? '广告更新成功' : '广告创建成功');
+      setShowModal(false);
+      setEditingAd(null);
+      setFormData(initialFormData);
+      handleImageRemove(); // 清除图片状态
+      fetchAds(currentPage, pageSize, searchTerm, statusFilter);
     } catch (error) {
-      console.error('提交广告出错:', error);
       message.error('提交广告出错');
     } finally {
       setSubmitting(false);
@@ -331,20 +296,11 @@ export default function AdsManagement() {
     }
 
     try {
-      const response = await authedFetch(`/pixel-ads/${ad.id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        message.success('广告删除成功');
-        fetchAds(currentPage, pageSize, searchTerm, statusFilter);
-      } else {
-        const errorData = await response.json();
-        message.error(errorData.error || '删除失败');
-      }
+      await http.delete(`/pixel-ads/${ad.id}`);
+      message.success('广告删除成功');
+      fetchAds(currentPage, pageSize, searchTerm, statusFilter);
     } catch (error) {
-      console.error('删除广告出错:', error);
-      message.error('删除广告出错');
+      message.error('删除广告出错：' + error);
     }
   };
 
@@ -439,7 +395,8 @@ export default function AdsManagement() {
   }, [showModal, editingAd]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <LicenseGuard feature="ads_management">
+      <div className="p-6 max-w-7xl mx-auto">
       {/* 页面标题 */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 mb-2">广告管理</h1>
@@ -878,6 +835,7 @@ export default function AdsManagement() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </LicenseGuard>
   );
 }

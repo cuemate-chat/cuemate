@@ -40,7 +40,7 @@ export function up(db: any): void {
 export function down(db: any): void {
   // 删除添加的字段
   // 注意：SQLite不支持DROP COLUMN，需要重建表
-  
+
   // 创建临时表
   db.exec(`
     CREATE TABLE pixel_ads_temp (

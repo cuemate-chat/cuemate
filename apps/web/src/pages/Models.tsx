@@ -143,11 +143,11 @@ export default function Models() {
         try {
           await selectUserModel(m.id);
         } catch (error) {
-          console.error('Failed to select user model:', error);
+          message.error('Failed to select user model:' + error);
         }
       }
     } catch (error) {
-      console.error('Failed to get user info:', error);
+      message.error('Failed to get user info:' + error);
     }
     try {
       const res: any = await getModel(m.id);
@@ -161,7 +161,7 @@ export default function Models() {
         return;
       }
     } catch (error) {
-      console.error('Failed to get model details:', error);
+      message.error('Failed to get model details:' + error);
     }
     setEditing(m);
   }
