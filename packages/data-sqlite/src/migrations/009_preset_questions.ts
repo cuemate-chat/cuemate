@@ -84,6 +84,5 @@ export function up(db: any): void {
     }
   } catch (e) {
     // 如果插入失败（可能是重复执行），忽略错误
-    console.warn('Failed to insert preset questions:', e);
   }
 }

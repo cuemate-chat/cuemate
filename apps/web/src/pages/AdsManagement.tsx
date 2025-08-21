@@ -1,4 +1,4 @@
-import { SearchOutlined } from '@ant-design/icons';
+import { CloseOutlined, SearchOutlined } from '@ant-design/icons';
 import {
   EyeIcon,
   MagnifyingGlassIcon,
@@ -282,8 +282,23 @@ export default function AdsManagement() {
       setFormData(initialFormData);
       handleImageRemove(); // 清除图片状态
       fetchAds(currentPage, pageSize, searchTerm, statusFilter);
-    } catch (error) {
-      message.error('提交广告出错');
+    } catch (error: any) {
+      
+      // 检查是否是认证错误
+      if (error.status === 401 || error.message?.includes('unauthorized') || error.message?.includes('token')) {
+        message.error('登录已过期，请重新登录');
+        // 可以在这里添加重定向到登录页的逻辑
+        return;
+      }
+      
+      // 检查是否是网络错误
+      if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        message.error('网络连接失败，请检查网络后重试');
+        return;
+      }
+      
+      // 其他错误
+      message.error(`提交广告出错: ${error.message || '未知错误'}`);
     } finally {
       setSubmitting(false);
     }
@@ -423,16 +438,19 @@ export default function AdsManagement() {
           
           <div className="w-full lg:w-48">
             <label className="block text-sm font-medium text-slate-700 mb-1">状态筛选</label>
-            <select
+            <Select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">全部状态</option>
-              <option value="active">活跃</option>
-              <option value="inactive">停用</option>
-              <option value="expired">已过期</option>
-            </select>
+              onChange={(value) => setStatusFilter(value)}
+              placeholder="全部状态"
+              style={{ width: '100%' }}
+              allowClear
+              className="h-[42px]"
+              options={[
+                { value: 'active', label: '活跃' },
+                { value: 'inactive', label: '停用' },
+                { value: 'expired', label: '已过期' },
+              ]}
+            />
           </div>
 
           <div className="flex gap-2">
@@ -593,13 +611,21 @@ export default function AdsManagement() {
 
       {/* 创建/编辑模态框 */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 pt-20">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[85vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-900">
                 {editingAd ? '编辑广告' : '新建广告'}
               </h2>
-              
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1"
+              >
+                <CloseOutlined className="text-xl" />
+              </button>
+            </div>
+            
+            <div className="p-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
@@ -673,19 +699,22 @@ export default function AdsManagement() {
                           }))
                         )
                       ]}
+                      listHeight={200}
+                      className="h-[42px]"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      块ID (如 1x1-1)
+                      层级
                     </label>
                     <input
-                      type="text"
-                      value={formData.block_id}
-                      onChange={(e) => setFormData(prev => ({ ...prev, block_id: e.target.value }))}
+                      type="number"
+                      min="1"
+                      max="999"
+                      value={formData.z_index}
+                      onChange={(e) => setFormData(prev => ({ ...prev, z_index: parseInt(e.target.value) || 1 }))}
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="如: 1x1-1, 2x1-1"
                     />
                   </div>
 
@@ -741,20 +770,6 @@ export default function AdsManagement() {
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      层级
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="999"
-                      value={formData.z_index}
-                      onChange={(e) => setFormData(prev => ({ ...prev, z_index: parseInt(e.target.value) || 1 }))}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
                   </div>
 
                   <div>

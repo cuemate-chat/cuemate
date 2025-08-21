@@ -43,7 +43,6 @@ const AudioController: React.FC<AudioControllerProps> = ({
         setSelectedAudioDevice(devices[0]);
       }
     } catch (error) {
-      console.error('Failed to load audio devices:', error);
       toast.error('无法获取音频设备列表');
     }
   };

@@ -53,7 +53,7 @@ export function up(db: any): void {
         contact_info: 'contact@cuemate.ai',
         price: 999.99,
         user_id: 'system',
-        expires_at: now + (365 * 24 * 60 * 60 * 1000), // 一年后过期
+        expires_at: now + 365 * 24 * 60 * 60 * 1000, // 一年后过期
       },
       {
         id: 'example_002',
@@ -70,7 +70,7 @@ export function up(db: any): void {
         contact_info: 'blog@example.com',
         price: 299.99,
         user_id: 'system',
-        expires_at: now + (30 * 24 * 60 * 60 * 1000), // 30天后过期
+        expires_at: now + 30 * 24 * 60 * 60 * 1000, // 30天后过期
       },
     ];
 
@@ -84,13 +84,25 @@ export function up(db: any): void {
 
     for (const ad of exampleAds) {
       stmt.run(
-        ad.id, ad.title, ad.description, ad.link_url, ad.image_path,
-        ad.x_position, ad.y_position, ad.width, ad.height, ad.z_index,
-        ad.status, ad.contact_info, ad.price, ad.user_id, now, ad.expires_at
+        ad.id,
+        ad.title,
+        ad.description,
+        ad.link_url,
+        ad.image_path,
+        ad.x_position,
+        ad.y_position,
+        ad.width,
+        ad.height,
+        ad.z_index,
+        ad.status,
+        ad.contact_info,
+        ad.price,
+        ad.user_id,
+        now,
+        ad.expires_at,
       );
     }
   } catch (e) {
     // 如果插入失败（可能是重复执行），忽略错误
-    console.warn('Failed to insert example pixel ads:', e);
   }
 }

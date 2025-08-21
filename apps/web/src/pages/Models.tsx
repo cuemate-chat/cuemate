@@ -487,7 +487,7 @@ function EditModal({ open, data, onClose, onOk }: any) {
         return;
       }
     } catch (error) {
-      console.error('Failed to get model details:', error);
+      message.error('Failed to get model details:' + error);
     }
     
     // 合并默认值和基础数据

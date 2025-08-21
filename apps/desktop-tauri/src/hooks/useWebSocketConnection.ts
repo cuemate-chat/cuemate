@@ -47,7 +47,6 @@ export default function useWebSocketConnection() {
     });
 
     socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
       setConnectionError(error.message);
       reconnectAttemptsRef.current++;
 
@@ -106,7 +105,6 @@ export default function useWebSocketConnection() {
 
     // 错误处理
     socket.on('error', (error) => {
-      console.error('Socket error:', error);
       toast.error(`错误: ${error.message}`);
     });
 

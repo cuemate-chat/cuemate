@@ -33,7 +33,6 @@ export function up(db: any): void {
     `);
   } catch (e) {
     // 如果更新失败（可能是数据不存在），忽略错误
-    console.warn('Failed to update example pixel ads block_id:', e);
   }
 }
 
