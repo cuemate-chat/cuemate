@@ -1,6 +1,7 @@
 import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 
 export function registerPresetQuestionRoutes(app: FastifyInstance) {
   // 获取预置题库列表
@@ -305,7 +306,6 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
     }),
   );
 
-
   // 批量同步到面试题库
   app.post(
     '/preset-questions/batch-sync',
@@ -376,8 +376,6 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
 
             // 同步到向量库（类似interview-questions的逻辑）
             try {
-              const base = 'http://localhost:3003';
-
               // 获取标签名称
               let tagName = null;
               if (preset.tag_id) {
@@ -387,22 +385,25 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
                 tagName = tagRow?.name || null;
               }
 
-              await fetch(`${base}/questions/process`, {
-                method: 'POST',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({
-                  question: {
-                    id: questionId,
-                    title: preset.question,
-                    description: preset.answer,
-                    job_id: body.jobId,
-                    tag_id: preset.tag_id,
-                    tag_name: tagName,
-                    user_id: payload.uid,
-                    created_at: now,
-                  },
-                }),
-              });
+              await fetch(
+                getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_PROCESS),
+                {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({
+                    question: {
+                      id: questionId,
+                      title: preset.question,
+                      description: preset.answer,
+                      job_id: body.jobId,
+                      tag_id: preset.tag_id,
+                      tag_name: tagName,
+                      user_id: payload.uid,
+                      created_at: now,
+                    },
+                  }),
+                },
+              );
 
               // 更新向量同步状态
               (app as any).db

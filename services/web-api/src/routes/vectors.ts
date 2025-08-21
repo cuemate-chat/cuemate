@@ -1,6 +1,7 @@
 import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 
 /**
  * 统一的向量库删除接口：删除 Chroma 向量，并回写业务库 vector_status = 0
@@ -127,14 +128,15 @@ export function registerVectorRoutes(app: FastifyInstance) {
       }
 
       try {
-        const rag = 'http://localhost:3003';
-
         // 首先检查RAG服务是否可用
         try {
-          const healthResponse = await fetch(`${rag}/health`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          });
+          const healthResponse = await fetch(
+            getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.HEALTH),
+            {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+            },
+          );
 
           if (!healthResponse.ok) {
             app.log.error(`RAG service health check failed: ${healthResponse.status}`);
@@ -161,30 +163,36 @@ export function registerVectorRoutes(app: FastifyInstance) {
             .get(job.id) as any;
 
           try {
-            await fetch(`${rag}/jobs/${job.id}`, { method: 'DELETE' });
+            await fetch(
+              getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_DELETE}/${job.id}`),
+              { method: 'DELETE' },
+            );
           } catch {}
           if (resume) {
-            const resp = await fetch(`${rag}/jobs/process`, {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({
-                job: {
-                  id: job.id,
-                  title: job.title,
-                  description: job.description,
-                  user_id: payload.uid,
-                  created_at: job.created_at || Date.now(),
-                },
-                resume: {
-                  id: resume.id,
-                  title: resume.title || `${job.title}-简历`,
-                  content: resume.content || '',
-                  job_id: job.id,
-                  user_id: payload.uid,
-                  created_at: resume.created_at || Date.now(),
-                },
-              }),
-            });
+            const resp = await fetch(
+              getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_PROCESS),
+              {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                  job: {
+                    id: job.id,
+                    title: job.title,
+                    description: job.description,
+                    user_id: payload.uid,
+                    created_at: job.created_at || Date.now(),
+                  },
+                  resume: {
+                    id: resume.id,
+                    title: resume.title || `${job.title}-简历`,
+                    content: resume.content || '',
+                    job_id: job.id,
+                    user_id: payload.uid,
+                    created_at: resume.created_at || Date.now(),
+                  },
+                }),
+              },
+            );
             if (resp.ok) {
               try {
                 (app as any).db.prepare('UPDATE jobs SET vector_status=1 WHERE id=?').run(job.id);
@@ -195,7 +203,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
             }
           } else {
             try {
-              await fetch(`${rag}/delete/by-filter`, {
+              await fetch(getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.DELETE_BY_FILTER), {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({ where: { jobId: job.id }, collection: 'resumes' }),
@@ -226,25 +234,33 @@ export function registerVectorRoutes(app: FastifyInstance) {
           let deletedExtras = 0;
           for (const r of qRows) {
             try {
-              await fetch(`${rag}/questions/${r.id}`, { method: 'DELETE' });
+              await fetch(
+                getRagServiceUrl(
+                  `${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_DELETE}/${r.id}`,
+                ),
+                { method: 'DELETE' },
+              );
             } catch {}
             try {
-              const resp = await fetch(`${rag}/questions/process`, {
-                method: 'POST',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({
-                  question: {
-                    id: r.id,
-                    title: r.question,
-                    description: r.answer || '',
-                    job_id: job.id,
-                    tag_id: r.tag_id,
-                    tag_name: r.tag_name,
-                    user_id: payload.uid,
-                    created_at: r.created_at,
-                  },
-                }),
-              });
+              const resp = await fetch(
+                getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_PROCESS),
+                {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({
+                    question: {
+                      id: r.id,
+                      title: r.question,
+                      description: r.answer || '',
+                      job_id: job.id,
+                      tag_id: r.tag_id,
+                      tag_name: r.tag_name,
+                      user_id: payload.uid,
+                      created_at: r.created_at,
+                    },
+                  }),
+                },
+              );
               if (!resp.ok) throw new Error('rag write failed');
               (app as any).db
                 .prepare('UPDATE interview_questions SET vector_status=1 WHERE id=?')
@@ -256,7 +272,12 @@ export function registerVectorRoutes(app: FastifyInstance) {
           }
           try {
             const filterParam = encodeURIComponent(JSON.stringify({ jobId: job.id }));
-            const listResp = await fetch(`${rag}/search/questions?filter=${filterParam}&k=10000`);
+            const listResp = await fetch(
+              getRagServiceUrl(
+                SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.SEARCH_QUESTIONS +
+                  `?filter=${filterParam}&k=10000`,
+              ),
+            );
             if (listResp.ok) {
               const listJson: any = await listResp.json();
               const vecIds: string[] = Array.from(
@@ -270,7 +291,12 @@ export function registerVectorRoutes(app: FastifyInstance) {
               for (const qid of vecIds) {
                 if (!dbIds.has(qid)) {
                   try {
-                    await fetch(`${rag}/questions/${qid}`, { method: 'DELETE' });
+                    await fetch(
+                      getRagServiceUrl(
+                        `${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_DELETE}/${qid}`,
+                      ),
+                      { method: 'DELETE' },
+                    );
                     deletedExtras++;
                   } catch {}
                 }
@@ -337,17 +363,19 @@ export function registerVectorRoutes(app: FastifyInstance) {
           return reply.code(401).send({ error: 'JWT验证失败：' + jwtError.message });
         }
 
-        const rag = 'http://localhost:3003';
-        app.log.info(`RAG service URL: ${rag}`);
+        app.log.info(`RAG service URL: ${getRagServiceUrl()}`);
 
         app.log.info(`Starting clean-all for user ${payload.uid}`);
 
         // 首先检查RAG服务是否可用
         try {
-          const healthResponse = await fetch(`${rag}/health`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          });
+          const healthResponse = await fetch(
+            getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.HEALTH),
+            {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+            },
+          );
 
           if (!healthResponse.ok) {
             app.log.error(`RAG service health check failed: ${healthResponse.status}`);
@@ -369,10 +397,13 @@ export function registerVectorRoutes(app: FastifyInstance) {
 
         // 调用RAG服务清空所有向量数据
         try {
-          const ragResponse = await fetch(`${rag}/clean-all`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          });
+          const ragResponse = await fetch(
+            getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.CLEAN_ALL),
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            },
+          );
 
           app.log.info(`RAG service response status: ${ragResponse.status}`);
 
@@ -440,12 +471,14 @@ export function registerVectorRoutes(app: FastifyInstance) {
         const collection = body.type || 'default';
 
         // 先删除向量库
-        const ragBase = 'http://localhost:3003';
-        const res = await fetch(`${ragBase}/delete/by-filter`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ where: { id: body.id }, collection }),
-        });
+        const res = await fetch(
+          getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.DELETE_BY_FILTER),
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ where: { id: body.id }, collection }),
+          },
+        );
         if (!res.ok) {
           const t = await res.text();
           return reply.code(500).send({ error: `删除向量库失败: ${t}` });

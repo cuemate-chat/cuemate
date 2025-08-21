@@ -641,6 +641,12 @@ function EditModal({ open, data, onClose, onOk }: any) {
         subtitle="请稍候，这可能需要几秒钟"
         type="saving"
       />
+      <FullScreenOverlay
+        visible={testing}
+        title="正在测试连接..."
+        subtitle="请稍候，正在验证模型连接..."
+        type="testing"
+      />
       
       <div className="flex flex-col h-full">
         <Tabs

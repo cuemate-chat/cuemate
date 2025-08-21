@@ -1,6 +1,7 @@
 import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 
 export function registerInterviewQuestionRoutes(app: FastifyInstance) {
   // 标签 CRUD
@@ -90,8 +91,6 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
 
         // 同步到向量库
         try {
-          const base = 'http://localhost:3003';
-
           // 获取标签名称
           let tagName = null;
           if (body.tagId) {
@@ -101,7 +100,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
             tagName = tagRow?.name || null;
           }
 
-          await fetch(`${base}/questions/process`, {
+          await fetch(getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_PROCESS), {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
@@ -199,32 +198,37 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           )
           .all(body.jobId);
 
-        const base = 'http://localhost:3003';
         let success = 0;
         let failed = 0;
         for (const r of rows) {
           try {
             // 先删除旧数据（若存在）
-            await fetch(`${base}/questions/${r.id}`, { method: 'DELETE' });
+            await fetch(
+              getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_DELETE}/${r.id}`),
+              { method: 'DELETE' },
+            );
           } catch {}
           try {
             // 重新写入
-            const resp = await fetch(`${base}/questions/process`, {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({
-                question: {
-                  id: r.id,
-                  title: r.question,
-                  description: r.answer || '',
-                  job_id: body.jobId,
-                  tag_id: r.tag_id,
-                  tag_name: r.tag_name,
-                  user_id: payload.uid,
-                  created_at: r.created_at,
-                },
-              }),
-            });
+            const resp = await fetch(
+              getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_PROCESS),
+              {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                  question: {
+                    id: r.id,
+                    title: r.question,
+                    description: r.answer || '',
+                    job_id: body.jobId,
+                    tag_id: r.tag_id,
+                    tag_name: r.tag_name,
+                    user_id: payload.uid,
+                    created_at: r.created_at,
+                  },
+                }),
+              },
+            );
             if (!resp.ok) throw new Error(`RAG write failed: ${resp.status}`);
             (app as any).db
               .prepare('UPDATE interview_questions SET vector_status=1 WHERE id=?')
@@ -239,7 +243,12 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         let deletedExtras = 0;
         try {
           const filterParam = encodeURIComponent(JSON.stringify({ jobId: body.jobId }));
-          const listResp = await fetch(`${base}/search/questions?filter=${filterParam}&k=10000`);
+          const listResp = await fetch(
+            getRagServiceUrl(
+              SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.SEARCH_QUESTIONS +
+                `?filter=${filterParam}&k=10000`,
+            ),
+          );
           if (listResp.ok) {
             const listJson: any = await listResp.json();
             const vecIds: string[] = Array.from(
@@ -253,7 +262,12 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
             for (const qid of vecIds) {
               if (!dbIds.has(qid)) {
                 try {
-                  await fetch(`${base}/questions/${qid}`, { method: 'DELETE' });
+                  await fetch(
+                    getRagServiceUrl(
+                      `${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_DELETE}/${qid}`,
+                    ),
+                    { method: 'DELETE' },
+                  );
                   deletedExtras++;
                 } catch (e) {
                   app.log.warn(
@@ -404,12 +418,13 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           )
           .run(body.title, body.description, body.tagId ?? null, id);
         try {
-          const base = 'http://localhost:3003';
-
           // 先删除旧的向量数据
-          await fetch(`${base}/questions/${id}`, {
-            method: 'DELETE',
-          });
+          await fetch(
+            getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_DELETE}/${id}`),
+            {
+              method: 'DELETE',
+            },
+          );
 
           // 获取标签名称
           let tagName = null;
@@ -421,7 +436,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           }
 
           // 重新处理并存入向量库
-          await fetch(`${base}/questions/process`, {
+          await fetch(getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_PROCESS), {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
@@ -468,10 +483,12 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
         (app as any).db.prepare('DELETE FROM interview_questions WHERE id=?').run(id);
         try {
-          const base = 'http://localhost:3003';
-          await fetch(`${base}/questions/${id}`, {
-            method: 'DELETE',
-          });
+          await fetch(
+            getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_DELETE}/${id}`),
+            {
+              method: 'DELETE',
+            },
+          );
           try {
             (app as any).db
               .prepare('UPDATE interview_questions SET vector_status=0 WHERE id=?')
@@ -522,28 +539,35 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
 
         // 删除向量库中的数据
         let vectorDeleted = 0;
-        const base = 'http://localhost:3003';
-        
+
         for (const qid of questionIds) {
           try {
-            const response = await fetch(`${base}/questions/${qid}`, {
-              method: 'DELETE',
-            });
+            const response = await fetch(
+              getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_DELETE}/${qid}`),
+              {
+                method: 'DELETE',
+              },
+            );
             if (response.ok) {
               vectorDeleted++;
             }
           } catch (error) {
-            app.log.error({ err: error, questionId: qid }, 'Failed to delete question from RAG service');
+            app.log.error(
+              { err: error, questionId: qid },
+              'Failed to delete question from RAG service',
+            );
           }
         }
 
-        app.log.info(`Batch deleted ${dbResult.changes} questions from database and ${vectorDeleted} from vector store for job ${jobId}`);
+        app.log.info(
+          `Batch deleted ${dbResult.changes} questions from database and ${vectorDeleted} from vector store for job ${jobId}`,
+        );
 
         return {
           success: true,
           deleted: dbResult.changes,
           vectorDeleted,
-          message: `已删除 ${dbResult.changes} 条押题数据，其中 ${vectorDeleted} 条从向量库删除`
+          message: `已删除 ${dbResult.changes} 条押题数据，其中 ${vectorDeleted} 条从向量库删除`,
         };
       } catch (err) {
         app.log.error({ err }, '批量删除岗位押题失败');

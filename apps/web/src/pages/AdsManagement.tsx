@@ -689,6 +689,38 @@ export default function AdsManagement() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
+                      广告位块ID <span className="text-red-500">*</span>
+                    </label>
+                    <Select
+                      showSearch
+                      placeholder="搜索并选择广告位块"
+                      value={formData.block_id || undefined}
+                      onChange={(value) => {
+                        setFormData(prev => ({ ...prev, block_id: value }));
+                        // 根据块ID自动设置价格
+                        const selectedPage = LAYOUT_PAGES[0]; // 默认使用第一个页面的价格
+                        const price = getBlockPrice(value, selectedPage.priceMultiplier);
+                        setFormData(prev => ({ ...prev, price }));
+                      }}
+                      style={{ width: '100%' }}
+                      suffixIcon={<SearchOutlined />}
+                      filterOption={(input, option) =>
+                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                      }
+                      options={[
+                        ...LAYOUT_PAGES.flatMap(page => 
+                          page.layout.map(block => ({
+                            value: block.blockId,
+                            label: `${block.blockId} (${page.name} - ¥${getBlockPrice(block.blockId, page.priceMultiplier)})`,
+                            key: `${page.id}-${block.blockId}`
+                          }))
+                        )
+                      ]}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
                       块ID (如 1x1-1)
                     </label>
                     <input
@@ -697,20 +729,6 @@ export default function AdsManagement() {
                       onChange={(e) => setFormData(prev => ({ ...prev, block_id: e.target.value }))}
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="如: 1x1-1, 2x1-1"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      层级
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="999"
-                      value={formData.z_index}
-                      onChange={(e) => setFormData(prev => ({ ...prev, z_index: parseInt(e.target.value) || 1 }))}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
 
@@ -770,33 +788,15 @@ export default function AdsManagement() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      广告位块ID <span className="text-red-500">*</span>
+                      层级
                     </label>
-                    <Select
-                      showSearch
-                      placeholder="搜索并选择广告位块"
-                      value={formData.block_id || undefined}
-                      onChange={(value) => {
-                        setFormData(prev => ({ ...prev, block_id: value }));
-                        // 根据块ID自动设置价格
-                        const selectedPage = LAYOUT_PAGES[0]; // 默认使用第一个页面的价格
-                        const price = getBlockPrice(value, selectedPage.priceMultiplier);
-                        setFormData(prev => ({ ...prev, price }));
-                      }}
-                      style={{ width: '100%' }}
-                      suffixIcon={<SearchOutlined />}
-                      filterOption={(input, option) =>
-                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                      }
-                      options={[
-                        ...LAYOUT_PAGES.flatMap(page => 
-                          page.layout.map(block => ({
-                            value: block.blockId,
-                            label: `${block.blockId} (${page.name} - ¥${getBlockPrice(block.blockId, page.priceMultiplier)})`,
-                            key: `${page.id}-${block.blockId}`
-                          }))
-                        )
-                      ]}
+                    <input
+                      type="number"
+                      min="1"
+                      max="999"
+                      value={formData.z_index}
+                      onChange={(e) => setFormData(prev => ({ ...prev, z_index: parseInt(e.target.value) || 1 }))}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
 
@@ -809,7 +809,7 @@ export default function AdsManagement() {
                       value={formData.contact_info}
                       onChange={(e) => setFormData(prev => ({ ...prev, contact_info: e.target.value }))}
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="输入联系方式（电话、微信、QQ等）"
+                      placeholder="输入联系方式（电话、微信、QQ、邮箱等）"
                       required
                     />
                   </div>

@@ -18,7 +18,7 @@ export async function login(email: string, password: string): Promise<void> {
   const res = await fetch(`${WEB_API_BASE}/auth/signin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ account: email, password }),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -33,7 +33,7 @@ export async function register(name: string, email: string, password: string): P
   const res = await fetch(`${WEB_API_BASE}/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password }),
+    body: JSON.stringify({ name, account: email, password }),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));

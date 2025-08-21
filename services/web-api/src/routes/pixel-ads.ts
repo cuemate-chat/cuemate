@@ -92,7 +92,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
 
         // 获取总数
         const countQuery = `SELECT COUNT(*) as total FROM pixel_ads WHERE ${whereClause}`;
-        const { total } = (app as any).db.prepare(countQuery).get(...params);
+        const { total } = app.db.prepare(countQuery).get(...params);
 
         // 获取数据
         const dataQuery = `
@@ -101,7 +101,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
           ORDER BY created_at DESC 
           LIMIT ? OFFSET ?
         `;
-        const ads = (app as any).db.prepare(dataQuery).all(...params, limit, offset);
+        const ads = app.db.prepare(dataQuery).all(...params, limit, offset);
 
         const totalPages = Math.ceil(total / limit);
 
@@ -129,7 +129,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
 
         const params = z.object({ id: z.string() }).parse(req.params);
 
-        const ad = (app as any).db.prepare('SELECT * FROM pixel_ads WHERE id = ?').get(params.id);
+        const ad = app.db.prepare('SELECT * FROM pixel_ads WHERE id = ?').get(params.id);
 
         if (!ad) {
           return reply.code(404).send({ error: '广告不存在' });
@@ -148,7 +148,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'pixel-ads.public', async (_req, reply) => {
       try {
         const now = Date.now();
-        const ads = (app as any).db
+        const ads = app.db
           .prepare(
             `
             SELECT id, title, description, link_url, image_path, block_id,
@@ -180,7 +180,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
         // 检查位置冲突
         if (
           checkPositionConflict(
-            (app as any).db,
+            app.db,
             data.x_position,
             data.y_position,
             data.width,
@@ -193,7 +193,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
         const now = Date.now();
         const adId = uuidv4();
 
-        (app as any).db
+        app.db
           .prepare(
             `
             INSERT INTO pixel_ads (
@@ -224,7 +224,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
             data.expires_at,
           );
 
-        const createdAd = (app as any).db.prepare('SELECT * FROM pixel_ads WHERE id = ?').get(adId);
+        const createdAd = app.db.prepare('SELECT * FROM pixel_ads WHERE id = ?').get(adId);
 
         return {
           success: true,
@@ -250,7 +250,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
         const data = updatePixelAdSchema.parse(req.body);
 
         // 检查广告是否存在
-        const existingAd = (app as any).db
+        const existingAd = app.db
           .prepare('SELECT * FROM pixel_ads WHERE id = ?')
           .get(params.id);
 
@@ -272,7 +272,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
           const newWidth = data.width ?? existingAd.width;
           const newHeight = data.height ?? existingAd.height;
 
-          if (checkPositionConflict((app as any).db, newX, newY, newWidth, newHeight, params.id)) {
+          if (checkPositionConflict(app.db, newX, newY, newWidth, newHeight, params.id)) {
             return reply.code(400).send({ error: '该像素区域已被占用，请选择其他位置' });
           }
         }
@@ -295,11 +295,11 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
         updateFields.push('updated_at = ?');
         updateValues.push(Date.now(), params.id);
 
-        (app as any).db
+        app.db
           .prepare(`UPDATE pixel_ads SET ${updateFields.join(', ')} WHERE id = ?`)
           .run(...updateValues);
 
-        const updatedAd = (app as any).db
+        const updatedAd = app.db
           .prepare('SELECT * FROM pixel_ads WHERE id = ?')
           .get(params.id);
 
@@ -326,7 +326,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
         const params = z.object({ id: z.string() }).parse(req.params);
 
         // 检查广告是否存在
-        const existingAd = (app as any).db
+        const existingAd = app.db
           .prepare('SELECT * FROM pixel_ads WHERE id = ?')
           .get(params.id);
 
@@ -336,7 +336,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
 
         // 权限检查已移除 - 允许任何已认证用户删除广告
 
-        const result = (app as any).db.prepare('DELETE FROM pixel_ads WHERE id = ?').run(params.id);
+        const result = app.db.prepare('DELETE FROM pixel_ads WHERE id = ?').run(params.id);
 
         if (result.changes === 0) {
           return reply.code(404).send({ error: '广告不存在' });
@@ -370,7 +370,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
           .parse(req.body);
 
         const isConflict = checkPositionConflict(
-          (app as any).db,
+          app.db,
           body.x_position,
           body.y_position,
           body.width,

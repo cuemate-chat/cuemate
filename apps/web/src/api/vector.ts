@@ -1,5 +1,8 @@
+import { config } from '../config';
 import { http } from './http';
-const RAG_SERVICE_BASE = 'http://localhost:3003';
+
+// 从环境变量获取 RAG 服务地址，如果没有则使用默认值
+const RAG_SERVICE_URL = config.RAG_SERVICE_URL || 'http://localhost:3003';
 
 export interface VectorDocument {
   id: string;
@@ -95,7 +98,7 @@ export const searchJobs = async (filters: SearchFilters): Promise<SearchResponse
       if (filters.createdTo) filterObj.createdTo = filters.createdTo;
     }
 
-    let url = `${RAG_SERVICE_BASE}/search/jobs?query=${encodeURIComponent(filters.query || '')}&k=1000`;
+    let url = `${RAG_SERVICE_URL}/search/jobs?query=${encodeURIComponent(filters.query || '')}&k=1000`;
     if (Object.keys(filterObj).length > 0) {
       url += `&filter=${encodeURIComponent(JSON.stringify(filterObj))}`;
     }
@@ -151,7 +154,7 @@ export const searchQuestions = async (filters: SearchFilters): Promise<SearchRes
       if (filters.createdTo) filterObj.createdTo = filters.createdTo;
     }
 
-    let url = `${RAG_SERVICE_BASE}/search/questions?query=${encodeURIComponent(filters.query || '')}&k=1000`;
+    let url = `${RAG_SERVICE_URL}/search/questions?query=${encodeURIComponent(filters.query || '')}&k=1000`;
     if (Object.keys(filterObj).length > 0) {
       url += `&filter=${encodeURIComponent(JSON.stringify(filterObj))}`;
     }
@@ -206,7 +209,7 @@ export const searchResumes = async (filters: SearchFilters): Promise<SearchRespo
       if (filters.createdTo) filterObj.createdTo = filters.createdTo;
     }
 
-    let url = `${RAG_SERVICE_BASE}/search/resumes?query=${encodeURIComponent(filters.query || '')}&k=1000`;
+    let url = `${RAG_SERVICE_URL}/search/resumes?query=${encodeURIComponent(filters.query || '')}&k=1000`;
     if (Object.keys(filterObj).length > 0) {
       url += `&filter=${encodeURIComponent(JSON.stringify(filterObj))}`;
     }
@@ -321,7 +324,7 @@ export const getRelatedDocuments = async (
   error?: string;
 }> => {
   try {
-    const url = `${RAG_SERVICE_BASE}/documents/${docId}/related${collection ? `?collection=${collection}` : ''}`;
+    const url = `${RAG_SERVICE_URL}/documents/${docId}/related${collection ? `?collection=${collection}` : ''}`;
     const response = await fetch(url);
 
     if (response.ok) {

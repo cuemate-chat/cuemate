@@ -9,6 +9,8 @@ declare global {
     readonly VITE_APP_TITLE?: string;
     readonly VITE_APP_VERSION?: string;
     readonly VITE_ENABLE_MOCK?: string;
+    readonly VITE_RAG_SERVICE_URL?: string;
+    readonly VITE_LLM_ROUTER_URL?: string;
   }
 }
 
@@ -16,6 +18,9 @@ declare global {
 export const config = {
   // API 基础地址
   API_BASE: import.meta.env.VITE_WEB_API_BASE || 'http://localhost:3004',
+
+  // RAG 服务地址
+  RAG_SERVICE_URL: import.meta.env.VITE_RAG_SERVICE_URL || 'http://localhost:3003',
 
   // 应用信息
   APP_TITLE: import.meta.env.VITE_APP_TITLE || 'CueMate',

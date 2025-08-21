@@ -2,6 +2,7 @@ import { withErrorLogging } from '@cuemate/logger';
 import { randomUUID } from 'crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 
 export function registerJobRoutes(app: FastifyInstance) {
   const createSchema = z.object({
@@ -46,30 +47,35 @@ export function registerJobRoutes(app: FastifyInstance) {
 
         // 同步到 rag-service
         try {
-          const base = 'http://localhost:3003';
-          app.log.info(`Syncing job ${jobId} to RAG service at ${base}/jobs/process`);
+          const base = getRagServiceUrl();
+          app.log.info(
+            `Syncing job ${jobId} to RAG service at ${base}${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_PROCESS}`,
+          );
 
-          const response = await fetch(`${base}/jobs/process`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              job: {
-                id: jobId,
-                title: body.title,
-                description: body.description,
-                user_id: payload.uid,
-                created_at: now,
-              },
-              resume: {
-                id: resumeId,
-                title: body.resumeTitle || `${body.title}-简历`,
-                content: body.resumeContent,
-                job_id: jobId,
-                user_id: payload.uid,
-                created_at: now,
-              },
-            }),
-          });
+          const response = await fetch(
+            getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_PROCESS),
+            {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                job: {
+                  id: jobId,
+                  title: body.title,
+                  description: body.description,
+                  user_id: payload.uid,
+                  created_at: now,
+                },
+                resume: {
+                  id: resumeId,
+                  title: body.resumeTitle || `${body.title}-简历`,
+                  content: body.resumeContent,
+                  job_id: jobId,
+                  user_id: payload.uid,
+                  created_at: now,
+                },
+              }),
+            },
+          );
 
           if (response.ok) {
             const result = await response.json();
@@ -192,10 +198,8 @@ export function registerJobRoutes(app: FastifyInstance) {
 
       // 同步到 rag-service（先删除旧，再写新）
       try {
-        const base = 'http://localhost:3003';
-
         // 先删除旧数据
-        await fetch(`${base}/jobs/${id}`, {
+        await fetch(getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_DELETE}/${id}`), {
           method: 'DELETE',
         });
 
@@ -206,7 +210,7 @@ export function registerJobRoutes(app: FastifyInstance) {
 
         if (resumeRow) {
           // 重新处理岗位和简历
-          await fetch(`${base}/jobs/process`, {
+          await fetch(getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_PROCESS), {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
@@ -301,13 +305,15 @@ export function registerJobRoutes(app: FastifyInstance) {
 
       // 4. 删除向量库中的所有相关数据（岗位、简历、押题）
       try {
-        const base = 'http://localhost:3003';
-        app.log.info(`Attempting to delete vector data for job ${id} from ${base}`);
+        app.log.info(`Attempting to delete vector data for job ${id} from ${getRagServiceUrl()}`);
 
         // 使用RAG服务的deleteJobData方法删除所有相关向量数据
-        const response = await fetch(`${base}/jobs/${id}`, {
-          method: 'DELETE',
-        });
+        const response = await fetch(
+          getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_DELETE}/${id}`),
+          {
+            method: 'DELETE',
+          },
+        );
 
         if (response.ok) {
           app.log.info(`Successfully deleted all vector data for job ${id}`);

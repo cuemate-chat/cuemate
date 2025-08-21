@@ -92,7 +92,8 @@ services:
       - WEB_API_HOST=0.0.0.0
       - SQLITE_PATH=/data/cuemate.db
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
-      - RAG_SERVICE_BASE=http://rag-service:3003
+      - RAG_SERVICE_URL=http://rag-service:3003
+      - LLM_ROUTER_URL=http://llm-router:3002
     volumes:
       - ../../data/sqlite:/data
       - ../../data/logs:/opt/cuemate/log
@@ -114,6 +115,8 @@ services:
       - "80:80"
     environment:
       - VITE_WEB_API_BASE=${WEB_API_BASE:-http://web-api:3004}
+      - VITE_RAG_SERVICE_URL=http://rag-service:3003
+      - VITE_LLM_ROUTER_URL=http://llm-router:3002
     depends_on:
       - web-api
     networks:
