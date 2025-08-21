@@ -583,24 +583,30 @@ export async function createDocumentRoutes(
       // 根据文档类型获取关联信息
       if (doc.metadata.type === 'jobs') {
         // 岗位信息：获取对应的简历和押题
-        // 岗位的ID就是jobId，所以用docId来查找关联的简历和押题
-        const jobId = docId;
+        // 使用文档元数据中的jobId来查找关联的简历和押题
+        const jobId = doc.metadata.jobId;
 
-        // 获取简历信息
-        const resumes = await deps.vectorStore.getAllDocuments(
-          1000,
-          { jobId: jobId },
-          deps.config.vectorStore.resumesCollection,
-        );
-        relatedData.resumes = resumes;
+        if (jobId) {
+          // 获取简历信息
+          const resumes = await deps.vectorStore.getAllDocuments(
+            1000,
+            { jobId: jobId },
+            deps.config.vectorStore.resumesCollection,
+          );
+          relatedData.resumes = resumes;
 
-        // 获取押题信息
-        const questions = await deps.vectorStore.getAllDocuments(
-          1000,
-          { jobId: jobId },
-          deps.config.vectorStore.questionsCollection,
-        );
-        relatedData.questions = questions;
+          // 获取押题信息
+          const questions = await deps.vectorStore.getAllDocuments(
+            1000,
+            { jobId: jobId },
+            deps.config.vectorStore.questionsCollection,
+          );
+          relatedData.questions = questions;
+        } else {
+          // 如果没有jobId，返回空数组
+          relatedData.resumes = [];
+          relatedData.questions = [];
+        }
 
         // 岗位本身作为jobs返回
         relatedData.jobs = [doc];
@@ -608,9 +614,10 @@ export async function createDocumentRoutes(
         // 简历信息：获取对应的岗位和押题
         if (doc.metadata.jobId) {
           // 获取岗位信息
+          // 岗位文档的ID格式是 job:{jobId}，所以需要使用jobId来查找
           const jobs = await deps.vectorStore.getAllDocuments(
             1000,
-            { id: doc.metadata.jobId },
+            { jobId: doc.metadata.jobId },
             deps.config.vectorStore.jobsCollection,
           );
           relatedData.jobs = jobs;
@@ -630,9 +637,10 @@ export async function createDocumentRoutes(
         // 押题信息：获取对应的岗位和简历
         if (doc.metadata.jobId) {
           // 获取岗位信息
+          // 岗位文档的ID格式是 job:{jobId}，所以需要使用jobId来查找
           const jobs = await deps.vectorStore.getAllDocuments(
             1000,
-            { id: doc.metadata.jobId },
+            { jobId: doc.metadata.jobId },
             deps.config.vectorStore.jobsCollection,
           );
           relatedData.jobs = jobs;

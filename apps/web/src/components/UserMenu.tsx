@@ -5,6 +5,8 @@ import {
   DocumentTextIcon,
   QueueListIcon,
   Squares2X2Icon,
+  PhotoIcon,
+  RectangleGroupIcon,
 } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -114,6 +116,16 @@ export default function UserMenu() {
     setOpen(false);
   };
 
+  const onPixelAds = () => {
+    navigate('/pixel-ads');
+    setOpen(false);
+  };
+
+  const onAdsManagement = () => {
+    navigate('/ads-management');
+    setOpen(false);
+  };
+
   const onLogout = () => {
     storage.clearToken();
     storage.clearUser();
@@ -181,15 +193,15 @@ export default function UserMenu() {
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-            onClick={onLicense}
+            onClick={onPixelAds}
           >
-            <CubeIcon className="w-4 h-4" /> 像素广告
+            <PhotoIcon className="w-4 h-4" /> 像素广告
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-            onClick={onLicense}
+            onClick={onAdsManagement}
           >
-            <CubeIcon className="w-4 h-4" /> 广告管理
+            <RectangleGroupIcon className="w-4 h-4" /> 广告管理
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"

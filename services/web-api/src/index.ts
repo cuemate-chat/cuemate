@@ -15,6 +15,7 @@ import { registerInterviewQuestionRoutes } from './routes/questions.js';
 import { registerReviewRoutes } from './routes/reviews.js';
 import { registerVectorRoutes } from './routes/vectors.js';
 import { registerLicenseRoutes } from './routes/license.js';
+import { registerPixelAdsRoutes } from './routes/pixel-ads.js';
 import { logger as serviceLogger } from './utils/logger.js';
 
 config();
@@ -65,6 +66,7 @@ async function start() {
   registerVectorRoutes(app as any);
   registerFileRoutes(app as any);
   registerLicenseRoutes(app as any);
+  registerPixelAdsRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 

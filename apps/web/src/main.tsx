@@ -20,6 +20,8 @@ import Settings from './pages/Settings';
 import UserAgreement from './pages/UserAgreement';
 import VectorKnowledge from './pages/VectorKnowledge';
 import License from './pages/License';
+import PixelAds from './pages/PixelAds';
+import AdsManagement from './pages/AdsManagement';
 import './styles.css';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -49,6 +51,8 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings/logs" element={<Logs />} />
           <Route path="/settings/vector-knowledge" element={<VectorKnowledge />} />
           <Route path="/settings/license" element={<License />} />
+          <Route path="/pixel-ads" element={<PixelAds />} />
+          <Route path="/ads-management" element={<AdsManagement />} />
         </Route>
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<Navigate to="/home" />} />

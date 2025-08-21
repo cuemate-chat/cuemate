@@ -8,6 +8,7 @@ import { up as up7, version as v7 } from './007_models.js';
 import { up as up8, version as v8 } from './008_user_selected_model.js';
 import { up as up9, version as v9 } from './009_preset_questions.js';
 import { up as up10, version as v10 } from './010_create_license_table.js';
+import { up as up11, version as v11 } from './011_create_ads_table.js';
 
 export interface Migration {
   version: number;
@@ -26,4 +27,5 @@ export const migrations: Migration[] = [
   { version: v8, name: '008_user_selected_model', up: up8 },
   { version: v9, name: '009_preset_questions', up: up9 },
   { version: v10, name: '010_create_license_table', up: up10 },
+  { version: v11, name: '011_create_ads_table', up: up11 },
 ];

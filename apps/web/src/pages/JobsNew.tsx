@@ -315,14 +315,37 @@ export default function JobsNew() {
                     }
                     // 2) 调用后端解析 PDF/Word
                     try {
+                      // 检查是否有认证token
+                      const token = localStorage.getItem('auth_token');
+                      if (!token) {
+                        throw new Error('请先登录后再使用文件解析功能');
+                      }
+
+                      console.log('开始解析文件:', file.name, '大小:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
                       const res = await extractResumeText(file);
                       setResumeText((res.text || '').slice(0, 20000));
-                      globalMessage.success('已从文件解析得到文本');
+                      console.log('文件解析成功，文本长度:', res.text?.length || 0);
+                      globalMessage.success(`已从文件解析得到文本（${res.text?.length || 0}个字符）`);
                     } catch (err: any) {
-                      setResumeText(
-                        `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n未能自动提取文本内容，请将简历文本粘贴到下方输入框以便后续处理。`,
-                      );
-                      globalMessage.warning(err?.message || '暂未能自动提取文本，请粘贴简历文本');
+                      console.error('文件解析失败:', err);
+                      
+                      // 根据错误类型给出不同的提示
+                      let errorMessage = '暂未能自动提取文本，请粘贴简历文本';
+                      let placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n未能自动提取文本内容，请将简历文本粘贴到下方输入框以便后续处理。`;
+                      
+                      if (err?.message?.includes('Authorization') || err?.message?.includes('认证') || err?.message?.includes('登录')) {
+                        errorMessage = '请先登录后再使用文件解析功能';
+                        placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n⚠️ 需要登录才能自动解析文件，请先登录或直接粘贴简历文本到下方输入框。`;
+                      } else if (err?.message?.includes('PDF') || err?.message?.includes('DOC') || err?.message?.includes('解析失败')) {
+                        errorMessage = `文件解析失败：${err.message}`;
+                        placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n❌ 文件解析失败：${err.message}\n\n请将简历文本手动粘贴到下方输入框，或尝试转换文件格式后重新上传。`;
+                      } else if (err?.message?.includes('不支持') || err?.message?.includes('格式')) {
+                        errorMessage = `不支持的文件格式：${err.message}`;
+                        placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n🚫 ${err.message}\n\n请将简历文本直接粘贴到下方输入框，或将文件转换为PDF、DOCX格式后重新上传。`;
+                      }
+                      
+                      setResumeText(placeholderText);
+                      globalMessage.warning(errorMessage);
                     }
                   })();
                   return false; // 阻止上传到服务器
