@@ -103,7 +103,6 @@ cd apps/desktop-tauri && pnpm tauri:dev
 DEEPGRAM_API_KEY=your_deepgram_api_key
 
 # LLM 配置
-OPENAI_API_KEY=your_openai_api_key
 MOONSHOT_API_KEY=your_moonshot_api_key  # 可选
 GLM_API_KEY=your_glm_api_key            # 可选
 QWEN_API_KEY=your_qwen_api_key          # 可选

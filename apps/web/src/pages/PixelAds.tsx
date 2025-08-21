@@ -135,7 +135,6 @@ export default function PixelAds() {
 
   // 格式化时间
   const formatExpireTime = (timestamp: number) => {
-    const date = new Date(timestamp);
     const now = Date.now();
     const diff = timestamp - now;
     
@@ -224,13 +223,9 @@ export default function PixelAds() {
 
   // 缩放处理
   const handleZoom = (delta: number, centerX?: number, centerY?: number) => {
+    void centerX; void centerY;
     const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, viewport.scale * delta));
-    
-    if (newScale !== viewport.scale && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const mouseX = centerX ?? rect.width / 2;
-      const mouseY = centerY ?? rect.height / 2;
-      
+    if (newScale !== viewport.scale) {
       setViewport(prev => ({
         ...prev,
         scale: newScale,

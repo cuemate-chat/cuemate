@@ -1,4 +1,4 @@
-import { Config } from '../config/index.js';
+import { config, type Config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
 import { AnthropicProvider } from './anthropic.js';
 import { AzureOpenAIProvider } from './azure-openai.js';
@@ -14,112 +14,113 @@ import { VllmProvider } from './vllm.js';
 import { VolcEngineProvider } from './volcengine.js';
 import { ZhipuProvider } from './zhipu.js';
 
-export async function initializeProviders(config: Config): Promise<Map<string, BaseLLMProvider>> {
+export async function initializeProviders(
+  _config: Config = config,
+): Promise<Map<string, BaseLLMProvider>> {
   const providers = new Map<string, BaseLLMProvider>();
 
   try {
-    if (process.env.DEEPSEEK_API_KEY) {
+    if (_config.providers.deepseek.apiKey) {
       const p = new DeepSeekProvider({
-        apiKey: process.env.DEEPSEEK_API_KEY,
-        model: process.env.DEEPSEEK_MODEL || 'deepseek-reasoner',
+        apiKey: _config.providers.deepseek.apiKey,
+        model: _config.providers.deepseek.model,
       });
       if (p.isAvailable()) providers.set('deepseek', p as unknown as BaseLLMProvider);
     }
   } catch {}
   try {
-    if (process.env.OLLAMA_BASE_URL) {
+    if (_config.providers.ollama.baseUrl) {
       const p = new OllamaProvider({
-        baseUrl: process.env.OLLAMA_BASE_URL,
-        model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
+        baseUrl: _config.providers.ollama.baseUrl,
+        model: _config.providers.ollama.model,
       });
       if (p.isAvailable()) providers.set('ollama', p as unknown as BaseLLMProvider);
     }
   } catch {}
   try {
-    if (process.env.AZURE_OPENAI_BASE_URL && process.env.AZURE_OPENAI_API_KEY) {
+    if (_config.providers.azureOpenai.baseUrl && _config.providers.azureOpenai.apiKey) {
       const p = new AzureOpenAIProvider({
-        baseUrl: process.env.AZURE_OPENAI_BASE_URL,
-        apiKey: process.env.AZURE_OPENAI_API_KEY,
-        model: process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4o-mini',
+        baseUrl: _config.providers.azureOpenai.baseUrl,
+        apiKey: _config.providers.azureOpenai.apiKey,
+        model: _config.providers.azureOpenai.model,
       });
       if (p.isAvailable()) providers.set('azure-openai', p as unknown as BaseLLMProvider);
     }
   } catch {}
 
   try {
-    if (process.env.ZHIPU_API_KEY) {
+    if (_config.providers.zhipu.apiKey) {
       const p = new ZhipuProvider({
-        apiKey: process.env.ZHIPU_API_KEY,
-        model: process.env.ZHIPU_MODEL || 'glm-4',
+        apiKey: _config.providers.zhipu.apiKey,
+        model: _config.providers.zhipu.model,
       });
       if (p.isAvailable()) providers.set('zhipu', p as unknown as BaseLLMProvider);
     }
   } catch {}
   try {
-    if (process.env.ANTHROPIC_API_KEY) {
+    if (_config.providers.anthropic.apiKey) {
       const p = new AnthropicProvider({
-        apiKey: process.env.ANTHROPIC_API_KEY,
-        model: process.env.ANTHROPIC_MODEL || 'claude-3-7-sonnet',
+        apiKey: _config.providers.anthropic.apiKey,
+        model: _config.providers.anthropic.model,
       });
       if (p.isAvailable()) providers.set('anthropic', p as unknown as BaseLLMProvider);
     }
   } catch {}
   try {
-    if (process.env.GEMINI_API_KEY) {
+    if (_config.providers.gemini.apiKey) {
       const p = new GeminiProvider({
-        apiKey: process.env.GEMINI_API_KEY,
-        model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp',
+        apiKey: _config.providers.gemini.apiKey,
+        model: _config.providers.gemini.model,
       });
       if (p.isAvailable()) providers.set('gemini', p as unknown as BaseLLMProvider);
     }
   } catch {}
   try {
-    if (process.env.KIMI_API_KEY) {
+    if (_config.providers.kimi.apiKey) {
       const p = new KimiProvider({
-        apiKey: process.env.KIMI_API_KEY,
-        model: process.env.KIMI_MODEL || 'moonshot-v1-32k',
+        apiKey: _config.providers.kimi.apiKey,
+        model: _config.providers.kimi.model,
       });
       if (p.isAvailable()) providers.set('kimi', p as unknown as BaseLLMProvider);
     }
   } catch {}
   try {
-    if (process.env.VOLC_API_KEY) {
+    if (_config.providers.volcengine.apiKey) {
       const p = new VolcEngineProvider({
-        apiKey: process.env.VOLC_API_KEY,
-        model: process.env.VOLC_MODEL || 'doubao-pro-32k',
+        apiKey: _config.providers.volcengine.apiKey,
+        model: _config.providers.volcengine.model,
       });
       if (p.isAvailable()) providers.set('volcengine', p as unknown as BaseLLMProvider);
     }
   } catch {}
   try {
-    if (process.env.TENCENT_API_KEY) {
+    if (_config.providers.tencent.apiKey) {
       const p = new TencentProvider({
-        apiKey: process.env.TENCENT_API_KEY,
-        model: process.env.TENCENT_MODEL || 'hunyuan-pro',
+        apiKey: _config.providers.tencent.apiKey,
+        model: _config.providers.tencent.model,
       });
       if (p.isAvailable()) providers.set('tencent', p as unknown as BaseLLMProvider);
     }
   } catch {}
   try {
-    if (process.env.SILICONFLOW_API_KEY) {
+    if (_config.providers.siliconflow.apiKey) {
       const p = new SiliconFlowProvider({
-        apiKey: process.env.SILICONFLOW_API_KEY,
-        model: process.env.SILICONFLOW_MODEL || 'llama3.1-8b-instruct',
+        apiKey: _config.providers.siliconflow.apiKey,
+        model: _config.providers.siliconflow.model,
       });
       if (p.isAvailable()) providers.set('siliconflow', p as unknown as BaseLLMProvider);
     }
   } catch {}
   try {
-    if (process.env.VLLM_BASE_URL) {
+    if (_config.providers.vllm.baseUrl) {
       const p = new VllmProvider({
-        baseUrl: process.env.VLLM_BASE_URL,
-        model: process.env.VLLM_MODEL || 'llama3.1:8b',
+        baseUrl: _config.providers.vllm.baseUrl,
+        model: _config.providers.vllm.model,
       });
       if (p.isAvailable()) providers.set('vllm', p as unknown as BaseLLMProvider);
     }
   } catch {}
 
-  // 预留：从 web-api 注入的动态模型，可在运行期扩展
   if (Array.isArray((config as any).providers.dynamic)) {
     for (const d of (config as any).providers.dynamic) {
       try {

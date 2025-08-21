@@ -1,3 +1,4 @@
+import { SearchOutlined } from '@ant-design/icons';
 import {
   EyeIcon,
   MagnifyingGlassIcon,
@@ -6,12 +7,11 @@ import {
   TrashIcon,
 } from '@heroicons/react/24/outline';
 import { Select } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { message } from '../components/Message';
-import { getToken } from '../lib/auth';
 import PaginationBar from '../components/PaginationBar';
 import { LAYOUT_PAGES, getBlockPrice } from '../data/pixelLayout';
+import { getToken } from '../lib/auth';
 
 interface PixelAd {
   id: string;
@@ -83,7 +83,7 @@ export default function AdsManagement() {
   // 图片上传相关状态
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [, setUploadingImage] = useState(false);
 
   // 处理图片文件选择
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -394,6 +394,7 @@ export default function AdsManagement() {
 
   // 分页大小变化处理
   const handlePageSizeChange = (current: number, size: number) => {
+    void current;
     setPageSize(size);
     setCurrentPage(1);
     fetchAds(1, size, searchTerm, statusFilter);

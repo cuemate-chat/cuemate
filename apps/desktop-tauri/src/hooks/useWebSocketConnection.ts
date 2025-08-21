@@ -3,7 +3,6 @@ import toast from 'react-hot-toast';
 import { io, Socket } from 'socket.io-client';
 import { useAppStore } from '../store/appStore';
 
-// 允许在非 Vite 环境下回退到 process.env
 const BACKEND_URL =
   (import.meta as any)?.env?.VITE_BACKEND_URL ||
   (process as any)?.env?.VITE_BACKEND_URL ||

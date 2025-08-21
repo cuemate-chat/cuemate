@@ -16,23 +16,43 @@ const configSchema = z.object({
     windowMs: z.string().default('1 minute'),
   }),
   providers: z.object({
-    // 所有提供商配置都从数据库动态获取，schema 只定义基本结构
-    anthropic: z.object({}).optional(),
-    azureOpenai: z.object({}).optional(),
-    base: z.object({}).optional(),
-    deepseek: z.object({}).optional(),
-    gemini: z.object({}).optional(),
-    kimi: z.object({}).optional(),
-    moonshot: z.object({}).optional(),
-    ollama: z.object({}).optional(),
-    openai: z.object({}).optional(),
-    openaiCompatible: z.object({}).optional(),
-    qwen: z.object({}).optional(),
-    siliconflow: z.object({}).optional(),
-    tencent: z.object({}).optional(),
-    vllm: z.object({}).optional(),
-    volcengine: z.object({}).optional(),
-    zhipu: z.object({}).optional(),
+    anthropic: z
+      .object({ apiKey: z.string().optional(), model: z.string().default('claude-3-7-sonnet') })
+      .default({}),
+    azureOpenai: z
+      .object({
+        baseUrl: z.string().optional(),
+        apiKey: z.string().optional(),
+        model: z.string().default('gpt-4o-mini'),
+      })
+      .default({}),
+    deepseek: z
+      .object({ apiKey: z.string().optional(), model: z.string().default('deepseek-reasoner') })
+      .default({}),
+    gemini: z
+      .object({ apiKey: z.string().optional(), model: z.string().default('gemini-2.0-flash-exp') })
+      .default({}),
+    kimi: z
+      .object({ apiKey: z.string().optional(), model: z.string().default('moonshot-v1-32k') })
+      .default({}),
+    volcengine: z
+      .object({ apiKey: z.string().optional(), model: z.string().default('doubao-pro-32k') })
+      .default({}),
+    tencent: z
+      .object({ apiKey: z.string().optional(), model: z.string().default('hunyuan-pro') })
+      .default({}),
+    siliconflow: z
+      .object({ apiKey: z.string().optional(), model: z.string().default('llama3.1-8b-instruct') })
+      .default({}),
+    vllm: z
+      .object({ baseUrl: z.string().optional(), model: z.string().default('llama3.1:8b') })
+      .default({}),
+    zhipu: z
+      .object({ apiKey: z.string().optional(), model: z.string().default('glm-4') })
+      .default({}),
+    ollama: z
+      .object({ baseUrl: z.string().optional(), model: z.string().default('llama3.1:8b') })
+      .default({}),
   }),
   webApiInternal: z.object({
     baseUrl: z.string().default('http://localhost:3004'),
@@ -76,23 +96,51 @@ export const config = configSchema.parse({
     windowMs: process.env.RATE_LIMIT_WINDOW || '1 minute',
   },
   providers: {
-    // 空的 providers 对象，所有配置都从数据库动态获取
-    anthropic: {},
-    azureOpenai: {},
-    base: {},
-    deepseek: {},
-    gemini: {},
-    kimi: {},
-    moonshot: {},
-    ollama: {},
-    openai: {},
-    openaiCompatible: {},
-    qwen: {},
-    siliconflow: {},
-    tencent: {},
-    vllm: {},
-    volcengine: {},
-    zhipu: {},
+    anthropic: {
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      model: process.env.ANTHROPIC_MODEL || 'claude-3-7-sonnet',
+    },
+    azureOpenai: {
+      baseUrl: process.env.AZURE_OPENAI_BASE_URL,
+      apiKey: process.env.AZURE_OPENAI_API_KEY,
+      model: process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4o-mini',
+    },
+    deepseek: {
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      model: process.env.DEEPSEEK_MODEL || 'deepseek-reasoner',
+    },
+    gemini: {
+      apiKey: process.env.GEMINI_API_KEY,
+      model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp',
+    },
+    kimi: {
+      apiKey: process.env.KIMI_API_KEY,
+      model: process.env.KIMI_MODEL || 'moonshot-v1-32k',
+    },
+    volcengine: {
+      apiKey: process.env.VOLC_API_KEY,
+      model: process.env.VOLC_MODEL || 'doubao-pro-32k',
+    },
+    tencent: {
+      apiKey: process.env.TENCENT_API_KEY,
+      model: process.env.TENCENT_MODEL || 'hunyuan-pro',
+    },
+    siliconflow: {
+      apiKey: process.env.SILICONFLOW_API_KEY,
+      model: process.env.SILICONFLOW_MODEL || 'llama3.1-8b-instruct',
+    },
+    vllm: {
+      baseUrl: process.env.VLLM_BASE_URL,
+      model: process.env.VLLM_MODEL || 'llama3.1:8b',
+    },
+    zhipu: {
+      apiKey: process.env.ZHIPU_API_KEY,
+      model: process.env.ZHIPU_MODEL || 'glm-4',
+    },
+    ollama: {
+      baseUrl: process.env.OLLAMA_BASE_URL,
+      model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
+    },
   },
   webApiInternal: {
     baseUrl: process.env.WEB_API_INTERNAL_BASE || 'http://localhost:3004',

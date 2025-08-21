@@ -245,7 +245,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
     '/pixel-ads/:id',
     withErrorLogging(app.log as any, 'pixel-ads.update', async (req, reply) => {
       try {
-        const payload = await (req as any).jwtVerify();
+        await (req as any).jwtVerify();
         const params = z.object({ id: z.string() }).parse(req.params);
         const data = updatePixelAdSchema.parse(req.body);
 
@@ -322,7 +322,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
     '/pixel-ads/:id',
     withErrorLogging(app.log as any, 'pixel-ads.delete', async (req, reply) => {
       try {
-        const payload = await (req as any).jwtVerify();
+        await (req as any).jwtVerify();
         const params = z.object({ id: z.string() }).parse(req.params);
 
         // 检查广告是否存在
