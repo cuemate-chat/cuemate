@@ -435,9 +435,9 @@ importers:
       mammoth:
         specifier: ^1.7.2
         version: 1.10.0
-      pdf-parse:
-        specifier: ^1.1.1
-        version: 1.1.1
+      pdf2json:
+        specifier: ^3.2.0
+        version: 3.2.0
       uuid:
         specifier: ^9.0.1
         version: 9.0.1
@@ -4954,6 +4954,13 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: false
+
+  /pdf2json@3.2.0:
+    resolution: {integrity: sha512-5RJYU5zWFXTQ5iRXAo75vlhK5ybZOyqEyg/szw2VtHc6ZOPcC7ruX4nnXk1OqqlY56Z7XT+WCFhV+/XPj4QwtQ==}
+    engines: {node: '>=20.18.0'}
+    hasBin: true
+    dev: false
+    bundledDependencies: []
 
   /pdfast@0.2.0:
     resolution: {integrity: sha512-cq6TTu6qKSFUHwEahi68k/kqN2mfepjkGrG9Un70cgdRRKLKY6Rf8P8uvP2NvZktaQZNF3YE7agEkLj0vGK9bA==}

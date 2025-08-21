@@ -38,12 +38,15 @@ export function createLogger(options: CreateLoggerOptions) {
   ensureDir(path.join(baseDir, 'error'));
 
   const transports: any = [];
-  if (!isDevelopment || !options.pretty) {
-    transports.push({
-      target: transportTarget,
-      options: { baseDir, service: options.service },
-    });
-  } else {
+
+  // 总是添加文件传输
+  transports.push({
+    target: transportTarget,
+    options: { baseDir, service: options.service },
+  });
+
+  // 在开发环境或明确要求时添加pretty输出
+  if (isDevelopment && options.pretty) {
     transports.push({
       target: 'pino-pretty',
       options: {
@@ -51,6 +54,14 @@ export function createLogger(options: CreateLoggerOptions) {
         ignore: 'pid,hostname',
         colorize: true,
       },
+    });
+  }
+
+  // 在生产环境（Docker容器）中，添加控制台输出
+  if (!isDevelopment) {
+    transports.push({
+      target: 'pino/file',
+      options: { destination: 1 }, // stdout
     });
   }
 

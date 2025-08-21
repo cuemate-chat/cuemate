@@ -1,9 +1,6 @@
 import multipart from '@fastify/multipart';
 import type { FastifyInstance } from 'fastify';
-import { promises as fs } from 'fs';
 import mammoth from 'mammoth';
-import { randomUUID } from 'crypto';
-import { join } from 'path';
 
 async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
   const chunks: Buffer[] = [];
@@ -23,6 +20,8 @@ export function registerFileRoutes(app: FastifyInstance) {
   });
 
   app.post('/files/extract-text', async (req: any, reply) => {
+    let text = ''; // 在函数开始就声明text变量
+
     try {
       // JWT认证检查
       try {
@@ -44,78 +43,75 @@ export function registerFileRoutes(app: FastifyInstance) {
       const buf = await streamToBuffer(file.file);
       app.log.info({ filename, bufferSize: buf.length }, '文件已转换为Buffer');
 
-      let text = '';
-
       // 支持PDF、DOC、DOCX和纯文本文件
       if (mimetype === 'application/pdf' || lower.endsWith('.pdf')) {
         try {
-          // 检查Buffer是否有效
-          if (!buf || buf.length === 0) {
-            throw new Error('PDF文件为空或无效');
+          // 检查PDF文件头
+          if (buf.length < 4 || buf.toString('ascii', 0, 4) !== '%PDF') {
+            throw new Error('无效的PDF文件格式');
           }
 
-          // 检查PDF文件头，确保是有效的PDF文件
-          const pdfHeader = buf.subarray(0, 4).toString();
-          if (pdfHeader !== '%PDF') {
-            throw new Error('文件不是有效的PDF格式');
-          }
+          app.log.info({ filename, bufferSize: buf.length, pdfHeader: '%PDF' }, '开始解析PDF文件');
 
-          // 使用临时文件解析PDF，避免pdf-parse库的内部路径问题
-          const tempDir = '/opt/cuemate/pdf';
-          const tempFileName = `${Date.now()}-${randomUUID()}.pdf`;
-          const tempFilePath = join(tempDir, tempFileName);
-          
-          app.log.info({ filename, bufferSize: buf.length, pdfHeader, tempFilePath }, '开始解析PDF文件');
-          
-          let res: any = null;
-          try {
-            // 将Buffer写入临时文件
-            await fs.writeFile(tempFilePath, buf);
-            
-            // 使用文件路径而不是Buffer来解析PDF
-            const { default: pdfParse } = await import('pdf-parse');
-            res = await pdfParse(await fs.readFile(tempFilePath));
-            text = (res.text || '').trim();
-            
-            app.log.info({ filename, textLength: text.length, pages: res.numpages }, 'PDF解析完成');
-            
-          } finally {
-            // 清理临时文件
-            try {
-              await fs.unlink(tempFilePath);
-            } catch (cleanupError) {
-              app.log.warn({ tempFilePath, err: cleanupError }, '清理临时PDF文件失败');
-            }
-          }
+          // 使用pdf2json解析PDF
+          const PDFParser = (await import('pdf2json')).default;
 
-          // 检查解析结果
-          if (!text && res && res.numpages && res.numpages > 0) {
-            throw new Error('PDF解析成功但未提取到文本内容，可能是扫描版PDF或图片PDF');
-          }
+          return new Promise((resolve, reject) => {
+            const pdfParser = new PDFParser();
+
+            pdfParser.on('pdfParser_dataReady', (pdfData: any) => {
+              try {
+                // 提取文本内容，保持原有的换行和格式
+                const pages = pdfData.Pages || [];
+                const textContent = pages
+                  .map((page: any) => {
+                    const texts = page.Texts || [];
+                    return texts
+                      .map((text: any) => {
+                        const decodedText = decodeURIComponent(text.R[0].T);
+                        return decodedText;
+                      })
+                      .join(' '); // 同一行内的文本用空格连接
+                  })
+                  .join('\n'); // 不同页面用换行符分隔
+
+                const text = textContent.trim();
+
+                if (text && text.length > 5) {
+                  app.log.info(
+                    { filename, textLength: text.length, pages: pages.length },
+                    'PDF解析完成（使用pdf2json）',
+                  );
+                  resolve({ text });
+                } else {
+                  reject(new Error('pdf2json提取的文本内容过少'));
+                }
+              } catch (parseError: any) {
+                reject(new Error(`pdf2json解析失败：${parseError.message}`));
+              }
+            });
+
+            pdfParser.on('pdfParser_dataError', (err: any) => {
+              reject(new Error(`pdf2json数据错误：${err.message}`));
+            });
+
+            // 解析PDF buffer
+            pdfParser.parseBuffer(buf);
+          });
         } catch (pdfError: any) {
           app.log.error({ err: pdfError, filename, errorMessage: pdfError.message }, 'PDF解析失败');
 
-          // 特殊处理 pdf-parse 库的内部路径错误
-          if (pdfError.message?.includes('ENOENT') && pdfError.message?.includes('test/data')) {
-            app.log.error({ filename }, 'PDF解析库内部路径错误，这是pdf-parse库的已知问题');
-            return reply.code(422).send({
-              error: `PDF文件解析失败，检测到pdf-parse库内部错误。`,
-            });
-          }
-
-          // 处理其他PDF错误
           let errorMessage = 'PDF文件解析失败';
-          if (pdfError.message?.includes('Invalid PDF')) {
-            errorMessage = 'PDF文件格式无效';
-          } else if (pdfError.message?.includes('加密') || pdfError.message?.includes('password')) {
-            errorMessage = 'PDF文件已加密';
-          } else if (pdfError.message?.includes('损坏')) {
-            errorMessage = 'PDF文件损坏';
+          if (pdfError.message?.includes('无效的PDF文件格式')) {
+            errorMessage += '：文件格式无效，请确保上传的是有效的PDF文件';
+          } else if (pdfError.message?.includes('文本内容过少')) {
+            errorMessage +=
+              '：可能是图片PDF或扫描版PDF，建议转换为可编辑的PDF或直接复制粘贴文本内容';
+          } else {
+            errorMessage += `：${pdfError.message}`;
           }
 
-          return reply.code(422).send({
-            error: `${errorMessage}：${pdfError.message}`,
-          });
+          throw new Error(errorMessage);
         }
       } else if (
         mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
@@ -148,7 +144,7 @@ export function registerFileRoutes(app: FastifyInstance) {
             );
             return reply.code(422).send({
               error:
-                '此DOC文件可能是较老的格式（如DOC 97-2003），建议将文件另存为DOCX格式后重新上传，或直接复制粘贴文本内容',
+                '此DOC文件可能是较老的格式（如DOC 97-2003），将文件另存为DOCX格式后重新上传，或直接复制粘贴文本内容',
             });
           }
         } catch (docError: any) {
@@ -164,20 +160,9 @@ export function registerFileRoutes(app: FastifyInstance) {
             error: `DOC文件解析失败：${docError.message || '文件可能已损坏或格式过旧'}。建议转换为DOCX格式或直接复制粘贴文本内容。`,
           });
         }
-      } else if (mimetype === 'text/plain' || lower.endsWith('.txt')) {
-        try {
-          app.log.info({ filename, bufferSize: buf.length }, '开始解析TXT文件');
-          text = buf.toString('utf-8').trim();
-          app.log.info({ filename, textLength: text.length }, 'TXT解析完成');
-        } catch (txtError: any) {
-          app.log.error({ err: txtError, filename }, 'TXT解析失败');
-          return reply.code(422).send({
-            error: `文本文件解析失败：${txtError.message || '文件编码可能不兼容'}。请检查文件编码或直接复制粘贴文本内容。`,
-          });
-        }
       } else {
         return reply.code(415).send({
-          error: `不支持的文件类型：${mimetype || '未知格式'} (${filename})。仅支持PDF、DOC、DOCX和TXT格式的简历文件。`,
+          error: `不支持的文件类型：${mimetype || '未知格式'} (${filename})。仅支持PDF、DOC和DOCX格式的简历文件。`,
         });
       }
 

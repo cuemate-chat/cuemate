@@ -332,13 +332,13 @@ export default function JobsList() {
               <div className="text-sm text-slate-600 mb-1">简历信息（文本）<span className="text-red-500"> *</span></div>
               <Input.TextArea
                 rows={adaptiveRows.resume}
-                maxLength={5000}
+                maxLength={20000}
                 value={resumeContent}
                 onChange={(e) => setResumeContent(e.target.value)}
                 placeholder="简历正文"
                 disabled={!selectedId}
               />
-              <div className="text-right text-xs text-slate-500">{resumeContent.length} / 5000</div>
+              <div className="text-right text-xs text-slate-500">{resumeContent.length} / 20000</div>
             </div>
           </div>
 
@@ -513,7 +513,7 @@ export default function JobsList() {
                     }}
                   />
                   <div className="text-right text-xs text-slate-500 mt-1">
-                    {tempOptimizedResume.length} 字
+                    {tempOptimizedResume.length} 字 / 20000
                   </div>
                 </div>
               </div>
