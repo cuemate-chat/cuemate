@@ -1,7 +1,4 @@
-import dotenv from 'dotenv';
 import { z } from 'zod';
-
-dotenv.config();
 
 const configSchema = z.object({
   server: z.object({
@@ -42,11 +39,6 @@ const configSchema = z.object({
     preSpeechPadMs: z.number().default(300),
     postSpeechPadMs: z.number().default(600),
   }),
-  redis: z.object({
-    host: z.string().default('localhost'),
-    port: z.number().default(6379),
-    password: z.string().optional(),
-  }),
   fallback: z.object({
     enabled: z.boolean().default(true),
     primaryProvider: z.enum(['deepgram', 'whisper']).default('deepgram'),
@@ -56,56 +48,51 @@ const configSchema = z.object({
   }),
 });
 
+// 使用简化配置，所有设置使用默认值
 export const config = configSchema.parse({
   server: {
-    port: parseInt(process.env.ASR_PORT || '3001'),
-    host: process.env.ASR_HOST || '0.0.0.0',
+    port: 3001,
+    host: '0.0.0.0',
   },
   cors: {
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: '*',
   },
   audio: {
-    sampleRate: parseInt(process.env.AUDIO_SAMPLE_RATE || '48000'),
-    channels: parseInt(process.env.AUDIO_CHANNELS || '1'),
-    frameSize: parseInt(process.env.AUDIO_FRAME_SIZE || '960'),
+    sampleRate: 48000,
+    channels: 1,
+    frameSize: 960,
   },
   deepgram: {
-    apiKey: process.env.DEEPGRAM_API_KEY,
-    model: process.env.DEEPGRAM_MODEL || 'nova-2',
-    language: process.env.DEEPGRAM_LANGUAGE || 'zh',
-    punctuate: process.env.DEEPGRAM_PUNCTUATE !== 'false',
-    profanityFilter: process.env.DEEPGRAM_PROFANITY_FILTER === 'true',
-    redact: process.env.DEEPGRAM_REDACT === 'true',
-    diarize: process.env.DEEPGRAM_DIARIZE === 'true',
-    numerals: process.env.DEEPGRAM_NUMERALS !== 'false',
-    endpointing: parseInt(process.env.DEEPGRAM_ENDPOINTING || '400'),
-    interimResults: process.env.DEEPGRAM_INTERIM !== 'false',
-    utteranceEndMs: parseInt(process.env.DEEPGRAM_UTTERANCE_END_MS || '1000'),
+    model: 'nova-2',
+    language: 'zh',
+    punctuate: true,
+    profanityFilter: false,
+    redact: false,
+    diarize: false,
+    numerals: true,
+    endpointing: 400,
+    interimResults: true,
+    utteranceEndMs: 1000,
   },
   whisper: {
-    modelPath: process.env.WHISPER_MODEL_PATH || './models/whisper',
-    modelSize: (process.env.WHISPER_MODEL_SIZE as any) || 'base',
-    language: process.env.WHISPER_LANGUAGE || 'zh',
-    threads: parseInt(process.env.WHISPER_THREADS || '4'),
-    useGpu: process.env.WHISPER_USE_GPU === 'true',
+    modelPath: './models/whisper',
+    modelSize: 'base',
+    language: 'zh',
+    threads: 4,
+    useGpu: false,
   },
   vad: {
-    enabled: process.env.VAD_ENABLED !== 'false',
-    threshold: parseFloat(process.env.VAD_THRESHOLD || '0.5'),
-    preSpeechPadMs: parseInt(process.env.VAD_PRE_SPEECH_PAD_MS || '300'),
-    postSpeechPadMs: parseInt(process.env.VAD_POST_SPEECH_PAD_MS || '600'),
-  },
-  redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    password: process.env.REDIS_PASSWORD,
+    enabled: true,
+    threshold: 0.5,
+    preSpeechPadMs: 300,
+    postSpeechPadMs: 600,
   },
   fallback: {
-    enabled: process.env.FALLBACK_ENABLED !== 'false',
-    primaryProvider: (process.env.PRIMARY_ASR_PROVIDER as any) || 'deepgram',
-    fallbackProvider: (process.env.FALLBACK_ASR_PROVIDER as any) || 'whisper',
-    maxRetries: parseInt(process.env.MAX_RETRIES || '3'),
-    retryDelayMs: parseInt(process.env.RETRY_DELAY_MS || '1000'),
+    enabled: true,
+    primaryProvider: 'deepgram',
+    fallbackProvider: 'whisper',
+    maxRetries: 3,
+    retryDelayMs: 1000,
   },
 });
 

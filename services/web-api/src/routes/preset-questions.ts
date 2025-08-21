@@ -376,7 +376,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
 
             // 同步到向量库（类似interview-questions的逻辑）
             try {
-              const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+              const base = 'http://localhost:3003';
 
               // 获取标签名称
               let tagName = null;

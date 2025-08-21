@@ -1,5 +1,5 @@
 import { http } from './http';
-const RAG_SERVICE_BASE = import.meta.env.VITE_RAG_SERVICE_BASE || 'http://localhost:3003';
+const RAG_SERVICE_BASE = 'http://localhost:3003';
 
 export interface VectorDocument {
   id: string;

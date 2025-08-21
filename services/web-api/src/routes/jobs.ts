@@ -46,7 +46,7 @@ export function registerJobRoutes(app: FastifyInstance) {
 
         // 同步到 rag-service
         try {
-          const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+          const base = 'http://localhost:3003';
           app.log.info(`Syncing job ${jobId} to RAG service at ${base}/jobs/process`);
 
           const response = await fetch(`${base}/jobs/process`, {
@@ -192,7 +192,7 @@ export function registerJobRoutes(app: FastifyInstance) {
 
       // 同步到 rag-service（先删除旧，再写新）
       try {
-        const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        const base = 'http://localhost:3003';
 
         // 先删除旧数据
         await fetch(`${base}/jobs/${id}`, {
@@ -301,7 +301,7 @@ export function registerJobRoutes(app: FastifyInstance) {
 
       // 4. 删除向量库中的所有相关数据（岗位、简历、押题）
       try {
-        const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        const base = 'http://localhost:3003';
         app.log.info(`Attempting to delete vector data for job ${id} from ${base}`);
 
         // 使用RAG服务的deleteJobData方法删除所有相关向量数据

@@ -108,12 +108,50 @@ export function registerVectorRoutes(app: FastifyInstance) {
   app.post(
     '/vectors/sync-all',
     withErrorLogging(app.log as any, 'vectors.sync-all', async (req, reply) => {
+      // JWT验证
+      let payload;
       try {
-        const payload = await (req as any).jwtVerify();
-        const body = z
-          .object({ jobId: z.string().min(1).optional() })
-          .parse((req as any).body || {});
-        const rag = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        payload = await (req as any).jwtVerify();
+      } catch (jwtError: any) {
+        app.log.error('JWT verification failed:', jwtError);
+        return reply.code(401).send({ error: 'JWT验证失败，请重新登录' });
+      }
+
+      // 解析请求体
+      let body;
+      try {
+        body = z.object({ jobId: z.string().min(1).optional() }).parse((req as any).body || {});
+      } catch (parseError: any) {
+        app.log.error('Request body parse failed:', parseError);
+        return reply.code(400).send({ error: '请求参数格式错误' });
+      }
+
+      try {
+        const rag = 'http://localhost:3003';
+
+        // 首先检查RAG服务是否可用
+        try {
+          const healthResponse = await fetch(`${rag}/health`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (!healthResponse.ok) {
+            app.log.error(`RAG service health check failed: ${healthResponse.status}`);
+            return reply.code(503).send({
+              error: 'RAG服务不可用，请检查服务是否正常运行',
+              details: `Health check failed with status ${healthResponse.status}`,
+            });
+          }
+
+          app.log.info('RAG service health check passed');
+        } catch (healthError: any) {
+          app.log.error('RAG service health check error:', healthError);
+          return reply.code(503).send({
+            error: 'RAG服务连接失败，请检查服务是否正常运行',
+            details: healthError.message,
+          });
+        }
 
         const processOneJob = async (job: any) => {
           const resume = (app as any).db
@@ -276,7 +314,8 @@ export function registerVectorRoutes(app: FastifyInstance) {
           },
         };
       } catch (err: any) {
-        return reply.code(401).send({ error: '未认证:' + err });
+        app.log.error('Sync-all failed:', err);
+        return reply.code(500).send({ error: '同步失败：' + err.message });
       }
     }),
   );
@@ -298,10 +337,35 @@ export function registerVectorRoutes(app: FastifyInstance) {
           return reply.code(401).send({ error: 'JWT验证失败：' + jwtError.message });
         }
 
-        const rag = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        const rag = 'http://localhost:3003';
         app.log.info(`RAG service URL: ${rag}`);
 
         app.log.info(`Starting clean-all for user ${payload.uid}`);
+
+        // 首先检查RAG服务是否可用
+        try {
+          const healthResponse = await fetch(`${rag}/health`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (!healthResponse.ok) {
+            app.log.error(`RAG service health check failed: ${healthResponse.status}`);
+            return reply.code(503).send({
+              error: 'RAG服务不可用，请检查服务是否正常运行',
+              details: `Health check failed with status ${healthResponse.status}`,
+            });
+          }
+
+          const healthData = await healthResponse.json();
+          app.log.info('RAG service health check passed:', healthData as any);
+        } catch (healthError: any) {
+          app.log.error('RAG service health check error:', healthError);
+          return reply.code(503).send({
+            error: 'RAG服务连接失败，请检查服务是否正常运行',
+            details: healthError.message,
+          });
+        }
 
         // 调用RAG服务清空所有向量数据
         try {
@@ -376,7 +440,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
         const collection = body.type || 'default';
 
         // 先删除向量库
-        const ragBase = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        const ragBase = 'http://localhost:3003';
         const res = await fetch(`${ragBase}/delete/by-filter`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },

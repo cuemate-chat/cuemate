@@ -1,7 +1,4 @@
-import dotenv from 'dotenv';
 import { z } from 'zod';
-
-dotenv.config();
 
 const configSchema = z.object({
   server: z.object({
@@ -46,43 +43,43 @@ const configSchema = z.object({
   }),
 });
 
+// 使用简化配置，所有设置使用默认值
 export const config = configSchema.parse({
   server: {
-    port: parseInt(process.env.RAG_PORT || '3003'),
-    host: process.env.RAG_HOST || '0.0.0.0',
+    port: 3003,
+    host: '0.0.0.0',
   },
   cors: {
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: '*',
   },
   vectorStore: {
-    type: (process.env.VECTOR_STORE_TYPE as any) || 'chroma',
-    chromaPath: process.env.CHROMA_PATH || 'http://localhost:8000',
-    chromaHost: process.env.CHROMA_HOST,
-    chromaPort: process.env.CHROMA_PORT ? parseInt(process.env.CHROMA_PORT) : undefined,
-    defaultCollection: process.env.DEFAULT_COLLECTION || 'default',
-    jobsCollection: process.env.JOBS_COLLECTION || 'jobs',
-    resumesCollection: process.env.RESUMES_COLLECTION || 'resumes',
-    questionsCollection: process.env.QUESTIONS_COLLECTION || 'questions',
+    type: 'chroma',
+    // 在 Docker 环境中使用 chroma:8000，本地开发使用 localhost:8000
+    chromaPath: process.env.NODE_ENV === 'production' ? 'http://chroma:8000' : 'http://localhost:8000',
+    defaultCollection: 'default',
+    jobsCollection: 'jobs',
+    resumesCollection: 'resumes',
+    questionsCollection: 'questions',
   },
   embeddings: {
-    dimensions: parseInt(process.env.EMBEDDING_DIMENSIONS || '1536'),
+    dimensions: 1536,
   },
   processing: {
-    chunkSize: parseInt(process.env.CHUNK_SIZE || '500'),
-    chunkOverlap: parseInt(process.env.CHUNK_OVERLAP || '50'),
-    maxChunksPerDocument: parseInt(process.env.MAX_CHUNKS_PER_DOC || '1000'),
-    supportedFormats: process.env.SUPPORTED_FORMATS?.split(',') || ['pdf', 'txt', 'md', 'docx'],
+    chunkSize: 500,
+    chunkOverlap: 50,
+    maxChunksPerDocument: 1000,
+    supportedFormats: ['pdf', 'txt', 'md', 'docx'],
   },
   retrieval: {
-    topK: parseInt(process.env.TOP_K || '5'),
-    minScore: parseFloat(process.env.MIN_SCORE || '0.7'),
-    rerankEnabled: process.env.RERANK_ENABLED === 'true',
-    hybridSearch: process.env.HYBRID_SEARCH === 'true',
+    topK: 5,
+    minScore: 0.7,
+    rerankEnabled: false,
+    hybridSearch: false,
   },
   privacy: {
-    redactPII: process.env.REDACT_PII !== 'false',
-    encryptAtRest: process.env.ENCRYPT_AT_REST === 'true',
-    auditLogging: process.env.AUDIT_LOGGING !== 'false',
+    redactPII: true,
+    encryptAtRest: false,
+    auditLogging: true,
   },
 });
 

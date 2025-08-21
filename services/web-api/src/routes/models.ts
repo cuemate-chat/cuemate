@@ -129,7 +129,7 @@ export function registerModelRoutes(app: FastifyInstance) {
       try {
         const modelRow = (app as any).db.prepare('SELECT * FROM models WHERE id=?').get(id);
         const creds = modelRow?.credentials ? JSON.parse(modelRow.credentials) : {};
-        const base = process.env.LLM_ROUTER_BASE || 'http://llm-router:3002';
+        const base = 'http://localhost:3002';
         const res = await fetch(`${base}/providers/probe`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -200,7 +200,7 @@ export function registerModelRoutes(app: FastifyInstance) {
       }
 
       // 调用 llm-router 的动态探测接口
-      const base = process.env.LLM_ROUTER_BASE || 'http://llm-router:3002';
+      const base = 'http://localhost:3002';
 
       // 构建请求体
       const requestBody = {
@@ -295,7 +295,8 @@ export function registerModelRoutes(app: FastifyInstance) {
       const query = (req as any).query || {};
       const userId = query.userId as string;
       const serviceKey = (req as any).headers['x-service-key'] as string | undefined;
-      if (!process.env.SERVICE_KEY || serviceKey !== process.env.SERVICE_KEY) {
+      const INTERNAL_SERVICE_KEY = 'internal-service-key-2025';
+      if (serviceKey !== INTERNAL_SERVICE_KEY) {
         return reply.code(401).send({ error: 'unauthorized' });
       }
       if (!userId) return reply.code(400).send({ error: 'userId required' });

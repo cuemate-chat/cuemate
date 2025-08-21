@@ -90,7 +90,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
 
         // 同步到向量库
         try {
-          const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+          const base = 'http://localhost:3003';
 
           // 获取标签名称
           let tagName = null;
@@ -199,7 +199,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           )
           .all(body.jobId);
 
-        const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        const base = 'http://localhost:3003';
         let success = 0;
         let failed = 0;
         for (const r of rows) {
@@ -404,7 +404,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           )
           .run(body.title, body.description, body.tagId ?? null, id);
         try {
-          const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+          const base = 'http://localhost:3003';
 
           // 先删除旧的向量数据
           await fetch(`${base}/questions/${id}`, {
@@ -468,7 +468,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
         (app as any).db.prepare('DELETE FROM interview_questions WHERE id=?').run(id);
         try {
-          const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+          const base = 'http://localhost:3003';
           await fetch(`${base}/questions/${id}`, {
             method: 'DELETE',
           });
@@ -522,7 +522,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
 
         // 删除向量库中的数据
         let vectorDeleted = 0;
-        const base = process.env.RAG_SERVICE_BASE || 'http://rag-service:3003';
+        const base = 'http://localhost:3003';
         
         for (const qid of questionIds) {
           try {

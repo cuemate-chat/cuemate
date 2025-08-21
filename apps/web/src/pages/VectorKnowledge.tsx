@@ -1107,7 +1107,22 @@ const SyncStatusOverview = ({
         message.error('同步失败：' + (result.error || '未知错误'));
       }
     } catch (error: any) {
-      message.error('同步失败：' + (error.message || '未知错误'));
+      console.error('Sync error:', error);
+      let errorMessage = '同步失败：';
+      
+      if (error.response?.status === 401) {
+        errorMessage += '登录已过期，请重新登录';
+      } else if (error.response?.status === 503) {
+        errorMessage += 'RAG服务不可用，请检查服务是否正常运行';
+      } else if (error.response?.data?.error) {
+        errorMessage += error.response.data.error;
+      } else if (error.message) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += '未知错误';
+      }
+      
+      message.error(errorMessage);
     } finally {
       setLoading(false);
       onSyncEnd?.();
@@ -1160,7 +1175,22 @@ const SyncStatusOverview = ({
             message.error('清空失败：' + (result.error || '未知错误'));
           }
         } catch (error: any) {
-          message.error('清空失败：' + (error.message || '未知错误'));
+          console.error('Clean error:', error);
+          let errorMessage = '清空失败：';
+          
+          if (error.response?.status === 401) {
+            errorMessage += '登录已过期，请重新登录';
+          } else if (error.response?.status === 503) {
+            errorMessage += 'RAG服务不可用，请检查服务是否正常运行';
+          } else if (error.response?.data?.error) {
+            errorMessage += error.response.data.error;
+          } else if (error.message) {
+            errorMessage += error.message;
+          } else {
+            errorMessage += '未知错误';
+          }
+          
+          message.error(errorMessage);
         } finally {
           setCleanLoading(false);
           onCleanEnd?.();
