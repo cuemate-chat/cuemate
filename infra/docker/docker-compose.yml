@@ -119,6 +119,8 @@ services:
       - VITE_WEB_API_BASE=${WEB_API_BASE:-http://web-api:3004}
       - VITE_RAG_SERVICE_URL=http://rag-service:3003
       - VITE_LLM_ROUTER_URL=http://llm-router:3002
+    volumes:
+      - ../../data/images:/opt/cuemate/images
     depends_on:
       - web-api
     networks:

@@ -21,6 +21,7 @@ import {
 import LicenseGuard from '../components/LicenseGuard';
 import { message } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
+import { WEB_API_BASE } from '../config';
 import { LAYOUT_PAGES, getBlockPrice } from '../data/pixelLayout';
 
 interface FormData {
@@ -321,6 +322,8 @@ export default function AdsManagement() {
     // 清除图片状态，显示当前图片信息
     handleImageRemove();
     if (ad.image_path) {
+      // 如果是相对路径，存储相对路径用于显示时转换
+      // 如果是完整URL（如用户上传的新图片），直接使用
       setImagePreview(ad.image_path);
     }
     
@@ -373,6 +376,14 @@ export default function AdsManagement() {
     return `¥${price.toFixed(2)}`;
   };
 
+  // 获取完整的图片URL
+  const getFullImageUrl = (imagePath: string) => {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${WEB_API_BASE}${imagePath}`;
+  };
+
+
   useEffect(() => {
     fetchAds();
   }, []);
@@ -411,7 +422,7 @@ export default function AdsManagement() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="搜索广告标题或描述..."
                 className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
           </div>
@@ -707,7 +718,7 @@ export default function AdsManagement() {
                       {imagePreview ? (
                         <div className="text-center">
                           <img 
-                            src={imagePreview} 
+                            src={imagePreview.startsWith('http') ? imagePreview : getFullImageUrl(imagePreview)} 
                             alt="图片预览" 
                             className="max-h-32 mx-auto mb-2 rounded"
                           />
