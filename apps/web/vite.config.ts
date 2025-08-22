@@ -20,4 +20,28 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // 将第三方库分离到单独的chunk
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('antd')) {
+              return 'vendor-antd';
+            }
+            return 'vendor';
+          }
+          // 将API模块分离
+          if (id.includes('/api/')) {
+            return 'api';
+          }
+        },
+      },
+    },
+    // 设置chunk大小警告阈值
+    chunkSizeWarningLimit: 1000,
+  },
 });
