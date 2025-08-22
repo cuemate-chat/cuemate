@@ -26,6 +26,7 @@ export interface CreatePixelAdRequest {
   title: string;
   description: string;
   link_url: string;
+  image_path: string; // 添加图片路径字段
   block_id: string;
   x_position: number;
   y_position: number;
@@ -117,4 +118,28 @@ export async function checkPixelPosition(
 // 获取公开的活跃广告
 export async function getPublicActiveAds(): Promise<{ ads: PixelAd[] }> {
   return await http.get<{ ads: PixelAd[] }>('/pixel-ads/public/active');
+}
+
+// 图片上传
+export async function uploadImage(
+  file: File,
+): Promise<{ imagePath: string; filename: string; size: number }> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch('/api/files/upload-image', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || '图片上传失败');
+  }
+
+  return await response.json();
 }

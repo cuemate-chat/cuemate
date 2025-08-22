@@ -98,6 +98,7 @@ services:
       - ../../data/sqlite:/opt/cuemate/data
       - ../../data/logs:/opt/cuemate/log
       - ../../data/pdf:/opt/cuemate/pdf
+      - ../../data/images:/opt/cuemate/images
     ports:
       - "3004:3004"
     networks:

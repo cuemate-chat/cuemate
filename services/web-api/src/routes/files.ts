@@ -1,6 +1,8 @@
 import multipart from '@fastify/multipart';
 import type { FastifyInstance } from 'fastify';
+import { promises as fs } from 'fs';
 import mammoth from 'mammoth';
+import path from 'path';
 
 async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
   const chunks: Buffer[] = [];
@@ -16,7 +18,69 @@ async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 
 export function registerFileRoutes(app: FastifyInstance) {
   app.register(multipart, {
-    limits: { fileSize: 10 * 1024 * 1024 },
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  });
+
+  // 图片上传路由
+  app.post('/files/upload-image', async (req: any, reply) => {
+    try {
+      // JWT认证检查
+      try {
+        await req.jwtVerify();
+      } catch (jwtError: any) {
+        app.log.warn({ err: jwtError }, 'JWT认证失败');
+        return reply.code(401).send({ error: '请先登录后再使用图片上传功能' });
+      }
+
+      const file = await req.file();
+      if (!file) return reply.code(400).send({ error: '缺少文件，请选择要上传的图片文件' });
+
+      const mimetype: string = file.mimetype || '';
+      const filename: string = file.filename || '';
+      const lower = filename.toLowerCase();
+
+      // 检查文件类型
+      if (
+        !mimetype.startsWith('image/') &&
+        !['.jpg', '.jpeg', '.png', '.gif', '.webp'].some((ext) => lower.endsWith(ext))
+      ) {
+        return reply.code(400).send({ error: '只支持图片文件格式：JPG、PNG、GIF、WebP' });
+      }
+
+      app.log.info({ filename, mimetype, size: file.file.bytesRead }, '开始上传图片');
+
+      const buf = await streamToBuffer(file.file);
+
+      // 生成带时间戳的文件名，避免重名
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '');
+      const extension = path.extname(filename) || '.jpg';
+      const nameWithoutExt = path.basename(filename, extension);
+      const newFilename = `${nameWithoutExt}${timestamp}${extension}`;
+
+      // 确保图片目录存在
+      const imageDir = '/opt/cuemate/images';
+      await fs.mkdir(imageDir, { recursive: true });
+
+      // 保存图片文件
+      const imagePath = path.join(imageDir, newFilename);
+      await fs.writeFile(imagePath, buf);
+
+      app.log.info({ filename, newFilename, imagePath, size: buf.length }, '图片上传成功');
+
+      // 返回图片访问路径（前端通过这个路径访问图片）
+      const imageUrl = `/images/${newFilename}`;
+
+      return {
+        success: true,
+        message: '图片上传成功',
+        imagePath: imageUrl,
+        filename: newFilename,
+        size: buf.length,
+      };
+    } catch (error: any) {
+      app.log.error({ err: error, filename: req.file?.filename }, '图片上传失败');
+      return reply.code(500).send({ error: '图片上传失败：' + error.message });
+    }
   });
 
   app.post('/files/extract-text', async (req: any, reply) => {

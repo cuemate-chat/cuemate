@@ -14,6 +14,7 @@ import {
   deletePixelAd,
   listPixelAds,
   updatePixelAd,
+  uploadImage,
   type CreatePixelAdRequest,
   type PixelAd
 } from '../api/ads-mg';
@@ -106,24 +107,17 @@ export default function AdsManagement() {
     setImagePreview('');
   };
 
-  // 上传图片 (模拟功能)
-  const uploadImage = async (): Promise<string> => {
+  // 上传图片
+  const handleImageUpload = async (): Promise<string> => {
     if (!selectedFile) return '';
     
     setUploadingImage(true);
     try {
-      // 这里是模拟上传，实际应该上传到服务器
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // 模拟返回图片路径
-      const timestamp = Date.now();
-      const extension = selectedFile.name.split('.').pop();
-      const imagePath = `/images/ads/${timestamp}.${extension}`;
-      
+      const result = await uploadImage(selectedFile);
       message.success('图片上传成功');
-      return imagePath;
-    } catch (error) {
-      message.error('图片上传失败');
+      return result.imagePath;
+    } catch (error: any) {
+      message.error('图片上传失败：' + error.message);
       return '';
     } finally {
       setUploadingImage(false);
@@ -237,7 +231,7 @@ export default function AdsManagement() {
       // 如果选择了新图片，先上传
       let imagePath = editingAd?.image_path || '';
       if (selectedFile) {
-        imagePath = await uploadImage();
+        imagePath = await handleImageUpload();
         if (!imagePath && selectedFile) {
           // 上传失败
           setSubmitting(false);
@@ -248,7 +242,7 @@ export default function AdsManagement() {
       const payload: CreatePixelAdRequest = {
         ...updatedFormData,
         expires_at: new Date(updatedFormData.expires_at).getTime(),
-        // 注意：image_path由后端处理，这里不传递
+        image_path: imagePath, // 包含图片路径
       };
 
       if (editingAd) {
@@ -269,7 +263,6 @@ export default function AdsManagement() {
       // 检查是否是认证错误
       if (error.status === 401 || error.message?.includes('unauthorized') || error.message?.includes('token')) {
         message.error('登录已过期，请重新登录');
-        // 可以在这里添加重定向到登录页的逻辑
         return;
       }
       

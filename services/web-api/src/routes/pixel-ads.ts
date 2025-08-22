@@ -8,6 +8,7 @@ const pixelAdSchema = z.object({
   title: z.string().min(1, '广告标题不能为空').max(100, '广告标题不能超过100字符'),
   description: z.string().min(1, '广告描述不能为空').max(500, '广告描述不能超过500字符'),
   link_url: z.string().url('请输入有效的URL').max(1000, 'URL不能超过1000字符'),
+  image_path: z.string().min(1, '图片路径不能为空').max(500, '图片路径不能超过500字符'), // 图片路径必填
   block_id: z.string().min(1, '块ID不能为空').max(20, '块ID不能超过20字符').optional(), // 新增block_id字段
   x_position: z.number().int().min(0, 'X坐标不能小于0').max(9999, 'X坐标不能大于9999'),
   y_position: z.number().int().min(0, 'Y坐标不能小于0').max(9999, 'Y坐标不能大于9999'),
@@ -171,7 +172,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
     '/pixel-ads',
     withErrorLogging(app.log as any, 'pixel-ads.create', async (req, reply) => {
       try {
-        await req.jwtVerify();
+        const payload = await req.jwtVerify();
         const data = pixelAdSchema.parse(req.body);
         const now = Date.now();
         const adId = uuidv4();
@@ -198,7 +199,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
             data.title,
             data.description,
             data.link_url,
-            '', // image_path 初始为空，需要单独上传图片
+            data.image_path, // 使用传入的image_path
             data.block_id || '', // 新增block_id字段
             data.x_position,
             data.y_position,
@@ -209,6 +210,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
             data.contact_info || '',
             data.price || 0,
             data.notes || '', // 新增notes字段
+            payload.uid, // 从JWT获取用户ID
             now,
             data.expires_at,
           );

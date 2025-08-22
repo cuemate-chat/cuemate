@@ -3,6 +3,7 @@ import { initSqlite } from '@cuemate/data-sqlite';
 import { fastifyLoggingHooks } from '@cuemate/logger';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
+import fastifyStatic from '@fastify/static';
 import { config } from 'dotenv';
 import Fastify from 'fastify';
 import { registerAuthRoutes } from './routes/auth.js';
@@ -32,6 +33,13 @@ async function start() {
     maxAge: 86400,
   });
   await app.register(jwt, { secret: process.env.JWT_SECRET || 'dev-secret' });
+
+  // 静态文件服务 - 提供图片访问
+  await app.register(fastifyStatic, {
+    root: '/opt/cuemate/images',
+    prefix: '/images/',
+    decorateReply: false,
+  });
 
   // 记录时区信息（实际生效由 @cuemate/logger 内部基于环境变量自动设置）
   const tz = process.env.CUEMATE_LOG_TZ || process.env.TZ || undefined;
