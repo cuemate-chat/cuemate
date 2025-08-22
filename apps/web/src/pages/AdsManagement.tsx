@@ -6,7 +6,7 @@ import {
   PlusIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
-import { Select } from 'antd';
+import { Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {
   checkPixelPosition,
@@ -281,17 +281,22 @@ export default function AdsManagement() {
 
   // 删除广告
   const handleDelete = async (ad: PixelAd) => {
-    if (!confirm(`确认删除广告 "${ad.title}" 吗？`)) {
-      return;
-    }
-
-    try {
-      await deletePixelAd(ad.id);
-      message.success('广告删除成功');
-      fetchAds(currentPage, pageSize, searchTerm, statusFilter);
-    } catch (error) {
-      message.error('删除广告出错：' + error);
-    }
+    Modal.confirm({
+      title: '确认删除广告',
+      content: `确定要删除广告 "${ad.title}" 吗？删除后无法恢复。`,
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      async onOk() {
+        try {
+          await deletePixelAd(ad.id);
+          message.success('广告删除成功');
+          fetchAds(currentPage, pageSize, searchTerm, statusFilter);
+        } catch (error) {
+          message.error('删除广告出错：' + error);
+        }
+      }
+    });
   };
 
   // 打开编辑模态框

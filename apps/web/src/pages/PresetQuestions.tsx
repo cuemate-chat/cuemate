@@ -216,13 +216,22 @@ export default function PresetQuestions() {
 
   // 删除单个
   const onDeleteItem = async (item: PresetQuestion) => {
-    try {
-      await deletePresetQuestion(item.id);
-      globalMessage.success('删除成功');
-      await reloadList();
-    } catch (e: any) {
-      globalMessage.error(e?.message || '删除失败');
-    }
+    Modal.confirm({
+      title: '确认删除题目',
+      content: '确定要删除该题目吗？删除后无法恢复。',
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      async onOk() {
+        try {
+          await deletePresetQuestion(item.id);
+          globalMessage.success('删除成功');
+          await reloadList();
+        } catch (e: any) {
+          globalMessage.error(e?.message || '删除失败');
+        }
+      }
+    });
   };
 
   // 批量删除

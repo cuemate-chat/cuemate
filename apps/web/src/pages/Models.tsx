@@ -167,10 +167,23 @@ export default function Models() {
   }
 
   async function handleDelete(id: string) {
-    await deleteModel(id);
-    message.success('已删除');
-    // 删除后立即刷新，保障页码回退逻辑生效
-    await fetchList();
+    Modal.confirm({
+      title: '确认删除模型',
+      content: '确定要删除该模型吗？删除后无法恢复。',
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      async onOk() {
+        try {
+          await deleteModel(id);
+          message.success('已删除');
+          // 删除后立即刷新，保障页码回退逻辑生效
+          await fetchList();
+        } catch (error) {
+          message.error('删除失败：' + error);
+        }
+      }
+    });
   }
 
   useEffect(() => {
