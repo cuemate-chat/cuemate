@@ -55,8 +55,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
     '/pixel-ads',
     withErrorLogging(app.log as any, 'pixel-ads.list', async (req, reply) => {
       try {
-        await (req as any).jwtVerify();
-
+        await req.jwtVerify();
         const query = z.object({
           page: z
             .string()
@@ -98,24 +97,22 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
         const dataQuery = `
           SELECT * FROM pixel_ads 
           WHERE ${whereClause}
-          ORDER BY created_at DESC 
+          ORDER BY created_at DESC
           LIMIT ? OFFSET ?
         `;
-        const ads = app.db.prepare(dataQuery).all(...params, limit, offset);
-
-        const totalPages = Math.ceil(total / limit);
+        const ads = app.db.prepare(dataQuery).all(limit, offset);
 
         return {
           ads,
           pagination: {
+            total,
             page,
             limit,
-            total,
-            totalPages,
           },
         };
-      } catch (error: any) {
-        return reply.code(401).send({ error: '未认证' });
+      } catch (err: any) {
+        app.log.error({ err }, '获取广告列表失败');
+        return reply.code(401).send({ error: '未认证：' + err });
       }
     }),
   );
@@ -125,8 +122,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
     '/pixel-ads/:id',
     withErrorLogging(app.log as any, 'pixel-ads.get', async (req, reply) => {
       try {
-        await (req as any).jwtVerify();
-
+        await req.jwtVerify();
         const params = z.object({ id: z.string() }).parse(req.params);
 
         const ad = app.db.prepare('SELECT * FROM pixel_ads WHERE id = ?').get(params.id);
@@ -136,8 +132,9 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
         }
 
         return { ad };
-      } catch (error: any) {
-        return reply.code(401).send({ error: '未认证' });
+      } catch (err: any) {
+        app.log.error({ err }, '获取广告详情失败');
+        return reply.code(401).send({ error: '未认证：' + err });
       }
     }),
   );
@@ -174,29 +171,22 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
     '/pixel-ads',
     withErrorLogging(app.log as any, 'pixel-ads.create', async (req, reply) => {
       try {
-        const payload = await (req as any).jwtVerify();
+        await req.jwtVerify();
         const data = pixelAdSchema.parse(req.body);
+        const now = Date.now();
+        const adId = uuidv4();
 
         // 检查位置冲突
         if (
-          checkPositionConflict(
-            app.db,
-            data.x_position,
-            data.y_position,
-            data.width,
-            data.height,
-          )
+          checkPositionConflict(app.db, data.x_position, data.y_position, data.width, data.height)
         ) {
           return reply.code(400).send({ error: '该像素区域已被占用，请选择其他位置' });
         }
 
-        const now = Date.now();
-        const adId = uuidv4();
-
+        // 创建广告
         app.db
           .prepare(
-            `
-            INSERT INTO pixel_ads (
+            `INSERT INTO pixel_ads (
               id, title, description, link_url, image_path, block_id,
               x_position, y_position, width, height, z_index,
               status, contact_info, price, notes, user_id, created_at, expires_at
@@ -219,7 +209,6 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
             data.contact_info || '',
             data.price || 0,
             data.notes || '', // 新增notes字段
-            payload.uid,
             now,
             data.expires_at,
           );
@@ -231,11 +220,12 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
           message: '广告创建成功',
           ad: createdAd,
         };
-      } catch (error: any) {
-        if (error.name === 'ZodError') {
-          return reply.code(400).send({ error: error.errors[0].message });
+      } catch (err: any) {
+        app.log.error({ err }, '创建广告失败');
+        if (err.name === 'ZodError') {
+          return reply.code(400).send({ error: err.errors[0].message });
         }
-        return reply.code(401).send({ error: '未认证' });
+        return reply.code(401).send({ error: '未认证：' + err });
       }
     }),
   );
@@ -245,14 +235,12 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
     '/pixel-ads/:id',
     withErrorLogging(app.log as any, 'pixel-ads.update', async (req, reply) => {
       try {
-        await (req as any).jwtVerify();
+        await req.jwtVerify();
         const params = z.object({ id: z.string() }).parse(req.params);
         const data = updatePixelAdSchema.parse(req.body);
 
         // 检查广告是否存在
-        const existingAd = app.db
-          .prepare('SELECT * FROM pixel_ads WHERE id = ?')
-          .get(params.id);
+        const existingAd = app.db.prepare('SELECT * FROM pixel_ads WHERE id = ?').get(params.id);
 
         if (!existingAd) {
           return reply.code(404).send({ error: '广告不存在' });
@@ -299,20 +287,19 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
           .prepare(`UPDATE pixel_ads SET ${updateFields.join(', ')} WHERE id = ?`)
           .run(...updateValues);
 
-        const updatedAd = app.db
-          .prepare('SELECT * FROM pixel_ads WHERE id = ?')
-          .get(params.id);
+        const updatedAd = app.db.prepare('SELECT * FROM pixel_ads WHERE id = ?').get(params.id);
 
         return {
           success: true,
           message: '广告更新成功',
           ad: updatedAd,
         };
-      } catch (error: any) {
-        if (error.name === 'ZodError') {
-          return reply.code(400).send({ error: error.errors[0].message });
+      } catch (err: any) {
+        app.log.error({ err }, '更新广告失败');
+        if (err.name === 'ZodError') {
+          return reply.code(400).send({ error: err.errors[0].message });
         }
-        return reply.code(401).send({ error: '未认证' });
+        return reply.code(401).send({ error: '未认证：' + err });
       }
     }),
   );
@@ -322,13 +309,11 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
     '/pixel-ads/:id',
     withErrorLogging(app.log as any, 'pixel-ads.delete', async (req, reply) => {
       try {
-        await (req as any).jwtVerify();
+        await req.jwtVerify();
         const params = z.object({ id: z.string() }).parse(req.params);
 
         // 检查广告是否存在
-        const existingAd = app.db
-          .prepare('SELECT * FROM pixel_ads WHERE id = ?')
-          .get(params.id);
+        const existingAd = app.db.prepare('SELECT * FROM pixel_ads WHERE id = ?').get(params.id);
 
         if (!existingAd) {
           return reply.code(404).send({ error: '广告不存在' });
@@ -346,8 +331,12 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
           success: true,
           message: '广告删除成功',
         };
-      } catch (error: any) {
-        return reply.code(401).send({ error: '未认证' });
+      } catch (err: any) {
+        app.log.error({ err }, '删除广告失败');
+        if (err.name === 'ZodError') {
+          return reply.code(400).send({ error: err.errors[0].message });
+        }
+        return reply.code(401).send({ error: '未认证：' + err });
       }
     }),
   );
@@ -357,8 +346,7 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
     '/pixel-ads/check-position',
     withErrorLogging(app.log as any, 'pixel-ads.check-position', async (req, reply) => {
       try {
-        await (req as any).jwtVerify();
-
+        await req.jwtVerify();
         const body = z
           .object({
             x_position: z.number().int().min(0).max(9999),
@@ -382,11 +370,12 @@ export function registerPixelAdsRoutes(app: FastifyInstance) {
           available: !isConflict,
           message: isConflict ? '该像素区域已被占用' : '该像素区域可用',
         };
-      } catch (error: any) {
-        if (error.name === 'ZodError') {
-          return reply.code(400).send({ error: error.errors[0].message });
+      } catch (err: any) {
+        app.log.error({ err }, '检查位置失败');
+        if (err.name === 'ZodError') {
+          return reply.code(400).send({ error: err.errors[0].message });
         }
-        return reply.code(401).send({ error: '未认证' });
+        return reply.code(401).send({ error: '未认证：' + err });
       }
     }),
   );

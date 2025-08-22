@@ -6,25 +6,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { Tabs } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { getPublicActiveAds, type PixelAd } from '../api/pixel-ads';
 import { message } from '../components/Message';
 import { GRID_CONFIG, LAYOUT_PAGES, getBlockPrice, type BlockConfig, type LayoutPage } from '../data/pixelLayout';
-
-interface PixelAd {
-  id: string;
-  title: string;
-  description: string;
-  link_url: string;
-  image_path: string;
-  block_id?: string; // 块ID字段
-  x_position: number;
-  y_position: number;
-  width: number;
-  height: number;
-  z_index: number;
-  expires_at: number;
-  contact_info?: string;
-  notes?: string; // 备注字段
-}
 
 interface AdBlock extends BlockConfig {
   ad?: PixelAd;
@@ -65,17 +49,12 @@ export default function PixelAds() {
   const fetchActiveAds = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/pixel-ads/public/active');
-      if (response.ok) {
-        const data = await response.json();
-        const adsData = data.ads || [];
-        setAds(adsData);
-        initializeAdBlocks(adsData);
-      } else {
-        message.error('获取广告数据失败');
-      }
+      const data = await getPublicActiveAds();
+      const adsData = data.ads || [];
+      setAds(adsData);
+      initializeAdBlocks(adsData);
     } catch (error) {
-      message.error('获取广告数据出错:' + error);
+      message.error('获取广告数据失败');
     } finally {
       setLoading(false);
     }

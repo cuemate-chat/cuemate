@@ -8,33 +8,19 @@ import {
 } from '@heroicons/react/24/outline';
 import { Select } from 'antd';
 import { useEffect, useState } from 'react';
-import { http } from '../api/http';
+import {
+  checkPixelPosition,
+  createPixelAd,
+  deletePixelAd,
+  listPixelAds,
+  updatePixelAd,
+  type CreatePixelAdRequest,
+  type PixelAd
+} from '../api/ads-mg';
 import LicenseGuard from '../components/LicenseGuard';
 import { message } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 import { LAYOUT_PAGES, getBlockPrice } from '../data/pixelLayout';
-
-interface PixelAd {
-  id: string;
-  title: string;
-  description: string;
-  link_url: string;
-  image_path: string;
-  block_id?: string; // 块ID字段
-  x_position: number;
-  y_position: number;
-  width: number;
-  height: number;
-  z_index: number;
-  status: 'active' | 'inactive' | 'expired';
-  contact_info?: string;
-  notes?: string; // 备注字段
-  price: number;
-  user_id: string;
-  created_at: number;
-  updated_at?: number;
-  expires_at: number;
-}
 
 interface FormData {
   title: string;
@@ -148,14 +134,12 @@ export default function AdsManagement() {
   const fetchAds = async (page = 1, limit = pageSize, search = '', status = '') => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        ...(search && { search }),
-        ...(status && { status }),
+      const data = await listPixelAds({
+        page,
+        limit,
+        search: search || undefined,
+        status: status || undefined,
       });
-
-      const data = await http.get<{ ads: PixelAd[]; pagination: { total: number } }>(`/pixel-ads?${params}`);
       setAds(data.ads);
       setTotalCount(data.pagination.total);
     } catch (error) {
@@ -168,7 +152,7 @@ export default function AdsManagement() {
   // 检查位置是否可用
   const checkPosition = async (x: number, y: number, width: number, height: number, excludeId?: string) => {
     try {
-      const data = await http.post<{ available: boolean }>('/pixel-ads/check-position', {
+      const data = await checkPixelPosition({
         x_position: x,
         y_position: y,
         width,
@@ -261,22 +245,20 @@ export default function AdsManagement() {
         }
       }
 
-      const url = editingAd ? `/pixel-ads/${editingAd.id}` : '/pixel-ads';
-      const method = editingAd ? 'PUT' : 'POST';
-
-      const payload = {
+      const payload: CreatePixelAdRequest = {
         ...updatedFormData,
         expires_at: new Date(updatedFormData.expires_at).getTime(),
         // 注意：image_path由后端处理，这里不传递
       };
 
-      if (method === 'POST') {
-        await http.post(url, payload);
+      if (editingAd) {
+        await updatePixelAd(editingAd.id, payload);
+        message.success('广告更新成功');
       } else {
-        await http.put(url, payload);
+        await createPixelAd(payload);
+        message.success('广告创建成功');
       }
       
-      message.success(editingAd ? '广告更新成功' : '广告创建成功');
       setShowModal(false);
       setEditingAd(null);
       setFormData(initialFormData);
@@ -311,7 +293,7 @@ export default function AdsManagement() {
     }
 
     try {
-      await http.delete(`/pixel-ads/${ad.id}`);
+      await deletePixelAd(ad.id);
       message.success('广告删除成功');
       fetchAds(currentPage, pageSize, searchTerm, statusFilter);
     } catch (error) {
