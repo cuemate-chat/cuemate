@@ -28,7 +28,7 @@ interface ViewportInfo {
 const MIN_SCALE = 0.1;  // 允许缩小到10%
 const MAX_SCALE = 5;    // 允许放大到500%
 
-export default function PixelAds() {
+export default function AdsPixel() {
   const [ads, setAds] = useState<PixelAd[]>([]);
   const [loading, setLoading] = useState(true);
   const [adBlocks, setAdBlocks] = useState<AdBlock[]>([]);

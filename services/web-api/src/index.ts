@@ -6,13 +6,13 @@ import jwt from '@fastify/jwt';
 import fastifyStatic from '@fastify/static';
 import { config } from 'dotenv';
 import Fastify from 'fastify';
+import { registerAdsRoutes } from './routes/ads.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerFileRoutes } from './routes/files.js';
 import { registerJobRoutes } from './routes/jobs.js';
 import { registerLicenseRoutes } from './routes/license.js';
 import { registerLogRoutes } from './routes/logs.js';
 import { registerModelRoutes } from './routes/models.js';
-import { registerPixelAdsRoutes } from './routes/pixel-ads.js';
 import { registerPresetQuestionRoutes } from './routes/preset-questions.js';
 import { registerInterviewQuestionRoutes } from './routes/questions.js';
 import { registerReviewRoutes } from './routes/reviews.js';
@@ -74,7 +74,7 @@ async function start() {
   registerVectorRoutes(app as any);
   registerFileRoutes(app as any);
   registerLicenseRoutes(app as any);
-  registerPixelAdsRoutes(app as any);
+  registerAdsRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 

@@ -50,7 +50,7 @@ function checkPositionConflict(
   return result.count > 0;
 }
 
-export function registerPixelAdsRoutes(app: FastifyInstance) {
+export function registerAdsRoutes(app: FastifyInstance) {
   // 获取所有广告（分页）
   app.get(
     '/pixel-ads',

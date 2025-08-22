@@ -12,7 +12,7 @@ import {
   checkPixelPosition,
   createPixelAd,
   deletePixelAd,
-  listPixelAds,
+  listAdsPixel,
   updatePixelAd,
   uploadImage,
   type CreatePixelAdRequest,
@@ -129,7 +129,7 @@ export default function AdsManagement() {
   const fetchAds = async (page = 1, limit = pageSize, search = '', status = '') => {
     setLoading(true);
     try {
-      const data = await listPixelAds({
+      const data = await listAdsPixel({
         page,
         limit,
         search: search || undefined,

@@ -41,7 +41,7 @@ export interface CreatePixelAdRequest {
 
 export interface UpdatePixelAdRequest extends Partial<CreatePixelAdRequest> {}
 
-export interface PaginatedPixelAdsResponse {
+export interface PaginatedAdsPixelResponse {
   ads: PixelAd[];
   pagination: {
     total: number;
@@ -64,12 +64,12 @@ export interface CheckPositionResponse {
 }
 
 // 获取广告列表
-export async function listPixelAds(params: {
+export async function listAdsPixel(params: {
   page?: number;
   limit?: number;
   search?: string;
   status?: string;
-}): Promise<PaginatedPixelAdsResponse> {
+}): Promise<PaginatedAdsPixelResponse> {
   const queryParams = new URLSearchParams();
   if (params.page) queryParams.append('page', params.page.toString());
   if (params.limit) queryParams.append('limit', params.limit.toString());
@@ -77,7 +77,7 @@ export async function listPixelAds(params: {
   if (params.status) queryParams.append('status', params.status);
 
   const url = queryParams.toString() ? `/pixel-ads?${queryParams}` : '/pixel-ads';
-  return await http.get<PaginatedPixelAdsResponse>(url);
+  return await http.get<PaginatedAdsPixelResponse>(url);
 }
 
 // 获取单个广告

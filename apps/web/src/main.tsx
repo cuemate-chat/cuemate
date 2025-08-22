@@ -4,10 +4,13 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import AuthGuard from './components/AuthGuard';
 import Layout from './components/Layout';
 import { MessageContainer } from './components/Message';
+import AdsManagement from './pages/AdsManagement';
+import AdsPixel from './pages/AdsPixel';
 import Help from './pages/Help';
 import Home from './pages/Home';
 import JobsList from './pages/JobsList';
 import JobsNew from './pages/JobsNew';
+import License from './pages/License';
 import Login from './pages/Login';
 import Logs from './pages/Logs';
 import Models from './pages/Models';
@@ -19,9 +22,6 @@ import Reviews from './pages/Reviews';
 import Settings from './pages/Settings';
 import UserAgreement from './pages/UserAgreement';
 import VectorKnowledge from './pages/VectorKnowledge';
-import License from './pages/License';
-import PixelAds from './pages/PixelAds';
-import AdsManagement from './pages/AdsManagement';
 import './styles.css';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -51,7 +51,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings/logs" element={<Logs />} />
           <Route path="/settings/vector-knowledge" element={<VectorKnowledge />} />
           <Route path="/settings/license" element={<License />} />
-          <Route path="/pixel-ads" element={<PixelAds />} />
+          <Route path="/pixel-ads" element={<AdsPixel />} />
           <Route path="/ads-management" element={<AdsManagement />} />
         </Route>
         <Route path="/" element={<Navigate to="/home" />} />
