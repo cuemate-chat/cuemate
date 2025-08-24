@@ -41,7 +41,6 @@ export default function AdsPixel() {
   
   
   // UI 控制
-  const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false);
   const [isControlsCollapsed, setIsControlsCollapsed] = useState(false); // 操作指南折叠状态
   const [isLegendCollapsed, setIsLegendCollapsed] = useState(false); // 状态图例折叠状态
   
@@ -246,37 +245,25 @@ export default function AdsPixel() {
 
 
 
-  // 全屏切换 - 保持当前缩放状态并重新计算布局
+  // 全屏切换
   const toggleFullscreen = async () => {
     try {
       if (!document.fullscreenElement) {
         await containerRef.current?.requestFullscreen();
         setIsFullscreen(true);
-        // 延迟重新计算布局以确保全屏生效
-        setTimeout(() => {
-          initializeAdBlocks(ads);
-        }, 100);
       } else {
         await document.exitFullscreen();
         setIsFullscreen(false);
-        // 延迟重新计算布局以确保退出全屏生效
-        setTimeout(() => {
-          initializeAdBlocks(ads);
-        }, 100);
       }
     } catch (error) {
       message.error('全屏功能不可用:' + error);
     }
   };
 
-  // 监听全屏状态变化 - 重新计算布局
+  // 监听全屏状态变化
   const handleFullscreenChange = () => {
     const newFullscreenState = !!document.fullscreenElement;
     setIsFullscreen(newFullscreenState);
-    // 延迟重新计算布局
-    setTimeout(() => {
-      initializeAdBlocks(ads);
-    }, 100);
   };
 
   // 键盘快捷键
@@ -329,9 +316,7 @@ export default function AdsPixel() {
     <div className={`h-screen flex flex-col bg-white ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
       {/* 控制工具栏 */}
       {!isFullscreen && (
-        <div className={`bg-white shadow-lg border-b border-gray-200 px-6 transition-transform duration-300 ${
-          isToolbarCollapsed ? '-translate-y-full' : 'translate-y-0'
-        } ${isToolbarCollapsed ? 'py-2' : 'py-4'}`}>
+        <div className="bg-white shadow-lg border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">像素广告位</h1>
@@ -353,17 +338,10 @@ export default function AdsPixel() {
               </button>
               <button
                 onClick={() => fetchActiveAds()}
-                className="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm shadow-sm flex items-center gap-2"
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm flex items-center gap-2"
               >
                 <ArrowPathIcon className="w-4 h-4" />
                 刷新
-              </button>
-              <button
-                onClick={() => setIsToolbarCollapsed(!isToolbarCollapsed)}
-                className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
-                title="折叠工具栏"
-              >
-                <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -611,16 +589,6 @@ export default function AdsPixel() {
           </button>
         )}
         
-        {/* 折叠工具栏时显示按钮 */}
-        {isToolbarCollapsed && !isFullscreen && (
-          <button
-            onClick={() => setIsToolbarCollapsed(false)}
-            className="fixed top-2 right-1/2 transform translate-x-1/2 z-50 bg-gray-800 bg-opacity-80 text-white px-4 py-2 rounded-b-lg shadow-lg hover:bg-opacity-90 transition-all"
-            title="展开工具栏"
-          >
-            ↓ 展开工具栏
-          </button>
-        )}
       </div>
 
       {/* 模拟上传弹窗 */}
