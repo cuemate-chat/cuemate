@@ -3,10 +3,10 @@ import {
   Cog6ToothIcon,
   CubeIcon,
   DocumentTextIcon,
-  QueueListIcon,
-  Squares2X2Icon,
   PhotoIcon,
+  QueueListIcon,
   RectangleGroupIcon,
+  Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -116,7 +116,7 @@ export default function UserMenu() {
     setOpen(false);
   };
 
-  const onPixelAds = () => {
+  const onAdsPixel = () => {
     navigate('/pixel-ads');
     setOpen(false);
   };
@@ -193,7 +193,7 @@ export default function UserMenu() {
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-            onClick={onPixelAds}
+            onClick={onAdsPixel}
           >
             <PhotoIcon className="w-4 h-4" /> 像素广告
           </button>

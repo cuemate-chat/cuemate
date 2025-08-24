@@ -672,8 +672,7 @@ export default function AdsManagement() {
                       onChange={(value) => {
                         setFormData(prev => ({ ...prev, block_id: value }));
                         // 根据块ID自动设置价格
-                        const selectedPage = LAYOUT_PAGES[0]; // 默认使用第一个页面的价格
-                        const price = getBlockPrice(value, selectedPage.priceMultiplier);
+                        const price = getBlockPrice(value);
                         setFormData(prev => ({ ...prev, price }));
                       }}
                       style={{ width: '100%' }}
@@ -685,7 +684,7 @@ export default function AdsManagement() {
                         ...LAYOUT_PAGES.flatMap(page => 
                           page.layout.map(block => ({
                             value: block.blockId,
-                            label: `${block.blockId} (${page.name} - ¥${getBlockPrice(block.blockId, page.priceMultiplier)})`,
+                            label: `${block.blockId} (${page.name} - ¥${getBlockPrice(block.blockId)})`,
                             key: `${page.id}-${block.blockId}`
                           }))
                         )

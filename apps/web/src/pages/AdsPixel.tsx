@@ -66,22 +66,6 @@ export default function AdsPixel() {
     }
   };
 
-  // 计算网格单元大小 - 确保32:20网格完全铺满16:10比例的容器
-  const calculateGridSize = () => {
-    const containerElement = containerRef.current || document.querySelector('.flex-1.relative.overflow-hidden.bg-white');
-    if (!containerElement) return 20; // 默认值
-    
-    const availableWidth = containerElement.clientWidth;
-    const availableHeight = containerElement.clientHeight;
-    
-    // 32:20网格比例 = 1.6:1，正好是16:10比例
-    // 计算每个网格单元的大小，确保完全铺满容器
-    const gridUnitWidth = availableWidth / GRID_CONFIG.COLS; // 宽度 / 32
-    const gridUnitHeight = availableHeight / GRID_CONFIG.ROWS; // 高度 / 20
-    
-    // 由于32:20 = 16:10，两者应该相等，选择较小的确保不溢出
-    return Math.min(gridUnitWidth, gridUnitHeight);
-  };
 
   // 使用预定义布局初始化广告块 - 基于百分比计算位置和大小
   const initializeAdBlocks = (adsData: PixelAd[]) => {

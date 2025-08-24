@@ -1,7 +1,3 @@
-// 完美的像素广告位布局配置 - 标准长方形 16:10 比例
-// 基于32x20的网格系统，总共640个单位，组合成100个广告位
-// 保证相同大小的块不相邻，形成完美的长方形
-
 export interface BlockConfig {
   id: string;
   blockId: string; // 如 "1x1-01", "2x2-01" 等
@@ -16,7 +12,7 @@ export interface BlockConfig {
 export const GRID_CONFIG = {
   COLS: 32,
   ROWS: 20,
-  TOTAL_BLOCKS: 100,
+  TOTAL_BLOCKS: 120,
   TOTAL_AREA: 640,
 };
 
@@ -46,203 +42,161 @@ export const getBlockPrice = (blockId: string): number => {
   return BASE_PRICES[sizeKey] || 100;
 };
 
-// 辅助函数：检查位置是否可用（不与现有块重叠）
-const isPositionAvailable = (
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  gridMatrix: boolean[][],
-): boolean => {
-  // 检查边界
-  if (x < 0 || y < 0 || x + width > GRID_CONFIG.COLS || y + height > GRID_CONFIG.ROWS) {
-    return false;
-  }
-
-  // 检查与现有块的重叠
-  for (let dy = 0; dy < height; dy++) {
-    for (let dx = 0; dx < width; dx++) {
-      if (gridMatrix[y + dy][x + dx]) {
-        return false;
-      }
-    }
-  }
-
-  return true;
-};
-
-// 创建真正的Million Dollar Homepage风格布局 - 恰好100个块，错落有致，完全覆盖32x20
+// 重新设计：实现真正的错落有致布局，棋盘式交错，完全覆盖32x20网格
 const createPerfectRectangleLayout = (): BlockConfig[] => {
-  // 手工精心设计的100块布局，确保无重叠、无空隙、错落有致
+  // 按照注释中的分配方案，重新设计布局策略
   const perfectLayout: BlockConfig[] = [
-    // Row 0-3: 混合大小块，创造视觉层次
-    { id: '001', blockId: '4x4-01', x: 0, y: 0, width: 4, height: 4, type: 'square' },
-    { id: '002', blockId: '2x3-01', x: 4, y: 0, width: 2, height: 3, type: 'vertical' },
-    { id: '003', blockId: '3x1-01', x: 6, y: 0, width: 3, height: 1, type: 'horizontal' },
-    { id: '004', blockId: '1x2-01', x: 9, y: 0, width: 1, height: 2, type: 'vertical' },
-    { id: '005', blockId: '3x3-01', x: 10, y: 0, width: 3, height: 3, type: 'square' },
-    { id: '006', blockId: '2x1-01', x: 13, y: 0, width: 2, height: 1, type: 'horizontal' },
-    { id: '007', blockId: '1x4-01', x: 15, y: 0, width: 1, height: 4, type: 'vertical' },
-    { id: '008', blockId: '4x2-01', x: 16, y: 0, width: 4, height: 2, type: 'horizontal' },
-    { id: '009', blockId: '2x2-01', x: 20, y: 0, width: 2, height: 2, type: 'square' },
-    { id: '010', blockId: '3x4-01', x: 22, y: 0, width: 3, height: 4, type: 'vertical' },
-    { id: '011', blockId: '2x3-02', x: 25, y: 0, width: 2, height: 3, type: 'vertical' },
-    { id: '012', blockId: '1x1-01', x: 27, y: 0, width: 1, height: 1, type: 'square' },
-    { id: '013', blockId: '4x1-01', x: 28, y: 0, width: 4, height: 1, type: 'horizontal' },
+    // 第1行：错落有致，大块小块交错，完全覆盖x=0-31
+    { id: '001', blockId: '4x4-001', x: 0, y: 0, width: 4, height: 4, type: 'square' }, // 16
+    { id: '002', blockId: '2x2-002', x: 4, y: 0, width: 2, height: 2, type: 'square' }, // 4
+    { id: '003', blockId: '3x3-003', x: 6, y: 0, width: 3, height: 3, type: 'square' }, // 9
+    { id: '004', blockId: '1x4-004', x: 9, y: 0, width: 1, height: 4, type: 'vertical' }, // 4
+    { id: '005', blockId: '4x2-005', x: 10, y: 0, width: 4, height: 2, type: 'horizontal' }, // 8
+    { id: '006', blockId: '2x3-006', x: 14, y: 0, width: 2, height: 3, type: 'vertical' }, // 6
+    { id: '007', blockId: '3x2-007', x: 16, y: 0, width: 3, height: 2, type: 'horizontal' }, // 6
+    { id: '008', blockId: '2x4-008', x: 19, y: 0, width: 2, height: 4, type: 'vertical' }, // 8
+    { id: '009', blockId: '4x3-009', x: 21, y: 0, width: 4, height: 3, type: 'horizontal' }, // 12
+    { id: '010', blockId: '2x1-010', x: 25, y: 0, width: 2, height: 1, type: 'horizontal' }, // 2
+    { id: '011', blockId: '2x3-011', x: 27, y: 0, width: 2, height: 3, type: 'vertical' }, // 6
+    { id: '012', blockId: '3x1-012', x: 29, y: 0, width: 3, height: 1, type: 'horizontal' }, // 3
 
-    // 补充前4行的剩余空间
-    { id: '014', blockId: '2x1-02', x: 6, y: 1, width: 2, height: 1, type: 'horizontal' },
-    { id: '015', blockId: '1x1-02', x: 8, y: 1, width: 1, height: 1, type: 'square' },
-    { id: '016', blockId: '1x1-03', x: 9, y: 2, width: 1, height: 1, type: 'square' },
-    { id: '017', blockId: '1x1-04', x: 13, y: 1, width: 1, height: 1, type: 'square' },
-    { id: '018', blockId: '1x1-05', x: 14, y: 1, width: 1, height: 1, type: 'square' },
-    { id: '019', blockId: '1x2-02', x: 16, y: 2, width: 1, height: 2, type: 'vertical' },
-    { id: '020', blockId: '3x1-02', x: 17, y: 2, width: 3, height: 1, type: 'horizontal' },
-    { id: '021', blockId: '1x1-06', x: 20, y: 2, width: 1, height: 1, type: 'square' },
-    { id: '022', blockId: '1x1-07', x: 21, y: 2, width: 1, height: 1, type: 'square' },
-    { id: '023', blockId: '1x1-08', x: 27, y: 1, width: 1, height: 1, type: 'square' },
-    { id: '024', blockId: '4x1-02', x: 28, y: 1, width: 4, height: 1, type: 'horizontal' },
-    { id: '025', blockId: '3x1-03', x: 6, y: 2, width: 3, height: 1, type: 'horizontal' },
-    { id: '026', blockId: '2x1-03', x: 13, y: 2, width: 2, height: 1, type: 'horizontal' },
-    { id: '027', blockId: '1x1-09', x: 25, y: 3, width: 1, height: 1, type: 'square' },
-    { id: '028', blockId: '1x1-10', x: 26, y: 3, width: 1, height: 1, type: 'square' },
-    { id: '029', blockId: '1x1-11', x: 27, y: 2, width: 1, height: 1, type: 'square' },
-    { id: '030', blockId: '4x1-03', x: 28, y: 2, width: 4, height: 1, type: 'horizontal' },
-    { id: '031', blockId: '4x1-04', x: 6, y: 3, width: 4, height: 1, type: 'horizontal' },
-    { id: '032', blockId: '3x1-04', x: 13, y: 3, width: 3, height: 1, type: 'horizontal' },
-    { id: '033', blockId: '1x1-12', x: 17, y: 3, width: 1, height: 1, type: 'square' },
-    { id: '034', blockId: '3x1-05', x: 18, y: 3, width: 3, height: 1, type: 'horizontal' },
-    { id: '035', blockId: '1x1-13', x: 21, y: 3, width: 1, height: 1, type: 'square' },
-    { id: '036', blockId: '1x1-14', x: 27, y: 3, width: 1, height: 1, type: 'square' },
-    { id: '037', blockId: '4x1-05', x: 28, y: 3, width: 4, height: 1, type: 'horizontal' },
+    // 第2行：继续交错布局，填充空隙，不与第一行重合
+    { id: '013', blockId: '3x2-013', x: 26, y: 9, width: 3, height: 2, type: 'horizontal' }, // 6
+    { id: '014', blockId: '2x2-014', x: 0, y: 4, width: 2, height: 2, type: 'square' }, // 4
+    { id: '015', blockId: '3x1-015', x: 2, y: 4, width: 3, height: 1, type: 'horizontal' }, // 3
+    { id: '016', blockId: '1x2-016', x: 4, y: 2, width: 1, height: 2, type: 'vertical' }, // 2
+    { id: '017', blockId: '1x1-017', x: 5, y: 2, width: 1, height: 1, type: 'square' }, // 1
+    { id: '018', blockId: '4x3-018', x: 5, y: 3, width: 4, height: 3, type: 'horizontal' }, // 12
+    { id: '019', blockId: '2x1-019', x: 10, y: 2, width: 2, height: 1, type: 'horizontal' }, // 2
+    { id: '020', blockId: '2x3-020', x: 9, y: 4, width: 2, height: 3, type: 'vertical' }, // 6
+    { id: '021', blockId: '1x4-021', x: 12, y: 2, width: 1, height: 4, type: 'vertical' }, // 4
+    { id: '022', blockId: '1x2-022', x: 13, y: 2, width: 1, height: 2, type: 'vertical' }, // 2
+    { id: '023', blockId: '4x4-023', x: 14, y: 3, width: 4, height: 4, type: 'square' }, // 16
+    { id: '024', blockId: '3x1-024', x: 16, y: 2, width: 3, height: 1, type: 'horizontal' }, // 3
+    { id: '025', blockId: '4x2-025', x: 19, y: 4, width: 4, height: 2, type: 'horizontal' }, // 8
+    { id: '026', blockId: '3x1-026', x: 21, y: 3, width: 3, height: 1, type: 'horizontal' }, // 3
+    { id: '027', blockId: '1x1-027', x: 24, y: 3, width: 1, height: 1, type: 'square' }, // 1
+    { id: '028', blockId: '2x4-028', x: 25, y: 1, width: 2, height: 4, type: 'vertical' }, // 4
+    { id: '029', blockId: '2x1-029', x: 27, y: 3, width: 2, height: 1, type: 'horizontal' }, // 2
+    { id: '030', blockId: '2x4-030', x: 29, y: 1, width: 2, height: 4, type: 'vertical' }, // 8
+    { id: '031', blockId: '1x1-031', x: 31, y: 1, width: 1, height: 1, type: 'square' }, // 1
 
-    // Row 4-7: 更复杂的组合
-    { id: '038', blockId: '2x4-01', x: 0, y: 4, width: 2, height: 4, type: 'vertical' },
-    { id: '039', blockId: '3x2-01', x: 2, y: 4, width: 3, height: 2, type: 'horizontal' },
-    { id: '040', blockId: '1x1-15', x: 5, y: 4, width: 1, height: 1, type: 'square' },
-    { id: '041', blockId: '4x3-01', x: 6, y: 4, width: 4, height: 3, type: 'horizontal' },
-    { id: '042', blockId: '1x3-01', x: 10, y: 4, width: 1, height: 3, type: 'vertical' },
-    { id: '043', blockId: '2x2-02', x: 11, y: 4, width: 2, height: 2, type: 'square' },
-    { id: '044', blockId: '3x1-06', x: 13, y: 4, width: 3, height: 1, type: 'horizontal' },
-    { id: '045', blockId: '4x4-02', x: 16, y: 4, width: 4, height: 4, type: 'square' },
-    { id: '046', blockId: '1x2-03', x: 20, y: 4, width: 1, height: 2, type: 'vertical' },
-    { id: '047', blockId: '3x3-02', x: 21, y: 4, width: 3, height: 3, type: 'square' },
-    { id: '048', blockId: '2x1-04', x: 24, y: 4, width: 2, height: 1, type: 'horizontal' },
-    { id: '049', blockId: '1x4-02', x: 26, y: 4, width: 1, height: 4, type: 'vertical' },
-    { id: '050', blockId: '2x3-03', x: 27, y: 4, width: 2, height: 3, type: 'vertical' },
-    { id: '051', blockId: '3x2-02', x: 29, y: 4, width: 3, height: 2, type: 'horizontal' },
+    // 第3行：错落有致，大小块混合，紧贴无缝隙
+    { id: '032', blockId: '2x3-032', x: 0, y: 6, width: 2, height: 3, type: 'vertical' }, // (0-1, 6-8)
+    { id: '033', blockId: '3x3-033', x: 2, y: 5, width: 3, height: 3, type: 'square' }, // (2, 6) 小缝隙
+    { id: '034', blockId: '2x3-034', x: 5, y: 6, width: 2, height: 3, type: 'vertical' }, // (4-6, 6)
+    { id: '035', blockId: '2x2-035', x: 7, y: 6, width: 2, height: 2, type: 'square' }, // (7-8, 6-7)
+    { id: '036', blockId: '2x3-036', x: 9, y: 7, width: 2, height: 3, type: 'vertical' }, // (9, 6-8)
+    { id: '037', blockId: '1x1-037', x: 10, y: 3, width: 1, height: 1, type: 'square' }, // (3, 6-7)
+    { id: '038', blockId: '1x3-038', x: 11, y: 3, width: 1, height: 3, type: 'vertical' }, // (3, 6-7)
+    { id: '039', blockId: '1x4-039', x: 13, y: 4, width: 1, height: 4, type: 'vertical' }, // (3, 6-7)
+    { id: '040', blockId: '2x4-040', x: 11, y: 6, width: 2, height: 4, type: 'vertical' }, // (10-13, 6-7)
+    { id: '041', blockId: '3x4-041', x: 14, y: 7, width: 3, height: 4, type: 'vertical' }, // (14-16, 7-10) 错落
+    { id: '042', blockId: '1x4-042', x: 18, y: 3, width: 1, height: 4, type: 'vertical' }, // (17, 7) 小缝隙
+    { id: '043', blockId: '2x3-043', x: 23, y: 4, width: 2, height: 3, type: 'vertical' }, // (23, 6) 小缝隙
+    { id: '044', blockId: '4x4-044', x: 25, y: 5, width: 4, height: 4, type: 'square' }, // (24-25, 4-5) 错落
+    { id: '045', blockId: '2x1-045', x: 27, y: 4, width: 2, height: 1, type: 'horizontal' }, // (27-29, 4-5) 错落
+    { id: '046', blockId: '2x2-046', x: 29, y: 5, width: 2, height: 2, type: 'square' }, // (31, 2-3) 错落
+    { id: '047', blockId: '2x1-047', x: 26, y: 11, width: 2, height: 1, type: 'horizontal' }, // (31, 2-3) 错落
+    { id: '048', blockId: '1x2-048', x: 31, y: 2, width: 1, height: 2, type: 'vertical' }, // (31, 2-3) 错落
+    { id: '049', blockId: '1x3-049', x: 31, y: 4, width: 1, height: 3, type: 'vertical' }, // (31, 4-6) 继续错落
 
-    // 补充4-7行
-    { id: '052', blockId: '1x1-16', x: 2, y: 6, width: 1, height: 1, type: 'square' },
-    { id: '053', blockId: '2x1-05', x: 3, y: 6, width: 2, height: 1, type: 'horizontal' },
-    { id: '054', blockId: '1x1-17', x: 5, y: 5, width: 1, height: 1, type: 'square' },
-    { id: '055', blockId: '1x1-18', x: 5, y: 6, width: 1, height: 1, type: 'square' },
-    { id: '056', blockId: '1x1-19', x: 11, y: 6, width: 1, height: 1, type: 'square' },
-    { id: '057', blockId: '1x1-20', x: 12, y: 6, width: 1, height: 1, type: 'square' },
-    { id: '058', blockId: '1x2-04', x: 13, y: 5, width: 1, height: 2, type: 'vertical' },
-    { id: '059', blockId: '2x1-06', x: 14, y: 5, width: 2, height: 1, type: 'horizontal' },
-    { id: '060', blockId: '1x1-21', x: 20, y: 6, width: 1, height: 1, type: 'square' },
-    { id: '061', blockId: '1x1-22', x: 24, y: 5, width: 1, height: 1, type: 'square' },
-    { id: '062', blockId: '1x1-23', x: 25, y: 5, width: 1, height: 1, type: 'square' },
-    { id: '063', blockId: '2x1-07', x: 24, y: 6, width: 2, height: 1, type: 'horizontal' },
-    { id: '064', blockId: '3x1-07', x: 29, y: 6, width: 3, height: 1, type: 'horizontal' },
-    { id: '065', blockId: '2x1-08', x: 2, y: 7, width: 2, height: 1, type: 'horizontal' },
-    { id: '066', blockId: '4x1-06', x: 6, y: 7, width: 4, height: 1, type: 'horizontal' },
-    { id: '067', blockId: '1x1-24', x: 14, y: 6, width: 1, height: 1, type: 'square' },
-    { id: '068', blockId: '1x1-25', x: 15, y: 6, width: 1, height: 1, type: 'square' },
-    { id: '069', blockId: '1x1-26', x: 21, y: 7, width: 1, height: 1, type: 'square' },
-    { id: '070', blockId: '2x1-09', x: 22, y: 7, width: 2, height: 1, type: 'horizontal' },
-    { id: '071', blockId: '2x1-10', x: 24, y: 7, width: 2, height: 1, type: 'horizontal' },
-    { id: '072', blockId: '1x1-27', x: 27, y: 7, width: 1, height: 1, type: 'square' },
-    { id: '073', blockId: '1x1-28', x: 28, y: 7, width: 1, height: 1, type: 'square' },
-    { id: '074', blockId: '3x1-08', x: 29, y: 7, width: 3, height: 1, type: 'horizontal' },
-    { id: '075', blockId: '1x1-29', x: 5, y: 7, width: 1, height: 1, type: 'square' },
-    { id: '076', blockId: '1x1-30', x: 14, y: 7, width: 1, height: 1, type: 'square' },
-    { id: '077', blockId: '1x1-31', x: 15, y: 7, width: 1, height: 1, type: 'square' },
+    // 第4行：继续错落有致，紧贴前面各行的最大y值，无缝隙
+    { id: '050', blockId: '3x3-050', x: 0, y: 9, width: 3, height: 3, type: 'square' }, // (0-1, 9-10) 紧贴第3行032块底部
+    { id: '051', blockId: '1x1-051', x: 2, y: 8, width: 1, height: 1, type: 'square' }, // (2, 8-10) 紧贴033块底部
+    { id: '052', blockId: '2x3-052', x: 3, y: 8, width: 2, height: 3, type: 'vertical' }, // (3-4, 8) 错落高度
+    { id: '053', blockId: '2x3-053', x: 7, y: 8, width: 2, height: 3, type: 'vertical' }, // (7-10, 8-9) 紧贴035块底部
+    { id: '054', blockId: '2x3-054', x: 5, y: 9, width: 2, height: 3, type: 'vertical' }, // (5-7, 8-10) 大块填隙
+    { id: '055', blockId: '4x3-055', x: 9, y: 10, width: 4, height: 3, type: 'horizontal' }, // (17-19, 7) 错落填隙
+    { id: '056', blockId: '1x3-056', x: 13, y: 8, width: 1, height: 3, type: 'vertical' }, // (19-20, 6-8) 错落高度
+    { id: '057', blockId: '2x2-057', x: 17, y: 7, width: 2, height: 2, type: 'square' }, // (21, 7-8) 小块填隙
+    { id: '058', blockId: '4x3-058', x: 19, y: 6, width: 4, height: 3, type: 'horizontal' }, // (22-23, 6) 横条错落
+    { id: '059', blockId: '2x3-059', x: 23, y: 7, width: 2, height: 3, type: 'vertical' }, // (22, 7-9) 细长填隙
+    { id: '060', blockId: '3x4-060', x: 29, y: 7, width: 3, height: 4, type: 'vertical' }, // (25-26, 7-8) 大块替代小块
 
-    // Row 8-11: 继续错落布局
-    { id: '078', blockId: '3x3-03', x: 0, y: 8, width: 3, height: 3, type: 'square' },
-    { id: '079', blockId: '4x2-02', x: 3, y: 8, width: 4, height: 2, type: 'horizontal' },
-    { id: '080', blockId: '1x4-03', x: 7, y: 8, width: 1, height: 4, type: 'vertical' },
-    { id: '081', blockId: '2x4-02', x: 8, y: 8, width: 2, height: 4, type: 'vertical' },
-    { id: '082', blockId: '4x3-02', x: 10, y: 8, width: 4, height: 3, type: 'horizontal' },
-    { id: '083', blockId: '3x2-03', x: 14, y: 8, width: 3, height: 2, type: 'horizontal' },
-    { id: '084', blockId: '2x2-03', x: 17, y: 8, width: 2, height: 2, type: 'square' },
-    { id: '085', blockId: '1x3-02', x: 19, y: 8, width: 1, height: 3, type: 'vertical' },
-    { id: '086', blockId: '3x4-02', x: 20, y: 8, width: 3, height: 4, type: 'vertical' },
-    { id: '087', blockId: '4x4-03', x: 23, y: 8, width: 4, height: 4, type: 'square' },
-    { id: '088', blockId: '1x2-05', x: 27, y: 8, width: 1, height: 2, type: 'vertical' },
-    { id: '089', blockId: '2x3-04', x: 28, y: 8, width: 2, height: 3, type: 'vertical' },
-    { id: '090', blockId: '2x1-11', x: 30, y: 8, width: 2, height: 1, type: 'horizontal' },
+    // 第5行：继续错落布局，填充剩余空间
+    { id: '061', blockId: '1x3-061', x: 0, y: 12, width: 1, height: 3, type: 'vertical' }, // (2-3, 9-11) 紧贴051块底部
+    { id: '062', blockId: '2x2-062', x: 1, y: 12, width: 2, height: 2, type: 'square' }, // (4, 11-12) 小高块
+    { id: '063', blockId: '2x3-063', x: 3, y: 11, width: 2, height: 3, type: 'vertical' }, // (5-6, 12) 横条
+    { id: '064', blockId: '2x1-064', x: 5, y: 12, width: 2, height: 1, type: 'horizontal' }, // (5-6, 12) 横条
+    { id: '065', blockId: '2x2-065', x: 7, y: 11, width: 2, height: 2, type: 'square' }, // (7-8, 12-13) 方块
+    { id: '066', blockId: '4x1-066', x: 13, y: 11, width: 4, height: 1, type: 'horizontal' }, // (9, 11-13) 高块错落
+    { id: '067', blockId: '2x3-067', x: 17, y: 9, width: 2, height: 3, type: 'vertical' }, // (10-12, 11) 横条
+    { id: '068', blockId: '3x4-068', x: 19, y: 9, width: 3, height: 4, type: 'vertical' }, // (13-14, 11-12) 方块填隙
+    { id: '069', blockId: '3x4-069', x: 22, y: 10, width: 3, height: 4, type: 'vertical' }, // (15, 12-13) 小高块
+    { id: '070', blockId: '1x3-070', x: 25, y: 9, width: 1, height: 3, type: 'vertical' }, // (21-22, 10-12) 高块
+    { id: '071', blockId: '3x3-071', x: 29, y: 11, width: 3, height: 3, type: 'square' }, // (23, 10) 小方块
 
-    // 补充8-11行
-    { id: '091', blockId: '1x1-32', x: 0, y: 11, width: 1, height: 1, type: 'square' },
-    { id: '092', blockId: '2x1-12', x: 1, y: 11, width: 2, height: 1, type: 'horizontal' },
-    { id: '093', blockId: '4x1-07', x: 3, y: 10, width: 4, height: 1, type: 'horizontal' },
-    { id: '094', blockId: '4x1-08', x: 10, y: 11, width: 4, height: 1, type: 'horizontal' },
-    { id: '095', blockId: '3x1-09', x: 14, y: 10, width: 3, height: 1, type: 'horizontal' },
-    { id: '096', blockId: '2x1-13', x: 17, y: 10, width: 2, height: 1, type: 'horizontal' },
-    { id: '097', blockId: '1x1-33', x: 27, y: 10, width: 1, height: 1, type: 'square' },
-    { id: '098', blockId: '1x1-34', x: 30, y: 9, width: 1, height: 1, type: 'square' },
-    { id: '099', blockId: '1x1-35', x: 31, y: 9, width: 1, height: 1, type: 'square' },
-    { id: '100', blockId: '2x1-14', x: 30, y: 10, width: 2, height: 1, type: 'horizontal' },
+    // 第6行：最终行，完成100块布局
+    { id: '072', blockId: '4x2-072', x: 1, y: 14, width: 4, height: 2, type: 'horizontal' }, // (0-2, 15-16) 横块开始
+    { id: '073', blockId: '2x4-073', x: 5, y: 13, width: 2, height: 4, type: 'vertical' }, // (3-4, 14-17) 高块填隙
+    { id: '074', blockId: '3x3-074', x: 7, y: 13, width: 3, height: 3, type: 'square' }, // (5-7, 13-15) 大方块
+    { id: '075', blockId: '3x2-075', x: 10, y: 13, width: 3, height: 2, type: 'horizontal' }, // (8, 13-14) 小高块
+    { id: '076', blockId: '2x3-076', x: 13, y: 12, width: 2, height: 3, type: 'vertical' }, // (9-12, 13-14) 横块
+    { id: '077', blockId: '4x4-077', x: 15, y: 12, width: 4, height: 4, type: 'square' }, // (13-14, 12-14) 高块错落
+    { id: '078', blockId: '4x1-078', x: 19, y: 14, width: 4, height: 1, type: 'horizontal' }, // (15, 15-18) 细长高块
+    { id: '079', blockId: '2x2-079', x: 23, y: 14, width: 2, height: 2, type: 'square' }, // (16-17, 14-15) 方块
+    { id: '080', blockId: '3x3-080', x: 25, y: 12, width: 3, height: 3, type: 'square' }, // (18-20, 14) 横条
+    { id: '081', blockId: '1x3-081', x: 28, y: 11, width: 1, height: 3, type: 'vertical' }, // (25-28, 12-15) 大方块
+    { id: '082', blockId: '4x3-082', x: 28, y: 14, width: 4, height: 3, type: 'horizontal' }, // (29-31, 14-15) 横块结束
+
+    // 第7行：继续错落布局，18个块左右
+    { id: '083', blockId: '1x2-083', x: 0, y: 15, width: 1, height: 2, type: 'vertical' }, // (0, 17-18) 小高块开始
+    { id: '084', blockId: '1x1-084', x: 1, y: 16, width: 1, height: 1, type: 'square' }, // (1-2, 18) 横条
+    { id: '085', blockId: '3x2-085', x: 2, y: 16, width: 3, height: 2, type: 'horizontal' }, // (3, 17) 小方块
+    { id: '086', blockId: '2x1-086', x: 5, y: 17, width: 2, height: 1, type: 'horizontal' }, // (4, 17-18) 小高块
+    { id: '087', blockId: '1x3-087', x: 7, y: 16, width: 1, height: 3, type: 'vertical' }, // (5-7, 19) 横条错落
+    { id: '088', blockId: '2x2-088', x: 8, y: 16, width: 2, height: 2, type: 'square' }, // (8-9, 19-20) 方块
+    { id: '089', blockId: '2x2-089', x: 10, y: 15, width: 2, height: 2, type: 'square' }, // (10, 16) 小方块
+    { id: '090', blockId: '2x1-090', x: 12, y: 15, width: 2, height: 1, type: 'horizontal' }, // (11-12, 16-18) 高块
+    { id: '091', blockId: '1x3-091', x: 14, y: 15, width: 1, height: 3, type: 'vertical' }, // (13, 15-16) 小高块
+    { id: '092', blockId: '3x3-092', x: 15, y: 16, width: 3, height: 3, type: 'square' }, // (14-15, 16) 横条
+    { id: '093', blockId: '4x3-093', x: 18, y: 16, width: 4, height: 3, type: 'horizontal' }, // (15-18, 16) 长横条
+    { id: '094', blockId: '1x1-094', x: 19, y: 15, width: 1, height: 1, type: 'square' }, // (19, 19-21) 高块
+    { id: '095', blockId: '2x1-095', x: 20, y: 15, width: 2, height: 1, type: 'horizontal' }, // (20-21, 15-16) 方块
+    { id: '096', blockId: '1x3-096', x: 22, y: 15, width: 1, height: 3, type: 'vertical' }, // (22, 19) 小方块
+    { id: '097', blockId: '1x1-097', x: 22, y: 9, width: 1, height: 1, type: 'square' }, // (23-24, 16) 横条
+    { id: '098', blockId: '3x1-098', x: 19, y: 13, width: 3, height: 1, type: 'horizontal' }, // (25-27, 15-16) 横块
+    { id: '099', blockId: '4x4-099', x: 23, y: 16, width: 4, height: 4, type: 'square' }, // (28, 18-21) 高块
+    { id: '100', blockId: '1x1-100', x: 25, y: 15, width: 1, height: 1, type: 'square' }, // (29-31, 15)
+    { id: '101', blockId: '2x1-101', x: 26, y: 15, width: 2, height: 1, type: 'horizontal' }, // (29-31, 15)
+    { id: '102', blockId: '2x1-102', x: 28, y: 17, width: 2, height: 1, type: 'horizontal' }, // (28, 16-18) 高块
+
+    // 最后一行：完成剩余空间填充，103-120
+    { id: '103', blockId: '2x3-103', x: 0, y: 17, width: 2, height: 3, type: 'vertical' }, // (0, 17) 小方块
+    { id: '104', blockId: '2x2-104', x: 2, y: 18, width: 2, height: 2, type: 'square' }, // (1-2, 17-18) 方块
+    { id: '105', blockId: '3x2-105', x: 4, y: 18, width: 3, height: 2, type: 'horizontal' }, // (3, 18-19) 高块
+    { id: '106', blockId: '1x1-106', x: 7, y: 19, width: 1, height: 1, type: 'square' }, // (4-5, 18) 横条
+    { id: '107', blockId: '2x2-107', x: 8, y: 18, width: 2, height: 2, type: 'square' }, // (6, 18) 小方块
+    { id: '108', blockId: '3x3-108', x: 10, y: 17, width: 3, height: 3, type: 'square' }, // (8, 18-19) 高块
+    { id: '109', blockId: '1x1-109', x: 12, y: 16, width: 1, height: 1, type: 'square' }, // (9-10, 18-19) 方块
+    { id: '110', blockId: '1x4-110', x: 13, y: 16, width: 1, height: 4, type: 'vertical' }, // (11, 17) 小方块
+    { id: '111', blockId: '1x1-111', x: 14, y: 18, width: 1, height: 1, type: 'square' }, // (12-13, 16-18) 高块
+    { id: '112', blockId: '3x1-112', x: 14, y: 19, width: 3, height: 1, type: 'horizontal' }, // (15, 19) 小方块
+    { id: '113', blockId: '4x1-113', x: 17, y: 19, width: 4, height: 1, type: 'horizontal' }, // (16-17, 19) 横条
+    { id: '114', blockId: '1x1-114', x: 21, y: 19, width: 1, height: 1, type: 'square' }, // (18, 19) 小方块
+    { id: '115', blockId: '1x2-115', x: 22, y: 18, width: 1, height: 2, type: 'vertical' }, // (22, 19) 横条
+    { id: '116', blockId: '1x2-116', x: 27, y: 16, width: 1, height: 2, type: 'vertical' }, // (27, 19) 小方块
+    { id: '117', blockId: '1x2-117', x: 27, y: 18, width: 1, height: 2, type: 'vertical' }, // (28, 19) 小方块
+    { id: '118', blockId: '1x2-118', x: 28, y: 18, width: 1, height: 2, type: 'vertical' }, // (29, 18) 小方块
+    { id: '119', blockId: '2x1-119', x: 30, y: 17, width: 2, height: 1, type: 'horizontal' }, // (30, 18) 小方块
+    { id: '120', blockId: '3x2-120', x: 29, y: 18, width: 3, height: 2, type: 'horizontal' }, // (30-31, 19) 横条结束
   ];
 
-  // 只填充Row 11的剩余部分和Row 12-19的完整8行，确保总面积640
-  const filledArea = perfectLayout.reduce((sum, block) => sum + block.width * block.height, 0);
-  const remainingArea = 640 - filledArea;
-
-  // 剩余区域 = (0,11)~(31,11) + (0,12)~(31,19)
-  // 第11行剩余：(3,11)~(31,11) = 29格
-  // 第12-19行：32*8 = 256格
-  // 总剩余：29 + 256 = 285格
-
-  // 填充剩余空间用1x1块，确保总块数不超过合理范围
-  let blockIndex = 101;
-  const additionalBlocks: BlockConfig[] = [];
-
-  // 填充第11行剩余部分
-  for (let x = 3; x <= 31; x++) {
-    if (x >= 10 && x <= 13) continue; // 跳过已有的4x1块位置
-    additionalBlocks.push({
-      id: String(blockIndex++).padStart(3, '0'),
-      blockId: `1x1-${blockIndex - 101 + 36}`,
-      x,
-      y: 11,
-      width: 1,
-      height: 1,
-      type: 'square',
-    });
-  }
-
-  // 用大块填充剩余8行(12-19)，减少总块数
-  const largeBlocks = [
-    // Row 12-19，用8x8大块快速填充
-    { x: 0, y: 12, w: 8, h: 8, type: '8x8' },
-    { x: 8, y: 12, w: 8, h: 8, type: '8x8' },
-    { x: 16, y: 12, w: 8, h: 8, type: '8x8' },
-    { x: 24, y: 12, w: 8, h: 8, type: '8x8' },
-  ];
-
-  largeBlocks.forEach((block, i) => {
-    additionalBlocks.push({
-      id: String(blockIndex++).padStart(3, '0'),
-      blockId: `${block.type}-${String(i + 1).padStart(2, '0')}`,
-      x: block.x,
-      y: block.y,
-      width: block.w,
-      height: block.h,
-      type: 'square',
-    });
-  });
-
-  const finalLayout = [...perfectLayout, ...additionalBlocks];
-
-  console.log(`完美布局生成: 总块数 = ${finalLayout.length}`);
-  const totalArea = finalLayout.reduce((sum, block) => sum + block.width * block.height, 0);
+  // 验证布局是否正确
+  const totalArea = perfectLayout.reduce((sum, block) => sum + block.width * block.height, 0);
+  console.log(`完美布局生成: 总块数 = ${perfectLayout.length}`);
   console.log(`总面积 = ${totalArea} (期望: 640)`);
 
-  return finalLayout;
+  if (perfectLayout.length !== 120) {
+    console.error(`布局错误：总块数 ${perfectLayout.length} 不等于期望的 120`);
+  }
+
+  if (totalArea !== 640) {
+    console.error(`布局错误：总面积 ${totalArea} 不等于期望的 640`);
+  }
+
+  return perfectLayout;
 };
 
 // 单一布局配置
@@ -257,3 +211,31 @@ export const LAYOUT_PAGES = [
     layout: PIXEL_LAYOUT,
   },
 ];
+
+// 验证函数：检查blockId和实际尺寸是否匹配
+export const validateBlockIds = (): void => {
+  const mismatches: string[] = [];
+
+  PIXEL_LAYOUT.forEach((block) => {
+    const [sizePart] = block.blockId.split('-');
+    const [widthStr, heightStr] = sizePart.split('x');
+    const expectedWidth = parseInt(widthStr);
+    const expectedHeight = parseInt(heightStr);
+
+    if (block.width !== expectedWidth || block.height !== expectedHeight) {
+      mismatches.push(
+        `ID ${block.id}: blockId="${block.blockId}" (期望: ${expectedWidth}x${expectedHeight}), ` +
+          `实际: width=${block.width}, height=${block.height}`,
+      );
+    }
+  });
+
+  if (mismatches.length > 0) {
+    console.error('发现blockId不匹配的问题:');
+    mismatches.forEach((msg) => console.error(msg));
+  } else {
+    console.log('✅ 所有blockId都匹配实际尺寸');
+  }
+};
+
+// 验证函数已导出，可直接使用
