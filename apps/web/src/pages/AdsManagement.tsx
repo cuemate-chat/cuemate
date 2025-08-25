@@ -118,7 +118,8 @@ export default function AdsManagement() {
       setSelectedFile(null);
       return result.imagePath;
     } catch (error: any) {
-      message.error('图片上传失败：' + error.message);
+      // HTTP客户端已经处理了错误提示，这里不再重复弹出
+      console.error('图片上传失败:', error);
       return '';
     } finally {
       setUploadingImage(false);
@@ -259,21 +260,7 @@ export default function AdsManagement() {
       handleImageRemove(); // 清除图片状态
       fetchAds(currentPage, pageSize, searchTerm, statusFilter, blockFilter);
     } catch (error: any) {
-      
-      // 检查是否是认证错误
-      if (error.status === 401 || error.message?.includes('unauthorized') || error.message?.includes('token')) {
-        message.error('登录已过期，请重新登录');
-        return;
-      }
-      
-      // 检查是否是网络错误
-      if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        message.error('网络连接失败，请检查网络后重试');
-        return;
-      }
-      
-      // 其他错误
-      message.error(`提交广告出错: ${error.message || '未知错误'}`);
+      console.error('提交广告失败:', error);
     } finally {
       setSubmitting(false);
     }
@@ -293,7 +280,8 @@ export default function AdsManagement() {
           message.success('广告删除成功');
           fetchAds(currentPage, pageSize, searchTerm, statusFilter, blockFilter);
         } catch (error) {
-          message.error('删除广告出错：' + error);
+          // HTTP客户端已经处理了错误提示，这里不再重复弹出
+          console.error('删除广告失败:', error);
         }
       }
     });
@@ -334,7 +322,8 @@ export default function AdsManagement() {
         expires_at: new Date(ad.expires_at).toISOString().split('T')[0],
       });
     } catch (error: any) {
-      message.error('获取块配置失败：' + error.message);
+      // HTTP客户端已经处理了错误提示，这里不再重复弹出
+      console.error('获取块配置失败:', error);
       // 仍然设置基本数据，但block_config_id为空
       setFormData({
         title: ad.title,

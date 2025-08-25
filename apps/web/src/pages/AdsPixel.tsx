@@ -91,7 +91,8 @@ export default function AdsPixel() {
       setBlockConfigs(blockConfigsData);
       initializeAdBlocks(adsData, blockConfigsData);
     } catch (error) {
-      message.error('获取数据失败');
+      // HTTP客户端已经处理了错误提示，这里不再重复弹出
+      console.error('获取数据失败:', error);
     } finally {
       setLoading(false);
     }
@@ -183,10 +184,16 @@ export default function AdsPixel() {
   };
 
   // 模拟上传处理
-  // 处理块筛选
-  const handleBlockFilter = (blockId: string) => {
-    setSelectedBlockFilter(blockId);
-    setHighlightedBlockId(blockId);
+  // 处理块筛选 - 照抄广告管理页面的逻辑
+  const handleBlockFilter = (blockConfigId: string) => {
+    setSelectedBlockFilter(blockConfigId);
+    // 根据选中的块配置ID找到对应的block_id进行高亮
+    const selectedBlock = blockConfigs.find(b => b.id === blockConfigId);
+    if (selectedBlock) {
+      setHighlightedBlockId(selectedBlock.block_id);
+    } else {
+      setHighlightedBlockId('');
+    }
   };
 
   const handleMockUpload = () => {
@@ -357,6 +364,42 @@ export default function AdsPixel() {
 
   return (
     <div className={`h-screen flex flex-col bg-white ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+      {/* 添加炫酷的高亮动画CSS */}
+      <style>{`
+        .highlight-glow {
+          position: relative;
+          animation: glow-pulse 2s ease-in-out infinite;
+        }
+        
+        .highlight-glow::before {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          padding: 4px;
+          background: linear-gradient(45deg, #fbbf24, #f59e0b, #d97706, #fbbf24);
+          background-size: 300% 300%;
+          border-radius: inherit;
+          z-index: -1;
+          animation: gradient-rotate 3s linear infinite;
+        }
+        
+        @keyframes glow-pulse {
+          0%, 100% { 
+            transform: scale(1.1); 
+            filter: brightness(1.2) saturate(1.3);
+          }
+          50% { 
+            transform: scale(1.15); 
+            filter: brightness(1.4) saturate(1.5);
+          }
+        }
+        
+        @keyframes gradient-rotate {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
       {/* 控制工具栏 */}
       {!isFullscreen && (
         <div className="bg-white shadow-lg border-b border-gray-200 px-6 py-4">
@@ -372,28 +415,25 @@ export default function AdsPixel() {
             </div>
             
             <div className="flex items-center gap-3">
-              {/* 块信息筛选 */}
+              {/* 块信息筛选 - 直接照抄广告管理页面的实现 */}
               <div className="min-w-[250px]">
                 <Select
                   showSearch
-                  allowClear
-                  placeholder="选择块进行高亮"
-                  value={selectedBlockFilter || undefined}
+                  value={selectedBlockFilter}
                   onChange={(value) => handleBlockFilter(value || '')}
+                  placeholder="选择广告块"
                   style={{ width: '100%' }}
+                  allowClear
                   className="h-[42px]"
-                  size="middle"
+                  loading={loading}
                   filterOption={(input, option) =>
                     (option?.label as string ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  options={adBlocks
-                    .filter(block => block.ad) // 只显示有广告的块
-                    .sort((a, b) => a.block_id.localeCompare(b.block_id))
-                    .map(block => ({
-                      value: block.block_id,
-                      label: `${block.block_id} - ${block.ad?.title}`,
-                      key: block.id
-                    }))}
+                  options={blockConfigs.map((block: BlockConfig) => ({
+                    value: block.id,
+                    label: `${block.block_id} (${block.width}x${block.height} - ¥${block.price})`,
+                    key: block.id
+                  }))}
                 />
               </div>
               
@@ -442,14 +482,14 @@ export default function AdsPixel() {
                 <div
                   key={block.id}
                   className={`absolute cursor-pointer transition-all duration-200 hover:z-10 flex items-center justify-center text-xs font-medium overflow-hidden ${
-                    // 有图片的块不要边框，没图片的块要边框
+                    // 有图片的块完全无边框，没图片的块要边框
                     block.ad && block.ad.image_path 
-                      ? '' 
+                      ? 'border-0' // 确保有图片的块完全无边框
                       : 'border-2 hover:shadow-lg hover:border-blue-400'
                   } ${
-                    // 高亮效果
+                    // 炫酷高亮特效 - 凸出浮起的感觉 + 动态边框发光
                     highlightedBlockId === block.block_id
-                      ? 'z-20 ring-4 ring-yellow-400 ring-opacity-75'
+                      ? 'z-50 highlight-glow'
                       : ''
                   }`}
                   style={{
@@ -457,13 +497,21 @@ export default function AdsPixel() {
                     top: `${block.pixelY}%`,
                     width: `${block.pixelWidth}%`,
                     height: `${block.pixelHeight}%`,
-                    ...blockStyle,
+                    // 有图片的块完全清除背景和边框样式，实现无缝拼接
+                    ...(block.ad && block.ad.image_path ? {
+                      background: 'transparent',
+                      border: 'none',
+                      padding: 0,
+                      margin: 0,
+                    } : blockStyle),
                     boxShadow: highlightedBlockId === block.block_id
-                      ? '0 0 20px rgba(251, 191, 36, 0.8)' // 高亮时的黄色阴影
+                      ? '0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 3px #fbbf24, 0 0 20px #fbbf24, 0 0 40px #fbbf24, inset 0 0 20px rgba(251, 191, 36, 0.2)' // 炫酷3D浮起 + 发光边框 + 内发光
                       : hoveredBlock?.id === block.id 
-                        ? '0 0 15px rgba(59, 130, 246, 0.5)' 
+                        ? (block.ad && block.ad.image_path 
+                            ? '0 8px 16px rgba(59, 130, 246, 0.3)' // 图片块悬停时轻微阴影
+                            : '0 8px 16px rgba(59, 130, 246, 0.5)') 
                         : block.ad && block.ad.image_path 
-                          ? 'none' // 有图片的块默认无阴影
+                          ? 'none' // 有图片的块默认完全无阴影
                           : '0 1px 3px rgba(0, 0, 0, 0.1)', // 无图片的块有轻微阴影
                   }}
                   onClick={() => handleBlockClick(block)}
@@ -475,10 +523,10 @@ export default function AdsPixel() {
                   }
                 >
                   {/* 块内容 */}
-                  <div className={`text-center w-full h-full flex flex-col justify-center relative z-10 ${block.ad && block.ad.image_path ? '' : 'p-1'}`}>
+                  <div className={`w-full h-full ${block.ad && block.ad.image_path ? 'p-0 m-0' : 'text-center flex flex-col justify-center relative z-10 p-1'}`}>
                     {block.ad && block.ad.image_path ? (
-                      // 显示广告图片 - 填满整个块，无padding和border
-                      <div className="w-full h-full relative overflow-hidden">
+                      // 显示广告图片 - 完全填满块，实现无缝拼接效果
+                      <div className="w-full h-full relative overflow-hidden" style={{ margin: 0, padding: 0, border: 'none' }}>
                         {(() => {
                           const imageUrl = getImageUrl(block.ad.image_path);
                           console.log('渲染图片 - 块ID:', block.block_id, '原始路径:', block.ad.image_path, '处理后URL:', imageUrl);
@@ -486,7 +534,16 @@ export default function AdsPixel() {
                             <img 
                               src={imageUrl}
                               alt={block.ad.title}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover block"
+                              style={{ 
+                                display: 'block',
+                                margin: 0,
+                                padding: 0,
+                                border: 'none',
+                                outline: 'none',
+                                // 确保图片完全贴合边界
+                                verticalAlign: 'top'
+                              }}
                               onError={(e) => {
                                 console.log('图片加载失败 - 块ID:', block.block_id, 'URL:', imageUrl);
                                 // 图片加载失败时显示文本
@@ -495,9 +552,9 @@ export default function AdsPixel() {
                                 const parent = target.parentElement;
                                 if (parent) {
                                   parent.innerHTML = `
-                                    <div class="w-full h-full flex flex-col items-center justify-center text-center">
-                                      <div class="font-bold">${block.block_id}</div>
-                                      <div class="text-xs truncate mt-1 font-medium">${block.ad?.title || ''}</div>
+                                    <div class="w-full h-full flex flex-col items-center justify-center text-center border-2 border-red-300 bg-red-50">
+                                      <div class="font-bold text-red-700">${block.block_id}</div>
+                                      <div class="text-xs truncate mt-1 font-medium text-red-600">${block.ad?.title || ''}</div>
                                       <div class="text-xs mt-1 text-red-500">图片加载失败</div>
                                     </div>
                                   `;
@@ -506,7 +563,7 @@ export default function AdsPixel() {
                             />
                           );
                         })()}
-                        {/* 图片上的覆盖信息 */}
+                        {/* 图片上的覆盖信息 - 悬停时显示 */}
                         <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                           <div className="text-white text-center text-xs">
                             <div className="font-bold">{block.block_id}</div>
@@ -515,8 +572,8 @@ export default function AdsPixel() {
                         </div>
                       </div>
                     ) : (
-                      // 无图片或空闲块的文本显示
-                      <div className="text-center">
+                      // 无图片或空闲块的文本显示 - 保持传统的有边框样式
+                      <>
                         <div className="font-bold">{block.block_id}</div>
                         {block.ad ? (
                           <div className="text-xs truncate mt-1 font-medium">
@@ -533,12 +590,12 @@ export default function AdsPixel() {
                             )}
                           </>
                         )}
-                      </div>
+                      </>
                     )}
                   </div>
                   
-                  {/* 悬停效果 */}
-                  {hoveredBlock?.id === block.id && (
+                  {/* 悬停效果 - 区分图片块和非图片块 */}
+                  {hoveredBlock?.id === block.id && !(block.ad && block.ad.image_path) && (
                     <div className="absolute inset-0 bg-blue-100/30 animate-pulse" />
                   )}
                 </div>
