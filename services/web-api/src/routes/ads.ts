@@ -8,49 +8,125 @@ const pixelAdSchema = z.object({
   title: z.string().min(1, '广告标题不能为空').max(100, '广告标题不能超过100字符'),
   description: z.string().min(1, '广告描述不能为空').max(500, '广告描述不能超过500字符'),
   link_url: z.string().url('请输入有效的URL').max(1000, 'URL不能超过1000字符'),
-  image_path: z.string().min(1, '图片路径不能为空').max(500, '图片路径不能超过500字符'), // 图片路径必填
-  block_id: z.string().min(1, '块ID不能为空').max(20, '块ID不能超过20字符').optional(), // 新增block_id字段
-  x_position: z.number().int().min(0, 'X坐标不能小于0').max(9999, 'X坐标不能大于9999'),
-  y_position: z.number().int().min(0, 'Y坐标不能小于0').max(9999, 'Y坐标不能大于9999'),
-  width: z.number().int().min(1, '宽度至少为1像素').max(1000, '宽度不能超过1000像素'),
-  height: z.number().int().min(1, '高度至少为1像素').max(1000, '高度不能超过1000像素'),
-  z_index: z.number().int().min(1, '层级至少为1').max(999, '层级不能超过999').optional(),
+  image_path: z.string().min(1, '图片路径不能为空').max(500, '图片路径不能超过500字符'),
+  block_config_id: z.string().min(1, '必须选择一个广告块').max(10, '块ID不能超过10字符'),
   contact_info: z.string().max(200, '联系信息不能超过200字符').optional(),
-  price: z.number().min(0, '价格不能为负数').optional(),
-  notes: z.string().max(500, '备注不能超过500字符').optional(), // 新增notes字段
+  notes: z.string().max(500, '备注不能超过500字符').optional(),
   expires_at: z.number().int().min(Date.now(), '过期时间不能早于当前时间'),
 });
 
 const updatePixelAdSchema = pixelAdSchema.partial();
 
-// 检查像素位置是否冲突
-function checkPositionConflict(
-  db: any,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  excludeId?: string,
-): boolean {
+// 检查块是否被占用
+function checkBlockOccupied(db: any, blockConfigId: string, excludeId?: string): boolean {
   const query = excludeId
     ? `SELECT COUNT(*) as count FROM pixel_ads 
-       WHERE status = 'active' AND id != ? AND
-       NOT (x_position + width <= ? OR ? >= x_position + width OR
-            y_position + height <= ? OR ? >= y_position + height)`
+       WHERE status = 'active' AND expires_at > ? AND block_config_id = ? AND id != ?`
     : `SELECT COUNT(*) as count FROM pixel_ads 
-       WHERE status = 'active' AND
-       NOT (x_position + width <= ? OR ? >= x_position + width OR
-            y_position + height <= ? OR ? >= y_position + height)`;
+       WHERE status = 'active' AND expires_at > ? AND block_config_id = ?`;
 
+  const now = Date.now();
   const params = excludeId
-    ? [excludeId, x, x + width, y, y + height]
-    : [x, x + width, y, y + height];
+    ? [now, blockConfigId, excludeId]
+    : [now, blockConfigId];
 
   const result = db.prepare(query).get(...params);
   return result.count > 0;
 }
 
 export function registerAdsRoutes(app: FastifyInstance) {
+  // 获取所有块配置（用于前端展示布局）
+  app.get(
+    '/block-configs',
+    withErrorLogging(app.log as any, 'block-configs.list', async (_req, reply) => {
+      try {
+        const blockConfigs = app.db
+          .prepare(
+            `
+            SELECT bc.*, bp.price 
+            FROM block_configs bc
+            LEFT JOIN base_prices bp ON bc.price_id = bp.id
+            ORDER BY CAST(bc.id AS INTEGER)
+          `,
+          )
+          .all();
+
+        return { blockConfigs };
+      } catch (error: any) {
+        app.log.error('获取块配置失败:', error);
+        return reply.code(500).send({ 
+          error: '服务器错误', 
+          details: error.message || error,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+        });
+      }
+    }),
+  );
+
+  // 获取所有价格配置
+  app.get(
+    '/base-prices',
+    withErrorLogging(app.log as any, 'base-prices.list', async (_req, reply) => {
+      try {
+        const basePrices = app.db
+          .prepare('SELECT * FROM base_prices ORDER BY price ASC')
+          .all();
+
+        return { basePrices };
+      } catch (error: any) {
+        app.log.error('获取价格配置失败:', error);
+        return reply.code(500).send({ 
+          error: '服务器错误', 
+          details: error.message || error,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+        });
+      }
+    }),
+  );
+
+  // 获取可用的块配置（未被占用的）
+  app.get(
+    '/block-configs/available',
+    withErrorLogging(app.log as any, 'block-configs.available', async (req, reply) => {
+      try {
+        const now = Date.now();
+        const query = req.query as { exclude_ad_id?: string };
+        
+        let sql = `
+          SELECT bc.*, bp.price 
+          FROM block_configs bc
+          LEFT JOIN base_prices bp ON bc.price_id = bp.id
+          WHERE bc.id NOT IN (
+            SELECT block_config_id 
+            FROM pixel_ads 
+            WHERE status = 'active' AND expires_at > ?`;
+        
+        const params: any[] = [now];
+        
+        // 如果是编辑模式，排除当前编辑的广告记录
+        if (query.exclude_ad_id) {
+          sql += ` AND id != ?`;
+          params.push(query.exclude_ad_id);
+        }
+        
+        sql += `
+          )
+          ORDER BY CAST(bc.id AS INTEGER)
+        `;
+        
+        const availableBlocks = app.db.prepare(sql).all(...params);
+
+        return { availableBlocks };
+      } catch (error: any) {
+        app.log.error('获取可用块配置失败:', error);
+        return reply.code(500).send({ 
+          error: '服务器错误', 
+          details: error.message || error,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+        });
+      }
+    }),
+  );
   // 获取所有广告（分页）
   app.get(
     '/pixel-ads',
@@ -72,36 +148,48 @@ export function registerAdsRoutes(app: FastifyInstance) {
             .default('20'),
           status: z.enum(['active', 'inactive', 'expired']).optional(),
           search: z.string().optional(),
+          block_config_id: z.string().optional(),
         });
 
-        const { page, limit, status, search } = query.parse(req.query);
+        const { page, limit, status, search, block_config_id } = query.parse(req.query);
         const offset = (page - 1) * limit;
 
         let whereClause = '1=1';
         let params: any[] = [];
 
         if (status) {
-          whereClause += ' AND status = ?';
+          whereClause += ' AND pa.status = ?';
           params.push(status);
         }
 
         if (search) {
-          whereClause += ' AND (title LIKE ? OR description LIKE ?)';
+          whereClause += ' AND (pa.title LIKE ? OR pa.description LIKE ?)';
           params.push(`%${search}%`, `%${search}%`);
         }
 
+        if (block_config_id) {
+          whereClause += ' AND pa.block_config_id = ?';
+          params.push(block_config_id);
+        }
+
         // 获取总数
-        const countQuery = `SELECT COUNT(*) as total FROM pixel_ads WHERE ${whereClause}`;
+        const countQuery = `SELECT COUNT(*) as total FROM pixel_ads pa WHERE ${whereClause}`;
         const { total } = app.db.prepare(countQuery).get(...params);
 
-        // 获取数据
+        // 获取数据，JOIN block_configs 和 base_prices 获取完整信息
         const dataQuery = `
-          SELECT * FROM pixel_ads 
+          SELECT pa.*, 
+                 bc.block_id, bc.x, bc.y, bc.width, bc.height, bc.type,
+                 bp.price,
+                 pa.block_config_id
+          FROM pixel_ads pa
+          LEFT JOIN block_configs bc ON pa.block_config_id = bc.id
+          LEFT JOIN base_prices bp ON bc.price_id = bp.id
           WHERE ${whereClause}
-          ORDER BY created_at DESC
+          ORDER BY pa.created_at DESC
           LIMIT ? OFFSET ?
         `;
-        const ads = app.db.prepare(dataQuery).all(limit, offset);
+        const ads = app.db.prepare(dataQuery).all(...params, limit, offset);
 
         return {
           ads,
@@ -126,7 +214,16 @@ export function registerAdsRoutes(app: FastifyInstance) {
         await req.jwtVerify();
         const params = z.object({ id: z.string() }).parse(req.params);
 
-        const ad = app.db.prepare('SELECT * FROM pixel_ads WHERE id = ?').get(params.id);
+        const ad = app.db.prepare(`
+          SELECT pa.*, 
+                 bc.block_id, bc.x, bc.y, bc.width, bc.height, bc.type,
+                 bp.price,
+                 pa.block_config_id
+          FROM pixel_ads pa
+          LEFT JOIN block_configs bc ON pa.block_config_id = bc.id
+          LEFT JOIN base_prices bp ON bc.price_id = bp.id
+          WHERE pa.id = ?
+        `).get(params.id);
 
         if (!ad) {
           return reply.code(404).send({ error: '广告不存在' });
@@ -149,12 +246,15 @@ export function registerAdsRoutes(app: FastifyInstance) {
         const ads = app.db
           .prepare(
             `
-            SELECT id, title, description, link_url, image_path, block_id,
-                   x_position, y_position, width, height, z_index, 
-                   contact_info, notes, expires_at
-            FROM pixel_ads 
-            WHERE status = 'active' AND expires_at > ?
-            ORDER BY z_index ASC, created_at ASC
+            SELECT pa.id, pa.title, pa.description, pa.link_url, pa.image_path, 
+                   pa.contact_info, pa.notes, pa.expires_at,
+                   bc.block_id, bc.x, bc.y, bc.width, bc.height, bc.type,
+                   bp.price
+            FROM pixel_ads pa
+            JOIN block_configs bc ON pa.block_config_id = bc.id
+            LEFT JOIN base_prices bp ON bc.price_id = bp.id
+            WHERE pa.status = 'active' AND pa.expires_at > ?
+            ORDER BY pa.created_at ASC
           `,
           )
           .all(now);
@@ -162,7 +262,11 @@ export function registerAdsRoutes(app: FastifyInstance) {
         return { ads };
       } catch (error: any) {
         app.log.error('获取公开广告失败:', error);
-        return reply.code(500).send({ error: '服务器错误' });
+        return reply.code(500).send({ 
+          error: '服务器错误', 
+          details: error.message || error,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+        });
       }
     }),
   );
@@ -177,21 +281,28 @@ export function registerAdsRoutes(app: FastifyInstance) {
         const now = Date.now();
         const adId = uuidv4();
 
-        // 检查位置冲突
-        if (
-          checkPositionConflict(app.db, data.x_position, data.y_position, data.width, data.height)
-        ) {
-          return reply.code(400).send({ error: '该像素区域已被占用，请选择其他位置' });
+        // 检查块配置是否存在
+        const blockConfig = app.db
+          .prepare('SELECT * FROM block_configs WHERE id = ?')
+          .get(data.block_config_id);
+
+        if (!blockConfig) {
+          return reply.code(400).send({ error: '指定的广告块不存在' });
+        }
+
+        // 检查块是否被占用
+        if (checkBlockOccupied(app.db, data.block_config_id)) {
+          return reply.code(400).send({ error: '该广告块已被占用，请选择其他块' });
         }
 
         // 创建广告
         app.db
           .prepare(
             `INSERT INTO pixel_ads (
-              id, title, description, link_url, image_path, block_id,
-              x_position, y_position, width, height, z_index,
-              status, contact_info, price, notes, user_id, created_at, expires_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              id, title, description, link_url, image_path, 
+              status, contact_info, notes, user_id, block_config_id,
+              created_at, expires_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `,
           )
           .run(
@@ -199,23 +310,28 @@ export function registerAdsRoutes(app: FastifyInstance) {
             data.title,
             data.description,
             data.link_url,
-            data.image_path, // 使用传入的image_path
-            data.block_id || '', // 新增block_id字段
-            data.x_position,
-            data.y_position,
-            data.width,
-            data.height,
-            data.z_index || 1,
+            data.image_path,
             'active',
             data.contact_info || '',
-            data.price || 0,
-            data.notes || '', // 新增notes字段
+            data.notes || '',
             payload.uid, // 从JWT获取用户ID
+            data.block_config_id,
             now,
             data.expires_at,
           );
 
-        const createdAd = app.db.prepare('SELECT * FROM pixel_ads WHERE id = ?').get(adId);
+        // 获取创建的广告及其块配置信息
+        const createdAd = app.db
+          .prepare(
+            `
+            SELECT pa.*, bc.block_id, bc.x, bc.y, bc.width, bc.height, bc.type, bp.price
+            FROM pixel_ads pa
+            JOIN block_configs bc ON pa.block_config_id = bc.id
+            LEFT JOIN base_prices bp ON bc.price_id = bp.id
+            WHERE pa.id = ?
+          `,
+          )
+          .get(adId);
 
         return {
           success: true,
@@ -248,22 +364,20 @@ export function registerAdsRoutes(app: FastifyInstance) {
           return reply.code(404).send({ error: '广告不存在' });
         }
 
-        // 权限检查已移除 - 允许任何已认证用户修改广告
+        // 如果修改了块配置，检查新块是否可用
+        if (data.block_config_id !== undefined) {
+          // 检查块配置是否存在
+          const blockConfig = app.db
+            .prepare('SELECT * FROM block_configs WHERE id = ?')
+            .get(data.block_config_id);
 
-        // 如果修改了位置或尺寸，检查冲突
-        if (
-          data.x_position !== undefined ||
-          data.y_position !== undefined ||
-          data.width !== undefined ||
-          data.height !== undefined
-        ) {
-          const newX = data.x_position ?? existingAd.x_position;
-          const newY = data.y_position ?? existingAd.y_position;
-          const newWidth = data.width ?? existingAd.width;
-          const newHeight = data.height ?? existingAd.height;
+          if (!blockConfig) {
+            return reply.code(400).send({ error: '指定的广告块不存在' });
+          }
 
-          if (checkPositionConflict(app.db, newX, newY, newWidth, newHeight, params.id)) {
-            return reply.code(400).send({ error: '该像素区域已被占用，请选择其他位置' });
+          // 检查块是否被其他广告占用
+          if (checkBlockOccupied(app.db, data.block_config_id, params.id)) {
+            return reply.code(400).send({ error: '该广告块已被占用，请选择其他块' });
           }
         }
 
@@ -289,7 +403,19 @@ export function registerAdsRoutes(app: FastifyInstance) {
           .prepare(`UPDATE pixel_ads SET ${updateFields.join(', ')} WHERE id = ?`)
           .run(...updateValues);
 
-        const updatedAd = app.db.prepare('SELECT * FROM pixel_ads WHERE id = ?').get(params.id);
+        // 获取更新后的广告及其块配置信息
+        const updatedAd = app.db
+          .prepare(
+            `
+            SELECT pa.*, bc.block_id, bc.x, bc.y, bc.width, bc.height, bc.type, bp.price,
+                   pa.block_config_id
+            FROM pixel_ads pa
+            JOIN block_configs bc ON pa.block_config_id = bc.id
+            LEFT JOIN base_prices bp ON bc.price_id = bp.id
+            WHERE pa.id = ?
+          `,
+          )
+          .get(params.id);
 
         return {
           success: true,
@@ -343,37 +469,39 @@ export function registerAdsRoutes(app: FastifyInstance) {
     }),
   );
 
-  // 检查像素位置是否可用
+  // 检查广告块是否可用
   app.post(
-    '/pixel-ads/check-position',
-    withErrorLogging(app.log as any, 'pixel-ads.check-position', async (req, reply) => {
+    '/pixel-ads/check-block',
+    withErrorLogging(app.log as any, 'pixel-ads.check-block', async (req, reply) => {
       try {
         await req.jwtVerify();
         const body = z
           .object({
-            x_position: z.number().int().min(0).max(9999),
-            y_position: z.number().int().min(0).max(9999),
-            width: z.number().int().min(1).max(1000),
-            height: z.number().int().min(1).max(1000),
+            block_config_id: z.string(),
             exclude_id: z.string().optional(),
           })
           .parse(req.body);
 
-        const isConflict = checkPositionConflict(
-          app.db,
-          body.x_position,
-          body.y_position,
-          body.width,
-          body.height,
-          body.exclude_id,
-        );
+        // 检查块配置是否存在
+        const blockConfig = app.db
+          .prepare('SELECT * FROM block_configs WHERE id = ?')
+          .get(body.block_config_id);
+
+        if (!blockConfig) {
+          return {
+            available: false,
+            message: '广告块不存在',
+          };
+        }
+
+        const isOccupied = checkBlockOccupied(app.db, body.block_config_id, body.exclude_id);
 
         return {
-          available: !isConflict,
-          message: isConflict ? '该像素区域已被占用' : '该像素区域可用',
+          available: !isOccupied,
+          message: isOccupied ? '该广告块已被占用' : '该广告块可用',
         };
       } catch (err: any) {
-        app.log.error({ err }, '检查位置失败');
+        app.log.error({ err }, '检查广告块失败');
         if (err.name === 'ZodError') {
           return reply.code(400).send({ error: err.errors[0].message });
         }

@@ -9,29 +9,50 @@ import {
   EyeIcon,
   LinkIcon,
   PaintBrushIcon,
-  PencilIcon,
-  PhoneIcon,
   PhotoIcon,
   SparklesIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
+import { Select } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getPublicActiveAds, type PixelAd } from '../api/pixel-ads';
+import { getBlockConfigs, getPublicActiveAds, type BlockConfig, type PixelAd } from '../api/ads';
 import { message } from '../components/Message';
-import { GRID_CONFIG, LAYOUT_PAGES, getBlockPrice, type BlockConfig } from '../data/pixelLayout';
+import { WEB_API_BASE } from '../config';
 
 interface AdBlock extends BlockConfig {
   ad?: PixelAd;
   isAvailable: boolean;
-  pixelX: number;    // 实际像素位置
+  pixelX: number;    // 百分比位置
   pixelY: number;
-  pixelWidth: number; // 实际像素大小
+  pixelWidth: number; // 百分比大小
   pixelHeight: number;
 }
+
+// 获取图片URL的辅助函数
+const getImageUrl = (imagePath: string): string => {
+  // 如果是blob URL（模拟上传的图片），直接返回
+  if (imagePath.startsWith('blob:')) {
+    return imagePath;
+  }
+  
+  // 如果是完整的HTTP URL，直接返回
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  
+  // 如果是本地开发环境（端口5174），使用完整的API地址
+  if (window.location.port === '5174' || window.location.hostname === 'localhost') {
+    return `${WEB_API_BASE}${imagePath}`;
+  }
+  
+  // 生产环境（nginx代理），直接使用相对路径
+  return imagePath;
+};
 
 
 export default function AdsPixel() {
   const [ads, setAds] = useState<PixelAd[]>([]);
+  const [blockConfigs, setBlockConfigs] = useState<BlockConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [adBlocks, setAdBlocks] = useState<AdBlock[]>([]);
   const [hoveredBlock, setHoveredBlock] = useState<AdBlock | null>(null);
@@ -48,72 +69,82 @@ export default function AdsPixel() {
   const [tempAds, setTempAds] = useState<Record<string, { title: string; image: string; link?: string }>>({});
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   
+  // 筛选和高亮
+  const [selectedBlockFilter, setSelectedBlockFilter] = useState<string>('');
+  const [highlightedBlockId, setHighlightedBlockId] = useState<string>('');
+  
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 获取活跃广告并初始化块布局
-  const fetchActiveAds = async () => {
+  // 获取活跃广告和块配置并初始化布局
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getPublicActiveAds();
-      const adsData = data.ads || [];
+      const [adsResponse, blockConfigsResponse] = await Promise.all([
+        getPublicActiveAds(),
+        getBlockConfigs()
+      ]);
+      
+      const adsData = adsResponse.ads || [];
+      const blockConfigsData = blockConfigsResponse.blockConfigs || [];
+      
       setAds(adsData);
-      initializeAdBlocks(adsData);
+      setBlockConfigs(blockConfigsData);
+      initializeAdBlocks(adsData, blockConfigsData);
     } catch (error) {
-      message.error('获取广告数据失败');
+      message.error('获取数据失败');
     } finally {
       setLoading(false);
     }
   };
 
 
-  // 使用预定义布局初始化广告块 - 基于百分比计算位置和大小
-  const initializeAdBlocks = (adsData: PixelAd[]) => {
-    const blocks: AdBlock[] = LAYOUT_PAGES[0].layout.map(config => {
+  // 使用块配置数据初始化广告块 - 基于百分比计算位置和大小
+  const initializeAdBlocks = (adsData: PixelAd[], blockConfigsData: BlockConfig[]) => {
+    const blocks: AdBlock[] = blockConfigsData.map(config => {
       // 查找该块对应的广告
-      let ad = adsData.find(ad => {
-        // 优先使用block_id匹配
-        if (ad.block_id) {
-          return ad.block_id === config.blockId;
-        }
-        // 旧的位置匹配已不适用，因为现在使用百分比
-        return false;
-      });
+      let ad = adsData.find(ad => ad.block_id === config.block_id);
       
       // 如果没有真实广告，检查是否有临时上传的数据
-      if (!ad && tempAds[config.blockId]) {
-        const tempAd = tempAds[config.blockId];
+      if (!ad && tempAds[config.block_id]) {
+        const tempAd = tempAds[config.block_id];
+        console.log('初始化块 - 找到临时广告数据:', {
+          blockId: config.block_id,
+          tempAd: tempAd,
+          imagePath: tempAd.image
+        });
         ad = {
-          id: `temp-${config.blockId}`,
-          block_id: config.blockId,
+          id: `temp-${config.block_id}`,
+          block_id: config.block_id,
           title: tempAd.title,
           description: '模拟上传的广告',
           image_path: tempAd.image,
           link_url: tempAd.link || '',
           contact_info: '',
           notes: '临时数据，刷新后消失',
-          x_position: 0, // 不再使用像素位置
-          y_position: 0,
-          width: 0,
-          height: 0,
-          z_index: 1,
+          x: config.x,
+          y: config.y, 
+          width: config.width,
+          height: config.height,
+          type: config.type,
+          price: config.price,
           expires_at: Date.now() + 24 * 60 * 60 * 1000, // 24小时后过期
-          created_at: Date.now(),
-          updated_at: Date.now()
         } as PixelAd;
       }
       
       // 计算基于百分比的位置和大小
       // 32列 = 100%宽度，20行 = 100%高度
-      const leftPercent = (config.x / GRID_CONFIG.COLS) * 100; // x位置百分比
-      const topPercent = (config.y / GRID_CONFIG.ROWS) * 100; // y位置百分比
-      const widthPercent = (config.width / GRID_CONFIG.COLS) * 100; // 宽度百分比
-      const heightPercent = (config.height / GRID_CONFIG.ROWS) * 100; // 高度百分比
+      const GRID_COLS = 32;
+      const GRID_ROWS = 20;
+      const leftPercent = (config.x / GRID_COLS) * 100;
+      const topPercent = (config.y / GRID_ROWS) * 100;
+      const widthPercent = (config.width / GRID_COLS) * 100;
+      const heightPercent = (config.height / GRID_ROWS) * 100;
       
       return {
         ...config,
         ad,
         isAvailable: Boolean(!ad || (ad.expires_at && ad.expires_at < Date.now())),
-        // 存储百分比值而不是像素值
+        // 存储百分比值
         pixelX: leftPercent,
         pixelY: topPercent,
         pixelWidth: widthPercent,
@@ -152,6 +183,12 @@ export default function AdsPixel() {
   };
 
   // 模拟上传处理
+  // 处理块筛选
+  const handleBlockFilter = (blockId: string) => {
+    setSelectedBlockFilter(blockId);
+    setHighlightedBlockId(blockId);
+  };
+
   const handleMockUpload = () => {
     if (!selectedBlock || !uploadedFile) {
       message.error('请选择要上传的图片！');
@@ -160,19 +197,25 @@ export default function AdsPixel() {
 
     // 创建图片 URL
     const imageUrl = URL.createObjectURL(uploadedFile);
+    console.log('模拟上传 - 创建图片URL:', imageUrl);
+    console.log('模拟上传 - 选择的块:', selectedBlock.block_id);
     
     // 添加到临时数据
-    setTempAds(prev => ({
-      ...prev,
-      [selectedBlock.blockId]: {
-        title: `模拟广告 - ${selectedBlock.blockId}`,
-        image: imageUrl,
-        link: '#'
-      }
-    }));
+    setTempAds(prev => {
+      const newTempAds = {
+        ...prev,
+        [selectedBlock.block_id]: {
+          title: `模拟广告 - ${selectedBlock.block_id}`,
+          image: imageUrl,
+          link: '#'
+        }
+      };
+      console.log('模拟上传 - 更新后的临时数据:', newTempAds);
+      return newTempAds;
+    });
     
-    const price = getBlockPrice(selectedBlock.blockId);
-    message.success(`模拟上传到块 ${selectedBlock.blockId} 成功！价格: ¥${price}`);
+    const price = selectedBlock.price || 100;
+    message.success(`模拟上传到块 ${selectedBlock.block_id} 成功！价格: ¥${price}`);
     setShowUploadModal(false);
     setSelectedBlock(null);
     setUploadedFile(null);
@@ -280,15 +323,15 @@ export default function AdsPixel() {
   }, []);
 
   useEffect(() => {
-    fetchActiveAds();
+    fetchData();
   }, []);  // 只在组件加载时执行一次
   
   // 当临时广告数据变化时，重新初始化布局
   useEffect(() => {
-    if (ads.length > 0) {
-      initializeAdBlocks(ads);
+    if (ads.length > 0 && blockConfigs.length > 0) {
+      initializeAdBlocks(ads, blockConfigs);
     }
-  }, [tempAds, ads]);
+  }, [tempAds, ads, blockConfigs]);
 
   useEffect(() => {
     // 事件监听
@@ -321,14 +364,39 @@ export default function AdsPixel() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">像素广告位</h1>
               <p className="text-sm text-gray-600 mt-1">
-                总块数: <span className="text-blue-600 font-medium">{GRID_CONFIG.TOTAL_BLOCKS}</span> | 
+                总块数: <span className="text-blue-600 font-medium">{blockConfigs.length}</span> | 
                 已占用: <span className="text-green-600 font-medium">{adBlocks.filter(b => b.ad && !b.isAvailable).length}</span> | 
                 可用: <span className="text-orange-600 font-medium">{adBlocks.filter(b => b.isAvailable).length}</span> |
-                比例: <span className="text-purple-600 font-medium">{GRID_CONFIG.COLS}×{GRID_CONFIG.ROWS}</span>
+                比例: <span className="text-purple-600 font-medium">32×20</span>
               </p>
             </div>
             
             <div className="flex items-center gap-3">
+              {/* 块信息筛选 */}
+              <div className="min-w-[250px]">
+                <Select
+                  showSearch
+                  allowClear
+                  placeholder="选择块进行高亮"
+                  value={selectedBlockFilter || undefined}
+                  onChange={(value) => handleBlockFilter(value || '')}
+                  style={{ width: '100%' }}
+                  className="h-[42px]"
+                  size="middle"
+                  filterOption={(input, option) =>
+                    (option?.label as string ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={adBlocks
+                    .filter(block => block.ad) // 只显示有广告的块
+                    .sort((a, b) => a.block_id.localeCompare(b.block_id))
+                    .map(block => ({
+                      value: block.block_id,
+                      label: `${block.block_id} - ${block.ad?.title}`,
+                      key: block.id
+                    }))}
+                />
+              </div>
+              
               <button
                 onClick={toggleFullscreen}
                 className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
@@ -337,7 +405,7 @@ export default function AdsPixel() {
                 <ArrowsPointingOutIcon className="w-5 h-5" />
               </button>
               <button
-                onClick={() => fetchActiveAds()}
+                onClick={() => fetchData()}
                 className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm flex items-center gap-2"
               >
                 <ArrowPathIcon className="w-4 h-4" />
@@ -373,23 +441,37 @@ export default function AdsPixel() {
               return (
                 <div
                   key={block.id}
-                  className="absolute border-2 cursor-pointer transition-all duration-200 hover:z-10 hover:shadow-lg hover:border-blue-400 flex items-center justify-center text-xs font-medium overflow-hidden"
+                  className={`absolute cursor-pointer transition-all duration-200 hover:z-10 flex items-center justify-center text-xs font-medium overflow-hidden ${
+                    // 有图片的块不要边框，没图片的块要边框
+                    block.ad && block.ad.image_path 
+                      ? '' 
+                      : 'border-2 hover:shadow-lg hover:border-blue-400'
+                  } ${
+                    // 高亮效果
+                    highlightedBlockId === block.block_id
+                      ? 'z-20 ring-4 ring-yellow-400 ring-opacity-75'
+                      : ''
+                  }`}
                   style={{
                     left: `${block.pixelX}%`,
                     top: `${block.pixelY}%`,
                     width: `${block.pixelWidth}%`,
                     height: `${block.pixelHeight}%`,
                     ...blockStyle,
-                    boxShadow: hoveredBlock?.id === block.id 
-                      ? '0 0 15px rgba(59, 130, 246, 0.5)' 
-                      : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                    boxShadow: highlightedBlockId === block.block_id
+                      ? '0 0 20px rgba(251, 191, 36, 0.8)' // 高亮时的黄色阴影
+                      : hoveredBlock?.id === block.id 
+                        ? '0 0 15px rgba(59, 130, 246, 0.5)' 
+                        : block.ad && block.ad.image_path 
+                          ? 'none' // 有图片的块默认无阴影
+                          : '0 1px 3px rgba(0, 0, 0, 0.1)', // 无图片的块有轻微阴影
                   }}
                   onClick={() => handleBlockClick(block)}
                   onMouseEnter={() => setHoveredBlock(block)}
                   onMouseLeave={() => setHoveredBlock(null)}
                   title={block.ad ? 
                     `${block.ad.title} - ${block.ad.description}` : 
-                    `空闲块 ${block.blockId} - 点击模拟上传`
+                    `空闲块 ${block.block_id} - 点击模拟上传`
                   }
                 >
                   {/* 块内容 */}
@@ -397,30 +479,37 @@ export default function AdsPixel() {
                     {block.ad && block.ad.image_path ? (
                       // 显示广告图片 - 填满整个块，无padding和border
                       <div className="w-full h-full relative overflow-hidden">
-                        <img 
-                          src={block.ad.image_path}
-                          alt={block.ad.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            // 图片加载失败时显示文本
-                            const target = e.target as HTMLElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.innerHTML = `
-                                <div class="w-full h-full flex flex-col items-center justify-center text-center">
-                                  <div class="font-bold">${block.blockId}</div>
-                                  <div class="text-xs truncate mt-1 font-medium">${block.ad?.title || ''}</div>
-                                  <div class="text-xs mt-1 text-red-500">图片加载失败</div>
-                                </div>
-                              `;
-                            }
-                          }}
-                        />
+                        {(() => {
+                          const imageUrl = getImageUrl(block.ad.image_path);
+                          console.log('渲染图片 - 块ID:', block.block_id, '原始路径:', block.ad.image_path, '处理后URL:', imageUrl);
+                          return (
+                            <img 
+                              src={imageUrl}
+                              alt={block.ad.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                console.log('图片加载失败 - 块ID:', block.block_id, 'URL:', imageUrl);
+                                // 图片加载失败时显示文本
+                                const target = e.target as HTMLElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `
+                                    <div class="w-full h-full flex flex-col items-center justify-center text-center">
+                                      <div class="font-bold">${block.block_id}</div>
+                                      <div class="text-xs truncate mt-1 font-medium">${block.ad?.title || ''}</div>
+                                      <div class="text-xs mt-1 text-red-500">图片加载失败</div>
+                                    </div>
+                                  `;
+                                }
+                              }}
+                            />
+                          );
+                        })()}
                         {/* 图片上的覆盖信息 */}
                         <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                           <div className="text-white text-center text-xs">
-                            <div className="font-bold">{block.blockId}</div>
+                            <div className="font-bold">{block.block_id}</div>
                             <div className="truncate">{block.ad.title}</div>
                           </div>
                         </div>
@@ -428,7 +517,7 @@ export default function AdsPixel() {
                     ) : (
                       // 无图片或空闲块的文本显示
                       <div className="text-center">
-                        <div className="font-bold">{block.blockId}</div>
+                        <div className="font-bold">{block.block_id}</div>
                         {block.ad ? (
                           <div className="text-xs truncate mt-1 font-medium">
                             {block.ad.title}
@@ -439,7 +528,7 @@ export default function AdsPixel() {
                             {block.pixelWidth > 6 && block.pixelHeight > 10 && ( // 调整为百分比阈值
                               <div className="text-xs mt-1 font-bold text-green-600 flex items-center justify-center gap-1">
                                 <CurrencyDollarIcon className="w-3 h-3" />
-                                {getBlockPrice(block.blockId)}
+                                {block.price || 100}
                               </div>
                             )}
                           </>
@@ -463,7 +552,10 @@ export default function AdsPixel() {
           <div className="absolute top-4 left-4 bg-white bg-opacity-95 backdrop-blur-sm p-4 rounded-lg shadow-xl text-sm max-w-xs z-30 border border-gray-200">
             <div className="font-semibold text-gray-900 text-lg flex items-center gap-2">
               <PhotoIcon className="w-5 h-5 text-blue-600" />
-              {hoveredBlock.blockId}
+              {hoveredBlock.block_id}
+            </div>
+            <div className="text-xs text-purple-600 mt-1 font-medium">
+              块ID: {hoveredBlock.block_id}
             </div>
             <div className="text-xs text-gray-600 mt-1">
               网格位置: {hoveredBlock.x}, {hoveredBlock.y} | 
@@ -476,18 +568,7 @@ export default function AdsPixel() {
               <>
                 <div className="text-sm text-blue-700 mt-3 font-medium">{hoveredBlock.ad.title}</div>
                 <div className="text-xs text-gray-700 mt-1">{hoveredBlock.ad.description}</div>
-                {hoveredBlock.ad.contact_info && (
-                  <div className="text-xs text-green-700 mt-1 flex items-center gap-1">
-                    <PhoneIcon className="w-3 h-3" />
-                    {hoveredBlock.ad.contact_info}
-                  </div>
-                )}
-                {hoveredBlock.ad.notes && (
-                  <div className="text-xs text-orange-700 mt-1 flex items-center gap-1">
-                    <PencilIcon className="w-3 h-3" />
-                    {hoveredBlock.ad.notes}
-                  </div>
-                )}
+
                 <div className="text-xs text-purple-700 mt-2 font-medium flex items-center gap-1">
                   <ClockIcon className="w-3 h-3" />
                   {formatExpireTime(hoveredBlock.ad.expires_at)}
@@ -505,7 +586,7 @@ export default function AdsPixel() {
                 </div>
                 <div className="flex items-center gap-1">
                   <CurrencyDollarIcon className="w-3 h-3" />
-                  价格: ¥{getBlockPrice(hoveredBlock.blockId)}
+                  价格: ¥{hoveredBlock.price || 100}
                 </div>
               </div>
             )}
@@ -597,7 +678,7 @@ export default function AdsPixel() {
           <div className="bg-white border border-gray-300 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
             <h3 className="text-xl font-semibold mb-4 text-gray-900 flex items-center gap-2">
               <PhotoIcon className="w-6 h-6 text-blue-600" />
-              模拟上传到块 {selectedBlock.blockId}
+              模拟上传到块 {selectedBlock.block_id}
             </h3>
             <div className="space-y-4">
               <div>

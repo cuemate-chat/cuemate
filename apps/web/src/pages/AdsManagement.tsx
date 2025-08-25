@@ -9,34 +9,30 @@ import {
 import { Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {
-  checkPixelPosition,
+  checkBlock,
   createPixelAd,
   deletePixelAd,
+  getAvailableBlocks,
+  getBlockConfigs,
   listAdsPixel,
   updatePixelAd,
   uploadImage,
+  type BlockConfig,
   type CreatePixelAdRequest,
   type PixelAd
-} from '../api/ads-mg';
+} from '../api/ads';
 import LicenseGuard from '../components/LicenseGuard';
 import { message } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 import { WEB_API_BASE } from '../config';
-import { LAYOUT_PAGES, getBlockPrice } from '../data/pixelLayout';
 
 interface FormData {
   title: string;
   description: string;
   link_url: string;
-  block_id: string; // 新增block_id字段
-  x_position: number;
-  y_position: number;
-  width: number;
-  height: number;
-  z_index: number;
+  block_config_id: string; // 块配置ID
   contact_info: string;
-  notes: string; // 新增notes字段
-  price: number;
+  notes: string;
   expires_at: string;
 }
 
@@ -44,15 +40,9 @@ const initialFormData: FormData = {
   title: '',
   description: '',
   link_url: '',
-  block_id: '', // 新增
-  x_position: 0,
-  y_position: 0,
-  width: 100,
-  height: 100,
-  z_index: 1,
+  block_config_id: '',
   contact_info: '',
-  notes: '', // 新增
-  price: 0,
+  notes: '',
   expires_at: '',
 };
 
@@ -67,12 +57,18 @@ export default function AdsManagement() {
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [blockFilter, setBlockFilter] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   
   // 图片上传相关状态
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [, setUploadingImage] = useState(false);
+  
+  // 块配置相关状态
+  const [availableBlocks, setAvailableBlocks] = useState<BlockConfig[]>([]);
+  const [allBlocks, setAllBlocks] = useState<BlockConfig[]>([]);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
 
   // 处理图片文件选择
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,6 +112,10 @@ export default function AdsManagement() {
     try {
       const result = await uploadImage(selectedFile);
       message.success('图片上传成功');
+      // 立即更新预览为上传后的图片路径
+      setImagePreview(result.imagePath);
+      // 清除选中的文件，因为已经上传成功
+      setSelectedFile(null);
       return result.imagePath;
     } catch (error: any) {
       message.error('图片上传失败：' + error.message);
@@ -125,8 +125,34 @@ export default function AdsManagement() {
     }
   };
 
+  // 获取可用块配置
+  const fetchAvailableBlocks = async () => {
+    setLoadingBlocks(true);
+    try {
+      const data = await getAvailableBlocks();
+      setAvailableBlocks(data.availableBlocks);
+    } catch (error) {
+      message.error('获取可用广告块失败');
+    } finally {
+      setLoadingBlocks(false);
+    }
+  };
+
+  // 获取所有块配置
+  const fetchBlockConfigs = async () => {
+    setLoadingBlocks(true);
+    try {
+      const data = await getBlockConfigs();
+      setAllBlocks(data.blockConfigs);
+    } catch (error) {
+      message.error('获取所有广告块失败');
+    } finally {
+      setLoadingBlocks(false);
+    }
+  };
+
   // 获取广告列表
-  const fetchAds = async (page = 1, limit = pageSize, search = '', status = '') => {
+  const fetchAds = async (page = 1, limit = pageSize, search = '', status = '', block = '') => {
     setLoading(true);
     try {
       const data = await listAdsPixel({
@@ -134,6 +160,7 @@ export default function AdsManagement() {
         limit,
         search: search || undefined,
         status: status || undefined,
+        block_config_id: block || undefined,
       });
       setAds(data.ads);
       setTotalCount(data.pagination.total);
@@ -144,31 +171,17 @@ export default function AdsManagement() {
     }
   };
 
-  // 检查位置是否可用
-  const checkPosition = async (x: number, y: number, width: number, height: number, excludeId?: string) => {
+  // 检查块是否可用
+  const checkBlockAvailable = async (blockConfigId: string, excludeId?: string) => {
     try {
-      const data = await checkPixelPosition({
-        x_position: x,
-        y_position: y,
-        width,
-        height,
+      const data = await checkBlock({
+        block_config_id: blockConfigId,
         exclude_id: excludeId,
       });
       return data.available;
     } catch (error) {
       return false;
     }
-  };
-
-  // 根据块ID获取块信息
-  const getBlockInfo = (blockId: string) => {
-    for (const page of LAYOUT_PAGES) {
-      const block = page.layout.find(b => b.blockId === blockId);
-      if (block) {
-        return { block, page };
-      }
-    }
-    return null;
   };
 
   // 创建或更新广告
@@ -188,8 +201,8 @@ export default function AdsManagement() {
       message.error('请输入跳转链接');
       return;
     }
-    if (!formData.block_id.trim()) {
-      message.error('请选择广告位块ID');
+    if (!formData.block_config_id.trim()) {
+      message.error('请选择广告位块');
       return;
     }
     if (!formData.contact_info.trim()) {
@@ -197,33 +210,14 @@ export default function AdsManagement() {
       return;
     }
 
-    // 根据块ID获取位置和尺寸信息
-    const blockInfo = getBlockInfo(formData.block_id);
-    if (!blockInfo) {
-      message.error('选择的块ID无效');
-      return;
-    }
-
-    // 更新表单数据的坐标和尺寸
-    const updatedFormData = {
-      ...formData,
-      x_position: blockInfo.block.x * 50, // 假设基础网格大小为50px
-      y_position: blockInfo.block.y * 50,
-      width: blockInfo.block.width * 50,
-      height: blockInfo.block.height * 50,
-    };
-
-    // 检查位置冲突
-    const available = await checkPosition(
-      updatedFormData.x_position,
-      updatedFormData.y_position,
-      updatedFormData.width,
-      updatedFormData.height,
+    // 检查块是否可用
+    const available = await checkBlockAvailable(
+      formData.block_config_id,
       editingAd?.id
     );
 
     if (!available) {
-      message.error('该广告位已被占用，请选择其他位置');
+      message.error('该广告块已被占用，请选择其他块');
       return;
     }
 
@@ -241,9 +235,14 @@ export default function AdsManagement() {
       }
 
       const payload: CreatePixelAdRequest = {
-        ...updatedFormData,
-        expires_at: new Date(updatedFormData.expires_at).getTime(),
-        image_path: imagePath, // 包含图片路径
+        title: formData.title,
+        description: formData.description,
+        link_url: formData.link_url,
+        block_config_id: formData.block_config_id,
+        contact_info: formData.contact_info,
+        notes: formData.notes,
+        expires_at: new Date(formData.expires_at).getTime(),
+        image_path: imagePath,
       };
 
       if (editingAd) {
@@ -258,7 +257,7 @@ export default function AdsManagement() {
       setEditingAd(null);
       setFormData(initialFormData);
       handleImageRemove(); // 清除图片状态
-      fetchAds(currentPage, pageSize, searchTerm, statusFilter);
+      fetchAds(currentPage, pageSize, searchTerm, statusFilter, blockFilter);
     } catch (error: any) {
       
       // 检查是否是认证错误
@@ -292,7 +291,7 @@ export default function AdsManagement() {
         try {
           await deletePixelAd(ad.id);
           message.success('广告删除成功');
-          fetchAds(currentPage, pageSize, searchTerm, statusFilter);
+          fetchAds(currentPage, pageSize, searchTerm, statusFilter, blockFilter);
         } catch (error) {
           message.error('删除广告出错：' + error);
         }
@@ -301,23 +300,54 @@ export default function AdsManagement() {
   };
 
   // 打开编辑模态框
-  const handleEdit = (ad: PixelAd) => {
+  const handleEdit = async (ad: PixelAd) => {
     setEditingAd(ad);
-    setFormData({
-      title: ad.title,
-      description: ad.description,
-      link_url: ad.link_url,
-      block_id: ad.block_id || '', // 新增
-      x_position: ad.x_position,
-      y_position: ad.y_position,
-      width: ad.width,
-      height: ad.height,
-      z_index: ad.z_index,
-      contact_info: ad.contact_info || '',
-      notes: ad.notes || '', // 新增
-      price: ad.price,
-      expires_at: new Date(ad.expires_at).toISOString().split('T')[0],
-    });
+    
+    // 编辑时获取可用块配置（排除当前编辑的广告记录）
+    setLoadingBlocks(true);
+    try {
+      const data = await getAvailableBlocks(ad.id);
+      setAvailableBlocks(data.availableBlocks);
+      
+      // 根据广告的block_id找到对应的block_config_id
+      let blockConfigId = '';
+      if (ad.block_id) {
+        const matchingBlock = data.availableBlocks.find(block => block.block_id === ad.block_id);
+        if (matchingBlock) {
+          blockConfigId = matchingBlock.id;
+        }
+      }
+      
+      console.log('编辑广告 - 查找块配置:', {
+        adBlockId: ad.block_id,
+        foundBlockConfigId: blockConfigId,
+        availableBlocks: data.availableBlocks.map(b => ({ id: b.id, block_id: b.block_id }))
+      });
+      
+      setFormData({
+        title: ad.title,
+        description: ad.description,
+        link_url: ad.link_url,
+        block_config_id: blockConfigId,
+        contact_info: ad.contact_info || '',
+        notes: ad.notes || '',
+        expires_at: new Date(ad.expires_at).toISOString().split('T')[0],
+      });
+    } catch (error: any) {
+      message.error('获取块配置失败：' + error.message);
+      // 仍然设置基本数据，但block_config_id为空
+      setFormData({
+        title: ad.title,
+        description: ad.description,
+        link_url: ad.link_url,
+        block_config_id: '',
+        contact_info: ad.contact_info || '',
+        notes: ad.notes || '',
+        expires_at: new Date(ad.expires_at).toISOString().split('T')[0],
+      });
+    } finally {
+      setLoadingBlocks(false);
+    }
     
     // 清除图片状态，显示当前图片信息
     handleImageRemove();
@@ -335,13 +365,15 @@ export default function AdsManagement() {
     setEditingAd(null);
     setFormData(initialFormData);
     handleImageRemove(); // 清除图片状态
+    fetchAvailableBlocks(); // 刷新可用块列表
+    fetchBlockConfigs(); // 刷新所有块列表
     setShowModal(true);
   };
 
   // 分页处理
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    fetchAds(page, pageSize, searchTerm, statusFilter);
+    fetchAds(page, pageSize, searchTerm, statusFilter, blockFilter);
   };
 
   // 分页大小变化处理
@@ -349,21 +381,22 @@ export default function AdsManagement() {
     void current;
     setPageSize(size);
     setCurrentPage(1);
-    fetchAds(1, size, searchTerm, statusFilter);
+    fetchAds(1, size, searchTerm, statusFilter, blockFilter);
   };
 
   // 搜索处理
   const handleSearch = () => {
     setCurrentPage(1);
-    fetchAds(1, pageSize, searchTerm, statusFilter);
+    fetchAds(1, pageSize, searchTerm, statusFilter, blockFilter);
   };
 
   // 重置搜索
   const handleReset = () => {
     setSearchTerm('');
     setStatusFilter('');
+    setBlockFilter('');
     setCurrentPage(1);
-    fetchAds(1, pageSize, '', '');
+    fetchAds(1, pageSize, '', '', '');
   };
 
   // 格式化日期
@@ -372,7 +405,8 @@ export default function AdsManagement() {
   };
 
   // 格式化价格
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | undefined | null) => {
+    if (price == null) return '¥0.00';
     return `¥${price.toFixed(2)}`;
   };
 
@@ -385,7 +419,9 @@ export default function AdsManagement() {
 
 
   useEffect(() => {
-    fetchAds();
+    fetchAds(1, pageSize, '', '', '');
+    fetchAvailableBlocks(); // 初始化时获取可用块列表
+    fetchBlockConfigs(); // 初始化时获取所有块列表
   }, []);
 
   useEffect(() => {
@@ -427,6 +463,28 @@ export default function AdsManagement() {
             </div>
           </div>
           
+          <div className="w-full lg:w-48">
+            <label className="block text-sm font-medium text-slate-700 mb-1">块信息筛选</label>
+            <Select
+              showSearch
+              value={blockFilter}
+              onChange={(value) => setBlockFilter(value)}
+              placeholder="选择广告块"
+              style={{ width: '100%' }}
+              allowClear
+              className="h-[42px]"
+              loading={loadingBlocks}
+              filterOption={(input, option) =>
+                (option?.label as string ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              options={allBlocks.map((block: BlockConfig) => ({
+                value: block.id,
+                label: `${block.block_id} (${block.width}x${block.height} - ¥${block.price})`,
+                key: block.id
+              }))}
+            />
+          </div>
+
           <div className="w-full lg:w-48">
             <label className="block text-sm font-medium text-slate-700 mb-1">状态筛选</label>
             <Select
@@ -501,6 +559,9 @@ export default function AdsManagement() {
                     广告信息
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    块信息
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     位置/尺寸
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -532,8 +593,12 @@ export default function AdsManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-900">
-                      <div>({ad.x_position}, {ad.y_position})</div>
-                      <div className="text-slate-500">{ad.width} × {ad.height}</div>
+                      <div className="text-xs text-slate-500">块ID</div>
+                      <div className="font-medium text-blue-600">{ad.block_id || 'N/A'}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-900">
+                      <div>({ad.x || 0}, {ad.y || 0})</div>
+                      <div className="text-slate-500">{ad.width || 0} × {ad.height || 0}</div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -663,49 +728,54 @@ export default function AdsManagement() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      广告位块ID <span className="text-red-500">*</span>
+                      广告块 <span className="text-red-500">*</span>
                     </label>
                     <Select
                       showSearch
-                      placeholder="搜索并选择广告位块"
-                      value={formData.block_id || undefined}
+                      placeholder="选择可用的广告块"
+                      value={formData.block_config_id || undefined}
                       onChange={(value) => {
-                        setFormData(prev => ({ ...prev, block_id: value }));
-                        // 根据块ID自动设置价格
-                        const price = getBlockPrice(value);
-                        setFormData(prev => ({ ...prev, price }));
+                        setFormData(prev => ({ ...prev, block_config_id: value }));
                       }}
                       style={{ width: '100%' }}
+                      loading={loadingBlocks}
                       suffixIcon={<SearchOutlined />}
                       filterOption={(input, option) =>
-                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                        (option?.label as string ?? '').toLowerCase().includes(input.toLowerCase())
                       }
-                      options={[
-                        ...LAYOUT_PAGES.flatMap(page => 
-                          page.layout.map(block => ({
-                            value: block.blockId,
-                            label: `${block.blockId} (${page.name} - ¥${getBlockPrice(block.blockId)})`,
-                            key: `${page.id}-${block.blockId}`
-                          }))
-                        )
-                      ]}
+                      options={availableBlocks.map((block: BlockConfig) => ({
+                        value: block.id,
+                        label: `${block.block_id} (${block.width}x${block.height} - ¥${block.price})`,
+                        key: block.id
+                      }))}
                       listHeight={200}
                       className="h-[42px]"
                     />
+                    <div className="text-xs text-slate-500 mt-1">
+                      显示可用的广告块配置，价格根据块大小自动计算
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      层级
+                      块信息
                     </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="999"
-                      value={formData.z_index}
-                      onChange={(e) => setFormData(prev => ({ ...prev, z_index: parseInt(e.target.value) || 1 }))}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                    <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-700">
+                      {formData.block_config_id ? (
+                        (() => {
+                          const selectedBlock = availableBlocks.find((b: BlockConfig) => b.id === formData.block_config_id);
+                          return selectedBlock ? (
+                            <div>
+                              <div>块ID: <span className="font-medium text-blue-600">{selectedBlock.block_id}</span></div>
+                              <div>位置: ({selectedBlock.x}, {selectedBlock.y})</div>
+                              <div>尺寸: {selectedBlock.width} × {selectedBlock.height}</div>
+                              <div>类型: {selectedBlock.type === 'square' ? '正方形' : selectedBlock.type === 'horizontal' ? '横长方形' : '竖长方形'}</div>
+                              <div>价格: ¥{selectedBlock.price}</div>
+                            </div>
+                          ) : '未选择块';
+                        })()
+                      ) : '请先选择广告块'}
+                    </div>
                   </div>
 
                   {/* 图片上传区域 */}
@@ -714,10 +784,10 @@ export default function AdsManagement() {
                       广告图片
                     </label>
                     <div className="border-2 border-dashed border-slate-300 rounded-lg p-4">
-                      {imagePreview ? (
+                      {imagePreview || selectedFile ? (
                         <div className="text-center">
                           <img 
-                            src={imagePreview.startsWith('http') ? imagePreview : getFullImageUrl(imagePreview)} 
+                            src={selectedFile ? URL.createObjectURL(selectedFile) : (imagePreview.startsWith('http') ? imagePreview : getFullImageUrl(imagePreview))} 
                             alt="图片预览" 
                             className="max-h-32 mx-auto mb-2 rounded"
                           />
@@ -776,21 +846,6 @@ export default function AdsManagement() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      价格（元）<span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formData.price}
-                      onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
-                      readOnly
-                      title="价格根据选择的块ID自动计算"
-                    />
-                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">

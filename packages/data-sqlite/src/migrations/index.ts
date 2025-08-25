@@ -10,6 +10,7 @@ import { up as up9, version as v9 } from './009_preset_questions.js';
 import { up as up10, version as v10 } from './010_create_license_table.js';
 import { up as up11, version as v11 } from './011_create_ads_table.js';
 import { up as up12, version as v12 } from './012_add_ads_fields.js';
+import { up as up13, version as v13 } from './013_create_layout_tables.js';
 
 export interface Migration {
   version: number;
@@ -30,4 +31,5 @@ export const migrations: Migration[] = [
   { version: v10, name: '010_create_license_table', up: up10 },
   { version: v11, name: '011_create_ads_table', up: up11 },
   { version: v12, name: '012_add_ads_fields', up: up12 },
+  { version: v13, name: '013_create_layout_tables', up: up13 },
 ];
