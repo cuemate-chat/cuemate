@@ -570,7 +570,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           message: `已删除 ${dbResult.changes} 条押题数据，其中 ${vectorDeleted} 条从向量库删除`,
         };
       } catch (err) {
-        app.log.error({ err }, '批量删除岗位押题失败');
+        app.log.error({ err: err }, '批量删除岗位押题失败');
         return reply.code(500).send({ error: '批量删除失败：' + err });
       }
     }),

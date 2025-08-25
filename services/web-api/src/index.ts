@@ -54,7 +54,7 @@ async function start() {
     const { validateLicenseAtStartup } = await import('./utils/license-validator.js');
     await validateLicenseAtStartup(db, app.log);
   } catch (error: any) {
-    app.log.error('License 检查过程中发生错误:', error);
+    app.log.error({ err: error }, 'License 检查过程中发生错误');
   }
 
   // 全局日志钩子

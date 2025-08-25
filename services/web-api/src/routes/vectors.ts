@@ -114,7 +114,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
       try {
         payload = await (req as any).jwtVerify();
       } catch (jwtError: any) {
-        app.log.error('JWT verification failed:', jwtError);
+        app.log.error({ err: jwtError }, 'JWT verification failed');
         return reply.code(401).send({ error: 'JWT验证失败，请重新登录' });
       }
 
@@ -123,7 +123,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
       try {
         body = z.object({ jobId: z.string().min(1).optional() }).parse((req as any).body || {});
       } catch (parseError: any) {
-        app.log.error('Request body parse failed:', parseError);
+        app.log.error({ err: parseError }, 'Request body parse failed');
         return reply.code(400).send({ error: '请求参数格式错误' });
       }
 
@@ -148,7 +148,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
 
           app.log.info('RAG service health check passed');
         } catch (healthError: any) {
-          app.log.error('RAG service health check error:', healthError);
+          app.log.error({ err: healthError }, 'RAG service health check error');
           return reply.code(503).send({
             error: 'RAG服务连接失败，请检查服务是否正常运行',
             details: healthError.message,
@@ -340,7 +340,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
           },
         };
       } catch (err: any) {
-        app.log.error('Sync-all failed:', err);
+        app.log.error({ err }, 'Sync-all failed');
         return reply.code(500).send({ error: '同步失败：' + err.message });
       }
     }),
@@ -359,7 +359,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
           payload = await (req as any).jwtVerify();
           app.log.info(`JWT verified for user ${payload.uid}`);
         } catch (jwtError: any) {
-          app.log.error('JWT verification failed:', jwtError);
+          app.log.error({ err: jwtError }, 'JWT verification failed');
           return reply.code(401).send({ error: 'JWT验证失败：' + jwtError.message });
         }
 
@@ -386,9 +386,9 @@ export function registerVectorRoutes(app: FastifyInstance) {
           }
 
           const healthData = await healthResponse.json();
-          app.log.info('RAG service health check passed:', healthData as any);
+          app.log.info({ data: healthData }, 'RAG service health check passed');
         } catch (healthError: any) {
-          app.log.error('RAG service health check error:', healthError);
+          app.log.error({ err: healthError }, 'RAG service health check error');
           return reply.code(503).send({
             error: 'RAG服务连接失败，请检查服务是否正常运行',
             details: healthError.message,
@@ -414,7 +414,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
           }
 
           const result = (await ragResponse.json()) as any;
-          app.log.info('RAG service response:', result);
+          app.log.info({ data: result }, 'RAG service response');
 
           // 更新数据库中的vector_status为0
           if (result.success) {
@@ -440,18 +440,18 @@ export function registerVectorRoutes(app: FastifyInstance) {
 
               app.log.info(`Updated vector_status to 0 for user ${payload.uid}`);
             } catch (dbError: any) {
-              app.log.error('Failed to update vector_status in database:', dbError);
+              app.log.error({ err: dbError }, 'Failed to update vector_status in database');
               // 不阻止返回成功，因为向量库清空已经成功
             }
           }
 
           reply.send(result);
         } catch (fetchError: any) {
-          app.log.error('Fetch to RAG service failed:', fetchError);
+          app.log.error({ err: fetchError }, 'Fetch to RAG service failed');
           return reply.code(500).send({ error: '调用RAG服务失败：' + fetchError.message });
         }
       } catch (err: any) {
-        app.log.error('Clean-all failed:', err);
+        app.log.error({ err }, 'Clean-all failed');
         return reply.code(500).send({ error: '清空失败：' + err.message });
       }
     }),

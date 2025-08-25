@@ -53,7 +53,7 @@ export function registerAdsRoutes(app: FastifyInstance) {
 
         return { blockConfigs };
       } catch (error: any) {
-        app.log.error('获取块配置失败:', error);
+        app.log.error({ err: error }, '获取块配置失败');
         return reply.code(500).send({ 
           error: '服务器错误', 
           details: error.message || error,
@@ -74,7 +74,7 @@ export function registerAdsRoutes(app: FastifyInstance) {
 
         return { basePrices };
       } catch (error: any) {
-        app.log.error('获取价格配置失败:', error);
+        app.log.error({ err: error }, '获取价格配置失败');
         return reply.code(500).send({ 
           error: '服务器错误', 
           details: error.message || error,
@@ -118,7 +118,7 @@ export function registerAdsRoutes(app: FastifyInstance) {
 
         return { availableBlocks };
       } catch (error: any) {
-        app.log.error('获取可用块配置失败:', error);
+        app.log.error({ err: error }, '获取可用块配置失败');
         return reply.code(500).send({ 
           error: '服务器错误', 
           details: error.message || error,
@@ -261,7 +261,7 @@ export function registerAdsRoutes(app: FastifyInstance) {
 
         return { ads };
       } catch (error: any) {
-        app.log.error('获取公开广告失败:', error);
+        app.log.error({ err: error }, '获取公开广告失败');
         return reply.code(500).send({ 
           error: '服务器错误', 
           details: error.message || error,

@@ -297,7 +297,7 @@ export function registerJobRoutes(app: FastifyInstance) {
 
         // 执行事务
         deleteResult = transaction();
-        app.log.info(`Database transaction completed for job ${id}:`, deleteResult);
+        app.log.info({ result: deleteResult }, `Database transaction completed for job ${id}`);
       } catch (dbError: any) {
         app.log.error({ err: dbError }, `Database transaction failed for job ${id}`);
         return reply.code(500).send({ error: '数据库操作失败：' + dbError.message });
@@ -326,7 +326,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         // 即使向量库删除失败，也不影响数据库删除的成功
       }
 
-      app.log.info(`Cascading delete completed for job ${id}:`, deleteResult);
+      app.log.info({ result: deleteResult }, `Cascading delete completed for job ${id}`);
 
       return {
         success: deleteResult.jobsDeleted > 0,

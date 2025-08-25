@@ -136,7 +136,7 @@ export function registerLogRoutes(app: FastifyInstance) {
       const tailLines = lines.slice(start).filter((l) => l.length > 0);
       return { level, service, date, lines: tailLines };
     } catch (err) {
-      (req as any).log.error({ err }, 'read-log-failed');
+      (req as any).log.error({ err: err }, 'read-log-failed');
       return reply.code(404).send({ error: 'not_found' });
     }
   });

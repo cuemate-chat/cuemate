@@ -186,7 +186,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
           },
         };
       } catch (error: any) {
-        app.log.error('上传 License 文件失败:', error);
+        app.log.error({ err: error }, '上传 License 文件失败');
         if (error.name === 'PayloadTooLargeError') {
           return reply.code(413).send({ error: '文件太大，请上传小于 10MB 的文件' });
         }
@@ -409,7 +409,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
                 // 提取ID字段值
                 const idMatch = statement.match(/VALUES\s*\(\s*'([^']+)'/i);
                 if (!idMatch) {
-                  app.log.warn(`无法从语句中提取ID: ${statement.substring(0, 100)}...`);
+                  app.log.warn({ statement: statement.substring(0, 100) }, '无法从语句中提取ID');
                   continue;
                 }
 
@@ -436,7 +436,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
                     existingCount++;
                     app.log.info(`题库ID ${id} 插入时发现重复，算作已存在`);
                   } else {
-                    app.log.error(`插入题库ID ${id} 失败:`, insertError);
+                    app.log.error({ err: insertError }, `插入题库ID ${id} 失败`);
                     throw insertError;
                   }
                 }
@@ -447,7 +447,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
                 );
               }
             } catch (error: any) {
-              app.log.error(`SQL 语句处理失败: ${statement.substring(0, 100)}...`, error);
+              app.log.error({ err: error }, `SQL 语句处理失败: ${statement.substring(0, 100)}...`);
               // 对于单个语句的错误，我们记录日志但不中止整个事务
             }
           }
@@ -474,7 +474,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
             summary: `${insertedCount}/${totalAttempted}`,
           };
         } catch (error: any) {
-          app.log.error({ err: error }, '执行 SQL 事务失败:');
+          app.log.error({ err: error }, '执行 SQL 事务失败');
           return reply.code(500).send({ error: 'SQL 执行失败: ' + error.message });
         }
       } catch (error: any) {
