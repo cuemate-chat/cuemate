@@ -474,17 +474,11 @@ export function registerLicenseRoutes(app: FastifyInstance) {
             summary: `${insertedCount}/${totalAttempted}`,
           };
         } catch (error: any) {
-          app.log.error('执行 SQL 事务失败:', error);
+          app.log.error({ err: error }, '执行 SQL 事务失败:');
           return reply.code(500).send({ error: 'SQL 执行失败: ' + error.message });
         }
       } catch (error: any) {
-        app.log.error('上传内置题库失败:', { 
-          error: error?.message || 'No message',
-          name: error?.name || 'No name',
-          stack: error?.stack || 'No stack',
-          type: typeof error,
-          errorObj: error
-        });
+        app.log.error({ err: error }, '上传内置题库失败');
         if (error.name === 'PayloadTooLargeError') {
           return reply.code(413).send({ error: '文件太大，请上传小于 10MB 的文件' });
         }

@@ -103,9 +103,14 @@ class HttpError extends Error {
  */
 export async function request<T = any>(path: string, init: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(init.headers as Record<string, string>),
   };
+
+  // 对于FormData，让浏览器自动设置Content-Type（包含boundary）
+  // 对于其他情况，设置JSON Content-Type
+  if (!(init.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   // 添加认证头
   const token = storage.getToken();
@@ -169,7 +174,7 @@ export const http = {
   post: <T = any>(path: string, body?: any): Promise<T> => {
     return request<T>(path, {
       method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined),
     });
   },
 
