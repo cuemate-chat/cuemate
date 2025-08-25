@@ -108,11 +108,6 @@ export default function AdsPixel() {
       // 如果没有真实广告，检查是否有临时上传的数据
       if (!ad && tempAds[config.block_id]) {
         const tempAd = tempAds[config.block_id];
-        console.log('初始化块 - 找到临时广告数据:', {
-          blockId: config.block_id,
-          tempAd: tempAd,
-          imagePath: tempAd.image
-        });
         ad = {
           id: `temp-${config.block_id}`,
           block_id: config.block_id,
@@ -204,8 +199,6 @@ export default function AdsPixel() {
 
     // 创建图片 URL
     const imageUrl = URL.createObjectURL(uploadedFile);
-    console.log('模拟上传 - 创建图片URL:', imageUrl);
-    console.log('模拟上传 - 选择的块:', selectedBlock.block_id);
     
     // 添加到临时数据
     setTempAds(prev => {
@@ -217,7 +210,6 @@ export default function AdsPixel() {
           link: '#'
         }
       };
-      console.log('模拟上传 - 更新后的临时数据:', newTempAds);
       return newTempAds;
     });
     
@@ -529,7 +521,6 @@ export default function AdsPixel() {
                       <div className="w-full h-full relative overflow-hidden" style={{ margin: 0, padding: 0, border: 'none' }}>
                         {(() => {
                           const imageUrl = getImageUrl(block.ad.image_path);
-                          console.log('渲染图片 - 块ID:', block.block_id, '原始路径:', block.ad.image_path, '处理后URL:', imageUrl);
                           return (
                             <img 
                               src={imageUrl}
@@ -545,7 +536,6 @@ export default function AdsPixel() {
                                 verticalAlign: 'top'
                               }}
                               onError={(e) => {
-                                console.log('图片加载失败 - 块ID:', block.block_id, 'URL:', imageUrl);
                                 // 图片加载失败时显示文本
                                 const target = e.target as HTMLElement;
                                 target.style.display = 'none';

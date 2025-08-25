@@ -95,7 +95,7 @@ function validateLicenseKey(licenseKey: string): LicenseResponse {
 }
 
 export function registerLicenseRoutes(app: FastifyInstance) {
-  // multipart 插件已在其他地方注册，不需要重复注册
+  // multipart 插件已在 files.ts 中注册，不需要重复注册
 
   // 上传和验证 License (文件上传)
   app.post(
@@ -383,17 +383,19 @@ export function registerLicenseRoutes(app: FastifyInstance) {
         let insertedCount = 0;
         let existingCount = 0;
         let totalAttempted = 0;
-        
+
         const statements = sqlContent
           .split(';')
           .map((stmt) => stmt.trim())
           .filter((stmt) => stmt.length > 0);
 
         const db = (app as any).db;
-        
+
         // 准备检查ID是否存在的语句
-        const checkExistsStmt = db.prepare('SELECT COUNT(*) as count FROM preset_questions WHERE id = ?');
-        
+        const checkExistsStmt = db.prepare(
+          'SELECT COUNT(*) as count FROM preset_questions WHERE id = ?',
+        );
+
         const transaction = db.transaction(() => {
           for (const statement of statements) {
             try {
@@ -403,16 +405,16 @@ export function registerLicenseRoutes(app: FastifyInstance) {
                 statement.toLowerCase().includes('preset_questions')
               ) {
                 totalAttempted++;
-                
+
                 // 提取ID字段值
                 const idMatch = statement.match(/VALUES\s*\(\s*'([^']+)'/i);
                 if (!idMatch) {
                   app.log.warn(`无法从语句中提取ID: ${statement.substring(0, 100)}...`);
                   continue;
                 }
-                
+
                 const id = idMatch[1];
-                
+
                 // 检查ID是否已存在
                 const existsResult = checkExistsStmt.get(id);
                 if (existsResult && existsResult.count > 0) {
@@ -420,7 +422,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
                   app.log.info(`题库ID ${id} 已存在，跳过插入`);
                   continue;
                 }
-                
+
                 // ID不存在，执行插入
                 try {
                   const result = db.prepare(statement).run();
@@ -476,11 +478,17 @@ export function registerLicenseRoutes(app: FastifyInstance) {
           return reply.code(500).send({ error: 'SQL 执行失败: ' + error.message });
         }
       } catch (error: any) {
-        app.log.error('上传内置题库失败:', error);
+        app.log.error('上传内置题库失败:', { 
+          error: error?.message || 'No message',
+          name: error?.name || 'No name',
+          stack: error?.stack || 'No stack',
+          type: typeof error,
+          errorObj: error
+        });
         if (error.name === 'PayloadTooLargeError') {
           return reply.code(413).send({ error: '文件太大，请上传小于 10MB 的文件' });
         }
-        return reply.code(500).send({ error: '上传失败: ' + error.message });
+        return reply.code(500).send({ error: '上传失败: ' + (error?.message || '未知错误') });
       }
     }),
   );

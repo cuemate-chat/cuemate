@@ -97,10 +97,6 @@ logs/
 .claude/
 
 # private file
-PROJECT.md
-technology.md
-build.md
+private/
 /data/
-CLAUDE.md
-clean-vector-db.js
 
