@@ -1,14 +1,20 @@
 import {
+  ClockIcon,
   Cog6ToothIcon,
+  CubeIcon,
+  DocumentTextIcon,
   EyeIcon,
   EyeSlashIcon,
   GlobeAltIcon,
+  InformationCircleIcon,
+  MicrophoneIcon,
   PaintBrushIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Select as AntSelect } from 'antd';
 import 'antd/dist/reset.css';
 import { useEffect, useState } from 'react';
+import { getAsrProviders, getUserAsrConfig, updateUserAsrProvider } from '../api/asr';
 import { changePassword, fetchMe, updateMe } from '../api/auth';
 import { storage } from '../api/http';
 import { listModels } from '../api/models';
@@ -30,6 +36,10 @@ export default function Settings() {
   });
   const [saving, setSaving] = useState(false);
   const [modelOptions, setModelOptions] = useState<{ label: string; value: string }[]>([]);
+  
+  // ASR相关状态
+  const [asrProviders, setAsrProviders] = useState<any[]>([]);
+  const [selectedAsrProviderId, setSelectedAsrProviderId] = useState('');
 
   useEffect(() => {
     const u = storage.getUser();
@@ -95,6 +105,33 @@ export default function Settings() {
       }
     })();
   }, []);
+
+  // 加载ASR配置
+  useEffect(() => {
+    (async () => {
+      try {
+        // 获取所有可用的ASR提供商
+        const providers = await getAsrProviders();
+        setAsrProviders(providers);
+      } catch (error: any) {
+        console.warn('加载ASR提供商失败:', error.message);
+      }
+    })();
+  }, []);
+
+  // 加载用户ASR配置
+  useEffect(() => {
+    if (!form.id) return;
+    
+    (async () => {
+      try {
+        const userAsrConfig = await getUserAsrConfig(form.id);
+        setSelectedAsrProviderId(userAsrConfig.selectedProviderId);
+      } catch (error: any) {
+        console.warn('加载用户ASR配置失败:', error.message);
+      }
+    })();
+  }, [form.id]);
 
   return (
     <div className="space-y-6">
@@ -164,7 +201,7 @@ export default function Settings() {
           {/* 时区 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div className="flex items-center gap-2 text-slate-800 font-medium">
-              <GlobeAltIcon className="w-5 h-5 text-slate-600" />
+              <ClockIcon className="w-5 h-5 text-slate-600" />
               <span>时区</span>
             </div>
             <div className="md:col-span-2">
@@ -191,7 +228,10 @@ export default function Settings() {
 
           {/* 版本号 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="text-slate-800 font-medium">软件版本</div>
+            <div className="flex items-center gap-2 text-slate-800 font-medium">
+              <InformationCircleIcon className="w-5 h-5 text-slate-600" />
+              <span>软件版本</span>
+            </div>
             <div className="md:col-span-2">
               <input
                 value={form.version}
@@ -203,7 +243,10 @@ export default function Settings() {
 
           {/* 当前绑定模型 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="text-slate-800 font-medium">大模型供应商</div>
+            <div className="flex items-center gap-2 text-slate-800 font-medium">
+              <CubeIcon className="w-5 h-5 text-slate-600" />
+              <span>大模型供应商</span>
+            </div>
             <div className="md:col-span-2">
               <div className="w-full">
                 <AntSelect
@@ -221,9 +264,39 @@ export default function Settings() {
             </div>
           </div>
 
+          {/* 语音识别供应商 */}
+          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            <div className="flex items-center gap-2 text-slate-800 font-medium">
+              <MicrophoneIcon className="w-5 h-5 text-slate-600" />
+              <span>语音识别供应商</span>
+            </div>
+            <div className="md:col-span-2">
+              <div className="w-full">
+                <AntSelect
+                  value={selectedAsrProviderId}
+                  onChange={setSelectedAsrProviderId}
+                  options={asrProviders.map(p => ({
+                    label: `${p.display_name} (${p.name})`,
+                    value: p.id,
+                  }))}
+                  className="w-full"
+                  popupMatchSelectWidth
+                  style={{ height: 40 }}
+                  loading={asrProviders.length === 0}
+                />
+              </div>
+              <p className="text-xs text-slate-600 mt-2">
+                为当前账号绑定一个语音识别提供商。选择后点击页面底部"保存"按钮生效。你也可以前往"语音设置"页面管理详细配置。
+              </p>
+            </div>
+          </div>
+
           {/* 政策协议 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="text-slate-800 font-medium">政策协议</div>
+            <div className="flex items-center gap-2 text-slate-800 font-medium">
+              <DocumentTextIcon className="w-5 h-5 text-slate-600" />
+              <span>政策协议</span>
+            </div>
             <div className="md:col-span-2">
               <div className="flex items-center gap-4 text-sm">
                 <a className="text-blue-700 hover:underline" href="/legal/user-agreement">
@@ -309,6 +382,13 @@ export default function Settings() {
                 timezone: form.timezone,
                 selected_model_id: form.selected_model_id,
               };
+              
+              // 如果ASR提供商有变化，也更新
+              if (selectedAsrProviderId) {
+                updateUserAsrProvider(form.id, selectedAsrProviderId).catch(asrError => {
+                  console.warn('更新ASR提供商失败:', asrError);
+                });
+              }
               // 直接复用 onSave 逻辑
               (async () => {
                 setSaving(true);
@@ -336,6 +416,7 @@ export default function Settings() {
     </div>
   );
 }
+
 
 function PasswordEditor() {
   const [editing, setEditing] = useState(false);

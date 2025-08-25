@@ -306,12 +306,6 @@ export default function AdsManagement() {
         }
       }
       
-      console.log('编辑广告 - 查找块配置:', {
-        adBlockId: ad.block_id,
-        foundBlockConfigId: blockConfigId,
-        availableBlocks: data.availableBlocks.map(b => ({ id: b.id, block_id: b.block_id }))
-      });
-      
       setFormData({
         title: ad.title,
         description: ad.description,

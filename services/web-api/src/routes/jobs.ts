@@ -297,7 +297,7 @@ export function registerJobRoutes(app: FastifyInstance) {
 
         // 执行事务
         deleteResult = transaction();
-        app.log.info({ result: deleteResult }, `Database transaction completed for job ${id}`);
+        app.log.info(`Database transaction completed for job ${id}:`, deleteResult);
       } catch (dbError: any) {
         app.log.error({ err: dbError }, `Database transaction failed for job ${id}`);
         return reply.code(500).send({ error: '数据库操作失败：' + dbError.message });
@@ -326,7 +326,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         // 即使向量库删除失败，也不影响数据库删除的成功
       }
 
-      app.log.info({ result: deleteResult }, `Cascading delete completed for job ${id}`);
+      app.log.info(`Cascading delete completed for job ${id}:`, deleteResult);
 
       return {
         success: deleteResult.jobsDeleted > 0,
@@ -510,7 +510,7 @@ export function registerJobRoutes(app: FastifyInstance) {
           optimizedResume: result.optimizedResume || content,
         };
       } catch (err: any) {
-        app.log.error({ err }, '简历优化失败');
+        app.log.error({ err: err }, '简历优化失败');
         if (err.name === 'ZodError') {
           return reply.code(400).send({ error: '参数错误' });
         }

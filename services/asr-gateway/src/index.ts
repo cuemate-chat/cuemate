@@ -3,11 +3,9 @@ import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
 import Fastify from 'fastify';
 import { Server } from 'socket.io';
-import { config } from './config/index.js';
 import { createSocketHandlers } from './handlers/socket.js';
 import { AudioProcessor } from './processors/audio.js';
-import { DeepgramProvider } from './providers/deepgram.js';
-import { WhisperProvider } from './providers/whisper.js';
+import { AsrProviderFactory } from './providers/factory.js';
 import { createHttpRoutes } from './routes/http.js';
 import { logger } from './utils/logger.js';
 
@@ -19,7 +17,7 @@ async function buildServer() {
 
   // 注册插件
   await fastify.register(cors, {
-    origin: config.cors.origin,
+    origin: '*', // 简化CORS配置
     credentials: true,
   });
 
@@ -28,27 +26,11 @@ async function buildServer() {
   // 初始化 Socket.IO
   const io = new Server(fastify.server, {
     cors: {
-      origin: config.cors.origin,
+      origin: '*',
       credentials: true,
     },
     transports: ['websocket'],
   });
-
-  // 初始化 ASR 提供者
-  const asrProviders = {
-    deepgram: new DeepgramProvider(config.deepgram),
-    whisper: new WhisperProvider(config.whisper),
-  };
-
-  // 初始化音频处理器
-  const audioProcessor = new AudioProcessor({
-    sampleRate: config.audio.sampleRate,
-    channels: config.audio.channels,
-    frameSize: config.audio.frameSize,
-  });
-
-  // 设置 Socket.IO 处理器
-  createSocketHandlers(io, asrProviders, audioProcessor);
 
   // 全局日志钩子
   const hooks = fastifyLoggingHooks();
@@ -56,35 +38,42 @@ async function buildServer() {
   fastify.addHook('onResponse', hooks.onResponse as any);
   hooks.setErrorHandler(fastify as any);
 
+  // 初始化服务
+  const asrProviderFactory = new AsrProviderFactory();
+  const audioProcessor = new AudioProcessor({
+    sampleRate: 48000,
+    channels: 1,
+    frameSize: 960,
+  });
+
+  // 设置处理器
+  createSocketHandlers(io, asrProviderFactory as any, audioProcessor);
+  
   // 设置 HTTP 路由
-  createHttpRoutes(fastify, asrProviders);
+  createHttpRoutes(fastify, asrProviderFactory as any);
 
   // 健康检查
   fastify.get('/health', async () => {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      providers: {
-        deepgram: asrProviders.deepgram.isAvailable(),
-        whisper: asrProviders.whisper.isAvailable(),
-      },
+      service: 'asr-gateway'
     };
   });
 
-  return { fastify, io };
+  return fastify;
 }
 
 async function start() {
   try {
-    const { fastify } = await buildServer();
+    const fastify = await buildServer();
 
-    const port = config.server.port;
-    const host = config.server.host;
+    const port = parseInt(process.env.PORT || '3002');
+    const host = process.env.HOST || '0.0.0.0';
 
     await fastify.listen({ port, host });
 
-    logger.info(`🚀 ASR Gateway running at http://${host}:${port}`);
-    logger.info(`📡 WebSocket endpoint: ws://${host}:${port}`);
+    logger.info(`🎙️ ASR Gateway running at http://${host}:${port}`);
   } catch (err) {
     logger.error(err);
     process.exit(1);

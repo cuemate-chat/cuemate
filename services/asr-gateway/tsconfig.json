@@ -11,6 +11,7 @@
         ],
         "strict": true,
         "noEmitOnError": true,
+        "skipLibCheck": true,
         "resolveJsonModule": true,
         "baseUrl": ".",
         "isolatedModules": false

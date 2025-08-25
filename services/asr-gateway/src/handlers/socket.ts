@@ -108,7 +108,7 @@ export function createSocketHandlers(
               });
             });
 
-            deepgramInstance.on('error', (error) => {
+            deepgramInstance.on('error', (error: any) => {
               logger.error('Deepgram error:', error);
               if (config.fallback.enabled) {
                 logger.info('Switching to fallback provider');
@@ -121,7 +121,10 @@ export function createSocketHandlers(
           }
         } else if (session.provider === 'whisper') {
           if (!session.activeProvider) {
-            const whisperInstance = new WhisperProvider(config.whisper);
+            const whisperInstance = new WhisperProvider({
+              ...config.whisper,
+              model: config.whisper.modelPath
+            } as any);
 
             whisperInstance.on('transcript', (transcript) => {
               socket.emit('transcript:final', {
@@ -242,7 +245,7 @@ async function handleWhisperStream(
 ) {
   try {
     if (session.activeProvider instanceof WhisperProvider) {
-      await session.activeProvider.processAudio(audioBuffer as unknown as ArrayBuffer);
+      await (session.activeProvider as any).processAudioChunk(audioBuffer);
     }
   } catch (error) {
     logger.error('Whisper processing failed:', error as any);

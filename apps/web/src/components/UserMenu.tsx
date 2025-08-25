@@ -6,6 +6,7 @@ import {
   PhotoIcon,
   QueueListIcon,
   RectangleGroupIcon,
+  SpeakerWaveIcon,
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -96,6 +97,11 @@ export default function UserMenu() {
     setOpen(false);
   };
 
+  const onASRSettings = () => {
+    navigate('/settings/asr');
+    setOpen(false);
+  };
+
   const onLogs = () => {
     navigate('/settings/logs');
     setOpen(false);
@@ -172,6 +178,12 @@ export default function UserMenu() {
             onClick={onModelSettings}
           >
             <Squares2X2Icon className="w-4 h-4" /> 模型设置
+          </button>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+            onClick={onASRSettings}
+          >
+            <SpeakerWaveIcon className="w-4 h-4" /> 语音设置
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"

@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import { MessageContainer } from './components/Message';
 import AdsManagement from './pages/AdsManagement';
 import AdsPixel from './pages/AdsPixel';
+import Asr from './pages/Asr';
 import Help from './pages/Help';
 import Home from './pages/Home';
 import JobsList from './pages/JobsList';
@@ -48,6 +49,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/legal/privacy" element={<PrivacyPolicy />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/models" element={<Models />} />
+          <Route path="/settings/asr" element={<Asr />} />
           <Route path="/settings/logs" element={<Logs />} />
           <Route path="/settings/vector-knowledge" element={<VectorKnowledge />} />
           <Route path="/settings/license" element={<License />} />

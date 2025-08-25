@@ -1,50 +1,67 @@
-import { EventEmitter } from 'events';
 import WebSocket from 'ws';
-import type { Config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
+import { BaseAsrProvider, type AsrProviderConfig, type AsrProviderInfo } from './base.js';
 
-export interface TranscriptResult {
-  text: string;
-  isFinal: boolean;
-  confidence?: number;
-  timestamp: number;
-  duration?: number;
-  words?: Array<{
-    word: string;
-    start: number;
-    end: number;
-    confidence: number;
-  }>;
+export interface DeepgramConfig extends AsrProviderConfig {
+  apiKey?: string;
+  model: string;
+  language: string;
+  punctuate: boolean;
+  profanityFilter: boolean;
+  redact: boolean;
+  diarize: boolean;
+  numerals: boolean;
+  endpointing: number;
+  interimResults: boolean;
+  utteranceEndMs: number;
 }
 
-export class DeepgramProvider extends EventEmitter {
-  private config: Config['deepgram'];
+export class DeepgramProvider extends BaseAsrProvider {
   private ws: WebSocket | null = null;
-  private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private isConnected = false;
 
-  constructor(config: Config['deepgram']) {
-    super();
-    this.config = config;
+  constructor(config: DeepgramConfig) {
+    super(config);
+  }
+
+  getName(): string {
+    return 'deepgram';
+  }
+
+  getInfo(): AsrProviderInfo {
+    return {
+      name: 'deepgram',
+      displayName: 'Deepgram',
+      type: 'realtime',
+      supportsStreamingInput: true,
+      supportsLanguageDetection: true,
+      supportedLanguages: ['zh', 'en', 'es', 'fr', 'de', 'ja', 'ko'],
+      maxAudioDurationMs: 5 * 60 * 1000, // 5分钟
+    };
+  }
+
+  async initialize(): Promise<void> {
+    this.validateConfig(['apiKey']);
+    this.isInitialized = true;
+    logger.info('Deepgram provider 已初始化');
   }
 
   async connect(): Promise<void> {
-    if (!this.config.apiKey) {
+    const config = this.config as DeepgramConfig;
+    if (!config.apiKey) {
       throw new Error('Deepgram API key not configured');
     }
 
     const params = new URLSearchParams({
-      language: this.config.language,
-      model: this.config.model,
-      punctuate: String(this.config.punctuate),
-      profanity_filter: String(this.config.profanityFilter),
-      redact: String(this.config.redact),
-      diarize: String(this.config.diarize),
-      numerals: String(this.config.numerals),
-      endpointing: String(this.config.endpointing),
-      interim_results: String(this.config.interimResults),
-      utterance_end_ms: String(this.config.utteranceEndMs),
+      language: config.language,
+      model: config.model,
+      punctuate: String(config.punctuate),
+      profanity_filter: String(config.profanityFilter),
+      redact: String(config.redact),
+      diarize: String(config.diarize),
+      numerals: String(config.numerals),
+      endpointing: String(config.endpointing),
+      interim_results: String(config.interimResults),
+      utterance_end_ms: String(config.utteranceEndMs),
       encoding: 'linear16',
       sample_rate: '48000',
       channels: '1',
@@ -55,15 +72,13 @@ export class DeepgramProvider extends EventEmitter {
     return new Promise((resolve, reject) => {
       this.ws = new WebSocket(url, {
         headers: {
-          Authorization: `Token ${this.config.apiKey}`,
+          Authorization: `Token ${config.apiKey}`,
         },
       });
 
       this.ws.on('open', () => {
         logger.info('Deepgram connection established');
-        this.isConnected = true;
-        this.reconnectAttempts = 0;
-        this.emit('connected');
+        this.emitConnected();
         resolve();
       });
 
@@ -74,22 +89,20 @@ export class DeepgramProvider extends EventEmitter {
           if ((response as any).type === 'Results') {
             const result = (response as any).channel?.alternatives?.[0];
             if (result) {
-              const transcript: TranscriptResult = {
+              this.emitTranscript({
                 text: result.transcript,
                 isFinal: (response as any).is_final || false,
                 confidence: result.confidence,
                 timestamp: Date.now(),
                 duration: (response as any).duration,
                 words: result.words,
-              };
-
-              this.emit('transcript', transcript as any);
+              });
             }
           } else if ((response as any).type === 'Metadata') {
             logger.debug('Deepgram metadata:', response as any);
           } else if ((response as any).type === 'Error') {
             logger.error('Deepgram error:', response as any);
-            this.emit('error', new Error((response as any).message));
+            this.emitError(new Error((response as any).message));
           }
         } catch (error) {
           logger.error('Failed to parse Deepgram message:', error as any);
@@ -98,14 +111,13 @@ export class DeepgramProvider extends EventEmitter {
 
       this.ws.on('error', (error) => {
         logger.error('Deepgram WebSocket error:', error as any);
-        this.emit('error', error as any);
+        this.emitError(error as any);
         reject(error as any);
       });
 
       this.ws.on('close', (code, reason) => {
         logger.info(`Deepgram connection closed: ${code} - ${reason}`);
-        this.isConnected = false;
-        this.emit('disconnected');
+        this.emitDisconnected();
 
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
           this.reconnect();
@@ -129,25 +141,11 @@ export class DeepgramProvider extends EventEmitter {
       this.ws.close();
       this.ws = null;
     }
-    this.isConnected = false;
+    this.emitDisconnected();
   }
 
   isAvailable(): boolean {
-    return !!this.config.apiKey;
-  }
-
-  private async reconnect(): Promise<void> {
-    this.reconnectAttempts++;
-    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-
-    logger.info(`Reconnecting to Deepgram in ${delay}ms (attempt ${this.reconnectAttempts})`);
-
-    setTimeout(async () => {
-      try {
-        await this.connect();
-      } catch (error) {
-        logger.error('Reconnection failed:', error as any);
-      }
-    }, delay);
+    const config = this.config as DeepgramConfig;
+    return !!config.apiKey;
   }
 }
