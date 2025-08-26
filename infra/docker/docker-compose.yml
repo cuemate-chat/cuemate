@@ -22,6 +22,10 @@ services:
     command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--host", "0.0.0.0", "--port", "8000", "--no-vac", "--no-vad"]
     environment:
       - PYTORCH_DISABLE_NET_ACCESS=1
+      - ASR_SERVICE_TYPE=user
+      - CUEMATE_LOG_DIR=/opt/cuemate/logs
+    volumes:
+      - /opt/cuemate/logs:/opt/cuemate/logs
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -35,6 +39,10 @@ services:
     command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--host", "0.0.0.0", "--port", "8000", "--no-vac", "--no-vad"]
     environment:
       - PYTORCH_DISABLE_NET_ACCESS=1
+      - ASR_SERVICE_TYPE=interviewer
+      - CUEMATE_LOG_DIR=/opt/cuemate/logs
+    volumes:
+      - /opt/cuemate/logs:/opt/cuemate/logs
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -49,15 +57,15 @@ services:
       - NODE_ENV=production
       - WEB_API_PORT=3001
       - WEB_API_HOST=0.0.0.0
-      - SQLITE_PATH=/opt/cuemate/data/cuemate.db
+      - SQLITE_PATH=/opt/cuemate/data/sqlite/cuemate.db
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
       - RAG_SERVICE_URL=http://rag-service:3003
       - LLM_ROUTER_URL=http://llm-router:3002
     volumes:
-      - ../../data/sqlite:/opt/cuemate/data
-      - ../../data/logs:/opt/cuemate/log
-      - ../../data/pdf:/opt/cuemate/pdf
-      - ../../data/images:/opt/cuemate/images
+      - /opt/cuemate/data:/opt/cuemate/data
+      - /opt/cuemate/logs:/opt/cuemate/logs
+      - /opt/cuemate/pdf:/opt/cuemate/pdf
+      - /opt/cuemate/images:/opt/cuemate/images
     ports:
       - "3001:3001"
     networks:
@@ -79,7 +87,7 @@ services:
       - PRIMARY_LLM_PROVIDER=openai
       - ROUTING_STRATEGY=primary-fallback
     volumes:
-      - ../../data/logs:/opt/cuemate/log
+      - /opt/cuemate/logs:/opt/cuemate/logs
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -100,9 +108,9 @@ services:
       - EMBEDDINGS_PROVIDER=mock
       - CHROMA_PATH=http://chroma:8000
     volumes:
-      - chroma_data:/app/chroma_data
-      - ../../services/rag-service/documents:/app/documents
-      - ../../data/logs:/opt/cuemate/log
+      - chroma_data:/opt/cuemate/chroma_data
+      - /opt/cuemate/documents:/opt/cuemate/documents
+      - /opt/cuemate/logs:/opt/cuemate/logs
     networks:
       - cuemate-network
     depends_on:
@@ -124,7 +132,7 @@ services:
       - VITE_RAG_SERVICE_URL=http://rag-service:3003
       - VITE_LLM_ROUTER_URL=http://llm-router:3002
     volumes:
-      - ../../data/images:/opt/cuemate/images
+      - /opt/cuemate/images:/opt/cuemate/images
     depends_on:
       - web-api
     networks:

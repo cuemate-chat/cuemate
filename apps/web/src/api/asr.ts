@@ -1,137 +1,78 @@
-import { request } from './http';
+//ASR Configuration API
 
-export interface AsrProvider {
-  id: string;
+export interface AsrConfig {
+  id: number;
   name: string;
-  provider_type: 'deepgram' | 'openai_whisper' | 'vosk';
-  description?: string;
-  default_config: Record<string, any>;
-  required_fields: string[];
-  status: boolean;
-  is_enabled: boolean;
+  language: string;
+  model: string;
+  backend: string;
+  task: string;
+  min_chunk_size: number;
+  no_vad: boolean;
+  no_vac: boolean;
+  vac_chunk_size: number | null;
+  confidence_validation: boolean;
+  diarization: boolean;
+  punctuation_split: boolean;
+  diarization_backend: string;
+  buffer_trimming: string | null;
+  buffer_trimming_sec: number | null;
+  log_level: string;
+  frame_threshold: number | null;
+  beams: number | null;
+  decoder: string | null;
+  audio_max_len: number | null;
+  audio_min_len: number | null;
+  never_fire: boolean;
+  init_prompt: string | null;
+  static_init_prompt: string | null;
+  max_context_tokens: number | null;
   created_at: number;
   updated_at: number;
 }
 
-export interface AsrConfig {
-  userId: string;
-  selectedProviderId: string;
-  selectedProvider: AsrProvider;
-  currentConfig: Record<string, any>;
-  availableProviders: AsrProvider[];
+export interface AsrService {
+  name: string;
+  url: string;
+}
+
+export interface AsrConfigResponse {
+  config: AsrConfig | null;
+  services: AsrService[];
 }
 
 /**
- * 获取用户的ASR配置
+ * 获取 ASR 配置
  */
-export async function getUserAsrConfig(userId: string): Promise<AsrConfig> {
-  const res = await request(`/asr/users/${userId}/config`);
-  if (!res.success) {
-    throw new Error(res.error || '获取ASR配置失败');
+export async function getAsrConfig(): Promise<AsrConfigResponse> {
+  const response = await fetch('/api/asr/config');
+  if (!response.ok) {
+    throw new Error('获取配置失败');
   }
-  return res.data;
+  return response.json();
 }
 
 /**
- * 获取所有可用的ASR提供商
+ * 保存 ASR 配置
  */
-export async function getAsrProviders(): Promise<AsrProvider[]> {
-  const res = await request('/asr/providers');
-  if (!res.success) {
-    throw new Error(res.error || '获取ASR提供商失败');
-  }
-  return res.data;
-}
-
-/**
- * 创建ASR提供商
- */
-export async function createAsrProvider(
-  provider: Omit<AsrProvider, 'id' | 'created_at' | 'updated_at'>,
-): Promise<AsrProvider> {
-  const res = await request('/asr/providers', {
-    method: 'POST',
-    body: JSON.stringify(provider),
-  });
-  if (!res.success) {
-    throw new Error(res.error || '创建ASR提供商失败');
-  }
-  return res.data;
-}
-
-/**
- * 更新ASR提供商
- */
-export async function updateAsrProvider(
-  id: string,
-  provider: Partial<Omit<AsrProvider, 'id' | 'created_at' | 'updated_at'>>,
-): Promise<AsrProvider> {
-  const res = await request(`/asr/providers/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(provider),
-  });
-  if (!res.success) {
-    throw new Error(res.error || '更新ASR提供商失败');
-  }
-  return res.data;
-}
-
-/**
- * 删除ASR提供商
- */
-export async function deleteAsrProvider(id: string): Promise<void> {
-  const res = await request(`/asr/providers/${id}`, {
-    method: 'DELETE',
-  });
-  if (!res.success) {
-    throw new Error(res.error || '删除ASR提供商失败');
-  }
-}
-
-/**
- * 更新用户选择的ASR提供商
- */
-export async function updateUserAsrProvider(userId: string, providerId: string): Promise<void> {
-  const res = await request(`/asr/users/${userId}/provider`, {
-    method: 'PUT',
-    body: JSON.stringify({ providerId }),
-  });
-  if (!res.success) {
-    throw new Error(res.error || '更新ASR提供商失败');
-  }
-}
-
-/**
- * 更新用户的ASR提供商配置
- */
-export async function updateUserAsrConfig(
-  userId: string,
-  providerId: string,
-  config: Record<string, any>,
-): Promise<void> {
-  const res = await request(`/asr/users/${userId}/config/${providerId}`, {
-    method: 'PUT',
-    body: JSON.stringify(config),
-  });
-  if (!res.success) {
-    throw new Error(res.error || '更新ASR配置失败');
-  }
-}
-
-/**
- * 验证用户的ASR配置
- */
-export async function validateUserAsrConfig(
-  userId: string,
-  providerId: string,
-): Promise<{
-  valid: boolean;
-  missingFields: string[];
+export async function saveAsrConfig(config: Partial<AsrConfig>): Promise<{
+  success: boolean;
+  config: AsrConfig;
   message: string;
 }> {
-  const res = await request(`/asr/users/${userId}/validate/${providerId}`);
-  if (!res.success) {
-    throw new Error(res.error || '验证ASR配置失败');
+  const response = await fetch('/api/asr/config', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(config),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || '保存失败');
   }
-  return res.data;
+
+  return data;
 }

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
 
-const LOG_BASE_DIR = process.env.CUEMATE_LOG_DIR || '/opt/cuemate/log';
+const LOG_BASE_DIR = process.env.CUEMATE_LOG_DIR || '/opt/cuemate/logs';
 const LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 type Level = (typeof LEVELS)[number];
 

@@ -1,38 +1,8 @@
-import { CheckCircleIcon } from '@heroicons/react/24/outline';
+import { MicrophoneIcon, StopIcon } from '@heroicons/react/24/outline';
 import { Button, Card, Form, Input, InputNumber, Select, Spin, Switch, Tabs } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { getAsrConfig, saveAsrConfig, type AsrConfig } from '../api/asr';
 import { message } from '../components/Message';
-
-interface AsrConfig {
-  id: number;
-  name: string;
-  language: string;
-  model: string;
-  backend: string;
-  task: string;
-  min_chunk_size: number;
-  no_vad: boolean;
-  no_vac: boolean;
-  vac_chunk_size: number | null;
-  confidence_validation: boolean;
-  diarization: boolean;
-  punctuation_split: boolean;
-  diarization_backend: string;
-  buffer_trimming: string | null;
-  buffer_trimming_sec: number | null;
-  log_level: string;
-  frame_threshold: number | null;
-  beams: number | null;
-  decoder: string | null;
-  audio_max_len: number | null;
-  audio_min_len: number | null;
-  never_fire: boolean;
-  init_prompt: string | null;
-  static_init_prompt: string | null;
-  max_context_tokens: number | null;
-  created_at: number;
-  updated_at: number;
-}
 
 export default function AsrSettings() {
   const [loading, setLoading] = useState(false);
@@ -40,15 +10,24 @@ export default function AsrSettings() {
   const [config, setConfig] = useState<AsrConfig | null>(null);
   const [form] = Form.useForm();
 
+  // 语音测试相关状态
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcriptText, setTranscriptText] = useState('');
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [testService, setTestService] = useState('ws://localhost:8001/asr');
+  const websocketRef = useRef<WebSocket | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationRef = useRef<number | null>(null);
+
   // 加载配置
   const loadConfig = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/asr/config');
-      if (!response.ok) {
-        throw new Error('加载配置失败');
-      }
-      const data = await response.json();
+      const data = await getAsrConfig();
       setConfig(data.config);
       if (data.config) {
         // 确保表单获得完整的数据
@@ -75,22 +54,9 @@ export default function AsrSettings() {
   const saveConfig = async (values: any) => {
     setSaving(true);
     try {
-      const response = await fetch('/api/asr/config', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        message.success(data.message || '配置已保存');
-        setConfig(data.config);
-      } else {
-        message.error(data.message || '保存失败');
-      }
+      const data = await saveAsrConfig(values);
+      message.success(data.message || '配置已保存');
+      setConfig(data.config);
     } catch (error: any) {
       message.error('保存失败：' + error.message);
     } finally {
@@ -98,8 +64,373 @@ export default function AsrSettings() {
     }
   };
 
+  // 绘制默认波形（未录音状态）
+  const drawDefaultWaveform = () => {
+    if (!canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const centerY = canvas.height / 2;
+    const time = Date.now() * 0.002;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 绘制中心基线
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, centerY);
+    ctx.lineTo(canvas.width, centerY);
+    ctx.stroke();
+    
+    // 绘制慢速脉冲波形
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    for (let x = 0; x < canvas.width; x += 2) {
+      const frequency = 0.02;
+      const amplitude = Math.sin(time + x * frequency) * 8;
+      const y = centerY + amplitude * Math.sin(time * 0.5);
+      
+      if (x === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+    
+    // 添加"等待录音"文字
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('等待音频输入...', canvas.width / 2, centerY + 25);
+    
+    if (!isRecording) {
+      animationRef.current = requestAnimationFrame(drawDefaultWaveform);
+    }
+  };
+
+  // 音频波形绘制（录音状态）
+  const drawWaveform = () => {
+    if (!canvasRef.current || !analyserRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const analyser = analyserRef.current;
+    
+    if (!ctx) return;
+    
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyser.getByteTimeDomainData(dataArray);
+    
+    // 清除画布
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 绘制渐变背景
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, 'rgba(24, 144, 255, 0.1)');
+    gradient.addColorStop(0.5, 'rgba(24, 144, 255, 0.05)');
+    gradient.addColorStop(1, 'rgba(24, 144, 255, 0.1)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // 绘制中心基线
+    const centerY = canvas.height / 2;
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, centerY);
+    ctx.lineTo(canvas.width, centerY);
+    ctx.stroke();
+    
+    // 绘制音频波形
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#1890ff';
+    ctx.beginPath();
+    
+    const sliceWidth = canvas.width / bufferLength;
+    let x = 0;
+    let maxAmplitude = 0;
+    
+    // 计算最大振幅用于动态缩放
+    for (let i = 0; i < bufferLength; i++) {
+      const amplitude = Math.abs(dataArray[i] - 128);
+      maxAmplitude = Math.max(maxAmplitude, amplitude);
+    }
+    
+    // 动态调整缩放因子
+    const scaleFactor = maxAmplitude > 0 ? Math.min(2, 60 / maxAmplitude) : 1;
+    
+    for (let i = 0; i < bufferLength; i++) {
+      const v = (dataArray[i] - 128) / 128.0;
+      const y = centerY + (v * centerY * scaleFactor);
+      
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+      
+      x += sliceWidth;
+    }
+    
+    ctx.stroke();
+    
+    // 绘制波形填充
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#1890ff';
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    
+    // 显示音量级别
+    const volumeLevel = Math.round((maxAmplitude / 128) * 100);
+    ctx.fillStyle = volumeLevel > 30 ? '#52c41a' : '#faad14';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(`音量: ${volumeLevel}%`, canvas.width - 10, 15);
+    
+    animationRef.current = requestAnimationFrame(drawWaveform);
+  };
+
+  // 语音测试功能
+  const startRecording = async () => {
+    try {
+      setTranscriptText("正在连接语音识别服务...");
+      
+      // 根据选择的服务确定音频源
+      const isInterviewerService = testService.includes('8002');
+      let stream;
+      
+      if (isInterviewerService) {
+        // 面试官服务：尝试捕获系统音频
+        try {
+          stream = await navigator.mediaDevices.getDisplayMedia({ 
+            video: false, 
+            audio: true 
+          });
+          message.info('已开始捕获系统音频输出');
+        } catch (error) {
+          message.warning('无法直接捕获系统音频，将使用麦克风替代测试');
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+      } else {
+        // 面试者服务：使用麦克风
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      
+      // 设置音频上下文和分析器
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 256;
+      
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      source.connect(analyserRef.current);
+      
+      // 开始绘制波形
+      drawWaveform();
+      
+      // 连接 WebSocket
+      websocketRef.current = new WebSocket(testService);
+      
+      websocketRef.current.onopen = () => {
+        console.log('WebSocket 连接成功:', testService);
+        message.success('已连接到语音识别服务');
+        setTranscriptText("已连接，等待语音输入...");
+      };
+      
+      websocketRef.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('收到 WebSocket 数据:', data);
+
+          if (data.type === "ready_to_stop") {
+            console.log("Ready to stop received");
+            setTranscriptText(prev => `${prev}\n\n[处理完成]`);
+            if (websocketRef.current) {
+              websocketRef.current.close();
+              websocketRef.current = null;
+            }
+            return;
+          }
+
+          // 构建显示文本
+          let displayText = '';
+          
+          // 处理已确认的转录行
+          if (data.lines && Array.isArray(data.lines)) {
+            data.lines.forEach((line: any) => {
+              let lineText = '';
+              if (line.speaker === -2) {
+                lineText = `[静音 ${line.beg || ''}-${line.end || ''}]`;
+              } else if (line.speaker > 0) {
+                lineText = `说话人${line.speaker}: ${line.text || ''}`;
+              } else if (line.text) {
+                lineText = line.text;
+              }
+              if (lineText) {
+                displayText += lineText + '\n';
+              }
+            });
+          }
+
+          // 添加缓冲区内容
+          if (data.buffer_transcription) {
+            displayText += `[转录中] ${data.buffer_transcription}\n`;
+          }
+          
+          if (data.buffer_diarization) {
+            displayText += `[分离中] ${data.buffer_diarization}\n`;
+          }
+
+          // 显示处理延迟信息
+          if (data.remaining_time_transcription > 0 || data.remaining_time_diarization > 0) {
+            displayText += `[延迟: 转录${(data.remaining_time_transcription || 0).toFixed(1)}s`;
+            if (data.remaining_time_diarization > 0) {
+              displayText += `, 分离${data.remaining_time_diarization.toFixed(1)}s`;
+            }
+            displayText += ']\n';
+          }
+
+          // 处理其他可能的文本格式
+          if (!displayText && data.text) {
+            displayText = data.text;
+          }
+
+          // 更新转录结果
+          if (displayText.trim()) {
+            setTranscriptText(displayText.trim());
+          } else if (data.status === "no_audio_detected") {
+            setTranscriptText("未检测到音频输入，请对着麦克风说话...");
+          }
+
+        } catch (error) {
+          console.error('解析 WebSocket 数据失败:', error, event.data);
+        }
+      };
+      
+      websocketRef.current.onclose = () => {
+        console.log('WebSocket 连接关闭');
+        message.info('与语音识别服务的连接已断开');
+      };
+      
+      websocketRef.current.onerror = (error) => {
+        console.error('WebSocket 连接错误:', error);
+        const servicePort = testService.includes('8001') ? '8001' : '8002';
+        message.error(`ASR 服务 (${servicePort}) 连接失败`);
+        setTranscriptText(`❌ WebSocket 连接失败\n服务地址: ${testService}\n请检查 Docker 服务是否启动`);
+        stopRecording();
+      };
+      
+      // 设置录音器
+      recorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      
+      recorderRef.current.ondataavailable = (event) => {
+        if (websocketRef.current?.readyState === WebSocket.OPEN) {
+          console.log('发送音频数据，大小:', event.data.size, 'bytes');
+          websocketRef.current.send(event.data);
+          
+        } else {
+          console.warn('WebSocket 未连接，无法发送音频数据');
+        }
+      };
+      
+      recorderRef.current.start(100); // 每100ms发送一次数据
+      setIsRecording(true);
+      setRecordingTime(0);
+      
+      // 启动计时器
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+    } catch (error) {
+      message.error('无法访问麦克风，请检查浏览器权限');
+      console.error('Recording error:', error);
+    }
+  };
+  
+  const stopRecording = () => {
+    // 停止音频波形动画
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+    
+    // 停止录音
+    if (recorderRef.current) {
+      recorderRef.current.stop();
+      recorderRef.current = null;
+    }
+    
+    // 清理音频上下文
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    
+    // 发送结束信号
+    if (websocketRef.current?.readyState === WebSocket.OPEN) {
+      const emptyBlob = new Blob([], { type: 'audio/webm' });
+      websocketRef.current.send(emptyBlob);
+      websocketRef.current.close();
+    }
+    
+    // 停止计时器
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    // 清空画布
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      }
+    }
+    
+    setIsRecording(false);
+    
+    // 恢复默认波形动画
+    setTimeout(() => {
+      drawDefaultWaveform();
+    }, 100);
+  };
+  
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     loadConfig();
+    
+    // 启动默认波形动画
+    setTimeout(() => {
+      drawDefaultWaveform();
+    }, 100);
+    
+    // 清理函数
+    return () => {
+      if (websocketRef.current) {
+        websocketRef.current.close();
+      }
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
   }, []);
 
   if (loading) {
@@ -476,32 +807,108 @@ export default function AsrSettings() {
           </div>
         </Form>
 
-        {/* 服务状态 */}
+        {/* 语音识别测试 */}
         <div className="mt-6 pt-6 border-t">
-          <h3 className="text-lg font-medium mb-4">ASR 服务状态</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                <span className="font-medium">面试者语音识别</span>
+          <h3 className="text-lg font-medium mb-4">语音识别测试</h3>
+          
+          {/* 服务选择 */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              选择测试服务
+            </label>
+            <Select
+              value={testService}
+              onChange={setTestService}
+              style={{ width: '100%' }}
+              options={[
+                { value: 'ws://localhost:8001/asr', label: '面试者语音识别 - 麦克风输入 (8001端口)' },
+                { value: 'ws://localhost:8002/asr', label: '面试官语音识别 - 系统音频输出 (8002端口)' }
+              ]}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 左侧：录音控制 */}
+            <div className="space-y-4">
+              <div className="border rounded-lg p-6 text-center">
+                <div className="mb-4">
+                  <Button
+                    type={isRecording ? 'default' : 'primary'}
+                    danger={isRecording}
+                    size="large"
+                    icon={isRecording ? <StopIcon className="w-6 h-6" /> : <MicrophoneIcon className="w-6 h-6" />}
+                    onClick={isRecording ? stopRecording : startRecording}
+                    className="px-8 py-6 h-auto text-lg"
+                  >
+                    {isRecording 
+                      ? '停止捕获' 
+                      : testService.includes('8002') 
+                        ? '开始捕获系统音频' 
+                        : '开始录音'
+                    }
+                  </Button>
+                </div>
+                
+                {/* 音频波形 */}
+                <div className="mb-4 p-2 bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg border-2 border-dashed border-slate-200">
+                  <canvas
+                    ref={canvasRef}
+                    width={300}
+                    height={60}
+                    className="rounded bg-white shadow-inner mx-auto"
+                    style={{ 
+                      width: '300px', 
+                      height: '60px',
+                      boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)'
+                    }}
+                  />
+                  <div className="text-xs text-center mt-1 text-slate-500">
+                    {isRecording ? '正在捕获音频信号...' : '音频波形显示区域'}
+                  </div>
+                </div>
+                
+                {/* 录音状态信息 */}
+                <div className="space-y-2 text-sm">
+                  {isRecording && (
+                    <div className="text-lg font-mono text-red-500">
+                      ⏱️ {formatTime(recordingTime)}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm text-slate-600">
-                  服务地址: <a href="http://localhost:8001" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">http://localhost:8001</a>
-                </p>
-                <p className="text-sm text-slate-500">WebSocket: ws://localhost:8001/asr</p>
+              
+              {/* 使用说明 */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-medium text-blue-800 mb-2">使用说明：</h4>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• 确保 Docker 服务已启动</li>
+                  <li>• 选择要测试的服务端口</li>
+                  {testService.includes('8002') ? (
+                    <>
+                      <li>• <strong>面试官音频：</strong>点击按钮选择"共享系统音频"</li>
+                      <li>• 播放音频文件或视频时会被捕获</li>
+                      <li>• 如果无法捕获系统音频，会降级为麦克风</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>• <strong>面试者音频：</strong>允许麦克风权限</li>
+                      <li>• 直接对着麦克风说话进行测试</li>
+                    </>
+                  )}
+                  <li>• 音频波形显示捕获状态</li>
+                  <li>• 右侧显示实时转录和说话人分离结果</li>
+                </ul>
               </div>
             </div>
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                <span className="font-medium">面试官语音识别</span>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-slate-600">
-                  服务地址: <a href="http://localhost:8002" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">http://localhost:8002</a>
-                </p>
-                <p className="text-sm text-slate-500">WebSocket: ws://localhost:8002/asr</p>
+
+            {/* 右侧：转录结果 */}
+            <div>
+              <h4 className="font-medium text-gray-800 mb-2">实时转录结果</h4>
+              <div 
+                className="border rounded-lg p-4 min-h-80 bg-gray-50 whitespace-pre-wrap overflow-y-auto"
+                style={{ fontFamily: 'monospace', fontSize: '14px' }}
+              >
+                {transcriptText || '点击"开始录音"测试语音识别功能...'}
               </div>
             </div>
           </div>

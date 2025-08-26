@@ -55,7 +55,7 @@ curl http://localhost:8002/         # ASR Interviewer (WhisperLiveKit)
 
 ## WebSocket 连接测试
 ```bash
-# 用户语音识别
+# 面试者语音识别
 ws://localhost:8001/asr
 
 # 面试官语音识别  
