@@ -3,12 +3,14 @@ import { request } from './http';
 export interface AsrProvider {
   id: string;
   name: string;
-  display_name: string;
   provider_type: 'deepgram' | 'openai_whisper' | 'vosk';
   description?: string;
   default_config: Record<string, any>;
   required_fields: string[];
+  status: boolean;
   is_enabled: boolean;
+  created_at: number;
+  updated_at: number;
 }
 
 export interface AsrConfig {
@@ -42,12 +44,57 @@ export async function getAsrProviders(): Promise<AsrProvider[]> {
 }
 
 /**
+ * 创建ASR提供商
+ */
+export async function createAsrProvider(
+  provider: Omit<AsrProvider, 'id' | 'created_at' | 'updated_at'>,
+): Promise<AsrProvider> {
+  const res = await request('/asr/providers', {
+    method: 'POST',
+    body: JSON.stringify(provider),
+  });
+  if (!res.success) {
+    throw new Error(res.error || '创建ASR提供商失败');
+  }
+  return res.data;
+}
+
+/**
+ * 更新ASR提供商
+ */
+export async function updateAsrProvider(
+  id: string,
+  provider: Partial<Omit<AsrProvider, 'id' | 'created_at' | 'updated_at'>>,
+): Promise<AsrProvider> {
+  const res = await request(`/asr/providers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(provider),
+  });
+  if (!res.success) {
+    throw new Error(res.error || '更新ASR提供商失败');
+  }
+  return res.data;
+}
+
+/**
+ * 删除ASR提供商
+ */
+export async function deleteAsrProvider(id: string): Promise<void> {
+  const res = await request(`/asr/providers/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.success) {
+    throw new Error(res.error || '删除ASR提供商失败');
+  }
+}
+
+/**
  * 更新用户选择的ASR提供商
  */
 export async function updateUserAsrProvider(userId: string, providerId: string): Promise<void> {
   const res = await request(`/asr/users/${userId}/provider`, {
     method: 'PUT',
-    body: JSON.stringify({ providerId })
+    body: JSON.stringify({ providerId }),
   });
   if (!res.success) {
     throw new Error(res.error || '更新ASR提供商失败');
@@ -58,13 +105,13 @@ export async function updateUserAsrProvider(userId: string, providerId: string):
  * 更新用户的ASR提供商配置
  */
 export async function updateUserAsrConfig(
-  userId: string, 
-  providerId: string, 
-  config: Record<string, any>
+  userId: string,
+  providerId: string,
+  config: Record<string, any>,
 ): Promise<void> {
   const res = await request(`/asr/users/${userId}/config/${providerId}`, {
     method: 'PUT',
-    body: JSON.stringify(config)
+    body: JSON.stringify(config),
   });
   if (!res.success) {
     throw new Error(res.error || '更新ASR配置失败');
@@ -75,8 +122,8 @@ export async function updateUserAsrConfig(
  * 验证用户的ASR配置
  */
 export async function validateUserAsrConfig(
-  userId: string, 
-  providerId: string
+  userId: string,
+  providerId: string,
 ): Promise<{
   valid: boolean;
   missingFields: string[];

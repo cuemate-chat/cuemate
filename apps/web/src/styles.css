@@ -82,25 +82,54 @@
 /* 全局消息样式 */
 .msg-wrap {
   position: fixed;
-  inset: 16px 16px auto auto;
-  top: 16px;
-  right: 16px;
+  top: 80px;
+  left: 60%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   gap: 10px;
   z-index: 9999;
+  pointer-events: none;
 }
 .msg-item {
-  min-width: 220px;
-  max-width: 420px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
+  max-width: 500px;
+  padding: 14px 24px;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
   color: #0f172a;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   background: #fff;
-  border: 1px solid #e2e8f0;
+  border: 2px solid #e2e8f0;
+  text-align: center;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+/* 消息滑入动画 */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-120px) translateX(-50%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(-50%);
+  }
+}
+
+/* 消息滑出动画 */
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) translateX(-50%);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-120px) translateX(-50%);
+  }
 }
 .msg-item.msg-success {
   background: #ecfdf5;

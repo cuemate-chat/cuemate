@@ -47,7 +47,15 @@ export const MessageContainer: React.FC = () => {
       
       // 自动移除
       setTimeout(() => {
-        setList((prev) => prev.filter((m) => m.id !== id));
+        const messageElement = document.querySelector(`[data-message-id="${id}"]`) as HTMLElement;
+        if (messageElement) {
+          messageElement.style.animation = 'slideOut 0.3s ease-in forwards';
+          setTimeout(() => {
+            setList((prev) => prev.filter((m) => m.id !== id));
+          }, 300);
+        } else {
+          setList((prev) => prev.filter((m) => m.id !== id));
+        }
       }, getDuration(detail.type));
     };
     window.addEventListener(EVENT_NAME, handler as EventListener);
@@ -57,8 +65,21 @@ export const MessageContainer: React.FC = () => {
   return createPortal(
     <div className="msg-wrap">
       {list.map((m) => (
-        <div key={m.id} className={`msg-item msg-${m.type}`}>
-          <span className="msg-text">{m.text}</span>
+        <div 
+          key={m.id} 
+          data-message-id={m.id}
+          className={`msg-item msg-${m.type} animate-slide-in`}
+          style={{
+            animation: 'slideIn 0.3s ease-out forwards'
+          }}
+        >
+          <div className="flex items-center justify-center gap-2">
+            {m.type === 'success' && <span className="text-green-600">✓</span>}
+            {m.type === 'error' && <span className="text-red-600">✗</span>}
+            {m.type === 'warning' && <span className="text-yellow-600">⚠</span>}
+            {m.type === 'info' && <span className="text-blue-600">ℹ</span>}
+            <span className="msg-text">{m.text}</span>
+          </div>
         </div>
       ))}
     </div>,

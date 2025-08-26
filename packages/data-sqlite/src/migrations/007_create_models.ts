@@ -1,5 +1,5 @@
 export const version = 7;
-export const name = '007_models';
+export const name = '007_create_models';
 
 /**
  * 模型与参数表

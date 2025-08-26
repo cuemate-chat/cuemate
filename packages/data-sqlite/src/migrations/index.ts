@@ -4,14 +4,14 @@ import { up as up3, version as v3 } from './003_add_user_prefs.js';
 import { up as up4, version as v4 } from './004_add_user_timezone.js';
 import { up as up5, version as v5 } from './005_add_tags.js';
 import { up as up6, version as v6 } from './006_enhance_reviews.js';
-import { up as up7, version as v7 } from './007_models.js';
+import { up as up7, version as v7 } from './007_create_models.js';
 import { up as up8, version as v8 } from './008_user_selected_model.js';
 import { up as up9, version as v9 } from './009_preset_questions.js';
 import { up as up10, version as v10 } from './010_create_license_table.js';
 import { up as up11, version as v11 } from './011_create_ads_table.js';
 import { up as up12, version as v12 } from './012_add_ads_fields.js';
 import { up as up13, version as v13 } from './013_create_layout_tables.js';
-import { up as up14, version as v14 } from './014_create_system_settings.js';
+import { up as up14, version as v14 } from './014_asr_settings.js';
 
 export interface Migration {
   version: number;

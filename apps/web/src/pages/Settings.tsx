@@ -40,6 +40,7 @@ export default function Settings() {
   // ASR相关状态
   const [asrProviders, setAsrProviders] = useState<any[]>([]);
   const [selectedAsrProviderId, setSelectedAsrProviderId] = useState('');
+  const [asrProviderOptions, setAsrProviderOptions] = useState<{ label: string; value: string }[]>([]);
 
   useEffect(() => {
     const u = storage.getUser();
@@ -113,6 +114,13 @@ export default function Settings() {
         // 获取所有可用的ASR提供商
         const providers = await getAsrProviders();
         setAsrProviders(providers);
+        
+        // 转换为下拉选项格式
+        const options = providers.map(p => ({
+          label: `${p.name} (${p.provider_type})`,
+          value: p.id,
+        }));
+        setAsrProviderOptions(options);
       } catch (error: any) {
         console.warn('加载ASR提供商失败:', error.message);
       }
@@ -275,10 +283,7 @@ export default function Settings() {
                 <AntSelect
                   value={selectedAsrProviderId}
                   onChange={setSelectedAsrProviderId}
-                  options={asrProviders.map(p => ({
-                    label: `${p.display_name} (${p.name})`,
-                    value: p.id,
-                  }))}
+                  options={asrProviderOptions}
                   className="w-full"
                   popupMatchSelectWidth
                   style={{ height: 40 }}
