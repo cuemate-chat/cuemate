@@ -36,6 +36,10 @@ export default function Logs() {
     date: string;
     lines: string[];
   } | null>(null);
+  
+  // 选中的日志行
+  const [selectedLines, setSelectedLines] = useState<Set<number>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
 
   // 列宽（可调节）
   type ColKey = 'name' | 'project' | 'level' | 'date' | 'size' | 'action';
@@ -108,6 +112,9 @@ export default function Logs() {
     try {
       const res = await fetchLogContent(it);
       setViewing(res);
+      // 重置选择状态
+      setSelectedLines(new Set());
+      setSelectAll(false);
     } catch {
       message.error('读取日志内容失败');
     }
@@ -135,6 +142,51 @@ export default function Logs() {
     } catch {
       message.error('日志清理失败');
     }
+  };
+
+  // 处理行选择
+  const handleLineSelect = (lineIndex: number) => {
+    const newSelected = new Set(selectedLines);
+    if (newSelected.has(lineIndex)) {
+      newSelected.delete(lineIndex);
+    } else {
+      newSelected.add(lineIndex);
+    }
+    setSelectedLines(newSelected);
+    setSelectAll(newSelected.size === viewing?.lines.length);
+  };
+
+  // 处理全选
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedLines(new Set());
+      setSelectAll(false);
+    } else {
+      const allLines = new Set(viewing?.lines.map((_, index) => index) || []);
+      setSelectedLines(allLines);
+      setSelectAll(true);
+    }
+  };
+
+  // 复制选中的日志行
+  const copySelectedLines = () => {
+    if (selectedLines.size === 0) {
+      message.warning('请先选择要复制的日志行');
+      return;
+    }
+    
+    const selectedContent = viewing?.lines
+      .filter((_, index) => selectedLines.has(index))
+      .join('\n') || '';
+    
+    navigator.clipboard
+      .writeText(selectedContent)
+      .then(() => {
+        message.success(`已复制 ${selectedLines.size} 行日志到剪贴板`);
+      })
+      .catch(() => {
+        message.error('复制失败');
+      });
   };
 
   const LevelPill = ({ lvl }: { lvl: LogLevel }) => {
@@ -313,56 +365,162 @@ export default function Logs() {
 
       {viewing && (
         <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={() => setViewing(null)}
         >
           <div
-            className="bg-white w-[1000px] h-[70vh] max-h-[80vh] rounded shadow-xl overflow-hidden flex flex-col"
+            className="bg-white w-[1200px] h-[80vh] max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-slate-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-4 py-2 border-b flex justify-between items-center">
-              <div className="font-medium">
-                {serviceNameMap[viewing.service] || viewing.service} - {viewing.level.toUpperCase()}{' '}
-                - {viewing.date}
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    const content = viewing.lines.join('\n');
-                    navigator.clipboard
-                      .writeText(content)
-                      .then(() => {
-                        message.success('已复制到剪贴板');
-                      })
-                      .catch(() => {
-                        message.error('复制失败');
-                      });
-                  }}
-                  className="px-3 py-1 text-blue-600 border border-blue-600 rounded hover:bg-blue-50 text-sm"
-                >
-                  复制日志
-                </button>
-                <button
-                  onClick={() => setViewing(null)}
-                  className="text-slate-500 hover:text-slate-700"
-                >
-                  关闭
-                </button>
+            {/* 头部区域 */}
+            <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 text-lg font-semibold">
+                      {viewing.service.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      {serviceNameMap[viewing.service] || viewing.service}
+                    </h3>
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        viewing.level === 'error' ? 'bg-red-100 text-red-700' :
+                        viewing.level === 'warn' ? 'bg-yellow-100 text-yellow-700' :
+                        viewing.level === 'info' ? 'bg-blue-100 text-blue-700' :
+                        'bg-slate-100 text-slate-700'
+                      }`}>
+                        {viewing.level.toUpperCase()}
+                      </span>
+                      <span className="text-slate-500">•</span>
+                      <span>{viewing.date}</span>
+                      <span className="text-slate-500">•</span>
+                      <span>{viewing.lines.length} 行日志</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={copySelectedLines}
+                    disabled={selectedLines.size === 0}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      selectedLines.size === 0
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                    }`}
+                  >
+                    复制选中 ({selectedLines.size})
+                  </button>
+                  <button
+                    onClick={() => {
+                      const content = viewing.lines.join('\n');
+                      navigator.clipboard
+                        .writeText(content)
+                        .then(() => {
+                          message.success('已复制全部日志到剪贴板');
+                        })
+                        .catch(() => {
+                          message.error('复制失败');
+                        });
+                    }}
+                    className="px-4 py-2 text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium transition-all"
+                  >
+                    复制全部
+                  </button>
+                  <button
+                    onClick={() => setViewing(null)}
+                    className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="flex-1 overflow-hidden flex flex-col">
-              {/* 内容区域：只显示一遍，但可以垂直滚动 */}
-              <div className="flex-1 overflow-y-auto">
-                <pre
-                  className="p-4 text-xs font-mono whitespace-pre"
-                  style={{ minWidth: 'max-content' }}
-                >
-                  {viewing.lines.join('\n')}
-                </pre>
+
+            {/* 工具栏 */}
+            <div className="px-6 py-3 border-b border-slate-200 bg-slate-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectAll}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-slate-700">
+                      全选 ({selectedLines.size}/{viewing.lines.length})
+                    </span>
+                  </label>
+                </div>
+                <div className="text-sm text-slate-600">
+                  已选择 {selectedLines.size} 行
+                </div>
               </div>
-              {/* 横向滚动条固定在底部 */}
-              <div className="h-2 overflow-x-auto border-t border-slate-200 bg-slate-50">
-                <div style={{ height: '1px', minWidth: 'max-content' }}></div>
+            </div>
+
+            {/* 日志内容区域 */}
+            <div className="flex-1 overflow-hidden">
+              <div className="h-full overflow-y-auto bg-slate-50">
+                <div className="p-4 space-y-1">
+                  {viewing.lines.map((line, index) => {
+                    const isSelected = selectedLines.has(index);
+                    const isJson = line.trim().startsWith('{') || line.trim().startsWith('[');
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`group relative p-3 rounded-lg border transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-50 border-blue-200 shadow-sm'
+                            : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                        }`}
+                        onClick={() => handleLineSelect(index)}
+                      >
+                        {/* 复选框 */}
+                        <div className="absolute left-3 top-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleLineSelect(index)}
+                            className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        
+                        {/* 行号 */}
+                        <div className="absolute left-10 top-3 text-xs text-slate-400 font-mono">
+                          {index + 1}
+                        </div>
+                        
+                        {/* 日志内容 */}
+                        <div className="ml-16">
+                          {isJson ? (
+                            <pre className="text-xs font-mono text-slate-800 whitespace-pre-wrap break-words">
+                              {line}
+                            </pre>
+                          ) : (
+                            <div className="text-sm text-slate-700 font-mono leading-relaxed">
+                              {line}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* 悬停时的选择提示 */}
+                        {!isSelected && (
+                          <div className="absolute inset-0 bg-blue-50 border-2 border-blue-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
+                            <span className="text-blue-600 text-xs font-medium">点击选择</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
