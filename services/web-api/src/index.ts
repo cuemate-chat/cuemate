@@ -7,6 +7,7 @@ import fastifyStatic from '@fastify/static';
 import { config } from 'dotenv';
 import Fastify from 'fastify';
 import { registerAdsRoutes } from './routes/ads.js';
+import { registerAsrRoutes } from './routes/asr.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerFileRoutes } from './routes/files.js';
 import { registerJobRoutes } from './routes/jobs.js';
@@ -65,6 +66,7 @@ async function start() {
 
   // 路由
   registerAuthRoutes(app as any);
+  registerAsrRoutes(app as any);
   registerPresetQuestionRoutes(app as any);
   registerInterviewQuestionRoutes(app as any);
   registerJobRoutes(app as any);
