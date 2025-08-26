@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { logger } from '../utils/logger.js';
+
 import { BaseAsrProvider, type AsrProviderConfig, type AsrProviderInfo } from './base.js';
 
 export interface DeepgramConfig extends AsrProviderConfig {
@@ -18,9 +18,11 @@ export interface DeepgramConfig extends AsrProviderConfig {
 
 export class DeepgramProvider extends BaseAsrProvider {
   private ws: WebSocket | null = null;
+  private logger: any;
 
-  constructor(config: DeepgramConfig) {
+  constructor(config: DeepgramConfig, logger: any) {
     super(config);
+    this.logger = logger;
   }
 
   getName(): string {
@@ -42,7 +44,7 @@ export class DeepgramProvider extends BaseAsrProvider {
   async initialize(): Promise<void> {
     this.validateConfig(['apiKey']);
     this.isInitialized = true;
-    logger.info('Deepgram provider 已初始化');
+    this.logger.info('Deepgram provider 已初始化');
   }
 
   async connect(): Promise<void> {
@@ -77,7 +79,7 @@ export class DeepgramProvider extends BaseAsrProvider {
       });
 
       this.ws.on('open', () => {
-        logger.info('Deepgram connection established');
+        this.logger.info('Deepgram connection established');
         this.emitConnected();
         resolve();
       });
@@ -99,24 +101,24 @@ export class DeepgramProvider extends BaseAsrProvider {
               });
             }
           } else if ((response as any).type === 'Metadata') {
-            logger.debug('Deepgram metadata:', response as any);
+            this.logger.debug({ metadata: response as any }, 'Deepgram metadata');
           } else if ((response as any).type === 'Error') {
-            logger.error('Deepgram error:', response as any);
+            this.logger.error({ err: response as any }, 'Deepgram error');
             this.emitError(new Error((response as any).message));
           }
         } catch (error) {
-          logger.error('Failed to parse Deepgram message:', error as any);
+          this.logger.error({ err: error as any }, 'Failed to parse Deepgram message');
         }
       });
 
       this.ws.on('error', (error) => {
-        logger.error('Deepgram WebSocket error:', error as any);
+        this.logger.error({ err: error as any }, 'Deepgram WebSocket error');
         this.emitError(error as any);
         reject(error as any);
       });
 
       this.ws.on('close', (code, reason) => {
-        logger.info(`Deepgram connection closed: ${code} - ${reason}`);
+        this.logger.info({ code, reason }, 'Deepgram connection closed');
         this.emitDisconnected();
 
         if (this.reconnectAttempts < this.maxReconnectAttempts) {

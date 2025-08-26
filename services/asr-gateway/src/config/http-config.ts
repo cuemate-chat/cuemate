@@ -1,5 +1,3 @@
-import { logger } from '../utils/logger.js';
-
 export interface AsrProvider {
   id: string;
   name: string;
@@ -23,9 +21,14 @@ export class HttpAsrConfigManager {
   private webApiBaseUrl: string;
   private cachedConfigs: Map<string, { config: AsrConfig; expiry: number }> = new Map();
   private readonly cacheTimeoutMs = 30 * 1000; // 30秒缓存
+  private logger: any;
 
-  constructor(webApiBaseUrl: string = process.env.WEB_API_URL || 'http://localhost:3000') {
+  constructor(
+    webApiBaseUrl: string = process.env.WEB_API_URL || 'http://localhost:3000',
+    logger: any,
+  ) {
     this.webApiBaseUrl = webApiBaseUrl;
+    this.logger = logger;
   }
 
   private invalidateCache(userId?: string): void {
@@ -38,7 +41,7 @@ export class HttpAsrConfigManager {
 
   async getConfig(userId: string): Promise<AsrConfig> {
     const now = Date.now();
-    
+
     // 使用缓存的配置（如果未过期）
     const cached = this.cachedConfigs.get(userId);
     if (cached && now < cached.expiry) {
@@ -51,7 +54,11 @@ export class HttpAsrConfigManager {
         throw new Error(`获取用户ASR配置失败: ${response.status}`);
       }
 
-      const result = await response.json() as { success: boolean; data?: AsrConfig; error?: string };
+      const result = (await response.json()) as {
+        success: boolean;
+        data?: AsrConfig;
+        error?: string;
+      };
       if (!result.success) {
         throw new Error(result.error || '获取用户ASR配置失败');
       }
@@ -61,12 +68,12 @@ export class HttpAsrConfigManager {
       // 缓存配置
       this.cachedConfigs.set(userId, {
         config,
-        expiry: now + this.cacheTimeoutMs
+        expiry: now + this.cacheTimeoutMs,
       });
 
       return config;
     } catch (error: any) {
-      logger.error(`获取用户ASR配置失败: ${userId}`, error);
+      this.logger.error({ err: error as any, userId }, '获取用户ASR配置失败');
       throw error;
     }
   }
@@ -76,51 +83,58 @@ export class HttpAsrConfigManager {
       const response = await fetch(`${this.webApiBaseUrl}/api/asr/users/${userId}/provider`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ providerId })
+        body: JSON.stringify({ providerId }),
       });
 
       if (!response.ok) {
         throw new Error(`更新用户ASR提供商失败: ${response.status}`);
       }
 
-      const result = await response.json() as { success: boolean; error?: string };
+      const result = (await response.json()) as { success: boolean; error?: string };
       if (!result.success) {
         throw new Error(result.error || '更新用户ASR提供商失败');
       }
 
       this.invalidateCache(userId);
-      logger.info(`用户ASR提供商已更新: ${userId} -> ${providerId}`);
+      this.logger.info({ userId, providerId }, '用户ASR提供商已更新');
     } catch (error: any) {
-      logger.error(`更新用户ASR提供商失败: ${userId}`, error);
+      this.logger.error({ err: error as any, userId, providerId }, '更新用户ASR提供商失败');
       throw error;
     }
   }
 
-  async updateUserProviderConfig(userId: string, providerId: string, config: Record<string, any>): Promise<void> {
+  async updateUserProviderConfig(
+    userId: string,
+    providerId: string,
+    config: Record<string, any>,
+  ): Promise<void> {
     try {
-      const response = await fetch(`${this.webApiBaseUrl}/api/asr/users/${userId}/config/${providerId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
+      const response = await fetch(
+        `${this.webApiBaseUrl}/api/asr/users/${userId}/config/${providerId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(config),
         },
-        body: JSON.stringify(config)
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`更新用户ASR提供商配置失败: ${response.status}`);
       }
 
-      const result = await response.json() as { success: boolean; error?: string };
+      const result = (await response.json()) as { success: boolean; error?: string };
       if (!result.success) {
         throw new Error(result.error || '更新用户ASR提供商配置失败');
       }
 
       this.invalidateCache(userId);
-      logger.info(`用户ASR提供商配置已更新: ${userId}/${providerId}`);
+      this.logger.info({ userId, providerId }, '用户ASR提供商配置已更新');
     } catch (error: any) {
-      logger.error(`更新用户ASR提供商配置失败: ${userId}/${providerId}`, error);
+      this.logger.error({ err: error as any, userId, providerId }, '更新用户ASR提供商配置失败');
       throw error;
     }
   }
@@ -132,35 +146,48 @@ export class HttpAsrConfigManager {
         throw new Error(`获取ASR提供商失败: ${response.status}`);
       }
 
-      const result = await response.json() as { success: boolean; data?: AsrProvider[]; error?: string };
+      const result = (await response.json()) as {
+        success: boolean;
+        data?: AsrProvider[];
+        error?: string;
+      };
       if (!result.success) {
         throw new Error(result.error || '获取ASR提供商失败');
       }
 
       return result.data!;
     } catch (error: any) {
-      logger.error('获取可用ASR提供商失败:', error);
+      this.logger.error({ err: error as any }, '获取可用ASR提供商失败');
       throw error;
     }
   }
 
   async getProvider(providerId: string): Promise<AsrProvider | null> {
     const providers = await this.getAvailableProviders();
-    return providers.find(p => p.id === providerId) || null;
+    return providers.find((p) => p.id === providerId) || null;
   }
 
-  async validateUserConfig(userId: string, providerId: string): Promise<{
+  async validateUserConfig(
+    userId: string,
+    providerId: string,
+  ): Promise<{
     valid: boolean;
     missingFields: string[];
     message: string;
   }> {
     try {
-      const response = await fetch(`${this.webApiBaseUrl}/api/asr/users/${userId}/validate/${providerId}`);
+      const response = await fetch(
+        `${this.webApiBaseUrl}/api/asr/users/${userId}/validate/${providerId}`,
+      );
       if (!response.ok) {
         throw new Error(`验证用户ASR配置失败: ${response.status}`);
       }
 
-      const result = await response.json() as { success: boolean; data?: { valid: boolean; missingFields: string[]; message: string }; error?: string };
+      const result = (await response.json()) as {
+        success: boolean;
+        data?: { valid: boolean; missingFields: string[]; message: string };
+        error?: string;
+      };
       if (!result.success) {
         throw new Error(result.error || '验证用户ASR配置失败');
       }
@@ -170,11 +197,8 @@ export class HttpAsrConfigManager {
       return {
         valid: false,
         missingFields: [],
-        message: `验证失败: ${error.message}`
+        message: `验证失败: ${error.message}`,
       };
     }
   }
 }
-
-// 全局配置管理器实例
-export const asrConfigManager = new HttpAsrConfigManager();

@@ -3,7 +3,6 @@ import { config } from '../config/index.js';
 import { AudioProcessor } from '../processors/audio.js';
 import { DeepgramProvider } from '../providers/deepgram.js';
 import { WhisperProvider } from '../providers/whisper.js';
-import { logger } from '../utils/logger.js';
 
 interface SessionData {
   sessionId: string;
@@ -22,9 +21,10 @@ export function createSocketHandlers(
     whisper: WhisperProvider;
   },
   _audioProcessor: AudioProcessor,
+  logger: any,
 ) {
   io.on('connection', (socket: Socket) => {
-    logger.info(`Client connected: ${socket.id}`);
+    logger.info({ socketId: socket.id }, 'Client connected');
 
     const session: SessionData = {
       sessionId: socket.id,
@@ -40,7 +40,7 @@ export function createSocketHandlers(
       try {
         const session = sessions.get(socket.id);
         if (!session) {
-          logger.error(`Session not found: ${socket.id}`);
+          logger.error({ socketId: socket.id }, 'Session not found');
           return;
         }
 
@@ -66,6 +66,7 @@ export function createSocketHandlers(
             providers.deepgram,
             Buffer.from(processedAudio as any),
             session,
+            logger,
           );
         } else if (session.provider === 'whisper' || config.fallback.enabled) {
           await handleWhisperStream(
@@ -73,10 +74,11 @@ export function createSocketHandlers(
             providers.whisper,
             Buffer.from(processedAudio as any),
             session,
+            logger,
           );
         }
       } catch (error) {
-        logger.error('Error processing audio stream:', error as any);
+        logger.error({ err: error as any }, 'Error processing audio stream');
         socket.emit('error', { message: 'Audio processing failed' });
       }
     });
@@ -97,7 +99,7 @@ export function createSocketHandlers(
         // 初始化提供者连接
         if (session.provider === 'deepgram' && providers.deepgram.isAvailable()) {
           if (!session.activeProvider) {
-            const deepgramInstance = new DeepgramProvider(config.deepgram);
+            const deepgramInstance = new DeepgramProvider(config.deepgram, logger);
 
             deepgramInstance.on('transcript', (transcript) => {
               socket.emit(transcript.isFinal ? 'transcript:final' : 'transcript:partial', {
@@ -109,7 +111,7 @@ export function createSocketHandlers(
             });
 
             deepgramInstance.on('error', (error: any) => {
-              logger.error('Deepgram error:', error);
+              logger.error({ err: error }, 'Deepgram error');
               if (config.fallback.enabled) {
                 logger.info('Switching to fallback provider');
                 session.provider = 'whisper';
@@ -121,10 +123,13 @@ export function createSocketHandlers(
           }
         } else if (session.provider === 'whisper') {
           if (!session.activeProvider) {
-            const whisperInstance = new WhisperProvider({
-              ...config.whisper,
-              model: config.whisper.modelPath
-            } as any);
+            const whisperInstance = new WhisperProvider(
+              {
+                ...config.whisper,
+                model: config.whisper.modelPath,
+              } as any,
+              logger,
+            );
 
             whisperInstance.on('transcript', (transcript) => {
               socket.emit('transcript:final', {
@@ -144,7 +149,7 @@ export function createSocketHandlers(
           sessionId: session.sessionId,
         });
       } catch (error) {
-        logger.error('Failed to start transcription:', error as any);
+        logger.error({ err: error as any }, 'Failed to start transcription');
         socket.emit('error', { message: 'Failed to start transcription' });
       }
     });
@@ -159,7 +164,7 @@ export function createSocketHandlers(
         }
         socket.emit('transcription:stopped');
       } catch (error) {
-        logger.error('Failed to stop transcription:', error as any);
+        logger.error({ err: error as any }, 'Failed to stop transcription');
       }
     });
 
@@ -182,7 +187,7 @@ export function createSocketHandlers(
 
         socket.emit('provider:switched', { provider });
       } catch (error) {
-        logger.error('Failed to switch provider:', error as any);
+        logger.error({ err: error as any }, 'Failed to switch provider');
         socket.emit('error', { message: 'Failed to switch provider' });
       }
     });
@@ -203,7 +208,7 @@ export function createSocketHandlers(
 
     // 断开连接
     socket.on('disconnect', async () => {
-      logger.info(`Client disconnected: ${socket.id}`);
+      logger.info({ socketId: socket.id }, 'Client disconnected');
 
       const session = sessions.get(socket.id);
       if (session) {
@@ -221,13 +226,14 @@ async function handleDeepgramStream(
   _provider: DeepgramProvider,
   audioBuffer: Buffer,
   session: SessionData,
+  logger: any,
 ) {
   try {
     if (session.activeProvider instanceof DeepgramProvider) {
       await session.activeProvider.sendAudio(audioBuffer as unknown as ArrayBuffer);
     }
   } catch (error) {
-    logger.error('Deepgram streaming failed:', error as any);
+    logger.error({ err: error as any }, 'Deepgram streaming failed');
 
     if (config.fallback.enabled) {
       logger.info('Falling back to Whisper');
@@ -242,13 +248,14 @@ async function handleWhisperStream(
   _provider: WhisperProvider,
   audioBuffer: Buffer,
   session: SessionData,
+  logger: any,
 ) {
   try {
     if (session.activeProvider instanceof WhisperProvider) {
       await (session.activeProvider as any).processAudioChunk(audioBuffer);
     }
   } catch (error) {
-    logger.error('Whisper processing failed:', error as any);
+    logger.error({ err: error as any }, 'Whisper processing failed');
     socket.emit('error', { message: 'Local ASR processing failed' });
   }
 }

@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
 import Fastify from 'fastify';
 import { Server } from 'socket.io';
+import { HttpAsrConfigManager } from './config/http-config.js';
 import { createSocketHandlers } from './handlers/socket.js';
 import { AudioProcessor } from './processors/audio.js';
 import { AsrProviderFactory } from './providers/factory.js';
@@ -39,7 +40,8 @@ async function buildServer() {
   hooks.setErrorHandler(fastify as any);
 
   // 初始化服务
-  const asrProviderFactory = new AsrProviderFactory();
+  const asrConfigManager = new HttpAsrConfigManager(undefined, fastify.log);
+  const asrProviderFactory = new AsrProviderFactory(fastify.log, asrConfigManager);
   const audioProcessor = new AudioProcessor({
     sampleRate: 48000,
     channels: 1,
@@ -47,8 +49,8 @@ async function buildServer() {
   });
 
   // 设置处理器
-  createSocketHandlers(io, asrProviderFactory as any, audioProcessor);
-  
+  createSocketHandlers(io, asrProviderFactory as any, audioProcessor, fastify.log);
+
   // 设置 HTTP 路由
   createHttpRoutes(fastify, asrProviderFactory as any);
 
@@ -57,7 +59,7 @@ async function buildServer() {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      service: 'asr-gateway'
+      service: 'asr-gateway',
     };
   });
 

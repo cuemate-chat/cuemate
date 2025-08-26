@@ -1,9 +1,9 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { createWriteStream } from 'fs';
 import { mkdir, rm, writeFile } from 'fs/promises';
-import { join } from 'path';
 import { tmpdir } from 'os';
-import { logger } from '../utils/logger.js';
+import { join } from 'path';
+
 import { BaseAsrProvider, type AsrProviderConfig, type AsrProviderInfo } from './base.js';
 
 export interface WhisperConfig extends AsrProviderConfig {
@@ -24,10 +24,15 @@ export class WhisperProvider extends BaseAsrProvider {
   private isProcessing = false;
   private silenceTimeout: NodeJS.Timeout | null = null;
   private tempDir: string;
+  private logger: any;
 
-  constructor(config: WhisperConfig) {
+  constructor(config: WhisperConfig, logger: any) {
     super(config);
-    this.tempDir = join(tmpdir(), `whisper-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`);
+    this.logger = logger;
+    this.tempDir = join(
+      tmpdir(),
+      `whisper-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+    );
   }
 
   getName(): string {
@@ -48,7 +53,7 @@ export class WhisperProvider extends BaseAsrProvider {
 
   async initialize(): Promise<void> {
     const config = this.config as WhisperConfig;
-    
+
     if (!config.useLocalModel) {
       // 使用OpenAI API，需要验证API Key
       this.validateConfig(['apiKey']);
@@ -65,7 +70,7 @@ export class WhisperProvider extends BaseAsrProvider {
     }
 
     this.isInitialized = true;
-    logger.info('OpenAI Whisper provider 已初始化');
+    this.logger.info('OpenAI Whisper provider 已初始化');
   }
 
   async connect(): Promise<void> {
@@ -106,9 +111,9 @@ export class WhisperProvider extends BaseAsrProvider {
 
     try {
       const config = this.config as WhisperConfig;
-      
+
       let result: { text: string; confidence?: number };
-      
+
       if (!config.useLocalModel) {
         // 使用OpenAI API
         result = await this.transcribeWithOpenAI(audioToProcess);
@@ -124,16 +129,18 @@ export class WhisperProvider extends BaseAsrProvider {
         timestamp: Date.now(),
       });
     } catch (error: any) {
-      logger.error('Whisper转写失败:', error as any);
+      this.logger.error({ err: error as any }, 'Whisper转写失败');
       this.emitError(error as Error);
     } finally {
       this.isProcessing = false;
     }
   }
 
-  private async transcribeWithOpenAI(audioBuffer: Buffer): Promise<{ text: string; confidence?: number }> {
+  private async transcribeWithOpenAI(
+    audioBuffer: Buffer,
+  ): Promise<{ text: string; confidence?: number }> {
     const config = this.config as WhisperConfig;
-    
+
     try {
       // 将音频保存为临时文件
       const tempAudioFile = join(this.tempDir, `audio-${Date.now()}.wav`);
@@ -144,15 +151,15 @@ export class WhisperProvider extends BaseAsrProvider {
       const audioBlob = new Blob([audioBuffer], { type: 'audio/wav' });
       formData.append('file', audioBlob, 'audio.wav');
       formData.append('model', config.model || 'whisper-1');
-      
+
       if (config.language) {
         formData.append('language', config.language);
       }
-      
+
       if (config.temperature !== undefined) {
         formData.append('temperature', config.temperature.toString());
       }
-      
+
       if (config.responseFormat) {
         formData.append('response_format', config.responseFormat);
       }
@@ -160,7 +167,7 @@ export class WhisperProvider extends BaseAsrProvider {
       const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${config.apiKey}`,
+          Authorization: `Bearer ${config.apiKey}`,
         },
         body: formData,
       });
@@ -170,31 +177,33 @@ export class WhisperProvider extends BaseAsrProvider {
       }
 
       const result = await response.json();
-      
+
       // 清理临时文件
       try {
         await rm(tempAudioFile);
       } catch (e: any) {
-        logger.warn('清理临时文件失败:', e);
+        this.logger.warn({ err: e }, '清理临时文件失败');
       }
 
       return {
         text: (result as any)?.text || '',
-        confidence: 0.95 // OpenAI API不返回置信度，使用固定值
+        confidence: 0.95, // OpenAI API不返回置信度，使用固定值
       };
     } catch (error: any) {
-      logger.error('OpenAI Whisper转写失败:', error as any);
+      this.logger.error({ err: error as any }, 'OpenAI Whisper转写失败');
       throw error;
     }
   }
 
-  private async transcribeWithLocalModel(audioBuffer: Buffer): Promise<{ text: string; confidence?: number }> {
+  private async transcribeWithLocalModel(
+    audioBuffer: Buffer,
+  ): Promise<{ text: string; confidence?: number }> {
     const config = this.config as WhisperConfig;
-    
+
     return new Promise((resolve, reject) => {
       // 将音频保存为临时文件
       const tempAudioFile = join(this.tempDir, `audio-${Date.now()}.wav`);
-      
+
       const writeStream = createWriteStream(tempAudioFile);
       writeStream.write(audioBuffer);
       writeStream.end();
@@ -202,10 +211,14 @@ export class WhisperProvider extends BaseAsrProvider {
       writeStream.on('finish', () => {
         // 使用whisper.cpp或其他本地模型
         const whisperProcess = spawn('whisper', [
-          '--model', config.localModelPath || './models/whisper',
-          '--language', config.language || 'zh',
-          '--threads', (config.threads || 4).toString(),
-          '--output-format', 'json',
+          '--model',
+          config.localModelPath || './models/whisper',
+          '--language',
+          config.language || 'zh',
+          '--threads',
+          (config.threads || 4).toString(),
+          '--output-format',
+          'json',
           '--no-timestamps',
           tempAudioFile,
         ]);
@@ -226,21 +239,21 @@ export class WhisperProvider extends BaseAsrProvider {
           try {
             await rm(tempAudioFile);
           } catch (e) {
-            logger.warn('清理临时文件失败:', e as any);
+            this.logger.warn({ err: e as any }, '清理临时文件失败');
           }
 
           if (code === 0) {
             try {
               const result = JSON.parse(output);
-              resolve({ 
+              resolve({
                 text: result.text || output.trim(),
-                confidence: 0.9
+                confidence: 0.9,
               });
             } catch (e) {
               // 如果解析JSON失败，直接使用文本输出
-              resolve({ 
+              resolve({
                 text: output.trim(),
-                confidence: 0.9
+                confidence: 0.9,
               });
             }
           } else {
@@ -267,20 +280,20 @@ export class WhisperProvider extends BaseAsrProvider {
       this.process.kill();
       this.process = null;
     }
-    
+
     // 清理临时目录
     try {
       await rm(this.tempDir, { recursive: true, force: true });
     } catch (e) {
-      logger.warn('清理临时目录失败:', e as any);
+      this.logger.warn({ err: e as any }, '清理临时目录失败');
     }
-    
+
     this.emitDisconnected();
   }
 
   isAvailable(): boolean {
     const config = this.config as WhisperConfig;
-    
+
     if (!config.useLocalModel) {
       // 使用OpenAI API，检查是否有API Key
       return !!config.apiKey;

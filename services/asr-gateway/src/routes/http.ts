@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { DeepgramProvider } from '../providers/deepgram.js';
 import { WhisperProvider } from '../providers/whisper.js';
-import { logger } from '../utils/logger.js';
+// 移除独立的logger导入，使用fastify.log
 
 export function createHttpRoutes(
   fastify: FastifyInstance,
@@ -45,7 +45,7 @@ export function createHttpRoutes(
       void { audio, provider, format };
       return { text: '', provider, timestamp: Date.now() } as const;
     } catch (error) {
-      logger.error('Transcription failed:', error as any);
+      fastify.log.error({ err: error as any }, 'Transcription failed');
       return reply.code(500).send({ error: 'Transcription failed' });
     }
   });

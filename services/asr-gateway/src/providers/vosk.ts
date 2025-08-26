@@ -1,7 +1,7 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { logger } from '../utils/logger.js';
+
 import { BaseAsrProvider, type AsrProviderConfig, type AsrProviderInfo } from './base.js';
 
 export interface VoskConfig extends AsrProviderConfig {
@@ -18,9 +18,11 @@ export class VoskProvider extends BaseAsrProvider {
   private isProcessing = false;
   private recognizer: any = null;
   private model: any = null;
+  private logger: any;
 
-  constructor(config: VoskConfig) {
+  constructor(config: VoskConfig, logger: any) {
     super(config);
+    this.logger = logger;
   }
 
   getName(): string {
@@ -50,34 +52,34 @@ export class VoskProvider extends BaseAsrProvider {
     try {
       // 动态导入vosk模块（如果安装了的话）
       const vosk = await import('vosk').catch(() => null);
-      
+
       if (!vosk) {
         throw new Error('Vosk模块未安装');
       }
-      
+
       // 设置日志级别
       vosk.setLogLevel(-1); // 禁用日志输出
 
       // 加载模型
       this.model = new vosk.Model(config.model_path);
-      
+
       // 创建识别器
       this.recognizer = new vosk.KaldiRecognizer(this.model, config.sample_rate || 16000);
-      
+
       if (config.words) {
         this.recognizer.setWords(true);
       }
-      
+
       if (config.max_alternatives && config.max_alternatives > 1) {
         this.recognizer.setMaxAlternatives(config.max_alternatives);
       }
 
       this.isInitialized = true;
-      logger.info('Vosk provider 已初始化');
+      this.logger.info('Vosk provider 已初始化');
     } catch (error) {
       // 如果vosk模块不可用，尝试使用命令行方式
       if (error instanceof Error && error.message.includes('Cannot find module')) {
-        logger.info('Vosk模块不可用，将使用命令行方式');
+        this.logger.info('Vosk模块不可用，将使用命令行方式');
         this.isInitialized = true;
       } else {
         throw new Error(`初始化Vosk失败: ${error}`);
@@ -92,16 +94,17 @@ export class VoskProvider extends BaseAsrProvider {
 
   async sendAudio(audioBuffer: ArrayBuffer | Buffer): Promise<void> {
     const buffer = Buffer.isBuffer(audioBuffer) ? audioBuffer : Buffer.from(audioBuffer);
-    
+
     if (this.recognizer) {
       // 使用vosk模块进行实时识别
       this.processWithVoskModule(buffer);
     } else {
       // 累积音频缓冲区，用于命令行方式
       this.audioBuffer = Buffer.concat([this.audioBuffer, buffer]);
-      
+
       // 每当缓冲区足够大时处理一次
-      if (this.audioBuffer.length >= 32000) { // 约2秒的16kHz音频
+      if (this.audioBuffer.length >= 32000) {
+        // 约2秒的16kHz音频
         this.processWithCommandLine();
       }
     }
@@ -113,10 +116,10 @@ export class VoskProvider extends BaseAsrProvider {
     try {
       // 转换为16位PCM数据
       const pcmData = this.convertToPCM16(audioBuffer);
-      
+
       // 处理音频数据
       const result = this.recognizer.acceptWaveform(pcmData);
-      
+
       if (result) {
         // 有最终结果
         const finalResult = JSON.parse(this.recognizer.result());
@@ -126,7 +129,7 @@ export class VoskProvider extends BaseAsrProvider {
             isFinal: true,
             confidence: finalResult.confidence || 0.8,
             timestamp: Date.now(),
-            words: finalResult.words
+            words: finalResult.words,
           });
         }
       } else {
@@ -137,29 +140,31 @@ export class VoskProvider extends BaseAsrProvider {
             text: partialResult.partial,
             isFinal: false,
             confidence: 0.5,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           });
         }
       }
     } catch (error: any) {
-      logger.error('Vosk音频处理失败:', error as any);
+      this.logger.error({ err: error as any }, 'Vosk音频处理失败');
       this.emitError(new Error(`Vosk音频处理失败: ${error}`));
     }
   }
 
   private processWithCommandLine(): void {
     if (this.isProcessing) return;
-    
+
     this.isProcessing = true;
     const audioToProcess = this.audioBuffer;
     this.audioBuffer = Buffer.alloc(0);
 
     const config = this.config as VoskConfig;
-    
+
     // 使用命令行方式调用vosk
-    const voskProcess = spawn('python3', [
-      '-c',
-      `
+    const voskProcess = spawn(
+      'python3',
+      [
+        '-c',
+        `
 import sys
 import json
 import wave
@@ -176,10 +181,12 @@ if result:
     print(rec.result())
 else:
     print('{"text": "", "confidence": 0}')
-      `
-    ], {
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+      `,
+      ],
+      {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      },
+    );
 
     voskProcess.stdin?.write(audioToProcess);
     voskProcess.stdin?.end();
@@ -197,7 +204,7 @@ else:
 
     voskProcess.on('close', (code) => {
       this.isProcessing = false;
-      
+
       if (code === 0) {
         try {
           const result = JSON.parse(output.trim());
@@ -207,21 +214,21 @@ else:
               isFinal: true,
               confidence: result.confidence || 0.8,
               timestamp: Date.now(),
-              words: result.words
+              words: result.words,
             });
           }
         } catch (error: any) {
-          logger.error('解析Vosk输出失败:', error as any);
+          this.logger.error({ err: error as any }, '解析Vosk输出失败');
         }
       } else {
-        logger.error(`Vosk进程退出，代码: ${code}, 错误: ${errorOutput}`);
+        this.logger.error({ code, errorOutput }, 'Vosk进程退出');
         this.emitError(new Error(`Vosk进程失败: ${errorOutput}`));
       }
     });
 
     voskProcess.on('error', (error: any) => {
       this.isProcessing = false;
-      logger.error('启动Vosk进程失败:', error as any);
+      this.logger.error({ err: error as any }, '启动Vosk进程失败');
       this.emitError(new Error(`启动Vosk进程失败: ${error.message}`));
     });
   }
@@ -246,7 +253,7 @@ else:
       this.process.kill();
       this.process = null;
     }
-    
+
     if (this.recognizer) {
       try {
         // 获取最终结果
@@ -257,20 +264,20 @@ else:
             isFinal: true,
             confidence: finalResult.confidence || 0.8,
             timestamp: Date.now(),
-            words: finalResult.words
+            words: finalResult.words,
           });
         }
       } catch (error) {
-        logger.warn('获取Vosk最终结果失败:', error as any);
+        this.logger.warn({ err: error as any }, '获取Vosk最终结果失败');
       }
-      
+
       this.recognizer = null;
     }
-    
+
     if (this.model) {
       this.model = null;
     }
-    
+
     this.emitDisconnected();
   }
 
@@ -285,39 +292,37 @@ else:
     details?: any;
   }> {
     const baseCheck = await super.healthCheck();
-    
+
     if (!baseCheck.healthy) {
       return baseCheck;
     }
 
     const config = this.config as VoskConfig;
-    
+
     // 检查模型文件
     if (!existsSync(config.model_path)) {
       return {
         healthy: false,
         message: `Vosk模型文件不存在: ${config.model_path}`,
-        details: { model_path: config.model_path }
+        details: { model_path: config.model_path },
       };
     }
 
     // 检查模型文件夹结构
     const requiredFiles = ['final.mdl', 'HCLG.fst', 'words.txt'];
-    const missingFiles = requiredFiles.filter(file => 
-      !existsSync(join(config.model_path, file))
-    );
+    const missingFiles = requiredFiles.filter((file) => !existsSync(join(config.model_path, file)));
 
     if (missingFiles.length > 0) {
       return {
         healthy: false,
         message: `Vosk模型文件不完整，缺少: ${missingFiles.join(', ')}`,
-        details: { missing_files: missingFiles }
+        details: { missing_files: missingFiles },
       };
     }
 
     return {
       healthy: true,
-      message: 'Vosk运行正常'
+      message: 'Vosk运行正常',
     };
   }
 }
