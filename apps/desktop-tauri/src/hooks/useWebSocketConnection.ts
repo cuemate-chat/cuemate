@@ -6,7 +6,7 @@ import { useAppStore } from '../store/appStore';
 const BACKEND_URL =
   (import.meta as any)?.env?.VITE_BACKEND_URL ||
   (process as any)?.env?.VITE_BACKEND_URL ||
-  'http://localhost:3000';
+  'http://localhost:3001';
 
 export default function useWebSocketConnection() {
   const socketRef = useRef<Socket | null>(null);

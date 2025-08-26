@@ -26,7 +26,7 @@ dev-desktop: ## Start desktop app in development mode
 
 dev-services: ## Start backend services
 	@echo "${BLUE}Starting backend services...${NC}"
-	cd services/asr-gateway && pnpm dev &
+	cd services/web-api && pnpm dev &
 	cd services/llm-router && pnpm dev &
 	cd services/rag-service && pnpm dev &
 
@@ -61,9 +61,11 @@ docker-up: ## Start core services with Docker (web-api only)
 	@echo "${BLUE}Starting Docker services...${NC}"
 	docker compose -f infra/docker/docker-compose.yml up -d web-api
 	@echo "${GREEN}Services started!${NC}"
-	@echo "ASR Gateway: http://localhost:3001"
+	@echo "Web API: http://localhost:3001"
 	@echo "LLM Router: http://localhost:3002"
 	@echo "RAG Service: http://localhost:3003"
+	@echo "ASR User: ws://localhost:8001/asr"
+	@echo "ASR Interviewer: ws://localhost:8002/asr"
 
 docker-down: ## Stop Docker services (web-api)
 	@echo "${BLUE}Stopping Docker services...${NC}"
@@ -121,6 +123,8 @@ check-deps: ## Check if all required tools are installed
 
 status: ## Check status of all services
 	@echo "${BLUE}Service Status:${NC}"
-	@curl -s http://localhost:3001/health >/dev/null 2>&1 && echo "${GREEN}✓ ASR Gateway${NC}" || echo "${RED}✗ ASR Gateway${NC}"
+	@curl -s http://localhost:3001/health >/dev/null 2>&1 && echo "${GREEN}✓ Web API${NC}" || echo "${RED}✗ Web API${NC}"
 	@curl -s http://localhost:3002/health >/dev/null 2>&1 && echo "${GREEN}✓ LLM Router${NC}" || echo "${RED}✗ LLM Router${NC}"
 	@curl -s http://localhost:3003/health >/dev/null 2>&1 && echo "${GREEN}✓ RAG Service${NC}" || echo "${RED}✗ RAG Service${NC}"
+	@curl -s http://localhost:8001/ >/dev/null 2>&1 && echo "${GREEN}✓ ASR User${NC}" || echo "${RED}✗ ASR User${NC}"
+	@curl -s http://localhost:8002/ >/dev/null 2>&1 && echo "${GREEN}✓ ASR Interviewer${NC}" || echo "${RED}✗ ASR Interviewer${NC}"

@@ -78,7 +78,7 @@ async function start() {
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 
-  const port = Number(process.env.WEB_API_PORT || 3004);
+  const port = Number(process.env.WEB_API_PORT || 3001);
   const host = process.env.WEB_API_HOST || '0.0.0.0';
   await app.listen({ port, host });
   app.log.info(`Web API running at http://${host}:${port}`);

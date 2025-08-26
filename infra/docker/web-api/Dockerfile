@@ -42,7 +42,7 @@ RUN mkdir -p /opt/cuemate/log/info/web-api \
     && chown -R node:node /opt/cuemate/log \
     && chown -R node:node /opt/cuemate/pdf
 
-EXPOSE 3004
+EXPOSE 3001
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/index.js"]
 

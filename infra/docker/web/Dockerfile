@@ -10,7 +10,7 @@ COPY apps/web/package.json ./apps/web/package.json
 RUN pnpm install --no-frozen-lockfile --filter @cuemate/web...
 
 # 复制源码并构建（支持通过构建参数注入后端地址）
-ARG WEB_API_BASE=http://localhost:3004
+ARG WEB_API_BASE=http://localhost:3001
 ENV VITE_WEB_API_BASE=${WEB_API_BASE}
 COPY tsconfig.base.json ./tsconfig.base.json
 COPY apps/web ./apps/web

@@ -83,7 +83,8 @@ export default function Logs() {
     'web-api': '后端 API 服务',
     'llm-router': '大模型路由',
     'rag-service': 'RAG 知识服务',
-    'asr-gateway': '语音识别网关',
+    'asr-user': '用户语音识别',
+    'asr-interviewer': '面试官语音识别',
   };
 
   useEffect(() => {

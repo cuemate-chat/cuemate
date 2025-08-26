@@ -13,24 +13,53 @@ services:
       - cuemate-network
     restart: unless-stopped
 
-  # ASR Gateway Service
-  asr-gateway:
+  # ASR User - User Speech Recognition
+  asr-user:
+    image: wlk
+    container_name: cuemate-asr-user
+    ports:
+      - "8001:8000"
+    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "auto", "--host", "0.0.0.0", "--port", "8000", "--no-vac", "--no-vad"]
+    environment:
+      - PYTORCH_DISABLE_NET_ACCESS=1
+    networks:
+      - cuemate-network
+    restart: unless-stopped
+
+  # ASR Interviewer - Interviewer Speech Recognition  
+  asr-interviewer:
+    image: wlk
+    container_name: cuemate-asr-interviewer
+    ports:
+      - "8002:8000"
+    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "auto", "--host", "0.0.0.0", "--port", "8000", "--no-vac", "--no-vad"]
+    environment:
+      - PYTORCH_DISABLE_NET_ACCESS=1
+    networks:
+      - cuemate-network
+    restart: unless-stopped
+
+  # Web API (SQLite) - 端口改为3001
+  web-api:
     build:
       context: ../..
-      dockerfile: infra/docker/asr-gateway/Dockerfile
-    container_name: cuemate-asr-gateway
-    ports:
-      - "3001:3001"
+      dockerfile: infra/docker/web-api/Dockerfile
+    container_name: cuemate-web-api
     environment:
       - NODE_ENV=production
-      - ASR_PORT=3001
-      - ASR_HOST=0.0.0.0
-      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
-      - PRIMARY_ASR_PROVIDER=deepgram
-      - FALLBACK_ASR_PROVIDER=whisper
+      - WEB_API_PORT=3001
+      - WEB_API_HOST=0.0.0.0
+      - SQLITE_PATH=/opt/cuemate/data/cuemate.db
+      - JWT_SECRET=${JWT_SECRET:-dev-secret}
+      - RAG_SERVICE_URL=http://rag-service:3003
+      - LLM_ROUTER_URL=http://llm-router:3002
     volumes:
-      - ../../services/asr-gateway/models:/app/models
+      - ../../data/sqlite:/opt/cuemate/data
       - ../../data/logs:/opt/cuemate/log
+      - ../../data/pdf:/opt/cuemate/pdf
+      - ../../data/images:/opt/cuemate/images
+    ports:
+      - "3001:3001"
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -80,43 +109,18 @@ services:
       - chroma
     restart: unless-stopped
 
-  # Web API (SQLite)
-  web-api:
-    build:
-      context: ../..
-      dockerfile: infra/docker/web-api/Dockerfile
-    container_name: cuemate-web-api
-    environment:
-      - NODE_ENV=production
-      - WEB_API_PORT=3004
-      - WEB_API_HOST=0.0.0.0
-      - SQLITE_PATH=/opt/cuemate/data/cuemate.db
-      - JWT_SECRET=${JWT_SECRET:-dev-secret}
-      - RAG_SERVICE_URL=http://rag-service:3003
-      - LLM_ROUTER_URL=http://llm-router:3002
-    volumes:
-      - ../../data/sqlite:/opt/cuemate/data
-      - ../../data/logs:/opt/cuemate/log
-      - ../../data/pdf:/opt/cuemate/pdf
-      - ../../data/images:/opt/cuemate/images
-    ports:
-      - "3004:3004"
-    networks:
-      - cuemate-network
-    restart: unless-stopped
-
   # Web 前端（静态站 - Nginx）
   web:
     build:
       context: ../..
       dockerfile: infra/docker/web/Dockerfile
       args:
-        WEB_API_BASE: ${WEB_API_BASE:-http://web-api:3004}
+        WEB_API_BASE: ${WEB_API_BASE:-http://web-api:3001}
     container_name: cuemate-web
     ports:
       - "80:80"
     environment:
-      - VITE_WEB_API_BASE=${WEB_API_BASE:-http://web-api:3004}
+      - VITE_WEB_API_BASE=${WEB_API_BASE:-http://web-api:3001}
       - VITE_RAG_SERVICE_URL=http://rag-service:3003
       - VITE_LLM_ROUTER_URL=http://llm-router:3002
     volumes:

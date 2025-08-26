@@ -17,7 +17,7 @@ declare global {
 // 应用配置
 export const config = {
   // API 基础地址
-  API_BASE: import.meta.env.VITE_WEB_API_BASE || 'http://localhost:3004',
+  API_BASE: import.meta.env.VITE_WEB_API_BASE || 'http://localhost:3001',
 
   // RAG 服务地址
   RAG_SERVICE_URL: import.meta.env.VITE_RAG_SERVICE_URL || 'http://localhost:3003',
