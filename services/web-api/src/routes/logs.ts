@@ -142,27 +142,140 @@ export function registerLogRoutes(app: FastifyInstance) {
   });
 
   // 清理指定日志文件内容
-  app.post('/logs/clear', async (req, reply) => {
+  app.get('/logs/clear', async (req, reply) => {
     const schema = z.object({
       level: z.enum(LEVELS),
       service: z.string().min(1),
       date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     });
-    const { level, service, date } = schema.parse((req as any).query || {});
-    const filePath = path.join(LOG_BASE_DIR, level, service, date, `${level}.log`);
 
     try {
-      const stat = fs.statSync(filePath);
-      if (!stat.isFile()) return reply.code(404).send({ error: 'not_found' });
+      // 从query参数获取，因为前端使用GET方式传递参数
+      const query = (req as any).query || {};
+      (req as any).log.debug({ query }, 'clear-log-query-params');
+
+      const { level, service, date } = schema.parse(query);
+
+      // 验证参数
+      if (!level || !service || !date) {
+        return reply.code(400).send({
+          error: 'invalid_params',
+          message: '缺少必要参数：level, service, date',
+        });
+      }
+
+      const filePath = path.join(LOG_BASE_DIR, level, service, date, `${level}.log`);
+
+      // 检查文件是否存在
+      try {
+        const stat = fs.statSync(filePath);
+        if (!stat.isFile()) {
+          return reply.code(404).send({
+            error: 'not_found',
+            message: '日志文件不存在',
+          });
+        }
+      } catch (statErr) {
+        return reply.code(404).send({
+          error: 'not_found',
+          message: '日志文件不存在或无法访问',
+        });
+      }
 
       // 清空文件内容（保留文件，只清空内容）
-      fs.writeFileSync(filePath, '', 'utf8');
+      try {
+        fs.writeFileSync(filePath, '', 'utf8');
+        (req as any).log.debug({ level, service, date }, 'log-file-cleared');
+        return { success: true, message: '日志文件已清空' };
+      } catch (writeErr) {
+        (req as any).log.error({ err: writeErr, level, service, date }, 'write-log-failed');
+        return reply.code(500).send({
+          error: 'write_failed',
+          message: '写入日志文件失败',
+        });
+      }
+    } catch (parseErr) {
+      (req as any).log.error({ err: parseErr }, 'parse-params-failed');
+      return reply.code(400).send({
+        error: 'parse_failed',
+        message: '参数解析失败：' + (parseErr as Error).message,
+      });
+    }
+  });
 
-      (req as any).log.debug({ level, service, date }, 'log-file-cleared');
-      return { success: true, message: '日志文件已清空' };
-    } catch (err) {
-      (req as any).log.error({ err, level, service, date }, 'clear-log-failed');
-      return reply.code(500).send({ error: 'clear_failed', message: '清理日志文件失败' });
+  // 删除指定日志文件
+  app.delete('/logs/delete', async (req, reply) => {
+    const schema = z.object({
+      level: z.enum(LEVELS),
+      service: z.string().min(1),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    });
+
+    try {
+      // 从query参数获取
+      const query = (req as any).query || {};
+      (req as any).log.debug({ query }, 'delete-log-query-params');
+
+      const { level, service, date } = schema.parse(query);
+
+      // 验证参数
+      if (!level || !service || !date) {
+        return reply.code(400).send({
+          error: 'invalid_params',
+          message: '缺少必要参数：level, service, date',
+        });
+      }
+
+      const filePath = path.join(LOG_BASE_DIR, level, service, date, `${level}.log`);
+      const dirPath = path.dirname(filePath);
+
+      // 检查文件是否存在
+      try {
+        const stat = fs.statSync(filePath);
+        if (!stat.isFile()) {
+          return reply.code(404).send({
+            error: 'not_found',
+            message: '日志文件不存在',
+          });
+        }
+      } catch (statErr) {
+        return reply.code(404).send({
+          error: 'not_found',
+          message: '日志文件不存在或无法访问',
+        });
+      }
+
+      // 删除日志文件
+      try {
+        fs.unlinkSync(filePath);
+        (req as any).log.debug({ level, service, date }, 'log-file-deleted');
+
+        // 检查目录是否为空，如果为空则删除目录
+        try {
+          const remainingFiles = fs.readdirSync(dirPath);
+          if (remainingFiles.length === 0) {
+            fs.rmdirSync(dirPath);
+            (req as any).log.debug({ dirPath }, 'empty-directory-removed');
+          }
+        } catch (dirErr) {
+          // 忽略目录删除错误，不影响文件删除的成功
+          (req as any).log.warn({ err: dirErr, dirPath }, 'failed-to-remove-empty-directory');
+        }
+
+        return { success: true, message: '日志文件已删除' };
+      } catch (deleteErr) {
+        (req as any).log.error({ err: deleteErr, level, service, date }, 'delete-log-failed');
+        return reply.code(500).send({
+          error: 'delete_failed',
+          message: '删除日志文件失败',
+        });
+      }
+    } catch (parseErr) {
+      (req as any).log.error({ err: parseErr }, 'parse-params-failed');
+      return reply.code(400).send({
+        error: 'parse_failed',
+        message: '参数解析失败：' + (parseErr as Error).message,
+      });
     }
   });
 }

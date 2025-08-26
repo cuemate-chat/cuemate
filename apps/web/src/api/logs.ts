@@ -36,7 +36,9 @@ export async function fetchLogContent(params: {
   qs.set('service', params.service);
   qs.set('date', params.date);
   if (params.tail) qs.set('tail', String(params.tail));
-  return await http.get<{ level: LogLevel; service: string; date: string; lines: string[] }>('/logs/content?' + qs.toString());
+  return await http.get<{ level: LogLevel; service: string; date: string; lines: string[] }>(
+    '/logs/content?' + qs.toString(),
+  );
 }
 
 export async function clearLogContent(params: {
@@ -48,6 +50,19 @@ export async function clearLogContent(params: {
   qs.set('level', params.level);
   qs.set('service', params.service);
   qs.set('date', params.date);
-  const res = await http.post('/logs/clear?' + qs.toString());
+  const res = await http.get('/logs/clear?' + qs.toString());
+  return res as { success: boolean };
+}
+
+export async function deleteLogFile(params: {
+  level: LogLevel;
+  service: string;
+  date: string; // yyyy-mm-dd
+}) {
+  const qs = new URLSearchParams();
+  qs.set('level', params.level);
+  qs.set('service', params.service);
+  qs.set('date', params.date);
+  const res = await http.delete('/logs/delete?' + qs.toString());
   return res as { success: boolean };
 }

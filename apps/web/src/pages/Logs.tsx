@@ -5,11 +5,12 @@ import {
   InformationCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/24/solid';
-import { DatePicker, Select } from 'antd';
+import { DatePicker, Modal, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import {
   clearLogContent as clearLogContentApi,
+  deleteLogFile as deleteLogFileApi,
   fetchLogContent,
   fetchLogs,
   fetchLogServices,
@@ -46,10 +47,10 @@ export default function Logs() {
   const [colWidths, setColWidths] = useState<Record<ColKey, number>>({
     name: 240,
     project: 240,
-    level: 240,
+    level: 220,
     date: 260,
-    size: 240,
-    action: 200,
+    size: 200,
+    action: 260,
   });
   const resizingRef = useRef<{ key: ColKey; startX: number; startW: number } | null>(null);
   const MIN_COL_WIDTH = 80;
@@ -139,8 +140,34 @@ export default function Logs() {
         .catch((err) => {
           message.error('加载日志失败：' + err);
         });
-    } catch {
-      message.error('日志清理失败');
+    } catch (error: any) {
+      console.error('日志清理失败:', error);
+      message.error('日志清理失败：' + (error?.message || '未知错误'));
+    }
+  };
+
+  const deleteLogFile = async (it: { level: LogLevel; service: string; date: string }) => {
+    try {
+      await deleteLogFileApi({ level: it.level, service: it.service, date: it.date });
+      message.success('日志文件已删除');
+      // 删除后重新加载当前页
+      fetchLogs({
+        level: level || undefined,
+        service: service || undefined,
+        date: date || undefined,
+        page,
+        pageSize,
+      })
+        .then((res) => {
+          setItems(res.items);
+          setTotal(res.total);
+        })
+        .catch((err) => {
+          message.error('加载日志失败：' + err);
+        });
+    } catch (error: any) {
+      console.error('日志删除失败:', error);
+      message.error('日志删除失败：' + (error?.message || '未知错误'));
     }
   };
 
@@ -328,7 +355,7 @@ export default function Logs() {
             </div>
             <div>{it.date}</div>
             <div>{(it.size / 1024).toFixed(1)} KB</div>
-            <div>
+            <div className="flex items-center gap-2">
               <button
                 className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700"
                 onClick={() => readContent(it)}
@@ -336,10 +363,60 @@ export default function Logs() {
                 <EyeIcon className="w-4 h-4" /> 查看
               </button>
               <button
-                className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 ml-2"
-                onClick={() => clearLogContent(it)}
+                className="inline-flex items-center gap-1 text-orange-600 hover:text-orange-700"
+                onClick={() => {
+                  Modal.confirm({
+                    title: '确认清理日志',
+                    content: (
+                      <div className="space-y-2">
+                        <p>确定要清理以下日志文件吗？</p>
+                        <div className="bg-slate-50 p-3 rounded text-sm">
+                          <div><strong>服务：</strong>{serviceNameMap[it.service] || it.service}</div>
+                          <div><strong>级别：</strong>{it.level.toUpperCase()}</div>
+                          <div><strong>日期：</strong>{it.date}</div>
+                          <div><strong>大小：</strong>{(it.size / 1024).toFixed(1)} KB</div>
+                        </div>
+                        <p className="text-orange-600 text-sm">⚠️ 清理后日志内容将无法恢复！</p>
+                      </div>
+                    ),
+                    okText: '确认清理',
+                    okType: 'default',
+                    cancelText: '取消',
+                    onOk: () => clearLogContent(it),
+                  });
+                }}
               >
                 <XCircleIcon className="w-4 h-4" /> 清理
+              </button>
+              <button
+                className="inline-flex items-center gap-1 text-red-600 hover:text-red-700"
+                onClick={() => {
+                  Modal.confirm({
+                    title: '确认删除日志文件',
+                    content: (
+                      <div className="space-y-2">
+                        <p>确定要删除以下日志文件吗？</p>
+                        <div className="bg-slate-50 p-3 rounded text-sm">
+                          <div><strong>服务：</strong>{serviceNameMap[it.service] || it.service}</div>
+                          <div><strong>级别：</strong>{it.level.toUpperCase()}</div>
+                          <div><strong>日期：</strong>{it.date}</div>
+                          <div><strong>大小：</strong>{(it.size / 1024).toFixed(1)} KB</div>
+                        </div>
+                        <p className="text-red-600 text-sm">🚨 删除后日志文件将完全消失，无法恢复！</p>
+                        <p className="text-red-600 text-sm">此操作比清理更加危险，请谨慎操作！</p>
+                      </div>
+                    ),
+                    okText: '确认删除',
+                    okType: 'danger',
+                    cancelText: '取消',
+                    onOk: () => deleteLogFile(it),
+                  });
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                删除
               </button>
             </div>
           </div>
