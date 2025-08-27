@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { promises as fs } from 'fs';
 import mammoth from 'mammoth';
 import path from 'path';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
   const chunks: Buffer[] = [];
@@ -29,11 +30,16 @@ export function registerFileRoutes(app: FastifyInstance) {
         await req.jwtVerify();
       } catch (jwtError: any) {
         app.log.warn({ err: jwtError }, 'JWT认证失败');
-        return reply.code(401).send({ error: '请先登录后再使用图片上传功能' });
+        return reply.code(401).send(buildPrefixedError('图片上传失败', jwtError, 401));
       }
 
       const file = await req.file();
-      if (!file) return reply.code(400).send({ error: '缺少文件，请选择要上传的图片文件' });
+      if (!file)
+        return reply
+          .code(400)
+          .send(
+            buildPrefixedError('图片上传失败', new Error('缺少文件，请选择要上传的图片文件'), 400),
+          );
 
       const mimetype: string = file.mimetype || '';
       const filename: string = file.filename || '';
@@ -44,7 +50,15 @@ export function registerFileRoutes(app: FastifyInstance) {
         !mimetype.startsWith('image/') &&
         !['.jpg', '.jpeg', '.png', '.gif', '.webp'].some((ext) => lower.endsWith(ext))
       ) {
-        return reply.code(400).send({ error: '只支持图片文件格式：JPG、PNG、GIF、WebP' });
+        return reply
+          .code(400)
+          .send(
+            buildPrefixedError(
+              '图片上传失败',
+              new Error('只支持图片文件格式：JPG、PNG、GIF、WebP'),
+              400,
+            ),
+          );
       }
 
       app.log.info({ filename, mimetype, size: file.file.bytesRead }, '开始上传图片');
@@ -79,7 +93,7 @@ export function registerFileRoutes(app: FastifyInstance) {
       };
     } catch (error: any) {
       app.log.error({ err: error, filename: req.file?.filename }, '图片上传失败');
-      return reply.code(500).send({ error: '图片上传失败：' + error.message });
+      return reply.code(500).send(buildPrefixedError('图片上传失败', error, 500));
     }
   });
 
@@ -92,11 +106,16 @@ export function registerFileRoutes(app: FastifyInstance) {
         await req.jwtVerify();
       } catch (jwtError: any) {
         app.log.warn({ err: jwtError }, 'JWT认证失败');
-        return reply.code(401).send({ error: '请先登录后再使用文件解析功能' });
+        return reply.code(401).send(buildPrefixedError('文件解析失败', jwtError, 401));
       }
 
       const file = await req.file();
-      if (!file) return reply.code(400).send({ error: '缺少文件，请选择要上传的简历文件' });
+      if (!file)
+        return reply
+          .code(400)
+          .send(
+            buildPrefixedError('文件解析失败', new Error('缺少文件，请选择要上传的简历文件'), 400),
+          );
 
       const mimetype: string = file.mimetype || '';
       const filename: string = file.filename || '';
@@ -188,9 +207,17 @@ export function registerFileRoutes(app: FastifyInstance) {
           app.log.info({ filename, textLength: text.length }, 'DOCX解析完成');
         } catch (docxError: any) {
           app.log.error({ err: docxError, filename }, 'DOCX解析失败');
-          return reply.code(422).send({
-            error: `DOCX文件解析失败：${docxError.message || '文件可能已损坏'}。请检查文件完整性或直接复制粘贴文本内容。`,
-          });
+          return reply
+            .code(422)
+            .send(
+              buildPrefixedError(
+                '文件解析失败',
+                new Error(
+                  `DOCX文件解析失败：${docxError.message || '文件可能已损坏'}。请检查文件完整性或直接复制粘贴文本内容。`,
+                ),
+                422,
+              ),
+            );
         }
       } else if (mimetype === 'application/msword' || lower.endsWith('.doc')) {
         try {
@@ -206,34 +233,72 @@ export function registerFileRoutes(app: FastifyInstance) {
               { filename, textLength: text.length },
               'DOC文件解析结果较短，可能是格式兼容性问题',
             );
-            return reply.code(422).send({
-              error:
-                '此DOC文件可能是较老的格式（如DOC 97-2003），将文件另存为DOCX格式后重新上传，或直接复制粘贴文本内容',
-            });
+            return reply
+              .code(422)
+              .send(
+                buildPrefixedError(
+                  '文件解析失败',
+                  new Error(
+                    '此DOC文件可能是较老的格式（如DOC 97-2003），将文件另存为DOCX格式后重新上传，或直接复制粘贴文本内容',
+                  ),
+                  422,
+                ),
+              );
           }
         } catch (docError: any) {
           app.log.error({ err: docError, filename }, 'DOC解析失败');
           // 检查是否是格式兼容性问题
           if (docError.message && docError.message.includes('zip')) {
-            return reply.code(422).send({
-              error:
-                '此DOC文件格式较老（如DOC 97-2003），无法自动解析。请将文件另存为DOCX格式后重新上传，或直接复制粘贴文本内容',
-            });
+            return reply
+              .code(422)
+              .send(
+                buildPrefixedError(
+                  '文件解析失败',
+                  new Error(
+                    '此DOC文件格式较老（如DOC 97-2003），无法自动解析。请将文件另存为DOCX格式后重新上传，或直接复制粘贴文本内容',
+                  ),
+                  422,
+                ),
+              );
           }
-          return reply.code(422).send({
-            error: `DOC文件解析失败：${docError.message || '文件可能已损坏或格式过旧'}。建议转换为DOCX格式或直接复制粘贴文本内容。`,
-          });
+          return reply
+            .code(422)
+            .send(
+              buildPrefixedError(
+                '文件解析失败',
+                new Error(
+                  `DOC文件解析失败：${docError.message || '文件可能已损坏或格式过旧'}。建议转换为DOCX格式或直接复制粘贴文本内容。`,
+                ),
+                422,
+              ),
+            );
         }
       } else {
-        return reply.code(415).send({
-          error: `不支持的文件类型：${mimetype || '未知格式'} (${filename})。仅支持PDF、DOC和DOCX格式的简历文件。`,
-        });
+        return reply
+          .code(415)
+          .send(
+            buildPrefixedError(
+              '文件解析失败',
+              new Error(
+                `不支持的文件类型：${mimetype || '未知格式'} (${filename})。仅支持PDF、DOC和DOCX格式的简历文件。`,
+              ),
+              415,
+            ),
+          );
       }
 
       if (!text || text.length < 5) {
-        return reply.code(422).send({
-          error: `文件解析成功但未提取到有效文本内容（长度: ${text.length}字符）。请检查文件是否包含可读文本内容，或直接复制粘贴文本内容。`,
-        });
+        return reply
+          .code(422)
+          .send(
+            buildPrefixedError(
+              '文件解析失败',
+              new Error(
+                `文件解析成功但未提取到有效文本内容（长度: ${text.length}字符）。请检查文件是否包含可读文本内容，或直接复制粘贴文本内容。`,
+              ),
+              422,
+            ),
+          );
       }
 
       app.log.info({ filename, finalTextLength: text.length }, '文件解析成功');
@@ -243,16 +308,40 @@ export function registerFileRoutes(app: FastifyInstance) {
 
       // 根据错误类型返回更友好的错误信息
       if (err?.code === 'ENOENT') {
-        return reply.code(400).send({ error: '文件不存在或无法读取，请重新选择文件' });
+        return reply
+          .code(400)
+          .send(
+            buildPrefixedError(
+              '文件解析失败',
+              new Error('文件不存在或无法读取，请重新选择文件'),
+              400,
+            ),
+          );
       } else if (err?.message?.includes('size')) {
-        return reply.code(413).send({ error: '文件过大，请选择小于10MB的文件' });
+        return reply
+          .code(413)
+          .send(
+            buildPrefixedError('文件解析失败', new Error('文件过大，请选择小于10MB的文件'), 413),
+          );
       } else if (err?.message?.includes('multipart')) {
-        return reply.code(400).send({ error: '文件上传格式错误，请重新选择文件' });
+        return reply
+          .code(400)
+          .send(
+            buildPrefixedError('文件解析失败', new Error('文件上传格式错误，请重新选择文件'), 400),
+          );
       }
 
-      return reply.code(500).send({
-        error: `文件解析服务异常：${err?.message || '未知错误'}。请稍后重试或直接复制粘贴文本内容。`,
-      });
+      return reply
+        .code(500)
+        .send(
+          buildPrefixedError(
+            '文件解析失败',
+            new Error(
+              `文件解析服务异常：${err?.message || '未知错误'}。请稍后重试或直接复制粘贴文本内容。`,
+            ),
+            500,
+          ),
+        );
     }
   });
 }

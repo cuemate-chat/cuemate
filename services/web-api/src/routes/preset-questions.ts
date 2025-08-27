@@ -2,6 +2,7 @@ import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 export function registerPresetQuestionRoutes(app: FastifyInstance) {
   // 获取预置题库列表
@@ -104,7 +105,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
 
         return { items, total, page, pageSize };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证:' + err });
+        return reply.code(401).send(buildPrefixedError('获取预置题库列表失败', err, 401));
       }
     }),
   );
@@ -142,7 +143,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
 
         return { item };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证:' + err });
+        return reply.code(401).send(buildPrefixedError('获取预置题目详情失败', err, 401));
       }
     }),
   );
@@ -173,7 +174,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
 
         return { id };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '创建失败' });
+        return reply.code(400).send(buildPrefixedError('创建预置题目失败', err, 400));
       }
     }),
   );
@@ -234,7 +235,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
 
         return { success: true };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '更新失败' });
+        return reply.code(400).send(buildPrefixedError('更新预置题目失败', err, 400));
       }
     }),
   );
@@ -264,7 +265,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
         (app as any).db.prepare('DELETE FROM preset_questions WHERE id = ?').run(id);
         return { success: true };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '删除失败' });
+        return reply.code(400).send(buildPrefixedError('删除预置题目失败', err, 400));
       }
     }),
   );
@@ -301,7 +302,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
 
         return { success: true, deletedCount };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '批量删除失败' });
+        return reply.code(400).send(buildPrefixedError('批量删除预置题目失败', err, 400));
       }
     }),
   );
@@ -422,7 +423,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
 
         return { success: true, syncedCount, skippedCount };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '同步失败' });
+        return reply.code(400).send(buildPrefixedError('批量同步预置题目失败', err, 400));
       }
     }),
   );
@@ -507,7 +508,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
           errors: errors.length > 0 ? errors : undefined,
         };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '批量导入失败' });
+        return reply.code(400).send(buildPrefixedError('批量导入预置题目失败', err, 400));
       }
     }),
   );

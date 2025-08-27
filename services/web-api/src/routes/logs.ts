@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 const LOG_BASE_DIR = process.env.CUEMATE_LOG_DIR || '/opt/cuemate/logs';
 const LEVELS = ['debug', 'info', 'warn', 'error'] as const;
@@ -135,9 +136,9 @@ export function registerLogRoutes(app: FastifyInstance) {
       const start = Math.max(0, lines.length - tail);
       const tailLines = lines.slice(start).filter((l) => l.length > 0);
       return { level, service, date, lines: tailLines };
-    } catch (err) {
+    } catch (err: any) {
       (req as any).log.error({ err: err }, 'read-log-failed');
-      return reply.code(404).send({ error: 'not_found' });
+      return reply.code(404).send(buildPrefixedError('读取日志失败', err, 404));
     }
   });
 
@@ -187,19 +188,13 @@ export function registerLogRoutes(app: FastifyInstance) {
         fs.writeFileSync(filePath, '', 'utf8');
         (req as any).log.debug({ level, service, date }, 'log-file-cleared');
         return { success: true, message: '日志文件已清空' };
-      } catch (writeErr) {
+      } catch (writeErr: any) {
         (req as any).log.error({ err: writeErr, level, service, date }, 'write-log-failed');
-        return reply.code(500).send({
-          error: 'write_failed',
-          message: '写入日志文件失败',
-        });
+        return reply.code(500).send(buildPrefixedError('清空日志失败', writeErr, 500));
       }
-    } catch (parseErr) {
+    } catch (parseErr: any) {
       (req as any).log.error({ err: parseErr }, 'parse-params-failed');
-      return reply.code(400).send({
-        error: 'parse_failed',
-        message: '参数解析失败：' + (parseErr as Error).message,
-      });
+      return reply.code(400).send(buildPrefixedError('参数解析失败', parseErr, 400));
     }
   });
 
@@ -263,19 +258,13 @@ export function registerLogRoutes(app: FastifyInstance) {
         }
 
         return { success: true, message: '日志文件已删除' };
-      } catch (deleteErr) {
+      } catch (deleteErr: any) {
         (req as any).log.error({ err: deleteErr, level, service, date }, 'delete-log-failed');
-        return reply.code(500).send({
-          error: 'delete_failed',
-          message: '删除日志文件失败',
-        });
+        return reply.code(500).send(buildPrefixedError('日志删除失败', deleteErr, 500));
       }
-    } catch (parseErr) {
+    } catch (parseErr: any) {
       (req as any).log.error({ err: parseErr }, 'parse-params-failed');
-      return reply.code(400).send({
-        error: 'parse_failed',
-        message: '参数解析失败：' + (parseErr as Error).message,
-      });
+      return reply.code(400).send(buildPrefixedError('参数解析失败', parseErr, 400));
     }
   });
 }

@@ -3,6 +3,7 @@ import { setLoggerTimeZone } from '@cuemate/logger/tz';
 import bcrypt from 'bcryptjs';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 export function registerAuthRoutes(app: FastifyInstance) {
   // 允许用用户名（name / id）或邮箱登录：字段统一为 account
@@ -47,7 +48,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
         if (!row) return reply.code(404).send({ error: '用户不存在' });
         return { user: row };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证' });
+        return reply.code(401).send(buildPrefixedError('获取当前用户失败', err, 401));
       }
     }),
   );
@@ -97,7 +98,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
         if (row?.timezone) setLoggerTimeZone(row.timezone);
         return { success: true, user: row };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证' });
+        return reply.code(401).send(buildPrefixedError('更新用户设置失败', err, 401));
       }
     }),
   );
@@ -122,7 +123,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
           .run(newHash, payload.uid);
         return { success: true };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证' });
+        return reply.code(401).send(buildPrefixedError('修改密码失败', err, 401));
       }
     }),
   );

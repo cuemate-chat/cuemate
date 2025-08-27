@@ -63,7 +63,7 @@ export default function Settings() {
           await changePassword(oldPassword, newPassword);
           message.success('密码已更新');
         } catch (err: any) {
-          message.error(err?.message || '修改密码失败');
+          console.error('修改密码失败:', err);
         }
       })();
     };
@@ -95,7 +95,7 @@ export default function Settings() {
         }));
         setModelOptions(opts);
       } catch (error) {
-        message.error('Failed to load model options:' + error);
+        console.error('Failed to load model options:', error);
       }
     })();
   }, []);
@@ -335,7 +335,7 @@ export default function Settings() {
                   }
                   message.success('设置已保存');
                 } catch (e: any) {
-                  message.error(e?.message || '保存失败');
+                  console.error('保存失败:', e);
                 } finally {
                   setSaving(false);
                 }

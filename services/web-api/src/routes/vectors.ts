@@ -2,6 +2,7 @@ import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 /**
  * 统一的向量库删除接口：删除 Chroma 向量，并回写业务库 vector_status = 0
@@ -100,7 +101,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
           },
         };
       } catch (err: any) {
-        return reply.code(401).send({ error: '未认证:' + err });
+        return reply.code(401).send(buildPrefixedError('查询同步状态失败', err, 401));
       }
     }),
   );
@@ -115,7 +116,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
         payload = await (req as any).jwtVerify();
       } catch (jwtError: any) {
         app.log.error({ err: jwtError }, 'JWT verification failed');
-        return reply.code(401).send({ error: 'JWT验证失败，请重新登录' });
+        return reply.code(401).send(buildPrefixedError('一键同步失败', jwtError, 401));
       }
 
       // 解析请求体
@@ -124,7 +125,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
         body = z.object({ jobId: z.string().min(1).optional() }).parse((req as any).body || {});
       } catch (parseError: any) {
         app.log.error({ err: parseError }, 'Request body parse failed');
-        return reply.code(400).send({ error: '请求参数格式错误' });
+        return reply.code(400).send(buildPrefixedError('请求参数格式错误', parseError, 400));
       }
 
       try {
@@ -140,19 +141,23 @@ export function registerVectorRoutes(app: FastifyInstance) {
 
           if (!healthResponse.ok) {
             app.log.error(`RAG service health check failed: ${healthResponse.status}`);
-            return reply.code(503).send({
-              error: 'RAG服务不可用，请检查服务是否正常运行',
-              details: `Health check failed with status ${healthResponse.status}`,
-            });
+            return reply
+              .code(503)
+              .send(
+                buildPrefixedError(
+                  'RAG服务不可用，请检查服务是否正常运行',
+                  new Error(`Health check failed with status ${healthResponse.status}`),
+                  503,
+                ),
+              );
           }
 
           app.log.info('RAG service health check passed');
         } catch (healthError: any) {
           app.log.error({ err: healthError }, 'RAG service health check error');
-          return reply.code(503).send({
-            error: 'RAG服务连接失败，请检查服务是否正常运行',
-            details: healthError.message,
-          });
+          return reply
+            .code(503)
+            .send(buildPrefixedError('RAG服务连接失败，请检查服务是否正常运行', healthError, 503));
         }
 
         const processOneJob = async (job: any) => {
@@ -341,7 +346,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
         };
       } catch (err: any) {
         app.log.error({ err }, 'Sync-all failed');
-        return reply.code(500).send({ error: '同步失败：' + err.message });
+        return reply.code(500).send(buildPrefixedError('同步失败', err, 500));
       }
     }),
   );
@@ -360,7 +365,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
           app.log.info(`JWT verified for user ${payload.uid}`);
         } catch (jwtError: any) {
           app.log.error({ err: jwtError }, 'JWT verification failed');
-          return reply.code(401).send({ error: 'JWT验证失败：' + jwtError.message });
+          return reply.code(401).send(buildPrefixedError('清空失败', jwtError, 401));
         }
 
         app.log.info(`RAG service URL: ${getRagServiceUrl()}`);
@@ -379,20 +384,24 @@ export function registerVectorRoutes(app: FastifyInstance) {
 
           if (!healthResponse.ok) {
             app.log.error(`RAG service health check failed: ${healthResponse.status}`);
-            return reply.code(503).send({
-              error: 'RAG服务不可用，请检查服务是否正常运行',
-              details: `Health check failed with status ${healthResponse.status}`,
-            });
+            return reply
+              .code(503)
+              .send(
+                buildPrefixedError(
+                  'RAG服务不可用，请检查服务是否正常运行',
+                  new Error(`Health check failed with status ${healthResponse.status}`),
+                  503,
+                ),
+              );
           }
 
           const healthData = await healthResponse.json();
           app.log.info({ data: healthData }, 'RAG service health check passed');
         } catch (healthError: any) {
           app.log.error({ err: healthError }, 'RAG service health check error');
-          return reply.code(503).send({
-            error: 'RAG服务连接失败，请检查服务是否正常运行',
-            details: healthError.message,
-          });
+          return reply
+            .code(503)
+            .send(buildPrefixedError('RAG服务连接失败，请检查服务是否正常运行', healthError, 503));
         }
 
         // 调用RAG服务清空所有向量数据
@@ -410,7 +419,9 @@ export function registerVectorRoutes(app: FastifyInstance) {
           if (!ragResponse.ok) {
             const errorText = await ragResponse.text();
             app.log.error(`RAG service clean-all failed: ${ragResponse.status} ${errorText}`);
-            return reply.code(500).send({ error: 'RAG服务清空失败：' + errorText });
+            return reply
+              .code(500)
+              .send(buildPrefixedError('RAG服务清空失败', new Error(errorText), 500));
           }
 
           const result = (await ragResponse.json()) as any;
@@ -448,11 +459,11 @@ export function registerVectorRoutes(app: FastifyInstance) {
           reply.send(result);
         } catch (fetchError: any) {
           app.log.error({ err: fetchError }, 'Fetch to RAG service failed');
-          return reply.code(500).send({ error: '调用RAG服务失败：' + fetchError.message });
+          return reply.code(500).send(buildPrefixedError('调用RAG服务失败', fetchError, 500));
         }
       } catch (err: any) {
         app.log.error({ err }, 'Clean-all failed');
-        return reply.code(500).send({ error: '清空失败：' + err.message });
+        return reply.code(500).send(buildPrefixedError('清空失败', err, 500));
       }
     }),
   );
@@ -509,7 +520,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
 
         return { success: true };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '请求参数错误' });
+        return reply.code(400).send(buildPrefixedError('删除向量失败', err, 400));
       }
     }),
   );

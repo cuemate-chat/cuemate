@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 import type { FastifyInstance } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 // License 常量 (修正密钥长度为 16 字节)
 const SECRET_KEY = 'CueMateService16';
@@ -188,9 +189,9 @@ export function registerLicenseRoutes(app: FastifyInstance) {
       } catch (error: any) {
         app.log.error({ err: error }, '上传 License 文件失败');
         if (error.name === 'PayloadTooLargeError') {
-          return reply.code(413).send({ error: '文件太大，请上传小于 10MB 的文件' });
+          return reply.code(413).send(buildPrefixedError('License 文件上传失败', error, 413));
         }
-        return reply.code(500).send({ error: '上传失败: ' + error.message });
+        return reply.code(500).send(buildPrefixedError('License 文件上传失败', error, 500));
       }
     }),
   );
@@ -267,9 +268,9 @@ export function registerLicenseRoutes(app: FastifyInstance) {
         };
       } catch (error: any) {
         if (error.name === 'ZodError') {
-          return reply.code(400).send({ error: error.errors[0].message });
+          return reply.code(400).send(buildPrefixedError('License 文本上传失败', error, 400));
         }
-        return reply.code(401).send({ error: '未认证' });
+        return reply.code(401).send(buildPrefixedError('License 文本上传失败', error, 401));
       }
     }),
   );
@@ -311,8 +312,8 @@ export function registerLicenseRoutes(app: FastifyInstance) {
             updatedAt: license.updated_at,
           },
         };
-      } catch (error) {
-        return reply.code(401).send({ error: '未认证' });
+      } catch (error: any) {
+        return reply.code(401).send(buildPrefixedError('获取 License 信息失败', error, 401));
       }
     }),
   );
@@ -333,8 +334,8 @@ export function registerLicenseRoutes(app: FastifyInstance) {
         }
 
         return { success: true, message: 'License 删除成功' };
-      } catch (error) {
-        return reply.code(401).send({ error: '未认证' });
+      } catch (error: any) {
+        return reply.code(401).send(buildPrefixedError('删除 License 失败', error, 401));
       }
     }),
   );
@@ -475,14 +476,14 @@ export function registerLicenseRoutes(app: FastifyInstance) {
           };
         } catch (error: any) {
           app.log.error({ err: error }, '执行 SQL 事务失败');
-          return reply.code(500).send({ error: 'SQL 执行失败: ' + error.message });
+          return reply.code(500).send(buildPrefixedError('SQL 执行失败', error, 500));
         }
       } catch (error: any) {
         app.log.error({ err: error }, '上传内置题库失败');
         if (error.name === 'PayloadTooLargeError') {
-          return reply.code(413).send({ error: '文件太大，请上传小于 10MB 的文件' });
+          return reply.code(413).send(buildPrefixedError('内置题库上传失败', error, 413));
         }
-        return reply.code(500).send({ error: '上传失败: ' + (error?.message || '未知错误') });
+        return reply.code(500).send(buildPrefixedError('内置题库上传失败', error, 500));
       }
     }),
   );

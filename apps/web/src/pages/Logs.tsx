@@ -106,7 +106,7 @@ export default function Logs() {
         setTotal(res.total);
       })
       .catch((err) => {
-        message.error('加载日志失败：' + err);
+        console.error('加载日志失败：', err);
       });
   }, [service, level, date, page, pageSize]);
 
@@ -117,8 +117,8 @@ export default function Logs() {
       // 重置选择状态
       setSelectedLines(new Set());
       setSelectAll(false);
-    } catch {
-      message.error('读取日志内容失败');
+    } catch (e) {
+      console.error('读取日志内容失败', e);
     }
   };
 
@@ -139,10 +139,10 @@ export default function Logs() {
           setTotal(res.total);
         })
         .catch((err) => {
-          message.error('加载日志失败：' + err);
+          console.error('加载日志失败：', err);
         });
     } catch (error: any) {
-      message.error('日志清理失败：' + (error?.message || '未知错误'));
+      console.error('日志清理失败：', error);
     }
   };
 
@@ -163,11 +163,10 @@ export default function Logs() {
           setTotal(res.total);
         })
         .catch((err) => {
-          message.error('加载日志失败：' + err);
+          console.error('加载日志失败：', err);
         });
     } catch (error: any) {
       console.error('日志删除失败:', error);
-      message.error('日志删除失败：' + (error?.message || '未知错误'));
     }
   };
 

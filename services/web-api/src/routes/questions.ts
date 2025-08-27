@@ -2,6 +2,7 @@ import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 export function registerInterviewQuestionRoutes(app: FastifyInstance) {
   // 标签 CRUD
@@ -14,8 +15,8 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           .prepare('SELECT id, name, created_at FROM tags ORDER BY created_at DESC')
           .all();
         return { items: rows };
-      } catch (err) {
-        return reply.code(401).send({ error: '未认证' });
+      } catch (err: any) {
+        return reply.code(401).send(buildPrefixedError('获取标签列表失败', err, 401));
       }
     }),
   );
@@ -33,7 +34,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           .run(id, body.name, Date.now());
         return { id };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '创建失败' });
+        return reply.code(400).send(buildPrefixedError('创建标签失败', err, 400));
       }
     }),
   );
@@ -48,7 +49,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         (app as any).db.prepare('UPDATE tags SET name=? WHERE id=?').run(body.name, id);
         return { success: true };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '更新失败' });
+        return reply.code(400).send(buildPrefixedError('更新标签失败', err, 400));
       }
     }),
   );
@@ -62,7 +63,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         (app as any).db.prepare('DELETE FROM tags WHERE id=?').run(id);
         return { success: true };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '删除失败' });
+        return reply.code(400).send(buildPrefixedError('删除标签失败', err, 400));
       }
     }),
   );
@@ -126,8 +127,8 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         }
 
         return { id: qid };
-      } catch (err) {
-        return reply.code(401).send({ error: '未认证:' + err });
+      } catch (err: any) {
+        return reply.code(401).send(buildPrefixedError('创建押题失败', err, 401));
       }
     }),
   );
@@ -158,7 +159,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         const unsynced = Math.max(0, (total || 0) - (synced || 0));
         return { total: total || 0, synced: synced || 0, unsynced };
       } catch (err: any) {
-        return reply.code(401).send({ error: '未认证:' + err });
+        return reply.code(401).send(buildPrefixedError('查询同步统计失败', err, 401));
       }
     }),
   );
@@ -283,7 +284,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         }
         return { success, failed, total: rows.length, deletedExtras };
       } catch (err: any) {
-        return reply.code(401).send({ error: '未认证:' + err });
+        return reply.code(401).send(buildPrefixedError('批量同步失败', err, 401));
       }
     }),
   );
@@ -359,7 +360,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           .all(...args, pageSize, offset);
         return { items: rows, total };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证:' + err });
+        return reply.code(401).send(buildPrefixedError('分页查询失败', err, 401));
       }
     }),
   );
@@ -386,7 +387,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         if (!row) return reply.code(404).send({ error: '不存在' });
         return { item: row };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证:' + err });
+        return reply.code(401).send(buildPrefixedError('查询详情失败', err, 401));
       }
     }),
   );
@@ -462,7 +463,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         }
         return { success: true };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证:' + err });
+        return reply.code(401).send(buildPrefixedError('更新押题失败', err, 401));
       }
     }),
   );
@@ -500,7 +501,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         return { success: true };
       } catch (err) {
         app.log.error({ err }, '删除问题失败');
-        return reply.code(401).send({ error: '未认证:' + err });
+        return reply.code(401).send(buildPrefixedError('删除押题失败', err, 401));
       }
     }),
   );
@@ -571,7 +572,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         };
       } catch (err) {
         app.log.error({ err: err }, '批量删除岗位押题失败');
-        return reply.code(500).send({ error: '批量删除失败：' + err });
+        return reply.code(500).send(buildPrefixedError('批量删除失败', err, 500));
       }
     }),
   );

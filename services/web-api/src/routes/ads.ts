@@ -2,6 +2,7 @@ import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 // 广告数据验证模式
 const pixelAdSchema = z.object({
@@ -26,9 +27,7 @@ function checkBlockOccupied(db: any, blockConfigId: string, excludeId?: string):
        WHERE status = 'active' AND expires_at > ? AND block_config_id = ?`;
 
   const now = Date.now();
-  const params = excludeId
-    ? [now, blockConfigId, excludeId]
-    : [now, blockConfigId];
+  const params = excludeId ? [now, blockConfigId, excludeId] : [now, blockConfigId];
 
   const result = db.prepare(query).get(...params);
   return result.count > 0;
@@ -54,10 +53,10 @@ export function registerAdsRoutes(app: FastifyInstance) {
         return { blockConfigs };
       } catch (error: any) {
         app.log.error({ err: error }, '获取块配置失败');
-        return reply.code(500).send({ 
-          error: '服务器错误', 
+        return reply.code(500).send({
+          error: '服务器错误',
           details: error.message || error,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
         });
       }
     }),
@@ -68,17 +67,15 @@ export function registerAdsRoutes(app: FastifyInstance) {
     '/base-prices',
     withErrorLogging(app.log as any, 'base-prices.list', async (_req, reply) => {
       try {
-        const basePrices = app.db
-          .prepare('SELECT * FROM base_prices ORDER BY price ASC')
-          .all();
+        const basePrices = app.db.prepare('SELECT * FROM base_prices ORDER BY price ASC').all();
 
         return { basePrices };
       } catch (error: any) {
         app.log.error({ err: error }, '获取价格配置失败');
-        return reply.code(500).send({ 
-          error: '服务器错误', 
+        return reply.code(500).send({
+          error: '服务器错误',
           details: error.message || error,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
         });
       }
     }),
@@ -91,7 +88,7 @@ export function registerAdsRoutes(app: FastifyInstance) {
       try {
         const now = Date.now();
         const query = req.query as { exclude_ad_id?: string };
-        
+
         let sql = `
           SELECT bc.*, bp.price 
           FROM block_configs bc
@@ -100,29 +97,29 @@ export function registerAdsRoutes(app: FastifyInstance) {
             SELECT block_config_id 
             FROM pixel_ads 
             WHERE status = 'active' AND expires_at > ?`;
-        
+
         const params: any[] = [now];
-        
+
         // 如果是编辑模式，排除当前编辑的广告记录
         if (query.exclude_ad_id) {
           sql += ` AND id != ?`;
           params.push(query.exclude_ad_id);
         }
-        
+
         sql += `
           )
           ORDER BY CAST(bc.id AS INTEGER)
         `;
-        
+
         const availableBlocks = app.db.prepare(sql).all(...params);
 
         return { availableBlocks };
       } catch (error: any) {
         app.log.error({ err: error }, '获取可用块配置失败');
-        return reply.code(500).send({ 
-          error: '服务器错误', 
+        return reply.code(500).send({
+          error: '服务器错误',
           details: error.message || error,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
         });
       }
     }),
@@ -201,7 +198,7 @@ export function registerAdsRoutes(app: FastifyInstance) {
         };
       } catch (err: any) {
         app.log.error({ err }, '获取广告列表失败');
-        return reply.code(401).send({ error: '未认证：' + err });
+        return reply.code(401).send(buildPrefixedError('获取广告列表失败', err, 401));
       }
     }),
   );
@@ -214,7 +211,9 @@ export function registerAdsRoutes(app: FastifyInstance) {
         await req.jwtVerify();
         const params = z.object({ id: z.string() }).parse(req.params);
 
-        const ad = app.db.prepare(`
+        const ad = app.db
+          .prepare(
+            `
           SELECT pa.*, 
                  bc.block_id, bc.x, bc.y, bc.width, bc.height, bc.type,
                  bp.price,
@@ -223,7 +222,9 @@ export function registerAdsRoutes(app: FastifyInstance) {
           LEFT JOIN block_configs bc ON pa.block_config_id = bc.id
           LEFT JOIN base_prices bp ON bc.price_id = bp.id
           WHERE pa.id = ?
-        `).get(params.id);
+        `,
+          )
+          .get(params.id);
 
         if (!ad) {
           return reply.code(404).send({ error: '广告不存在' });
@@ -232,7 +233,7 @@ export function registerAdsRoutes(app: FastifyInstance) {
         return { ad };
       } catch (err: any) {
         app.log.error({ err }, '获取广告详情失败');
-        return reply.code(401).send({ error: '未认证：' + err });
+        return reply.code(401).send(buildPrefixedError('获取广告详情失败', err, 401));
       }
     }),
   );
@@ -262,10 +263,10 @@ export function registerAdsRoutes(app: FastifyInstance) {
         return { ads };
       } catch (error: any) {
         app.log.error({ err: error }, '获取公开广告失败');
-        return reply.code(500).send({ 
-          error: '服务器错误', 
+        return reply.code(500).send({
+          error: '服务器错误',
           details: error.message || error,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
         });
       }
     }),
@@ -341,9 +342,9 @@ export function registerAdsRoutes(app: FastifyInstance) {
       } catch (err: any) {
         app.log.error({ err }, '创建广告失败');
         if (err.name === 'ZodError') {
-          return reply.code(400).send({ error: err.errors[0].message });
+          return reply.code(400).send(buildPrefixedError('创建广告失败', err, 400));
         }
-        return reply.code(401).send({ error: '未认证：' + err });
+        return reply.code(401).send(buildPrefixedError('创建广告失败', err, 401));
       }
     }),
   );
@@ -425,9 +426,9 @@ export function registerAdsRoutes(app: FastifyInstance) {
       } catch (err: any) {
         app.log.error({ err }, '更新广告失败');
         if (err.name === 'ZodError') {
-          return reply.code(400).send({ error: err.errors[0].message });
+          return reply.code(400).send(buildPrefixedError('更新广告失败', err, 400));
         }
-        return reply.code(401).send({ error: '未认证：' + err });
+        return reply.code(401).send(buildPrefixedError('更新广告失败', err, 401));
       }
     }),
   );
@@ -462,9 +463,9 @@ export function registerAdsRoutes(app: FastifyInstance) {
       } catch (err: any) {
         app.log.error({ err }, '删除广告失败');
         if (err.name === 'ZodError') {
-          return reply.code(400).send({ error: err.errors[0].message });
+          return reply.code(400).send(buildPrefixedError('删除广告失败', err, 400));
         }
-        return reply.code(401).send({ error: '未认证：' + err });
+        return reply.code(401).send(buildPrefixedError('删除广告失败', err, 401));
       }
     }),
   );
@@ -503,9 +504,9 @@ export function registerAdsRoutes(app: FastifyInstance) {
       } catch (err: any) {
         app.log.error({ err }, '检查广告块失败');
         if (err.name === 'ZodError') {
-          return reply.code(400).send({ error: err.errors[0].message });
+          return reply.code(400).send(buildPrefixedError('检查广告块失败', err, 400));
         }
-        return reply.code(401).send({ error: '未认证：' + err });
+        return reply.code(401).send(buildPrefixedError('检查广告块失败', err, 401));
       }
     }),
   );

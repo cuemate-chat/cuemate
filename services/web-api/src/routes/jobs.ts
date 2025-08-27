@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 export function registerJobRoutes(app: FastifyInstance) {
   const createSchema = z.object({
@@ -97,10 +98,10 @@ export function registerJobRoutes(app: FastifyInstance) {
         }
 
         return { jobId, resumeId };
-      } catch (err) {
+      } catch (err: any) {
         // 记录详细错误信息到日志
         app.log.error({ err }, '岗位创建失败');
-        return reply.code(401).send({ error: '未认证：' + err });
+        return reply.code(401).send(buildPrefixedError('岗位创建失败', err, 401));
       }
     },
   );
@@ -127,9 +128,9 @@ export function registerJobRoutes(app: FastifyInstance) {
         )
         .all(payload.uid);
       return { items: rows };
-    } catch (err) {
+    } catch (err: any) {
       app.log.error({ err }, '获取岗位列表失败');
-      return reply.code(401).send({ error: '未认证：' + err });
+      return reply.code(401).send(buildPrefixedError('获取岗位列表失败', err, 401));
     }
   });
 
@@ -148,9 +149,9 @@ export function registerJobRoutes(app: FastifyInstance) {
         .get(id, payload.uid);
       if (!row) return reply.code(404).send({ error: '岗位不存在' });
       return { job: row };
-    } catch (err) {
+    } catch (err: any) {
       app.log.error({ err }, '获取岗位详情失败');
-      return reply.code(401).send({ error: '未认证：' + err });
+      return reply.code(401).send(buildPrefixedError('获取岗位详情失败', err, 401));
     }
   });
 
@@ -241,9 +242,9 @@ export function registerJobRoutes(app: FastifyInstance) {
       }
 
       return { success: true };
-    } catch (err) {
+    } catch (err: any) {
       app.log.error({ err }, '更新岗位失败');
-      return reply.code(401).send({ error: '未认证：' + err });
+      return reply.code(401).send(buildPrefixedError('更新岗位失败', err, 401));
     }
   });
 
@@ -255,16 +256,18 @@ export function registerJobRoutes(app: FastifyInstance) {
       try {
         payload = await req.jwtVerify();
         app.log.info(`User ${payload.uid} attempting to delete job`);
-      } catch (jwtError) {
+      } catch (jwtError: any) {
         app.log.error({ err: jwtError }, 'JWT verification failed');
-        return reply.code(401).send({ error: 'JWT验证失败，请重新登录' });
+        return reply.code(401).send(buildPrefixedError('JWT验证失败', jwtError, 401));
       }
 
       // 2. 参数验证
       const id = (req.params as any)?.id as string;
       if (!id) {
         app.log.error('Job ID is missing from request params');
-        return reply.code(400).send({ error: '岗位ID不能为空' });
+        return reply
+          .code(400)
+          .send(buildPrefixedError('岗位删除失败', new Error('岗位ID不能为空'), 400));
       }
 
       app.log.info(`Starting cascading delete for job ${id} by user ${payload.uid}`);
@@ -300,7 +303,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         app.log.info(`Database transaction completed for job ${id}:`, deleteResult);
       } catch (dbError: any) {
         app.log.error({ err: dbError }, `Database transaction failed for job ${id}`);
-        return reply.code(500).send({ error: '数据库操作失败：' + dbError.message });
+        return reply.code(500).send(buildPrefixedError('删除岗位失败', dbError, 500));
       }
 
       // 4. 删除向量库中的所有相关数据（岗位、简历、押题）
@@ -336,7 +339,7 @@ export function registerJobRoutes(app: FastifyInstance) {
     } catch (err: any) {
       app.log.error({ err }, '删除岗位失败');
       // 不要返回401，除非确实是认证问题
-      return reply.code(500).send({ error: '删除岗位失败：' + err.message });
+      return reply.code(500).send(buildPrefixedError('删除岗位失败', err, 500));
     }
   });
 
@@ -459,16 +462,18 @@ export function registerJobRoutes(app: FastifyInstance) {
         if (!llmResponse.ok) {
           const errorText = await llmResponse.text();
           app.log.error(`LLM service error: ${llmResponse.status} - ${errorText}`);
-
-          let errorMessage = `调用大模型服务失败 (${llmResponse.status}): ${errorText}`;
-          return reply.code(500).send({ error: errorMessage });
+          return reply
+            .code(500)
+            .send(buildPrefixedError('简历优化失败', new Error(errorText), 500));
         }
 
         const llmResult = (await llmResponse.json()) as any;
         const content = llmResult.choices?.[0]?.message?.content;
 
         if (!content) {
-          return reply.code(500).send({ error: '大模型返回内容为空' });
+          return reply
+            .code(500)
+            .send(buildPrefixedError('简历优化失败', new Error('大模型返回内容为空'), 500));
         }
 
         // 尝试解析JSON格式的回复
@@ -512,9 +517,9 @@ export function registerJobRoutes(app: FastifyInstance) {
       } catch (err: any) {
         app.log.error({ err: err }, '简历优化失败');
         if (err.name === 'ZodError') {
-          return reply.code(400).send({ error: '参数错误' });
+          return reply.code(400).send(buildPrefixedError('简历优化失败', err, 400));
         }
-        return reply.code(500).send({ error: '简历优化失败：' + err.message });
+        return reply.code(500).send(buildPrefixedError('简历优化失败', err, 500));
       }
     }),
   );

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 const configSchema = z.object({
   name: z.string().min(1).max(50).default('ASR-Gateway'),
@@ -141,10 +142,7 @@ export function registerAsrRoutes(app: FastifyInstance) {
       };
     } catch (error: any) {
       app.log.error({ err: error }, 'Failed to update ASR config');
-      return reply.code(500).send({
-        error: 'update_failed',
-        message: error.message,
-      });
+      return reply.code(500).send(buildPrefixedError('语音识别配置保存失败', error, 500));
     }
   });
 }

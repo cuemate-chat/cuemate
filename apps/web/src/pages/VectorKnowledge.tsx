@@ -93,7 +93,7 @@ export default function VectorKnowledge() {
                 };
               }
             } catch (error) {
-              message.error('获取相关文档失败:' + error);
+              console.error('获取相关文档失败:', error);
             }
             return doc;
           })
@@ -105,6 +105,7 @@ export default function VectorKnowledge() {
         setTotalResults(0);
       }
     } catch (error) {
+      console.error('搜索出错:', error);
       setSearchResults([]);
       setTotalResults(0);
     } finally {
@@ -141,7 +142,7 @@ export default function VectorKnowledge() {
       const data = await listTags();
       setTags(data.items || []);
     } catch (error) {
-      message.error('获取标签失败: ' + error);
+      console.error('获取标签失败:', error);
     }
   };
 
@@ -264,7 +265,7 @@ export default function VectorKnowledge() {
         });
       }
     } catch (error) {
-      message.error('获取关联信息失败: ' + error);
+      console.error('获取关联信息失败:', error);
       // 设置默认的关联数据结构
       setRelatedData({
         jobs: doc.metadata.type === 'jobs' ? [doc] : [],

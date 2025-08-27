@@ -166,7 +166,7 @@ export default function AdsManagement() {
       setAds(data.ads);
       setTotalCount(data.pagination.total);
     } catch (error) {
-      message.error('获取广告列表出错');
+      console.error('获取广告列表出错:', error);
     } finally {
       setLoading(false);
     }

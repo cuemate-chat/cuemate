@@ -1,6 +1,7 @@
 import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 export function registerReviewRoutes(app: FastifyInstance) {
   // 面试复盘列表（按开始时间倒序，无分页，前端统一滚动展示）
@@ -42,7 +43,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
           .all(payload.uid);
         return { items: rows, total };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证' });
+        return reply.code(401).send(buildPrefixedError('获取面试复盘列表失败', err, 401));
       }
     }),
   );
@@ -117,7 +118,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
 
         return { summary, questions, insights, advantages };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证' });
+        return reply.code(401).send(buildPrefixedError('获取面试复盘详情失败', err, 401));
       }
     }),
   );
@@ -158,7 +159,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
           );
         return { id };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '创建失败' });
+        return reply.code(400).send(buildPrefixedError('创建面试复盘失败', err, 400));
       }
     }),
   );
@@ -177,7 +178,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
         (app as any).db.prepare('UPDATE interviews SET ended_at=? WHERE id=?').run(Date.now(), id);
         return { success: true };
       } catch (err: any) {
-        return reply.code(400).send({ error: err?.message || '更新失败' });
+        return reply.code(400).send(buildPrefixedError('结束面试失败', err, 400));
       }
     }),
   );
@@ -196,7 +197,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
         (app as any).db.prepare('DELETE FROM interviews WHERE id=?').run(id);
         return { success: true };
       } catch (err) {
-        return reply.code(401).send({ error: '未认证' });
+        return reply.code(401).send(buildPrefixedError('删除面试复盘失败', err, 401));
       }
     }),
   );

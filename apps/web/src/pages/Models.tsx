@@ -129,7 +129,7 @@ export default function Models() {
         setList(all.slice(start, start + pageSize));
       }
     } catch (e: any) {
-      message.error(e?.message || '获取模型失败');
+      console.error('获取模型失败:', e);
     } finally {
       setLoading(false);
     }
@@ -143,11 +143,11 @@ export default function Models() {
         try {
           await selectUserModel(m.id);
         } catch (error) {
-          message.error('Failed to select user model:' + error);
+          console.error('Failed to select user model:', error);
         }
       }
     } catch (error) {
-      message.error('Failed to get user info:' + error);
+      console.error('Failed to get user info:', error);
     }
     try {
       const res: any = await getModel(m.id);
@@ -161,7 +161,7 @@ export default function Models() {
         return;
       }
     } catch (error) {
-      message.error('Failed to get model details:' + error);
+      console.error('Failed to get model details:', error);
     }
     setEditing(m);
   }
@@ -180,7 +180,7 @@ export default function Models() {
           // 删除后立即刷新，保障页码回退逻辑生效
           await fetchList();
         } catch (error) {
-          message.error('删除失败：' + error);
+          console.error('删除失败：', error);
         }
       }
     });

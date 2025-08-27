@@ -22,7 +22,17 @@ export function fastifyLoggingHooks() {
       app.setErrorHandler((error: any, _req: any, reply: any) => {
         const status = (error as any)?.statusCode || 500;
         (app.log as any).error({ err: error, status }, 'unhandled');
-        reply.code(status).send({ error: 'Internal Server Error' });
+        const isDev = process.env.NODE_ENV !== 'production';
+        const payload: any = {
+          error: (error && (error.message || String(error))) || 'Unknown error',
+          name: (error && error.name) || undefined,
+          code: (error && (error.code || error.statusCode)) || undefined,
+          status,
+          details: (error && (error.details || error.errors)) || undefined,
+          cause: (error && error.cause) || undefined,
+          stack: isDev ? error?.stack : undefined,
+        };
+        reply.code(status).send(payload);
       });
     },
   };

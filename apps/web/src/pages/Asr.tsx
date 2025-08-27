@@ -83,7 +83,7 @@ export default function AsrSettings() {
         });
       }
     } catch (error: any) {
-      message.error('加载配置失败：' + error.message);
+      console.error('加载配置失败：', error);
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,7 @@ export default function AsrSettings() {
       message.success(data.message || '配置已保存');
       setConfig(data.config);
     } catch (error: any) {
-      message.error('保存失败：' + error.message);
+      console.error('保存失败：', error);
     } finally {
       setSaving(false);
     }

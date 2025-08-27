@@ -57,7 +57,7 @@ export default function License() {
       
       fetchLicenseInfo(); // 刷新 License 信息
     } catch (error) {
-      message.error('License 文件上传失败');
+      console.error('License 文件上传失败:', error);
     } finally {
       setUploadingFile(false);
       // 清空文件输入
@@ -85,7 +85,7 @@ export default function License() {
       const data = await uploadQuestions(file);
       message.success(data.message || `导入完成: ${data.summary} 条新增，${data.existingCount || 0} 条已存在`);
     } catch (error) {
-      message.error('内置题库导入失败');
+      console.error('内置题库导入失败:', error);
     } finally {
       setUploadingQuestions(false);
       // 清空文件输入

@@ -2,6 +2,7 @@ import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getLlmRouterUrl, SERVICE_CONFIG } from '../config/services.js';
+import { buildPrefixedError } from '../utils/error-response.js';
 
 export function registerModelRoutes(app: FastifyInstance) {
   // 列表查询（支持按供应商/类型/关键字过滤）
@@ -279,8 +280,8 @@ export function registerModelRoutes(app: FastifyInstance) {
           .prepare('UPDATE users SET selected_model_id=? WHERE id=?')
           .run(model_id, payload.uid);
         return { success: true };
-      } catch {
-        return reply.code(401).send({ error: '未认证' });
+      } catch (err) {
+        return reply.code(401).send(buildPrefixedError('选择模型失败', err, 401));
       }
     }),
   );
