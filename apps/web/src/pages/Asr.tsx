@@ -8,13 +8,14 @@ export default function AsrSettings() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [config, setConfig] = useState<AsrConfig | null>(null);
+  const [services, setServices] = useState<{name: string, url: string}[]>([]);
   const [form] = Form.useForm();
 
   // 语音测试相关状态
   const [isRecording, setIsRecording] = useState(false);
   const [transcriptText, setTranscriptText] = useState('');
   const [recordingTime, setRecordingTime] = useState(0);
-  const [testService, setTestService] = useState('ws://localhost:8001/asr');
+  const [testService, setTestService] = useState('');
   const websocketRef = useRef<WebSocket | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -29,6 +30,44 @@ export default function AsrSettings() {
     try {
       const data = await getAsrConfig();
       setConfig(data.config);
+
+      // 规范化后端返回的 WebSocket 地址，避免浏览器收到容器名或 8000 端口
+      const normalizeUrl = (service: { name: string; url: string }): string => {
+        try {
+          const isLocalhost = typeof window !== 'undefined' &&
+            (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+          // 只在本机访问的情况下强制使用 localhost 与映射端口
+          if (isLocalhost) {
+            const port = service.name === 'asr-interviewer' ? 8002 : 8001;
+            return `ws://localhost:${port}/asr`;
+          }
+
+          // 非 localhost 情况，尽量保留后端提供的 host，但修正容器名与 8000 端口
+          const u = new URL(service.url);
+          if (u.hostname.startsWith('cuemate-asr-') || u.port === '8000') {
+            const port = service.name === 'asr-interviewer' ? '8002' : '8001';
+            const host = typeof window !== 'undefined' ? window.location.hostname : u.hostname;
+            return `${u.protocol}//${host}:${port}${u.pathname}`;
+          }
+          return service.url;
+        } catch {
+          // 解析失败时回退到合理的默认值
+          return service.name === 'asr-interviewer'
+            ? 'ws://localhost:8002/asr'
+            : 'ws://localhost:8001/asr';
+        }
+      };
+
+      const normalizedServices = (data.services || []).map(s => ({
+        name: s.name,
+        url: normalizeUrl(s),
+      }));
+
+      setServices(normalizedServices);
+      if (!testService && normalizedServices.length > 0) {
+        setTestService(normalizedServices[0].url);
+      }
       if (data.config) {
         // 确保表单获得完整的数据
         form.setFieldsValue({
@@ -820,10 +859,10 @@ export default function AsrSettings() {
               value={testService}
               onChange={setTestService}
               style={{ width: '100%' }}
-              options={[
-                { value: 'ws://localhost:8001/asr', label: '面试者语音识别 - 麦克风输入 (8001端口)' },
-                { value: 'ws://localhost:8002/asr', label: '面试官语音识别 - 系统音频输出 (8002端口)' }
-              ]}
+              options={services.map(service => ({
+                value: service.url,
+                label: `${service.name === 'asr-user' ? '面试者语音识别 - 麦克风输入' : '面试官语音识别 - 系统音频输出'} (${service.url})`
+              }))}
             />
           </div>
 

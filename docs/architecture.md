@@ -6,7 +6,7 @@
 - **web-api**: 后端API服务
 - **llm-router**: LLM路由服务
 - **rag-service**: RAG知识库服务
-- **asr-user**: 用户语音识别 (WhisperLiveKit)
+- **asr-user**: 面试者语音识别 (WhisperLiveKit)
 - **asr-interviewer**: 面试官语音识别 (WhisperLiveKit)
 
 ## 数据流

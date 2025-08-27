@@ -33,7 +33,7 @@ const configSchema = z.object({
 
 export function registerAsrRoutes(app: FastifyInstance) {
   // 获取当前 ASR 配置
-  app.get('/asr/config', async () => {
+  app.get('/asr/config', async (req) => {
     const stmt = (app as any).db.prepare('SELECT * FROM asr_config WHERE id = 1');
     const rawConfig = stmt.get();
 
@@ -50,16 +50,36 @@ export function registerAsrRoutes(app: FastifyInstance) {
         }
       : null;
 
+    // 检查请求来源，判断如何返回WebSocket地址
+    const host = req.headers.host || 'localhost:3001';
+    const isDockerEnvironment = process.env.NODE_ENV === 'production';
+
+    // 根据请求来源返回正确的WebSocket地址
+    const getWebSocketUrl = (port: number, containerName: string) => {
+      // 如果是从浏览器访问，始终返回localhost地址
+      console.log(containerName);
+      // 只有在容器间通信时才使用容器名称
+      if (host.includes('localhost') || host.includes('127.0.0.1')) {
+        return `ws://localhost:${port}/asr`;
+      } else if (isDockerEnvironment) {
+        // 如果是生产环境且不是localhost访问，返回实际主机地址
+        const hostname = host.split(':')[0];
+        return `ws://${hostname}:${port}/asr`;
+      } else {
+        return `ws://localhost:${port}/asr`;
+      }
+    };
+
     return {
       config,
       services: [
         {
           name: 'asr-user',
-          url: 'ws://localhost:8001/asr',
+          url: getWebSocketUrl(8001, 'cuemate-asr-user'),
         },
         {
           name: 'asr-interviewer',
-          url: 'ws://localhost:8002/asr',
+          url: getWebSocketUrl(8002, 'cuemate-asr-interviewer'),
         },
       ],
     };

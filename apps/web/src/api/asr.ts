@@ -1,3 +1,5 @@
+import { http } from './http';
+
 //ASR Configuration API
 
 export interface AsrConfig {
@@ -45,11 +47,7 @@ export interface AsrConfigResponse {
  * 获取 ASR 配置
  */
 export async function getAsrConfig(): Promise<AsrConfigResponse> {
-  const response = await fetch('/api/asr/config');
-  if (!response.ok) {
-    throw new Error('获取配置失败');
-  }
-  return response.json();
+  return http.get<AsrConfigResponse>('/asr/config');
 }
 
 /**
@@ -60,19 +58,9 @@ export async function saveAsrConfig(config: Partial<AsrConfig>): Promise<{
   config: AsrConfig;
   message: string;
 }> {
-  const response = await fetch('/api/asr/config', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(config),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || '保存失败');
-  }
-
-  return data;
+  return http.post<{
+    success: boolean;
+    config: AsrConfig;
+    message: string;
+  }>('/asr/config', config);
 }

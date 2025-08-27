@@ -15,11 +15,11 @@ services:
 
   # ASR User - User Speech Recognition
   asr-user:
-    image: wlk
+    image: cuemate-asr-user:${VERSION:-0.1.0}
     container_name: cuemate-asr-user
     ports:
       - "8001:8000"
-    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--host", "0.0.0.0", "--port", "8000", "--no-vac", "--no-vad"]
+    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--port", "8000", "--no-vac", "--no-vad"]
     environment:
       - PYTORCH_DISABLE_NET_ACCESS=1
       - ASR_SERVICE_TYPE=user
@@ -32,11 +32,11 @@ services:
 
   # ASR Interviewer - Interviewer Speech Recognition  
   asr-interviewer:
-    image: wlk
+    image: cuemate-asr-interviewer:${VERSION:-0.1.0}
     container_name: cuemate-asr-interviewer
     ports:
       - "8002:8000"
-    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--host", "0.0.0.0", "--port", "8000", "--no-vac", "--no-vad"]
+    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--port", "8000", "--no-vac", "--no-vad"]
     environment:
       - PYTORCH_DISABLE_NET_ACCESS=1
       - ASR_SERVICE_TYPE=interviewer
@@ -52,6 +52,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/web-api/Dockerfile
+      tags:
+        - cuemate-web-api:${VERSION:-0.1.0}
     container_name: cuemate-web-api
     environment:
       - NODE_ENV=production
@@ -77,6 +79,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/llm-router/Dockerfile
+      tags:
+        - cuemate-llm-router:${VERSION:-0.1.0}
     container_name: cuemate-llm-router
     ports:
       - "3002:3002"
@@ -97,6 +101,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/rag-service/Dockerfile
+      tags:
+        - cuemate-rag-service:${VERSION:-0.1.0}
     container_name: cuemate-rag-service
     ports:
       - "3003:3003"
@@ -123,14 +129,16 @@ services:
       context: ../..
       dockerfile: infra/docker/web/Dockerfile
       args:
-        WEB_API_BASE: ${WEB_API_BASE:-http://web-api:3001}
+        WEB_API_BASE: ${WEB_API_BASE:-http://localhost:3001}
+      tags:
+        - cuemate-web:${VERSION:-0.1.0}
     container_name: cuemate-web
     ports:
       - "80:80"
     environment:
-      - VITE_WEB_API_BASE=${WEB_API_BASE:-http://web-api:3001}
-      - VITE_RAG_SERVICE_URL=http://rag-service:3003
-      - VITE_LLM_ROUTER_URL=http://llm-router:3002
+      - VITE_WEB_API_BASE=${WEB_API_BASE:-http://cuemate-web-api:3001}
+      - VITE_RAG_SERVICE_URL=http://cuemate-rag-service:3003
+      - VITE_LLM_ROUTER_URL=http://cuemate-llm-router:3002
     volumes:
       - /opt/cuemate/images:/opt/cuemate/images
     depends_on:
