@@ -61,42 +61,42 @@ export async function logOperation(
 export const OPERATION_MAPPING = {
   // 认证相关
   AUTH: {
-    menu: MenuType.AUTH,
+    menu: MenuType.ACCOUNT_SETTINGS,
     type: ResourceType.USER,
   },
   // 模型管理
   MODEL: {
-    menu: MenuType.MODEL_MANAGEMENT,
+    menu: MenuType.MODEL_SETTINGS,
     type: ResourceType.MODEL,
   },
   // 面试任务
   JOB: {
-    menu: MenuType.JOB_MANAGEMENT,
+    menu: MenuType.JOB_LIST,
     type: ResourceType.JOB,
   },
   // 题库管理
   QUESTION: {
-    menu: MenuType.QUESTION_MANAGEMENT,
+    menu: MenuType.PRESET_QUESTION_BANK,
     type: ResourceType.QUESTION,
   },
   // 预设问题
   PRESET_QUESTION: {
-    menu: MenuType.PRESET_QUESTIONS,
+    menu: MenuType.PRESET_QUESTION_BANK,
     type: ResourceType.PRESET_QUESTION,
   },
   // 面试评价
   REVIEW: {
-    menu: MenuType.REVIEW_MANAGEMENT,
+    menu: MenuType.INTERVIEW_REVIEW,
     type: ResourceType.REVIEW,
   },
   // ASR设置
   ASR: {
-    menu: MenuType.ASR_SETTINGS,
+    menu: MenuType.VOICE_SETTINGS,
     type: ResourceType.ASR_CONFIG,
   },
   // 向量知识库
   VECTOR: {
-    menu: MenuType.VECTOR_KNOWLEDGE,
+    menu: MenuType.VECTOR_KNOWLEDGE_BASE,
     type: ResourceType.VECTOR,
   },
   // 许可证管理
@@ -111,7 +111,7 @@ export const OPERATION_MAPPING = {
   },
   // 系统设置
   SYSTEM: {
-    menu: MenuType.SYSTEM_SETTINGS,
+    menu: MenuType.HELP_CENTER,
     type: ResourceType.SYSTEM,
   },
 } as const;

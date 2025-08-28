@@ -121,6 +121,30 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
     })
   );
   
+  // 删除单个操作记录
+  app.delete(
+    '/operation-logs/:id',
+    withErrorLogging(app.log as any, 'operation-logs.delete', async (req, reply) => {
+      try {
+        // JWT验证
+        await (req as any).jwtVerify();
+        
+        const id = (req.params as any).id;
+        const result = (app as any).db
+          .prepare('DELETE FROM operation_logs WHERE id=?')
+          .run(id);
+        
+        if (result.changes === 0) {
+          return reply.code(404).send({ error: '操作记录不存在' });
+        }
+        
+        return { success: true };
+      } catch (err) {
+        return reply.code(500).send(buildPrefixedError('删除操作记录失败', err, 500));
+      }
+    })
+  );
+  
   // 批量删除操作记录（管理员权限）
   app.delete(
     '/operation-logs',
@@ -272,13 +296,24 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
             LIMIT 10
           `)
           .all(startTime);
+
+        // 今日面试次数
+        const todayStart = Math.floor(Date.now() / 1000) - (24 * 60 * 60); // 24小时前
+        const interviewCount = (app as any).db
+          .prepare(`
+            SELECT COUNT(*) as count 
+            FROM interviews 
+            WHERE started_at >= ?
+          `)
+          .get(todayStart);
         
         return {
           menuStats,
           operationStats,
           statusStats,
           dailyStats,
-          userStats
+          userStats,
+          interviewCount: interviewCount?.count || 0
         };
       } catch (err) {
         return reply.code(500).send(buildPrefixedError('获取操作统计失败', err, 500));

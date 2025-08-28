@@ -1,16 +1,25 @@
 import type { FastifyRequest } from 'fastify';
 
 export interface OperationLogData {
-  menu: string;                    // 操作菜单：用户管理/模型管理/ASR设置等
-  type: string;                    // 资源类型：user/model/asr_config/job等
-  resourceId?: string;             // 资源ID
-  resourceName?: string;           // 资源名称
-  operation: 'login' | 'create' | 'update' | 'delete' | 'view' | 'export' | 'import' | 'backup' | 'restore';
-  message?: string;                // 操作信息
-  status?: 'success' | 'failed';   // 操作状态
-  errorMessage?: string;           // 错误信息
-  userId?: string;                 // 操作用户ID
-  userName?: string;               // 操作用户名
+  menu: string; // 操作菜单：用户管理/模型管理/ASR设置等
+  type: string; // 资源类型：user/model/asr_config/job等
+  resourceId?: string; // 资源ID
+  resourceName?: string; // 资源名称
+  operation:
+    | 'login'
+    | 'create'
+    | 'update'
+    | 'delete'
+    | 'view'
+    | 'export'
+    | 'import'
+    | 'backup'
+    | 'restore';
+  message?: string; // 操作信息
+  status?: 'success' | 'failed'; // 操作状态
+  errorMessage?: string; // 错误信息
+  userId?: string; // 操作用户ID
+  userName?: string; // 操作用户名
 }
 
 export class OperationLogger {
@@ -84,15 +93,18 @@ export class OperationLogger {
         insertData.updated_at,
       );
 
-      req.log.info({
-        operationLogId: result.lastInsertRowid,
-        menu: data.menu,
-        operation: data.operation,
-        type: data.type,
-        resourceId: data.resourceId,
-        userId: data.userId,
-        sourceIp,
-      }, '操作记录已保存');
+      req.log.info(
+        {
+          operationLogId: result.lastInsertRowid,
+          menu: data.menu,
+          operation: data.operation,
+          type: data.type,
+          resourceId: data.resourceId,
+          userId: data.userId,
+          sourceIp,
+        },
+        '操作记录已保存',
+      );
 
       return result.lastInsertRowid;
     } catch (error) {
@@ -122,20 +134,20 @@ export class OperationLogger {
     const forwarded = req.headers['x-forwarded-for'];
     const realIp = req.headers['x-real-ip'];
     const clientIp = req.headers['x-client-ip'];
-    
+
     if (typeof forwarded === 'string') {
       // X-Forwarded-For 可能包含多个IP，取第一个
       return forwarded.split(',')[0].trim();
     }
-    
+
     if (typeof realIp === 'string') {
       return realIp;
     }
-    
+
     if (typeof clientIp === 'string') {
       return clientIp;
     }
-    
+
     // 默认使用连接IP
     return req.ip || req.socket?.remoteAddress || 'unknown';
   }
@@ -160,19 +172,22 @@ export const OperationType = {
  * 菜单类型枚举
  */
 export const MenuType = {
-  USER_MANAGEMENT: '用户管理',
-  MODEL_MANAGEMENT: '模型管理',
-  ASR_SETTINGS: 'ASR设置',
-  JOB_MANAGEMENT: '面试任务',
-  QUESTION_MANAGEMENT: '题库管理',
-  PRESET_QUESTIONS: '预设问题',
-  REVIEW_MANAGEMENT: '面试评价',
+  HOME: '主页',
+  CREATE_JOB: '新建岗位',
+  JOB_LIST: '岗位列表',
+  INTERVIEW_PREDICTION: '面试押题',
+  INTERVIEW_REVIEW: '面试复盘',
+  HELP_CENTER: '帮助中心',
+  ACCOUNT_SETTINGS: '账户设置',
+  MODEL_SETTINGS: '模型设置',
+  VOICE_SETTINGS: '语音设置',
   LOG_MANAGEMENT: '日志管理',
-  LICENSE_MANAGEMENT: '许可证管理',
-  VECTOR_KNOWLEDGE: '向量知识库',
+  OPERATION_LOGS: '操作记录',
+  PRESET_QUESTION_BANK: '预置题库',
+  VECTOR_KNOWLEDGE_BASE: '向量知识库',
+  PIXEL_ADS: '像素广告',
   ADS_MANAGEMENT: '广告管理',
-  SYSTEM_SETTINGS: '系统设置',
-  AUTH: '认证授权',
+  LICENSE_MANAGEMENT: 'License 管理',
 } as const;
 
 /**

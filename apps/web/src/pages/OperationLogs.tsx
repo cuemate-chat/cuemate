@@ -1,12 +1,19 @@
-import { EyeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
-import { DatePicker, Modal, Select, Space, Button, Popconfirm } from 'antd';
+import { ArrowDownTrayIcon, EyeIcon, TrashIcon } from '@heroicons/react/24/outline';
+import {
+  ChartBarIcon,
+  CheckCircleIcon,
+  PlayIcon,
+  XCircleIcon,
+} from '@heroicons/react/24/solid';
+import { Button, DatePicker, Modal, Popconfirm, Select, Space } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import {
+  batchDeleteOperationLogs,
+  deleteOperationLog,
+  exportOperationLogs,
   fetchOperationLogs,
   fetchOperationStats,
-  exportOperationLogs,
-  batchDeleteOperationLogs,
   type OperationLog,
   type OperationStats,
 } from '../api/operation-logs';
@@ -18,7 +25,7 @@ export default function OperationLogs() {
   const [logs, setLogs] = useState<OperationLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState<OperationStats | null>(null);
 
@@ -37,22 +44,25 @@ export default function OperationLogs() {
   // 详情弹窗
   const [viewingLog, setViewingLog] = useState<OperationLog | null>(null);
 
-  // 常量定义
+  // 菜单选项 - 根据 Header.tsx 和 UserMenu.tsx 的实际菜单结构
   const menuOptions = [
-    { label: '全部菜单', value: '' },
-    { label: '认证授权', value: '认证授权' },
-    { label: '用户管理', value: '用户管理' },
-    { label: '模型管理', value: '模型管理' },
-    { label: 'ASR设置', value: 'ASR设置' },
-    { label: '面试任务', value: '面试任务' },
-    { label: '题库管理', value: '题库管理' },
-    { label: '预设问题', value: '预设问题' },
-    { label: '面试评价', value: '面试评价' },
-    { label: '日志管理', value: '日志管理' },
-    { label: '许可证管理', value: '许可证管理' },
-    { label: '向量知识库', value: '向量知识库' },
-    { label: '广告管理', value: '广告管理' },
-    { label: '系统设置', value: '系统设置' },
+    { value: '', label: '全部' },
+    { value: '主页', label: '主页' },
+    { value: '新建岗位', label: '新建岗位' },
+    { value: '岗位列表', label: '岗位列表' },
+    { value: '面试押题', label: '面试押题' },
+    { value: '面试复盘', label: '面试复盘' },
+    { value: '帮助中心', label: '帮助中心' },
+    { value: '账户设置', label: '账户设置' },
+    { value: '模型设置', label: '模型设置' },
+    { value: '语音设置', label: '语音设置' },
+    { value: '日志管理', label: '日志管理' },
+    { value: '操作记录', label: '操作记录' },
+    { value: '预置题库', label: '预置题库' },
+    { value: '向量知识库', label: '向量知识库' },
+    { value: '像素广告', label: '像素广告' },
+    { value: '广告管理', label: '广告管理' },
+    { value: 'License 管理', label: 'License 管理' },
   ];
 
   const operationOptions = [
@@ -109,7 +119,7 @@ export default function OperationLogs() {
 
   useEffect(() => {
     loadOperationLogs();
-  }, [page, pageSize]);
+  }, [page, pageSize, filters]);
 
   useEffect(() => {
     loadStats();
@@ -134,9 +144,6 @@ export default function OperationLogs() {
       endTime: '',
     });
     setPage(1);
-    setTimeout(() => {
-      loadOperationLogs();
-    }, 100);
   };
 
   // 导出操作记录
@@ -160,6 +167,18 @@ export default function OperationLogs() {
       const beforeTime = dayjs().subtract(beforeDays, 'day').unix();
       const response = await batchDeleteOperationLogs({ beforeTime });
       message.success(`删除了 ${response.deletedCount} 条记录`);
+      loadOperationLogs();
+    } catch (error) {
+      console.error('删除失败：', error);
+      message.error('删除失败');
+    }
+  };
+
+  // 删除单条记录
+  const handleDeleteSingle = async (id: number) => {
+    try {
+      await deleteOperationLog(id);
+      message.success('删除成功');
       loadOperationLogs();
     } catch (error) {
       console.error('删除失败：', error);
@@ -211,28 +230,48 @@ export default function OperationLogs() {
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-lg shadow border">
-            <h3 className="text-sm font-medium text-gray-500">今日操作总数</h3>
-            <p className="text-2xl font-bold text-blue-600">
-              {stats.dailyStats[0]?.count || 0}
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">今日操作总数</h3>
+                <p className="text-2xl font-bold text-blue-600">
+                  {stats.dailyStats[0]?.count || 0}
+                </p>
+              </div>
+              <ChartBarIcon className="w-8 h-8 text-blue-500" />
+            </div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow border">
-            <h3 className="text-sm font-medium text-gray-500">成功操作</h3>
-            <p className="text-2xl font-bold text-green-600">
-              {stats.statusStats.find(s => s.status === 'success')?.count || 0}
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">成功操作数</h3>
+                <p className="text-2xl font-bold text-green-600">
+                  {stats.statusStats.find(s => s.status === 'success')?.count || 0}
+                </p>
+              </div>
+              <CheckCircleIcon className="w-8 h-8 text-green-500" />
+            </div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow border">
-            <h3 className="text-sm font-medium text-gray-500">失败操作</h3>
-            <p className="text-2xl font-bold text-red-600">
-              {stats.statusStats.find(s => s.status === 'failed')?.count || 0}
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">失败操作数</h3>
+                <p className="text-2xl font-bold text-red-600">
+                  {stats.statusStats.find(s => s.status === 'failed')?.count || 0}
+                </p>
+              </div>
+              <XCircleIcon className="w-8 h-8 text-red-500" />
+            </div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow border">
-            <h3 className="text-sm font-medium text-gray-500">活跃用户</h3>
-            <p className="text-2xl font-bold text-purple-600">
-              {stats.userStats.length}
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">今日面试次数</h3>
+                <p className="text-2xl font-bold text-purple-600">
+                  {stats.interviewCount}
+                </p>
+              </div>
+              <PlayIcon className="w-8 h-8 text-purple-500" />
+            </div>
           </div>
         </div>
       )}
@@ -247,6 +286,7 @@ export default function OperationLogs() {
               onChange={(value) => setFilters(prev => ({ ...prev, menu: value }))}
               options={menuOptions}
               className="w-full"
+              style={{ height: 42 }}
               placeholder="选择菜单"
             />
           </div>
@@ -257,6 +297,7 @@ export default function OperationLogs() {
               onChange={(value) => setFilters(prev => ({ ...prev, operation: value }))}
               options={operationOptions}
               className="w-full"
+              style={{ height: 42 }}
               placeholder="选择操作类型"
             />
           </div>
@@ -267,6 +308,7 @@ export default function OperationLogs() {
               onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
               options={statusOptions}
               className="w-full"
+              style={{ height: 42 }}
               placeholder="选择状态"
             />
           </div>
@@ -276,18 +318,18 @@ export default function OperationLogs() {
               type="text"
               value={filters.keyword}
               onChange={(e) => setFilters(prev => ({ ...prev, keyword: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 h-[42px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="搜索操作信息、资源名称或用户名"
             />
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">开始时间</label>
             <DatePicker
               value={filters.startTime ? dayjs(filters.startTime) : null}
               onChange={(date) => setFilters(prev => ({ ...prev, startTime: date ? date.format('YYYY-MM-DD') : '' }))}
-              className="w-full"
+              className="w-full [&_.ant-picker]:!h-[42px]"
               placeholder="选择开始时间"
             />
           </div>
@@ -296,23 +338,23 @@ export default function OperationLogs() {
             <DatePicker
               value={filters.endTime ? dayjs(filters.endTime) : null}
               onChange={(date) => setFilters(prev => ({ ...prev, endTime: date ? date.format('YYYY-MM-DD') : '' }))}
-              className="w-full"
+              className="w-full [&_.ant-picker]:!h-[42px]"
               placeholder="选择结束时间"
             />
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Button type="primary" onClick={handleSearch}>搜索</Button>
-          <Button onClick={handleReset}>重置</Button>
-          <Button icon={<ArrowDownTrayIcon className="w-4 h-4" />} onClick={handleExport}>导出</Button>
-          <Space.Compact>
-            <Popconfirm title="确定要删除7天前的记录吗？" onConfirm={() => handleDeleteBefore(7)}>
-              <Button danger>删除7天前</Button>
-            </Popconfirm>
-            <Popconfirm title="确定要删除30天前的记录吗？" onConfirm={() => handleDeleteBefore(30)}>
-              <Button danger>删除30天前</Button>
-            </Popconfirm>
-          </Space.Compact>
+          <div className="col-span-2 flex items-end gap-2">
+            <Button type="primary" onClick={handleSearch} className="h-[42px]">搜索</Button>
+            <Button onClick={handleReset} className="h-[42px]">重置</Button>
+            <Button icon={<ArrowDownTrayIcon className="w-4 h-4" />} onClick={handleExport} className="h-[42px]">导出</Button>
+            <Space.Compact>
+              <Popconfirm title="确定要删除7天前的记录吗？" onConfirm={() => handleDeleteBefore(7)}>
+                <Button danger className="h-[42px]">删除7天前</Button>
+              </Popconfirm>
+              <Popconfirm title="确定要删除30天前的记录吗？" onConfirm={() => handleDeleteBefore(30)}>
+                <Button danger className="h-[42px]">删除30天前</Button>
+              </Popconfirm>
+            </Space.Compact>
+          </div>
         </div>
       </div>
 
@@ -322,6 +364,9 @@ export default function OperationLogs() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  序号
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   操作信息
                 </th>
@@ -345,19 +390,24 @@ export default function OperationLogs() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                     加载中...
                   </td>
                 </tr>
               ) : logs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                     暂无数据
                   </td>
                 </tr>
               ) : (
-                logs.map((log) => (
+                logs.map((log, index) => (
                   <tr key={log.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {(page - 1) * pageSize + index + 1}
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
@@ -389,13 +439,28 @@ export default function OperationLogs() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => setViewingLog(log)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="查看详情"
-                      >
-                        <EyeIcon className="w-5 h-5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setViewingLog(log)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="查看详情"
+                        >
+                          <EyeIcon className="w-5 h-5" />
+                        </button>
+                        <Popconfirm
+                          title="确定要删除这条操作记录吗？"
+                          onConfirm={() => handleDeleteSingle(log.id)}
+                          okText="确定"
+                          cancelText="取消"
+                        >
+                          <button
+                            className="text-red-600 hover:text-red-900"
+                            title="删除"
+                          >
+                            <TrashIcon className="w-5 h-5" />
+                          </button>
+                        </Popconfirm>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -404,21 +469,22 @@ export default function OperationLogs() {
           </table>
         </div>
 
-        {/* 分页 */}
-        {total > 0 && (
-          <div className="px-6 py-4 border-t border-gray-200">
-            <PaginationBar
-              page={page}
-              pageSize={pageSize}
-              total={total}
-              onChange={setPage}
-              onPageSizeChange={(_, size) => {
-                setPageSize(size);
-                setPage(1);
-              }}
-            />
-          </div>
-        )}
+      </div>
+
+      <div className="flex justify-between items-center mt-3 text-sm">
+        <div className="text-slate-500">共 {total} 条</div>
+        <PaginationBar 
+          page={page} 
+          pageSize={pageSize} 
+          total={total} 
+          onChange={(p) => setPage(p)}
+          onPageSizeChange={(_, size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+          showSizeChanger={true}
+          pageSizeOptions={['10', '20', '50', '100']}
+        />
       </div>
 
       {/* 详情弹窗 */}

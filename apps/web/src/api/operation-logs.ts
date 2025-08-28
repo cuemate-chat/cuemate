@@ -41,6 +41,7 @@ export interface OperationStats {
   statusStats: Array<{ status: string; count: number }>;
   dailyStats: Array<{ date: string; count: number }>;
   userStats: Array<{ user_id: string; user_name: string; count: number }>;
+  interviewCount: number;
 }
 
 // 查询参数类型
@@ -133,6 +134,13 @@ export const exportOperationLogs = async (params: {
   a.click();
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
+};
+
+/**
+ * 删除单条操作记录
+ */
+export const deleteOperationLog = async (id: number): Promise<{ success: boolean }> => {
+  return http.delete(`/operation-logs/${id}`);
 };
 
 /**
