@@ -69,7 +69,7 @@ function resolveLogPath(
 }
 
 export default async function transport(options: TransportOptions = {}) {
-  const baseDir = options.baseDir || process.env.CUEMATE_LOG_DIR || '/opt/cuemate/log';
+  const baseDir = options.baseDir || process.env.CUEMATE_LOG_DIR || '/opt/cuemate/logs';
   const service = options.service;
   const timeZone = getLoggerTimeZone();
   ensureDir(baseDir);
@@ -81,10 +81,16 @@ export default async function transport(options: TransportOptions = {}) {
     if (!ws) {
       const filePath = resolveLogPath(baseDir, level, service, dateStr);
       try {
+        // 确保文件存在
         fs.closeSync(fs.openSync(filePath, 'a'));
-      } catch {}
-      ws = fs.createWriteStream('/dev/null');
-      streams.set(key, ws);
+        // 创建写入流，写入到实际文件而不是/dev/null
+        ws = fs.createWriteStream(filePath, { flags: 'a' });
+        streams.set(key, ws);
+      } catch (error) {
+        console.error('Failed to create log file:', filePath, error);
+        // 如果创建失败，返回文件路径让prependLine处理
+        return resolveLogPath(baseDir, level, service, dateStr);
+      }
     }
     return resolveLogPath(baseDir, level, service, dateStr);
   }

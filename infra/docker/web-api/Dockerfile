@@ -19,7 +19,7 @@ RUN pnpm -r --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cue
 
 FROM node:20-bookworm-slim
 WORKDIR /app
-RUN npm install -g pnpm && apt-get update && apt-get install -y dumb-init sqlite3 python3 make g++ && rm -rf /var/lib/apt/lists/*
+RUN npm install -g pnpm && apt-get update && apt-get install -y dumb-init sqlite3 python3 make g++ tzdata && rm -rf /var/lib/apt/lists/*
 
 # 使用根锁文件按包生产安装，确保运行时依赖完整
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
@@ -34,12 +34,12 @@ COPY --from=builder /app/packages/data-sqlite/dist ./packages/data-sqlite/dist
 COPY --from=builder /app/packages/logger/dist ./packages/logger/dist
 
 WORKDIR /app/services/web-api
-RUN mkdir -p /opt/cuemate/log/info/web-api \
-    && mkdir -p /opt/cuemate/log/debug/web-api \
-    && mkdir -p /opt/cuemate/log/warn/web-api \
-    && mkdir -p /opt/cuemate/log/error/web-api \
+RUN mkdir -p /opt/cuemate/logs/info/web-api \
+    && mkdir -p /opt/cuemate/logs/debug/web-api \
+    && mkdir -p /opt/cuemate/logs/warn/web-api \
+    && mkdir -p /opt/cuemate/logs/error/web-api \
     && mkdir -p /opt/cuemate/pdf \
-    && chown -R node:node /opt/cuemate/log \
+    && chown -R node:node /opt/cuemate/logs \
     && chown -R node:node /opt/cuemate/pdf
 
 EXPOSE 3001

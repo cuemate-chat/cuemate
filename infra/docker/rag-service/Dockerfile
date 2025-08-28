@@ -18,7 +18,7 @@ RUN pnpm -r --filter @cuemate/logger --filter @cuemate/rag-service build
 
 FROM node:22-bookworm-slim
 WORKDIR /app
-RUN npm install -g pnpm && apt-get update && apt-get install -y dumb-init && rm -rf /var/lib/apt/lists/*
+RUN npm install -g pnpm && apt-get update && apt-get install -y dumb-init tzdata && rm -rf /var/lib/apt/lists/*
 
 # 使用工作区锁文件执行按包生产安装，确保运行时依赖完整
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
@@ -32,11 +32,11 @@ COPY --from=builder /app/packages/logger/dist ./packages/logger/dist
 
 WORKDIR /app/services/rag-service
 # 预创建日志目录并授权给 node 用户
-RUN mkdir -p /opt/cuemate/log/info/rag-service \
-    && mkdir -p /opt/cuemate/log/debug/rag-service \
-    && mkdir -p /opt/cuemate/log/warn/rag-service \
-    && mkdir -p /opt/cuemate/log/error/rag-service \
-    && chown -R node:node /opt/cuemate/log
+RUN mkdir -p /opt/cuemate/logs/info/rag-service \
+    && mkdir -p /opt/cuemate/logs/debug/rag-service \
+    && mkdir -p /opt/cuemate/logs/warn/rag-service \
+    && mkdir -p /opt/cuemate/logs/error/rag-service \
+    && chown -R node:node /opt/cuemate/logs
 USER node
 EXPOSE 3003
 ENTRYPOINT ["dumb-init", "--"]

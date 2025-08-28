@@ -98,8 +98,20 @@ export function registerLogRoutes(app: FastifyInstance) {
       }
     }
 
-    // 最新创建时间优先
-    candidates.sort((a, b) => b.ctimeMs - a.ctimeMs);
+    // 按日期降序排列，然后按服务名称和级别排序
+    candidates.sort((a, b) => {
+      // 首先按日期降序
+      if (a.date !== b.date) {
+        return b.date.localeCompare(a.date);
+      }
+      // 然后按服务名称
+      if (a.service !== b.service) {
+        return a.service.localeCompare(b.service);
+      }
+      // 最后按级别
+      const levelOrder = { debug: 0, info: 1, warn: 2, error: 3 };
+      return levelOrder[a.level] - levelOrder[b.level];
+    });
 
     const ps = clampPageSize(pageSize);
     const start = (page - 1) * ps;

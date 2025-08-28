@@ -7,8 +7,11 @@ services:
       - "8000:8000"
     environment:
       - CHROMA_SERVER_CORS_ALLOW_ORIGINS=["*"]
+      - TZ=Asia/Shanghai
     volumes:
       - chroma_data:/chroma/chroma
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -24,8 +27,11 @@ services:
       - PYTORCH_DISABLE_NET_ACCESS=1
       - ASR_SERVICE_TYPE=user
       - CUEMATE_LOG_DIR=/opt/cuemate/logs
+      - TZ=Asia/Shanghai
     volumes:
       - /opt/cuemate/logs:/opt/cuemate/logs
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -41,8 +47,11 @@ services:
       - PYTORCH_DISABLE_NET_ACCESS=1
       - ASR_SERVICE_TYPE=interviewer
       - CUEMATE_LOG_DIR=/opt/cuemate/logs
+      - TZ=Asia/Shanghai
     volumes:
       - /opt/cuemate/logs:/opt/cuemate/logs
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -63,11 +72,14 @@ services:
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
       - RAG_SERVICE_URL=http://rag-service:3003
       - LLM_ROUTER_URL=http://llm-router:3002
+      - TZ=Asia/Shanghai
     volumes:
       - /opt/cuemate/data:/opt/cuemate/data
       - /opt/cuemate/logs:/opt/cuemate/logs
       - /opt/cuemate/pdf:/opt/cuemate/pdf
       - /opt/cuemate/images:/opt/cuemate/images
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     ports:
       - "3001:3001"
     networks:
@@ -90,8 +102,11 @@ services:
       - LLM_HOST=0.0.0.0
       - PRIMARY_LLM_PROVIDER=openai
       - ROUTING_STRATEGY=primary-fallback
+      - TZ=Asia/Shanghai
     volumes:
       - /opt/cuemate/logs:/opt/cuemate/logs
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - cuemate-network
     restart: unless-stopped
@@ -113,10 +128,13 @@ services:
       - VECTOR_STORE_TYPE=chroma
       - EMBEDDINGS_PROVIDER=mock
       - CHROMA_PATH=http://chroma:8000
+      - TZ=Asia/Shanghai
     volumes:
       - chroma_data:/opt/cuemate/chroma_data
       - /opt/cuemate/documents:/opt/cuemate/documents
       - /opt/cuemate/logs:/opt/cuemate/logs
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - cuemate-network
     depends_on:
@@ -141,6 +159,8 @@ services:
       - VITE_LLM_ROUTER_URL=http://cuemate-llm-router:3002
     volumes:
       - /opt/cuemate/images:/opt/cuemate/images
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     depends_on:
       - web-api
     networks:

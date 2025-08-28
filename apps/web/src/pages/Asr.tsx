@@ -24,6 +24,10 @@ export default function AsrSettings() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const isConnectingRef = useRef(false);
+  const lastSendTimeRef = useRef<number>(0);
+  const pendingChunksRef = useRef<number>(0);
 
   // 加载配置
   const loadConfig = async () => {
@@ -220,7 +224,20 @@ export default function AsrSettings() {
   // 语音测试功能
   const startRecording = async () => {
     try {
+      // 防止重复连接
+      if (isConnectingRef.current || isRecording) {
+        console.log('正在连接中或已在录音，跳过');
+        return;
+      }
+      
+      isConnectingRef.current = true;
       setTranscriptText("正在连接语音识别服务...");
+      
+      // 确保之前的连接完全清理
+      await stopRecording();
+      
+      // 等待一小段时间确保资源完全释放
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // 根据选择的服务确定音频源
       const isInterviewerService = testService.includes('8002');
@@ -243,6 +260,9 @@ export default function AsrSettings() {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       }
       
+      // 保存流的引用
+      streamRef.current = stream;
+      
       // 设置音频上下文和分析器
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       analyserRef.current = audioContextRef.current.createAnalyser();
@@ -261,12 +281,18 @@ export default function AsrSettings() {
         console.log('WebSocket 连接成功:', testService);
         message.success('已连接到语音识别服务');
         setTranscriptText("已连接，等待语音输入...");
+        isConnectingRef.current = false; // 连接成功后重置标志
       };
       
       websocketRef.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           console.log('收到 WebSocket 数据:', data);
+          
+          // 收到响应时减少待处理计数
+          if (pendingChunksRef.current > 0) {
+            pendingChunksRef.current--;
+          }
 
           if (data.type === "ready_to_stop") {
             console.log("Ready to stop received");
@@ -333,9 +359,12 @@ export default function AsrSettings() {
         }
       };
       
-      websocketRef.current.onclose = () => {
-        console.log('WebSocket 连接关闭');
-        message.info('与语音识别服务的连接已断开');
+      websocketRef.current.onclose = (event) => {
+        console.log('WebSocket 连接关闭', { code: event.code, reason: event.reason, wasClean: event.wasClean });
+        if (!event.wasClean && isRecording) {
+          message.warning('与语音识别服务的连接意外断开');
+        }
+        isConnectingRef.current = false;
       };
       
       websocketRef.current.onerror = (error) => {
@@ -343,6 +372,7 @@ export default function AsrSettings() {
         const servicePort = testService.includes('8001') ? '8001' : '8002';
         message.error(`ASR 服务 (${servicePort}) 连接失败`);
         setTranscriptText(`❌ WebSocket 连接失败\n服务地址: ${testService}\n请检查 Docker 服务是否启动`);
+        isConnectingRef.current = false; // 重置连接标志
         stopRecording();
       };
       
@@ -354,8 +384,25 @@ export default function AsrSettings() {
         if (event.data && event.data.size > 0) {
           if (websocketRef.current?.readyState === WebSocket.OPEN) {
             try {
+              const now = Date.now();
+              const timeSinceLastSend = now - lastSendTimeRef.current;
+              
+              // 限制发送频率，避免服务端过载
+              if (timeSinceLastSend < 200) { // 最小200ms间隔
+                console.debug('发送频率过高，跳过此次数据');
+                return;
+              }
+              
+              // 检查待处理的数据包数量
+              if (pendingChunksRef.current > 5) { // 限制待处理数据包数量
+                console.warn('服务端处理较慢，跳过此次数据发送');
+                return;
+              }
+              
               websocketRef.current.send(event.data);
-              console.debug('音频数据已发送:', event.data.size, 'bytes');
+              lastSendTimeRef.current = now;
+              pendingChunksRef.current++;
+              console.debug('音频数据已发送:', event.data.size, 'bytes', `待处理:${pendingChunksRef.current}`);
             } catch (error) {
               console.error('发送音频数据失败:', error);
               // 发送失败时停止录音，避免持续错误
@@ -364,7 +411,11 @@ export default function AsrSettings() {
           } else if (websocketRef.current?.readyState === WebSocket.CONNECTING) {
             console.debug('WebSocket正在连接中，跳过此次数据发送');
           } else {
-            console.warn('WebSocket连接已断开，停止录音');
+            console.warn('WebSocket连接已断开，停止录音', { 
+              readyState: websocketRef.current?.readyState,
+              isRecording 
+            });
+            isConnectingRef.current = false;
             stopRecording();
           }
         }
@@ -373,10 +424,13 @@ export default function AsrSettings() {
       recorderRef.current.onerror = (event) => {
         console.error('录音器错误:', event);
         message.error('录音过程中发生错误');
+        isConnectingRef.current = false;
         stopRecording();
       };
       
-      recorderRef.current.start(250); // 每250ms发送一次数据，减少网络负载
+      // 根据服务类型调整发送频率，减少服务端负载
+      const chunkInterval = isInterviewerService ? 500 : 250; // 面试官服务降低发送频率
+      recorderRef.current.start(chunkInterval);
       setIsRecording(true);
       setRecordingTime(0);
       
@@ -388,33 +442,73 @@ export default function AsrSettings() {
     } catch (error) {
       message.error('无法访问麦克风，请检查浏览器权限');
       console.error('Recording error:', error);
+      isConnectingRef.current = false; // 重置连接标志
     }
   };
   
-  const stopRecording = () => {
+  const stopRecording = async () => {
+    // 重置连接状态标志
+    isConnectingRef.current = false;
+    lastSendTimeRef.current = 0;
+    pendingChunksRef.current = 0;
+    
     // 停止音频波形动画
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
     
-    // 停止录音
-    if (recorderRef.current) {
-      recorderRef.current.stop();
+    // 停止录音器
+    if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+      try {
+        recorderRef.current.stop();
+      } catch (error) {
+        console.warn('停止录音器时出错:', error);
+      }
       recorderRef.current = null;
     }
     
+    // 停止媒体流
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+        console.log('媒体轨道已停止:', track.kind);
+      });
+      streamRef.current = null;
+    }
+    
+    // 清理分析器引用
+    if (analyserRef.current) {
+      analyserRef.current = null;
+    }
+    
     // 清理音频上下文
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      try {
+        await audioContextRef.current.close();
+        console.log('AudioContext 已关闭');
+      } catch (error) {
+        console.warn('关闭 AudioContext 时出错:', error);
+      }
       audioContextRef.current = null;
     }
     
-    // 发送结束信号
-    if (websocketRef.current?.readyState === WebSocket.OPEN) {
-      const emptyBlob = new Blob([], { type: 'audio/webm' });
-      websocketRef.current.send(emptyBlob);
-      websocketRef.current.close();
+    // 关闭 WebSocket 连接
+    if (websocketRef.current) {
+      if (websocketRef.current.readyState === WebSocket.OPEN) {
+        try {
+          // 发送结束信号
+          const emptyBlob = new Blob([], { type: 'audio/webm' });
+          websocketRef.current.send(emptyBlob);
+        } catch (error) {
+          console.warn('发送结束信号时出错:', error);
+        }
+      }
+      
+      if (websocketRef.current.readyState !== WebSocket.CLOSED) {
+        websocketRef.current.close();
+      }
+      websocketRef.current = null;
     }
     
     // 停止计时器
@@ -436,7 +530,7 @@ export default function AsrSettings() {
     // 恢复默认波形动画
     setTimeout(() => {
       drawDefaultWaveform();
-    }, 100);
+    }, 200);
   };
   
   const formatTime = (seconds: number) => {
@@ -455,18 +549,10 @@ export default function AsrSettings() {
     
     // 清理函数
     return () => {
-      if (websocketRef.current) {
-        websocketRef.current.close();
-      }
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
+      // 异步清理资源
+      stopRecording().catch(error => {
+        console.warn('清理资源时出错:', error);
+      });
     };
   }, []);
 
