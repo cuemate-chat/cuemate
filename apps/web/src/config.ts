@@ -11,6 +11,8 @@ declare global {
     readonly VITE_ENABLE_MOCK?: string;
     readonly VITE_RAG_SERVICE_URL?: string;
     readonly VITE_LLM_ROUTER_URL?: string;
+    readonly VITE_ASR_USER_WS_URL?: string;
+    readonly VITE_ASR_INTERVIEWER_WS_URL?: string;
   }
 }
 
@@ -21,6 +23,10 @@ export const config = {
 
   // RAG 服务地址
   RAG_SERVICE_URL: import.meta.env.VITE_RAG_SERVICE_URL || 'http://localhost:3003',
+
+  // ASR WebSocket 服务地址
+  ASR_USER_WS_URL: import.meta.env.VITE_ASR_USER_WS_URL || 'ws://localhost:8001/asr',
+  ASR_INTERVIEWER_WS_URL: import.meta.env.VITE_ASR_INTERVIEWER_WS_URL || 'ws://localhost:8002/asr',
 
   // 应用信息
   APP_TITLE: import.meta.env.VITE_APP_TITLE || 'CueMate',

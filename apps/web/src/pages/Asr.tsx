@@ -3,12 +3,13 @@ import { Button, Card, Form, Input, InputNumber, Select, Spin, Switch, Tabs } fr
 import { useEffect, useRef, useState } from 'react';
 import { getAsrConfig, saveAsrConfig, type AsrConfig } from '../api/asr';
 import { message } from '../components/Message';
+import { getAsrServices, normalizeWebSocketUrl, type AsrService } from '../utils/asr';
 
 export default function AsrSettings() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [config, setConfig] = useState<AsrConfig | null>(null);
-  const [services, setServices] = useState<{name: string, url: string}[]>([]);
+  const [services, setServices] = useState<AsrService[]>([]);
   const [form] = Form.useForm();
 
   // 语音测试相关状态
@@ -31,42 +32,22 @@ export default function AsrSettings() {
       const data = await getAsrConfig();
       setConfig(data.config);
 
-      // 规范化后端返回的 WebSocket 地址，避免浏览器收到容器名或 8000 端口
-      const normalizeUrl = (service: { name: string; url: string }): string => {
-        try {
-          const isLocalhost = typeof window !== 'undefined' &&
-            (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      // 使用后端返回的服务列表，如果没有则使用默认配置
+      let asrServices: AsrService[];
+      if (data.services && data.services.length > 0) {
+        asrServices = data.services.map(s => ({
+          name: s.name,
+          url: normalizeWebSocketUrl(s.url, s.name),
+          displayName: s.name === 'asr-user' ? '面试者语音识别' : '面试官语音识别',
+          description: s.name === 'asr-user' ? '麦克风输入' : '系统音频输出'
+        }));
+      } else {
+        asrServices = getAsrServices();
+      }
 
-          // 只在本机访问的情况下强制使用 localhost 与映射端口
-          if (isLocalhost) {
-            const port = service.name === 'asr-interviewer' ? 8002 : 8001;
-            return `ws://localhost:${port}/asr`;
-          }
-
-          // 非 localhost 情况，尽量保留后端提供的 host，但修正容器名与 8000 端口
-          const u = new URL(service.url);
-          if (u.hostname.startsWith('cuemate-asr-') || u.port === '8000') {
-            const port = service.name === 'asr-interviewer' ? '8002' : '8001';
-            const host = typeof window !== 'undefined' ? window.location.hostname : u.hostname;
-            return `${u.protocol}//${host}:${port}${u.pathname}`;
-          }
-          return service.url;
-        } catch {
-          // 解析失败时回退到合理的默认值
-          return service.name === 'asr-interviewer'
-            ? 'ws://localhost:8002/asr'
-            : 'ws://localhost:8001/asr';
-        }
-      };
-
-      const normalizedServices = (data.services || []).map(s => ({
-        name: s.name,
-        url: normalizeUrl(s),
-      }));
-
-      setServices(normalizedServices);
-      if (!testService && normalizedServices.length > 0) {
-        setTestService(normalizedServices[0].url);
+      setServices(asrServices);
+      if (!testService && asrServices.length > 0) {
+        setTestService(asrServices[0].url);
       }
       if (data.config) {
         // 确保表单获得完整的数据
@@ -369,16 +350,33 @@ export default function AsrSettings() {
       recorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       
       recorderRef.current.ondataavailable = (event) => {
-        if (websocketRef.current?.readyState === WebSocket.OPEN) {
-          console.log('发送音频数据，大小:', event.data.size, 'bytes');
-          websocketRef.current.send(event.data);
-          
-        } else {
-          console.warn('WebSocket 未连接，无法发送音频数据');
+        // 只有当数据大小大于0且WebSocket连接正常时才发送
+        if (event.data && event.data.size > 0) {
+          if (websocketRef.current?.readyState === WebSocket.OPEN) {
+            try {
+              websocketRef.current.send(event.data);
+              console.debug('音频数据已发送:', event.data.size, 'bytes');
+            } catch (error) {
+              console.error('发送音频数据失败:', error);
+              // 发送失败时停止录音，避免持续错误
+              stopRecording();
+            }
+          } else if (websocketRef.current?.readyState === WebSocket.CONNECTING) {
+            console.debug('WebSocket正在连接中，跳过此次数据发送');
+          } else {
+            console.warn('WebSocket连接已断开，停止录音');
+            stopRecording();
+          }
         }
       };
       
-      recorderRef.current.start(100); // 每100ms发送一次数据
+      recorderRef.current.onerror = (event) => {
+        console.error('录音器错误:', event);
+        message.error('录音过程中发生错误');
+        stopRecording();
+      };
+      
+      recorderRef.current.start(250); // 每250ms发送一次数据，减少网络负载
       setIsRecording(true);
       setRecordingTime(0);
       
@@ -861,7 +859,7 @@ export default function AsrSettings() {
               style={{ width: '100%' }}
               options={services.map(service => ({
                 value: service.url,
-                label: `${service.name === 'asr-user' ? '面试者语音识别 - 麦克风输入' : '面试官语音识别 - 系统音频输出'} (${service.url})`
+                label: `${service.displayName} - ${service.description} (${service.url})`
               }))}
             />
           </div>

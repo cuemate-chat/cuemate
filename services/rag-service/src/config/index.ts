@@ -10,7 +10,6 @@ const configSchema = z.object({
   }),
   vectorStore: z.object({
     type: z.enum(['chroma', 'pgvector', 'milvus']).default('chroma'),
-    // 注意：JS 客户端仅支持 HTTP API，不支持本地目录路径
     // 默认指向本机 8000 端口的 Chroma Server
     chromaPath: z.string().default('http://localhost:8000'),
     chromaHost: z.string().optional(),
@@ -55,7 +54,8 @@ export const config = configSchema.parse({
   vectorStore: {
     type: 'chroma',
     // 在 Docker 环境中使用 chroma:8000，本地开发使用 localhost:8000
-    chromaPath: process.env.NODE_ENV === 'production' ? 'http://chroma:8000' : 'http://localhost:8000',
+    chromaPath:
+      process.env.NODE_ENV === 'production' ? 'http://chroma:8000' : 'http://localhost:8000',
     defaultCollection: 'default',
     jobsCollection: 'jobs',
     resumesCollection: 'resumes',
