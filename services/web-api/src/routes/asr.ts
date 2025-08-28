@@ -4,7 +4,7 @@ import { buildPrefixedError } from '../utils/error-response.js';
 
 const configSchema = z.object({
   name: z.string().min(1).max(50).default('ASR-Gateway'),
-  language: z.string().min(1).max(10).default('en'),
+  language: z.string().min(1).max(10).default('zh'),
   model: z.string().min(1).default('small'),
   backend: z
     .enum(['faster-whisper', 'whisper_timestamped', 'mlx-whisper', 'openai-api', 'simulstreaming'])
@@ -13,23 +13,33 @@ const configSchema = z.object({
   min_chunk_size: z.number().min(0.1).max(10).default(1.0),
   no_vad: z.boolean().default(false),
   no_vac: z.boolean().default(false),
-  vac_chunk_size: z.number().optional(),
+  vac_chunk_size: z.number().nullable().default(1.0),
   confidence_validation: z.boolean().default(false),
   diarization: z.boolean().default(false),
   punctuation_split: z.boolean().default(true),
   diarization_backend: z.enum(['sortformer', 'diart']).default('sortformer'),
   buffer_trimming: z.enum(['sentence', 'segment']).default('segment'),
-  buffer_trimming_sec: z.number().optional(),
+  buffer_trimming_sec: z.number().nullable().default(5.0),
   log_level: z.enum(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']).default('INFO'),
   frame_threshold: z.number().default(25),
   beams: z.number().default(1),
   decoder: z.enum(['beam', 'greedy', 'auto']).default('auto'),
   audio_max_len: z.number().default(30.0),
-  audio_min_len: z.number().default(0.0),
+  audio_min_len: z.number().default(0.5),
   never_fire: z.boolean().default(false),
-  init_prompt: z.string().optional(),
-  static_init_prompt: z.string().optional(),
-  max_context_tokens: z.number().optional(),
+  init_prompt: z
+    .string()
+    .nullable()
+    .default(
+      '技术面试常用词汇：算法、数据结构、架构设计、性能优化、代码重构、系统设计、API接口、数据库、缓存、消息队列、微服务、容器化、云计算、人工智能、机器学习、前端开发、后端开发、全栈开发。',
+    ),
+  static_init_prompt: z
+    .string()
+    .nullable()
+    .default(
+      '请准确识别并转录音频内容，保持语言的自然流畅性，注意专业术语的准确性。对于技术讨论，请特别关注代码逻辑、系统架构和性能分析等内容的准确转录。',
+    ),
+  max_context_tokens: z.number().nullable().default(10000),
 });
 
 export function registerAsrRoutes(app: FastifyInstance) {
@@ -135,8 +145,11 @@ export function registerAsrRoutes(app: FastifyInstance) {
         newConfig.max_context_tokens,
       );
 
-      // 同步配置到 ASR 服务
-      const asrServiceUrls = ['http://localhost:8001', 'http://localhost:8002'];
+      // 同步配置到 ASR 服务（使用 Docker 内部网络地址）
+      const asrServiceUrls = [
+        'http://cuemate-asr-user:8000',
+        'http://cuemate-asr-interviewer:8000',
+      ];
       const syncResults = [];
 
       for (const serviceUrl of asrServiceUrls) {
