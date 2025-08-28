@@ -3,6 +3,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
+import { OperationType } from '../utils/operation-logger.js';
 
 export function registerInterviewQuestionRoutes(app: FastifyInstance) {
   // 标签 CRUD
@@ -32,6 +34,19 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         (app as any).db
           .prepare('INSERT INTO tags (id, name, created_at) VALUES (?, ?, ?)')
           .run(id, body.name, Date.now());
+        
+        // 记录操作日志
+        const payload = (req as any).user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.QUESTION,
+          resourceId: id,
+          resourceName: body.name,
+          operation: OperationType.CREATE,
+          message: `创建标签: ${body.name}`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return { id };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('创建标签失败', err, 400));
@@ -47,6 +62,19 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         const id = (req as any).params?.id as string;
         const body = z.object({ name: z.string().min(1).max(20) }).parse((req as any).body || {});
         (app as any).db.prepare('UPDATE tags SET name=? WHERE id=?').run(body.name, id);
+        
+        // 记录操作日志
+        const payload = (req as any).user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.QUESTION,
+          resourceId: id,
+          resourceName: body.name,
+          operation: OperationType.UPDATE,
+          message: `更新标签: ${body.name}`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return { success: true };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('更新标签失败', err, 400));
@@ -60,7 +88,23 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
       try {
         await (req as any).jwtVerify();
         const id = (req as any).params?.id as string;
+        // 先获取标签信息用于日志记录
+        const existingTag = (app as any).db.prepare('SELECT name FROM tags WHERE id=?').get(id);
+        
         (app as any).db.prepare('DELETE FROM tags WHERE id=?').run(id);
+        
+        // 记录操作日志
+        const payload = (req as any).user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.QUESTION,
+          resourceId: id,
+          resourceName: existingTag ? existingTag.name : '标签',
+          operation: OperationType.DELETE,
+          message: `删除标签: ${existingTag ? existingTag.name : id}`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return { success: true };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('删除标签失败', err, 400));
@@ -126,6 +170,17 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           app.log.error({ err: error }, 'Failed to sync question to RAG service');
         }
 
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.QUESTION,
+          resourceId: qid,
+          resourceName: body.title.substring(0, 50) + '...',
+          operation: OperationType.CREATE,
+          message: `创建面试题: ${body.title.substring(0, 30)}...`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return { id: qid };
       } catch (err: any) {
         return reply.code(401).send(buildPrefixedError('创建押题失败', err, 401));
@@ -282,6 +337,17 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         } catch (e) {
           app.log.warn({ err: e as any }, 'List and clean extra vector docs failed');
         }
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.QUESTION,
+          resourceId: body.jobId,
+          resourceName: `批量同步${rows.length}个面试题`,
+          operation: OperationType.UPDATE,
+          message: `批量同步面试题到向量库: ${success}/${rows.length} 个成功`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return { success, failed, total: rows.length, deletedExtras };
       } catch (err: any) {
         return reply.code(401).send(buildPrefixedError('批量同步失败', err, 401));
@@ -461,6 +527,18 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         } catch (error) {
           app.log.error({ err: error }, 'Failed to sync updated question to RAG service');
         }
+        
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.QUESTION,
+          resourceId: id,
+          resourceName: body.title.substring(0, 50) + '...',
+          operation: OperationType.UPDATE,
+          message: `更新面试题: ${body.title.substring(0, 30)}...`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return { success: true };
       } catch (err) {
         return reply.code(401).send(buildPrefixedError('更新押题失败', err, 401));
@@ -498,6 +576,18 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         } catch (error) {
           app.log.error({ err: error }, 'Failed to delete question from RAG service');
         }
+        
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.QUESTION,
+          resourceId: id,
+          resourceName: '面试题',
+          operation: OperationType.DELETE,
+          message: `删除面试题: ${id}`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return { success: true };
       } catch (err) {
         app.log.error({ err }, '删除问题失败');
@@ -564,6 +654,17 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           `Batch deleted ${dbResult.changes} questions from database and ${vectorDeleted} from vector store for job ${jobId}`,
         );
 
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.QUESTION,
+          resourceId: jobId,
+          resourceName: `批量删除${totalCount}个面试题`,
+          operation: OperationType.DELETE,
+          message: `批量删除岗位面试题: ${dbResult.changes}/${totalCount} 个成功`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return {
           success: true,
           deleted: dbResult.changes,

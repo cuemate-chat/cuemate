@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
+import { OperationType } from '../utils/operation-logger.js';
 
 const LOG_BASE_DIR = process.env.CUEMATE_LOG_DIR || '/opt/cuemate/logs';
 const LEVELS = ['debug', 'info', 'warn', 'error'] as const;
@@ -199,6 +201,25 @@ export function registerLogRoutes(app: FastifyInstance) {
       try {
         fs.writeFileSync(filePath, '', 'utf8');
         (req as any).log.debug({ level, service, date }, 'log-file-cleared');
+        
+        // 记录操作日志
+        try {
+          await (req as any).jwtVerify();
+          const payload = (req as any).user as any;
+          await logOperation(app, req, {
+            ...OPERATION_MAPPING.SYSTEM,
+            resourceId: `${level}_${service}_${date}`,
+            resourceName: `日志文件: ${level}/${service}/${date}`,
+            operation: OperationType.UPDATE,
+            message: `清空日志文件: ${level}/${service}/${date}`,
+            status: 'success',
+            userId: payload.uid
+          });
+        } catch (authError) {
+          // 日志操作不需要认证，但如果有认证信息就记录操作日志
+          (req as any).log.info('日志清空操作未记录操作日志（无认证信息）');
+        }
+        
         return { success: true, message: '日志文件已清空' };
       } catch (writeErr: any) {
         (req as any).log.error({ err: writeErr, level, service, date }, 'write-log-failed');
@@ -267,6 +288,24 @@ export function registerLogRoutes(app: FastifyInstance) {
         } catch (dirErr) {
           // 忽略目录删除错误，不影响文件删除的成功
           (req as any).log.warn({ err: dirErr, dirPath }, 'failed-to-remove-empty-directory');
+        }
+
+        // 记录操作日志
+        try {
+          await (req as any).jwtVerify();
+          const payload = (req as any).user as any;
+          await logOperation(app, req, {
+            ...OPERATION_MAPPING.SYSTEM,
+            resourceId: `${level}_${service}_${date}`,
+            resourceName: `日志文件: ${level}/${service}/${date}`,
+            operation: OperationType.DELETE,
+            message: `删除日志文件: ${level}/${service}/${date}`,
+            status: 'success',
+            userId: payload.uid
+          });
+        } catch (authError) {
+          // 日志操作不需要认证，但如果有认证信息就记录操作日志
+          (req as any).log.info('日志删除操作未记录操作日志（无认证信息）');
         }
 
         return { success: true, message: '日志文件已删除' };

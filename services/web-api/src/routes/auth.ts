@@ -4,6 +4,8 @@ import bcrypt from 'bcryptjs';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { OperationType } from '../utils/operation-logger.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 
 export function registerAuthRoutes(app: FastifyInstance) {
   // 允许用用户名（name / id）或邮箱登录：字段统一为 account
@@ -18,9 +20,36 @@ export function registerAuthRoutes(app: FastifyInstance) {
         .prepare('SELECT * FROM users WHERE id=? OR name=?')
         .get(body.account, body.account);
     }
-    if (!row) return reply.code(401).send({ error: '账号或密码错误' });
+    if (!row) {
+      // 记录登录失败
+      await logOperation(app, req, {
+        ...OPERATION_MAPPING.AUTH,
+        resourceId: body.account,
+        operation: OperationType.LOGIN,
+        message: '登录失败：账号不存在',
+        status: 'failed',
+        errorMessage: '账号或密码错误',
+        autoGetUser: false
+      });
+      return reply.code(401).send({ error: '账号或密码错误' });
+    }
     const ok = await bcrypt.compare(body.password, row.password_hash);
-    if (!ok) return reply.code(401).send({ error: '账号或密码错误' });
+    if (!ok) {
+      // 记录登录失败
+      await logOperation(app, req, {
+        ...OPERATION_MAPPING.AUTH,
+        resourceId: row.id,
+        resourceName: row.name,
+        operation: OperationType.LOGIN,
+        message: '登录失败：密码错误',
+        status: 'failed',
+        errorMessage: '账号或密码错误',
+        userId: row.id,
+        userName: row.name,
+        autoGetUser: false
+      });
+      return reply.code(401).send({ error: '账号或密码错误' });
+    }
     const token = app.jwt.sign({ uid: row.id, email: row.email });
     const user = {
       id: row.id,
@@ -31,6 +60,20 @@ export function registerAuthRoutes(app: FastifyInstance) {
       locale: row.locale ?? 'zh-CN',
       timezone: row.timezone ?? 'Asia/Shanghai',
     };
+    
+    // 记录登录成功
+    await logOperation(app, req, {
+      ...OPERATION_MAPPING.AUTH,
+      resourceId: row.id,
+      resourceName: row.name,
+      operation: OperationType.LOGIN,
+      message: '登录成功',
+      status: 'success',
+      userId: row.id,
+      userName: row.name,
+      autoGetUser: false
+    });
+    
     return { token, user };
   });
 
@@ -96,6 +139,20 @@ export function registerAuthRoutes(app: FastifyInstance) {
           )
           .get(payload.uid);
         if (row?.timezone) setLoggerTimeZone(row.timezone);
+        
+        // 记录用户设置更新
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.AUTH,
+          resourceId: payload.uid,
+          resourceName: row?.name,
+          operation: OperationType.UPDATE,
+          message: `更新用户设置: ${fields.join(', ')}`,
+          status: 'success',
+          userId: payload.uid,
+          userName: row?.name,
+          autoGetUser: false
+        });
+        
         return { success: true, user: row };
       } catch (err) {
         return reply.code(401).send(buildPrefixedError('更新用户设置失败', err, 401));
@@ -121,6 +178,25 @@ export function registerAuthRoutes(app: FastifyInstance) {
         (app as any).db
           .prepare('UPDATE users SET password_hash=? WHERE id=?')
           .run(newHash, payload.uid);
+        
+        // 获取用户信息用于记录
+        const userRow = (app as any).db
+          .prepare('SELECT id, name FROM users WHERE id = ?')
+          .get(payload.uid);
+        
+        // 记录密码修改
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.AUTH,
+          resourceId: payload.uid,
+          resourceName: userRow?.name,
+          operation: OperationType.UPDATE,
+          message: '修改密码成功',
+          status: 'success',
+          userId: payload.uid,
+          userName: userRow?.name,
+          autoGetUser: false
+        });
+        
         return { success: true };
       } catch (err) {
         return reply.code(401).send(buildPrefixedError('修改密码失败', err, 401));

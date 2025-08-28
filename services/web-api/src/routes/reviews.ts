@@ -2,6 +2,8 @@ import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
+import { OperationType } from '../utils/operation-logger.js';
 
 export function registerReviewRoutes(app: FastifyInstance) {
   // 面试复盘列表（按开始时间倒序，无分页，前端统一滚动展示）
@@ -157,6 +159,18 @@ export function registerReviewRoutes(app: FastifyInstance) {
             userRow?.locale || 'zh-CN',
             userRow?.timezone || 'Asia/Shanghai',
           );
+        
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.REVIEW,
+          resourceId: id,
+          resourceName: `面试复盘: ${body.jobId}`,
+          operation: OperationType.CREATE,
+          message: `创建面试复盘: ${body.jobId}`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return { id };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('创建面试复盘失败', err, 400));
@@ -176,6 +190,18 @@ export function registerReviewRoutes(app: FastifyInstance) {
           .get(id, payload.uid);
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
         (app as any).db.prepare('UPDATE interviews SET ended_at=? WHERE id=?').run(Date.now(), id);
+        
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.REVIEW,
+          resourceId: id,
+          resourceName: `面试复盘: ${id}`,
+          operation: OperationType.UPDATE,
+          message: `结束面试复盘: ${id}`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return { success: true };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('结束面试失败', err, 400));
@@ -195,6 +221,18 @@ export function registerReviewRoutes(app: FastifyInstance) {
           .get(id, payload.uid);
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
         (app as any).db.prepare('DELETE FROM interviews WHERE id=?').run(id);
+        
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.REVIEW,
+          resourceId: id,
+          resourceName: `面试复盘: ${id}`,
+          operation: OperationType.DELETE,
+          message: `删除面试复盘: ${id}`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return { success: true };
       } catch (err) {
         return reply.code(401).send(buildPrefixedError('删除面试复盘失败', err, 401));

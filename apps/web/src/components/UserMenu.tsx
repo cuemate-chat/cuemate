@@ -8,6 +8,7 @@ import {
   RectangleGroupIcon,
   SpeakerWaveIcon,
   Squares2X2Icon,
+  ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -107,6 +108,11 @@ export default function UserMenu() {
     setOpen(false);
   };
 
+  const onOperationLogs = () => {
+    navigate('/operation-logs');
+    setOpen(false);
+  };
+
   const onVectorKnowledge = () => {
     navigate('/settings/vector-knowledge');
     setOpen(false);
@@ -190,6 +196,12 @@ export default function UserMenu() {
             onClick={onLogs}
           >
             <DocumentTextIcon className="w-4 h-4" /> 日志管理
+          </button>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+            onClick={onOperationLogs}
+          >
+            <ClipboardDocumentListIcon className="w-4 h-4" /> 操作记录
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"

@@ -4,6 +4,8 @@ import type { FastifyInstance } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
+import { OperationType } from '../utils/operation-logger.js';
 
 // License 常量 (修正密钥长度为 16 字节)
 const SECRET_KEY = 'CueMateService16';
@@ -171,6 +173,17 @@ export function registerLicenseRoutes(app: FastifyInstance) {
             now,
           );
 
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.LICENSE,
+          resourceId: licenseId,
+          resourceName: `${license.corporation}_${license.edition}`,
+          operation: OperationType.CREATE,
+          message: `上传License文件: ${license.corporation} (${license.edition})`,
+          status: 'success',
+          userId: payload.uid
+        });
+
         return {
           success: true,
           message: 'License 上传成功',
@@ -251,6 +264,17 @@ export function registerLicenseRoutes(app: FastifyInstance) {
             now,
           );
 
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.LICENSE,
+          resourceId: licenseId,
+          resourceName: `${license.corporation}_${license.edition}`,
+          operation: OperationType.CREATE,
+          message: `上传License文本: ${license.corporation} (${license.edition})`,
+          status: 'success',
+          userId: payload.uid
+        });
+
         return {
           success: true,
           message: 'License 上传成功',
@@ -327,11 +351,26 @@ export function registerLicenseRoutes(app: FastifyInstance) {
 
         const params = z.object({ id: z.string() }).parse(req.params);
 
+        // 先获取license信息用于日志记录
+        const existingLicense = (app as any).db.prepare('SELECT * FROM licenses WHERE id = ?').get(params.id);
+        
         const result = (app as any).db.prepare('DELETE FROM licenses WHERE id = ?').run(params.id);
 
         if (result.changes === 0) {
           return reply.code(404).send({ error: 'License 不存在' });
         }
+
+        // 记录操作日志
+        const payload = (req as any).user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.LICENSE,
+          resourceId: params.id,
+          resourceName: existingLicense ? `${existingLicense.corporation}_${existingLicense.edition}` : 'License',
+          operation: OperationType.DELETE,
+          message: `删除License: ${existingLicense ? existingLicense.corporation : 'Unknown'}`,
+          status: 'success',
+          userId: payload.uid
+        });
 
         return { success: true, message: 'License 删除成功' };
       } catch (error: any) {
@@ -465,6 +504,18 @@ export function registerLicenseRoutes(app: FastifyInstance) {
 
           const message = `内置题库导入完成: ${insertedCount}/${totalAttempted} 条新增，${existingCount} 条已存在`;
           app.log.info(message);
+
+          // 记录操作日志
+          const payload = (req as any).user as any;
+          await logOperation(app, req, {
+            ...OPERATION_MAPPING.PRESET_QUESTION,
+            resourceId: filename,
+            resourceName: filename,
+            operation: OperationType.CREATE,
+            message: `导入内置题库: ${message}`,
+            status: 'success',
+            userId: payload.uid
+          });
 
           return {
             success: true,

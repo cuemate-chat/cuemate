@@ -3,6 +3,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getLlmRouterUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { OperationType } from '../utils/operation-logger.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 
 export function registerModelRoutes(app: FastifyInstance) {
   // 列表查询（支持按供应商/类型/关键字过滤）
@@ -156,6 +158,20 @@ export function registerModelRoutes(app: FastifyInstance) {
           .run(ok ? 'ok' : 'fail', id);
       } catch {}
 
+      // 记录模型操作
+      const isUpdate = body.id && (app as any).db.prepare('SELECT 1 FROM models WHERE id=? AND created_at < ?').get(id, now);
+      const operation = isUpdate ? OperationType.UPDATE : OperationType.CREATE;
+      const message = isUpdate ? `更新模型: ${body.name}` : `创建模型: ${body.name}`;
+      
+      await logOperation(app, req, {
+        ...OPERATION_MAPPING.MODEL,
+        resourceId: id,
+        resourceName: body.name,
+        operation,
+        message,
+        status: 'success'
+      });
+
       return { id };
     }),
   );
@@ -163,8 +179,23 @@ export function registerModelRoutes(app: FastifyInstance) {
   // 删除
   app.delete('/models/:id', async (req) => {
     const id = (req.params as any).id;
+    
+    // 获取模型信息用于记录
+    const modelRow = (app as any).db.prepare('SELECT name FROM models WHERE id=?').get(id);
+    
     (app as any).db.prepare('DELETE FROM models WHERE id=?').run(id);
     (app as any).db.prepare('DELETE FROM model_params WHERE model_id=?').run(id);
+    
+    // 记录删除操作
+    await logOperation(app, req, {
+      ...OPERATION_MAPPING.MODEL,
+      resourceId: id,
+      resourceName: modelRow?.name || '未知模型',
+      operation: OperationType.DELETE,
+      message: `删除模型: ${modelRow?.name || id}`,
+      status: 'success'
+    });
+    
     return { success: true };
   });
 

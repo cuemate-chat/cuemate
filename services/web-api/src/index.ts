@@ -18,7 +18,9 @@ import { registerPresetQuestionRoutes } from './routes/preset-questions.js';
 import { registerInterviewQuestionRoutes } from './routes/questions.js';
 import { registerReviewRoutes } from './routes/reviews.js';
 import { registerVectorRoutes } from './routes/vectors.js';
+import { registerOperationLogRoutes } from './routes/operation-logs.js';
 import { logger as serviceLogger } from './utils/logger.js';
+import { OperationLogger } from './utils/operation-logger.js';
 
 config();
 
@@ -50,6 +52,10 @@ async function start() {
   const db = await initSqlite(process.env.SQLITE_PATH || './cuemate.db');
   app.decorate('db', db as any);
 
+  // 初始化操作记录器
+  const operationLogger = new OperationLogger(db);
+  app.decorate('operationLogger', operationLogger);
+
   // 启动时检查并验证 License
   try {
     const { validateLicenseAtStartup } = await import('./utils/license-validator.js');
@@ -77,6 +83,7 @@ async function start() {
   registerFileRoutes(app as any);
   registerLicenseRoutes(app as any);
   registerAdsRoutes(app as any);
+  registerOperationLogRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 

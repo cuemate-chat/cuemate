@@ -4,6 +4,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
+import { OperationType } from '../utils/operation-logger.js';
 
 export function registerJobRoutes(app: FastifyInstance) {
   const createSchema = z.object({
@@ -96,6 +98,17 @@ export function registerJobRoutes(app: FastifyInstance) {
         } catch (error) {
           app.log.error({ err: error as any }, `Failed to sync job ${jobId} to RAG service`);
         }
+
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.JOB,
+          resourceId: jobId,
+          resourceName: body.title,
+          operation: OperationType.CREATE,
+          message: `创建面试任务: ${body.title}`,
+          status: 'success',
+          userId: payload.uid
+        });
 
         return { jobId, resumeId };
       } catch (err: any) {
@@ -241,6 +254,17 @@ export function registerJobRoutes(app: FastifyInstance) {
         app.log.error({ err: error }, 'Failed to sync to RAG service');
       }
 
+      // 记录操作日志
+      await logOperation(app, req, {
+        ...OPERATION_MAPPING.JOB,
+        resourceId: id,
+        resourceName: body.title,
+        operation: OperationType.UPDATE,
+        message: `更新面试任务: ${body.title}`,
+        status: 'success',
+        userId: payload.uid
+      });
+
       return { success: true };
     } catch (err: any) {
       app.log.error({ err }, '更新岗位失败');
@@ -272,7 +296,17 @@ export function registerJobRoutes(app: FastifyInstance) {
 
       app.log.info(`Starting cascading delete for job ${id} by user ${payload.uid}`);
 
-      // 3. 开始事务
+      // 3. 获取任务信息（用于记录操作日志）
+      const jobInfo = app.db
+        .prepare('SELECT title FROM jobs WHERE id=? AND user_id=?')
+        .get(id, payload.uid);
+      
+      if (!jobInfo) {
+        app.log.error(`Job ${id} not found for user ${payload.uid}`);
+        return reply.code(404).send({ error: '岗位不存在' });
+      }
+
+      // 4. 开始事务
       let deleteResult;
       try {
         const transaction = app.db.transaction(() => {
@@ -330,6 +364,19 @@ export function registerJobRoutes(app: FastifyInstance) {
       }
 
       app.log.info(`Cascading delete completed for job ${id}:`, deleteResult);
+
+      // 记录操作日志
+      if (deleteResult.jobsDeleted > 0) {
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.JOB,
+          resourceId: id,
+          resourceName: jobInfo.title,
+          operation: OperationType.DELETE,
+          message: `删除面试任务: ${jobInfo.title}`,
+          status: 'success',
+          userId: payload.uid
+        });
+      }
 
       return {
         success: deleteResult.jobsDeleted > 0,

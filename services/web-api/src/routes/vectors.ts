@@ -3,6 +3,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
+import { OperationType } from '../utils/operation-logger.js';
 
 /**
  * 统一的向量库删除接口：删除 Chroma 向量，并回写业务库 vector_status = 0
@@ -335,6 +337,17 @@ export function registerVectorRoutes(app: FastifyInstance) {
           totalDeletedExtras += r.deletedExtras;
         }
 
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.VECTOR,
+          resourceId: body.jobId || 'all',
+          resourceName: body.jobId ? `岗位向量同步: ${body.jobId}` : '一键全量向量同步',
+          operation: OperationType.UPDATE,
+          message: `一键同步向量数据: ${jobs.length}个岗位, ${totalSuccess}个题目成功`,
+          status: 'success',
+          userId: payload.uid
+        });
+
         return {
           success: true,
           jobs: { count: jobs.length },
@@ -456,6 +469,17 @@ export function registerVectorRoutes(app: FastifyInstance) {
             }
           }
 
+          // 记录操作日志
+          await logOperation(app, req, {
+            ...OPERATION_MAPPING.VECTOR,
+            resourceId: 'all',
+            resourceName: '清空所有向量数据',
+            operation: OperationType.DELETE,
+            message: `清空所有向量数据`,
+            status: 'success',
+            userId: payload.uid
+          });
+          
           reply.send(result);
         } catch (fetchError: any) {
           app.log.error({ err: fetchError }, 'Fetch to RAG service failed');
@@ -517,6 +541,18 @@ export function registerVectorRoutes(app: FastifyInstance) {
         } catch (e) {
           app.log.warn({ err: e as any }, '回写 vector_status 失败');
         }
+
+        // 记录操作日志
+        const payload = (req as any).user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.VECTOR,
+          resourceId: body.id,
+          resourceName: `删除向量数据: ${collection}`,
+          operation: OperationType.DELETE,
+          message: `删除单个向量数据: ${body.id} (${collection})`,
+          status: 'success',
+          userId: payload.uid
+        });
 
         return { success: true };
       } catch (err: any) {

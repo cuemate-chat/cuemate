@@ -12,6 +12,7 @@ import { up as up11, version as v11 } from './011_create_ads_table.js';
 import { up as up12, version as v12 } from './012_add_ads_fields.js';
 import { up as up13, version as v13 } from './013_create_layout_tables.js';
 import { up as up14, version as v14 } from './014_asr_settings.js';
+import { up as up15, version as v15 } from './015_operation_logs.js';
 
 export interface Migration {
   version: number;
@@ -34,4 +35,5 @@ export const migrations: Migration[] = [
   { version: v12, name: '012_add_ads_fields', up: up12 },
   { version: v13, name: '013_create_layout_tables', up: up13 },
   { version: v14, name: '014_asr_settings', up: up14 },
+  { version: v15, name: '015_operation_logs', up: up15 },
 ];

@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
+import { OperationType } from '../utils/operation-logger.js';
 
 const configSchema = z.object({
   name: z.string().min(1).max(50).default('ASR-Gateway'),
@@ -224,6 +226,24 @@ export function registerAsrRoutes(app: FastifyInstance) {
         successCount > 0
           ? `配置已保存成功，${successCount}/${asrServiceUrls.length} 个服务同步成功`
           : '配置已保存到数据库，但服务同步失败';
+
+      // 记录操作日志
+      try {
+        await req.jwtVerify();
+        const payload = req.user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.ASR,
+          resourceId: '1',
+          resourceName: 'ASR配置',
+          operation: OperationType.UPDATE,
+          message: `更新ASR配置: ${newConfig.name}`,
+          status: 'success',
+          userId: payload.uid
+        });
+      } catch (authError) {
+        // ASR配置更新不需要认证，但如果有认证信息就记录操作日志
+        app.log.info('ASR配置更新未记录操作日志（无认证信息）');
+      }
 
       return {
         success: true,

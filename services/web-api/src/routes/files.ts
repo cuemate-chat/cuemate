@@ -4,6 +4,8 @@ import { promises as fs } from 'fs';
 import mammoth from 'mammoth';
 import path from 'path';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
+import { OperationType } from '../utils/operation-logger.js';
 
 async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
   const chunks: Buffer[] = [];
@@ -83,6 +85,18 @@ export function registerFileRoutes(app: FastifyInstance) {
 
       // 返回图片访问路径（前端通过这个路径访问图片）
       const imageUrl = `/images/${newFilename}`;
+
+      // 记录操作日志
+      const payload = req.user as any;
+      await logOperation(app, req, {
+        ...OPERATION_MAPPING.SYSTEM,
+        resourceId: newFilename,
+        resourceName: filename,
+        operation: OperationType.CREATE,
+        message: `上传图片文件: ${filename}`,
+        status: 'success',
+        userId: payload.uid
+      });
 
       return {
         success: true,
@@ -302,6 +316,19 @@ export function registerFileRoutes(app: FastifyInstance) {
       }
 
       app.log.info({ filename, finalTextLength: text.length }, '文件解析成功');
+      
+      // 记录操作日志
+      const payload = req.user as any;
+      await logOperation(app, req, {
+        ...OPERATION_MAPPING.SYSTEM,
+        resourceId: filename,
+        resourceName: filename,
+        operation: OperationType.VIEW,
+        message: `解析文档文件: ${filename} (${text.length}字符)`,
+        status: 'success',
+        userId: payload.uid
+      });
+      
       return { text };
     } catch (err: any) {
       app.log.error({ err }, 'extract-text处理失败');

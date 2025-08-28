@@ -3,6 +3,8 @@ import type { FastifyInstance } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
+import { OperationType } from '../utils/operation-logger.js';
 
 // 广告数据验证模式
 const pixelAdSchema = z.object({
@@ -334,6 +336,17 @@ export function registerAdsRoutes(app: FastifyInstance) {
           )
           .get(adId);
 
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.ADS,
+          resourceId: adId,
+          resourceName: data.title,
+          operation: OperationType.CREATE,
+          message: `创建像素广告: ${data.title}`,
+          status: 'success',
+          userId: payload.uid
+        });
+
         return {
           success: true,
           message: '广告创建成功',
@@ -418,6 +431,18 @@ export function registerAdsRoutes(app: FastifyInstance) {
           )
           .get(params.id);
 
+        // 记录操作日志
+        const payload = req.user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.ADS,
+          resourceId: params.id,
+          resourceName: existingAd.title,
+          operation: OperationType.UPDATE,
+          message: `更新像素广告: ${existingAd.title}`,
+          status: 'success',
+          userId: payload.uid
+        });
+
         return {
           success: true,
           message: '广告更新成功',
@@ -455,6 +480,18 @@ export function registerAdsRoutes(app: FastifyInstance) {
         if (result.changes === 0) {
           return reply.code(404).send({ error: '广告不存在' });
         }
+
+        // 记录操作日志
+        const payload = req.user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.ADS,
+          resourceId: params.id,
+          resourceName: existingAd.title,
+          operation: OperationType.DELETE,
+          message: `删除像素广告: ${existingAd.title}`,
+          status: 'success',
+          userId: payload.uid
+        });
 
         return {
           success: true,

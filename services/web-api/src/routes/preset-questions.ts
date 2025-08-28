@@ -3,6 +3,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
+import { OperationType } from '../utils/operation-logger.js';
 
 export function registerPresetQuestionRoutes(app: FastifyInstance) {
   // 获取预置题库列表
@@ -172,6 +174,18 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
           )
           .run(id, body.question, body.answer, body.tag_id || null, '[]', now);
 
+        // 记录操作日志
+        const payload = (req as any).user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.PRESET_QUESTION,
+          resourceId: id,
+          resourceName: body.question.substring(0, 50) + '...',
+          operation: OperationType.CREATE,
+          message: `创建预置题目: ${body.question.substring(0, 30)}...`,
+          status: 'success',
+          userId: payload.uid
+        });
+
         return { id };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('创建预置题目失败', err, 400));
@@ -233,6 +247,18 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
           .prepare(`UPDATE preset_questions SET ${updates.join(', ')} WHERE id = ?`)
           .run(...args);
 
+        // 记录操作日志
+        const payload = (req as any).user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.PRESET_QUESTION,
+          resourceId: id,
+          resourceName: body.question ? body.question.substring(0, 50) + '...' : '预置题目',
+          operation: OperationType.UPDATE,
+          message: `更新预置题目: ${existing.id}`,
+          status: 'success',
+          userId: payload.uid
+        });
+
         return { success: true };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('更新预置题目失败', err, 400));
@@ -262,7 +288,25 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
         //   return reply.code(400).send({ error: '内置题目无法删除' });
         // }
 
+        // 先获取题目信息用于日志记录
+        const questionToDelete = (app as any).db
+          .prepare('SELECT question FROM preset_questions WHERE id = ?')
+          .get(id);
+          
         (app as any).db.prepare('DELETE FROM preset_questions WHERE id = ?').run(id);
+        
+        // 记录操作日志
+        const payload = (req as any).user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.PRESET_QUESTION,
+          resourceId: id,
+          resourceName: questionToDelete ? questionToDelete.question.substring(0, 50) + '...' : '预置题目',
+          operation: OperationType.DELETE,
+          message: `删除预置题目: ${questionToDelete ? questionToDelete.question.substring(0, 30) : id}...`,
+          status: 'success',
+          userId: payload.uid
+        });
+        
         return { success: true };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('删除预置题目失败', err, 400));
@@ -299,6 +343,18 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
             `DELETE FROM preset_questions WHERE id IN (${body.ids.map(() => '?').join(',')})`,
           )
           .run(...body.ids).changes;
+
+        // 记录操作日志
+        const payload = (req as any).user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.PRESET_QUESTION,
+          resourceId: `batch_${body.ids.length}`,
+          resourceName: `批量删除${body.ids.length}个预置题目`,
+          operation: OperationType.DELETE,
+          message: `批量删除预置题目: ${deletedCount}/${body.ids.length} 个成功`,
+          status: 'success',
+          userId: payload.uid
+        });
 
         return { success: true, deletedCount };
       } catch (err: any) {
@@ -421,6 +477,17 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
           }
         }
 
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.PRESET_QUESTION,
+          resourceId: body.jobId,
+          resourceName: `批量同步${body.presetQuestionIds.length}个预置题目`,
+          operation: OperationType.CREATE,
+          message: `批量同步预置题目到面试题库: ${syncedCount}/${body.presetQuestionIds.length} 个成功`,
+          status: 'success',
+          userId: payload.uid
+        });
+
         return { success: true, syncedCount, skippedCount };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('批量同步预置题目失败', err, 400));
@@ -499,6 +566,18 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
             if (errors.length > 10) break; // 最多记录10个错误
           }
         }
+
+        // 记录操作日志
+        const payload = (req as any).user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.PRESET_QUESTION,
+          resourceId: `batch_import_${now}`,
+          resourceName: `批量导入${body.questions.length}个预置题目`,
+          operation: OperationType.CREATE,
+          message: `批量导入预置题目: ${importedCount}/${body.questions.length} 个成功`,
+          status: 'success',
+          userId: payload.uid
+        });
 
         return {
           success: true,
