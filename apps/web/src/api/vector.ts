@@ -15,6 +15,8 @@ export interface VectorDocument {
     questionId?: string;
     tagId?: string;
     tagName?: string;
+    jobTitle?: string;
+    resumeTitle?: string;
     chunkIndex?: number;
     totalChunks?: number;
     createdAt?: number;

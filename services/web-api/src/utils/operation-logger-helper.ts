@@ -111,7 +111,7 @@ export const OPERATION_MAPPING = {
   },
   // 系统设置
   SYSTEM: {
-    menu: MenuType.HELP_CENTER,
+    menu: MenuType.ACCOUNT_SETTINGS,
     type: ResourceType.SYSTEM,
   },
 } as const;

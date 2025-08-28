@@ -345,7 +345,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
           operation: OperationType.UPDATE,
           message: `一键同步向量数据: ${jobs.length}个岗位, ${totalSuccess}个题目成功`,
           status: 'success',
-          userId: payload.uid
+          userId: payload.uid,
         });
 
         return {
@@ -477,9 +477,9 @@ export function registerVectorRoutes(app: FastifyInstance) {
             operation: OperationType.DELETE,
             message: `清空所有向量数据`,
             status: 'success',
-            userId: payload.uid
+            userId: payload.uid,
           });
-          
+
           reply.send(result);
         } catch (fetchError: any) {
           app.log.error({ err: fetchError }, 'Fetch to RAG service failed');
@@ -551,7 +551,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
           operation: OperationType.DELETE,
           message: `删除单个向量数据: ${body.id} (${collection})`,
           status: 'success',
-          userId: payload.uid
+          userId: payload.uid,
         });
 
         return { success: true };

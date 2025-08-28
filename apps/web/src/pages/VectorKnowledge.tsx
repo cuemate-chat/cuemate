@@ -82,6 +82,9 @@ export default function VectorKnowledge() {
             try {
               const relatedResult = await getRelatedDocuments(doc.id, doc.metadata.type);
               if (relatedResult.success && relatedResult.related) {
+                // 从关联数据推断岗位/简历标题
+                const firstJob = relatedResult.related.jobs?.[0];
+                const firstResume = relatedResult.related.resumes?.[0];
                 return {
                   ...doc,
                   metadata: {
@@ -89,6 +92,8 @@ export default function VectorKnowledge() {
                     relatedJobs: relatedResult.related.jobs?.length || 0,
                     relatedResumes: relatedResult.related.resumes?.length || 0,
                     relatedQuestions: relatedResult.related.questions?.length || 0,
+                    jobTitle: firstJob?.metadata?.title,
+                    resumeTitle: firstResume?.metadata?.title,
                   }
                 };
               }
@@ -175,6 +180,8 @@ export default function VectorKnowledge() {
             try {
               const relatedResult = await getRelatedDocuments(doc.id, doc.metadata.type);
               if (relatedResult.success && relatedResult.related) {
+                const firstJob = relatedResult.related.jobs?.[0];
+                const firstResume = relatedResult.related.resumes?.[0];
                 return {
                   ...doc,
                   metadata: {
@@ -182,6 +189,8 @@ export default function VectorKnowledge() {
                     relatedJobs: relatedResult.related.jobs?.length || 0,
                     relatedResumes: relatedResult.related.resumes?.length || 0,
                     relatedQuestions: relatedResult.related.questions?.length || 0,
+                    jobTitle: firstJob?.metadata?.title,
+                    resumeTitle: firstResume?.metadata?.title,
                   }
                 };
               }
@@ -735,10 +744,32 @@ export default function VectorKnowledge() {
                           </span>
                         </>
                       )}
-                      {doc.metadata.tagName && (
+                       {doc.metadata.tagName && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
                           {doc.metadata.tagName}
                         </span>
+                      )}
+                      {doc.metadata.type === 'questions' && (
+                        <>
+                          {/* 岗位名称 */}
+                          {doc.metadata.jobTitle && (
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-200">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm3 2a1 1 0 011-1h4a1 1 0 011 1v1H7V6z" clipRule="evenodd" />
+                              </svg>
+                              {doc.metadata.jobTitle}
+                            </span>
+                          )}
+                          {/* 简历名称 */}
+                          {doc.metadata.resumeTitle && (
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-full border border-green-200">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm3 2a1 1 0 011-1h4a1 1 0 011 1v1H7V6z" clipRule="evenodd" />
+                              </svg>
+                              {doc.metadata.resumeTitle}
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
 
@@ -959,7 +990,7 @@ export default function VectorKnowledge() {
                           ID: {relatedData.resumes[0].id}
                         </span>
                       </div>
-                      <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-80 overflow-y-auto">
+                      <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-100 overflow-y-auto">
                         {relatedData.resumes[0].content}
                       </div>
                     </div>
@@ -993,7 +1024,7 @@ export default function VectorKnowledge() {
                             <span className="font-medium">标签: {question.metadata.tagName}</span>
                           )}
                         </div>
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-2 overflow-y-auto ml-6">
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-80 overflow-y-auto ml-6">
                           {question.content}
                         </div>
                       </div>
@@ -1016,7 +1047,7 @@ export default function VectorKnowledge() {
                         </h4>
                         <span className="text-xs text-slate-500">ID: {relatedData.jobs[0].id}</span>
                       </div>
-                      <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                      <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-100 overflow-y-auto">
                         {relatedData.jobs[0].content}
                       </div>
                     </div>

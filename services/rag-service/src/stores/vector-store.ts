@@ -342,11 +342,18 @@ export class VectorStore {
     );
 
     try {
-      // 使用 get 方法获取所有文档，避免嵌入函数问题
-      const results: any = await (collection as any).get({
-        limit: topK,
-        where: filter,
-      });
+      // 使用 get 方法获取文档。若包含 id，则优先用 ids 精确获取
+      let results: any;
+      if (filter && (filter as any).id) {
+        results = await (collection as any).get({
+          ids: [(filter as any).id],
+        });
+      } else {
+        results = await (collection as any).get({
+          limit: topK,
+          where: filter,
+        });
+      }
 
       if (!results.documents || results.documents.length === 0) {
         return [];

@@ -411,9 +411,9 @@ export default function AdsPixel() {
               <div className="min-w-[250px]">
                 <Select
                   showSearch
-                  value={selectedBlockFilter}
-                  onChange={(value) => handleBlockFilter(value || '')}
-                  placeholder="选择广告块"
+                  value={selectedBlockFilter ? selectedBlockFilter : undefined}
+                  onChange={(value) => handleBlockFilter((value as string) || '')}
+                  placeholder="全部"
                   style={{ width: '100%' }}
                   allowClear
                   className="h-[42px]"

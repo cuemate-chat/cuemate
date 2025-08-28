@@ -70,6 +70,17 @@ export async function createDocumentRoutes(
     }
   }
 
+  // 统一按创建时间逆序排序（优先 metadata.createdAt，其次 metadata.timestamp）
+  function sortByCreatedAtDesc(results: Array<{ metadata?: Record<string, any> }>) {
+    return results.sort((a: any, b: any) => {
+      const ta = a?.metadata?.createdAt ?? a?.metadata?.timestamp ?? 0;
+      const tb = b?.metadata?.createdAt ?? b?.metadata?.timestamp ?? 0;
+      const na = typeof ta === 'number' ? ta : ta ? new Date(ta).getTime() : 0;
+      const nb = typeof tb === 'number' ? tb : tb ? new Date(tb).getTime() : 0;
+      return nb - na;
+    });
+  }
+
   // 处理单个文档
   app.post('/ingest', async (req) => {
     const body = (req as any).body as {
@@ -239,10 +250,12 @@ export async function createDocumentRoutes(
           deps.config.vectorStore.jobsCollection,
         );
 
+        const ordered = sortByCreatedAtDesc(results);
+
         return {
           success: true,
-          results,
-          total: results.length,
+          results: ordered,
+          total: ordered.length,
           query: '',
           filter: parsedFilter,
           topK: k,
@@ -301,10 +314,12 @@ export async function createDocumentRoutes(
           return true;
         });
 
+        const ordered = sortByCreatedAtDesc(filtered);
+
         return {
           success: true,
-          results: filtered,
-          total: filtered.length,
+          results: ordered,
+          total: ordered.length,
           query: query,
           filter: parsedFilter,
           topK: k,
@@ -312,10 +327,12 @@ export async function createDocumentRoutes(
         };
       }
 
+      const ordered = sortByCreatedAtDesc(searchResults);
+
       return {
         success: true,
-        results: searchResults,
-        total: searchResults.length,
+        results: ordered,
+        total: ordered.length,
         query: query,
         filter: parsedFilter,
         topK: k,
@@ -359,10 +376,12 @@ export async function createDocumentRoutes(
           deps.config.vectorStore.resumesCollection,
         );
 
+        const ordered = sortByCreatedAtDesc(results);
+
         return {
           success: true,
-          results,
-          total: results.length,
+          results: ordered,
+          total: ordered.length,
           query: '',
           filter: parsedFilter,
           topK: k,
@@ -409,10 +428,12 @@ export async function createDocumentRoutes(
           return true;
         });
 
+        const ordered = sortByCreatedAtDesc(filtered);
+
         return {
           success: true,
-          results: filtered,
-          total: filtered.length,
+          results: ordered,
+          total: ordered.length,
           query: query,
           filter: parsedFilter,
           topK: k,
@@ -420,10 +441,12 @@ export async function createDocumentRoutes(
         };
       }
 
+      const ordered = sortByCreatedAtDesc(searchResults);
+
       return {
         success: true,
-        results: searchResults,
-        total: searchResults.length,
+        results: ordered,
+        total: ordered.length,
         query: query,
         filter: parsedFilter,
         topK: k,
@@ -467,10 +490,12 @@ export async function createDocumentRoutes(
           deps.config.vectorStore.questionsCollection,
         );
 
+        const ordered = sortByCreatedAtDesc(results);
+
         return {
           success: true,
-          results,
-          total: results.length,
+          results: ordered,
+          total: ordered.length,
           query: '',
           filter: parsedFilter,
           topK: k,
@@ -517,10 +542,12 @@ export async function createDocumentRoutes(
           return true;
         });
 
+        const ordered = sortByCreatedAtDesc(filtered);
+
         return {
           success: true,
-          results: filtered,
-          total: filtered.length,
+          results: ordered,
+          total: ordered.length,
           query: query,
           filter: parsedFilter,
           topK: k,
@@ -528,10 +555,12 @@ export async function createDocumentRoutes(
         };
       }
 
+      const ordered = sortByCreatedAtDesc(searchResults);
+
       return {
         success: true,
-        results: searchResults,
-        total: searchResults.length,
+        results: ordered,
+        total: ordered.length,
         query: query,
         filter: parsedFilter,
         topK: k,
