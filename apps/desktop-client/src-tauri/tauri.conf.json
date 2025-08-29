@@ -3,32 +3,42 @@
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:5173"
+    "devUrl": "http://localhost:1420"
   },
   "bundle": {
     "active": true,
     "targets": "all"
   },
-  "productName": "CueMate Audio Client",
-  "mainBinaryName": "CueMate Audio Client",
+  "productName": "CueMate",
+  "mainBinaryName": "CueMate",
   "version": "0.1.0",
-  "identifier": "com.cuemate.desktop-client",
+  "identifier": "com.cuemate.desktop",
   "plugins": {},
   "app": {
     "windows": [
       {
         "fullscreen": false,
-        "resizable": true,
-        "title": "CueMate Audio Client",
-        "width": 800,
-        "height": 600,
-        "minWidth": 600,
-        "minHeight": 400,
-        "useHttpsScheme": true
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "title": "CueMate",
+        "width": 400,
+        "height": 80,
+        "minWidth": 350,
+        "minHeight": 60,
+        "maxWidth": 500,
+        "maxHeight": 100,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "useHttpsScheme": true,
+        "visible": true,
+        "acceptFirstMouse": false,
+        "hiddenTitle": true
       }
     ],
     "security": {
       "csp": null
-    }
+    },
+    "macOSPrivateApi": true
   }
 }

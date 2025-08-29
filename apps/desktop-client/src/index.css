@@ -1,3 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 全局样式重置 */
 * {
   margin: 0;
   padding: 0;
@@ -5,11 +10,41 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: transparent;
+  overflow: hidden;
 }
 
 #root {
-  min-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+}
+
+/* 隐藏滚动条 */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+/* 确保应用容器不受全局样式影响 */
+.floating-app {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+/* 移除默认的 body 背景 */
+body {
+  background: none !important;
+}
+
+/* 确保没有默认的边距和填充 */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
 }

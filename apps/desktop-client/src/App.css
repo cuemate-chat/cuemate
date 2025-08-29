@@ -1,404 +1,382 @@
-/* CueMate Desktop Client Styles */
-
-.app {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #333;
+/* 悬浮控制栏样式 - 真正的系统级悬浮 */
+.floating-control-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  pointer-events: none;
 }
 
-.header {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  padding: 1rem 2rem;
-  text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.header h1 {
-  color: white;
-  margin: 0;
-  font-size: 1.8rem;
-  font-weight: 600;
-}
-
-.main {
-  padding: 2rem;
-  max-width: 1000px;
-  margin: 0 auto;
+.control-bar-container {
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 60px;
+  background: rgba(30, 30, 30, 0.85);
+  backdrop-filter: blur(20px);
+  border-radius: 30px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-/* 安装向导样式 */
-.install-guide {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.install-guide h2 {
-  color: #4a5568;
-  margin-top: 0;
-  margin-bottom: 1rem;
-}
-
-.platform-info {
-  background: #f7fafc;
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-}
-
-.platform-info h3 {
-  margin-top: 0;
-  color: #2d3748;
-}
-
-.platform-info ul {
-  margin: 0.5rem 0;
-  padding-left: 1.5rem;
-}
-
-.platform-info li {
-  margin: 0.5rem 0;
-  color: #4a5568;
-}
-
-.install-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
   align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  pointer-events: auto;
 }
 
-.install-btn, .refresh-btn {
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* 拖拽区域 */
+.drag-area {
+  flex: 1;
+  height: 100%;
+  cursor: move;
+  position: relative;
 }
 
-.install-btn {
-  background: #4299e1;
-  color: white;
+.drag-area::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
 }
 
-.install-btn:hover:not(:disabled) {
-  background: #3182ce;
-}
-
-.install-btn:disabled {
-  background: #a0aec0;
-  cursor: not-allowed;
-}
-
-.refresh-btn {
-  background: #68d391;
-  color: white;
-}
-
-.refresh-btn:hover {
-  background: #48bb78;
-}
-
-.success {
-  text-align: center;
-  color: #38a169;
-}
-
-.success button {
-  background: #38a169;
-  color: white;
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-/* 配置区域样式 */
-.config-section {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.config-section h2 {
-  color: #4a5568;
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #4a5568;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.2s ease;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #4299e1;
-  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-}
-
-.control-buttons {
+/* 状态指示器 */
+.status-indicator {
   display: flex;
-  gap: 1rem;
+  align-items: center;
   justify-content: center;
-  margin-top: 2rem;
+  width: 24px;
+  height: 24px;
 }
 
-.start-btn, .stop-btn {
-  padding: 1rem 2rem;
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-dot.active {
+  background: #00d2d3;
+  box-shadow: 0 0 12px rgba(0, 210, 211, 0.6);
+}
+
+.status-dot.inactive {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* 录音按钮 */
+.listen-btn {
+  height: 36px;
+  padding: 0 16px;
   border: none;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 200px;
-}
-
-.start-btn {
-  background: #48bb78;
+  border-radius: 18px;
+  background: #3b82f6;
   color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.start-btn:hover:not(:disabled) {
-  background: #38a169;
-  transform: translateY(-2px);
+.listen-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
-.start-btn:disabled {
-  background: #a0aec0;
+.listen-btn.recording {
+  background: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.listen-btn.recording:hover {
+  background: #dc2626;
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+.listen-btn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.stop-btn {
-  background: #f56565;
+/* 提问按钮 */
+.ask-question-btn {
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.1);
   color: white;
-}
-
-.stop-btn:hover {
-  background: #e53e3e;
-  transform: translateY(-2px);
-}
-
-/* 设备列表样式 */
-.device-list {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.device-list h3 {
-  color: #4a5568;
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-}
-
-.device-category {
-  margin-bottom: 2rem;
-}
-
-.device-category h4 {
-  color: #2d3748;
-  margin-bottom: 1rem;
-}
-
-.device-category ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.virtual-device, .device-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  background: #f7fafc;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-  border-left: 4px solid #4299e1;
-}
-
-.device-name {
-  flex: 1;
+  font-size: 14px;
   font-weight: 500;
-  color: #2d3748;
-}
-
-.device-type {
-  background: #e2e8f0;
-  color: #4a5568;
-  padding: 0.25rem 0.75rem;
-  border-radius: 16px;
-  font-size: 0.875rem;
-}
-
-.virtual-badge {
-  background: #9f7aea;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 16px;
-  font-size: 0.875rem;
-}
-
-.default-badge {
-  background: #f6ad55;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 16px;
-  font-size: 0.875rem;
-}
-
-.no-devices {
-  color: #a0aec0;
-  font-style: italic;
-  text-align: center;
-  padding: 2rem;
-}
-
-details {
-  margin-top: 1rem;
-}
-
-details summary {
   cursor: pointer;
-  font-weight: 500;
-  color: #4a5568;
-  padding: 0.5rem 0;
-  user-select: none;
-}
-
-details summary:hover {
-  color: #2d3748;
-}
-
-.all-devices {
-  margin-top: 1rem;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-/* 状态区域样式 */
-.status-section {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.status-section h3 {
-  color: #4a5568;
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-}
-
-.status-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-}
-
-.status-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  background: #f7fafc;
-  border-radius: 8px;
+  gap: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.status-item label {
+.ask-question-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 视图按钮 */
+.view-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.view-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 菜单按钮 */
+.menu-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.menu-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 关闭按钮 */
+.close-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+/* 设置面板 */
+.settings-panel {
+  position: absolute;
+  top: 70px;
+  left: 0;
+  right: 0;
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.settings-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-item label {
+  font-size: 13px;
   font-weight: 500;
-  color: #4a5568;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.status-active {
-  color: #38a169;
-  font-weight: 600;
+.setting-item input,
+.device-select {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
 }
 
-.status-inactive {
-  color: #a0aec0;
+.setting-item input:focus,
+.device-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.setting-item input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.device-select option {
+  background: #1f1f1f;
+  color: white;
+}
+
+.driver-section {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.driver-section h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
   font-weight: 600;
+  color: #fbbf24;
+}
+
+.driver-section p {
+  margin: 0 0 16px 0;
+  font-size: 12px;
+  color: #f59e0b;
+  line-height: 1.4;
+}
+
+.install-btn {
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #f59e0b;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.install-btn:hover {
+  background: #d97706;
+  transform: translateY(-1px);
+}
+
+.install-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* 响应式设计 */
-@media (max-width: 768px) {
-  .main {
-    padding: 1rem;
-    gap: 1rem;
+@media (max-width: 480px) {
+  .control-bar-container {
+    width: 350px;
+    height: 56px;
+    padding: 0 12px;
+    gap: 8px;
   }
+  
+  .listen-btn,
+  .ask-question-btn {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  
+  .view-btn,
+  .menu-btn,
+  .close-btn {
+    width: 32px;
+    height: 32px;
+  }
+}
 
-  .config-section,
-  .device-list,
-  .status-section,
-  .install-guide {
-    padding: 1.5rem;
+/* 动画效果 */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
   }
+  50% {
+    transform: scale(1.1);
+  }
+}
 
-  .control-buttons {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .start-btn, .stop-btn {
-    width: 100%;
-    max-width: 300px;
-  }
-
-  .status-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .virtual-device, .device-item {
-    flex-wrap: wrap;
-  }
+.status-dot.active {
+  animation: pulse 2s infinite;
 }
 
 /* 滚动条样式 */
-.all-devices::-webkit-scrollbar {
+.settings-panel::-webkit-scrollbar {
   width: 6px;
 }
 
-.all-devices::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.settings-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
 }
 
-.all-devices::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+.settings-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 3px;
 }
 
-.all-devices::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+.settings-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
