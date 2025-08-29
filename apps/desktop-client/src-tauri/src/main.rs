@@ -1,13 +1,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod audio;
 mod commands;
 
-use audio::virtual_driver::VirtualAudioDriverInstaller;
 use commands::*;
 use log::{info, LevelFilter};
-use tauri::{Emitter, Manager};
+use tauri::Manager;
 
 fn main() {
     // 初始化日志
@@ -19,32 +17,39 @@ fn main() {
 
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            get_audio_devices,
-            get_virtual_devices,
-            check_virtual_driver,
-            install_virtual_driver,
-            start_audio_capture,
-            stop_audio_capture,
-            is_capturing,
-            set_websocket_url,
-            set_audio_config
+            show_floating_overlay,
+            hide_floating_overlay,
+            toggle_floating_overlay
         ])
         .setup(|app| {
-            info!("应用初始化完成");
-            
-            // 检查虚拟音频驱动
-            let app_handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                let installed_drivers = VirtualAudioDriverInstaller::detect_installed_drivers();
-                if installed_drivers.is_empty() {
-                    info!("未检测到虚拟音频驱动");
-                    // 通知前端显示安装向导
-                    let _ = app_handle.emit("virtual-driver-not-found", ());
+            // 设置 control-bar 窗口位置
+            if let Some(window) = app.get_webview_window("control-bar") {
+                // 获取屏幕大小 & 窗口大小
+                if let Ok(monitor) = window.current_monitor() {
+                    if let Some(monitor) = monitor {
+                        let screen_size = monitor.size();
+                        let window_size = window.outer_size().unwrap();
+                        
+                        // 横向居中
+                        let x = (screen_size.width - window_size.width) / 2;
+                        let y = 120;
+                        
+                        // 设置窗口位置
+                        if let Err(e) = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(x as i32, y))) {
+                            info!("设置窗口失败: {}", e);
+                        } else {
+                            info!("窗口设置成功");
+                        }
+                    } else {
+                        info!("无法获取显示器信息");
+                    }
                 } else {
-                    info!("检测到虚拟音频驱动: {:?}", installed_drivers);
+                    info!("获取显示器失败");
                 }
-            });
-
+            } else {
+                info!("未找到 control-bar 窗口");
+            }
+            info!("应用初始化完成");
             Ok(())
         })
         .run(tauri::generate_context!())

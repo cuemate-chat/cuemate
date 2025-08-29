@@ -253,7 +253,7 @@ export default function License() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-semibold text-blue-800 mb-1">导入预置题库</h3>
-                      <p className="text-sm text-blue-600">上传 SQL 文件来导入预置面试题库</p>
+                      <p className="text-sm text-blue-600">上传文件来导入预置面试题库</p>
                     </div>
                     <div className="relative">
                       <input

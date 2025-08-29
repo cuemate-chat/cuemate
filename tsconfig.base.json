@@ -22,15 +22,6 @@
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
         "paths": {
-            "@cuemate/core-prompts": [
-                "packages/core-prompts/src"
-            ],
-            "@cuemate/ui-kit": [
-                "packages/ui-kit/src"
-            ],
-            "@cuemate/sdk": [
-                "packages/cml-sdk/src"
-            ],
             "@cuemate/data-sqlite": [
                 "packages/data-sqlite/src"
             ],

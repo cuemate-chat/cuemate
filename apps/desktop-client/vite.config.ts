@@ -1,9 +1,20 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
   plugins: [react()],
+  
+  // 配置多个入口点
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        floating: resolve(__dirname, 'floating.html'),
+      },
+    },
+  },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

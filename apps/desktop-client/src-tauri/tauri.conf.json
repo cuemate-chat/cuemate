@@ -17,23 +17,18 @@
   "app": {
     "windows": [
       {
+        "label": "control-bar",
         "fullscreen": false,
         "resizable": false,
         "decorations": false,
         "transparent": true,
         "title": "CueMate",
-        "width": 400,
-        "height": 80,
-        "minWidth": 350,
-        "minHeight": 60,
-        "maxWidth": 500,
-        "maxHeight": 100,
+        "width": 600,
+        "height": 60,
         "alwaysOnTop": true,
-        "skipTaskbar": true,
-        "useHttpsScheme": true,
         "visible": true,
-        "acceptFirstMouse": false,
-        "hiddenTitle": true
+        "center": true,
+        "skipTaskbar": true
       }
     ],
     "security": {
