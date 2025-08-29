@@ -23,11 +23,12 @@
         "decorations": false,
         "transparent": true,
         "title": "CueMate",
-        "width": 600,
-        "height": 60,
+        "width": 400,
+        "height": 50,
         "alwaysOnTop": true,
         "visible": true,
         "center": true,
+        "y": 0,
         "skipTaskbar": true
       }
     ],

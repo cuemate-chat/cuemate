@@ -2,37 +2,15 @@ import { invoke } from '@tauri-apps/api/core';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { motion } from 'framer-motion';
 import { Eye, Layout, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
 
 function App() {
-  const [isDragging, setIsDragging] = useState(false);
-  const [, setPosition] = useState({ x: 100, y: 100 });
   const [showFloatingBar, setShowFloatingBar] = useState(true);
   const [floatingOverlayVisible, setFloatingOverlayVisible] = useState(false);
-  const dragRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
   }, []);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.target === dragRef.current) {
-      setIsDragging(true);
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      setPosition({
-        x: e.clientX - 200,
-        y: e.clientY - 40
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
 
   const toggleMainApp = async () => {
     try {
@@ -123,15 +101,6 @@ function App() {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        {/* 拖拽区域 */}
-        <div 
-          ref={dragRef}
-          className="drag-area"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-        />
-
         {/* Logo 区域 - 点击展开主应用 */}
         <div className="logo-section" onClick={toggleMainApp}>
           <div className="logo-icon">

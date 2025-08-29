@@ -28,7 +28,7 @@ fn main() {
                 if let Ok(monitor) = window.current_monitor() {
                     if let Some(monitor) = monitor {
                         let screen_size = monitor.size();
-                        let window_size = window.outer_size().unwrap();
+                        let window_size = window.inner_size().unwrap();
                         
                         // 横向居中
                         let x = (screen_size.width - window_size.width) / 2;
