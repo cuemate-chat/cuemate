@@ -1,19 +1,52 @@
-import { invoke } from '@tauri-apps/api/core';
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { motion } from 'framer-motion';
-import { Eye, Layout, X } from 'lucide-react';
+import { Layout, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import './App.css';
 
-function App() {
-  const [showFloatingBar, setShowFloatingBar] = useState(true);
-  const [floatingOverlayVisible, setFloatingOverlayVisible] = useState(false);
+// 日志工具函数
+const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) => {
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke('log_from_frontend', { level, message });
+  } catch (error) {
+    // 如果日志命令失败，静默处理
+  }
+};
 
+function App() {
+  const [floatingOverlayVisible, setFloatingOverlayVisible] = useState(false);
+  const [showCloseButton, setShowCloseButton] = useState(true); // 先设为true调试
+  const [activeShortcut, setActiveShortcut] = useState('快捷键');
+
+  // 注册全局快捷键
   useEffect(() => {
+    const setupGlobalShortcut = async () => {
+      try {
+        const { register } = await import('@tauri-apps/plugin-global-shortcut');
+        const { invoke } = await import('@tauri-apps/api/core');
+        
+        // 注册 ⌘+\ 快捷键
+        await register('Cmd+\\', async () => {
+          await log('info', '全局快捷键触发: ⌘+\\');
+          try {
+            await invoke('toggle_app_visibility');
+          } catch (error) {
+            await log('error', `快捷键切换失败: ${error}`);
+          }
+        });
+        
+        setActiveShortcut('Cmd+\\');
+      } catch (error) {
+        await log('error', `全局快捷键注册失败: ${error}`);
+      }
+    };
+
+    setupGlobalShortcut();
   }, []);
 
   const toggleMainApp = async () => {
     try {
+      const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
       const windows = await WebviewWindow.getAll();
       let mainWindow = windows.find((w: any) => w.label === 'main-app');
       
@@ -26,7 +59,6 @@ function App() {
           await mainWindow.setFocus();
         }
       } else {
-        // 创建新的主应用窗口，加载web项目
         mainWindow = new WebviewWindow('main-app', {
           url: 'http://localhost:5174',
           title: 'CueMate - 面试助手',
@@ -39,68 +71,57 @@ function App() {
           closable: true,
           skipTaskbar: false,
         });
-        
-        // 监听窗口创建结果
-        mainWindow.once('tauri://created', () => {
-          console.log('主应用窗口创建成功');
-        });
-        
-        mainWindow.once('tauri://error', (e: any) => {
-          console.error('主应用窗口创建失败:', e);
-          const message = `无法打开主应用窗口
-          
-请确保：
-1. Web 服务正在运行 (端口 5174)
-2. 运行 'pnpm dev' 启动 Web 服务
-3. 检查防火墙设置`;
-          alert(message);
-        });
       }
     } catch (error) {
-      console.error('打开主应用失败:', error);
-      alert('打开主应用时发生错误，请检查网络连接和服务状态');
+      await log('error', `切换主应用失败: ${error}`);
     }
   };
 
-  const hideFloatingBar = () => {
-    setShowFloatingBar(false);
+  const minimizeWindow = async () => {
+    try {
+      await log('info', '开始最小化窗口...');
+      const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+      const currentWindow = getCurrentWebviewWindow();
+      await log('info', `获取到窗口: ${currentWindow.label}`);
+      
+      // 尝试隐藏窗口
+      await currentWindow.hide();
+      await log('info', '窗口已隐藏');
+    } catch (error) {
+      await log('error', `操作窗口失败: ${error}`);
+      // 备用方案：尝试最小化
+      try {
+        const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+        const currentWindow = getCurrentWebviewWindow();
+        await currentWindow.minimize();
+        await log('info', '窗口已最小化');
+      } catch (minError) {
+        await log('error', `最小化也失败: ${minError}`);
+      }
+    }
   };
 
   const toggleFloatingOverlay = async () => {
     try {
+      const { invoke } = await import('@tauri-apps/api/core');
       await invoke('toggle_floating_overlay');
       setFloatingOverlayVisible(!floatingOverlayVisible);
     } catch (error) {
-      console.error('切换悬浮窗口失败:', error);
+      await log('error', `切换悬浮窗口失败: ${error}`);
     }
   };
 
-  // 如果悬浮框被隐藏，显示一个小的显示按钮
-  if (!showFloatingBar) {
-    return (
-      <div className="floating-control-bar">
-        <motion.button
-          className="show-floating-btn"
-          onClick={() => setShowFloatingBar(true)}
+  return (
+    <div className="floating-control-bar">
+      <div className="floating-bar-wrapper">
+        <motion.div 
+          className="simple-floating-bar"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3 }}
+          onMouseEnter={() => setShowCloseButton(true)}
+          onMouseLeave={() => setShowCloseButton(false)}
         >
-          <Eye size={20} />
-        </motion.button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="floating-control-bar">
-      {/* 简化的悬浮控制栏 */}
-      <motion.div 
-        className="simple-floating-bar"
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
         {/* Logo 区域 - 点击展开主应用 */}
         <div className="logo-section" onClick={toggleMainApp}>
           <div className="logo-icon">
@@ -109,7 +130,6 @@ function App() {
               alt="CueMate Logo" 
               className="logo-image"
               onError={(e) => {
-                // 如果图片加载失败，显示字母C
                 const target = e.target as HTMLElement;
                 target.style.display = 'none';
                 const parent = target.parentElement;
@@ -138,11 +158,30 @@ function App() {
           <Layout size={16} />
         </button>
 
-        {/* 关闭按钮 */}
-        <button onClick={hideFloatingBar} className="close-floating-btn">
-          <X size={16} />
-        </button>
-      </motion.div>
+        </motion.div>
+        
+        {/* 关闭按钮区域 */}
+        <div 
+          className="close-button-area"
+          onMouseEnter={() => setShowCloseButton(true)}
+          onMouseLeave={() => setShowCloseButton(false)}
+        >
+          <motion.button 
+            onClick={minimizeWindow}
+            className="close-floating-btn-separate"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: showCloseButton ? 1 : 0, scale: showCloseButton ? 1 : 0.8 }}
+            transition={{ duration: 0.2 }}
+          >
+            <X size={14} />
+          </motion.button>
+          
+          {/* 提示文字 - 简化调试 */}
+          <div className="close-button-tooltip">
+            隐藏 CueMate，按 {activeShortcut} 重新显示
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

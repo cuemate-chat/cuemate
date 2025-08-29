@@ -28,12 +28,15 @@
         "alwaysOnTop": true,
         "visible": true,
         "center": true,
-        "y": 0,
-        "skipTaskbar": true
+        "skipTaskbar": true,
+        "minimizable": true,
+        "maximizable": false,
+        "acceptFirstMouse": false
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "capabilities": ["default"]
     },
     "macOSPrivateApi": true
   }

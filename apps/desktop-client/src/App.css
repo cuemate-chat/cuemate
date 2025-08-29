@@ -2,13 +2,23 @@
 .floating-control-bar {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 50px;
   z-index: 9999;
   user-select: none;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   pointer-events: none;
+}
+
+/* 悬浮栏包装器 */
+.floating-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  pointer-events: auto;
 }
 
 /* 简化的悬浮控制栏 */
@@ -24,7 +34,6 @@
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.1);
-  overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
@@ -32,6 +41,7 @@
   gap: 16px;
   pointer-events: auto;
   transition: all 0.3s ease;
+  z-index: 100000;
 }
 
 .simple-floating-bar:hover {
@@ -109,6 +119,7 @@
   justify-content: center;
   transition: all 0.2s ease;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 100000;
 }
 
 .close-floating-btn:hover {
@@ -117,33 +128,7 @@
   color: #fca5a5;
 }
 
-/* 显示悬浮框按钮 */
-.show-floating-btn {
-  position: absolute;
-  top: 5px;
-  right: 20px;
-  width: 48px;
-  height: 48px;
-  border: none;
-  border-radius: 24px;
-  background: rgba(30, 30, 30, 0.9);
-  backdrop-filter: blur(20px);
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  pointer-events: auto;
-}
 
-.show-floating-btn:hover {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.4);
-  transform: scale(1.1);
-}
 
 /* 悬浮窗口控制按钮 */
 .floating-overlay-btn {
@@ -176,6 +161,56 @@
 .floating-overlay-btn.active:hover {
   background: rgba(34, 197, 94, 0.3);
   border-color: rgba(34, 197, 94, 0.5);
+}
+
+/* 关闭按钮区域 */
+.close-button-area {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 24px;
+  height: 24px;
+}
+
+/* 独立的关闭按钮 */
+.close-floating-btn-separate {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.4);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.close-floating-btn-separate:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0);
+  color: rgba(255, 255, 255, 0.7);
+  transform: scale(1.1);
+}
+
+/* 关闭按钮提示 - 调试版本 */
+.close-button-tooltip {
+  position: fixed;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: red;
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  white-space: nowrap;
+  z-index: 999999;
+  border: 3px solid yellow;
 }
 
 /* 响应式设计 */

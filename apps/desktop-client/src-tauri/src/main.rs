@@ -16,10 +16,13 @@ fn main() {
     info!("CueMate 桌面客户端启动");
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             show_floating_overlay,
             hide_floating_overlay,
-            toggle_floating_overlay
+            toggle_floating_overlay,
+            log_from_frontend,
+            toggle_app_visibility
         ])
         .setup(|app| {
             // 设置 control-bar 窗口位置
@@ -32,13 +35,15 @@ fn main() {
                         
                         // 横向居中
                         let x = (screen_size.width - window_size.width) / 2;
-                        let y = 120;
+                        let y = 100;
                         
-                        // 设置窗口位置
+                        // 设置窗口位置，并确保窗口可以被后续移动
                         if let Err(e) = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(x as i32, y))) {
                             info!("设置窗口失败: {}", e);
                         } else {
-                            info!("窗口设置成功");
+                            info!("窗口设置成功，位置: x={}, y={}", x, y);
+                            // 确保窗口是可移动的
+                            window.set_resizable(true).unwrap_or_else(|e| info!("设置可调整大小失败: {}", e));
                         }
                     } else {
                         info!("无法获取显示器信息");
