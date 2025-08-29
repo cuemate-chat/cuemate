@@ -1,8 +1,9 @@
-import { appWindow } from '@tauri-apps/api/window';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { motion } from 'framer-motion';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import Logo from '../assets/CueMate.png';
+// Logo 图片路径
+const Logo = '/src/assets/CueMate.png';
 
 interface FloatingPanelProps {
   children: React.ReactNode;
@@ -15,7 +16,7 @@ const FloatingPanel: React.FC<FloatingPanelProps> = ({ children }) => {
 
   useEffect(() => {
     // 设置窗口为始终置顶
-    appWindow.setAlwaysOnTop(true);
+    getCurrentWindow().setAlwaysOnTop(true);
   }, []);
 
   const handleMinimize = () => {
@@ -23,12 +24,12 @@ const FloatingPanel: React.FC<FloatingPanelProps> = ({ children }) => {
   };
 
   const handleClose = async () => {
-    await appWindow.hide();
+    await getCurrentWindow().hide();
   };
 
   const handleStartDrag = async () => {
     setIsDragging(true);
-    await appWindow.startDragging();
+    await getCurrentWindow().startDragging();
     setIsDragging(false);
   };
 

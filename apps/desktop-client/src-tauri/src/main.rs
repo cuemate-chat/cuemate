@@ -4,22 +4,10 @@
 mod audio;
 mod commands;
 
-use audio::{
-    capture::AudioCapture,
-    device_manager::AudioDeviceManager,
-    virtual_driver::VirtualAudioDriverInstaller,
-};
+use audio::virtual_driver::VirtualAudioDriverInstaller;
 use commands::*;
 use log::{info, LevelFilter};
-use std::sync::Arc;
-use tauri::{Manager, State};
-use tokio::sync::Mutex;
-
-// 应用状态
-pub struct AppState {
-    pub audio_capture: Arc<Mutex<AudioCapture>>,
-    pub device_manager: Arc<AudioDeviceManager>,
-}
+use tauri::{Emitter, Manager};
 
 fn main() {
     // 初始化日志
@@ -29,17 +17,7 @@ fn main() {
 
     info!("CueMate 桌面客户端启动");
 
-    // 创建应用状态
-    let audio_capture = Arc::new(Mutex::new(AudioCapture::new()));
-    let device_manager = Arc::new(AudioDeviceManager::new());
-    
-    let app_state = AppState {
-        audio_capture,
-        device_manager,
-    };
-
     tauri::Builder::default()
-        .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             get_audio_devices,
             get_virtual_devices,
@@ -55,13 +33,13 @@ fn main() {
             info!("应用初始化完成");
             
             // 检查虚拟音频驱动
-            let app_handle = app.handle();
+            let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
                 let installed_drivers = VirtualAudioDriverInstaller::detect_installed_drivers();
                 if installed_drivers.is_empty() {
                     info!("未检测到虚拟音频驱动");
                     // 通知前端显示安装向导
-                    let _ = app_handle.emit_all("virtual-driver-not-found", ());
+                    let _ = app_handle.emit("virtual-driver-not-found", ());
                 } else {
                     info!("检测到虚拟音频驱动: {:?}", installed_drivers);
                 }

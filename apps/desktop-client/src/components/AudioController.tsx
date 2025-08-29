@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { motion } from 'framer-motion';
 import { Mic, MicOff, Settings, Volume2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';

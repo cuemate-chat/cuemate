@@ -30,24 +30,24 @@ CueMate 桌面音频捕获客户端，用于捕获系统音频并发送到远程
 
 ```bash
 # 安装前端依赖
-npm install
+pnpm install
 
 # 安装 Tauri CLI (如果未安装)
-npm install -g @tauri-apps/cli
+pnpm add -g @tauri-apps/cli
 ```
 
 ### 开发模式
 
 ```bash
 # 启动开发服务器
-npm run tauri dev
+cargo tauri dev
 ```
 
 ### 构建应用
 
 ```bash
 # 构建生产版本
-npm run tauri build
+cargo tauri build
 ```
 
 ## 📁 项目结构

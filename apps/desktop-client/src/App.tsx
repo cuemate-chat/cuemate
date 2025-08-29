@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/tauri';
+import { useState, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import './App.css';
 
@@ -11,11 +11,12 @@ interface AudioDevice {
   is_default: boolean;
 }
 
-interface AudioConfig {
-  sample_rate: number;
-  channels: number;
-  buffer_size: number;
-}
+// 保留备用配置接口
+// interface AudioConfig {
+//   sample_rate: number;
+//   channels: number;
+//   buffer_size: number;
+// }
 
 function App() {
   const [devices, setDevices] = useState<AudioDevice[]>([]);
@@ -53,7 +54,7 @@ function App() {
       setVirtualDevices(virtualDevices);
       
       // 自动选择第一个虚拟输入设备
-      const virtualInputDevice = virtualDevices.find(d => d.device_type === 'Input');
+      const virtualInputDevice = virtualDevices.find((d: AudioDevice) => d.device_type === 'Input');
       if (virtualInputDevice) {
         setSelectedDevice(virtualInputDevice.name);
       }

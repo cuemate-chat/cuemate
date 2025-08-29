@@ -78,7 +78,7 @@ impl AudioDeviceManager {
 
     /// 检查是否为默认输入设备
     fn is_default_input(&self, device: &Device) -> bool {
-        if let Ok(default_device) = self.host.default_input_device() {
+        if let Some(default_device) = self.host.default_input_device() {
             if let (Ok(name1), Ok(name2)) = (device.name(), default_device.name()) {
                 return name1 == name2;
             }
@@ -88,7 +88,7 @@ impl AudioDeviceManager {
 
     /// 检查是否为默认输出设备
     fn is_default_output(&self, device: &Device) -> bool {
-        if let Ok(default_device) = self.host.default_output_device() {
+        if let Some(default_device) = self.host.default_output_device() {
             if let (Ok(name1), Ok(name2)) = (device.name(), default_device.name()) {
                 return name1 == name2;
             }

@@ -29,8 +29,8 @@ impl AudioCapture {
 
     /// 设置 WebSocket 连接地址
     pub fn set_websocket_url(&mut self, url: String) {
-        self.websocket_url = Some(url);
         info!("设置 WebSocket 地址: {}", url);
+        self.websocket_url = Some(url);
     }
 
     /// 设置音频配置
