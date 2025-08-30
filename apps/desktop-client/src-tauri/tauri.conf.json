@@ -20,7 +20,7 @@
   "app": {
     "windows": [
       {
-        "label": "control-bar", 
+        "label": "control-bar",
         "fullscreen": false,
         "resizable": false,
         "decorations": false,

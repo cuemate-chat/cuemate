@@ -60,6 +60,12 @@ export function FloatingCloseButton({ showCloseButton }: FloatingCloseButtonProp
     }
     setIsHovered(true);
     log('info', '🟢 FloatingCloseButton 鼠标进入，设置isHovered为true');
+    
+    // 立即清理任何可能存在的定时器，防止意外隐藏
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
   };
 
   // 处理鼠标离开事件
@@ -69,7 +75,7 @@ export function FloatingCloseButton({ showCloseButton }: FloatingCloseButtonProp
     timeoutRef.current = setTimeout(() => {
       setIsHovered(false);
       log('info', '🔴 FloatingCloseButton 鼠标离开（延迟），设置isHovered为false');
-    }, 100);
+    }, 200); // 200ms延迟，避免意外的鼠标离开
   };
   
   // 清理定时器

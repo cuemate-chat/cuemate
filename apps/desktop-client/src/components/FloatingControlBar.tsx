@@ -123,7 +123,7 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
       } catch (error) {
         await log('error', `通知 close-button 窗口失败: ${error}`);
       }
-    }, 150); // 150ms延迟，比关闭按钮的延迟稍长
+    }, 300); // 300ms延迟，给用户足够时间移动到关闭按钮
   };
 
   // 清理定时器

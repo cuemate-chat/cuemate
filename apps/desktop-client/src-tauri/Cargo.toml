@@ -30,11 +30,11 @@ widestring = "1.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.24"
-objc = "0.2"
+objc = "0.2.7"
+objc2 = "0.6"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
 [features]
 default = []
-# 移除了 custom-protocol，Tauri v2 中已内置
