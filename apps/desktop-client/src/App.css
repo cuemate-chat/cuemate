@@ -1,7 +1,7 @@
 /* 应用容器 */
 .app-container {
   position: relative;
-  width: 350px;
+  width: 400px;
   height: 50px;
   z-index: 9999;
   user-select: none;
@@ -14,14 +14,14 @@
 /* 悬浮控制栏样式 */
 .floating-control-bar {
   position: relative;
-  width: 350px;
+  width: 400px;
   height: 50px;
 }
 
 /* 独立关闭按钮容器 */
 .app-container-close {
   position: relative;
-  width: 450px;
+  width: 400px;
   height: 50px;
   z-index: 9999;
   user-select: none;

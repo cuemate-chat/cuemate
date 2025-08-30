@@ -50,7 +50,7 @@ fn main() {
                         
                         // 设置 close-button 窗口位置（在 control-bar 右侧）
                         if let Some(close_window) = app.get_webview_window("close-button") {
-                            let close_x = x + window_size.width + 10;
+                            let close_x = x + window_size.width;
                             let close_y = y; // 同一水平线
                             
                             if let Err(e) = close_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(close_x as i32, close_y))) {
