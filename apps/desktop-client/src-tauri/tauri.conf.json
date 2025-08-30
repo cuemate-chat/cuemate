@@ -57,7 +57,7 @@
         "skipTaskbar": true,
         "minimizable": false,
         "maximizable": false,
-        "acceptFirstMouse": true,
+        "acceptFirstMouse": false,
         "titleBarStyle": "Overlay",
         "shadow": false,
         "hiddenTitle": true,

@@ -33,6 +33,8 @@ fn main() {
             hide_close_button
         ])
         .setup(|app| {
+            info!("开始初始化 NSPanel");
+            
             // 转换 control-bar 窗口为 NSPanel
             if let Some(window) = app.get_webview_window("control-bar") {
                 match window.to_panel() {
@@ -48,24 +50,24 @@ fn main() {
                             info!("control-bar NSPanel 已设置为 nonactivatingPanel 模式");
                             
                             unsafe {
-                                // 将 Id<RawNSPanel, Shared> 转换为 *mut AnyObject
+                                // 从 panel 解引用后强转
                                 let raw: *mut AnyObject = (&*panel) as *const _ as *mut AnyObject;
-                                
-                                // 方案1：becomesKeyOnlyIfNeeded = true
+                            
+                                // 关键：让 NSPanel 能接收鼠标事件，但不抢焦点
+                                let _: () = msg_send![raw, setIgnoresMouseEvents: false];
+                            
+                                // 设置其他属性
                                 let _: () = msg_send![raw, setBecomesKeyOnlyIfNeeded: true];
                                 let _: () = msg_send![raw, setHidesOnDeactivate: false];
                                 let _: () = msg_send![raw, setFloatingPanel: true];
-                                
-                                // 方案2：允许鼠标穿透/忽略激活
-                                let _: () = msg_send![raw, setIgnoresMouseEvents: false];
                                 let _: () = msg_send![raw, setMovableByWindowBackground: true];
-                                
+                            
                                 // 设置 collectionBehavior: canJoinAllSpaces + fullScreenAuxiliary
-                                // NSWindowCollectionBehaviorCanJoinAllSpaces = 1 << 0 = 1
-                                // NSWindowCollectionBehaviorFullScreenAuxiliary = 1 << 8 = 256
                                 let collection_behavior = 1i64 | 256i64; // 1 + 256 = 257
                                 let _: () = msg_send![raw, setCollectionBehavior: collection_behavior];
-                                
+                            
+                                // 如果这是 A 窗口：强制成为 key window
+                                let _: () = msg_send![raw, makeKeyWindow];
                             }
                         }
                         
@@ -93,25 +95,56 @@ fn main() {
                                 }
                                 
                                 if let Some(close_window) = app.get_webview_window("close-button") {
-                                    info!("close-button 窗口保持为 NSWindow");
+                                    info!("close-button 窗口转换为 NSPanel");
                                     
-                                    // 确保 always_on_top 设置
-                                    if let Err(e) = close_window.set_always_on_top(true) {
-                                        info!("设置 close-button always_on_top 失败: {}", e);
-                                    } else {
-                                        info!("close-button 窗口已确保 always_on_top");
-                                    }
-                                    
-                                    info!("close-button NSWindow 配置完成");
-                                    
-                                    // 让关闭按钮稍微重叠，确保鼠标能无缝移动
-                                    let close_x = x + window_size.width - 20; // 重叠20像素
-                                    let close_y = y; // 同一水平线
-                                    
-                                    if let Err(e) = close_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(close_x as i32, close_y))) {
-                                        info!("设置 close-button 窗口位置失败: {}", e);
-                                    } else {
-                                        info!("close-button NSWindow 设置成功，位置: x={}, y={}", close_x, close_y);
+                                    // 转换 close-button 窗口为 NSPanel
+                                    match close_window.to_panel() {
+                                        Ok(close_panel) => {
+                                            info!("close-button 窗口已转换为 NSPanel");
+                                            
+                                            // 配置 NSPanel 的关键属性
+                                            #[cfg(target_os = "macos")]
+                                            {
+                                                // NSNonactivatingPanelMask = 1 << 7 = 128
+                                                let nonactivating_panel_mask = 128i32;
+                                                close_panel.set_style_mask(nonactivating_panel_mask);
+                                                info!("close-button NSPanel 已设置为 nonactivatingPanel 模式");
+                                                
+                                                unsafe {
+                                                    let raw: *mut AnyObject = (&*close_panel) as *const _ as *mut AnyObject;
+                                                
+                                                    let _: () = msg_send![raw, setIgnoresMouseEvents: false];
+                                                    let _: () = msg_send![raw, setHidesOnDeactivate: false];
+                                                    let _: () = msg_send![raw, setFloatingPanel: true];
+                                                    let _: () = msg_send![raw, setMovableByWindowBackground: true];
+                                                
+                                                    let collection_behavior = 1i64 | 256i64;
+                                                    let _: () = msg_send![raw, setCollectionBehavior: collection_behavior];
+                                                }
+                                            }
+                                            
+                                            // 确保 always_on_top 设置
+                                            if let Err(e) = close_window.set_always_on_top(true) {
+                                                info!("设置 close-button always_on_top 失败: {}", e);
+                                            } else {
+                                                info!("close-button 窗口已确保 always_on_top");
+                                            }
+                                            
+                                            info!("close-button NSPanel 配置完成");
+                                            
+                                            // 让关闭按钮稍微重叠，确保鼠标能无缝移动
+                                            let close_x = x + window_size.width;
+                                            let close_y = y; // 同一水平线
+                                            
+                                            if let Err(e) = close_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(close_x as i32, close_y))) {
+                                                info!("设置 close-button 窗口位置失败: {}", e);
+                                            } else {
+                                                info!("close-button NSPanel 设置成功，位置: x={}, y={}", close_x, close_y);
+                                            }
+                                        }
+                                        Err(e) => {
+                                            info!("转换 close-button 为 NSPanel 失败: {}", e);
+                                        }
                                     }
                                 } else {
                                     info!("未找到 close-button 窗口");

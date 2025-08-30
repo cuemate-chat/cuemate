@@ -14,12 +14,12 @@
   pointer-events: auto;
 }
 
-/* 悬浮控制栏样式 */
+/* 悬浮控制栏样式 - NSPanel 窗口 */
 .floating-control-bar {
   position: relative;
   width: 400px;
   height: 50px;
-  pointer-events: auto;
+  pointer-events: auto; /* 恢复：让 NSPanel 能接收鼠标事件 */
 }
 
 /* 独立关闭按钮容器 */
@@ -60,16 +60,16 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* 悬浮栏包装器 */
+/* 悬浮栏包装器 - 但内部元素可以接收事件 */
 .floating-bar-wrapper {
   display: flex;
   align-items: center;
   gap: 6px;
   height: 100%;
-  pointer-events: auto;
+  pointer-events: auto; /* 恢复：让包装器能接收鼠标事件 */
 }
 
-/* 简化的悬浮控制栏 */
+/* 简化的悬浮控制栏 - 内部元素可以接收事件 */
 .simple-floating-bar {
   position: relative;
   margin: 0 auto;
@@ -86,7 +86,7 @@
   gap: 16px;
   transition: all 0.3s ease;
   z-index: 100000;
-  pointer-events: auto;
+  pointer-events: auto; /* 恢复：让容器能接收鼠标事件 */
 }
 
 
