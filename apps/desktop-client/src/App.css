@@ -21,7 +21,7 @@
 /* 独立关闭按钮容器 */
 .app-container-close {
   position: relative;
-  width: 350px;
+  width: 450px;
   height: 50px;
   z-index: 9999;
   user-select: none;

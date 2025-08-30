@@ -44,36 +44,16 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     setupGlobalShortcut();
   }, []);
 
-  const toggleMainApp = async () => {
-    try {
-      const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-      const windows = await WebviewWindow.getAll();
-      let mainWindow = windows.find((w: any) => w.label === 'main-app');
-      
-      if (mainWindow) {
-        const isVisible = await mainWindow.isVisible();
-        if (isVisible) {
-          await mainWindow.hide();
-        } else {
-          await mainWindow.show();
-          await mainWindow.setFocus();
-        }
-      } else {
-        mainWindow = new WebviewWindow('main-app', {
-          url: 'http://localhost:5174',
-          title: 'CueMate',
-          width: 1200,
-          height: 800,
-          center: true,
-          resizable: true,
-          minimizable: true,
-          maximizable: true,
-          closable: true,
-          skipTaskbar: false,
-        });
+  // 处理 logo 点击事件 - 跳转到帮助文档
+  const handleLogoClick = async () => {
+    const confirmed = window.confirm('是否跳转到 CueMate 帮助文档？');
+    if (confirmed) {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core');
+        await invoke('open_url', { url: 'https://cuemate.chat' });
+      } catch (error) {
+        await log('error', `打开链接失败: ${error}`);
       }
-    } catch (error) {
-      await log('error', `切换主应用失败: ${error}`);
     }
   };
 
@@ -131,9 +111,7 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
           {/* Logo 区域 - 点击展开主应用 */}
           <div 
             className="logo-section" 
-            onClick={toggleMainApp}
-            onMouseEnter={() => log('info', '🟢 Logo 区域 - MouseEnter')}
-            onMouseLeave={() => log('info', '🟠 Logo 区域 - MouseLeave')}
+            onClick={handleLogoClick}
           >
             <div className="logo-icon">
               <img 
