@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Layout } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // 日志工具函数
 const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) => {
@@ -19,6 +19,7 @@ interface FloatingControlBarProps {
 
 export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: FloatingControlBarProps) {
   const [floatingOverlayVisible, setFloatingOverlayVisible] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 注册全局快捷键
   useEffect(() => {
@@ -57,7 +58,6 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     }
   };
 
-
   const toggleFloatingOverlay = async () => {
     try {
       const { invoke } = await import('@tauri-apps/api/core');
@@ -68,6 +68,62 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     }
   };
 
+  // 处理鼠标进入事件
+  const handleMouseEnter = async () => {
+    // 清除之前的定时器
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
+    onShowCloseButton();
+    log('info', '🟢 FloatingControlBar 鼠标进入，显示关闭按钮');
+    
+    // 通知 close-button 窗口显示
+    try {
+      const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+      const closeWindow = await WebviewWindow.getByLabel('close-button');
+      if (closeWindow) {
+        closeWindow.emit('toggle_close_button', { show: true });
+      }
+    } catch (error) {
+      await log('error', `通知 close-button 窗口失败: ${error}`);
+    }
+  };
+
+  // 处理鼠标离开事件，添加延迟隐藏
+  const handleMouseLeave = async () => {
+    // 清除之前的定时器
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    // 延迟隐藏，给用户时间移动到关闭按钮区域
+    timeoutRef.current = setTimeout(async () => {
+      onHideCloseButton();
+      log('info', '🔴 FloatingControlBar 鼠标离开（延迟），隐藏关闭按钮');
+      
+      // 通知 close-button 窗口隐藏
+      try {
+        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+        const closeWindow = await WebviewWindow.getByLabel('close-button');
+        if (closeWindow) {
+          closeWindow.emit('toggle_close_button', { show: false });
+        }
+      } catch (error) {
+        await log('error', `通知 close-button 窗口失败: ${error}`);
+      }
+    }, 150); // 150ms延迟，比关闭按钮的延迟稍长
+  };
+
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div 
@@ -75,32 +131,8 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     >
       <div 
         className="floating-bar-wrapper"
-        onMouseEnter={async () => {
-          onShowCloseButton();
-          // 通知 close-button 窗口显示
-          try {
-            const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-            const closeWindow = await WebviewWindow.getByLabel('close-button');
-            if (closeWindow) {
-              closeWindow.emit('toggle_close_button', { show: true });
-            }
-          } catch (error) {
-            await log('error', `通知 close-button 窗口失败: ${error}`);
-          }
-        }}
-        onMouseLeave={async () => {
-          onHideCloseButton();
-          // 通知 close-button 窗口隐藏
-          try {
-            const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-            const closeWindow = await WebviewWindow.getByLabel('close-button');
-            if (closeWindow) {
-              closeWindow.emit('toggle_close_button', { show: false });
-            }
-          } catch (error) {
-            await log('error', `通知 close-button 窗口失败: ${error}`);
-          }
-        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
           <motion.div 
             className="simple-floating-bar"

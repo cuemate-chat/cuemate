@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 // 日志工具函数
 const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) => {
@@ -15,7 +16,68 @@ interface FloatingCloseButtonProps {
 }
 
 export function FloatingCloseButton({ showCloseButton }: FloatingCloseButtonProps) {
-  log('info', `🟡 FloatingCloseButton 重新渲染，showCloseButton: ${showCloseButton}`);
+  const [isHovered, setIsHovered] = useState(false);
+  const [shouldShow, setShouldShow] = useState(false);
+  const [showFromParent, setShowFromParent] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 监听来自主窗口的显示/隐藏事件
+  useEffect(() => {
+    const setupEventListener = async () => {
+      try {
+        const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+        const currentWindow = getCurrentWebviewWindow();
+        
+        const unlisten = await currentWindow.listen('toggle_close_button', (event) => {
+          const { show } = event.payload as { show: boolean };
+          setShowFromParent(show);
+          log('info', `🟡 FloatingCloseButton 收到父窗口事件，showFromParent: ${show}`);
+        });
+        
+        return unlisten;
+      } catch (error) {
+        await log('error', `设置事件监听失败: ${error}`);
+      }
+    };
+    
+    setupEventListener();
+  }, []);
+  
+  // 计算最终显示状态：父窗口要求显示 或者 本地鼠标悬浮
+  useEffect(() => {
+    const newShouldShow = showFromParent || isHovered;
+    setShouldShow(newShouldShow);
+    log('info', `🟡 FloatingCloseButton 状态更新，showFromParent: ${showFromParent}, isHovered: ${isHovered}, shouldShow: ${newShouldShow}`);
+  }, [showFromParent, isHovered]);
+  
+  // 处理鼠标进入事件
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setIsHovered(true);
+    log('info', '🟢 FloatingCloseButton 鼠标进入，设置isHovered为true');
+  };
+
+  // 处理鼠标离开事件
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    timeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
+      log('info', '🔴 FloatingCloseButton 鼠标离开（延迟），设置isHovered为false');
+    }, 100);
+  };
+  
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const minimizeWindow = async () => {
     try {
@@ -41,16 +103,24 @@ export function FloatingCloseButton({ showCloseButton }: FloatingCloseButtonProp
     }
   };
 
+  const handleClick = () => {
+    minimizeWindow();
+  };
 
   return (
-    <div className="floating-close-button-container">
+    <div 
+      className="floating-close-button-container"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <button 
-        onClick={minimizeWindow}
+        onClick={handleClick}
         className="close-floating-btn-separate"
         style={{ 
-          opacity: showCloseButton ? 1 : 0,
-          visibility: showCloseButton ? 'visible' : 'hidden',
-          pointerEvents: showCloseButton ? 'auto' : 'none'
+          opacity: shouldShow ? 1 : 0,
+          visibility: shouldShow ? 'visible' : 'hidden',
+          pointerEvents: shouldShow ? 'auto' : 'none',
+          transition: 'opacity 0.2s ease, visibility 0.2s ease'
         }}
       >
         <X size={14} />
@@ -58,8 +128,9 @@ export function FloatingCloseButton({ showCloseButton }: FloatingCloseButtonProp
       <div 
         className="close-button-tooltip"
         style={{ 
-          opacity: showCloseButton ? 1 : 0,
-          visibility: showCloseButton ? 'visible' : 'hidden'
+          opacity: shouldShow ? 1 : 0,
+          visibility: shouldShow ? 'visible' : 'hidden',
+          transition: 'opacity 0.2s ease, visibility 0.2s ease'
         }}
       >
         隐藏 CueMate，按 <span className="shortcut-key">⌘</span> + <span className="shortcut-key">\</span> 重新显示

@@ -20,40 +20,22 @@
   "app": {
     "windows": [
       {
-        "label": "control-bar",
-        "fullscreen": false,
+        "label": "main",
+        "fullscreen": true,
         "resizable": false,
         "decorations": false,
         "transparent": true,
         "title": "CueMate",
-        "width": 400,
-        "height": 50,
         "alwaysOnTop": true,
         "visible": true,
-        "center": true,
-        "skipTaskbar": true,
-        "minimizable": true,
-        "maximizable": false,
-        "acceptFirstMouse": false,
-        "url": "src/windows/control-bar/index.html"
-      },
-      {
-        "label": "close-button",
-        "fullscreen": false,
-        "resizable": false,
-        "decorations": false,
-        "transparent": true,
-        "title": "Close Button",
-        "width": 400,
-        "height": 50,
-        "alwaysOnTop": true,
-        "visible": true,
-        "center": false,
         "skipTaskbar": true,
         "minimizable": false,
         "maximizable": false,
         "acceptFirstMouse": true,
-        "url": "src/windows/close-button/index.html"
+        "titleBarStyle": "Overlay",
+        "url": "index.html",
+        "closable": false,
+        "focus": false
       }
     ],
     "security": {
