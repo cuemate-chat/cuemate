@@ -12,7 +12,12 @@ const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) 
   }
 };
 
-export function FloatingControlBar() {
+interface FloatingControlBarProps {
+  onShowCloseButton: () => void;
+  onHideCloseButton: () => void;
+}
+
+export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: FloatingControlBarProps) {
   const [floatingOverlayVisible, setFloatingOverlayVisible] = useState(false);
 
   // 注册全局快捷键
@@ -88,7 +93,35 @@ export function FloatingControlBar() {
     <div 
       className="floating-control-bar"
     >
-      <div className="floating-bar-wrapper">
+      <div 
+        className="floating-bar-wrapper"
+        onMouseEnter={async () => {
+          onShowCloseButton();
+          // 通知 close-button 窗口显示
+          try {
+            const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+            const closeWindow = await WebviewWindow.getByLabel('close-button');
+            if (closeWindow) {
+              closeWindow.emit('toggle_close_button', { show: true });
+            }
+          } catch (error) {
+            await log('error', `通知 close-button 窗口失败: ${error}`);
+          }
+        }}
+        onMouseLeave={async () => {
+          onHideCloseButton();
+          // 通知 close-button 窗口隐藏
+          try {
+            const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+            const closeWindow = await WebviewWindow.getByLabel('close-button');
+            if (closeWindow) {
+              closeWindow.emit('toggle_close_button', { show: false });
+            }
+          } catch (error) {
+            await log('error', `通知 close-button 窗口失败: ${error}`);
+          }
+        }}
+      >
           <motion.div 
             className="simple-floating-bar"
             initial={{ scale: 0.8, opacity: 0 }}

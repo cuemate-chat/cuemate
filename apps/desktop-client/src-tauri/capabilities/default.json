@@ -2,7 +2,8 @@
   "identifier": "default",
   "description": "Default capabilities for CueMate desktop app",
   "windows": [
-    "control-bar"
+    "control-bar",
+    "close-button"
   ],
   "permissions": [
     "core:default",

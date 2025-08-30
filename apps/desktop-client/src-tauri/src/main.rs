@@ -22,7 +22,9 @@ fn main() {
             hide_floating_overlay,
             toggle_floating_overlay,
             log_from_frontend,
-            toggle_app_visibility
+            toggle_app_visibility,
+            show_close_button,
+            hide_close_button
         ])
         .setup(|app| {
             // 设置 control-bar 窗口位置
@@ -39,11 +41,25 @@ fn main() {
                         
                         // 设置窗口位置，并确保窗口可以被后续移动
                         if let Err(e) = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(x as i32, y))) {
-                            info!("设置窗口失败: {}", e);
+                            info!("设置 control-bar 窗口失败: {}", e);
                         } else {
-                            info!("窗口设置成功，位置: x={}, y={}", x, y);
+                            info!("control-bar 窗口设置成功，位置: x={}, y={}", x, y);
                             // 确保窗口是可移动的
                             window.set_resizable(true).unwrap_or_else(|e| info!("设置可调整大小失败: {}", e));
+                        }
+                        
+                        // 设置 close-button 窗口位置（在 control-bar 右侧）
+                        if let Some(close_window) = app.get_webview_window("close-button") {
+                            let close_x = x + window_size.width + 10;
+                            let close_y = y; // 同一水平线
+                            
+                            if let Err(e) = close_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(close_x as i32, close_y))) {
+                                info!("设置 close-button 窗口失败: {}", e);
+                            } else {
+                                info!("close-button 窗口设置成功，位置: x={}, y={}", close_x, close_y);
+                            }
+                        } else {
+                            info!("未找到 close-button 窗口");
                         }
                     } else {
                         info!("无法获取显示器信息");

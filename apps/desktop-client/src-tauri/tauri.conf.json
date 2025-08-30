@@ -7,7 +7,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all"
+    "targets": "all",
+    "icon": [
+      "icons/icon.png"
+    ]
   },
   "productName": "CueMate",
   "mainBinaryName": "CueMate",
@@ -31,12 +34,33 @@
         "skipTaskbar": true,
         "minimizable": true,
         "maximizable": false,
-        "acceptFirstMouse": false
+        "acceptFirstMouse": false,
+        "url": "src/windows/control-bar/index.html"
+      },
+      {
+        "label": "close-button",
+        "fullscreen": false,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "title": "Close Button",
+        "width": 250,
+        "height": 50,
+        "alwaysOnTop": true,
+        "visible": true,
+        "center": false,
+        "skipTaskbar": true,
+        "minimizable": false,
+        "maximizable": false,
+        "acceptFirstMouse": true,
+        "url": "src/windows/close-button/index.html"
       }
     ],
     "security": {
       "csp": null,
-      "capabilities": ["default"]
+      "capabilities": [
+        "default"
+      ]
     },
     "macOSPrivateApi": true
   }

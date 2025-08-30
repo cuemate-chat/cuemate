@@ -110,6 +110,56 @@ pub async fn log_from_frontend(level: String, message: String) -> Result<String,
     Ok("日志已记录".to_string())
 }
 
+/// 显示关闭按钮窗口
+#[tauri::command]
+pub async fn show_close_button(app_handle: AppHandle) -> Result<String, String> {
+    info!("显示关闭按钮窗口");
+    
+    match app_handle.get_webview_window("close-button") {
+        Some(window) => {
+            match window.show() {
+                Ok(_) => {
+                    info!("关闭按钮窗口已显示");
+                    Ok("关闭按钮窗口已显示".to_string())
+                }
+                Err(e) => {
+                    error!("显示关闭按钮窗口失败: {}", e);
+                    Err(format!("显示关闭按钮窗口失败: {}", e))
+                }
+            }
+        }
+        None => {
+            error!("关闭按钮窗口不存在");
+            Err("关闭按钮窗口不存在".to_string())
+        }
+    }
+}
+
+/// 隐藏关闭按钮窗口
+#[tauri::command]
+pub async fn hide_close_button(app_handle: AppHandle) -> Result<String, String> {
+    info!("隐藏关闭按钮窗口");
+    
+    match app_handle.get_webview_window("close-button") {
+        Some(window) => {
+            match window.hide() {
+                Ok(_) => {
+                    info!("关闭按钮窗口已隐藏");
+                    Ok("关闭按钮窗口已隐藏".to_string())
+                }
+                Err(e) => {
+                    error!("隐藏关闭按钮窗口失败: {}", e);
+                    Err(format!("隐藏关闭按钮窗口失败: {}", e))
+                }
+            }
+        }
+        None => {
+            error!("关闭按钮窗口不存在");
+            Err("关闭按钮窗口不存在".to_string())
+        }
+    }
+}
+
 /// 切换应用显示状态
 #[tauri::command]
 pub async fn toggle_app_visibility(app_handle: AppHandle) -> Result<String, String> {

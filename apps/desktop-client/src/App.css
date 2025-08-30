@@ -1,37 +1,43 @@
 /* 应用容器 */
 .app-container {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 400px;
+  position: relative;
+  width: 350px;
   height: 50px;
   z-index: 9999;
   user-select: none;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  pointer-events: none;
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 /* 悬浮控制栏样式 */
 .floating-control-bar {
   position: relative;
-  width: 400px;
+  width: 350px;
   height: 50px;
-  pointer-events: none;
 }
 
 /* 独立关闭按钮容器 */
+.app-container-close {
+  position: relative;
+  width: 350px;
+  height: 50px;
+  z-index: 9999;
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .floating-close-button-container {
-  position: absolute;
-  left: 410px;
-  top: 0;
+  position: relative;
+  width: auto;
   height: 50px;
   display: flex;
   align-items: center;
   gap: 10px;
-  pointer-events: auto;
 }
 
 /* 关闭按钮提示文字 */
@@ -53,7 +59,6 @@
   align-items: center;
   gap: 6px;
   height: 100%;
-  pointer-events: auto;
 }
 
 /* 简化的悬浮控制栏 */
@@ -71,7 +76,6 @@
   align-items: center;
   padding: 0 16px;
   gap: 16px;
-  pointer-events: auto;
   transition: all 0.3s ease;
   z-index: 100000;
 }

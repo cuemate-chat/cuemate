@@ -62,7 +62,7 @@ export function FloatingCloseButton({ showCloseButton }: FloatingCloseButtonProp
           visibility: showCloseButton ? 'visible' : 'hidden'
         }}
       >
-        隐藏 CueMate，按 <span className="shortcut-key">⌘</span><span className="shortcut-key">\</span> 重新显示
+        隐藏 CueMate，按 <span className="shortcut-key">⌘</span> + <span className="shortcut-key">\</span> 重新显示
       </div>
     </div>
   );
