@@ -1,3 +1,4 @@
+import * as Tooltip from '@radix-ui/react-tooltip';
 import { X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -15,7 +16,7 @@ interface FloatingCloseButtonProps {
   showCloseButton: boolean;
 }
 
-export function FloatingCloseButton({ showCloseButton }: FloatingCloseButtonProps) {
+export function FloatingCloseButton({ showCloseButton: _showCloseButton }: FloatingCloseButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
   const [showFromParent, setShowFromParent] = useState(false);
@@ -123,28 +124,39 @@ export function FloatingCloseButton({ showCloseButton }: FloatingCloseButtonProp
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <button 
-        onClick={handleClick}
-        className="close-floating-btn-separate"
-        style={{ 
-          opacity: shouldShow ? 1 : 0,
-          visibility: shouldShow ? 'visible' : 'hidden',
-          pointerEvents: shouldShow ? 'auto' : 'none',
-          transition: 'opacity 0.2s ease, visibility 0.2s ease'
-        }}
-      >
-        <X size={14} />
-      </button>
-      <div 
-        className="close-button-tooltip"
-        style={{ 
-          opacity: shouldShow ? 1 : 0,
-          visibility: shouldShow ? 'visible' : 'hidden',
-          transition: 'opacity 0.2s ease, visibility 0.2s ease'
-        }}
-      >
-        隐藏 CueMate，按 <span className="shortcut-key">⌘</span> + <span className="shortcut-key">\</span> 重新显示
-      </div>
+      <Tooltip.Provider>
+        <Tooltip.Root delayDuration={0}>
+          <Tooltip.Trigger asChild>
+            <button 
+              onClick={handleClick}
+              className="close-floating-btn-separate"
+              style={{ 
+                opacity: shouldShow ? 1 : 0,
+                visibility: shouldShow ? 'visible' : 'hidden',
+                pointerEvents: shouldShow ? 'auto' : 'none',
+                transition: 'opacity 0.2s ease, visibility 0.2s ease'
+              }}
+            >
+              <X size={14} />
+            </button>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              className="radix-tooltip-content"
+              side="right"
+              sideOffset={5}
+              style={{ 
+                opacity: shouldShow ? 1 : 0,
+                visibility: shouldShow ? 'visible' : 'hidden',
+                transition: 'opacity 0.2s ease, visibility 0.2s ease'
+              }}
+            >
+              隐藏 CueMate，按 <span className="shortcut-key">⌘</span> + <span className="shortcut-key">\</span> 重新显示
+              <Tooltip.Arrow className="radix-tooltip-arrow" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </Tooltip.Provider>
     </div>
   );
 }

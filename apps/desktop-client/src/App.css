@@ -3,21 +3,24 @@
 /* 应用容器 */
 .app-container {
   position: relative;
-  width: 400px;
-  height: 50px;
+  width: 360px;
+  height: 150px;
   z-index: 9999;
   user-select: none;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: flex-start;
+  gap: 0;
   pointer-events: auto;
+  padding-top: 0;
 }
 
 /* 悬浮控制栏样式 - NSPanel 窗口 */
 .floating-control-bar {
   position: relative;
-  width: 400px;
+  width: 360px;
   height: 50px;
   pointer-events: auto; /* 恢复：让 NSPanel 能接收鼠标事件 */
 }
@@ -31,20 +34,24 @@
   user-select: none;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: center;
   gap: 10px;
   pointer-events: auto;
+  padding-top: 10px;
 }
 
+/* 关闭按钮容器 - 用于定位关闭按钮和其 tooltip */
 .floating-close-button-container {
   position: relative;
-  width: auto;
+  width: 100%;
   height: 50px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;  /* 按钮顶部对齐，确保 tooltip 在正右侧 */
+  justify-content: flex-start;
   gap: 10px;
   z-index: 100001;
-  padding: 0 10px;
+  padding: 0;
 }
 
 /* 关闭按钮提示文字 */
@@ -63,7 +70,7 @@
 /* 悬浮栏包装器 - 但内部元素可以接收事件 */
 .floating-bar-wrapper {
   display: flex;
-  align-items: center;
+  align-items: flex-start;  /* 改为 flex-start，让控制栏在顶部 */
   gap: 6px;
   height: 100%;
   pointer-events: auto; /* 恢复：让包装器能接收鼠标事件 */
@@ -72,7 +79,7 @@
 /* 简化的悬浮控制栏 - 内部元素可以接收事件 */
 .simple-floating-bar {
   position: relative;
-  margin: 0 auto;
+  margin: 0;  /* 移除 auto，让控制栏在顶部 */
   width: 400px;
   height: 50px;
   background: rgba(30, 30, 30, 0.6);
@@ -226,7 +233,7 @@
 .radix-tooltip-content {
   background: rgba(30, 30, 30, 0.9);
   color: white;
-  padding: 8px 12px;
+  padding: 0 12px;  /* 减少垂直 padding，只保留水平 padding */
   border-radius: 6px;
   font-size: 14px;
   white-space: nowrap;
@@ -237,6 +244,10 @@
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
+  height: 42px;  /* 固定高度，与左侧控制栏一致 */
+  display: flex;
+  align-items: center;  /* 内容垂直居中 */
+  box-sizing: border-box;  /* 确保 padding 和 border 包含在高度内 */
 }
 
 .radix-tooltip-content[data-state='delayed-open'][data-side='top'] {
