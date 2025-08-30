@@ -265,29 +265,21 @@ pub async fn open_url(url: String) -> Result<String, String> {
     }
 }
 
-/// 显示所有窗口
+/// 显示所有窗口（Dock图标点击专用，不设置焦点）
 #[tauri::command]
 pub async fn show_all_windows(app_handle: AppHandle) -> Result<String, String> {
-    info!("显示所有窗口");
+    info!("显示所有窗口（来自Dock图标点击）");
     
     let mut success_count = 0;
     let mut error_count = 0;
     
-    // 显示 control-bar 窗口
+    // 显示 control-bar 窗口（不设置焦点，避免死循环）
     match app_handle.get_webview_window("control-bar") {
         Some(window) => {
             match window.show() {
                 Ok(_) => {
-                    match window.set_focus() {
-                        Ok(_) => {
-                            info!("control-bar 窗口已显示并聚焦");
-                            success_count += 1;
-                        }
-                        Err(e) => {
-                            info!("control-bar 窗口已显示但聚焦失败: {}", e);
-                            success_count += 1;
-                        }
-                    }
+                    info!("control-bar 窗口已显示");
+                    success_count += 1;
                 }
                 Err(e) => {
                     error!("显示 control-bar 窗口失败: {}", e);
@@ -336,8 +328,8 @@ pub async fn show_all_windows(app_handle: AppHandle) -> Result<String, String> {
     }
     
     if error_count == 0 {
-        info!("所有窗口已显示，成功: {}", success_count);
-        Ok(format!("所有窗口已显示，成功: {}", success_count))
+        info!("所有窗口已显示完成，成功: {}", success_count);
+        Ok(format!("所有窗口已显示完成，成功: {}", success_count))
     } else {
         warn!("部分窗口显示失败，成功: {}, 失败: {}", success_count, error_count);
         Ok(format!("部分窗口显示失败，成功: {}, 失败: {}", success_count, error_count))

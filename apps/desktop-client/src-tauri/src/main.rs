@@ -5,9 +5,7 @@ mod commands;
 
 use commands::*;
 use log::{info, LevelFilter};
-use tauri::Manager;
-use tauri::Listener;
-use log::error;
+use tauri::{Manager, RunEvent, WindowEvent};
 use tauri_nspanel::WebviewWindowExt;
 
 #[cfg(target_os = "macos")]
@@ -168,27 +166,47 @@ fn main() {
                 info!("未找到 control-bar 窗口");
             }
             info!("NSPanel 初始化完成");
-            
-            // 监听 Dock 图标点击事件
-            let app_handle = app.handle().clone();
-
-            // 再 clone 一份给闭包 move 进去
-            let handle_for_listener = app_handle.clone();
-
-            let _unlisten = app_handle.listen_any("tauri://activate", move |_event| {
-                info!("Dock 图标被点击，显示所有窗口");
-
-                // 用 handle_for_listener（已经提前 clone 好的），不会冲突
-                let handle = handle_for_listener.clone();
-                tauri::async_runtime::spawn(async move {
-                    if let Err(e) = show_all_windows(handle).await {
-                        error!("显示所有窗口失败: {}", e);
-                    }
-                });
-            });
-            
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle: &tauri::AppHandle, event: RunEvent| {
+            info!("收到运行时事件: {:?}", event);
+            
+            match event {
+                RunEvent::Ready => {
+                    info!("App is ready");
+                }
+                RunEvent::Reopen { has_visible_windows, .. } => {
+                    info!("应用被重新打开 (Dock 图标点击): has_visible_windows={}", has_visible_windows);
+                    // 这是 macOS 上点击 Dock 图标的正确事件!
+                    if let Some(control_window) = app_handle.get_webview_window("control-bar") {
+                        let _ = control_window.show();
+                        info!("显示 control-bar 窗口");
+                    }
+                    if let Some(close_window) = app_handle.get_webview_window("close-button") {
+                        let _ = close_window.show();
+                        info!("显示 close-button 窗口");
+                    }
+                }
+                RunEvent::WindowEvent { label, event, .. } => {
+                    info!("收到窗口事件: label={}, event={:?}", label, event);
+                    
+                    match event {
+                        WindowEvent::Focused(focused) => {
+                            info!("窗口焦点事件: label={}, focused={}", label, focused);
+                            if focused && label == "control-bar" {
+                                info!("control-bar 窗口获得焦点");
+                            }
+                        }
+                        _ => {
+                            info!("其他窗口事件: {:?}", event);
+                        }
+                    }
+                }
+                _ => {
+                    info!("其他运行时事件: {:?}", event);
+                }
+            }
+        });
 }
