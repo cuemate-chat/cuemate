@@ -21,6 +21,7 @@ futures-util = "0.3"
 log = "0.4"
 env_logger = "0.10"
 tauri-plugin-global-shortcut = "2.3.0"
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2" }
 
 # Platform specific dependencies
 [target.'cfg(windows)'.dependencies]

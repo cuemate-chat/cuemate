@@ -1,3 +1,5 @@
+/* NSPanel 多窗口架构，不需要全屏覆盖样式 */
+
 /* 应用容器 */
 .app-container {
   position: relative;
@@ -87,10 +89,12 @@
   pointer-events: auto;
 }
 
+
 .simple-floating-bar:hover {
   background: rgba(30, 30, 30, 0.5);
   border-color: rgba(255, 255, 255, 0.15);
 }
+
 
 /* Logo 区域 */
 .logo-section {

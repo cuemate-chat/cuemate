@@ -46,7 +46,9 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
   }, []);
 
   // 处理 logo 点击事件 - 跳转到帮助文档
-  const handleLogoClick = async () => {
+  const handleLogoClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const confirmed = window.confirm('是否跳转到 CueMate 帮助文档？');
     if (confirmed) {
       try {
@@ -58,7 +60,9 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     }
   };
 
-  const toggleFloatingOverlay = async () => {
+  const toggleFloatingOverlay = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
       const { invoke } = await import('@tauri-apps/api/core');
       await invoke('toggle_floating_overlay');
@@ -69,7 +73,10 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
   };
 
   // 处理鼠标进入事件
-  const handleMouseEnter = async () => {
+  const handleMouseEnter = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     // 清除之前的定时器
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -92,7 +99,10 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
   };
 
   // 处理鼠标离开事件，添加延迟隐藏
-  const handleMouseLeave = async () => {
+  const handleMouseLeave = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     // 清除之前的定时器
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);

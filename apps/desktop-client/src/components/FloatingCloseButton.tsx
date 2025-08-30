@@ -52,6 +52,7 @@ export function FloatingCloseButton({ showCloseButton }: FloatingCloseButtonProp
   
   // 处理鼠标进入事件
   const handleMouseEnter = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -63,6 +64,7 @@ export function FloatingCloseButton({ showCloseButton }: FloatingCloseButtonProp
 
   // 处理鼠标离开事件
   const handleMouseLeave = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     timeoutRef.current = setTimeout(() => {
       setIsHovered(false);
@@ -103,7 +105,9 @@ export function FloatingCloseButton({ showCloseButton }: FloatingCloseButtonProp
     }
   };
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     minimizeWindow();
   };
 
