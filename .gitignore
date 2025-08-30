@@ -42,9 +42,9 @@ lerna-debug.log*
 *~
 
 # Tauri
-src-tauri/target/
+target/
 src-tauri/WixTools/
-src-tauri/gen/
+gen/
 
 # Flutter
 **/doc/api/

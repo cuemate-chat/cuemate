@@ -12,7 +12,6 @@
   pointer-events: none;
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
 /* 悬浮控制栏样式 */
@@ -25,8 +24,9 @@
 
 /* 独立关闭按钮容器 */
 .floating-close-button-container {
-  position: relative;
-  width: auto;
+  position: absolute;
+  left: 410px;
+  top: 0;
   height: 50px;
   display: flex;
   align-items: center;

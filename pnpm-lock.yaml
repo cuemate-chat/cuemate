@@ -161,18 +161,6 @@ importers:
         specifier: ^5.4.10
         version: 5.4.19(@types/node@20.19.10)
 
-  packages/cml-sdk:
-    devDependencies:
-      typescript:
-        specifier: ^5.5.4
-        version: 5.9.2
-
-  packages/core-prompts:
-    devDependencies:
-      typescript:
-        specifier: ^5.5.4
-        version: 5.9.2
-
   packages/data-sqlite:
     dependencies:
       bcryptjs:
@@ -204,12 +192,6 @@ importers:
       tsx:
         specifier: ^4.19.1
         version: 4.20.3
-      typescript:
-        specifier: ^5.5.4
-        version: 5.9.2
-
-  packages/ui-kit:
-    devDependencies:
       typescript:
         specifier: ^5.5.4
         version: 5.9.2
