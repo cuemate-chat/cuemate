@@ -213,3 +213,54 @@ pub async fn toggle_app_visibility(app_handle: AppHandle) -> Result<String, Stri
         }
     }
 }
+
+/// 打开网页链接
+#[tauri::command]
+pub async fn open_url(url: String) -> Result<String, String> {
+    info!("打开网页链接: {}", url);
+    
+    #[cfg(target_os = "macos")]
+    {
+        use std::process::Command;
+        match Command::new("open").arg(&url).spawn() {
+            Ok(_) => {
+                info!("网页链接已打开: {}", url);
+                Ok(format!("网页链接已打开: {}", url))
+            }
+            Err(e) => {
+                error!("打开网页链接失败: {}", e);
+                Err(format!("打开网页链接失败: {}", e))
+            }
+        }
+    }
+    
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        match Command::new("cmd").args(&["/C", "start", &url]).spawn() {
+            Ok(_) => {
+                info!("网页链接已打开: {}", url);
+                Ok(format!("网页链接已打开: {}", url))
+            }
+            Err(e) => {
+                error!("打开网页链接失败: {}", e);
+                Err(format!("打开网页链接失败: {}", e))
+            }
+        }
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        use std::process::Command;
+        match Command::new("xdg-open").arg(&url).spawn() {
+            Ok(_) => {
+                info!("网页链接已打开: {}", url);
+                Ok(format!("网页链接已打开: {}", url))
+            }
+            Err(e) => {
+                error!("打开网页链接失败: {}", e);
+                Err(format!("打开网页链接失败: {}", e))
+            }
+        }
+    }
+}

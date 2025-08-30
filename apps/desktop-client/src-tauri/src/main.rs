@@ -30,7 +30,8 @@ fn main() {
             log_from_frontend,
             toggle_app_visibility,
             show_close_button,
-            hide_close_button
+            hide_close_button,
+            open_url
         ])
         .setup(|app| {
             info!("开始初始化 NSPanel");
