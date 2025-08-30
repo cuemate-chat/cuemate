@@ -1,5 +1,5 @@
-/* 悬浮控制栏样式 */
-.floating-control-bar {
+/* 应用容器 */
+.app-container {
   position: fixed;
   top: 0;
   left: 50%;
@@ -10,6 +10,41 @@
   user-select: none;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 悬浮控制栏样式 */
+.floating-control-bar {
+  position: relative;
+  width: 400px;
+  height: 50px;
+  pointer-events: none;
+}
+
+/* 独立关闭按钮容器 */
+.floating-close-button-container {
+  position: relative;
+  width: auto;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+/* 关闭按钮提示文字 */
+.close-button-tooltip {
+  background: rgba(30, 30, 30, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  white-space: nowrap;
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* 悬浮栏包装器 */
@@ -27,13 +62,10 @@
   margin: 0 auto;
   width: 400px;
   height: 50px;
-  background: rgba(30, 30, 30, 0.4);
+  background: rgba(30, 30, 30, 0.6);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border-radius: 25px;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
@@ -45,7 +77,7 @@
 }
 
 .simple-floating-bar:hover {
-  background: rgba(30, 30, 30, 0.2);
+  background: rgba(30, 30, 30, 0.5);
   border-color: rgba(255, 255, 255, 0.15);
 }
 
@@ -105,31 +137,6 @@
   letter-spacing: 0.5px;
 }
 
-/* 关闭按钮 */
-.close-floating-btn {
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  z-index: 100000;
-}
-
-.close-floating-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.4);
-  color: #fca5a5;
-}
-
-
-
 /* 悬浮窗口控制按钮 */
 .floating-overlay-btn {
   width: 28px;
@@ -172,45 +179,127 @@
   height: 24px;
 }
 
-/* 独立的关闭按钮 */
+/* 关闭按钮 */
 .close-floating-btn-separate {
   width: 24px;
   height: 24px;
   border: none;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.4);
-  color: white;
+  background: rgba(30, 30, 30, 0.6);
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
 }
 
 .close-floating-btn-separate:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0);
-  color: rgba(255, 255, 255, 0.7);
-  transform: scale(1.1);
+  background: rgba(30, 30, 30, 0.7);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
-/* 关闭按钮提示 - 调试版本 */
-.close-button-tooltip {
-  position: fixed;
-  top: 100px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: red;
+.close-floating-btn-separate.hover {
+  background: rgba(30, 30, 30, 0.7);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Radix Tooltip 样式 */
+.radix-tooltip-content {
+  background: rgba(30, 30, 30, 0.9);
   color: white;
-  padding: 20px;
-  border-radius: 8px;
-  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
   white-space: nowrap;
-  z-index: 999999;
-  border: 3px solid yellow;
+  z-index: 100001;
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='top'] {
+  animation-name: slideDownAndFade;
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='right'] {
+  animation-name: slideLeftAndFade;
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='bottom'] {
+  animation-name: slideUpAndFade;
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='left'] {
+  animation-name: slideRightAndFade;
+}
+
+.radix-tooltip-arrow {
+  fill: rgba(30, 30, 30, 0.9);
+}
+
+@keyframes slideDownAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideLeftAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideUpAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideRightAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 快捷键字符样式 */
+.shortcut-key {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin: 0 2px;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 16px;
+  text-align: center;
 }
 
 /* 响应式设计 */
@@ -237,7 +326,7 @@
     font-size: 12px;
   }
   
-  .close-floating-btn,
+  .close-floating-btn-separate,
   .floating-overlay-btn {
     width: 24px;
     height: 24px;
