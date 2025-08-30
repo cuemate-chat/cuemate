@@ -6,6 +6,8 @@ mod commands;
 use commands::*;
 use log::{info, LevelFilter};
 use tauri::Manager;
+use tauri::Listener;
+use log::error;
 use tauri_nspanel::WebviewWindowExt;
 
 #[cfg(target_os = "macos")]
@@ -31,7 +33,8 @@ fn main() {
             toggle_app_visibility,
             show_close_button,
             hide_close_button,
-            open_url
+            open_url,
+            show_all_windows
         ])
         .setup(|app| {
             info!("开始初始化 NSPanel");
@@ -165,6 +168,25 @@ fn main() {
                 info!("未找到 control-bar 窗口");
             }
             info!("NSPanel 初始化完成");
+            
+            // 监听 Dock 图标点击事件
+            let app_handle = app.handle().clone();
+
+            // 再 clone 一份给闭包 move 进去
+            let handle_for_listener = app_handle.clone();
+
+            let _unlisten = app_handle.listen_any("tauri://activate", move |_event| {
+                info!("Dock 图标被点击，显示所有窗口");
+
+                // 用 handle_for_listener（已经提前 clone 好的），不会冲突
+                let handle = handle_for_listener.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(e) = show_all_windows(handle).await {
+                        error!("显示所有窗口失败: {}", e);
+                    }
+                });
+            });
+            
             Ok(())
         })
         .run(tauri::generate_context!())

@@ -90,25 +90,45 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
 
   const minimizeWindow = async () => {
     try {
-      await log('info', '开始最小化窗口...');
-      const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-      const currentWindow = getCurrentWebviewWindow();
-      await log('info', `获取到窗口: ${currentWindow.label}`);
+      await log('info', '开始隐藏所有窗口...');
       
-      // 尝试隐藏窗口
-      await currentWindow.hide();
-      await log('info', '窗口已隐藏');
-    } catch (error) {
-      await log('error', `操作窗口失败: ${error}`);
-      // 备用方案：尝试最小化
+      // 隐藏 control-bar 窗口
+      try {
+        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+        const controlWindow = await WebviewWindow.getByLabel('control-bar');
+        if (controlWindow) {
+          await controlWindow.hide();
+          await log('info', 'control-bar 窗口已隐藏');
+        }
+      } catch (error) {
+        await log('error', `隐藏 control-bar 窗口失败: ${error}`);
+      }
+      
+      // 隐藏 close-button 窗口
       try {
         const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow');
         const currentWindow = getCurrentWebviewWindow();
-        await currentWindow.minimize();
-        await log('info', '窗口已最小化');
-      } catch (minError) {
-        await log('error', `最小化也失败: ${minError}`);
+        await currentWindow.hide();
+        await log('info', 'close-button 窗口已隐藏');
+      } catch (error) {
+        await log('error', `隐藏 close-button 窗口失败: ${error}`);
       }
+      
+      // 隐藏 floating-overlay 窗口（如果存在）
+      try {
+        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+        const overlayWindow = await WebviewWindow.getByLabel('floating-overlay');
+        if (overlayWindow) {
+          await overlayWindow.hide();
+          await log('info', 'floating-overlay 窗口已隐藏');
+        }
+      } catch (error) {
+        await log('error', `隐藏 floating-overlay 窗口失败: ${error}`);
+      }
+      
+      await log('info', '所有窗口已隐藏');
+    } catch (error) {
+      await log('error', `隐藏窗口失败: ${error}`);
     }
   };
 

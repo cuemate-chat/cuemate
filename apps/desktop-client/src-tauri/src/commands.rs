@@ -264,3 +264,82 @@ pub async fn open_url(url: String) -> Result<String, String> {
         }
     }
 }
+
+/// 显示所有窗口
+#[tauri::command]
+pub async fn show_all_windows(app_handle: AppHandle) -> Result<String, String> {
+    info!("显示所有窗口");
+    
+    let mut success_count = 0;
+    let mut error_count = 0;
+    
+    // 显示 control-bar 窗口
+    match app_handle.get_webview_window("control-bar") {
+        Some(window) => {
+            match window.show() {
+                Ok(_) => {
+                    match window.set_focus() {
+                        Ok(_) => {
+                            info!("control-bar 窗口已显示并聚焦");
+                            success_count += 1;
+                        }
+                        Err(e) => {
+                            info!("control-bar 窗口已显示但聚焦失败: {}", e);
+                            success_count += 1;
+                        }
+                    }
+                }
+                Err(e) => {
+                    error!("显示 control-bar 窗口失败: {}", e);
+                    error_count += 1;
+                }
+            }
+        }
+        None => {
+            error!("control-bar 窗口不存在");
+            error_count += 1;
+        }
+    }
+    
+    // 显示 close-button 窗口
+    match app_handle.get_webview_window("close-button") {
+        Some(window) => {
+            match window.show() {
+                Ok(_) => {
+                    info!("close-button 窗口已显示");
+                    success_count += 1;
+                }
+                Err(e) => {
+                    error!("显示 close-button 窗口失败: {}", e);
+                    error_count += 1;
+                }
+            }
+        }
+        None => {
+            error!("close-button 窗口不存在");
+            error_count += 1;
+        }
+    }
+    
+    // 显示 floating-overlay 窗口（如果存在）
+    if let Some(window) = app_handle.get_webview_window("floating-overlay") {
+        match window.show() {
+            Ok(_) => {
+                info!("floating-overlay 窗口已显示");
+                success_count += 1;
+            }
+            Err(e) => {
+                error!("显示 floating-overlay 窗口失败: {}", e);
+                error_count += 1;
+            }
+        }
+    }
+    
+    if error_count == 0 {
+        info!("所有窗口已显示，成功: {}", success_count);
+        Ok(format!("所有窗口已显示，成功: {}", success_count))
+    } else {
+        warn!("部分窗口显示失败，成功: {}, 失败: {}", success_count, error_count);
+        Ok(format!("部分窗口显示失败，成功: {}, 失败: {}", success_count, error_count))
+    }
+}
