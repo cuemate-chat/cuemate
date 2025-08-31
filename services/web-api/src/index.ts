@@ -9,16 +9,17 @@ import Fastify from 'fastify';
 import { registerAdsRoutes } from './routes/ads.js';
 import { registerAsrRoutes } from './routes/asr.js';
 import { registerAuthRoutes } from './routes/auth.js';
+import { registerDockerRoutes } from './routes/docker.js';
 import { registerFileRoutes } from './routes/files.js';
 import { registerJobRoutes } from './routes/jobs.js';
 import { registerLicenseRoutes } from './routes/license.js';
 import { registerLogRoutes } from './routes/logs.js';
 import { registerModelRoutes } from './routes/models.js';
+import { registerOperationLogRoutes } from './routes/operation-logs.js';
 import { registerPresetQuestionRoutes } from './routes/preset-questions.js';
 import { registerInterviewQuestionRoutes } from './routes/questions.js';
 import { registerReviewRoutes } from './routes/reviews.js';
 import { registerVectorRoutes } from './routes/vectors.js';
-import { registerOperationLogRoutes } from './routes/operation-logs.js';
 import { logger as serviceLogger } from './utils/logger.js';
 import { OperationLogger } from './utils/operation-logger.js';
 
@@ -84,6 +85,7 @@ async function start() {
   registerLicenseRoutes(app as any);
   registerAdsRoutes(app as any);
   registerOperationLogRoutes(app as any);
+  registerDockerRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 

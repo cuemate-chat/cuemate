@@ -7,6 +7,7 @@ import { MessageContainer } from './components/Message';
 import AdsManagement from './pages/AdsManagement';
 import AdsPixel from './pages/AdsPixel';
 import Asr from './pages/Asr';
+import DockerMonitor from './pages/DockerMonitor';
 import Help from './pages/Help';
 import Home from './pages/Home';
 import JobsList from './pages/JobsList';
@@ -54,6 +55,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings/logs" element={<Logs />} />
           <Route path="/settings/vector-knowledge" element={<VectorKnowledge />} />
           <Route path="/settings/license" element={<License />} />
+          <Route path="/docker-monitor" element={<DockerMonitor />} />
           <Route path="/operation-logs" element={<OperationLogs />} />
           <Route path="/pixel-ads" element={<AdsPixel />} />
           <Route path="/ads-management" element={<AdsManagement />} />
