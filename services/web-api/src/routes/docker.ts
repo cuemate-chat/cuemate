@@ -40,8 +40,13 @@ async function makeDockerRequest(
           if (rawResponse) {
             resolve(data);
           } else {
-            const jsonData = JSON.parse(data);
-            resolve(jsonData);
+            // 如果响应为空，直接返回空对象
+            if (!data || data.trim() === '') {
+              resolve({});
+            } else {
+              const jsonData = JSON.parse(data);
+              resolve(jsonData);
+            }
           }
         } catch (error: any) {
           reject(error);
@@ -64,7 +69,17 @@ async function makeDockerRequest(
 async function getContainersFromSocket(): Promise<DockerContainer[]> {
   try {
     const containers = (await makeDockerRequest('/containers/json?all=true&size=true')) as any[];
-    return containers.map((container: any) => ({
+
+    // 只返回 cuemate 相关的容器
+    const cuemateContainers = containers.filter((container: any) => {
+      const containerName = container.Names[0]?.replace('/', '') || '';
+      const imageName = container.Image || '';
+
+      // 过滤条件：容器名称或镜像名称包含 cuemate
+      return containerName.includes('cuemate') || imageName.includes('cuemate');
+    });
+
+    return cuemateContainers.map((container: any) => ({
       id: container.Id.substring(0, 12),
       name: container.Names[0]?.replace('/', '') || '',
       image: container.Image,

@@ -1,8 +1,8 @@
-import { CopyOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons';
-import Editor from '@monaco-editor/react';
-import { Button, Card, Col, Modal, Row, Space, Spin, Statistic, Table, Tag, Typography } from 'antd';
+import { EyeOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, Card, Col, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { DockerContainer, getContainerLogs, getContainers, restartContainer } from '../api/docker';
+import LogViewer from '../components/LogViewer';
 import { message } from '../components/Message';
 
 const { Title, Text } = Typography;
@@ -39,48 +39,12 @@ const DockerMonitor: React.FC = () => {
     }
   };
 
-  // 清理日志中的控制字符
-  const cleanLogs = (logs: string) => {
-    return logs
-      .replace(/\u0000/g, '') // 移除 null 字符
-      .replace(/\u0001/g, '') // 移除 SOH 字符
-      .replace(/\u0002/g, '') // 移除 STX 字符
-      .replace(/\u0003/g, '') // 移除 ETX 字符
-      .replace(/\u0004/g, '') // 移除 EOT 字符
-      .replace(/\u0005/g, '') // 移除 ENQ 字符
-      .replace(/\u0006/g, '') // 移除 ACK 字符
-      .replace(/\u0007/g, '') // 移除 BEL 字符
-      .replace(/\u0008/g, '') // 移除 BS 字符
-      .replace(/\u000B/g, '') // 移除 VT 字符
-      .replace(/\u000C/g, '') // 移除 FF 字符
-      .replace(/\u000E/g, '') // 移除 SO 字符
-      .replace(/\u000F/g, '') // 移除 SI 字符
-      .replace(/\u0010/g, '') // 移除 DLE 字符
-      .replace(/\u0011/g, '') // 移除 DC1 字符
-      .replace(/\u0012/g, '') // 移除 DC2 字符
-      .replace(/\u0013/g, '') // 移除 DC3 字符
-      .replace(/\u0014/g, '') // 移除 DC4 字符
-      .replace(/\u0015/g, '') // 移除 NAK 字符
-      .replace(/\u0016/g, '') // 移除 SYN 字符
-      .replace(/\u0017/g, '') // 移除 ETB 字符
-      .replace(/\u0018/g, '') // 移除 CAN 字符
-      .replace(/\u0019/g, '') // 移除 EM 字符
-      .replace(/\u001A/g, '') // 移除 SUB 字符
-      .replace(/\u001B/g, '') // 移除 ESC 字符
-      .replace(/\u001C/g, '') // 移除 FS 字符
-      .replace(/\u001D/g, '') // 移除 GS 字符
-      .replace(/\u001E/g, '') // 移除 RS 字符
-      .replace(/\u001F/g, '') // 移除 US 字符
-      .replace(/\u007F/g, ''); // 移除 DEL 字符
-  };
-
   // 获取容器日志
   const fetchContainerLogs = async (containerId: string) => {
     setLogsLoading(true);
     try {
       const logs = await getContainerLogs(containerId);
-      const cleanedLogs = cleanLogs(logs);
-      setContainerLogs(cleanedLogs);
+      setContainerLogs(logs);
     } catch (error) {
       message.error('获取容器日志失败');
       setContainerLogs('获取日志失败，请检查后端服务是否正常运行');
@@ -94,23 +58,6 @@ const DockerMonitor: React.FC = () => {
     setSelectedContainer(container);
     setLogsModalVisible(true);
     fetchContainerLogs(container.id);
-  };
-
-  // 复制日志内容
-  const copyLogs = async () => {
-    try {
-      await navigator.clipboard.writeText(containerLogs);
-      message.success('日志内容已复制到剪贴板');
-    } catch (error) {
-      // 降级方案：使用传统的复制方法
-      const textArea = document.createElement('textarea');
-      textArea.value = containerLogs;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      message.success('日志内容已复制到剪贴板');
-    }
   };
 
 
@@ -148,7 +95,7 @@ const DockerMonitor: React.FC = () => {
       render: (image: string) => <Text code>{image}</Text>
     },
     {
-      title: '状态',
+      title: '运行状态',
       dataIndex: 'state',
       key: 'state',
       render: (state: string) => (
@@ -179,6 +126,21 @@ const DockerMonitor: React.FC = () => {
       key: 'size'
     },
     {
+        title: '状态',
+        dataIndex: 'status',
+        key: 'status',
+        render: (status: string) => <Text>{status}</Text>
+    },
+    {
+        title: '创建时间',
+        dataIndex: 'created',
+        key: 'created',
+        render: (created: string) => {
+          const date = new Date(created);
+          return <Text>{date.toLocaleString('zh-CN')}</Text>;
+        }
+      },
+    {
       title: '操作',
       key: 'actions',
       render: (_: any, record: DockerContainer) => (
@@ -189,13 +151,10 @@ const DockerMonitor: React.FC = () => {
             size="small"
             icon={<ReloadOutlined />}
             onClick={() => {
-              Modal.confirm({
-                title: '确认重启',
-                content: '重启该服务可能会导致 CueMate 某些服务断开连接一段时间',
-                okText: '确认',
-                cancelText: '取消',
-                onOk: () => handleRestartContainer(record.id)
-              });
+              // 使用 window.confirm 替代 Modal.confirm
+              if (window.confirm('重启该服务可能会导致 CueMate 某些服务断开连接一段时间，确认重启吗？')) {
+                handleRestartContainer(record.id);
+              }
             }}
           >
             重启
@@ -292,75 +251,16 @@ const DockerMonitor: React.FC = () => {
         />
       </Card>
 
-      {/* 日志查看模态框 */}
-      <Modal
-        title={
-          <div className="flex items-center justify-between w-full pr-8">
-            <div className="flex items-center space-x-2">
-              <span className="text-green-500">●</span>
-              <span>容器日志 - {selectedContainer?.name}</span>
-            </div>
-            <Button
-              type="primary"
-              icon={<CopyOutlined />}
-              onClick={copyLogs}
-              title="复制日志内容"
-              size="small"
-              style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
-            >
-              复制
-            </Button>
-          </div>
-        }
-        open={logsModalVisible}
-        onCancel={() => setLogsModalVisible(false)}
-        footer={null}
+      {/* 日志查看器 */}
+      <LogViewer
+        visible={logsModalVisible}
+        onClose={() => setLogsModalVisible(false)}
+        title={`容器日志 - ${selectedContainer?.name}`}
+        logs={containerLogs}
+        loading={logsLoading}
         width={1000}
-        centered
-        bodyStyle={{ 
-          padding: 0,
-          height: '600px'
-        }}
-      >
-        <Spin spinning={logsLoading}>
-          <div className="h-full">
-            <div className="bg-gray-800 text-gray-300 px-4 py-2 text-sm border-b border-gray-700">
-              $ docker logs {selectedContainer?.name}
-            </div>
-            <div className="h-[540px]">
-              <Editor
-                height="100%"
-                language="plaintext"
-                theme="vs-dark"
-                value={containerLogs || '暂无日志'}
-                options={{
-                  readOnly: true,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  fontSize: 13,
-                  lineNumbers: 'on',
-                  folding: false,
-                  wordWrap: 'on',
-                  renderWhitespace: 'none',
-                  glyphMargin: true,
-                  lineDecorationsWidth: 10,
-                  lineNumbersMinChars: 3,
-                  overviewRulerBorder: false,
-                  hideCursorInOverviewRuler: true,
-                  overviewRulerLanes: 0,
-                  scrollbar: {
-                    vertical: 'visible',
-                    horizontal: 'visible',
-                    verticalScrollbarSize: 12,
-                    horizontalScrollbarSize: 12
-                  },
-                  padding: { top: 8, bottom: 8 }
-                }}
-              />
-            </div>
-          </div>
-        </Spin>
-      </Modal>
+        height={600}
+      />
     </div>
   );
 };
