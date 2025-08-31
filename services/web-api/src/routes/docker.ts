@@ -63,7 +63,7 @@ async function makeDockerRequest(
 // 使用 Docker Socket API 获取容器列表
 async function getContainersFromSocket(): Promise<DockerContainer[]> {
   try {
-    const containers = (await makeDockerRequest('/containers/json?all=true')) as any[];
+    const containers = (await makeDockerRequest('/containers/json?all=true&size=true')) as any[];
     return containers.map((container: any) => ({
       id: container.Id.substring(0, 12),
       name: container.Names[0]?.replace('/', '') || '',
@@ -74,11 +74,31 @@ async function getContainersFromSocket(): Promise<DockerContainer[]> {
           (port: any) => `${port.IP}:${port.PublicPort}->${port.PrivatePort}/${port.Type}`,
         ) || [],
       created: new Date(container.Created * 1000).toISOString(),
-      size: container.SizeRw
-        ? `${Math.round(container.SizeRw / 1024 / 1024)}MB`
-        : container.SizeFs
-          ? `${Math.round(container.SizeFs / 1024 / 1024)}MB`
-          : '0B',
+      size: (() => {
+        // 格式化字节大小为人类可读格式
+        const formatBytes = (bytes: number): string => {
+          if (bytes === 0) return '0B';
+          const k = 1024;
+          const sizes = ['B', 'KB', 'MB', 'GB'];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return `${Math.round(bytes / Math.pow(k, i))}${sizes[i]}`;
+        };
+
+        // 使用 SizeRootFs（完整文件系统大小）作为容器大小
+        // SizeRootFs = 镜像大小 + 读写层大小
+        if (container.SizeRootFs && container.SizeRootFs > 0) {
+          return formatBytes(container.SizeRootFs);
+        }
+        // 如果没有 SizeRootFs，尝试使用 SizeFs
+        if (container.SizeFs && container.SizeFs > 0) {
+          return formatBytes(container.SizeFs);
+        }
+        // 最后尝试使用 SizeRw（仅读写层大小）
+        if (container.SizeRw && container.SizeRw > 0) {
+          return formatBytes(container.SizeRw);
+        }
+        return '0B';
+      })(),
       state:
         container.State === 'running'
           ? 'running'
@@ -161,10 +181,36 @@ export function registerDockerRoutes(app: FastifyInstance) {
       if (tail) path += `&tail=${tail}`;
       if (since) path += `&since=${since}`;
 
-      // 日志是原始文本，不需要 JSON 解析
-      const logs = await makeDockerRequest(path, 'GET', undefined, true);
+      // 获取原始日志
+      const rawLogs = await makeDockerRequest(path, 'GET', undefined, true);
+
+      // 处理 Docker 日志流格式
+      // Docker 日志流格式：每个日志行前面有 8 字节的头部
+      // 前 4 字节是时间戳，后 4 字节是流类型标识符
+      // 流类型：1=stdout, 2=stderr
+      const processedLogs = rawLogs
+        .split('\n')
+        .map((line: string) => {
+          // 如果行长度小于 8，说明不是标准 Docker 日志格式，直接返回
+          if (line.length < 8) return line;
+
+          // 检查前 8 个字符是否都是可打印字符
+          const header = line.substring(0, 8);
+          const isPrintable = /^[\x20-\x7E]+$/.test(header);
+
+          if (isPrintable) {
+            // 这是普通文本，直接返回
+            return line;
+          } else {
+            // 这是 Docker 日志流格式，去掉前 8 字节头部
+            return line.substring(8);
+          }
+        })
+        .filter((line: string) => line.trim() !== '') // 过滤空行
+        .join('\n');
+
       reply.header('Content-Type', 'text/plain');
-      return logs;
+      return processedLogs;
     } catch (error: any) {
       (req as any).log.error({ err: error }, '获取容器日志失败');
       return reply.code(500).send(buildPrefixedError('获取容器日志失败', error, 500));

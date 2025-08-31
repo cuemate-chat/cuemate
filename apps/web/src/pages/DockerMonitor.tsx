@@ -1,4 +1,4 @@
-import { EyeOutlined, ReloadOutlined } from '@ant-design/icons';
+import { CopyOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
 import { Button, Card, Col, Modal, Row, Space, Spin, Statistic, Table, Tag, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
@@ -42,7 +42,6 @@ const DockerMonitor: React.FC = () => {
   // 清理日志中的控制字符
   const cleanLogs = (logs: string) => {
     return logs
-      .replace(/[\x00-\x1F\x7F]/g, '') // 移除控制字符
       .replace(/\u0000/g, '') // 移除 null 字符
       .replace(/\u0001/g, '') // 移除 SOH 字符
       .replace(/\u0002/g, '') // 移除 STX 字符
@@ -52,11 +51,8 @@ const DockerMonitor: React.FC = () => {
       .replace(/\u0006/g, '') // 移除 ACK 字符
       .replace(/\u0007/g, '') // 移除 BEL 字符
       .replace(/\u0008/g, '') // 移除 BS 字符
-      .replace(/\u0009/g, '\t') // 保留制表符
-      .replace(/\u000A/g, '\n') // 保留换行符
       .replace(/\u000B/g, '') // 移除 VT 字符
       .replace(/\u000C/g, '') // 移除 FF 字符
-      .replace(/\u000D/g, '\r') // 保留回车符
       .replace(/\u000E/g, '') // 移除 SO 字符
       .replace(/\u000F/g, '') // 移除 SI 字符
       .replace(/\u0010/g, '') // 移除 DLE 字符
@@ -98,6 +94,23 @@ const DockerMonitor: React.FC = () => {
     setSelectedContainer(container);
     setLogsModalVisible(true);
     fetchContainerLogs(container.id);
+  };
+
+  // 复制日志内容
+  const copyLogs = async () => {
+    try {
+      await navigator.clipboard.writeText(containerLogs);
+      message.success('日志内容已复制到剪贴板');
+    } catch (error) {
+      // 降级方案：使用传统的复制方法
+      const textArea = document.createElement('textarea');
+      textArea.value = containerLogs;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      message.success('日志内容已复制到剪贴板');
+    }
   };
 
 
@@ -282,9 +295,21 @@ const DockerMonitor: React.FC = () => {
       {/* 日志查看模态框 */}
       <Modal
         title={
-          <div className="flex items-center space-x-2">
-            <span className="text-green-500">●</span>
-            <span>容器日志 - {selectedContainer?.name}</span>
+          <div className="flex items-center justify-between w-full pr-8">
+            <div className="flex items-center space-x-2">
+              <span className="text-green-500">●</span>
+              <span>容器日志 - {selectedContainer?.name}</span>
+            </div>
+            <Button
+              type="primary"
+              icon={<CopyOutlined />}
+              onClick={copyLogs}
+              title="复制日志内容"
+              size="small"
+              style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
+            >
+              复制
+            </Button>
           </div>
         }
         open={logsModalVisible}
@@ -313,22 +338,23 @@ const DockerMonitor: React.FC = () => {
                   minimap: { enabled: false },
                   scrollBeyondLastLine: false,
                   fontSize: 13,
-                  lineNumbers: 'off',
+                  lineNumbers: 'on',
                   folding: false,
                   wordWrap: 'on',
                   renderWhitespace: 'none',
-                  glyphMargin: false,
-                  lineDecorationsWidth: 0,
-                  lineNumbersMinChars: 0,
+                  glyphMargin: true,
+                  lineDecorationsWidth: 10,
+                  lineNumbersMinChars: 3,
                   overviewRulerBorder: false,
                   hideCursorInOverviewRuler: true,
                   overviewRulerLanes: 0,
                   scrollbar: {
                     vertical: 'visible',
                     horizontal: 'visible',
-                    verticalScrollbarSize: 8,
-                    horizontalScrollbarSize: 8
-                  }
+                    verticalScrollbarSize: 12,
+                    horizontalScrollbarSize: 12
+                  },
+                  padding: { top: 8, bottom: 8 }
                 }}
               />
             </div>
