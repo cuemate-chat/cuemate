@@ -24,9 +24,6 @@ fn main() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(tauri_nspanel::WebviewPanelManager::default())
         .invoke_handler(tauri::generate_handler![
-            show_floating_overlay,
-            hide_floating_overlay,
-            toggle_floating_overlay,
             log_from_frontend,
             toggle_app_visibility,
             show_close_button,
@@ -171,8 +168,6 @@ fn main() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle: &tauri::AppHandle, event: RunEvent| {
-            info!("收到运行时事件: {:?}", event);
-            
             match event {
                 RunEvent::Ready => {
                     info!("App is ready");
@@ -190,22 +185,32 @@ fn main() {
                     }
                 }
                 RunEvent::WindowEvent { label, event, .. } => {
-                    info!("收到窗口事件: label={}, event={:?}", label, event);
-                    
+                    // 只记录重要的窗口事件
                     match event {
                         WindowEvent::Focused(focused) => {
-                            info!("窗口焦点事件: label={}, focused={}", label, focused);
-                            if focused && label == "control-bar" {
-                                info!("control-bar 窗口获得焦点");
+                            if focused {
+                                info!("窗口获得焦点: {}", label);
                             }
                         }
+                        WindowEvent::CloseRequested { .. } => {
+                            info!("窗口关闭请求: {}", label);
+                        }
+                        WindowEvent::Resized(_) => {
+                            info!("窗口大小改变: {}", label);
+                        }
+                        WindowEvent::Moved(_) => {
+                            info!("窗口位置改变: {}", label);
+                        }
                         _ => {
-                            info!("其他窗口事件: {:?}", event);
+                            // 忽略其他不重要的窗口事件
                         }
                     }
                 }
+                RunEvent::MainEventsCleared => {
+                    // 不记录 MainEventsCleared 事件，因为它太频繁了
+                }
                 _ => {
-                    info!("其他运行时事件: {:?}", event);
+                    // 其他事件可以选择性记录，但不包括频繁的内部事件
                 }
             }
         });

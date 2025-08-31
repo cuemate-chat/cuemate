@@ -19,7 +19,6 @@ interface FloatingControlBarProps {
 }
 
 export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: FloatingControlBarProps) {
-  const [floatingOverlayVisible, setFloatingOverlayVisible] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 注册全局快捷键
@@ -58,15 +57,14 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     }
   };
 
-  const toggleFloatingOverlay = async (e: React.MouseEvent) => {
+  const openMainApp = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     try {
       const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('toggle_floating_overlay');
-      setFloatingOverlayVisible(!floatingOverlayVisible);
+      await invoke('show_all_windows');
     } catch (error) {
-      await log('error', `切换悬浮窗口失败: ${error}`);
+      await log('error', `打开主应用失败: ${error}`);
     }
   };
 
@@ -211,8 +209,8 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
             <Tooltip.Root delayDuration={0}>
               <Tooltip.Trigger asChild>
                 <button 
-                  onClick={toggleFloatingOverlay} 
-                  className={`floating-overlay-btn ${floatingOverlayVisible ? 'active' : ''}`}
+                  onClick={openMainApp} 
+                  className="floating-overlay-btn"
                 >
                   <Layout size={16} />
                 </button>
@@ -223,7 +221,7 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
                   side="bottom"
                   sideOffset={5}
                 >
-                  打开客户端，录入岗位、简历、题库等信息
+                  打开 CueMate 主应用
                   <Tooltip.Arrow className="radix-tooltip-arrow" />
                 </Tooltip.Content>
               </Tooltip.Portal>

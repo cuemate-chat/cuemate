@@ -1,101 +1,7 @@
 use log::{error, info, warn, debug};
 use tauri::{AppHandle, Manager};
 
-/// 显示悬浮窗口
-#[tauri::command]
-pub async fn show_floating_overlay(app_handle: AppHandle) -> Result<String, String> {
-    info!("显示悬浮窗口");
-    
-    match app_handle.get_webview_window("floating-overlay") {
-        Some(window) => {
-            match window.show() {
-                Ok(_) => {
-                    info!("悬浮窗口已显示");
-                    Ok("悬浮窗口已显示".to_string())
-                }
-                Err(e) => {
-                    error!("显示悬浮窗口失败: {}", e);
-                    Err(format!("显示悬浮窗口失败: {}", e))
-                }
-            }
-        }
-        None => {
-            error!("悬浮窗口不存在");
-            Err("悬浮窗口不存在".to_string())
-        }
-    }
-}
 
-/// 隐藏悬浮窗口
-#[tauri::command]
-pub async fn hide_floating_overlay(app_handle: AppHandle) -> Result<String, String> {
-    info!("隐藏悬浮窗口");
-    
-    match app_handle.get_webview_window("floating-overlay") {
-        Some(window) => {
-            match window.hide() {
-                Ok(_) => {
-                    info!("悬浮窗口已隐藏");
-                    Ok("悬浮窗口已隐藏".to_string())
-                }
-                Err(e) => {
-                    error!("隐藏悬浮窗口失败: {}", e);
-                    Err(format!("隐藏悬浮窗口失败: {}", e))
-                }
-            }
-        }
-        None => {
-            error!("悬浮窗口不存在");
-            Err("悬浮窗口不存在".to_string())
-        }
-    }
-}
-
-/// 切换悬浮窗口显示状态
-#[tauri::command]
-pub async fn toggle_floating_overlay(app_handle: AppHandle) -> Result<String, String> {
-    info!("切换悬浮窗口显示状态");
-    
-    match app_handle.get_webview_window("floating-overlay") {
-        Some(window) => {
-            match window.is_visible() {
-                Ok(is_visible) => {
-                    if is_visible {
-                        match window.hide() {
-                            Ok(_) => {
-                                info!("悬浮窗口已隐藏");
-                                Ok("悬浮窗口已隐藏".to_string())
-                            }
-                            Err(e) => {
-                                error!("隐藏悬浮窗口失败: {}", e);
-                                Err(format!("隐藏悬浮窗口失败: {}", e))
-                            }
-                        }
-                    } else {
-                        match window.show() {
-                            Ok(_) => {
-                                info!("悬浮窗口已显示");
-                                Ok("悬浮窗口已显示".to_string())
-                            }
-                            Err(e) => {
-                                error!("显示悬浮窗口失败: {}", e);
-                                Err(format!("显示悬浮窗口失败: {}", e))
-                            }
-                        }
-                    }
-                }
-                Err(e) => {
-                    error!("获取悬浮窗口状态失败: {}", e);
-                    Err(format!("获取悬浮窗口状态失败: {}", e))
-                }
-            }
-        }
-        None => {
-            error!("悬浮窗口不存在");
-            Err("悬浮窗口不存在".to_string())
-        }
-    }
-}
 
 /// 前端日志记录
 #[tauri::command]
@@ -313,19 +219,6 @@ pub async fn show_all_windows(app_handle: AppHandle) -> Result<String, String> {
         }
     }
     
-    // 显示 floating-overlay 窗口（如果存在）
-    if let Some(window) = app_handle.get_webview_window("floating-overlay") {
-        match window.show() {
-            Ok(_) => {
-                info!("floating-overlay 窗口已显示");
-                success_count += 1;
-            }
-            Err(e) => {
-                error!("显示 floating-overlay 窗口失败: {}", e);
-                error_count += 1;
-            }
-        }
-    }
     
     if error_count == 0 {
         info!("所有窗口已显示完成，成功: {}", success_count);

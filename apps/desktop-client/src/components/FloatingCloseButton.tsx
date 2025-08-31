@@ -114,17 +114,6 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
         await log('error', `隐藏 close-button 窗口失败: ${error}`);
       }
       
-      // 隐藏 floating-overlay 窗口（如果存在）
-      try {
-        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-        const overlayWindow = await WebviewWindow.getByLabel('floating-overlay');
-        if (overlayWindow) {
-          await overlayWindow.hide();
-          await log('info', 'floating-overlay 窗口已隐藏');
-        }
-      } catch (error) {
-        await log('error', `隐藏 floating-overlay 窗口失败: ${error}`);
-      }
       
       await log('info', '所有窗口已隐藏');
     } catch (error) {
