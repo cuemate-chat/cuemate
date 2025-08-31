@@ -106,12 +106,8 @@ export function registerLogRoutes(app: FastifyInstance) {
       if (a.date !== b.date) {
         return b.date.localeCompare(a.date);
       }
-      // 然后按服务名称
-      if (a.service !== b.service) {
-        return a.service.localeCompare(b.service);
-      }
       // 最后按级别
-      const levelOrder = { debug: 0, info: 1, warn: 2, error: 3 };
+      const levelOrder = { error: 0, warn: 1, debug: 2, info: 3 };
       return levelOrder[a.level] - levelOrder[b.level];
     });
 
@@ -201,7 +197,7 @@ export function registerLogRoutes(app: FastifyInstance) {
       try {
         fs.writeFileSync(filePath, '', 'utf8');
         (req as any).log.debug({ level, service, date }, 'log-file-cleared');
-        
+
         // 记录操作日志
         try {
           await (req as any).jwtVerify();
@@ -213,13 +209,13 @@ export function registerLogRoutes(app: FastifyInstance) {
             operation: OperationType.UPDATE,
             message: `清空日志文件: ${level}/${service}/${date}`,
             status: 'success',
-            userId: payload.uid
+            userId: payload.uid,
           });
         } catch (authError) {
           // 日志操作不需要认证，但如果有认证信息就记录操作日志
           (req as any).log.info('日志清空操作未记录操作日志（无认证信息）');
         }
-        
+
         return { success: true, message: '日志文件已清空' };
       } catch (writeErr: any) {
         (req as any).log.error({ err: writeErr, level, service, date }, 'write-log-failed');
@@ -301,7 +297,7 @@ export function registerLogRoutes(app: FastifyInstance) {
             operation: OperationType.DELETE,
             message: `删除日志文件: ${level}/${service}/${date}`,
             status: 'success',
-            userId: payload.uid
+            userId: payload.uid,
           });
         } catch (authError) {
           // 日志操作不需要认证，但如果有认证信息就记录操作日志
