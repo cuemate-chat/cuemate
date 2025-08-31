@@ -2,8 +2,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
+mod platform;
+mod main_window;
 
 use commands::*;
+use platform::log_platform_info;
 use log::{info, LevelFilter};
 use tauri::{Manager, RunEvent, WindowEvent};
 use tauri_nspanel::WebviewWindowExt;
@@ -20,6 +23,9 @@ fn main() {
 
     info!("CueMate 桌面客户端启动");
 
+    // 记录平台信息
+    log_platform_info();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(tauri_nspanel::WebviewPanelManager::default())
@@ -29,7 +35,11 @@ fn main() {
             show_close_button,
             hide_close_button,
             open_url,
-            show_all_windows
+            show_all_windows,
+            create_main_window,
+            show_main_window,
+            hide_main_window,
+            toggle_main_window
         ])
         .setup(|app| {
             info!("开始初始化 NSPanel");

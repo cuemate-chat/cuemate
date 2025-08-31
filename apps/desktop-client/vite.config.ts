@@ -6,12 +6,11 @@ import { resolve } from 'path';
 export default defineConfig(async () => ({
   plugins: [react()],
   
-  // 配置多个入口点
+  // 配置单个入口点
   build: {
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        floating: resolve(__dirname, 'floating.html'),
       },
     },
   },

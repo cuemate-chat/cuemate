@@ -62,9 +62,19 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     e.stopPropagation();
     try {
       const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('show_all_windows');
+      // 首先尝试创建主窗口（如果不存在）
+      await invoke('create_main_window');
+      await log('info', '主应用窗口已创建并显示');
     } catch (error) {
-      await log('error', `打开主应用失败: ${error}`);
+      await log('error', `创建主应用失败: ${error}`);
+      // 如果创建失败，尝试显示已存在的主窗口
+      try {
+        const { invoke: showInvoke } = await import('@tauri-apps/api/core');
+        await showInvoke('show_main_window');
+        await log('info', '已显示现有主应用窗口');
+      } catch (showError) {
+        await log('error', `显示主应用失败: ${showError}`);
+      }
     }
   };
 

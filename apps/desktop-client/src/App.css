@@ -84,7 +84,7 @@
   margin: 0;  /* 移除 auto，让控制栏在顶部 */
   width: 400px;
   height: 50px;
-  background: rgba(30, 30, 30, 0.6);
+  background: rgba(30, 30, 30, 0.7);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border-radius: 25px;
@@ -100,7 +100,7 @@
 
 
 .simple-floating-bar:hover {
-  background: rgba(30, 30, 30, 0.5);
+  background: rgba(30, 30, 30, 0.6);
   border-color: rgba(255, 255, 255, 0.15);
 }
 
@@ -209,7 +209,7 @@
   height: 24px;
   border: none;
   border-radius: 12px;
-  background: rgba(30, 30, 30, 0.6);
+  background: rgba(30, 30, 30, 0.7);
   color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
   display: flex;
@@ -222,12 +222,12 @@
 }
 
 .close-floating-btn-separate:hover {
-  background: rgba(30, 30, 30, 0.7);
+  background: rgba(30, 30, 30, 0.6);
   border-color: rgba(255, 255, 255, 0.25);
 }
 
 .close-floating-btn-separate.hover {
-  background: rgba(30, 30, 30, 0.7);
+  background: rgba(30, 30, 30, 0.6);
   border-color: rgba(255, 255, 255, 0.25);
 }
 

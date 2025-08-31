@@ -1,5 +1,6 @@
 use log::{error, info, warn, debug};
 use tauri::{AppHandle, Manager};
+use crate::main_window::MainWindowManager;
 
 
 
@@ -226,5 +227,112 @@ pub async fn show_all_windows(app_handle: AppHandle) -> Result<String, String> {
     } else {
         warn!("部分窗口显示失败，成功: {}, 失败: {}", success_count, error_count);
         Ok(format!("部分窗口显示失败，成功: {}, 失败: {}", success_count, error_count))
+    }
+}
+
+/// 创建并显示主应用窗口  
+#[tauri::command]
+pub async fn create_main_window(
+    app_handle: AppHandle,
+) -> Result<String, String> {
+    info!("创建主应用窗口");
+    
+    // 创建管理器
+    let mut manager = MainWindowManager::new(app_handle.clone());
+    
+    // 直接处理异步创建和显示
+    match manager.create_main_window().await {
+        Ok(_) => {
+            info!("主窗口创建成功");
+            match manager.show_main_window() {
+                Ok(_) => {
+                    info!("主应用窗口创建并显示完成");
+                    Ok("主应用窗口创建并显示完成".to_string())
+                }
+                Err(e) => {
+                    error!("显示主窗口失败: {}", e);
+                    Err(format!("显示主窗口失败: {}", e))
+                }
+            }
+        }
+        Err(e) => {
+            error!("创建主窗口失败: {}", e);
+            Err(format!("创建主窗口失败: {}", e))
+        }
+    }
+}
+
+/// 显示主应用窗口
+#[tauri::command]
+pub fn show_main_window(
+    app_handle: AppHandle,
+) -> Result<String, String> {
+    info!("显示主应用窗口");
+    
+    if let Some(window) = app_handle.get_webview_window("main-app") {
+        match window.show() {
+            Ok(_) => {
+                info!("主应用窗口显示成功");
+                Ok("主应用窗口显示成功".to_string())
+            }
+            Err(e) => {
+                error!("显示主应用窗口失败: {}", e);
+                Err(format!("显示主应用窗口失败: {}", e))
+            }
+        }
+    } else {
+        warn!("主应用窗口不存在，需要先创建");
+        Err("主应用窗口不存在，请先创建".to_string())
+    }
+}
+
+/// 隐藏主应用窗口
+#[tauri::command]
+pub fn hide_main_window(
+    app_handle: AppHandle,
+) -> Result<String, String> {
+    info!("隐藏主应用窗口");
+    
+    if let Some(window) = app_handle.get_webview_window("main-app") {
+        match window.hide() {
+            Ok(_) => {
+                info!("主应用窗口隐藏成功");
+                Ok("主应用窗口隐藏成功".to_string())
+            }
+            Err(e) => {
+                error!("隐藏主应用窗口失败: {}", e);
+                Err(format!("隐藏主应用窗口失败: {}", e))
+            }
+        }
+    } else {
+        warn!("主应用窗口不存在");
+        Err("主应用窗口不存在".to_string())
+    }
+}
+
+/// 切换主应用窗口显示状态
+#[tauri::command]
+pub fn toggle_main_window(
+    app_handle: AppHandle,
+) -> Result<String, String> {
+    info!("切换主应用窗口显示状态");
+    
+    if let Some(window) = app_handle.get_webview_window("main-app") {
+        match window.is_visible() {
+            Ok(is_visible) => {
+                if is_visible {
+                    hide_main_window(app_handle)
+                } else {
+                    show_main_window(app_handle)
+                }
+            }
+            Err(e) => {
+                error!("获取主窗口状态失败: {}", e);
+                Err(format!("获取主窗口状态失败: {}", e))
+            }
+        }
+    } else {
+        warn!("主应用窗口不存在，需要先创建");
+        Err("主应用窗口不存在，请先创建".to_string())
     }
 }
