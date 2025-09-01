@@ -42,7 +42,7 @@ impl MainWindowManager {
         .title("CueMate 主应用")
         .inner_size(1200.0, 800.0)
         .min_inner_size(800.0, 600.0)
-        .center() // 使用 Tauri 内置的居中功能
+        .center() // 先居中，后面手动调整Y坐标
         .resizable(true)  // 允许调整大小
         .maximizable(true) // 允许最大化
         .minimizable(true) // 允许最小化
@@ -53,8 +53,26 @@ impl MainWindowManager {
         .title_bar_style(tauri::TitleBarStyle::Visible); // 使用标准标题栏
 
         match window_builder.build() {
-            Ok(_window) => {
+            Ok(window) => {
                 info!("主窗口（普通 NSWindow）创建成功");
+                
+                // 获取屏幕大小并调整窗口Y坐标，确保在control-bar下方
+                if let Ok(monitor) = window.current_monitor() {
+                    if let Some(monitor) = monitor {
+                        let screen_size = monitor.size();
+                        let window_size = window.inner_size().unwrap();
+                        
+                        // 保持水平居中，只调整Y坐标
+                        let x = (screen_size.width - window_size.width) / 2;
+                        let y = 350;
+                        
+                        if let Err(e) = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(x as i32, y))) {
+                            info!("设置主窗口位置失败: {}", e);
+                        } else {
+                            info!("主窗口位置设置成功，位置: x={}, y={}", x, y);
+                        }
+                    }
+                }
                 
                 // 暂时跳过 macOS 特殊配置，先测试基本功能
                 info!("跳过 macOS 特殊配置，使用默认窗口设置");

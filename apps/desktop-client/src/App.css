@@ -4,7 +4,7 @@
 .app-container {
   position: relative;
   width: 360px;
-  height: 150px;
+  height: 100px;
   z-index: 9999;
   user-select: none;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

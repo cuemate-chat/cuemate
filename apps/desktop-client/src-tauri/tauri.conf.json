@@ -27,7 +27,7 @@
         "transparent": true,
         "title": "CueMate",
         "width": 360,
-        "height": 150,
+        "height": 100,
         "alwaysOnTop": true,
         "visible": true,
         "center": false,
