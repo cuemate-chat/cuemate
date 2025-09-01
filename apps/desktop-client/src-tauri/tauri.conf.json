@@ -30,7 +30,7 @@
         "height": 100,
         "alwaysOnTop": true,
         "visible": true,
-        "center": false,
+        "center": true,
         "skipTaskbar": true,
         "minimizable": true,
         "maximizable": false,
