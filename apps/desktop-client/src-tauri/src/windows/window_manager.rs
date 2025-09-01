@@ -3,7 +3,7 @@
 /// 重点解决焦点管理问题：确保焦点始终在 main-focus 窗口上
 
 use log::{info, error, warn};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Emitter};
 
 use crate::windows::{
     main_focus_window::MainFocusWindow,
@@ -132,8 +132,14 @@ impl WindowManager {
     pub fn show_main_content(&self) -> Result<(), String> {
         self.main_content_window.show()?;
         
-        // 关键：主内容窗口显示后立即恢复焦点到 main-focus
-        self.ensure_main_focus()?;
+        // 延迟恢复焦点，给用户操作时间
+        let app_handle = self.app_handle.clone();
+        tauri::async_runtime::spawn(async move {
+            tokio::time::sleep(tokio::time::Duration::from_millis(300)).await;
+            if let Err(e) = app_handle.emit("restore_focus", ()) {
+                log::error!("发送恢复焦点事件失败: {}", e);
+            }
+        });
         
         Ok(())
     }

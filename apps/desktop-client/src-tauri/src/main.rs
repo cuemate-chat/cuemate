@@ -79,6 +79,20 @@ fn main() {
                         WindowEvent::Focused(focused) => {
                             if focused {
                                 info!("窗口获得焦点: {}", label);
+                                
+                                // 只有 main-focus 窗口可以真正获得焦点
+                                // 其他窗口（NSPanel）不应该获得焦点
+                                if label != "main-focus" {
+                                    info!("NSPanel 窗口 {} 获得焦点，立即恢复焦点到 main-focus", label);
+                                    // 立即恢复焦点，防止其他窗口保持焦点
+                                    if let Some(main_focus_window) = app_handle.get_webview_window("main-focus") {
+                                        if let Err(e) = main_focus_window.set_focus() {
+                                            log::error!("恢复焦点到 main-focus 失败: {}", e);
+                                        } else {
+                                            log::info!("焦点已恢复 to main-focus");
+                                        }
+                                    }
+                                }
                             }
                         }
                         WindowEvent::CloseRequested { .. } => {
@@ -97,11 +111,12 @@ fn main() {
                                 }
                             }
                         }
-                        WindowEvent::Resized(_) => {
-                            info!("窗口大小改变: {}", label);
-                        }
                         WindowEvent::Moved(_) => {
                             info!("窗口位置改变: {}", label);
+                            // 鼠标移动不触发焦点恢复，让鼠标事件正常工作
+                        }
+                        WindowEvent::Resized(_) => {
+                            info!("窗口大小改变: {}", label);
                         }
                         _ => {
                             // 忽略其他不重要的窗口事件

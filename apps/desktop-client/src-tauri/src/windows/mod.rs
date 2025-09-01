@@ -6,5 +6,6 @@ pub mod control_bar_window;
 pub mod close_button_window;
 pub mod main_content_window;
 pub mod window_manager;
+pub mod panel_utils;
 
 pub use window_manager::WindowManager;

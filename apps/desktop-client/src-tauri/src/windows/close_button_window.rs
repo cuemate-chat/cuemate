@@ -1,9 +1,10 @@
 /// 关闭按钮窗口管理
 /// 负责 close-button 窗口的配置和 NSPanel 转换
 
-use log::{info, error};
+use log::{info, error, warn};
 use tauri::{AppHandle, Manager, Position, PhysicalPosition};
 use tauri_nspanel::WebviewWindowExt;
+use crate::windows::panel_utils::setup_nonactivating_panel;
 
 pub struct CloseButtonWindow {
     app_handle: AppHandle,
@@ -22,19 +23,12 @@ impl CloseButtonWindow {
             info!("找到 close-button 窗口，开始转换为 NSPanel...");
             
             match close_window.to_panel() {
-                Ok(_close_panel) => {
+                Ok(close_panel) => {
                     info!("close-button 窗口已转换为 NSPanel");
                     
-                    // 配置 NSPanel 为真正的无焦点模式
-                    #[cfg(target_os = "macos")]
-                    {
-                        info!("开始设置 macOS 特定的 NSPanel 样式...");
-                        
-                        // 设置 NSPanel 样式，确保不参与焦点争夺
-                        // NSNonactivatingPanelMask = 1 << 7 = 128
-                        // let nonactivating_panel_mask = 128i32;
-                        // close_panel.set_style_mask(nonactivating_panel_mask);
-                        info!("close-button NSPanel 已设置为 nonactivatingPanel 模式");
+                    // 使用公共方法设置 NSPanel 为无焦点模式
+                    if let Err(e) = setup_nonactivating_panel("close-button") {
+                        warn!("设置 close-button 无焦点模式失败: {}", e);
                     }
                     
                     info!("开始设置 always_on_top...");

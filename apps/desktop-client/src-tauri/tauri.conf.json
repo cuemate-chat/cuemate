@@ -34,13 +34,13 @@
         "skipTaskbar": true,
         "minimizable": true,
         "maximizable": false,
-        "acceptFirstMouse": true,
         "titleBarStyle": "Overlay",
         "shadow": false,
         "hiddenTitle": true,
         "url": "src/windows/control-bar/index.html",
         "closable": false,
-        "focus": false
+        "focus": false,
+        "acceptFirstMouse": true
       },
       {
         "label": "close-button",
@@ -57,13 +57,13 @@
         "skipTaskbar": true,
         "minimizable": false,
         "maximizable": false,
-        "acceptFirstMouse": false,
         "titleBarStyle": "Overlay",
         "shadow": false,
         "hiddenTitle": true,
         "url": "src/windows/close-button/index.html",
         "closable": false,
-        "focus": false
+        "focus": false,
+        "acceptFirstMouse": true
       },
       {
         "label": "main-content",
@@ -80,13 +80,13 @@
         "skipTaskbar": false,
         "minimizable": true,
         "maximizable": true,
-        "acceptFirstMouse": false,
         "titleBarStyle": "Visible",
         "shadow": true,
         "hiddenTitle": false,
         "url": "http://localhost:80",
         "closable": true,
-        "focus": false
+        "focus": false,
+        "acceptFirstMouse": true
       }
     ],
     "security": {
