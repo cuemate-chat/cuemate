@@ -87,7 +87,6 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     try {
       const { invoke } = await import('@tauri-apps/api/core');
       await invoke('ensure_main_focus');
-      await log('info', '🔥 FloatingControlBar mouseEnter: 隐形锚点焦点已恢复');
     } catch (error) {
       await log('error', `恢复隐形锚点焦点失败: ${error}`);
     }
@@ -126,7 +125,6 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     // 延迟隐藏，给用户时间移动到关闭按钮区域
     timeoutRef.current = setTimeout(async () => {
       onHideCloseButton();
-      log('info', '🔴 FloatingControlBar 鼠标离开（延迟），隐藏关闭按钮');
       
       // 通知 close-button 窗口隐藏
       try {
@@ -138,7 +136,7 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
       } catch (error) {
         await log('error', `通知 close-button 窗口失败: ${error}`);
       }
-    }, 300); // 300ms延迟，给用户足够时间移动到关闭按钮
+    }, 200);
   };
 
   // 清理定时器

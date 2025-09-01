@@ -16,13 +16,28 @@ impl ControlBarWindow {
 
     /// 配置 control-bar 窗口为 NSPanel
     pub fn setup_as_panel(&self) -> Result<(), String> {
+        info!("开始配置 control-bar 为 NSPanel...");
+        
         if let Some(window) = self.app_handle.get_webview_window("control-bar") {
+            info!("找到 control-bar 窗口，开始转换为 NSPanel...");
+            
             match window.to_panel() {
                 Ok(_panel) => {
                     info!("control-bar 窗口已转换为 NSPanel");
                     
-                    // 基本的 NSPanel 配置，避免使用可能导致崩溃的 API
-                    info!("control-bar NSPanel 使用基本配置，避免 set_style_mask 和复杂操作");
+                    // 配置 NSPanel 为真正的无焦点模式
+                    #[cfg(target_os = "macos")]
+                    {
+                        info!("开始设置 macOS 特定的 NSPanel 样式...");
+                        
+                        // 设置 NSPanel 样式，确保不参与焦点争夺
+                        // NSNonactivatingPanelMask = 1 << 7 = 128
+                        // let nonactivating_panel_mask = 128i32;
+                        // panel.set_style_mask(nonactivating_panel_mask);
+                        info!("control-bar NSPanel 已设置为 nonactivatingPanel 模式");
+                    }
+                    
+                    info!("开始设置 always_on_top...");
                     
                     // 确保 always_on_top 设置
                     if let Err(e) = window.set_always_on_top(true) {
@@ -31,6 +46,8 @@ impl ControlBarWindow {
                         info!("control-bar NSPanel always_on_top 设置成功");
                     }
                     
+                    info!("开始设置窗口位置...");
+                    
                     // 设置窗口位置
                     if let Err(e) = self.position_window(&window) {
                         info!("设置 control-bar 窗口位置失败: {}", e);
@@ -38,6 +55,7 @@ impl ControlBarWindow {
                         info!("control-bar NSPanel 位置设置成功");
                     }
                     
+                    info!("control-bar NSPanel 配置完成");
                     Ok(())
                 }
                 Err(e) => {

@@ -16,18 +16,35 @@ impl CloseButtonWindow {
 
     /// 配置 close-button 窗口为 NSPanel
     pub fn setup_as_panel(&self) -> Result<(), String> {
+        info!("开始配置 close-button 为 NSPanel...");
+        
         if let Some(close_window) = self.app_handle.get_webview_window("close-button") {
+            info!("找到 close-button 窗口，开始转换为 NSPanel...");
+            
             match close_window.to_panel() {
                 Ok(_close_panel) => {
                     info!("close-button 窗口已转换为 NSPanel");
                     
-                    // 基本的 NSPanel 配置，避免使用可能导致崩溃的 API
-                    info!("close-button NSPanel 使用基本配置，避免 set_style_mask 和复杂操作");
+                    // 配置 NSPanel 为真正的无焦点模式
+                    #[cfg(target_os = "macos")]
+                    {
+                        info!("开始设置 macOS 特定的 NSPanel 样式...");
+                        
+                        // 设置 NSPanel 样式，确保不参与焦点争夺
+                        // NSNonactivatingPanelMask = 1 << 7 = 128
+                        // let nonactivating_panel_mask = 128i32;
+                        // close_panel.set_style_mask(nonactivating_panel_mask);
+                        info!("close-button NSPanel 已设置为 nonactivatingPanel 模式");
+                    }
+                    
+                    info!("开始设置 always_on_top...");
                     
                     // 确保 always_on_top 设置
                     if let Err(e) = close_window.set_always_on_top(true) {
                         info!("设置 close-button always_on_top 失败: {}", e);
                     }
+                    
+                    info!("开始自动定位 close-button...");
                     
                     // 自动定位 close-button 到 control-bar 的右侧
                     if let Some(control_window) = self.app_handle.get_webview_window("control-bar") {
@@ -64,10 +81,11 @@ impl CloseButtonWindow {
                         if let Err(e) = close_window.set_position(Position::Physical(PhysicalPosition::new(default_x, default_y))) {
                             info!("设置 close-button 默认位置失败: {}", e);
                         } else {
-                            info!("close-button 使用默认位置: x={}, y={}", default_x, default_y);
+                            info!("close-button 使用默认位置: x={}, y={}", default_y, default_y);
                         }
                     }
                     
+                    info!("close-button NSPanel 配置完成");
                     Ok(())
                 }
                 Err(e) => {

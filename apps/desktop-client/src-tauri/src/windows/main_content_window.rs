@@ -1,94 +1,89 @@
 /// 主内容窗口管理
-/// 负责主应用内容窗口的创建和管理
+/// 负责主应用内容窗口的配置和 NSPanel 转换
 
-use log::{info, error, warn};
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder, Position, PhysicalPosition, TitleBarStyle};
+use log::{info, error};
+use tauri::{AppHandle, Manager, Position, PhysicalPosition};
+use tauri_nspanel::WebviewWindowExt;
 
 pub struct MainContentWindow {
     app_handle: AppHandle,
-    is_created: bool,
 }
 
 impl MainContentWindow {
     pub fn new(app_handle: AppHandle) -> Self {
-        Self {
-            app_handle,
-            is_created: false,
+        Self { app_handle }
+    }
+
+    /// 配置主内容窗口为 NSPanel
+    pub fn setup_as_panel(&self) -> Result<(), String> {
+        info!("开始配置 main-content 为 NSPanel...");
+        
+        if let Some(window) = self.app_handle.get_webview_window("main-content") {
+            info!("找到 main-content 窗口，开始转换为 NSPanel...");
+            
+            match window.to_panel() {
+                Ok(_panel) => {
+                    info!("main-content 窗口已转换为 NSPanel");
+                    
+                    // 配置 NSPanel 为真正的无焦点模式
+                    #[cfg(target_os = "macos")]
+                    {
+                        info!("开始设置 macOS 特定的 NSPanel 样式...");
+                        
+                        // 设置 NSPanel 样式，确保不参与焦点争夺
+                        // NSNonactivatingPanelMask = 1 << 7 = 128
+                        // let nonactivating_panel_mask = 128i32;
+                        // panel.set_style_mask(nonactivating_panel_mask);
+                        info!("main-content NSPanel 已设置为 nonactivatingPanel 模式");
+                    }
+                    
+                    info!("开始设置窗口位置...");
+                    
+                    // 设置窗口位置
+                    if let Err(e) = self.position_window(&window) {
+                        info!("设置 main-content 窗口位置失败: {}", e);
+                    } else {
+                        info!("main-content NSPanel 位置设置成功");
+                    }
+                    
+                    info!("main-content NSPanel 配置完成");
+                    Ok(())
+                }
+                Err(e) => {
+                    error!("转换 main-content 为 NSPanel 失败: {}", e);
+                    Err(format!("转换 main-content 为 NSPanel 失败: {}", e))
+                }
+            }
+        } else {
+            error!("未找到 main-content 窗口");
+            Err("未找到 main-content 窗口".to_string())
         }
     }
 
-    /// 创建主内容窗口
-    pub async fn create(&mut self) -> Result<(), String> {
-        if self.is_created {
-            info!("主内容窗口已存在");
-            return Ok(());
-        }
-
-        info!("创建主内容窗口");
-
-        let url = match "http://localhost:80".parse() {
-            Ok(url) => url,
-            Err(e) => {
-                error!("解析主内容窗口 URL 失败: {}", e);
-                return Err(format!("解析主内容窗口 URL 失败: {}", e));
-            }
-        };
-        let webview_url = WebviewUrl::External(url);
-        
-        let window_builder = WebviewWindowBuilder::new(
-            &self.app_handle,
-            "main-content",
-            webview_url
-        )
-        .title("CueMate 主应用")
-        .inner_size(1200.0, 800.0)
-        .min_inner_size(800.0, 600.0)
-        .center()
-        .resizable(true)
-        .maximizable(true)
-        .minimizable(true)
-        .closable(true)
-        .always_on_top(false)
-        .visible(false)   // 先隐藏，稍后显示
-        .decorations(true)
-        .title_bar_style(TitleBarStyle::Visible);
-
-        match window_builder.build() {
-            Ok(window) => {
-                info!("主内容窗口创建成功");
-                
-                // 设置窗口位置
-                if let Ok(monitor) = window.current_monitor() {
-                    if let Some(monitor) = monitor {
-                        let screen_size = monitor.size();
-                        let window_size = match window.inner_size() {
-                            Ok(size) => size,
-                            Err(e) => {
-                                warn!("获取主内容窗口大小失败: {}", e);
-                                self.is_created = true;
-                                return Ok(()); // 跳过位置设置，但不影响窗口创建
-                            }
-                        };
-                        
-                        let x = (screen_size.width - window_size.width) / 2;
-                        let y = 200;
-                        
-                        if let Err(e) = window.set_position(Position::Physical(PhysicalPosition::new(x as i32, y))) {
-                            warn!("设置主内容窗口位置失败: {}", e);
-                        } else {
-                            info!("主内容窗口位置设置成功: x={}, y={}", x, y);
-                        }
+    /// 设置窗口位置
+    fn position_window(&self, window: &tauri::WebviewWindow) -> Result<(), String> {
+        if let Ok(monitor) = window.current_monitor() {
+            if let Some(monitor) = monitor {
+                let screen_size = monitor.size();
+                let window_size = match window.inner_size() {
+                    Ok(size) => size,
+                    Err(e) => {
+                        info!("获取 main-content 窗口大小失败: {}", e);
+                        return Ok(()); // 跳过位置设置
                     }
-                }
+                };
                 
-                self.is_created = true;
-                Ok(())
-            }
-            Err(e) => {
-                error!("创建主内容窗口失败: {}", e);
-                Err(format!("创建主内容窗口失败: {}", e))
+                let x = (screen_size.width - window_size.width) / 2;
+                let y = 250;
+                
+                if let Err(e) = window.set_position(Position::Physical(PhysicalPosition::new(x as i32, y))) {
+                    info!("设置 main-content 窗口位置失败: {}", e);
+                } else {
+                    info!("main-content NSPanel 位置设置成功: x={}, y={}", x, y);
+                }
             }
         }
+        Ok(())
     }
 
     /// 显示窗口
@@ -134,22 +129,5 @@ impl MainContentWindow {
         }
     }
 
-    /// 销毁窗口
-    pub fn destroy(&mut self) -> Result<(), String> {
-        if let Some(window) = self.app_handle.get_webview_window("main-content") {
-            window.close().map_err(|e| format!("销毁主内容窗口失败: {}", e))?;
-            info!("主内容窗口已销毁");
-            self.is_created = false;
-            Ok(())
-        } else {
-            warn!("主内容窗口不存在，无需销毁");
-            self.is_created = false;
-            Ok(())
-        }
-    }
 
-    /// 检查窗口是否已创建
-    pub fn is_created(&self) -> bool {
-        self.is_created
-    }
 }

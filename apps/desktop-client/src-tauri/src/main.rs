@@ -83,6 +83,19 @@ fn main() {
                         }
                         WindowEvent::CloseRequested { .. } => {
                             info!("窗口关闭请求: {}", label);
+                            
+                            // 特殊处理 main-content 窗口的关闭请求
+                            if label == "main-content" {
+                                info!("处理 main-content 窗口关闭请求，执行安全隐藏");
+                                if let Some(window) = app_handle.get_webview_window("main-content") {
+                                    // 直接隐藏窗口，不使用 catch_unwind
+                                    if let Err(e) = window.hide() {
+                                        log::error!("隐藏 main-content 窗口失败: {}", e);
+                                    } else {
+                                        log::info!("main-content 窗口已安全隐藏");
+                                    }
+                                }
+                            }
                         }
                         WindowEvent::Resized(_) => {
                             info!("窗口大小改变: {}", label);

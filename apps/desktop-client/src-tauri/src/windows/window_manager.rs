@@ -52,6 +52,8 @@ impl WindowManager {
             }
         }
 
+        info!("准备配置 control-bar 为 NSPanel...");
+        
         // 2. 配置 control-bar 为 NSPanel（非阻塞，失败不影响启动）
         match self.control_bar_window.setup_as_panel() {
             Ok(_) => {
@@ -61,6 +63,8 @@ impl WindowManager {
                 warn!("配置 control-bar NSPanel 失败，但不影响启动: {}", e);
             }
         }
+
+        info!("control-bar 配置完成，准备配置 close-button...");
 
         // 3. 配置 close-button 为 NSPanel（非阻塞，失败不影响启动）
         // 由于 control-bar 已经设置了 center: true，close-button 会自动定位
@@ -73,7 +77,21 @@ impl WindowManager {
             }
         }
 
-        // 4. 最后确保焦点在 main-focus 窗口上（非阻塞）
+        info!("close-button 配置完成，准备配置 main-content...");
+
+        // 4. 配置 main-content 为 NSPanel（非阻塞，失败不影响启动）
+        match self.main_content_window.setup_as_panel() {
+            Ok(_) => {
+                info!("main-content NSPanel 配置成功");
+            }
+            Err(e) => {
+                warn!("配置 main-content NSPanel 失败，但不影响启动: {}", e);
+            }
+        }
+
+        info!("main-content 配置完成，准备恢复焦点...");
+
+        // 5. 最后确保焦点在 main-focus 窗口上（非阻塞）
         if let Err(e) = self.ensure_main_focus() {
             warn!("初始化时恢复 main-focus 焦点失败，但不影响启动: {}", e);
         }
@@ -94,17 +112,17 @@ impl WindowManager {
         Ok(())
     }
 
-    /// 创建主内容窗口
+    /// 创建主内容窗口（现在只是确保存在，因为窗口已在 tauri.conf.json 中定义）
     pub async fn create_main_content(&mut self) -> Result<(), String> {
         // 确保 main-focus 主焦点窗口存在
         if !self.main_focus_window.is_created() {
             self.main_focus_window.create().await?;
         }
 
-        // 创建主内容窗口
-        self.main_content_window.create().await?;
+        // 主内容窗口已在 tauri.conf.json 中定义，无需手动创建
+        info!("主内容窗口已在配置中定义，无需手动创建");
         
-        // 关键：主内容窗口创建后立即恢复焦点到 main-focus
+        // 关键：确保焦点在 main-focus 窗口上
         self.ensure_main_focus()?;
         
         Ok(())
@@ -228,8 +246,4 @@ impl WindowManager {
         }
     }
 
-    /// 检查主内容窗口是否已创建
-    pub fn is_main_content_created(&self) -> bool {
-        self.main_content_window.is_created()
-    }
 }

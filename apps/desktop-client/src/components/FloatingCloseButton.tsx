@@ -32,7 +32,6 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
         const unlisten = await currentWindow.listen('toggle_close_button', (event) => {
           const { show } = event.payload as { show: boolean };
           setShowFromParent(show);
-          log('info', `🟡 FloatingCloseButton 收到父窗口事件，showFromParent: ${show}`);
         });
         
         return unlisten;
@@ -48,7 +47,6 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
   useEffect(() => {
     const newShouldShow = showFromParent || isHovered;
     setShouldShow(newShouldShow);
-    log('info', `🟡 FloatingCloseButton 状态更新，showFromParent: ${showFromParent}, isHovered: ${isHovered}, shouldShow: ${newShouldShow}`);
   }, [showFromParent, isHovered]);
   
   // 处理鼠标进入事件
@@ -60,7 +58,6 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
     try {
       const { invoke } = await import('@tauri-apps/api/core');
       await invoke('ensure_main_focus');
-      await log('info', '🔥 FloatingCloseButton mouseEnter: 隐形锚点焦点已恢复');
     } catch (error) {
       await log('error', `恢复隐形锚点焦点失败: ${error}`);
     }
@@ -70,8 +67,6 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
       timeoutRef.current = null;
     }
     setIsHovered(true);
-    log('info', '🟢 FloatingCloseButton 鼠标进入，设置isHovered为true');
-    
     // 立即清理任何可能存在的定时器，防止意外隐藏
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -85,7 +80,6 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
     e.stopPropagation();
     timeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-      log('info', '🔴 FloatingCloseButton 鼠标离开（延迟），设置isHovered为false');
     }, 200); // 200ms延迟，避免意外的鼠标离开
   };
   

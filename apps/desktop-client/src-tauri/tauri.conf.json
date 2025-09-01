@@ -64,6 +64,29 @@
         "url": "src/windows/close-button/index.html",
         "closable": false,
         "focus": false
+      },
+      {
+        "label": "main-content",
+        "fullscreen": false,
+        "resizable": true,
+        "decorations": true,
+        "transparent": false,
+        "title": "CueMate 主应用",
+        "width": 1200,
+        "height": 800,
+        "alwaysOnTop": false,
+        "visible": false,
+        "center": true,
+        "skipTaskbar": false,
+        "minimizable": true,
+        "maximizable": true,
+        "acceptFirstMouse": false,
+        "titleBarStyle": "Visible",
+        "shadow": true,
+        "hiddenTitle": false,
+        "url": "http://localhost:80",
+        "closable": true,
+        "focus": false
       }
     ],
     "security": {
