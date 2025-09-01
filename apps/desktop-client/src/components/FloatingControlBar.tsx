@@ -83,6 +83,15 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     e.preventDefault();
     e.stopPropagation();
     
+    // 关键：鼠标进入NSPanel时，立即恢复隐形锚点的焦点
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('ensure_anchor_focus');
+      await log('info', '🔥 FloatingControlBar mouseEnter: 隐形锚点焦点已恢复');
+    } catch (error) {
+      await log('error', `恢复隐形锚点焦点失败: ${error}`);
+    }
+    
     // 清除之前的定时器
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);

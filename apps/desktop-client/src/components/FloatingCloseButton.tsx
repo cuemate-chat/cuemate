@@ -52,9 +52,19 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
   }, [showFromParent, isHovered]);
   
   // 处理鼠标进入事件
-  const handleMouseEnter = (e: React.MouseEvent) => {
+  const handleMouseEnter = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // 关键：鼠标进入NSPanel时，立即恢复隐形锚点的焦点
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('ensure_anchor_focus');
+      await log('info', '🔥 FloatingCloseButton mouseEnter: 隐形锚点焦点已恢复');
+    } catch (error) {
+      await log('error', `恢复隐形锚点焦点失败: ${error}`);
+    }
+    
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;

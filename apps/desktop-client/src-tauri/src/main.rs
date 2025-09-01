@@ -39,7 +39,8 @@ fn main() {
             create_main_window,
             show_main_window,
             hide_main_window,
-            toggle_main_window
+            toggle_main_window,
+            ensure_anchor_focus
         ])
         .setup(|app| {
             info!("开始初始化 NSPanel");

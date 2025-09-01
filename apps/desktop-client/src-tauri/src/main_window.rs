@@ -9,6 +9,7 @@ use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 pub struct MainWindowManager {
     app_handle: AppHandle,
     is_created: bool,
+    is_invisible_anchor_created: bool,
 }
 
 impl MainWindowManager {
@@ -17,140 +18,198 @@ impl MainWindowManager {
         Self {
             app_handle,
             is_created: false,
+            is_invisible_anchor_created: false,
         }
     }
 
-    /// 创建并配置主窗口（普通 NSWindow）
+    /// 创建隐形主窗口（焦点锚点）- 临时简化版本
+    pub async fn create_invisible_anchor(&mut self) -> Result<(), String> {
+        if self.is_invisible_anchor_created {
+            info!("隐形焦点锚点已存在");
+            return Ok(());
+        }
+
+        let platform = get_current_platform();
+        info!("创建隐形焦点锚点窗口，平台: {:?}", platform);
+
+        // 使用本地服务器作为隐形窗口的内容源
+        let webview_url = WebviewUrl::External("http://localhost:1420".parse().unwrap());
+        
+        let window_builder = WebviewWindowBuilder::new(
+            &self.app_handle,
+            "invisible-anchor",
+            webview_url
+        )
+        .title("CueMate Focus Anchor")
+        .inner_size(10.0, 10.0)  // 改为10x10像素，避免1x1的问题
+        .position(-100.0, -100.0)  // 移到屏幕外
+        .resizable(false)
+        .maximizable(false)
+        .minimizable(true)     // 允许最小化
+        .closable(false)       // 不允许关闭
+        .always_on_top(false)
+        .visible(false)        // 隐形
+        .decorations(false)
+        .skip_taskbar(true);
+
+        match window_builder.build() {
+            Ok(_window) => {
+                info!("隐形焦点锚点创建成功（简化版本）");
+                
+                // 暂时完全跳过 macOS 特殊配置，避免任何 unsafe 操作
+                info!("暂时跳过所有 macOS 特殊配置，避免崩溃");
+                
+                self.is_invisible_anchor_created = true;
+                Ok(())
+            }
+            Err(e) => {
+                error!("创建隐形焦点锚点失败: {}", e);
+                Err(format!("创建隐形焦点锚点失败: {}", e))
+            }
+        }
+    }
+
+    /// 确保隐形锚点始终为 Key Window (完全简化版)
+    pub fn ensure_anchor_focus(&self) -> Result<(), String> {
+        if let Some(window) = self.app_handle.get_webview_window("invisible-anchor") {
+            match window.set_focus() {
+                Ok(_) => {
+                    log::info!("隐形锚点焦点已通过 set_focus 设置");
+                    Ok(())
+                }
+                Err(e) => {
+                    log::warn!("无法使用 set_focus 设置隐形锚点焦点: {:?}", e);
+                    Err(format!("设置焦点失败: {:?}", e))
+                }
+            }
+        } else {
+            Err("隐形锚点不存在".to_string())
+        }
+    }
+
+    /// 创建主内容窗口（NSPanel形式，不争夺焦点）
     pub async fn create_main_window(&mut self) -> Result<(), String> {
+        // 首先确保隐形锚点存在
+        if let Err(e) = self.create_invisible_anchor().await {
+            warn!("创建隐形锚点失败: {}", e);
+        }
+
         if self.is_created {
-            info!("主窗口已存在，直接显示");
+            info!("主内容窗口已存在，直接显示");
             return self.show_main_window();
         }
 
         let platform = get_current_platform();
-        info!("创建主窗口，平台: {:?}", platform);
+        info!("创建主内容窗口（NSPanel），平台: {:?}", platform);
 
-        // 直接创建普通的 NSWindow（不使用 NSPanel）
-        // 前端 web 页面在 Docker 的 80 端口（cuemate-web 容器）
+        // 创建主内容窗口，将转换为 NSPanel
         let webview_url = WebviewUrl::External("http://localhost:80".parse().unwrap());
         
         let window_builder = WebviewWindowBuilder::new(
             &self.app_handle,
-            "main-app",
+            "main-content",  // 改名为 main-content
             webview_url
         )
         .title("CueMate 主应用")
         .inner_size(1200.0, 800.0)
         .min_inner_size(800.0, 600.0)
-        .center() // 先居中，后面手动调整Y坐标
-        .resizable(true)  // 允许调整大小
-        .maximizable(true) // 允许最大化
-        .minimizable(true) // 允许最小化
-        .closable(true)   // 允许关闭
-        .always_on_top(false) // 不总是置顶
-        .visible(false)   // 先隐藏
-        .decorations(true) // 显示标题栏
-        .title_bar_style(tauri::TitleBarStyle::Visible); // 使用标准标题栏
+        .center()
+        .resizable(true)
+        .maximizable(true)
+        .minimizable(true)
+        .closable(true)
+        .always_on_top(false)
+        .visible(false)   // 先隐藏，稍后显示
+        .decorations(true)
+        .title_bar_style(tauri::TitleBarStyle::Visible);
 
         match window_builder.build() {
             Ok(window) => {
-                info!("主窗口（普通 NSWindow）创建成功");
+                info!("主内容窗口创建成功，开始转换为 NSPanel");
                 
-                // 获取屏幕大小并调整窗口Y坐标，确保在control-bar下方
+                // 暂时跳过 NSPanel 转换，先测试基本窗口功能
+                info!("暂时使用普通 NSWindow，跳过 NSPanel 转换以避免崩溃");
+                
+                // 设置窗口位置
                 if let Ok(monitor) = window.current_monitor() {
                     if let Some(monitor) = monitor {
                         let screen_size = monitor.size();
                         let window_size = window.inner_size().unwrap();
                         
-                        // 保持水平居中，只调整Y坐标
                         let x = (screen_size.width - window_size.width) / 2;
-                        let y = 350;
+                        let y = 200;
                         
                         if let Err(e) = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(x as i32, y))) {
-                            info!("设置主窗口位置失败: {}", e);
+                            warn!("设置主内容窗口位置失败: {}", e);
                         } else {
-                            info!("主窗口位置设置成功，位置: x={}, y={}", x, y);
+                            info!("主内容窗口位置设置成功: x={}, y={}", x, y);
                         }
                     }
                 }
-                
-                // 暂时跳过 macOS 特殊配置，先测试基本功能
-                info!("跳过 macOS 特殊配置，使用默认窗口设置");
                 
                 self.is_created = true;
                 Ok(())
             }
             Err(e) => {
-                error!("创建主窗口失败: {}", e);
-                Err(format!("创建主窗口失败: {}", e))
+                error!("创建主内容窗口失败: {}", e);
+                Err(format!("创建主内容窗口失败: {}", e))
             }
         }
     }
 
 
 
-    /// 显示主窗口
+    /// 显示主内容窗口
     pub fn show_main_window(&self) -> Result<(), String> {
-        if let Some(window) = self.app_handle.get_webview_window("main-app") {
+        if let Some(window) = self.app_handle.get_webview_window("main-content") {
             match window.show() {
                 Ok(_) => {
-                    info!("主窗口已显示");
+                    info!("主内容窗口已显示");
                     
-                    // 设置焦点
-                    if let Err(e) = window.set_focus() {
-                        warn!("设置主窗口焦点失败: {}", e);
+                    // 关键：主内容窗口显示后，确保隐形锚点保持焦点
+                    if let Err(e) = self.ensure_anchor_focus() {
+                        warn!("确保隐形锚点焦点失败: {}", e);
                     }
                     
-                    // macOS 确保 Key Window 状态
-                    #[cfg(target_os = "macos")]
-                    {
-                        if let Ok(ns_window) = window.ns_window() {
-                            unsafe {
-                                use objc2::{msg_send, runtime::AnyObject};
-                                let raw: *mut AnyObject = ns_window as *mut AnyObject;
-                                let _: () = msg_send![raw, makeKeyWindow];
-                                let _: () = msg_send![raw, makeMainWindow];
-                            }
-                        }
-                    }
-                    
+                    // 主内容窗口（NSPanel）不应该争夺焦点
+                    info!("主内容窗口已显示，隐形锚点保持焦点");
                     Ok(())
                 }
                 Err(e) => {
-                    error!("显示主窗口失败: {}", e);
-                    Err(format!("显示主窗口失败: {}", e))
+                    error!("显示主内容窗口失败: {}", e);
+                    Err(format!("显示主内容窗口失败: {}", e))
                 }
             }
         } else {
-            error!("主窗口不存在");
-            Err("主窗口不存在".to_string())
+            error!("主内容窗口不存在");
+            Err("主内容窗口不存在".to_string())
         }
     }
 
-    /// 隐藏主窗口
+    /// 隐藏主内容窗口
     #[allow(dead_code)]
     pub fn hide_main_window(&self) -> Result<(), String> {
-        if let Some(window) = self.app_handle.get_webview_window("main-app") {
+        if let Some(window) = self.app_handle.get_webview_window("main-content") {
             match window.hide() {
                 Ok(_) => {
-                    info!("主窗口已隐藏");
+                    info!("主内容窗口已隐藏");
                     Ok(())
                 }
                 Err(e) => {
-                    error!("隐藏主窗口失败: {}", e);
-                    Err(format!("隐藏主窗口失败: {}", e))
+                    error!("隐藏主内容窗口失败: {}", e);
+                    Err(format!("隐藏主内容窗口失败: {}", e))
                 }
             }
         } else {
-            error!("主窗口不存在");
-            Err("主窗口不存在".to_string())
+            error!("主内容窗口不存在");
+            Err("主内容窗口不存在".to_string())
         }
     }
 
-    /// 切换主窗口显示状态
+    /// 切换主内容窗口显示状态
     #[allow(dead_code)]
     pub fn toggle_main_window(&self) -> Result<(), String> {
-        if let Some(window) = self.app_handle.get_webview_window("main-app") {
+        if let Some(window) = self.app_handle.get_webview_window("main-content") {
             match window.is_visible() {
                 Ok(is_visible) => {
                     if is_visible {
@@ -160,33 +219,33 @@ impl MainWindowManager {
                     }
                 }
                 Err(e) => {
-                    error!("获取主窗口状态失败: {}", e);
-                    Err(format!("获取主窗口状态失败: {}", e))
+                    error!("获取主内容窗口状态失败: {}", e);
+                    Err(format!("获取主内容窗口状态失败: {}", e))
                 }
             }
         } else {
-            error!("主窗口不存在");
-            Err("主窗口不存在".to_string())
+            error!("主内容窗口不存在");
+            Err("主内容窗口不存在".to_string())
         }
     }
 
-    /// 销毁主窗口
+    /// 销毁主内容窗口
     #[allow(dead_code)]
     pub fn destroy_main_window(&mut self) -> Result<(), String> {
-        if let Some(window) = self.app_handle.get_webview_window("main-app") {
+        if let Some(window) = self.app_handle.get_webview_window("main-content") {
             match window.close() {
                 Ok(_) => {
-                    info!("主窗口已销毁");
+                    info!("主内容窗口已销毁");
                     self.is_created = false;
                     Ok(())
                 }
                 Err(e) => {
-                    error!("销毁主窗口失败: {}", e);
-                    Err(format!("销毁主窗口失败: {}", e))
+                    error!("销毁主内容窗口失败: {}", e);
+                    Err(format!("销毁主内容窗口失败: {}", e))
                 }
             }
         } else {
-            warn!("主窗口不存在，无需销毁");
+            warn!("主内容窗口不存在，无需销毁");
             self.is_created = false;
             Ok(())
         }
@@ -198,9 +257,9 @@ impl MainWindowManager {
         self.is_created
     }
 
-    /// 获取主窗口标签
+    /// 获取主内容窗口标签
     #[allow(dead_code)]
     pub fn get_window_label(&self) -> &str {
-        "main-app"
+        "main-content"
     }
 }

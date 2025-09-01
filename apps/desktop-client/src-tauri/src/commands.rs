@@ -269,10 +269,28 @@ pub fn show_main_window(
 ) -> Result<String, String> {
     info!("显示主应用窗口");
     
-    if let Some(window) = app_handle.get_webview_window("main-app") {
+    // 显示主内容窗口后，确保隐形锚点保持焦点
+    if let Some(window) = app_handle.get_webview_window("main-content") {
         match window.show() {
             Ok(_) => {
                 info!("主应用窗口显示成功");
+                
+                // 确保隐形锚点保持焦点
+                if let Some(anchor) = app_handle.get_webview_window("invisible-anchor") {
+                    #[cfg(target_os = "macos")]
+                    {
+                        if let Ok(ns_window) = anchor.ns_window() {
+                            unsafe {
+                                use objc2::{msg_send, runtime::AnyObject};
+                                let raw: *mut AnyObject = ns_window as *mut AnyObject;
+                                let _: () = msg_send![raw, makeKeyWindow];
+                                let _: () = msg_send![raw, makeMainWindow];
+                            }
+                            info!("主应用窗口显示，隐形锚点保持焦点");
+                        }
+                    }
+                }
+                
                 Ok("主应用窗口显示成功".to_string())
             }
             Err(e) => {
@@ -293,7 +311,7 @@ pub fn hide_main_window(
 ) -> Result<String, String> {
     info!("隐藏主应用窗口");
     
-    if let Some(window) = app_handle.get_webview_window("main-app") {
+    if let Some(window) = app_handle.get_webview_window("main-content") {
         match window.hide() {
             Ok(_) => {
                 info!("主应用窗口隐藏成功");
@@ -317,7 +335,7 @@ pub fn toggle_main_window(
 ) -> Result<String, String> {
     info!("切换主应用窗口显示状态");
     
-    if let Some(window) = app_handle.get_webview_window("main-app") {
+    if let Some(window) = app_handle.get_webview_window("main-content") {
         match window.is_visible() {
             Ok(is_visible) => {
                 if is_visible {
@@ -335,4 +353,26 @@ pub fn toggle_main_window(
         warn!("主应用窗口不存在，需要先创建");
         Err("主应用窗口不存在，请先创建".to_string())
     }
+}
+
+/// 确保隐形锚点保持焦点（供NSPanel使用）
+#[tauri::command]
+pub fn ensure_anchor_focus(app_handle: AppHandle) -> Result<String, String> {
+    if let Some(anchor) = app_handle.get_webview_window("invisible-anchor") {
+        #[cfg(target_os = "macos")]
+        {
+            if let Ok(ns_window) = anchor.ns_window() {
+                unsafe {
+                    use objc2::{msg_send, runtime::AnyObject};
+                    let raw: *mut AnyObject = ns_window as *mut AnyObject;
+                    let _: () = msg_send![raw, makeKeyWindow];
+                    let _: () = msg_send![raw, makeMainWindow];
+                }
+                info!("隐形锚点焦点已恢复");
+                return Ok("焦点已恢复到隐形锚点".to_string());
+            }
+        }
+    }
+    warn!("隐形锚点不存在或无法设置焦点");
+    Err("隐形锚点不存在".to_string())
 }
