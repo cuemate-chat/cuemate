@@ -1,31 +1,100 @@
-import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
-// https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig({
   plugins: [react()],
+  base: './',
   
-  // 配置单个入口点
+  // 开发服务器配置
+  server: {
+    port: 3000,
+    host: 'localhost',
+    cors: true,
+    open: false, // Electron 会自动打开窗口
+  },
+
+  // 构建配置
   build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    target: 'esnext',
+    minify: 'esbuild',
+    sourcemap: true,
+    
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
+        // 渲染进程入口（React应用）
+        'control-bar': resolve(__dirname, 'src/renderer/control-bar/index.html'),
+        'close-button': resolve(__dirname, 'src/renderer/close-button/index.html'),
+        'main-content': resolve(__dirname, 'src/renderer/main-content/index.html'),
+      },
+      
+      output: {        
+        // 渲染进程文件输出配置
+        entryFileNames: 'renderer/[name]/[name].js',
+        chunkFileNames: 'renderer/chunks/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          const name = assetInfo.name || '';
+          
+          // HTML 文件
+          if (name.endsWith('.html')) {
+            const windowName = name.replace('.html', '');
+            return `renderer/${windowName}/[name][extname]`;
+          }
+          
+          // CSS 文件
+          if (name.endsWith('.css')) {
+            return 'renderer/assets/[name]-[hash][extname]';
+          }
+          
+          // 其他资源文件
+          return 'renderer/assets/[name]-[hash][extname]';
+        },
       },
     },
   },
 
-  // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
-  //
-  // 1. prevent vite from obscuring rust errors
-  clearScreen: false,
-  // 2. tauri expects a fixed port, fail if that port is not available
-  server: {
-    port: 1420,
-    strictPort: true,
-    watch: {
-      // 3. tell vite to ignore watching `src-tauri`
-      ignored: ['**/src-tauri/**'],
+  // 解析配置
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+      '@renderer': resolve(__dirname, 'src/renderer'),
+      '@main': resolve(__dirname, 'src/main'),
+      '@shared': resolve(__dirname, 'src/shared'),
+      '@components': resolve(__dirname, 'src/renderer/components'),
+      '@hooks': resolve(__dirname, 'src/renderer/hooks'),
+      '@utils': resolve(__dirname, 'src/renderer/utils'),
+      '@assets': resolve(__dirname, 'src/renderer/assets'),
     },
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
-}));
+
+  // CSS 配置
+  css: {
+    postcss: './postcss.config.js',
+  },
+
+  // 针对 Electron 的特殊配置
+  define: {
+    // 在渲染进程中定义全局变量
+    __IS_DEV__: process.env.NODE_ENV === 'development',
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
+  },
+
+  // 优化配置
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'framer-motion',
+      'lucide-react',
+    ],
+    exclude: [
+      'electron',
+    ],
+  },
+
+  // 环境变量
+  envPrefix: 'VITE_',
+});

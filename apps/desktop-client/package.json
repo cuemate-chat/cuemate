@@ -2,33 +2,97 @@
   "name": "cuemate-desktop-client",
   "private": true,
   "version": "0.1.0",
+  "main": "dist/main/index.js",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "dev:main": "tsx watch src/main/index.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "pnpm typecheck && pnpm build:main && pnpm build:renderer",
+    "build:main": "pnpm typecheck && node build-main.js",
+    "build:renderer": "pnpm typecheck && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "electron": "electron dist/main/index.js",
+    "electron:dev": "pnpm typecheck && concurrently \"pnpm dev\" \"pnpm build:main && wait-on http://localhost:3000 && electron dist/main/index.js\"",
+    "package": "electron-builder",
+    "dist": "pnpm build && electron-builder --publish=never",
+    "clean": "rimraf dist",
+    "rebuild": "pnpm clean && pnpm build"
   },
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@tauri-apps/api": "^2.3.1",
-    "@tauri-apps/plugin-global-shortcut": "^2.3.0",
-    "@tauri-apps/plugin-os": "^2.3.1",
     "clsx": "^2.1.1",
+    "electron": "^28.0.0",
     "framer-motion": "^11.0.23",
     "lucide-react": "^0.454.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.8.3",
+    "@types/node": "^20.11.0",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^8.2.2",
+    "electron-builder": "^24.9.1",
+    "esbuild": "^0.21.5",
+    "eslint": "^8.54.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
     "postcss": "^8.4.41",
+    "rimraf": "^5.0.0",
     "tailwindcss": "^3.4.14",
+    "tsx": "^4.7.0",
     "typescript": "^5.2.2",
-    "vite": "^5.2.0"
+    "vite": "^5.2.0",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.cuemate.desktop",
+    "productName": "CueMate",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*"
+    ],
+    "mac": {
+      "icon": "assets/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
   }
 }

@@ -2,13 +2,15 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-// 日志工具函数
+// 日志工具函数 - 使用 Electron IPC
 const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) => {
   try {
-    const { invoke } = await import('@tauri-apps/api/core');
-    await invoke('log_from_frontend', { level, message });
+    if ((window as any).electronAPI) {
+      await (window as any).electronAPI.log({ level, message });
+    }
   } catch (error) {
     // 如果日志命令失败，静默处理
+    console.warn('日志发送失败:', error);
   }
 };
 
@@ -22,25 +24,29 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
   const [showFromParent, setShowFromParent] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // 监听来自主窗口的显示/隐藏事件
+  // 监听来自主进程的显示/隐藏事件
   useEffect(() => {
-    const setupEventListener = async () => {
+    const setupEventListener = () => {
       try {
-        const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-        const currentWindow = getCurrentWebviewWindow();
-        
-        const unlisten = await currentWindow.listen('toggle_close_button', (event) => {
-          const { show } = event.payload as { show: boolean };
-          setShowFromParent(show);
-        });
-        
-        return unlisten;
+        if ((window as any).electronAPI) {
+          // 监听关闭按钮显示/隐藏事件
+          (window as any).electronAPI.on('toggle-close-button', (show: boolean) => {
+            setShowFromParent(show);
+          });
+        }
       } catch (error) {
-        await log('error', `设置事件监听失败: ${error}`);
+        log('error', `设置事件监听失败: ${error}`);
       }
     };
     
     setupEventListener();
+    
+    // 清理函数
+    return () => {
+      if ((window as any).electronAPI) {
+        (window as any).electronAPI.off('toggle-close-button');
+      }
+    };
   }, []);
   
   // 计算最终显示状态：父窗口要求显示 或者 本地鼠标悬浮
@@ -54,10 +60,11 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
     e.preventDefault();
     e.stopPropagation();
     
-    // 关键：鼠标进入NSPanel时，立即恢复隐形锚点的焦点
+    // 关键：鼠标进入关闭按钮时，确保焦点管理
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('ensure_main_focus');
+      if ((window as any).electronAPI) {
+        await (window as any).electronAPI.ensureMainFocus();
+      }
     } catch (error) {
       await log('error', `恢复隐形锚点焦点失败: ${error}`);
     }
@@ -94,32 +101,13 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
 
   const minimizeWindow = async () => {
     try {
-      await log('info', '开始隐藏所有窗口...');
+      await log('info', '开始隐藏所有浮动窗口...');
       
-      // 隐藏 control-bar 窗口
-      try {
-        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-        const controlWindow = await WebviewWindow.getByLabel('control-bar');
-        if (controlWindow) {
-          await controlWindow.hide();
-          await log('info', 'control-bar 窗口已隐藏');
-        }
-      } catch (error) {
-        await log('error', `隐藏 control-bar 窗口失败: ${error}`);
+      // 使用 Electron API 隐藏浮动窗口
+      if ((window as any).electronAPI) {
+        await (window as any).electronAPI.hideFloatingWindows();
+        await log('info', '所有浮动窗口已隐藏');
       }
-      
-      // 隐藏 close-button 窗口
-      try {
-        const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-        const currentWindow = getCurrentWebviewWindow();
-        await currentWindow.hide();
-        await log('info', 'close-button 窗口已隐藏');
-      } catch (error) {
-        await log('error', `隐藏 close-button 窗口失败: ${error}`);
-      }
-      
-      
-      await log('info', '所有窗口已隐藏');
     } catch (error) {
       await log('error', `隐藏窗口失败: ${error}`);
     }

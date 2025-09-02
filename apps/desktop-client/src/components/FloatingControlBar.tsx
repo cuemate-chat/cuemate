@@ -3,13 +3,15 @@ import { motion } from 'framer-motion';
 import { Layout } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
-// 日志工具函数
+// 日志工具函数 - 使用 Electron IPC
 const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) => {
   try {
-    const { invoke } = await import('@tauri-apps/api/core');
-    await invoke('log_from_frontend', { level, message });
+    if ((window as any).electronAPI) {
+      await (window as any).electronAPI.log({ level, message });
+    }
   } catch (error) {
     // 如果日志命令失败，静默处理
+    console.warn('日志发送失败:', error);
   }
 };
 
@@ -21,24 +23,16 @@ interface FloatingControlBarProps {
 export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: FloatingControlBarProps) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 注册全局快捷键
+  // 注册全局快捷键 - 使用 Electron IPC
   useEffect(() => {
     const setupGlobalShortcut = async () => {
       try {
-        const { register } = await import('@tauri-apps/plugin-global-shortcut');
-        const { invoke } = await import('@tauri-apps/api/core');
-        
-        // 注册 ⌘+\ 快捷键
-        await register('Cmd+Backslash', async () => {
-          await log('info', '全局快捷键触发: ⌘+\\\\');
-          try {
-            await invoke('toggle_app_visibility');
-          } catch (error) {
-            await log('error', `快捷键切换失败: ${error}`);
-          }
-        });
+        if ((window as any).electronAPI) {
+          // 全局快捷键由主进程处理，这里只是通知已准备好
+          await log('info', '组件已初始化，全局快捷键由主进程管理');
+        }
       } catch (error) {
-        await log('error', `全局快捷键注册失败: ${error}`);
+        await log('error', `组件初始化失败: ${error}`);
       }
     };
 
@@ -50,8 +44,9 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     e.preventDefault();
     e.stopPropagation();
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('open_url', { url: 'https://cuemate.chat' });
+      if ((window as any).electronAPI && 'openExternalUrl' in (window as any).electronAPI) {
+        await ((window as any).electronAPI as any).openExternalUrl('https://cuemate.chat');
+      }
     } catch (error) {
       await log('error', `打开链接失败: ${error}`);
     }
@@ -61,20 +56,12 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     e.preventDefault();
     e.stopPropagation();
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      // 首先尝试创建主窗口（如果不存在）
-      await invoke('create_main_window');
-      await log('info', '主应用窗口已创建并显示');
-    } catch (error) {
-      await log('error', `创建主应用失败: ${error}`);
-      // 如果创建失败，尝试显示已存在的主窗口
-      try {
-        const { invoke: showInvoke } = await import('@tauri-apps/api/core');
-        await showInvoke('show_main_window');
-        await log('info', '已显示现有主应用窗口');
-      } catch (showError) {
-        await log('error', `显示主应用失败: ${showError}`);
+      if ((window as any).electronAPI) {
+        await (window as any).electronAPI.showMainContent();
+        await log('info', '主应用窗口已显示');
       }
+    } catch (error) {
+      await log('error', `显示主应用失败: ${error}`);
     }
   };
 
@@ -83,12 +70,13 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     e.preventDefault();
     e.stopPropagation();
     
-    // 关键：鼠标进入NSPanel时，立即恢复隐形锚点的焦点
+    // 关键：鼠标进入控制条时，确保焦点管理
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('ensure_main_focus');
+      if ((window as any).electronAPI) {
+        await (window as any).electronAPI.ensureMainFocus();
+      }
     } catch (error) {
-      await log('error', `恢复隐形锚点焦点失败: ${error}`);
+      await log('error', `恢复焦点失败: ${error}`);
     }
     
     // 清除之前的定时器
@@ -100,15 +88,13 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     onShowCloseButton();
     log('info', '🟢 FloatingControlBar 鼠标进入，显示关闭按钮');
     
-    // 通知 close-button 窗口显示
+    // 通知显示关闭按钮
     try {
-      const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-      const closeWindow = await WebviewWindow.getByLabel('close-button');
-      if (closeWindow) {
-        closeWindow.emit('toggle_close_button', { show: true });
+      if ((window as any).electronAPI) {
+        await (window as any).electronAPI.showCloseButton();
       }
     } catch (error) {
-      await log('error', `通知 close-button 窗口失败: ${error}`);
+      await log('error', `显示关闭按钮失败: ${error}`);
     }
   };
 
@@ -126,15 +112,13 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     timeoutRef.current = setTimeout(async () => {
       onHideCloseButton();
       
-      // 通知 close-button 窗口隐藏
+      // 通知隐藏关闭按钮
       try {
-        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-        const closeWindow = await WebviewWindow.getByLabel('close-button');
-        if (closeWindow) {
-          closeWindow.emit('toggle_close_button', { show: false });
+        if ((window as any).electronAPI) {
+          await (window as any).electronAPI.hideCloseButton();
         }
       } catch (error) {
-        await log('error', `通知 close-button 窗口失败: ${error}`);
+        await log('error', `隐藏关闭按钮失败: ${error}`);
       }
     }, 200);
   };
