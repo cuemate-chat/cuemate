@@ -62,14 +62,14 @@ export class CloseButtonWindow {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
-          webSecurity: !this.isDevelopment,
+          webSecurity: !this.isDevelopment, // 恢复原逻辑，开发模式禁用 webSecurity
           preload: getPreloadPath('closeButton')
         }
       });
 
       // 加载页面
       if (this.isDevelopment) {
-        await this.window.loadURL('http://localhost:3000/close-button');
+        await this.window.loadURL('http://localhost:3000/src/renderer/close-button/');
       } else {
         await this.window.loadFile(getRendererPath('close-button'));
       }

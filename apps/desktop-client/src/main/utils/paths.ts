@@ -36,17 +36,19 @@ export function getMainDir(): string {
  * 获取预加载脚本路径
  */
 export function getPreloadPath(scriptName: string): string {
-  const mainDir = getMainDir();
-  return join(mainDir, 'preload', `${scriptName}.js`);
+  // 预加载脚本位于 dist/main/preload/ 目录下
+  const currentDir = getDirname(import.meta.url);
+  return join(currentDir, 'preload', `${scriptName}.js`);
 }
 
 /**
  * 获取渲染进程HTML路径
  */
 export function getRendererPath(htmlName: string): string {
-  // 在生产模式下，从 dist/main 目录向上2级到项目根目录，然后到src/renderer
-  const projectRoot = getProjectRoot();
-  return join(projectRoot, 'src', 'renderer', htmlName, 'index.html');
+  // Vite 构建后的 HTML 文件实际位于 dist/src/renderer/
+  const currentDir = getDirname(import.meta.url);
+  const distDir = join(currentDir, '../');
+  return join(distDir, 'src', 'renderer', htmlName, 'index.html');
 }
 
 /**

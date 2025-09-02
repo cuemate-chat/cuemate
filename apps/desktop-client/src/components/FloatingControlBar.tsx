@@ -156,22 +156,7 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
                   onClick={handleLogoClick}
                 >
                   <div className="logo-icon">
-                    <img 
-                      src="/src/assets/CueMate.png" 
-                      alt="CueMate Logo" 
-                      className="logo-image"
-                      onError={(e) => {
-                        const target = e.target as HTMLElement;
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent) {
-                          const fallback = document.createElement('div');
-                          fallback.className = 'logo-circle';
-                          fallback.textContent = 'C';
-                          parent.appendChild(fallback);
-                        }
-                      }}
-                    />
+                    <div className="logo-circle">C</div>
                   </div>
                 </div>
               </Tooltip.Trigger>

@@ -11,14 +11,14 @@ class CueMateApp {
 
   constructor() {
     this.isDevelopment = process.env.NODE_ENV === 'development';
-    console.log(`🔧 运行模式: ${this.isDevelopment ? '开发模式' : '生产模式'}`);
+    console.log(`运行模式: ${this.isDevelopment ? '开发模式' : '生产模式'}`);
     this.windowManager = new WindowManager(this.isDevelopment);
     
     this.initialize();
   }
 
   private initialize(): void {
-    console.log('🚀 CueMate Desktop Client 启动');
+    console.log('CueMate Desktop Client 启动');
     
     // 设置应用程序事件监听器
     this.setupAppEvents();
@@ -30,17 +30,17 @@ class CueMateApp {
   private setupAppEvents(): void {
     // 当应用准备就绪时
     app.whenReady().then(() => {
-      console.log('📱 应用已准备就绪，开始初始化窗口管理器');
+      console.log('应用已准备就绪，开始初始化窗口管理器');
       
       // 设置应用图标
       try {
         const iconPath = getAppIconPath();
-        console.log('🖼️ 应用图标路径:', iconPath);
+        console.log('应用图标路径:', iconPath);
         
         // 在 macOS 上设置 Dock 图标
         if (process.platform === 'darwin') {
           app.dock.setIcon(iconPath);
-          console.log('✅ macOS Dock 图标已设置');
+          console.log('macOS Dock 图标已设置');
         }
       } catch (error) {
         console.warn('⚠️ 设置应用图标失败:', error);
@@ -52,7 +52,7 @@ class CueMateApp {
       // 初始化窗口管理器
       this.windowManager.initialize()
         .then(() => {
-          console.log('✅ 窗口管理器初始化完成');
+          console.log('窗口管理器初始化完成');
         })
         .catch((error) => {
           console.error('❌ 窗口管理器初始化失败:', error);
@@ -60,7 +60,7 @@ class CueMateApp {
 
       // macOS: 当点击 dock 图标时重新激活
       app.on('activate', () => {
-        console.log('🔄 应用被重新激活 (Dock 图标点击)');
+        console.log('应用被重新激活 (Dock 图标点击)');
         this.windowManager.showFloatingWindows();
       });
     });
@@ -76,7 +76,7 @@ class CueMateApp {
 
     // 当应用即将退出时
     app.on('before-quit', () => {
-      console.log('👋 应用准备退出');
+      console.log('应用准备退出');
       
       // 清理资源
       this.cleanup();
@@ -84,7 +84,7 @@ class CueMateApp {
 
     // 处理第二个实例启动
     app.on('second-instance', () => {
-      console.log('🔄 检测到第二个实例，激活现有应用');
+      console.log('检测到第二个实例，激活现有应用');
       this.windowManager.showFloatingWindows();
     });
 
@@ -105,7 +105,18 @@ class CueMateApp {
   }
 
   private cleanup(): void {
-    console.log('🧹 清理应用资源');
+    console.log('清理应用资源');
+    
+    // macOS: 确保 Dock 图标保持正确直到应用完全退出
+    if (process.platform === 'darwin') {
+      try {
+        const iconPath = getAppIconPath();
+        app.dock.setIcon(iconPath);
+        console.log('Dock 图标在退出前已确认设置');
+      } catch (error) {
+        console.warn('退出前设置 Dock 图标失败:', error);
+      }
+    }
     
     // 注销所有全局快捷键
     globalShortcut.unregisterAll();

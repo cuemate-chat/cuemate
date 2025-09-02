@@ -15,8 +15,8 @@ export class ControlBarWindow {
   private readonly config: WindowConfig = {
     id: 'control-bar',
     label: 'control-bar',
-    width: 300,
-    height: 60,
+    width: 360,
+    height: 100,
     alwaysOnTop: true,
     frame: false,
     transparent: true,
@@ -73,14 +73,14 @@ export class ControlBarWindow {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
-          webSecurity: !this.isDevelopment,
+          webSecurity: !this.isDevelopment, // 恢复原逻辑，开发模式禁用 webSecurity
           preload: getPreloadPath('controlBar')
         }
       });
 
       // 加载页面
       if (this.isDevelopment) {
-        await this.window.loadURL('http://localhost:3000/control-bar');
+        await this.window.loadURL('http://localhost:3000/src/renderer/control-bar/');
       } else {
         await this.window.loadFile(getRendererPath('control-bar'));
       }

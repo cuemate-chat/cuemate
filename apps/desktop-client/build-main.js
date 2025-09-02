@@ -56,6 +56,7 @@ async function buildPreloadScripts() {
       preloadScripts.map(({ entry, output }) =>
         build({
           ...buildConfig,
+          format: 'cjs', // 预加载脚本必须使用 CommonJS 格式
           entryPoints: [entry],
           outfile: output,
         })
