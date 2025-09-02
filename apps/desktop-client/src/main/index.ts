@@ -2,6 +2,7 @@ import { app, globalShortcut } from 'electron';
 import { WindowManager } from './windows/WindowManager.js';
 import { setupIPC } from './ipc/handlers.js';
 import { setupGlobalShortcuts } from './utils/shortcuts.js';
+import { getAppIconPath } from './utils/paths.js';
 import type { LogLevel } from '../shared/types.js';
 
 class CueMateApp {
@@ -10,6 +11,7 @@ class CueMateApp {
 
   constructor() {
     this.isDevelopment = process.env.NODE_ENV === 'development';
+    console.log(`🔧 运行模式: ${this.isDevelopment ? '开发模式' : '生产模式'}`);
     this.windowManager = new WindowManager(this.isDevelopment);
     
     this.initialize();
@@ -23,15 +25,25 @@ class CueMateApp {
     
     // 设置 IPC 通信
     setupIPC(this.windowManager);
-    
-    // 设置全局快捷键
-    setupGlobalShortcuts(this.windowManager);
   }
 
   private setupAppEvents(): void {
     // 当应用准备就绪时
     app.whenReady().then(() => {
       console.log('📱 应用已准备就绪，开始初始化窗口管理器');
+      
+      // 设置应用图标 (仅在Linux上可用)
+      try {
+        const iconPath = getAppIconPath();
+        console.log('🖼️ 应用图标路径:', iconPath);
+        // macOS和Windows通过BrowserWindow的icon选项设置图标，不需要在这里设置
+        // 图标在各个窗口中已经配置
+      } catch (error) {
+        console.warn('⚠️ 获取图标路径失败:', error);
+      }
+      
+      // 设置全局快捷键（必须在app ready之后）
+      setupGlobalShortcuts(this.windowManager);
       
       // 初始化窗口管理器
       this.windowManager.initialize()

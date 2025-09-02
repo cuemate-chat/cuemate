@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron';
-import { join } from 'path';
 import type { WindowConfig } from '../../shared/types.js';
+import { getPreloadPath, getRendererPath } from '../utils/paths.js';
 
 /**
  * 关闭按钮窗口 - 小型浮动关闭按钮
@@ -63,7 +63,7 @@ export class CloseButtonWindow {
           nodeIntegration: false,
           contextIsolation: true,
           webSecurity: !this.isDevelopment,
-          preload: join(__dirname, '../preload/closeButton.js')
+          preload: getPreloadPath('closeButton')
         }
       });
 
@@ -71,7 +71,7 @@ export class CloseButtonWindow {
       if (this.isDevelopment) {
         await this.window.loadURL('http://localhost:3000/close-button');
       } else {
-        await this.window.loadFile(join(__dirname, '../renderer/close-button.html'));
+        await this.window.loadFile(getRendererPath('close-button'));
       }
 
       // 设置窗口事件监听

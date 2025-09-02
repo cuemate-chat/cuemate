@@ -1,6 +1,6 @@
 import { BrowserWindow, screen } from 'electron';
-import { join } from 'path';
 import type { WindowConfig } from '../../shared/types.js';
+import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
 
 /**
  * 主内容窗口 - 应用的主要界面
@@ -47,17 +47,18 @@ export class MainContentWindow {
     try {
       // 获取主显示器信息来计算初始位置
       const primaryDisplay = screen.getPrimaryDisplay();
-      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+      const { x: displayX, y: displayY, width: screenWidth, height: screenHeight } = primaryDisplay.workArea;
       
-      // 居中显示
-      const initialX = Math.floor((screenWidth - this.config.width) / 2);
-      const initialY = Math.floor((screenHeight - this.config.height) / 2);
+      // 在主屏幕居中显示
+      const initialX = displayX + Math.floor((screenWidth - this.config.width) / 2);
+      const initialY = displayY + Math.floor((screenHeight - this.config.height) / 2);
 
       this.window = new BrowserWindow({
         width: this.config.width,
         height: this.config.height,
         x: initialX,
         y: initialY,
+        icon: getWindowIconPath(), // 设置窗口图标
         alwaysOnTop: this.config.alwaysOnTop,
         frame: this.config.frame,
         transparent: this.config.transparent,
@@ -74,7 +75,7 @@ export class MainContentWindow {
           nodeIntegration: false,
           contextIsolation: true,
           webSecurity: !this.isDevelopment,
-          preload: join(__dirname, '../preload/mainContent.js')
+          preload: getPreloadPath('mainContent')
         }
       });
 
@@ -87,7 +88,7 @@ export class MainContentWindow {
         // 开发模式下打开开发者工具
         this.window.webContents.openDevTools();
       } else {
-        await this.window.loadFile(join(__dirname, '../renderer/main-content.html'));
+        await this.window.loadFile(getRendererPath('main-content'));
       }
 
       // 设置窗口事件监听

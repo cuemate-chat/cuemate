@@ -70,7 +70,9 @@ export const storage = {
   },
   setLicense: (licenseInfo: any): void => {
     // 排除敏感字段
-    const { license_key, ...safeLicenseInfo } = licenseInfo;
+    const safeLicenseInfo = { ...(licenseInfo ?? {}) } as Record<string, unknown>;
+    // 显式删除敏感字段，避免未使用变量的 Lint 告警
+    delete (safeLicenseInfo as any).license_key;
     localStorage.setItem(STORAGE_KEYS.LICENSE, JSON.stringify(safeLicenseInfo));
   },
   clearLicense: (): void => localStorage.removeItem(STORAGE_KEYS.LICENSE),

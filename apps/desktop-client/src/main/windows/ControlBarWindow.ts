@@ -1,6 +1,6 @@
 import { BrowserWindow, screen } from 'electron';
-import { join } from 'path';
 import type { WindowConfig } from '../../shared/types.js';
+import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
 
 /**
  * 控制条窗口 - 主要的浮动交互界面
@@ -48,17 +48,18 @@ export class ControlBarWindow {
     try {
       // 获取主显示器信息来计算初始位置
       const primaryDisplay = screen.getPrimaryDisplay();
-      const { width: screenWidth } = primaryDisplay.workAreaSize;
+      const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea;
       
-      // 初始位置：水平居中，距离顶部 100 像素
-      const initialX = Math.floor((screenWidth - this.config.width) / 2);
-      const initialY = 100;
+      // 初始位置：在主屏幕水平居中，距离顶部 100 像素
+      const initialX = displayX + Math.floor((screenWidth - this.config.width) / 2);
+      const initialY = displayY + 100;
 
       this.window = new BrowserWindow({
         width: this.config.width,
         height: this.config.height,
         x: initialX,
         y: initialY,
+        icon: getWindowIconPath(), // 设置窗口图标
         alwaysOnTop: this.config.alwaysOnTop,
         frame: this.config.frame,
         transparent: this.config.transparent,
@@ -73,7 +74,7 @@ export class ControlBarWindow {
           nodeIntegration: false,
           contextIsolation: true,
           webSecurity: !this.isDevelopment,
-          preload: join(__dirname, '../preload/controlBar.js')
+          preload: getPreloadPath('controlBar')
         }
       });
 
@@ -81,7 +82,7 @@ export class ControlBarWindow {
       if (this.isDevelopment) {
         await this.window.loadURL('http://localhost:3000/control-bar');
       } else {
-        await this.window.loadFile(join(__dirname, '../renderer/control-bar.html'));
+        await this.window.loadFile(getRendererPath('control-bar'));
       }
 
       // 设置窗口事件监听
@@ -218,10 +219,10 @@ export class ControlBarWindow {
   public center(): void {
     if (this.window && !this.window.isDestroyed()) {
       const primaryDisplay = screen.getPrimaryDisplay();
-      const { width: screenWidth } = primaryDisplay.workAreaSize;
+      const { x: displayX, width: screenWidth } = primaryDisplay.workArea;
       const windowBounds = this.window.getBounds();
       
-      const centerX = Math.floor((screenWidth - windowBounds.width) / 2);
+      const centerX = displayX + Math.floor((screenWidth - windowBounds.width) / 2);
       this.setPosition(centerX, windowBounds.y);
     }
   }
