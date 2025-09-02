@@ -1,11 +1,9 @@
-import { MainFocusWindow } from './MainFocusWindow.js';
 import { ControlBarWindow } from './ControlBarWindow.js';
 import { CloseButtonWindow } from './CloseButtonWindow.js';
 import { MainContentWindow } from './MainContentWindow.js';
 import type { AppState } from '../../shared/types.js';
 
 export class WindowManager {
-  private mainFocusWindow: MainFocusWindow;
   private controlBarWindow: ControlBarWindow;
   private closeButtonWindow: CloseButtonWindow;
   private mainContentWindow: MainContentWindow;
@@ -22,8 +20,7 @@ export class WindowManager {
       isMainContentVisible: false,
     };
 
-    // 创建窗口实例
-    this.mainFocusWindow = new MainFocusWindow(this.isDevelopment);
+    // 创建窗口实例 - control-bar 现在作为主焦点窗口
     this.controlBarWindow = new ControlBarWindow(this.isDevelopment);
     this.closeButtonWindow = new CloseButtonWindow(this.isDevelopment);
     this.mainContentWindow = new MainContentWindow(this.isDevelopment);
@@ -36,20 +33,15 @@ export class WindowManager {
     console.log('🏗️ 开始初始化窗口管理器');
 
     try {
-      // 1. 首先创建隐形焦点锚点窗口（最重要）
-      await this.mainFocusWindow.create();
-      this.appState.mainFocusWindowId = this.mainFocusWindow.getId();
-      console.log('✅ main-focus 主焦点窗口已创建');
-
-      // 2. 创建控制条窗口
+      // 1. 创建控制条窗口（现在作为主焦点窗口）
       await this.controlBarWindow.create();
-      console.log('✅ control-bar 控制条窗口已创建');
+      console.log('✅ control-bar 控制条窗口已创建（作为主焦点窗口）');
 
-      // 3. 创建关闭按钮窗口（初始隐藏）
+      // 2. 创建关闭按钮窗口（初始隐藏）
       await this.closeButtonWindow.create();
       console.log('✅ close-button 关闭按钮窗口已创建');
 
-      // 4. 创建主内容窗口（初始隐藏）
+      // 3. 创建主内容窗口（初始隐藏）
       await this.mainContentWindow.create();
       console.log('✅ main-content 主内容窗口已创建');
 
@@ -59,8 +51,8 @@ export class WindowManager {
       // 6. 设置窗口事件监听
       this.setupWindowEvents();
 
-      // 7. 确保焦点在锚点窗口
-      this.ensureMainFocus();
+      // 4. 显示浮动窗口（control-bar 和 close-button）
+      this.showFloatingWindows();
 
       console.log('🎯 窗口管理器初始化完成');
     } catch (error) {
@@ -77,8 +69,7 @@ export class WindowManager {
     const controlBarWindow = this.controlBarWindow.getBrowserWindow();
     if (controlBarWindow) {
       controlBarWindow.on('focus', () => {
-        console.log('🔍 control-bar 获得焦点，立即恢复到主焦点');
-        setTimeout(() => this.ensureMainFocus(), 0);
+        console.log('🎯 control-bar 获得焦点（作为主焦点窗口，这是正常的）');
       });
 
       controlBarWindow.on('move', () => {
@@ -132,14 +123,11 @@ export class WindowManager {
   }
 
   /**
-   * 确保焦点在主焦点窗口上
+   * 确保焦点在主焦点窗口上（现在是 control-bar）
    */
   public ensureMainFocus(): void {
-    const mainFocusWindow = this.mainFocusWindow.getBrowserWindow();
-    if (mainFocusWindow && !mainFocusWindow.isDestroyed()) {
-      mainFocusWindow.focus();
-      console.log('🎯 焦点已恢复到 main-focus 锚点窗口');
-    }
+    this.controlBarWindow.ensureFocus();
+    console.log('🎯 焦点已恢复到 control-bar 主焦点窗口');
   }
 
   /**
@@ -262,7 +250,6 @@ export class WindowManager {
   public destroy(): void {
     console.log('🗑️ 销毁窗口管理器');
     
-    this.mainFocusWindow.destroy();
     this.controlBarWindow.destroy();
     this.closeButtonWindow.destroy();
     this.mainContentWindow.destroy();

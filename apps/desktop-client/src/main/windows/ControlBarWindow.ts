@@ -25,7 +25,7 @@ export class ControlBarWindow {
     minimizable: false,
     maximizable: false,
     closable: false,
-    focusable: false,  // 不获取焦点，让主焦点窗口保持焦点
+    focusable: true,   // 作为主焦点窗口，可以获得焦点
     show: false,
     center: true,  // 初始居中显示
   };
@@ -154,12 +154,14 @@ export class ControlBarWindow {
       this.window = null;
     });
 
-    // 防止窗口获得焦点
+    // control-bar 现在作为主焦点窗口，应该保持焦点
     this.window.on('focus', () => {
-      console.log('⚠️ control-bar 意外获得焦点，立即模糊');
-      if (this.window) {
-        this.window.blur();
-      }
+      console.log('🎯 control-bar 获得焦点（作为主焦点窗口）');
+    });
+
+    // 失去焦点时的处理
+    this.window.on('blur', () => {
+      console.log('😶‍🌫️ control-bar 失去焦点');
     });
   }
 
@@ -168,8 +170,8 @@ export class ControlBarWindow {
    */
   public show(): void {
     if (this.window && !this.window.isDestroyed()) {
-      this.window.showInactive();  // 显示但不激活（不获得焦点）
-      console.log('👀 control-bar 窗口已显示');
+      this.window.show();  // 显示并激活，作为主焦点窗口
+      console.log('👀 control-bar 窗口已显示并获得焦点');
       
       // 确保窗口在最顶层
       this.window.setAlwaysOnTop(true, 'floating');
@@ -255,6 +257,25 @@ export class ControlBarWindow {
     if (this.window && !this.window.isDestroyed()) {
       this.window.webContents.send(channel, data);
     }
+  }
+
+  /**
+   * 确保窗口获得焦点（作为主焦点窗口）
+   */
+  public ensureFocus(): void {
+    if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
+      if (!this.window.isFocused()) {
+        this.window.focus();
+        console.log('🎯 control-bar 重新获得焦点');
+      }
+    }
+  }
+
+  /**
+   * 检查是否拥有焦点
+   */
+  public isFocused(): boolean {
+    return this.window ? this.window.isFocused() : false;
   }
 
   /**

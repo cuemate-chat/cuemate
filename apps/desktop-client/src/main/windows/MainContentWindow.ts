@@ -1,6 +1,6 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
-import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
+import { getWindowIconPath } from '../utils/paths.js';
 
 /**
  * 主内容窗口 - 应用的主要界面
@@ -75,20 +75,19 @@ export class MainContentWindow {
           nodeIntegration: false,
           contextIsolation: true,
           webSecurity: !this.isDevelopment,
-          preload: getPreloadPath('mainContent')
+          // main-content 窗口加载外部 web 应用，不需要预加载脚本
         }
       });
 
       // 设置最小尺寸
       this.window.setMinimumSize(800, 600);
 
-      // 加载页面
+      // 加载页面 - 直接加载您的 Docker web 应用
+      await this.window.loadURL('http://localhost:80');
+      
+      // 开发模式下打开开发者工具
       if (this.isDevelopment) {
-        await this.window.loadURL('http://localhost:3000/main-content');
-        // 开发模式下打开开发者工具
         this.window.webContents.openDevTools();
-      } else {
-        await this.window.loadFile(getRendererPath('main-content'));
       }
 
       // 设置窗口事件监听

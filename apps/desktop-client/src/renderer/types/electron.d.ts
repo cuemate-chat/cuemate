@@ -26,7 +26,6 @@ interface AppState {
   isControlBarVisible: boolean;
   isCloseButtonVisible: boolean;
   isMainContentVisible: boolean;
-  mainFocusWindowId?: string;
 }
 
 interface WindowBounds {

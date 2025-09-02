@@ -32,14 +32,18 @@ class CueMateApp {
     app.whenReady().then(() => {
       console.log('📱 应用已准备就绪，开始初始化窗口管理器');
       
-      // 设置应用图标 (仅在Linux上可用)
+      // 设置应用图标
       try {
         const iconPath = getAppIconPath();
         console.log('🖼️ 应用图标路径:', iconPath);
-        // macOS和Windows通过BrowserWindow的icon选项设置图标，不需要在这里设置
-        // 图标在各个窗口中已经配置
+        
+        // 在 macOS 上设置 Dock 图标
+        if (process.platform === 'darwin') {
+          app.dock.setIcon(iconPath);
+          console.log('✅ macOS Dock 图标已设置');
+        }
       } catch (error) {
-        console.warn('⚠️ 获取图标路径失败:', error);
+        console.warn('⚠️ 设置应用图标失败:', error);
       }
       
       // 设置全局快捷键（必须在app ready之后）

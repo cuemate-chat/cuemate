@@ -13,7 +13,7 @@
     "build:renderer": "pnpm typecheck && vite build",
     "preview": "vite preview",
     "electron": "npx electron dist/main/index.js",
-    "electron:dev": "pnpm typecheck && concurrently \"pnpm dev\" \"pnpm build:main && wait-on http://localhost:3000 && npx electron dist/main/index.js\"",
+    "electron:dev": "pnpm typecheck && pnpm build:main && npx electron dist/main/index.js",
     "package": "electron-builder",
     "dist": "pnpm build && electron-builder --publish=never",
     "clean": "rimraf dist",

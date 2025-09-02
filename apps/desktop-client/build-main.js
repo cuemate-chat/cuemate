@@ -48,10 +48,7 @@ async function buildPreloadScripts() {
       entry: resolve(__dirname, 'src/main/preload/closeButton.ts'),
       output: resolve(__dirname, 'dist/main/preload/closeButton.js'),
     },
-    {
-      entry: resolve(__dirname, 'src/main/preload/mainContent.ts'),
-      output: resolve(__dirname, 'dist/main/preload/mainContent.js'),
-    },
+    // main-content 窗口直接加载 localhost:80，不需要预加载脚本
   ];
 
   try {

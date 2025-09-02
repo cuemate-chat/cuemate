@@ -1,11 +1,11 @@
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [react()],
   base: './',
-  
+
   // 开发服务器配置
   server: {
     port: 3000,
@@ -21,33 +21,32 @@ export default defineConfig({
     target: 'esnext',
     minify: 'esbuild',
     sourcemap: true,
-    
+
     rollupOptions: {
       input: {
-        // 渲染进程入口（React应用）
+        // 渲染进程入口（React应用）- main-content 直接加载 localhost:80，不需要构建
         'control-bar': resolve(__dirname, 'src/renderer/control-bar/index.html'),
         'close-button': resolve(__dirname, 'src/renderer/close-button/index.html'),
-        'main-content': resolve(__dirname, 'src/renderer/main-content/index.html'),
       },
-      
-      output: {        
+
+      output: {
         // 渲染进程文件输出配置
         entryFileNames: 'renderer/[name]/[name].js',
         chunkFileNames: 'renderer/chunks/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
           const name = assetInfo.name || '';
-          
+
           // HTML 文件
           if (name.endsWith('.html')) {
             const windowName = name.replace('.html', '');
             return `renderer/${windowName}/[name][extname]`;
           }
-          
+
           // CSS 文件
           if (name.endsWith('.css')) {
             return 'renderer/assets/[name]-[hash][extname]';
           }
-          
+
           // 其他资源文件
           return 'renderer/assets/[name]-[hash][extname]';
         },
@@ -84,15 +83,8 @@ export default defineConfig({
 
   // 优化配置
   optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      'framer-motion',
-      'lucide-react',
-    ],
-    exclude: [
-      'electron',
-    ],
+    include: ['react', 'react-dom', 'framer-motion', 'lucide-react'],
+    exclude: ['electron'],
   },
 
   // 环境变量
