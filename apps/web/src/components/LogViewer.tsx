@@ -14,39 +14,19 @@ interface LogViewerProps {
   height?: number;
 }
 
-// 清理日志中的控制字符
+// 清理日志中的控制字符（无正则实现，规避 no-control-regex）
 const cleanLogs = (logs: string) => {
-  return logs
-    .replace(/\u0000/g, '') // 移除 null 字符
-    .replace(/\u0001/g, '') // 移除 SOH 字符
-    .replace(/\u0002/g, '') // 移除 STX 字符
-    .replace(/\u0003/g, '') // 移除 ETX 字符
-    .replace(/\u0004/g, '') // 移除 EOT 字符
-    .replace(/\u0005/g, '') // 移除 ENQ 字符
-    .replace(/\u0006/g, '') // 移除 ACK 字符
-    .replace(/\u0007/g, '') // 移除 BEL 字符
-    .replace(/\u0008/g, '') // 移除 BS 字符
-    .replace(/\u000B/g, '') // 移除 VT 字符
-    .replace(/\u000C/g, '') // 移除 FF 字符
-    .replace(/\u000E/g, '') // 移除 SO 字符
-    .replace(/\u000F/g, '') // 移除 SI 字符
-    .replace(/\u0010/g, '') // 移除 DLE 字符
-    .replace(/\u0011/g, '') // 移除 DC1 字符
-    .replace(/\u0012/g, '') // 移除 DC2 字符
-    .replace(/\u0013/g, '') // 移除 DC3 字符
-    .replace(/\u0014/g, '') // 移除 DC4 字符
-    .replace(/\u0015/g, '') // 移除 NAK 字符
-    .replace(/\u0016/g, '') // 移除 SYN 字符
-    .replace(/\u0017/g, '') // 移除 ETB 字符
-    .replace(/\u0018/g, '') // 移除 CAN 字符
-    .replace(/\u0019/g, '') // 移除 EM 字符
-    .replace(/\u001A/g, '') // 移除 SUB 字符
-    .replace(/\u001B/g, '') // 移除 ESC 字符
-    .replace(/\u001C/g, '') // 移除 FS 字符
-    .replace(/\u001D/g, '') // 移除 GS 字符
-    .replace(/\u001E/g, '') // 移除 RS 字符
-    .replace(/\u001F/g, '') // 移除 US 字符
-    .replace(/\u007F/g, ''); // 移除 DEL 字符
+  if (!logs) return '';
+  let result = '';
+  for (let i = 0; i < logs.length; i += 1) {
+    const code = logs.charCodeAt(i);
+    // 允许常见的可见字符以及换行(10)、回车(13)、制表符(9)
+    const isVisible = (code >= 32 && code !== 127) || code === 10 || code === 13 || code === 9;
+    if (isVisible) {
+      result += logs[i];
+    }
+  }
+  return result;
 };
 
 const LogViewer: React.FC<LogViewerProps> = ({
