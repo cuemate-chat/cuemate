@@ -13,6 +13,7 @@ if (document.readyState === 'loading') {
 function initializeApp() {
   const container = document.getElementById('root');
   if (!container) {
+    // 渲染进程中保留 console.error，因为这是错误处理
     console.error('未找到根元素 #root');
     return;
   }

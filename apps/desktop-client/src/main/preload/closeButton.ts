@@ -10,11 +10,11 @@ import type { FrontendLogMessage } from '../../shared/types.js';
 const closeButtonAPI = {
   // === 按钮交互 API ===
   onClick: () => ipcRenderer.invoke('close-button-clicked'),
-  
+
   // === 窗口管理 API ===
   hideFloatingWindows: () => ipcRenderer.invoke('hide-floating-windows'),
   quitApp: () => ipcRenderer.invoke('quit-app'),
-  
+
   // === 日志 API ===
   log: (logMessage: FrontendLogMessage) => ipcRenderer.invoke('frontend-log', logMessage),
 
@@ -26,12 +26,13 @@ const closeButtonAPI = {
       'mouse-leave',
       'button-clicked',
       'set-hover-state',
-      'set-pressed-state'
+      'set-pressed-state',
     ];
-    
+
     if (allowedChannels.includes(channel)) {
       ipcRenderer.on(channel, callback);
     } else {
+      // 预加载脚本中不使用 logger，保持 console.warn
       console.warn(`关闭按钮窗口不允许监听频道: ${channel}`);
     }
   },
@@ -45,15 +46,17 @@ const closeButtonAPI = {
   },
 
   // === 工具方法 ===
-  platform: process.platform
+  platform: process.platform,
 };
 
 // 日志功能的便捷方法（简化版）
 const logger = {
   info: (message: string) => closeButtonAPI.log({ level: 'info', message, timestamp: Date.now() }),
   warn: (message: string) => closeButtonAPI.log({ level: 'warn', message, timestamp: Date.now() }),
-  error: (message: string) => closeButtonAPI.log({ level: 'error', message, timestamp: Date.now() }),
-  debug: (message: string) => closeButtonAPI.log({ level: 'debug', message, timestamp: Date.now() })
+  error: (message: string) =>
+    closeButtonAPI.log({ level: 'error', message, timestamp: Date.now() }),
+  debug: (message: string) =>
+    closeButtonAPI.log({ level: 'debug', message, timestamp: Date.now() }),
 };
 
 // 通过 contextBridge 安全地暴露 API
@@ -65,4 +68,5 @@ export type CloseButtonAPI = typeof closeButtonAPI;
 
 // 类型声明已移除，使用动态类型
 
+// 预加载脚本中不使用 logger，保持 console.log
 console.log('关闭按钮窗口预加载脚本已加载');

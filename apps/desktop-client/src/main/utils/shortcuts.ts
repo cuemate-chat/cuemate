@@ -1,48 +1,49 @@
 import { globalShortcut } from 'electron';
 import { WindowManager } from '../windows/WindowManager.js';
 import type { ShortcutConfig } from '../../shared/types.js';
+import { logger } from '../../utils/logger.js';
 
 /**
  * 设置全局快捷键
  * 替代 Tauri 的全局快捷键功能
  */
 export function setupGlobalShortcuts(windowManager: WindowManager): void {
-  console.log('设置全局快捷键');
+  logger.info('设置全局快捷键');
 
   // 快捷键配置列表
   const shortcuts: ShortcutConfig[] = [
     {
       accelerator: 'CommandOrControl+\\',
       callback: () => {
-        console.log('全局快捷键触发: CommandOrControl+\\');
+        logger.info('全局快捷键触发: CommandOrControl+\\');
         windowManager.toggleFloatingWindows();
       }
     },
     {
       accelerator: 'CommandOrControl+Shift+C',
       callback: () => {
-        console.log('全局快捷键触发: CommandOrControl+Shift+C');
+        logger.info('全局快捷键触发: CommandOrControl+Shift+C');
         windowManager.toggleMainContent();
       }
     },
     {
       accelerator: 'CommandOrControl+Alt+Q',
       callback: () => {
-        console.log('全局快捷键触发: CommandOrControl+Alt+Q');
+        logger.info('全局快捷键触发: CommandOrControl+Alt+Q');
         windowManager.hideFloatingWindows();
       }
     },
     {
       accelerator: 'CommandOrControl+Alt+S',
       callback: () => {
-        console.log('全局快捷键触发: CommandOrControl+Alt+S');
+        logger.info('全局快捷键触发: CommandOrControl+Alt+S');
         windowManager.showFloatingWindows();
       }
     },
     {
       accelerator: 'CommandOrControl+Shift+H',
       callback: () => {
-        console.log('全局快捷键触发: CommandOrControl+Shift+H');
+        logger.info('全局快捷键触发: CommandOrControl+Shift+H');
         // 隐藏所有窗口
         windowManager.hideFloatingWindows();
         windowManager.hideMainContent();
@@ -59,24 +60,24 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
       const success = globalShortcut.register(shortcut.accelerator, shortcut.callback);
       
       if (success) {
-        console.log(`快捷键注册成功: ${shortcut.accelerator}`);
+        logger.info(`快捷键注册成功: ${shortcut.accelerator}`);
         registeredCount++;
       } else {
-        console.error(`快捷键注册失败: ${shortcut.accelerator} (可能已被其他应用占用)`);
+        logger.error(`快捷键注册失败: ${shortcut.accelerator} (可能已被其他应用占用)`);
         failedCount++;
       }
     } catch (error) {
-      console.error(`快捷键注册异常: ${shortcut.accelerator}`, error);
+      logger.error({ error }, `快捷键注册异常: ${shortcut.accelerator}`);
       failedCount++;
     }
   });
 
-  console.log(`快捷键注册完成: 成功 ${registeredCount} 个, 失败 ${failedCount} 个`);
+  logger.info(`快捷键注册完成: 成功 ${registeredCount} 个, 失败 ${failedCount} 个`);
 
   // 验证快捷键是否已注册
   shortcuts.forEach(shortcut => {
     const isRegistered = globalShortcut.isRegistered(shortcut.accelerator);
-    console.log(`快捷键 ${shortcut.accelerator} 注册状态: ${isRegistered ? '已注册' : '未注册'}`);
+    logger.info(`快捷键 ${shortcut.accelerator} 注册状态: ${isRegistered ? '已注册' : '未注册'}`);
   });
 }
 
@@ -87,13 +88,13 @@ export function registerShortcut(accelerator: string, callback: () => void): boo
   try {
     const success = globalShortcut.register(accelerator, callback);
     if (success) {
-      console.log(`动态注册快捷键成功: ${accelerator}`);
+      logger.info(`动态注册快捷键成功: ${accelerator}`);
     } else {
-      console.error(`动态注册快捷键失败: ${accelerator}`);
+      logger.error(`动态注册快捷键失败: ${accelerator}`);
     }
     return success;
   } catch (error) {
-    console.error(`动态注册快捷键异常: ${accelerator}`, error);
+    logger.error({ error }, `动态注册快捷键异常: ${accelerator}`);
     return false;
   }
 }
@@ -104,9 +105,9 @@ export function registerShortcut(accelerator: string, callback: () => void): boo
 export function unregisterShortcut(accelerator: string): void {
   try {
     globalShortcut.unregister(accelerator);
-    console.log(`快捷键已注销: ${accelerator}`);
+    logger.info(`快捷键已注销: ${accelerator}`);
   } catch (error) {
-    console.error(`注销快捷键失败: ${accelerator}`, error);
+    logger.error({ error }, `注销快捷键失败: ${accelerator}`);
   }
 }
 
@@ -116,9 +117,9 @@ export function unregisterShortcut(accelerator: string): void {
 export function unregisterAllShortcuts(): void {
   try {
     globalShortcut.unregisterAll();
-    console.log('所有快捷键已注销');
+    logger.info('所有快捷键已注销');
   } catch (error) {
-    console.error('注销所有快捷键失败:', error);
+    logger.error({ error }, '注销所有快捷键失败');
   }
 }
 
@@ -129,7 +130,7 @@ export function isShortcutRegistered(accelerator: string): boolean {
   try {
     return globalShortcut.isRegistered(accelerator);
   } catch (error) {
-    console.error(`检查快捷键注册状态失败: ${accelerator}`, error);
+    logger.error({ error }, `检查快捷键注册状态失败: ${accelerator}`);
     return false;
   }
 }
@@ -188,7 +189,7 @@ export function validateShortcut(accelerator: string): boolean {
     }
     return false;
   } catch (error) {
-    console.error(`快捷键格式验证失败: ${accelerator}`, error);
+    logger.error({ error }, `快捷键格式验证失败: ${accelerator}`);
     return false;
   }
 }

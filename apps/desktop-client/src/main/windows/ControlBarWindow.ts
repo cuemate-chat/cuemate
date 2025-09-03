@@ -1,5 +1,6 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
+import { logger } from '../../utils/logger.js';
 import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
 
 /**
@@ -39,11 +40,11 @@ export class ControlBarWindow {
    */
   public async create(): Promise<void> {
     if (this.window) {
-      console.log('control-bar 窗口已存在，跳过创建');
+      logger.info('control-bar 窗口已存在，跳过创建');
       return;
     }
 
-    console.log('创建 control-bar 控制条窗口');
+    logger.info('创建 control-bar 控制条窗口');
 
     try {
       // 获取主显示器信息来计算初始位置
@@ -88,10 +89,10 @@ export class ControlBarWindow {
       // 设置窗口事件监听
       this.setupEvents();
 
-      console.log('control-bar 控制条窗口创建成功');
-      console.log(`窗口位置: (${initialX}, ${initialY})`);
+      logger.info('control-bar 控制条窗口创建成功');
+      logger.info(`窗口位置: (${initialX}, ${initialY})`);
     } catch (error) {
-      console.error('创建 control-bar 窗口失败:', error);
+      logger.error({ error }, '创建 control-bar 窗口失败');
       throw error;
     }
   }
@@ -104,7 +105,7 @@ export class ControlBarWindow {
 
     // 窗口准备显示
     this.window.on('ready-to-show', () => {
-      console.log('control-bar 窗口准备就绪');
+      logger.info('control-bar 窗口准备就绪');
     });
 
     // 鼠标进入窗口区域（用于显示关闭按钮）
@@ -123,7 +124,7 @@ export class ControlBarWindow {
     this.window.on('will-move', () => {
       this.isMoving = true;
       this.moveStartTime = Date.now();
-      console.log('control-bar 窗口开始移动');
+      logger.info('control-bar 窗口开始移动');
     });
 
     // 窗口移动完成
@@ -131,7 +132,7 @@ export class ControlBarWindow {
       if (this.isMoving) {
         const moveEndTime = Date.now();
         const moveDuration = moveEndTime - this.moveStartTime;
-        console.log(`control-bar 窗口移动完成，耗时: ${moveDuration}ms`);
+        logger.info(`control-bar 窗口移动完成，耗时: ${moveDuration}ms`);
 
         // 发送位置更新事件
         const bounds = this.window!.getBounds();
@@ -149,18 +150,18 @@ export class ControlBarWindow {
 
     // 窗口已关闭
     this.window.on('closed', () => {
-      console.log('control-bar 窗口已关闭');
+      logger.info('control-bar 窗口已关闭');
       this.window = null;
     });
 
     // control-bar 现在作为主焦点窗口，应该保持焦点
     this.window.on('focus', () => {
-      console.log('control-bar 获得焦点（作为主焦点窗口）');
+      logger.info('control-bar 获得焦点（作为主焦点窗口）');
     });
 
     // 失去焦点时的处理
     this.window.on('blur', () => {
-      console.log('control-bar 失去焦点');
+      logger.info('control-bar 失去焦点');
     });
   }
 
@@ -170,7 +171,7 @@ export class ControlBarWindow {
   public show(): void {
     if (this.window && !this.window.isDestroyed()) {
       this.window.show(); // 显示并激活，作为主焦点窗口
-      console.log('control-bar 窗口已显示并获得焦点');
+      logger.info('control-bar 窗口已显示并获得焦点');
 
       // 确保窗口在最顶层
       this.window.setAlwaysOnTop(true, 'floating');
@@ -183,7 +184,7 @@ export class ControlBarWindow {
   public hide(): void {
     if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
       this.window.hide();
-      console.log('control-bar 窗口已隐藏');
+      logger.info('control-bar 窗口已隐藏');
     }
   }
 
@@ -200,7 +201,7 @@ export class ControlBarWindow {
   public setPosition(x: number, y: number): void {
     if (this.window && !this.window.isDestroyed()) {
       this.window.setPosition(x, y);
-      console.log(`control-bar 窗口位置已更新: (${x}, ${y})`);
+      logger.info(`control-bar 窗口位置已更新: (${x}, ${y})`);
     }
   }
 
@@ -265,7 +266,7 @@ export class ControlBarWindow {
     if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
       if (!this.window.isFocused()) {
         this.window.focus();
-        console.log('control-bar 重新获得焦点');
+        logger.info('control-bar 重新获得焦点');
       }
     }
   }
@@ -282,7 +283,7 @@ export class ControlBarWindow {
    */
   public destroy(): void {
     if (this.window && !this.window.isDestroyed()) {
-      console.log('销毁 control-bar 窗口');
+      logger.info('销毁 control-bar 窗口');
       this.window.destroy();
       this.window = null;
     }

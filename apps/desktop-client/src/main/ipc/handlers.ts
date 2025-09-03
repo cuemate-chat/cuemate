@@ -1,13 +1,14 @@
-import { ipcMain, app, shell, dialog } from 'electron';
-import { WindowManager } from '../windows/WindowManager.js';
+import { app, dialog, ipcMain, shell } from 'electron';
 import type { FrontendLogMessage } from '../../shared/types.js';
+import { logger } from '../../utils/logger.js';
+import { WindowManager } from '../windows/WindowManager.js';
 
 /**
  * 设置 IPC 通信处理器
  * 替代 Tauri 的 command 系统，处理前端和后端之间的通信
  */
 export function setupIPC(windowManager: WindowManager): void {
-  console.log('设置 IPC 通信处理器');
+  logger.info('设置 IPC 通信处理器');
 
   // === 窗口管理相关 IPC 处理器 ===
 
@@ -17,10 +18,10 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('show-floating-windows', async () => {
     try {
       windowManager.showFloatingWindows();
-      console.log('IPC: 显示浮动窗口命令已执行');
+      logger.info('IPC: 显示浮动窗口命令已执行');
       return { success: true };
     } catch (error) {
-      console.error('IPC: 显示浮动窗口失败:', error);
+      logger.error({ error }, 'IPC: 显示浮动窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -31,10 +32,10 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('hide-floating-windows', async () => {
     try {
       windowManager.hideFloatingWindows();
-      console.log('IPC: 隐藏浮动窗口命令已执行');
+      logger.info('IPC: 隐藏浮动窗口命令已执行');
       return { success: true };
     } catch (error) {
-      console.error('IPC: 隐藏浮动窗口失败:', error);
+      logger.error({ error }, 'IPC: 隐藏浮动窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -45,10 +46,10 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('toggle-floating-windows', async () => {
     try {
       windowManager.toggleFloatingWindows();
-      console.log('IPC: 切换浮动窗口命令已执行');
+      logger.info('IPC: 切换浮动窗口命令已执行');
       return { success: true };
     } catch (error) {
-      console.error('IPC: 切换浮动窗口失败:', error);
+      logger.error({ error }, 'IPC: 切换浮动窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -59,10 +60,10 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('show-close-button', async () => {
     try {
       windowManager.showCloseButton();
-      console.log('IPC: 显示关闭按钮命令已执行');
+      logger.info('IPC: 显示关闭按钮命令已执行');
       return { success: true };
     } catch (error) {
-      console.error('IPC: 显示关闭按钮失败:', error);
+      logger.error({ error }, 'IPC: 显示关闭按钮失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -73,10 +74,10 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('hide-close-button', async () => {
     try {
       windowManager.hideCloseButton();
-      console.log('IPC: 隐藏关闭按钮命令已执行');
+      logger.info('IPC: 隐藏关闭按钮命令已执行');
       return { success: true };
     } catch (error) {
-      console.error('IPC: 隐藏关闭按钮失败:', error);
+      logger.error({ error }, 'IPC: 隐藏关闭按钮失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -87,10 +88,10 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('show-main-content', async () => {
     try {
       windowManager.showMainContent();
-      console.log('IPC: 显示主内容窗口命令已执行');
+      logger.info('IPC: 显示主内容窗口命令已执行');
       return { success: true };
     } catch (error) {
-      console.error('IPC: 显示主内容窗口失败:', error);
+      logger.error({ error }, 'IPC: 显示主内容窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -101,10 +102,10 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('hide-main-content', async () => {
     try {
       windowManager.hideMainContent();
-      console.log('IPC: 隐藏主内容窗口命令已执行');
+      logger.info('IPC: 隐藏主内容窗口命令已执行');
       return { success: true };
     } catch (error) {
-      console.error('IPC: 隐藏主内容窗口失败:', error);
+      logger.error({ error }, 'IPC: 隐藏主内容窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -115,10 +116,10 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('toggle-main-content', async () => {
     try {
       windowManager.toggleMainContent();
-      console.log('IPC: 切换主内容窗口命令已执行');
+      logger.info('IPC: 切换主内容窗口命令已执行');
       return { success: true };
     } catch (error) {
-      console.error('IPC: 切换主内容窗口失败:', error);
+      logger.error({ error }, 'IPC: 切换主内容窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -129,10 +130,10 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('get-app-state', async () => {
     try {
       const appState = windowManager.getAppState();
-      console.log('IPC: 获取应用状态:', appState);
+      logger.info({ appState }, 'IPC: 获取应用状态');
       return { success: true, data: appState };
     } catch (error) {
-      console.error('IPC: 获取应用状态失败:', error);
+      logger.error({ error }, 'IPC: 获取应用状态失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -144,11 +145,11 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('quit-app', async () => {
     try {
-      console.log('IPC: 收到退出应用命令');
+      logger.info('IPC: 收到退出应用命令');
       app.quit();
       return { success: true };
     } catch (error) {
-      console.error('IPC: 退出应用失败:', error);
+      logger.error({ error }, 'IPC: 退出应用失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -158,12 +159,12 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('restart-app', async () => {
     try {
-      console.log('IPC: 收到重启应用命令');
+      logger.info('IPC: 收到重启应用命令');
       app.relaunch();
       app.quit();
       return { success: true };
     } catch (error) {
-      console.error('IPC: 重启应用失败:', error);
+      logger.error({ error }, 'IPC: 重启应用失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -180,12 +181,12 @@ export function setupIPC(windowManager: WindowManager): void {
         arch: process.arch,
         electronVersion: process.versions.electron,
         nodeVersion: process.versions.node,
-        chromeVersion: process.versions.chrome
+        chromeVersion: process.versions.chrome,
       };
-      console.log('IPC: 获取应用信息:', appInfo);
+      logger.info({ appInfo }, 'IPC: 获取应用信息');
       return { success: true, data: appInfo };
     } catch (error) {
-      console.error('IPC: 获取应用信息失败:', error);
+      logger.error({ error }, 'IPC: 获取应用信息失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -197,11 +198,11 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('open-external-url', async (_event, url: string) => {
     try {
-      console.log('IPC: 打开外部链接:', url);
+      logger.info({ url }, 'IPC: 打开外部链接');
       await shell.openExternal(url);
       return { success: true };
     } catch (error) {
-      console.error('IPC: 打开外部链接失败:', error);
+      logger.error({ error }, 'IPC: 打开外部链接失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -213,19 +214,19 @@ export function setupIPC(windowManager: WindowManager): void {
     try {
       const result = await dialog.showOpenDialog({
         properties: ['openDirectory', 'createDirectory'],
-        title: '选择文件夹'
+        title: '选择文件夹',
       });
 
-      console.log('IPC: 文件夹对话框结果:', result);
-      return { 
-        success: true, 
+      logger.info({ result }, 'IPC: 文件夹对话框结果');
+      return {
+        success: true,
         data: {
           canceled: result.canceled,
-          filePaths: result.filePaths
-        }
+          filePaths: result.filePaths,
+        },
       };
     } catch (error) {
-      console.error('IPC: 文件夹对话框失败:', error);
+      logger.error({ error }, 'IPC: 文件夹对话框失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -238,24 +239,22 @@ export function setupIPC(windowManager: WindowManager): void {
       const dialogOptions = {
         properties: ['openFile', 'multiSelections'],
         title: '选择文件',
-        filters: options.filters || [
-          { name: '所有文件', extensions: ['*'] }
-        ],
-        ...options
+        filters: options.filters || [{ name: '所有文件', extensions: ['*'] }],
+        ...options,
       };
 
       const result = await dialog.showOpenDialog(dialogOptions);
-      console.log('IPC: 文件对话框结果:', result);
-      
-      return { 
-        success: true, 
+      logger.info({ result }, 'IPC: 文件对话框结果');
+
+      return {
+        success: true,
         data: {
           canceled: result.canceled,
-          filePaths: result.filePaths
-        }
+          filePaths: result.filePaths,
+        },
       };
     } catch (error) {
-      console.error('IPC: 文件对话框失败:', error);
+      logger.error({ error }, 'IPC: 文件对话框失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -273,23 +272,23 @@ export function setupIPC(windowManager: WindowManager): void {
 
       switch (level) {
         case 'error':
-          console.error(`${prefix} ${message}`);
+          logger.error(`${prefix} ${message}`);
           break;
         case 'warn':
-          console.warn(`${prefix} ${message}`);
+          logger.warn(`${prefix} ${message}`);
           break;
         case 'debug':
-          console.debug(`${prefix} ${message}`);
+          logger.debug(`${prefix} ${message}`);
           break;
         case 'info':
         default:
-          console.log(`${prefix} ${message}`);
+          logger.info(`${prefix} ${message}`);
           break;
       }
 
       return { success: true };
     } catch (error) {
-      console.error('IPC: 前端日志处理失败:', error);
+      logger.error({ error }, 'IPC: 前端日志处理失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -305,10 +304,10 @@ export function setupIPC(windowManager: WindowManager): void {
       setTimeout(() => {
         windowManager.showCloseButton();
       }, 300);
-      console.log('IPC: 控制条鼠标进入事件已处理');
+      logger.info('IPC: 控制条鼠标进入事件已处理');
       return { success: true };
     } catch (error) {
-      console.error('IPC: 控制条鼠标进入事件处理失败:', error);
+      logger.error({ error }, 'IPC: 控制条鼠标进入事件处理失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -322,10 +321,10 @@ export function setupIPC(windowManager: WindowManager): void {
       setTimeout(() => {
         windowManager.hideCloseButton();
       }, 1000);
-      console.log('IPC: 控制条鼠标离开事件已处理');
+      logger.info('IPC: 控制条鼠标离开事件已处理');
       return { success: true };
     } catch (error) {
-      console.error('IPC: 控制条鼠标离开事件处理失败:', error);
+      logger.error({ error }, 'IPC: 控制条鼠标离开事件处理失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -335,12 +334,12 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('close-button-clicked', async () => {
     try {
-      console.log('IPC: 关闭按钮被点击');
+      logger.info('IPC: 关闭按钮被点击');
       // 隐藏所有浮动窗口
       windowManager.hideFloatingWindows();
       return { success: true };
     } catch (error) {
-      console.error('IPC: 关闭按钮点击处理失败:', error);
+      logger.error({ error }, 'IPC: 关闭按钮点击处理失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -354,20 +353,20 @@ export function setupIPC(windowManager: WindowManager): void {
     try {
       if (windowId) {
         // 为指定窗口打开开发者工具（功能暂未实现）
-        console.log(`IPC: 尝试为窗口 ${windowId} 打开开发者工具（功能待实现）`);
+        logger.info({ windowId }, 'IPC: 尝试为窗口打开开发者工具（功能待实现）');
       } else {
         // 为发送请求的窗口打开开发者工具
         event.sender.openDevTools();
-        console.log('IPC: 为当前窗口打开开发者工具');
+        logger.info('IPC: 为当前窗口打开开发者工具');
       }
       return { success: true };
     } catch (error) {
-      console.error('IPC: 打开开发者工具失败:', error);
+      logger.error({ error }, 'IPC: 打开开发者工具失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 
-  console.log('IPC 通信处理器设置完成');
+  logger.info('IPC 通信处理器设置完成');
 }
 
 // 辅助函数已内联，移除未使用的函数

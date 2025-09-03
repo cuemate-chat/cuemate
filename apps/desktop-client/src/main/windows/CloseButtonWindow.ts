@@ -1,5 +1,6 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
+import { logger } from '../../utils/logger.js';
 import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
 
 /**
@@ -36,11 +37,11 @@ export class CloseButtonWindow {
    */
   public async create(): Promise<void> {
     if (this.window) {
-      console.log('close-button 窗口已存在，跳过创建');
+      logger.info('close-button 窗口已存在，跳过创建');
       return;
     }
 
-    console.log('创建 close-button 关闭按钮窗口');
+    logger.info('创建 close-button 关闭按钮窗口');
 
     try {
       // 获取主显示器信息来计算初始位置
@@ -86,10 +87,10 @@ export class CloseButtonWindow {
       // 设置窗口事件监听
       this.setupEvents();
 
-      console.log('close-button 关闭按钮窗口创建成功');
-      console.log(`窗口位置: (${initialX}, ${initialY})`);
+      logger.info('close-button 关闭按钮窗口创建成功');
+      logger.info(`窗口位置: (${initialX}, ${initialY})`);
     } catch (error) {
-      console.error('创建 close-button 窗口失败:', error);
+      logger.error({ error }, '创建 close-button 窗口失败');
       throw error;
     }
   }
@@ -102,7 +103,7 @@ export class CloseButtonWindow {
 
     // 窗口准备显示
     this.window.on('ready-to-show', () => {
-      console.log('close-button 窗口准备就绪');
+      logger.info('close-button 窗口准备就绪');
     });
 
     // 鼠标进入按钮区域
@@ -125,13 +126,13 @@ export class CloseButtonWindow {
 
     // 窗口已关闭
     this.window.on('closed', () => {
-      console.log('close-button 窗口已关闭');
+      logger.info('close-button 窗口已关闭');
       this.window = null;
     });
 
     // 防止窗口获得焦点
     this.window.on('focus', () => {
-      console.log('close-button 意外获得焦点，立即模糊');
+      logger.info('close-button 意外获得焦点，立即模糊');
       if (this.window) {
         this.window.blur();
       }
@@ -140,7 +141,7 @@ export class CloseButtonWindow {
     // 监听点击事件
     this.window.webContents.on('before-input-event', (_event, input) => {
       if (input.type === 'mouseDown') {
-        console.log('close-button 被点击');
+        logger.info('close-button 被点击');
         // 发送点击事件到渲染进程
         this.window?.webContents.send('button-clicked');
       }
@@ -153,7 +154,7 @@ export class CloseButtonWindow {
   public show(): void {
     if (this.window && !this.window.isDestroyed()) {
       this.window.showInactive(); // 显示但不激活（不获得焦点）
-      console.log('close-button 窗口已显示');
+      logger.info('close-button 窗口已显示');
 
       // 确保窗口在最顶层
       this.window.setAlwaysOnTop(true, 'floating');
@@ -166,7 +167,7 @@ export class CloseButtonWindow {
   public hide(): void {
     if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
       this.window.hide();
-      console.log('close-button 窗口已隐藏');
+      logger.info('close-button 窗口已隐藏');
     }
   }
 
@@ -183,7 +184,7 @@ export class CloseButtonWindow {
   public setPosition(x: number, y: number): void {
     if (this.window && !this.window.isDestroyed()) {
       this.window.setPosition(x, y);
-      console.log(`close-button 窗口位置已更新: (${x}, ${y})`);
+      logger.info(`close-button 窗口位置已更新: (${x}, ${y})`);
     }
   }
 
@@ -250,7 +251,7 @@ export class CloseButtonWindow {
    */
   public destroy(): void {
     if (this.window && !this.window.isDestroyed()) {
-      console.log('销毁 close-button 窗口');
+      logger.info('销毁 close-button 窗口');
       this.window.destroy();
       this.window = null;
     }

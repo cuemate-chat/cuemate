@@ -1,5 +1,6 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
+import { logger } from '../../utils/logger.js';
 import { getWindowIconPath } from '../utils/paths.js';
 
 /**
@@ -10,21 +11,21 @@ export class MainContentWindow {
   private window: BrowserWindow | null = null;
   private isDevelopment: boolean;
   private lastBounds: Electron.Rectangle | null = null;
-  
+
   private readonly config: WindowConfig = {
     id: 'main-content',
     label: 'main-content',
     width: 1200,
     height: 800,
-    alwaysOnTop: false,  // 主内容窗口不需要总是置顶
-    frame: true,         // 有标题栏和边框
-    transparent: false,  // 不透明
-    skipTaskbar: false,  // 在任务栏显示
-    resizable: true,     // 可调整大小
+    alwaysOnTop: false, // 主内容窗口不需要总是置顶
+    frame: true, // 有标题栏和边框
+    transparent: false, // 不透明
+    skipTaskbar: false, // 在任务栏显示
+    resizable: true, // 可调整大小
     minimizable: true,
     maximizable: true,
-    closable: true,      // 可关闭（但会被阻止并改为隐藏）
-    focusable: true,     // 允许获得焦点，以便用户可以输入内容
+    closable: true, // 可关闭（但会被阻止并改为隐藏）
+    focusable: true, // 允许获得焦点，以便用户可以输入内容
     show: false,
     center: true,
   };
@@ -38,17 +39,22 @@ export class MainContentWindow {
    */
   public async create(): Promise<void> {
     if (this.window) {
-      console.log('main-content 窗口已存在，跳过创建');
+      logger.info('main-content 窗口已存在，跳过创建');
       return;
     }
 
-    console.log('创建 main-content 主内容窗口');
+    logger.info('创建 main-content 主内容窗口');
 
     try {
       // 获取主显示器信息来计算初始位置
       const primaryDisplay = screen.getPrimaryDisplay();
-      const { x: displayX, y: displayY, width: screenWidth, height: screenHeight } = primaryDisplay.workArea;
-      
+      const {
+        x: displayX,
+        y: displayY,
+        width: screenWidth,
+        height: screenHeight,
+      } = primaryDisplay.workArea;
+
       // 在主屏幕居中显示
       const initialX = displayX + Math.floor((screenWidth - this.config.width) / 2);
       const initialY = displayY + Math.floor((screenHeight - this.config.height) / 2);
@@ -76,7 +82,7 @@ export class MainContentWindow {
           contextIsolation: true,
           webSecurity: !this.isDevelopment,
           // main-content 窗口加载外部 web 应用，不需要预加载脚本
-        }
+        },
       });
 
       // 设置最小尺寸
@@ -84,7 +90,7 @@ export class MainContentWindow {
 
       // 加载页面 - 直接加载您的 Docker web 应用
       await this.window.loadURL('http://localhost:80');
-      
+
       // 开发模式下打开开发者工具
       if (this.isDevelopment) {
         this.window.webContents.openDevTools();
@@ -93,11 +99,10 @@ export class MainContentWindow {
       // 设置窗口事件监听
       this.setupEvents();
 
-      console.log('main-content 主内容窗口创建成功');
-      console.log(`窗口位置: (${initialX}, ${initialY})`);
-
+      logger.info('main-content 主内容窗口创建成功');
+      logger.info(`窗口位置: (${initialX}, ${initialY})`);
     } catch (error) {
-      console.error('创建 main-content 窗口失败:', error);
+      logger.error({ error }, '创建 main-content 窗口失败');
       throw error;
     }
   }
@@ -110,37 +115,37 @@ export class MainContentWindow {
 
     // 窗口准备显示
     this.window.on('ready-to-show', () => {
-      console.log('main-content 窗口准备就绪');
+      logger.info('main-content 窗口准备就绪');
     });
 
     // 窗口显示时
     this.window.on('show', () => {
-      console.log('main-content 窗口已显示');
+      logger.info('main-content 窗口已显示');
     });
 
     // 窗口隐藏时
     this.window.on('hide', () => {
-      console.log('main-content 窗口已隐藏');
+      logger.info('main-content 窗口已隐藏');
     });
 
     // 窗口获得焦点时（应该立即转移到主焦点窗口）
     this.window.on('focus', () => {
-      console.log('main-content 获得焦点（将转移到主焦点）');
+      logger.info('main-content 获得焦点（将转移到主焦点）');
     });
 
     // 窗口失去焦点
     this.window.on('blur', () => {
-      console.log('main-content 失去焦点');
+      logger.info('main-content 失去焦点');
     });
 
     // 窗口尺寸改变
     this.window.on('resized', () => {
       const bounds = this.window!.getBounds();
-      console.log(`main-content 窗口尺寸已改变: ${bounds.width}x${bounds.height}`);
-      
+      logger.info(`main-content 窗口尺寸已改变: ${bounds.width}x${bounds.height}`);
+
       // 保存窗口状态
       this.lastBounds = bounds;
-      
+
       // 通知渲染进程窗口尺寸变化
       this.window!.webContents.send('window-resized', bounds);
     });
@@ -148,70 +153,70 @@ export class MainContentWindow {
     // 窗口移动
     this.window.on('moved', () => {
       const bounds = this.window!.getBounds();
-      console.log(`main-content 窗口位置已改变: (${bounds.x}, ${bounds.y})`);
-      
+      logger.info(`main-content 窗口位置已改变: (${bounds.x}, ${bounds.y})`);
+
       // 保存窗口状态
       this.lastBounds = bounds;
-      
+
       // 通知渲染进程窗口位置变化
       this.window!.webContents.send('window-moved', bounds);
     });
 
     // 窗口最小化
     this.window.on('minimize', () => {
-      console.log('main-content 窗口已最小化');
+      logger.info('main-content 窗口已最小化');
     });
 
     // 窗口从最小化恢复
     this.window.on('restore', () => {
-      console.log('main-content 窗口已恢复');
+      logger.info('main-content 窗口已恢复');
     });
 
     // 窗口最大化
     this.window.on('maximize', () => {
-      console.log('main-content 窗口已最大化');
+      logger.info('main-content 窗口已最大化');
       this.window!.webContents.send('window-maximized', true);
     });
 
     // 窗口取消最大化
     this.window.on('unmaximize', () => {
-      console.log('main-content 窗口取消最大化');
+      logger.info('main-content 窗口取消最大化');
       this.window!.webContents.send('window-maximized', false);
     });
 
     // 阻止窗口关闭，改为隐藏
     this.window.on('close', (event) => {
-      console.log('main-content 窗口尝试关闭，改为隐藏');
+      logger.info('main-content 窗口尝试关闭，改为隐藏');
       event.preventDefault();
       this.hide();
     });
 
     // 窗口已关闭（实际销毁时）
     this.window.on('closed', () => {
-      console.log('main-content 窗口已关闭');
+      logger.info('main-content 窗口已关闭');
       this.window = null;
       this.lastBounds = null;
     });
 
     // 页面加载完成
     this.window.webContents.on('did-finish-load', () => {
-      console.log('main-content 页面加载完成');
+      logger.info('main-content 页面加载完成');
     });
 
     // 处理页面崩溃
     this.window.webContents.on('crashed', () => {
-      console.error('main-content 页面崩溃');
+      logger.error('main-content 页面崩溃');
       // 可以在这里添加崩溃恢复逻辑
     });
 
     // 处理未响应
     this.window.on('unresponsive', () => {
-      console.warn('main-content 窗口无响应');
+      logger.warn('main-content 窗口无响应');
     });
 
     // 恢复响应
     this.window.on('responsive', () => {
-      console.log('main-content 窗口恢复响应');
+      logger.info('main-content 窗口恢复响应');
     });
   }
 
@@ -224,14 +229,14 @@ export class MainContentWindow {
       if (this.window.isMinimized()) {
         this.window.restore();
       }
-      
+
       // 恢复上次的窗口位置和大小
       if (this.lastBounds) {
         this.window.setBounds(this.lastBounds);
       }
-      
-      this.window.show();  // 显示并激活窗口，允许键盘输入
-      console.log('main-content 窗口已显示');
+
+      this.window.show(); // 显示并激活窗口，允许键盘输入
+      logger.info('main-content 窗口已显示');
     }
   }
 
@@ -242,9 +247,9 @@ export class MainContentWindow {
     if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
       // 保存当前窗口状态
       this.lastBounds = this.window.getBounds();
-      
+
       this.window.hide();
-      console.log('main-content 窗口已隐藏');
+      logger.info('main-content 窗口已隐藏');
     }
   }
 
@@ -272,7 +277,7 @@ export class MainContentWindow {
   public center(): void {
     if (this.window && !this.window.isDestroyed()) {
       this.window.center();
-      console.log('main-content 窗口已居中');
+      logger.info('main-content 窗口已居中');
     }
   }
 
@@ -353,7 +358,7 @@ export class MainContentWindow {
    */
   public destroy(): void {
     if (this.window && !this.window.isDestroyed()) {
-      console.log('销毁 main-content 窗口');
+      logger.info('销毁 main-content 窗口');
       this.window.destroy();
       this.window = null;
       this.lastBounds = null;

@@ -16,10 +16,17 @@ const buildConfig = {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
   },
   external: ['electron'],
+  alias: {
+    'node:fs': 'fs',
+    'node:path': 'path',
+    'node:os': 'os',
+    'node:url': 'url',
+  },
 };
 
 // 构建主进程
 async function buildMain(watchMode = false) {
+  // 构建脚本中保留 console.log，因为这是构建工具
   console.log('构建主进程...');
   
   try {
