@@ -24,7 +24,7 @@ export class MainContentWindow {
     minimizable: true,
     maximizable: true,
     closable: true,      // 可关闭（但会被阻止并改为隐藏）
-    focusable: false,    // 不自动获得焦点，保持主焦点窗口的焦点管理
+    focusable: true,     // 允许获得焦点，以便用户可以输入内容
     show: false,
     center: true,
   };
@@ -230,7 +230,7 @@ export class MainContentWindow {
         this.window.setBounds(this.lastBounds);
       }
       
-      this.window.showInactive();  // 显示但不激活
+      this.window.show();  // 显示并激活窗口，允许键盘输入
       console.log('main-content 窗口已显示');
     }
   }

@@ -50,9 +50,9 @@ export class ControlBarWindow {
       const primaryDisplay = screen.getPrimaryDisplay();
       const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea;
 
-      // 初始位置：在主屏幕水平居中，距离顶部 30 像素
+      // 初始位置：在主屏幕水平居中，距离顶部 10 像素
       const initialX = displayX + Math.floor((screenWidth - this.config.width) / 2);
-      const initialY = displayY + 20;
+      const initialY = displayY + 10;
 
       this.window = new BrowserWindow({
         width: this.config.width,
@@ -123,7 +123,7 @@ export class ControlBarWindow {
     this.window.on('will-move', () => {
       this.isMoving = true;
       this.moveStartTime = Date.now();
-      console.log('🔄 control-bar 窗口开始移动');
+      console.log('control-bar 窗口开始移动');
     });
 
     // 窗口移动完成
@@ -200,7 +200,7 @@ export class ControlBarWindow {
   public setPosition(x: number, y: number): void {
     if (this.window && !this.window.isDestroyed()) {
       this.window.setPosition(x, y);
-      console.log(`📍 control-bar 窗口位置已更新: (${x}, ${y})`);
+      console.log(`control-bar 窗口位置已更新: (${x}, ${y})`);
     }
   }
 

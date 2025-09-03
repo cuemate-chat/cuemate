@@ -12,6 +12,7 @@ export default defineConfig({
     host: 'localhost',
     cors: true,
     open: false, // Electron 会自动打开窗口
+    strictPort: true, // 如果端口被占用则直接报错，不自动尝试下一个端口
   },
 
   // 构建配置
@@ -78,7 +79,7 @@ export default defineConfig({
   define: {
     // 在渲染进程中定义全局变量
     __IS_DEV__: process.env.NODE_ENV === 'development',
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '0.1.0'),
   },
 
   // 优化配置

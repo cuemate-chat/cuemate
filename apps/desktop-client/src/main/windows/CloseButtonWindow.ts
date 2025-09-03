@@ -9,12 +9,12 @@ import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/pat
 export class CloseButtonWindow {
   private window: BrowserWindow | null = null;
   private isDevelopment: boolean;
-  
+
   private readonly config: WindowConfig = {
     id: 'close-button',
     label: 'close-button',
-    width: 32,
-    height: 32,
+    width: 400,
+    height: 50,
     alwaysOnTop: true,
     frame: false,
     transparent: true,
@@ -23,7 +23,7 @@ export class CloseButtonWindow {
     minimizable: false,
     maximizable: false,
     closable: false,
-    focusable: false,  // 不获取焦点
+    focusable: false, // 不获取焦点
     show: false,
   };
 
@@ -47,10 +47,10 @@ export class CloseButtonWindow {
       const primaryDisplay = screen.getPrimaryDisplay();
       const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea;
 
-      // 初始位置：在控制条窗口右侧，距离顶部 20 像素
+      // 初始位置：在控制条窗口右侧，距离顶部 10 像素
       // 假设控制条窗口宽度为 360px，在右侧留出 10px 间距
       const initialX = displayX + Math.floor((screenWidth - 360) / 2) + 360 + 10;
-      const initialY = displayY + 20;
+      const initialY = displayY + 10;
 
       this.window = new BrowserWindow({
         width: this.config.width,
@@ -72,8 +72,8 @@ export class CloseButtonWindow {
           nodeIntegration: false,
           contextIsolation: true,
           webSecurity: !this.isDevelopment, // 恢复原逻辑，开发模式禁用 webSecurity
-          preload: getPreloadPath('closeButton')
-        }
+          preload: getPreloadPath('closeButton'),
+        },
       });
 
       // 加载页面
@@ -88,7 +88,6 @@ export class CloseButtonWindow {
 
       console.log('close-button 关闭按钮窗口创建成功');
       console.log(`窗口位置: (${initialX}, ${initialY})`);
-
     } catch (error) {
       console.error('创建 close-button 窗口失败:', error);
       throw error;
@@ -153,9 +152,9 @@ export class CloseButtonWindow {
    */
   public show(): void {
     if (this.window && !this.window.isDestroyed()) {
-      this.window.showInactive();  // 显示但不激活（不获得焦点）
+      this.window.showInactive(); // 显示但不激活（不获得焦点）
       console.log('close-button 窗口已显示');
-      
+
       // 确保窗口在最顶层
       this.window.setAlwaysOnTop(true, 'floating');
     }
