@@ -124,6 +124,13 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
       className="floating-close-button-container"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      style={{
+        // 确保容器能接收鼠标事件，即使内容透明
+        backgroundColor: 'rgba(0,0,0,0.01)', // 几乎透明但能接收事件
+        minHeight: '42px',
+        width: '100%',
+        pointerEvents: 'auto', // 明确设置能接收鼠标事件
+      }}
     >
       <Tooltip.Provider>
         <Tooltip.Root delayDuration={0}>

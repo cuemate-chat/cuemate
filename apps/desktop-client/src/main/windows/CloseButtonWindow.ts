@@ -84,6 +84,9 @@ export class CloseButtonWindow {
         await this.window.loadFile(getRendererPath('close-button'));
       }
 
+      // 关键：默认不忽略鼠标事件，让透明区域也能接收鼠标事件
+      this.window.setIgnoreMouseEvents(false);
+
       // 设置窗口事件监听
       this.setupEvents();
 
