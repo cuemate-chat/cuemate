@@ -141,7 +141,14 @@ export async function request<T = any>(path: string, init: RequestInit = {}): Pr
       if (response.status === 401) {
         storage.clearToken();
         storage.clearUser();
-        window.location.href = '/login';
+
+        // 登录页或登录接口不进行整页跳转，交由页面自行展示错误
+        const isOnLoginPage =
+          typeof window !== 'undefined' && window.location.pathname.startsWith('/login');
+        const isSigninRequest = path.includes('/auth/signin');
+        if (!isOnLoginPage && !isSigninRequest) {
+          window.location.href = '/login';
+        }
         return Promise.reject(error);
       }
 

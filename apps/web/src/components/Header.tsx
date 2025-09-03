@@ -9,12 +9,13 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '../assets/logo-background.png';
 import UserMenu from './UserMenu';
 
 export default function Header() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getActiveKey = (): string | null => {
@@ -54,6 +55,29 @@ export default function Header() {
     { to: '/help', icon: QuestionMarkCircleIcon, label: '帮助中心' },
   ];
 
+  // 判断是否运行在 Electron 容器
+  const isElectron = () => {
+    return (
+      (typeof navigator !== 'undefined' && /Electron/i.test(navigator.userAgent)) ||
+      (typeof window !== 'undefined' && (window as any).process?.versions?.electron)
+    );
+  };
+
+  // 客户端中为“帮助中心”采用外部浏览器打开逻辑
+  const handleHelpClick = (e: React.MouseEvent) => {
+    if (isElectron()) {
+      e.preventDefault();
+      // 在客户端中使用外部浏览器打开帮助页面
+      const helpUrl = 'https://cuemate.chat'; // 替换为实际的帮助页面地址
+      if (typeof window !== 'undefined' && (window as any).electronAPI?.openExternal) {
+        (window as any).electronAPI.openExternal(helpUrl);
+      } else {
+        // 降级方案：直接使用 window.open
+        window.open(helpUrl, '_blank');
+      }
+    }
+  };
+
   return (
     <>
       <header className="h-14 px-3 sm:px-6 flex items-center justify-between border-b border-slate-200 bg-[#e5eefc] text-[#3b82f6] sticky top-0 z-[2000]">
@@ -66,7 +90,7 @@ export default function Header() {
         <nav className="hidden lg:flex items-center justify-center flex-1 max-w-4xl mx-4">
           <div className="flex items-center gap-2 xl:gap-4">
             {navigationItems.map(({ to, icon: Icon, label }) => (
-              <Link key={to} to={to} className={desktopLinkCls(to)}>
+              <Link key={to} to={to} className={desktopLinkCls(to)} onClick={to === '/help' ? handleHelpClick : undefined}>
                 <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 <span className="hidden sm:inline">{label}</span>
               </Link>
@@ -82,6 +106,7 @@ export default function Header() {
                 key={to} 
                 to={to} 
                 className={desktopLinkCls(to)}
+                onClick={to === '/help' ? handleHelpClick : undefined}
                 title={label}
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
@@ -117,7 +142,10 @@ export default function Header() {
                 key={to}
                 to={to}
                 className={mobileLinkCls(to)}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={(e) => {
+                  if (to === '/help') handleHelpClick(e);
+                  setMobileMenuOpen(false);
+                }}
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
                 <span>{label}</span>

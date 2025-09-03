@@ -100,12 +100,12 @@ export const PAGINATION = {
 
 // 表单验证规则
 export const VALIDATION = {
-  PASSWORD_MIN_LENGTH: 8,
+  PASSWORD_MIN_LENGTH: 6,
   PASSWORD_MAX_LENGTH: 128,
   USERNAME_MIN_LENGTH: 3,
   USERNAME_MAX_LENGTH: 32,
   EMAIL_PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  PASSWORD_PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/,
+  PASSWORD_PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$/,
 } as const;
 
 // 文件上传配置
