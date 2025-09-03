@@ -1,12 +1,10 @@
 import type { AppState } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
-import { CloseButtonWindow } from './CloseButtonWindow.js';
 import { ControlBarWindow } from './ControlBarWindow.js';
 import { MainContentWindow } from './MainContentWindow.js';
 
 export class WindowManager {
   private controlBarWindow: ControlBarWindow;
-  private closeButtonWindow: CloseButtonWindow;
   private mainContentWindow: MainContentWindow;
   private isDevelopment: boolean;
   private appState: AppState;
@@ -17,13 +15,12 @@ export class WindowManager {
     // 初始化应用状态
     this.appState = {
       isControlBarVisible: true,
-      isCloseButtonVisible: false,
+      isCloseButtonVisible: false, // 保留状态字段以兼容现有代码
       isMainContentVisible: false,
     };
 
-    // 创建窗口实例 - control-bar 现在作为主焦点窗口
+    // 创建窗口实例 - control-bar 现在作为主焦点窗口，关闭按钮已集成
     this.controlBarWindow = new ControlBarWindow(this.isDevelopment);
-    this.closeButtonWindow = new CloseButtonWindow(this.isDevelopment);
     this.mainContentWindow = new MainContentWindow(this.isDevelopment);
   }
 
@@ -38,16 +35,13 @@ export class WindowManager {
       await this.controlBarWindow.create();
       logger.info('control-bar 控制条窗口已创建（作为主焦点窗口）');
 
-      // 2. 创建关闭按钮窗口（初始隐藏）
-      await this.closeButtonWindow.create();
-      logger.info('close-button 关闭按钮窗口已创建');
+      // 关闭按钮已集成到控制条窗口中，无需单独创建
 
       // 3. 创建主内容窗口（初始隐藏）
       await this.mainContentWindow.create();
       logger.info('main-content 主内容窗口已创建');
 
-      // 5. 设置窗口位置关系
-      this.updateCloseButtonPosition();
+      // 关闭按钮已集成到控制条窗口中，无需设置位置关系
 
       // 6. 设置窗口事件监听
       this.setupWindowEvents();
@@ -74,19 +68,11 @@ export class WindowManager {
       });
 
       controlBarWindow.on('move', () => {
-        // 当控制条移动时，更新关闭按钮位置
-        this.updateCloseButtonPosition();
+        // 关闭按钮已集成到控制条窗口中，无需单独更新位置
       });
     }
 
-    // 监听关闭按钮窗口事件
-    const closeButtonWindow = this.closeButtonWindow.getBrowserWindow();
-    if (closeButtonWindow) {
-      closeButtonWindow.on('focus', () => {
-        logger.info('close-button 获得焦点，立即恢复到主焦点');
-        setTimeout(() => this.ensureMainFocus(), 0);
-      });
-    }
+    // 关闭按钮已集成到控制条窗口中，无需单独监听
 
     // 监听主内容窗口事件
     const mainContentWindow = this.mainContentWindow.getBrowserWindow();
@@ -115,23 +101,6 @@ export class WindowManager {
     }
   }
 
-  /**
-   * 更新关闭按钮位置（跟随控制条）
-   */
-  private updateCloseButtonPosition(): void {
-    const controlBarWindow = this.controlBarWindow.getBrowserWindow();
-    const closeButtonWindow = this.closeButtonWindow.getBrowserWindow();
-
-    if (controlBarWindow && closeButtonWindow) {
-      const controlBarBounds = controlBarWindow.getBounds();
-
-      // 计算关闭按钮位置（控制条右侧，顶部对齐）
-      const newX = controlBarBounds.x + controlBarBounds.width;
-      const newY = controlBarBounds.y; // 顶部对齐，不使用垂直居中
-
-      closeButtonWindow.setPosition(newX, newY);
-    }
-  }
 
   /**
    * 确保焦点在主焦点窗口上（现在是 control-bar）
@@ -150,10 +119,8 @@ export class WindowManager {
     this.controlBarWindow.show();
     this.appState.isControlBarVisible = true;
 
-    // 同时显示关闭按钮窗口
-    this.closeButtonWindow.show();
-    this.appState.isCloseButtonVisible = true;
-    this.closeButtonWindow.sendToRenderer('toggle-close-button', true);
+    // 关闭按钮已集成到控制条窗口中，无需单独显示
+    this.appState.isCloseButtonVisible = true; // 保持状态一致性
 
     // 初始时确保焦点在 control-bar
     setTimeout(() => this.ensureMainFocus(), 100);
@@ -166,7 +133,7 @@ export class WindowManager {
     logger.info('隐藏浮动窗口');
 
     this.controlBarWindow.hide();
-    this.closeButtonWindow.hide();
+    // 关闭按钮已集成到控制条窗口中，会一同隐藏
 
     this.appState.isControlBarVisible = false;
     this.appState.isCloseButtonVisible = false;
@@ -187,30 +154,21 @@ export class WindowManager {
   }
 
   /**
-   * 显示关闭按钮
+   * 显示关闭按钮 - 现在由集成的控制条组件处理
    */
   public showCloseButton(): void {
-    if (!this.appState.isCloseButtonVisible) {
-      this.updateCloseButtonPosition();
-      this.closeButtonWindow.show();
-      // 通知渲染进程更新显示状态
-      this.closeButtonWindow.sendToRenderer('toggle-close-button', true);
-      this.appState.isCloseButtonVisible = true;
-      logger.info('关闭按钮已显示');
-    }
+    // 关闭按钮现在集成在控制条窗口中，由组件内部状态管理
+    this.appState.isCloseButtonVisible = true;
+    logger.info('关闭按钮显示状态更新（已集成到控制条）');
   }
 
   /**
-   * 隐藏关闭按钮
+   * 隐藏关闭按钮 - 现在由集成的控制条组件处理
    */
   public hideCloseButton(): void {
-    if (this.appState.isCloseButtonVisible) {
-      // 通知渲染进程更新显示状态
-      this.closeButtonWindow.sendToRenderer('toggle-close-button', false);
-      this.closeButtonWindow.hide();
-      this.appState.isCloseButtonVisible = false;
-      logger.info('关闭按钮已隐藏');
-    }
+    // 关闭按钮现在集成在控制条窗口中，由组件内部状态管理
+    this.appState.isCloseButtonVisible = false;
+    logger.info('关闭按钮隐藏状态更新（已集成到控制条）');
   }
 
   /**
@@ -269,7 +227,7 @@ export class WindowManager {
     logger.info('销毁窗口管理器');
 
     this.controlBarWindow.destroy();
-    this.closeButtonWindow.destroy();
     this.mainContentWindow.destroy();
+    // 关闭按钮已集成到控制条窗口中，会一同销毁
   }
 }

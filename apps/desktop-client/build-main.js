@@ -90,10 +90,7 @@ async function buildPreloadScripts(watchMode = false) {
       entry: resolve(__dirname, 'src/main/preload/controlBar.ts'),
       output: resolve(__dirname, 'dist/main/preload/controlBar.js'),
     },
-    {
-      entry: resolve(__dirname, 'src/main/preload/closeButton.ts'),
-      output: resolve(__dirname, 'dist/main/preload/closeButton.js'),
-    },
+    // closeButton 预加载脚本已删除，关闭按钮已集成到控制条中
     // main-content 窗口直接加载 localhost:80，不需要预加载脚本
   ];
 

@@ -3,7 +3,7 @@
 /* 应用容器 */
 .app-container {
   position: relative;
-  width: 360px;
+  width: 1000px;
   height: 100px;
   z-index: 9999;
   user-select: none;
@@ -20,7 +20,7 @@
 /* 悬浮控制栏样式 - NSPanel 窗口 */
 .floating-control-bar {
   position: relative;
-  width: 360px;
+  width: 360px; /* 保持原有宽度，关闭按钮独立在外 */
   height: 42px;
   pointer-events: auto; /* 恢复：让 NSPanel 能接收鼠标事件 */
   cursor: pointer;  /* 添加小手光标 */
@@ -39,47 +39,6 @@
 .floating-control-bar:hover {
   background: rgba(30, 30, 30, 0.6);
   border-color: rgba(255, 255, 255, 0.15);
-}
-
-/* 独立关闭按钮容器 */
-.app-container-close {
-  position: relative;
-  width: 400px;
-  height: 42px;
-  z-index: 9999;
-  user-select: none;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  pointer-events: auto;
-  border-radius: 25px;
-}
-
-/* 关闭按钮容器 - 用于定位关闭按钮和其 tooltip */
-.floating-close-button-container {
-  position: relative;
-  width: 100%;
-  height: 42px;
-  display: flex;
-  align-items: center;  /* 改为 center，让按钮垂直居中 */
-  justify-content: flex-start;
-  gap: 10px;
-  z-index: 100001;
-  padding: 0;
-}
-
-/* 关闭按钮提示文字 */
-.close-button-tooltip {
-  background: rgba(30, 30, 30, 0.9);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  white-space: nowrap;
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Logo 区域 */
@@ -108,56 +67,24 @@
 }
 
 .logo-image {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(59, 130, 246, 0.3);
-}
-
-.logo-circle {
-  width: 24px;
-  height: 24px;
-  background: #3b82f6;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* Logo 图片样式 */
-.logo-image {
   width: 28px;
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
   cursor: pointer;
   transition: all 0.2s ease;
+  border: 2px solid rgba(59, 130, 246, 0.3);
 }
 
 .logo-image:hover {
   transform: scale(1.05);
 }
 
-/* Logo 区域悬停效果 */
-.logo-section {
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.logo-section:hover {
-  opacity: 0.8;
-}
-
 /* 欢迎文字 */
 .welcome-text {
   flex: 1;
   color: white;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   text-align: center;
   letter-spacing: 0.5px;
@@ -188,25 +115,6 @@
   opacity: 0.8;
 }
 
-.floating-overlay-btn.active {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: rgba(34, 197, 94, 0.4);
-  color: #4ade80;
-}
-
-.floating-overlay-btn.active:hover {
-  background: rgba(34, 197, 94, 0.3);
-  border-color: rgba(34, 197, 94, 0.5);
-}
-
-/* 关闭按钮区域 */
-.close-button-area {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-width: 32px;
-  height: 32px;
-}
 
 /* 关闭按钮 */
 .close-floating-btn-separate {
@@ -338,28 +246,37 @@
   text-align: center;
 }
 
+/* 浮动控制栏容器 */
+.floating-control-bar-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 1000px;
+}
+
+/* 关闭按钮区域 */
+.floating-close-button-area {
+  position: absolute;
+  right: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 42px;
+  background-color: rgba(0,0,0,0.01);
+  pointer-events: auto;
+}
+
 /* 响应式设计 */
 @media (max-width: 480px) {
-  .simple-floating-bar {
-    width: 350px;
-    height: 40px;
-    padding: 0 16px;
-    gap: 16px;
-  }
-  
   .welcome-text {
-    font-size: 14px;
+    font-size: 12px;
   }
   
   .logo-icon {
     width: 24px;
     height: 24px;
-  }
-  
-  .logo-circle {
-    width: 20px;
-    height: 20px;
-    font-size: 12px;
   }
   
   .close-floating-btn-separate,

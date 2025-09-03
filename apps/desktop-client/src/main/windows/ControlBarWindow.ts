@@ -16,7 +16,7 @@ export class ControlBarWindow {
   private readonly config: WindowConfig = {
     id: 'control-bar',
     label: 'control-bar',
-    width: 360,
+    width: 1000,
     height: 100,
     alwaysOnTop: true,
     frame: false,

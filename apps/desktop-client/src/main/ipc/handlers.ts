@@ -55,29 +55,31 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   /**
-   * 显示关闭按钮
+   * 显示关闭按钮 - 已集成到控制条组件中
    */
   ipcMain.handle('show-close-button', async () => {
     try {
+      // 关闭按钮现在由控制条组件内部管理，保留接口以兼容
       windowManager.showCloseButton();
-      logger.info('IPC: 显示关闭按钮命令已执行');
+      logger.info('IPC: 显示关闭按钮状态已更新（已集成到控制条）');
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 显示关闭按钮失败');
+      logger.error({ error }, 'IPC: 显示关闭按钮状态更新失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 
   /**
-   * 隐藏关闭按钮
+   * 隐藏关闭按钮 - 已集成到控制条组件中
    */
   ipcMain.handle('hide-close-button', async () => {
     try {
+      // 关闭按钮现在由控制条组件内部管理，保留接口以兼容
       windowManager.hideCloseButton();
-      logger.info('IPC: 隐藏关闭按钮命令已执行');
+      logger.info('IPC: 隐藏关闭按钮状态已更新（已集成到控制条）');
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 隐藏关闭按钮失败');
+      logger.error({ error }, 'IPC: 隐藏关闭按钮状态更新失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -296,41 +298,7 @@ export function setupIPC(windowManager: WindowManager): void {
   // === 鼠标和键盘事件相关 IPC 处理器 ===
 
   /**
-   * 处理控制条鼠标进入事件
-   */
-  ipcMain.handle('control-bar-mouse-enter', async () => {
-    try {
-      // 延迟显示关闭按钮，避免误触
-      setTimeout(() => {
-        windowManager.showCloseButton();
-      }, 300);
-      logger.info('IPC: 控制条鼠标进入事件已处理');
-      return { success: true };
-    } catch (error) {
-      logger.error({ error }, 'IPC: 控制条鼠标进入事件处理失败');
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  });
-
-  /**
-   * 处理控制条鼠标离开事件
-   */
-  ipcMain.handle('control-bar-mouse-leave', async () => {
-    try {
-      // 延迟隐藏关闭按钮，给用户时间点击
-      setTimeout(() => {
-        windowManager.hideCloseButton();
-      }, 1000);
-      logger.info('IPC: 控制条鼠标离开事件已处理');
-      return { success: true };
-    } catch (error) {
-      logger.error({ error }, 'IPC: 控制条鼠标离开事件处理失败');
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  });
-
-  /**
-   * 处理关闭按钮点击事件
+   * 处理关闭按钮点击事件 - 现在由集成的控制条组件处理
    */
   ipcMain.handle('close-button-clicked', async () => {
     try {
@@ -343,6 +311,8 @@ export function setupIPC(windowManager: WindowManager): void {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
+
+  // 移除了单独的控制条鼠标事件处理，现在由集成的组件内部处理
 
   // === 开发工具相关 IPC 处理器 ===
 
