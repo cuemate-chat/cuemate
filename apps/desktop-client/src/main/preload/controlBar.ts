@@ -53,6 +53,7 @@ const controlBarAPI = {
       'position-changed',
       'app-state-changed',
       'shortcut-triggered',
+      'login-status-changed', // 添加登录状态变化事件
     ];
 
     if (allowedChannels.includes(channel)) {

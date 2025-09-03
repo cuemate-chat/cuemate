@@ -1,3 +1,4 @@
+import type { BrowserWindow } from 'electron';
 import type { AppState } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
 import { ControlBarWindow } from './ControlBarWindow.js';
@@ -100,7 +101,6 @@ export class WindowManager {
       });
     }
   }
-
 
   /**
    * 确保焦点在主焦点窗口上（现在是 control-bar）
@@ -218,6 +218,13 @@ export class WindowManager {
    */
   public getAppState(): AppState {
     return { ...this.appState };
+  }
+
+  /**
+   * 获取控制条窗口实例
+   */
+  public getControlBarWindow(): BrowserWindow | null {
+    return this.controlBarWindow.getBrowserWindow();
   }
 
   /**

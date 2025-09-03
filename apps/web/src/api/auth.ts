@@ -8,6 +8,34 @@ import type {
 } from '../types';
 import { http, storage } from './http';
 
+// 默认用户表单数据
+export const defaultUserForm = {
+  id: '',
+  name: '',
+  email: '',
+  created_at: 0,
+  theme: 'system' as 'light' | 'dark' | 'system',
+  locale: 'zh-CN',
+  version: 'v0.1.0',
+  timezone: 'Asia/Shanghai',
+  selected_model_id: '',
+};
+
+// 将用户数据转换为表单数据
+export function userToFormData(user: any) {
+  return {
+    id: user.id,
+    name: user.name || '',
+    email: user.email || '',
+    created_at: user.created_at || 0,
+    theme: (user.theme || 'system') as 'light' | 'dark' | 'system',
+    locale: user.locale || 'zh-CN',
+    version: 'v0.1.0',
+    timezone: user.timezone || 'Asia/Shanghai',
+    selected_model_id: user.selected_model_id || '',
+  };
+}
+
 export async function signin(account: string, password: string): Promise<LoginResponse> {
   const request: LoginRequest = { account, password };
   const response = await http.post<LoginResponse>('/auth/signin', request);
@@ -23,6 +51,15 @@ export async function signin(account: string, password: string): Promise<LoginRe
     }
   } catch (error) {
     message.error('获取 license 信息失败:' + error);
+  }
+
+  // 通知桌面应用登录状态已变化
+  try {
+    if ((window as any).electronAPI && (window as any).electronAPI.notifyLoginStatusChanged) {
+      await (window as any).electronAPI.notifyLoginStatusChanged(true, response.user);
+    }
+  } catch (error) {
+    console.warn('通知桌面应用登录状态变化失败:', error);
   }
 
   return response;

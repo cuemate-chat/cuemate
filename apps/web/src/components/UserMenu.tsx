@@ -158,6 +158,16 @@ export default function UserMenu() {
     storage.clearUser();
     message.success('已退出登录');
     setOpen(false);
+    
+    // 通知桌面应用登录状态已变化
+    try {
+      if ((window as any).electronAPI && (window as any).electronAPI.notifyLoginStatusChanged) {
+        await (window as any).electronAPI.notifyLoginStatusChanged(false);
+      }
+    } catch (error) {
+      console.warn('通知桌面应用登录状态变化失败:', error);
+    }
+    
     navigate('/login', { replace: true });
   };
 

@@ -312,6 +312,27 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   /**
+   * 通知登录状态变化
+   */
+  ipcMain.handle('notify-login-status-changed', async (_event, isLoggedIn: boolean, user?: any) => {
+    try {
+      logger.info({ isLoggedIn, user }, 'IPC: 通知登录状态变化');
+
+      // 向控制条窗口发送登录状态变化事件
+      const controlBarWindow = windowManager.getControlBarWindow();
+      if (controlBarWindow && !controlBarWindow.isDestroyed()) {
+        controlBarWindow.webContents.send('login-status-changed', { isLoggedIn, user });
+        logger.info('IPC: 已向控制条窗口发送登录状态变化事件');
+      }
+
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 通知登录状态变化失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
    * 前端日志处理
    */
   ipcMain.handle('frontend-log', async (_event, logMessage: FrontendLogMessage) => {

@@ -13,44 +13,25 @@ import {
 import { Select as AntSelect } from 'antd';
 import 'antd/dist/reset.css';
 import { useEffect, useState } from 'react';
-import { changePassword, fetchMe, updateMe } from '../api/auth';
+import { changePassword, defaultUserForm, fetchMe, updateMe, userToFormData } from '../api/auth';
 import { storage } from '../api/http';
 import { listModels } from '../api/models';
 import { message } from '../components/Message';
 
-type Theme = 'light' | 'dark' | 'system';
-
 export default function Settings() {
-  const [form, setForm] = useState({
-    id: '',
-    name: '',
-    email: '',
-    created_at: 0,
-    theme: 'system' as Theme,
-    locale: 'zh-CN',
-    version: 'v0.1.0',
-    timezone: 'Asia/Shanghai',
-    selected_model_id: '',
-  });
+  const [form, setForm] = useState(defaultUserForm);
   const [saving, setSaving] = useState(false);
   const [modelOptions, setModelOptions] = useState<{ label: string; value: string }[]>([]);
 
   useEffect(() => {
-    const u = storage.getUser();
-    if (!u) {
-      fetchMe()
-        .then((res) => {
-          const user = (res as any).user;
-          if (user) {
-            initForm(user);
-            // 覆盖缓存，确保后续读取的就是服务端的 timezone
-            storage.setUser(user);
-          }
-        })
-        .catch(() => {});
-    } else {
-      initForm(u);
-    }
+    fetchMe()
+      .then((user) => {
+        if (user) {
+          setForm(userToFormData(user));
+          storage.setUser(user);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // 监听密码编辑器事件：单独请求修改密码，不混入其它字段
@@ -70,20 +51,6 @@ export default function Settings() {
     window.addEventListener('settings-set-password', handler as any);
     return () => window.removeEventListener('settings-set-password', handler as any);
   }, []);
-
-  function initForm(u: any) {
-    setForm({
-      id: u.id,
-      name: u.name || '',
-      email: u.email || '',
-      created_at: u.created_at || 0,
-      theme: (u.theme || 'system') as Theme,
-      locale: u.locale || 'zh-CN',
-      version: 'v0.1.0',
-      timezone: u.timezone || 'Asia/Shanghai',
-      selected_model_id: u.selected_model_id || '',
-    });
-  }
 
   useEffect(() => {
     (async () => {
@@ -214,6 +181,7 @@ export default function Settings() {
               <CubeIcon className="w-5 h-5 text-slate-600" />
               <span>大模型供应商</span>
             </div>
+            
             <div className="md:col-span-2">
               <div className="w-full">
                 <AntSelect
@@ -331,7 +299,7 @@ export default function Settings() {
                   // 更新本地存储和表单状态
                   if (res) {
                     storage.setUser(res);
-                    initForm(res);
+                    setForm(userToFormData(res));
                   }
                   message.success('设置已保存');
                 } catch (e: any) {

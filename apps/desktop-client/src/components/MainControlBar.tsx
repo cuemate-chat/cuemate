@@ -48,6 +48,27 @@ export function MainControlBar({}: MainControlBarProps) {
     checkLoginStatus();
   }, []);
 
+  // 监听登录状态变化事件
+  useEffect(() => {
+    const handleLoginStatusChanged = (data: { isLoggedIn: boolean; user?: any }) => {
+      setIsLoggedIn(data.isLoggedIn);
+      setIsLoading(false);
+      log('info', `登录状态已更新: ${data.isLoggedIn ? '已登录' : '未登录'}`);
+    };
+
+    // 监听登录状态变化事件
+    if ((window as any).electronAPI && (window as any).electronAPI.on) {
+      (window as any).electronAPI.on('login-status-changed', handleLoginStatusChanged);
+    }
+
+    // 清理监听器
+    return () => {
+      if ((window as any).electronAPI && (window as any).electronAPI.off) {
+        (window as any).electronAPI.off('login-status-changed', handleLoginStatusChanged);
+      }
+    };
+  }, []);
+
   // 处理 logo 点击事件 - 跳转到帮助文档
   const handleLogoClick = async (e: React.MouseEvent) => {
     e.preventDefault();

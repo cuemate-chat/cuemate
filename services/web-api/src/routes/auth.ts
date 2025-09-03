@@ -63,6 +63,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
       theme: row.theme ?? 'system',
       locale: row.locale ?? 'zh-CN',
       timezone: row.timezone ?? 'Asia/Shanghai',
+      selected_model_id: row.selected_model_id ?? null,
     };
 
     // 记录登录成功

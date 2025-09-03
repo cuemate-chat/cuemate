@@ -1,7 +1,7 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
-import { getWindowIconPath } from '../utils/paths.js';
+import { getPreloadPath, getWindowIconPath } from '../utils/paths.js';
 
 /**
  * 主内容窗口 - 应用的主要界面
@@ -82,7 +82,7 @@ export class MainContentWindow {
           contextIsolation: true,
           webSecurity: !this.isDevelopment,
           devTools: this.isDevelopment, // 仅开发环境允许打开 DevTools，但不自动打开
-          // main-content 窗口加载外部 web 应用，不需要预加载脚本
+          preload: getPreloadPath('mainContent'), // 添加预加载脚本
         },
       });
 
