@@ -29,6 +29,7 @@ export interface User {
   theme?: 'light' | 'dark' | 'system';
   locale?: string;
   timezone?: string;
+  selected_model_id?: string;
   created_at?: number;
   updated_at?: number;
   // 保持兼容性
@@ -52,6 +53,7 @@ export interface UpdateUserRequest {
   theme?: 'light' | 'dark' | 'system';
   locale?: string;
   timezone?: string;
+  selected_model_id?: string;
 }
 
 export interface ChangePasswordRequest {

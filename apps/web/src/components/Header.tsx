@@ -9,13 +9,12 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Logo from '../assets/logo-background.png';
 import UserMenu from './UserMenu';
 
 export default function Header() {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getActiveKey = (): string | null => {
