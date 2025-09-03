@@ -57,7 +57,7 @@ export class MainContentWindow {
 
       // 在主屏幕居中显示
       const initialX = displayX + Math.floor((screenWidth - this.config.width) / 2);
-      const initialY = displayY + Math.floor((screenHeight - this.config.height) / 2);
+      const initialY = displayY + Math.floor((screenHeight - this.config.height) / 2) + 20;
 
       this.window = new BrowserWindow({
         width: this.config.width,

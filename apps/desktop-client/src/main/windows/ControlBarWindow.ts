@@ -17,7 +17,7 @@ export class ControlBarWindow {
     id: 'control-bar',
     label: 'control-bar',
     width: 360,
-    height: 90,
+    height: 100,
     alwaysOnTop: true,
     frame: false,
     transparent: true,

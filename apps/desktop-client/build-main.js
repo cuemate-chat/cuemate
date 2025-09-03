@@ -15,7 +15,22 @@ const buildConfig = {
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
   },
-  external: ['electron'],
+  external: [
+    'electron',
+    'fs',
+    'path', 
+    'os',
+    'crypto',
+    'util',
+    'events',
+    'stream',
+    'http',
+    'https',
+    'url',
+    'querystring',
+    'zlib',
+    'child_process'
+  ],
   alias: {
     'node:fs': 'fs',
     'node:path': 'path',
