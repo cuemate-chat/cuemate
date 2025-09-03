@@ -20,9 +20,9 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
       }
     },
     {
-      accelerator: 'CommandOrControl+Shift+C',
+      accelerator: 'CommandOrControl+J',
       callback: () => {
-        logger.info('全局快捷键触发: CommandOrControl+Shift+C');
+        logger.info('全局快捷键触发: CommandOrControl+J - 切换主应用窗口');
         windowManager.toggleMainContent();
       }
     },
@@ -202,7 +202,7 @@ export function validateShortcut(accelerator: string): boolean {
 export function getRegisteredShortcuts(): string[] {
   const shortcuts = [
     'CommandOrControl+\\',
-    'CommandOrControl+Shift+C', 
+    'CommandOrControl+J',
     'CommandOrControl+Alt+Q',
     'CommandOrControl+Alt+S',
     'CommandOrControl+Shift+H'

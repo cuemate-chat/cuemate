@@ -27,6 +27,7 @@ const closeButtonAPI = {
       'button-clicked',
       'set-hover-state',
       'set-pressed-state',
+      'toggle-close-button',
     ];
 
     if (allowedChannels.includes(channel)) {

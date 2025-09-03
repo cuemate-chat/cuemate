@@ -1,8 +1,9 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { Layout } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CueMateLogo from '../assets/CueMate.png';
+import CueMateLogo2 from '../assets/CueMate2.png';
 
 // 日志工具函数 - 使用 Electron IPC
 const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) => {
@@ -23,6 +24,7 @@ interface FloatingControlBarProps {
 
 export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: FloatingControlBarProps) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isLogoHovered, setIsLogoHovered] = useState(false);
 
   // 注册全局快捷键 - 使用 Electron IPC
   useEffect(() => {
@@ -53,6 +55,15 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     }
   };
 
+  // 处理 logo 悬浮事件
+  const handleLogoMouseEnter = () => {
+    setIsLogoHovered(true);
+  };
+
+  const handleLogoMouseLeave = () => {
+    setIsLogoHovered(false);
+  };
+
   const openMainApp = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -70,15 +81,6 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
   const handleMouseEnter = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // 关键：鼠标进入控制条时，通知主进程处理鼠标进入事件
-    try {
-      if ((window as any).electronAPI) {
-        await (window as any).electronAPI.onMouseEnter();
-      }
-    } catch (error) {
-      await log('error', `处理鼠标进入事件失败: ${error}`);
-    }
     
     // 清除之前的定时器
     if (timeoutRef.current) {
@@ -116,89 +118,74 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
   }, []);
 
   return (
-    <div 
-      className="floating-control-bar"
-    >
-      <div 
-        className="floating-bar-wrapper"
+    <Tooltip.Provider>
+      <motion.div 
+        className="floating-control-bar"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2 }}
       >
-        <Tooltip.Provider>
-          <motion.div 
-            className="simple-floating-bar"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* Logo 区域 - 点击展开主应用 */}
-            <Tooltip.Root delayDuration={0}>
-              <Tooltip.Trigger asChild>
-                <div 
-                  className="logo-section" 
-                  onClick={handleLogoClick}
-                >
-                  <div className="logo-icon">
-                    <img src={CueMateLogo} alt="CueMate" className="logo-image" />
-                  </div>
-                </div>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="radix-tooltip-content"
-                  side="bottom"
-                  sideOffset={5}
-                >
-                  跳转到 CueMate 帮助文档
-                  <Tooltip.Arrow className="radix-tooltip-arrow" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
+        {/* Logo 区域 - 点击展开主应用 */}
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <div 
+              className="logo-section" 
+              onClick={handleLogoClick}
+              onMouseEnter={handleLogoMouseEnter}
+              onMouseLeave={handleLogoMouseLeave}
+            >
+              <div className="logo-icon">
+                <img 
+                  src={isLogoHovered ? CueMateLogo2 : CueMateLogo} 
+                  alt="CueMate" 
+                  className="logo-image" 
+                />
+              </div>
+            </div>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content className="radix-tooltip-content">
+              访问 CueMate 官网
+              <Tooltip.Arrow className="radix-tooltip-arrow" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
 
-            {/* 欢迎文字 */}
-            <Tooltip.Root delayDuration={0}>
-              <Tooltip.Trigger asChild>
-                <div className="welcome-text">
-                  欢迎使用 CueMate, 请先登录
-                </div>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="radix-tooltip-content"
-                  side="bottom"
-                  sideOffset={5}
-                >
-                  登录即可使用 CueMate 全部功能
-                  <Tooltip.Arrow className="radix-tooltip-arrow" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
+        {/* 欢迎文字 */}
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <div className="welcome-text">
+              欢迎使用 CueMate, 请先登录
+            </div>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content className="radix-tooltip-content">
+              点击右侧按钮打开主应用
+              <Tooltip.Arrow className="radix-tooltip-arrow" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
 
-            {/* 悬浮窗口按钮 */}
-            <Tooltip.Root delayDuration={0}>
-              <Tooltip.Trigger asChild>
-                <button 
-                  onClick={openMainApp} 
-                  className="floating-overlay-btn"
-                >
-                  <Layout size={16} />
-                </button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="radix-tooltip-content"
-                  side="bottom"
-                  sideOffset={5}
-                >
-                  打开 CueMate 主应用
-                  <Tooltip.Arrow className="radix-tooltip-arrow" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-
-          </motion.div>
-        </Tooltip.Provider>
-      </div>
-    </div>
+        {/* 悬浮窗口按钮 */}
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <button 
+              onClick={openMainApp} 
+              className="floating-overlay-btn"
+            >
+              <Layout size={18} />
+            </button>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content className="radix-tooltip-content">
+              打开主应用窗口，快捷键 <span className="shortcut-key"> ⌘</span> + <span className="shortcut-key">J</span>
+              <Tooltip.Arrow className="radix-tooltip-arrow" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </motion.div>
+    </Tooltip.Provider>
   );
 }

@@ -20,7 +20,7 @@ interface FloatingCloseButtonProps {
 
 export function FloatingCloseButton({ showCloseButton: _showCloseButton }: FloatingCloseButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [shouldShow, setShouldShow] = useState(false);
+  const [shouldShow, setShouldShow] = useState(true); // 默认显示
   const [showFromParent, setShowFromParent] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -152,7 +152,7 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
                 transition: 'opacity 0.2s ease, visibility 0.2s ease'
               }}
             >
-              隐藏 CueMate，按 <span className="shortcut-key">⌘</span> + <span className="shortcut-key"> \ </span>  重新显示
+              隐藏 CueMate，按 <span className="shortcut-key"> ⌘</span> + <span className="shortcut-key"> \ </span>  重新显示
               <Tooltip.Arrow className="radix-tooltip-arrow" />
             </Tooltip.Content>
           </Tooltip.Portal>

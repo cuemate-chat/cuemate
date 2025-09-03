@@ -124,12 +124,10 @@ export class WindowManager {
 
     if (controlBarWindow && closeButtonWindow) {
       const controlBarBounds = controlBarWindow.getBounds();
-      const closeButtonBounds = closeButtonWindow.getBounds();
 
-      // 计算关闭按钮位置（控制条右侧）
+      // 计算关闭按钮位置（控制条右侧，顶部对齐）
       const newX = controlBarBounds.x + controlBarBounds.width;
-      const newY =
-        controlBarBounds.y + Math.floor((controlBarBounds.height - closeButtonBounds.height) / 2);
+      const newY = controlBarBounds.y; // 顶部对齐，不使用垂直居中
 
       closeButtonWindow.setPosition(newX, newY);
     }
@@ -151,6 +149,11 @@ export class WindowManager {
 
     this.controlBarWindow.show();
     this.appState.isControlBarVisible = true;
+
+    // 同时显示关闭按钮窗口
+    this.closeButtonWindow.show();
+    this.appState.isCloseButtonVisible = true;
+    this.closeButtonWindow.sendToRenderer('toggle-close-button', true);
 
     // 初始时确保焦点在 control-bar
     setTimeout(() => this.ensureMainFocus(), 100);

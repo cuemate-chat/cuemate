@@ -15,7 +15,7 @@ export class CloseButtonWindow {
     id: 'close-button',
     label: 'close-button',
     width: 400,
-    height: 50,
+    height: 42,
     alwaysOnTop: true,
     frame: false,
     transparent: true,
@@ -48,9 +48,9 @@ export class CloseButtonWindow {
       const primaryDisplay = screen.getPrimaryDisplay();
       const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea;
 
-      // 初始位置：在控制条窗口右侧，距离顶部 10 像素
-      // 假设控制条窗口宽度为 360px，在右侧留出 10px 间距
-      const initialX = displayX + Math.floor((screenWidth - 360) / 2) + 360 + 10;
+      const controlBarWidth = 400;
+      const initialX =
+        displayX + Math.floor((screenWidth - controlBarWidth) / 2) + controlBarWidth + 10;
       const initialY = displayY + 10;
 
       this.window = new BrowserWindow({
