@@ -8,7 +8,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const buildConfig = {
   platform: 'node',
   target: 'node18',
-  format: 'esm',
+  format: 'cjs',
   bundle: true,
   sourcemap: true,
   minify: process.env.NODE_ENV === 'production',
@@ -33,7 +33,7 @@ async function buildMain(watchMode = false) {
     const buildOptions = {
       ...buildConfig,
       entryPoints: [resolve(__dirname, 'src/main/index.ts')],
-      outfile: resolve(__dirname, 'dist/main/index.js'),
+      outfile: resolve(__dirname, 'dist/main/index.cjs'),
     };
 
     if (watchMode) {
