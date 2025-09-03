@@ -31,6 +31,9 @@ const controlBarAPI = {
   restartApp: () => ipcRenderer.invoke('restart-app'),
   getAppInfo: () => ipcRenderer.invoke('get-app-info'),
 
+  // === 登录状态检查 API ===
+  checkLoginStatus: () => ipcRenderer.invoke('check-login-status'),
+
   // === 事件处理 API ===
   onMouseEnter: () => ipcRenderer.invoke('control-bar-mouse-enter'),
   onMouseLeave: () => ipcRenderer.invoke('control-bar-mouse-leave'),

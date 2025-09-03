@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchMe } from '../api/auth';
+import { fetchMe, signout } from '../api/auth';
 import { storage } from '../api/http';
 import { message } from './Message';
 
@@ -144,7 +144,16 @@ export default function UserMenu() {
     setOpen(false);
   };
 
-  const onLogout = () => {
+  const onLogout = async () => {
+    try {
+      // 调用后端登出接口，更新数据库状态
+      await signout();
+    } catch (error) {
+      // 即使后端调用失败，也要清除本地状态
+      console.warn('登出接口调用失败:', error);
+    }
+    
+    // 清除本地存储
     storage.clearToken();
     storage.clearUser();
     message.success('已退出登录');

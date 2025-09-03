@@ -264,6 +264,54 @@ export function setupIPC(windowManager: WindowManager): void {
   // === 日志相关 IPC 处理器 ===
 
   /**
+   * 检查用户登录状态
+   */
+  ipcMain.handle('check-login-status', async () => {
+    try {
+      logger.info('IPC: 检查用户登录状态');
+
+      // 调用 web-api 检查登录状态
+      const response = await fetch('http://localhost:3001/auth/login-status', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // 设置较短的超时时间，避免长时间等待
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        logger.info({ user: data.user }, 'IPC: 用户已登录');
+        return {
+          success: true,
+          isLoggedIn: data.isLoggedIn,
+          user: data.user,
+        };
+      } else if (response.status === 401) {
+        logger.info('IPC: 用户未登录');
+        return {
+          success: true,
+          isLoggedIn: false,
+        };
+      } else {
+        logger.warn({ status: response.status }, 'IPC: 登录检查返回异常状态码');
+        return {
+          success: true,
+          isLoggedIn: false,
+        };
+      }
+    } catch (error) {
+      logger.error({ error }, 'IPC: 登录状态检查失败');
+      return {
+        success: false,
+        isLoggedIn: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
+  /**
    * 前端日志处理
    */
   ipcMain.handle('frontend-log', async (_event, logMessage: FrontendLogMessage) => {

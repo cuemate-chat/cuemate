@@ -27,7 +27,6 @@ export default defineConfig({
       input: {
         // 渲染进程入口（React应用）- main-content 直接加载 localhost:80，不需要构建
         'control-bar': resolve(__dirname, 'src/renderer/control-bar/index.html'),
-        'close-button': resolve(__dirname, 'src/renderer/close-button/index.html'),
       },
 
       output: {

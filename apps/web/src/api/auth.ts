@@ -46,3 +46,7 @@ export async function changePassword(oldPassword: string, newPassword: string): 
   const request: ChangePasswordRequest = { oldPassword, newPassword };
   await http.post('/auth/change-password', request);
 }
+
+export async function signout(): Promise<void> {
+  await http.post('/auth/signout');
+}

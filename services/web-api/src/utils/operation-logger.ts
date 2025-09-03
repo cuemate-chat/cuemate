@@ -7,6 +7,7 @@ export interface OperationLogData {
   resourceName?: string; // 资源名称
   operation:
     | 'login'
+    | 'logout'
     | 'create'
     | 'update'
     | 'delete'
@@ -158,6 +159,7 @@ export class OperationLogger {
  */
 export const OperationType = {
   LOGIN: 'login' as const,
+  LOGOUT: 'logout' as const,
   CREATE: 'create' as const,
   UPDATE: 'update' as const,
   DELETE: 'delete' as const,

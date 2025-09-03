@@ -1,5 +1,5 @@
+import { execSync } from 'child_process';
 import { app, globalShortcut } from 'electron';
-import { exec, spawn } from 'child_process';
 import type { LogLevel } from '../shared/types.js';
 import { logger } from '../utils/logger.js';
 import { setupIPC } from './ipc/handlers.js';
@@ -91,31 +91,30 @@ class CueMateApp {
 
       // macOS: 监听 Dock 图标右键菜单的退出选项
       if (process.platform === 'darwin') {
-        app.on('will-quit', (event) => {
+        app.on('will-quit', () => {
           logger.info('应用将要退出 (用户主动退出)');
-          
+
           // 在开发模式下，立即停止开发服务
           if (this.isDevelopment) {
             try {
               logger.info('正在停止开发服务...');
               // 同步执行停止命令
-              const { execSync } = require('child_process');
               const commands = [
                 "pkill -f 'pnpm.*dev' || true",
-                "pkill -f 'vite' || true", 
-                "pkill -f 'esbuild' || true"
+                "pkill -f 'vite' || true",
+                "pkill -f 'esbuild' || true",
               ];
-              
-              commands.forEach(cmd => {
+
+              commands.forEach((cmd) => {
                 try {
                   execSync(cmd);
                   logger.info(`执行停止命令: ${cmd}`);
                 } catch (error) {
                   // pkill 找不到进程时会报错，这是正常的
-                  logger.debug(`停止命令结果: ${cmd} - ${error.message}`);
+                  logger.debug(`停止命令结果: ${cmd} - ${(error as Error).message}`);
                 }
               });
-              
+
               logger.info('开发服务已停止');
             } catch (error) {
               logger.warn({ error }, '停止开发服务时出错');
@@ -193,7 +192,6 @@ class CueMateApp {
     // 清理窗口管理器
     this.windowManager.destroy();
   }
-
 
   // 日志方法（供 IPC 使用）
   public log(level: LogLevel, message: string): void {

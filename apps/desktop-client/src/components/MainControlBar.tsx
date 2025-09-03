@@ -1,7 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { Layout } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CueMateLogo from '../assets/CueMate.png';
 import CueMateLogo2 from '../assets/CueMate2.png';
 
@@ -23,8 +23,30 @@ interface MainControlBarProps {
 
 export function MainControlBar({}: MainControlBarProps) {
   const [isLogoHovered, setIsLogoHovered] = useState(false);
-  const [isWelcomeTextHovered, setIsWelcomeTextHovered] = useState(false);
-  const [isOverlayBtnHovered, setIsOverlayBtnHovered] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 检查登录状态
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        if ((window as any).electronAPI) {
+          const result = await (window as any).electronAPI.checkLoginStatus();
+          if (result.success) {
+            setIsLoggedIn(result.isLoggedIn);
+          } else {
+            await log('error', `登录状态检查失败: ${result.error}`);
+          }
+        }
+      } catch (error) {
+        await log('error', `登录状态检查异常: ${error}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
 
   // 处理 logo 点击事件 - 跳转到帮助文档
   const handleLogoClick = async (e: React.MouseEvent) => {
@@ -46,24 +68,6 @@ export function MainControlBar({}: MainControlBarProps) {
 
   const handleLogoMouseLeave = () => {
     setIsLogoHovered(false);
-  };
-
-  // 处理欢迎文字悬浮事件
-  const handleWelcomeTextMouseEnter = () => {
-    setIsWelcomeTextHovered(true);
-  };
-
-  const handleWelcomeTextMouseLeave = () => {
-    setIsWelcomeTextHovered(false);
-  };
-
-  // 处理悬浮框按钮悬浮事件
-  const handleOverlayBtnMouseEnter = () => {
-    setIsOverlayBtnHovered(true);
-  };
-
-  const handleOverlayBtnMouseLeave = () => {
-    setIsOverlayBtnHovered(false);
   };
 
   const openMainApp = async (e: React.MouseEvent) => {
@@ -117,12 +121,16 @@ export function MainControlBar({}: MainControlBarProps) {
         <Tooltip.Trigger asChild>
           <motion.div 
             className="welcome-text"
-            onMouseEnter={handleWelcomeTextMouseEnter}
-            onMouseLeave={handleWelcomeTextMouseLeave}
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.2 }}
           >
-            欢迎使用 CueMate, 请先登录
+            {isLoading ? (
+              '正在检查登录状态...'
+            ) : isLoggedIn ? (
+              `已登录，欢迎使用 CueMate`
+            ) : (
+              '欢迎使用 CueMate, 请先登录'
+            )}
           </motion.div>
         </Tooltip.Trigger>
         <Tooltip.Portal>
@@ -139,8 +147,6 @@ export function MainControlBar({}: MainControlBarProps) {
           <button 
             onClick={openMainApp} 
             className="floating-overlay-btn"
-            onMouseEnter={handleOverlayBtnMouseEnter}
-            onMouseLeave={handleOverlayBtnMouseLeave}
           >
             <motion.div
               whileHover={{ scale: 1.2 }}

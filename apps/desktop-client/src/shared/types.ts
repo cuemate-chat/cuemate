@@ -37,7 +37,7 @@ export interface IPCMessage<T = any> {
 }
 
 // 窗口事件类型
-export type WindowEventType = 
+export type WindowEventType =
   | 'window-ready'
   | 'window-show'
   | 'window-hide'
@@ -77,10 +77,10 @@ export type Platform = 'win32' | 'darwin' | 'linux';
 export interface ElectronAPI {
   // 基本方法
   onClick?: () => Promise<any>;
-  
+
   // 日志方法
   log: (logMessage: FrontendLogMessage) => Promise<void>;
-  
+
   // 窗口管理
   showMainContent?: () => Promise<void>;
   hideMainContent?: () => Promise<void>;
@@ -91,36 +91,44 @@ export interface ElectronAPI {
   ensureMainFocus: () => Promise<void>;
   toggleFloatingWindows?: () => Promise<void>;
   toggleMainContent?: () => Promise<void>;
-  
+
   // 应用控制
   quitApp: () => Promise<void>;
-  
+
   // 外部链接
   openExternalUrl: (url: string) => Promise<void>;
-  
+
   // 对话框
   showFileDialog?: (options?: any) => Promise<any>;
   showFolderDialog?: (options?: any) => Promise<any>;
-  
+
   // 主题相关
   getTheme?: () => Promise<string>;
   onThemeChange?: (callback: (theme: 'light' | 'dark') => void) => () => void;
-  
+
   // 应用信息
   getAppInfo?: () => Promise<any>;
-  
+
+  // 登录状态检查
+  checkLoginStatus: () => Promise<{
+    success: boolean;
+    isLoggedIn: boolean;
+    user?: any;
+    error?: string;
+  }>;
+
   // 开发工具
   openDevTools?: () => Promise<void>;
-  
+
   // 事件监听
   on: (channel: string, callback: (...args: any[]) => void) => void;
   off: (channel: string, callback?: (...args: any[]) => void) => void;
   onMouseEnter?: (callback: () => void) => void;
   onMouseLeave?: (callback: () => void) => void;
-  
+
   // 平台信息
   platform: Platform;
-  
+
   // 版本信息
   versions?: {
     node: string;
