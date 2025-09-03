@@ -3,17 +3,18 @@ import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import { listJobs } from '../api/jobs';
 import {
-  createInterviewQuestion,
-  createTag,
-  deleteAllQuestionsByJob,
-  deleteInterviewQuestion,
-  deleteTag,
-  listInterviewQuestions,
-  listTags,
-  updateInterviewQuestion,
-  updateTag,
+    createInterviewQuestion,
+    createTag,
+    deleteAllQuestionsByJob,
+    deleteInterviewQuestion,
+    deleteTag,
+    listInterviewQuestions,
+    listTags,
+    updateInterviewQuestion,
+    updateTag,
 } from '../api/questions';
 import CollapsibleSidebar from '../components/CollapsibleSidebar';
+import { DocumentIcon, SearchIcon, WarningIcon } from '../components/Icons';
 import { message as globalMessage } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 
@@ -135,24 +136,24 @@ export default function Prompts() {
           </div>
           <div className="space-y-2 text-sm text-gray-700">
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">📋</span>
+              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs"><DocumentIcon className="w-3 h-3" /></span>
               <span>岗位：<strong>{currentJob.title}</strong></span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">📝</span>
+              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs"><DocumentIcon className="w-3 h-3" /></span>
               <span>押题数量：<strong>{currentJob.question_count || 0}</strong> 条</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">🗄️</span>
+              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs"><DocumentIcon className="w-3 h-3" /></span>
               <span>数据库中的押题记录</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">🔍</span>
+              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs"><SearchIcon className="w-3 h-3" /></span>
               <span>向量库中的对应数据</span>
             </div>
           </div>
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
-            <div className="font-medium mb-1">⚠️ 重要提醒：</div>
+            <div className="font-medium mb-1"><WarningIcon className="w-4 h-4 inline mr-1" />重要提醒：</div>
             <div>删除后，该岗位的所有押题数据将被永久清除，包括数据库和向量库中的相关数据！</div>
           </div>
         </div>

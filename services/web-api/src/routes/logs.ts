@@ -86,6 +86,8 @@ export function registerLogRoutes(app: FastifyInstance) {
           try {
             const stat = fs.statSync(filePath);
             if (!stat.isFile()) continue;
+            // 过滤掉空文件（大小为0）
+            if (stat.size === 0) continue;
             candidates.push({
               level: lvl,
               service: svc,
@@ -105,6 +107,20 @@ export function registerLogRoutes(app: FastifyInstance) {
       // 首先按日期降序
       if (a.date !== b.date) {
         return b.date.localeCompare(a.date);
+      }
+      // 然后按服务名称优先级排序
+      const serviceOrder: Record<string, number> = {
+        'web-api': 0,
+        'llm-router': 1,
+        'rag-service': 2,
+        'asr-user': 3,
+        'asr-interviewer': 4,
+        'desktop-client': 5,
+      };
+      const aOrder = serviceOrder[a.service] ?? 999;
+      const bOrder = serviceOrder[b.service] ?? 999;
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
       }
       // 最后按级别
       const levelOrder = { error: 0, warn: 1, debug: 2, info: 3 };

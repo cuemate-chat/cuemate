@@ -12,10 +12,32 @@ class CueMateApp {
 
   constructor() {
     this.isDevelopment = process.env.NODE_ENV === 'development';
+
+    // 设置日志环境变量
+    this.setupLoggingEnvironment();
+
     logger.info(`运行模式: ${this.isDevelopment ? '开发模式' : '生产模式'}`);
     this.windowManager = new WindowManager(this.isDevelopment);
 
     this.initialize();
+  }
+
+  private setupLoggingEnvironment(): void {
+    // 设置日志级别
+    if (!process.env.LOG_LEVEL) {
+      process.env.LOG_LEVEL = this.isDevelopment ? 'debug' : 'info';
+    }
+
+    // 设置时区
+    if (!process.env.CUEMATE_LOG_TZ && !process.env.TZ) {
+      process.env.TZ = 'Asia/Shanghai';
+    }
+
+    logger.info('日志环境配置完成', {
+      logLevel: process.env.LOG_LEVEL,
+      timezone: process.env.CUEMATE_LOG_TZ || process.env.TZ,
+      userDataPath: app?.getPath('userData'),
+    });
   }
 
   private initialize(): void {

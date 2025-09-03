@@ -6,6 +6,7 @@ import { http } from '../api/http';
 import { deleteJob, extractResumeText, listJobs, updateJob, type JobWithResume } from '../api/jobs';
 import CollapsibleSidebar from '../components/CollapsibleSidebar';
 import FullScreenOverlay from '../components/FullScreenOverlay';
+import { ApplicationIcon, LightbulbIcon, WarningIcon } from '../components/Icons';
 import { message as globalMessage } from '../components/Message';
 
 
@@ -136,7 +137,10 @@ export default function JobsList() {
             </div>
           </div>
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
-            <div className="font-medium mb-1">⚠️ 重要提醒：</div>
+                            <div className="font-medium mb-1">
+                  <WarningIcon className="w-4 h-4 inline mr-1" />
+                  重要提醒：
+                </div>
             <div>删除后，所有相关的简历、押题、向量库数据都将被永久清除，请谨慎操作！</div>
           </div>
         </div>
@@ -405,7 +409,8 @@ export default function JobsList() {
         footer={
           <div className="flex justify-between items-center">
             <div className="text-xs text-gray-500">
-              💡 提示：您可以编辑下方简历内容，然后选择应用哪个版本
+                              <LightbulbIcon className="w-4 h-4 inline mr-1" />
+                提示：您可以编辑下方简历内容，然后选择应用哪个版本
             </div>
             <div className="flex gap-3 mr-12">
               <Button onClick={() => setOptimizeModalVisible(false)}>
@@ -459,7 +464,7 @@ export default function JobsList() {
                       }}
                       className="text-xs text-red-600 hover:text-red-700"
                     >
-                      应用此版本 ⚠️
+                      应用此版本 <ApplicationIcon className="w-4 h-4 inline ml-1" />
                     </Button>
                   </div>
                   <Input.TextArea

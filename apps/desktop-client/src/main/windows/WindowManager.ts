@@ -91,9 +91,20 @@ export class WindowManager {
     // 监听主内容窗口事件
     const mainContentWindow = this.mainContentWindow.getBrowserWindow();
     if (mainContentWindow) {
+      // 允许 main-content 在交互期间获得焦点（以便键盘输入）。
+      // 当 main-content 失去焦点或被隐藏/关闭后，再恢复到 control-bar。
       mainContentWindow.on('focus', () => {
-        logger.info('🔍 main-content 获得焦点，立即恢复到主焦点');
-        setTimeout(() => this.ensureMainFocus(), 100); // 稍微延迟，允许用户交互
+        logger.info('🔍 main-content 获得焦点（允许输入，不立刻切回 control-bar）');
+      });
+
+      mainContentWindow.on('blur', () => {
+        logger.info('🔍 main-content 失去焦点，恢复 control-bar 焦点');
+        setTimeout(() => this.ensureMainFocus(), 0);
+      });
+
+      mainContentWindow.on('hide', () => {
+        logger.info('🔍 main-content 被隐藏，恢复 control-bar 焦点');
+        setTimeout(() => this.ensureMainFocus(), 0);
       });
 
       mainContentWindow.on('close', (event) => {
@@ -141,7 +152,7 @@ export class WindowManager {
     this.controlBarWindow.show();
     this.appState.isControlBarVisible = true;
 
-    // 确保焦点在锚点
+    // 初始时确保焦点在 control-bar
     setTimeout(() => this.ensureMainFocus(), 100);
   }
 
@@ -157,7 +168,7 @@ export class WindowManager {
     this.appState.isControlBarVisible = false;
     this.appState.isCloseButtonVisible = false;
 
-    // 确保焦点在锚点
+    // 浮动窗口隐藏后，若 main-content 不可见，再恢复 control-bar 焦点
     setTimeout(() => this.ensureMainFocus(), 100);
   }
 
@@ -206,9 +217,7 @@ export class WindowManager {
     this.mainContentWindow.show();
     this.appState.isMainContentVisible = true;
     logger.info('📱 主内容窗口已显示');
-
-    // 延迟恢复焦点，给用户操作时间
-    setTimeout(() => this.ensureMainFocus(), 300);
+    // 不立即切回 control-bar，允许用户在 main-content 输入
   }
 
   /**

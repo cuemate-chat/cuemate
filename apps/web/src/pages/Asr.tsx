@@ -371,7 +371,7 @@ export default function AsrSettings() {
         console.error('WebSocket 连接错误:', error);
         const servicePort = testService.includes('8001') ? '8001' : '8002';
         message.error(`ASR 服务 (${servicePort}) 连接失败`);
-        setTranscriptText(`❌ WebSocket 连接失败\n服务地址: ${testService}\n请检查 Docker 服务是否启动`);
+        setTranscriptText(`[错误] WebSocket 连接失败\n服务地址: ${testService}\n请检查 Docker 服务是否启动`);
         isConnectingRef.current = false; // 重置连接标志
         stopRecording();
       };

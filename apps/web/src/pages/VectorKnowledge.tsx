@@ -14,6 +14,7 @@ import {
   searchResumes
 } from '../api/vector';
 import FullScreenOverlay from '../components/FullScreenOverlay';
+import { WarningIcon } from '../components/Icons';
 import { message } from '../components/Message';
 
 export default function VectorKnowledge() {
@@ -1176,7 +1177,7 @@ const SyncStatusOverview = ({
             </div>
           </div>
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
-            <div className="font-medium mb-1">⚠️ 重要提醒：</div>
+            <div className="font-medium mb-1"><WarningIcon className="w-4 h-4 inline mr-1" />重要提醒：</div>
             <div>清空后，所有向量库数据将被永久清除，需要重新同步才能恢复搜索功能！</div>
           </div>
         </div>

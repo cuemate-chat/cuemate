@@ -16,6 +16,7 @@ import {
   fetchLogServices,
   LogLevel,
 } from '../api/logs';
+import { DangerIcon, WarningIcon } from '../components/Icons';
 import { message } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
 
@@ -363,7 +364,7 @@ export default function Logs() {
                 <EyeIcon className="w-4 h-4" /> 查看
               </button>
               <button
-                className="inline-flex items-center gap-1 text-orange-600 hover:text-orange-700"
+                className="inline-flex items-center gap-1 text-amber-600 hover:text-amber-700"
                 onClick={() => {
                   Modal.confirm({
                     title: '确认清理日志',
@@ -376,7 +377,10 @@ export default function Logs() {
                           <div><strong>日期：</strong>{it.date}</div>
                           <div><strong>大小：</strong>{(it.size / 1024).toFixed(1)} KB</div>
                         </div>
-                        <p className="text-orange-600 text-sm">⚠️ 清理后日志内容将无法恢复！</p>
+                        <p className="text-amber-600 text-sm">
+                          <WarningIcon className="w-4 h-4 inline mr-1" />
+                          清理后日志内容将无法恢复！
+                        </p>
                       </div>
                     ),
                     okText: '确认清理',
@@ -402,7 +406,10 @@ export default function Logs() {
                           <div><strong>日期：</strong>{it.date}</div>
                           <div><strong>大小：</strong>{(it.size / 1024).toFixed(1)} KB</div>
                         </div>
-                        <p className="text-red-600 text-sm">🚨 删除后日志文件将完全消失，无法恢复！</p>
+                        <p className="text-red-600 text-sm">
+                          <DangerIcon className="w-4 h-4 inline mr-1" />
+                          删除后日志文件将完全消失，无法恢复！
+                        </p>
                         <p className="text-red-600 text-sm">此操作比清理更加危险，请谨慎操作！</p>
                       </div>
                     ),

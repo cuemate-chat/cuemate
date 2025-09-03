@@ -81,6 +81,7 @@ export class MainContentWindow {
           nodeIntegration: false,
           contextIsolation: true,
           webSecurity: !this.isDevelopment,
+          devTools: this.isDevelopment, // 仅开发环境允许打开 DevTools
           // main-content 窗口加载外部 web 应用，不需要预加载脚本
         },
       });
@@ -90,11 +91,6 @@ export class MainContentWindow {
 
       // 加载页面 - 直接加载您的 Docker web 应用
       await this.window.loadURL('http://localhost:80');
-
-      // 开发模式下打开开发者工具
-      if (this.isDevelopment) {
-        this.window.webContents.openDevTools();
-      }
 
       // 设置窗口事件监听
       this.setupEvents();

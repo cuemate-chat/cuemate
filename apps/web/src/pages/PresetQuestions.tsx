@@ -3,17 +3,18 @@ import { Button, Card, Checkbox, DatePicker, Input, message, Modal, Select, Spin
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import {
-  batchDeletePresetQuestions,
-  batchImportPresetQuestions,
-  batchSyncToInterviewQuestions,
-  createPresetQuestion,
-  deletePresetQuestion,
-  getJobsForSync,
-  listPresetQuestions,
-  PresetQuestion,
-  updatePresetQuestion,
+    batchDeletePresetQuestions,
+    batchImportPresetQuestions,
+    batchSyncToInterviewQuestions,
+    createPresetQuestion,
+    deletePresetQuestion,
+    getJobsForSync,
+    listPresetQuestions,
+    PresetQuestion,
+    updatePresetQuestion,
 } from '../api/preset-questions';
 import { createTag, deleteTag, listTags, updateTag } from '../api/questions';
+import { LightbulbIcon } from '../components/Icons';
 import LicenseGuard from '../components/LicenseGuard';
 import { message as globalMessage } from '../components/Message';
 import PaginationBar from '../components/PaginationBar';
@@ -973,7 +974,8 @@ export default function PresetQuestions() {
           {/* 底部说明 */}
           <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
             <div className="text-xs text-slate-600 text-center">
-              💡 此题目已成功同步到上述岗位的面试题库中，面试官可以在对应岗位的面试押题中查看和使用
+              <LightbulbIcon className="w-4 h-4 inline mr-1" />
+              此题目已成功同步到上述岗位的面试题库中，面试官可以在对应岗位的面试押题中查看和使用
             </div>
           </div>
         </div>

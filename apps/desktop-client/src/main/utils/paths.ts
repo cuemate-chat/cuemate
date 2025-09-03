@@ -1,5 +1,5 @@
-import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
 /**
  * 获取当前模块目录，兼容 CommonJS 和 ESM
@@ -9,12 +9,18 @@ function getCurrentDir(): string {
   if (typeof __dirname !== 'undefined') {
     return __dirname;
   }
-  
-  // 在 ESM 中使用 import.meta.url
-  if (typeof import.meta !== 'undefined' && import.meta.url) {
-    return dirname(fileURLToPath(import.meta.url));
-  }
-  
+
+  // 在 ESM 中使用 import.meta.url（通过运行时求值避免 CJS 构建告警）
+  try {
+    const getUrl = new Function(
+      'try { return (typeof import !== "undefined" && import.meta && import.meta.url) || undefined } catch { return undefined }',
+    ) as () => string | undefined;
+    const metaUrl = getUrl();
+    if (metaUrl) {
+      return dirname(fileURLToPath(metaUrl));
+    }
+  } catch {}
+
   // 回退方案
   return process.cwd();
 }
