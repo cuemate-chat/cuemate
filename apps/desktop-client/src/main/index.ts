@@ -92,10 +92,8 @@ class CueMateApp {
     // 当所有窗口关闭时
     app.on('window-all-closed', () => {
       logger.info('所有窗口已关闭');
-      // macOS: 通常应用不会完全退出
-      if (process.platform !== 'darwin') {
-        app.quit();
-      }
+      // 在所有平台上都退出应用，包括 macOS
+      app.quit();
     });
 
     // 当应用即将退出时
@@ -135,8 +133,19 @@ class CueMateApp {
     if (process.platform === 'darwin') {
       try {
         const iconPath = getAppIconPath();
+        // 在退出前立即设置图标，避免显示默认图标
         app.dock.setIcon(iconPath);
         logger.info('Dock 图标在退出前已确认设置');
+
+        // 延迟一小段时间确保图标设置生效
+        setTimeout(() => {
+          try {
+            app.dock.setIcon(iconPath);
+            logger.info('Dock 图标再次确认设置');
+          } catch (error) {
+            logger.warn({ error }, '退出前再次设置 Dock 图标失败');
+          }
+        }, 100);
       } catch (error) {
         logger.warn({ error }, '退出前设置 Dock 图标失败');
       }

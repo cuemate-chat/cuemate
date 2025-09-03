@@ -2,6 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { Layout } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import CueMateLogo from '../assets/CueMate.png';
 
 // 日志工具函数 - 使用 Electron IPC
 const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) => {
@@ -138,7 +139,7 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
                   onClick={handleLogoClick}
                 >
                   <div className="logo-icon">
-                    <div className="logo-circle">C</div>
+                    <img src={CueMateLogo} alt="CueMate" className="logo-image" />
                   </div>
                 </div>
               </Tooltip.Trigger>

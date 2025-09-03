@@ -83,7 +83,7 @@ export class WindowManager {
     const closeButtonWindow = this.closeButtonWindow.getBrowserWindow();
     if (closeButtonWindow) {
       closeButtonWindow.on('focus', () => {
-        logger.info('🔍 close-button 获得焦点，立即恢复到主焦点');
+        logger.info('close-button 获得焦点，立即恢复到主焦点');
         setTimeout(() => this.ensureMainFocus(), 0);
       });
     }
@@ -94,16 +94,16 @@ export class WindowManager {
       // 允许 main-content 在交互期间获得焦点（以便键盘输入）。
       // 当 main-content 失去焦点或被隐藏/关闭后，再恢复到 control-bar。
       mainContentWindow.on('focus', () => {
-        logger.info('🔍 main-content 获得焦点（允许输入，不立刻切回 control-bar）');
+        logger.info('main-content 获得焦点（允许输入，不立刻切回 control-bar）');
       });
 
       mainContentWindow.on('blur', () => {
-        logger.info('🔍 main-content 失去焦点，恢复 control-bar 焦点');
+        logger.info('main-content 失去焦点，恢复 control-bar 焦点');
         setTimeout(() => this.ensureMainFocus(), 0);
       });
 
       mainContentWindow.on('hide', () => {
-        logger.info('🔍 main-content 被隐藏，恢复 control-bar 焦点');
+        logger.info('main-content 被隐藏，恢复 control-bar 焦点');
         setTimeout(() => this.ensureMainFocus(), 0);
       });
 
@@ -216,7 +216,7 @@ export class WindowManager {
   public showMainContent(): void {
     this.mainContentWindow.show();
     this.appState.isMainContentVisible = true;
-    logger.info('📱 主内容窗口已显示');
+    logger.info('主内容窗口已显示');
     // 不立即切回 control-bar，允许用户在 main-content 输入
   }
 
@@ -226,7 +226,7 @@ export class WindowManager {
   public hideMainContent(): void {
     this.mainContentWindow.hide();
     this.appState.isMainContentVisible = false;
-    logger.info('📱 主内容窗口已隐藏');
+    logger.info('主内容窗口已隐藏');
 
     // 立即恢复焦点
     this.ensureMainFocus();
