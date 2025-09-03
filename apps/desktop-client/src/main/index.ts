@@ -43,7 +43,7 @@ class CueMateApp {
           console.log('macOS Dock 图标已设置');
         }
       } catch (error) {
-        console.warn('⚠️ 设置应用图标失败:', error);
+        console.warn('设置应用图标失败:', error);
       }
       
       // 设置全局快捷键（必须在app ready之后）
@@ -55,7 +55,7 @@ class CueMateApp {
           console.log('窗口管理器初始化完成');
         })
         .catch((error) => {
-          console.error('❌ 窗口管理器初始化失败:', error);
+          console.error('窗口管理器初始化失败:', error);
         });
 
       // macOS: 当点击 dock 图标时重新激活
@@ -67,7 +67,7 @@ class CueMateApp {
 
     // 当所有窗口关闭时
     app.on('window-all-closed', () => {
-      console.log('🚪 所有窗口已关闭');
+      console.log('所有窗口已关闭');
       // macOS: 通常应用不会完全退出
       if (process.platform !== 'darwin') {
         app.quit();
@@ -90,7 +90,7 @@ class CueMateApp {
 
     // macOS: 处理重新打开事件
     app.on('open-url', (event, url) => {
-      console.log('🔗 处理 URL:', url);
+      console.log('处理 URL:', url);
       event.preventDefault();
       // 处理自定义 URL scheme
     });
@@ -152,7 +152,7 @@ class CueMateApp {
 
 // 确保只有一个应用实例运行
 if (!app.requestSingleInstanceLock()) {
-  console.log('🚫 应用已在运行，退出当前实例');
+  console.log('应用已在运行，退出当前实例');
   app.quit();
 } else {
   // 创建应用实例
@@ -169,9 +169,9 @@ if (process.env.NODE_ENV === 'development') {
 
 // 处理未捕获的异常
 process.on('uncaughtException', (error) => {
-  console.error('💥 未捕获的异常:', error);
+  console.error('未捕获的异常:', error);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('💥 未处理的 Promise 拒绝:', reason, 'at:', promise);
+  console.error('未处理的 Promise 拒绝:', reason, 'at:', promise);
 });

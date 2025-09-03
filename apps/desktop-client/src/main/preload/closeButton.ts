@@ -65,4 +65,4 @@ export type CloseButtonAPI = typeof closeButtonAPI;
 
 // 类型声明已移除，使用动态类型
 
-console.log('❌ 关闭按钮窗口预加载脚本已加载');
+console.log('关闭按钮窗口预加载脚本已加载');

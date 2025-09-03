@@ -50,9 +50,9 @@ export class ControlBarWindow {
       const primaryDisplay = screen.getPrimaryDisplay();
       const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea;
       
-      // 初始位置：在主屏幕水平居中，距离顶部 100 像素
+      // 初始位置：在主屏幕水平居中，距离顶部 30 像素
       const initialX = displayX + Math.floor((screenWidth - this.config.width) / 2);
-      const initialY = displayY + 100;
+      const initialY = displayY + 30;
 
       this.window = new BrowserWindow({
         width: this.config.width,
