@@ -1,4 +1,5 @@
 import { app, globalShortcut } from 'electron';
+import { exec, spawn } from 'child_process';
 import type { LogLevel } from '../shared/types.js';
 import { logger } from '../utils/logger.js';
 import { setupIPC } from './ipc/handlers.js';
@@ -129,6 +130,11 @@ class CueMateApp {
   private cleanup(): void {
     logger.info('清理应用资源');
 
+    // 在开发模式下停止开发服务
+    if (this.isDevelopment) {
+      this.stopDevelopmentServices();
+    }
+
     // macOS: 确保 Dock 图标保持正确直到应用完全退出
     if (process.platform === 'darwin') {
       try {
@@ -156,6 +162,43 @@ class CueMateApp {
 
     // 清理窗口管理器
     this.windowManager.destroy();
+  }
+
+  /**
+   * 停止开发服务进程
+   */
+  private stopDevelopmentServices(): void {
+    logger.info('正在停止开发服务...');
+    
+    try {
+      // 查找并杀死 pnpm dev 和 pnpm electron:dev 进程
+      const commands = [
+        // 杀死包含 "pnpm dev" 的进程
+        "pkill -f 'pnpm.*dev'",
+        // 杀死包含 "pnpm electron:dev" 的进程  
+        "pkill -f 'pnpm.*electron:dev'",
+        // 杀死可能的 webpack-dev-server 或 vite 进程
+        "pkill -f 'webpack-dev-server'",
+        "pkill -f 'vite'",
+        // 杀死可能的 esbuild 进程
+        "pkill -f 'esbuild'"
+      ];
+
+      commands.forEach((cmd, index) => {
+        exec(cmd, (error, stdout, stderr) => {
+          if (error) {
+            // pkill 命令如果没有找到匹配的进程会返回错误，这是正常的
+            logger.debug(`停止服务命令 ${index + 1} 执行结果: ${error.message}`);
+          } else {
+            logger.info(`服务进程已停止: ${cmd}`);
+          }
+        });
+      });
+
+      logger.info('开发服务停止命令已发送');
+    } catch (error) {
+      logger.warn({ error }, '停止开发服务时出错');
+    }
   }
 
   // 日志方法（供 IPC 使用）

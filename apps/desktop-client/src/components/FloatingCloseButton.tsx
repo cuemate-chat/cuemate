@@ -60,25 +60,18 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
     e.preventDefault();
     e.stopPropagation();
     
-    // 关键：鼠标进入关闭按钮时，通知主进程处理鼠标进入事件
-    try {
-      if ((window as any).electronAPI) {
-        await (window as any).electronAPI.onMouseEnter();
-      }
-    } catch (error) {
-      await log('error', `处理鼠标进入事件失败: ${error}`);
+    console.log('FloatingCloseButton 鼠标进入！');
+    await log('info', 'FloatingCloseButton 鼠标进入事件触发');
+    
+    // 清除任何可能存在的隐藏定时器
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
     
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
+    // 立即设置本地悬浮状态
     setIsHovered(true);
-    // 立即清理任何可能存在的定时器，防止意外隐藏
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
+    console.log('设置 isHovered 为 true');
   };
 
   // 处理鼠标离开事件
@@ -139,10 +132,10 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
               onClick={handleClick}
               className="close-floating-btn-separate"
               style={{ 
-                opacity: shouldShow ? 1 : 0,
-                visibility: shouldShow ? 'visible' : 'hidden',
-                pointerEvents: shouldShow ? 'auto' : 'none',
-                transition: 'opacity 0.2s ease, visibility 0.2s ease'
+                opacity: shouldShow || isHovered ? 1 : 0,
+                visibility: 'visible', // 始终可见以接收鼠标事件
+                pointerEvents: 'auto', // 始终可接收鼠标事件
+                transition: 'opacity 0.2s ease'
               }}
             >
               <X size={14} />
@@ -154,8 +147,8 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
               side="right"
               sideOffset={5}
               style={{ 
-                opacity: shouldShow ? 1 : 0,
-                visibility: shouldShow ? 'visible' : 'hidden',
+                opacity: shouldShow || isHovered ? 1 : 0,
+                visibility: shouldShow || isHovered ? 'visible' : 'hidden',
                 transition: 'opacity 0.2s ease, visibility 0.2s ease'
               }}
             >

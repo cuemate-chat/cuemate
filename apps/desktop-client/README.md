@@ -23,31 +23,46 @@ CueMate 桌面音频捕获客户端，用于捕获系统音频并发送到远程
 ### 前置要求
 
 - Node.js 18+
-- Rust 1.70+
-- Tauri CLI
+- pnpm 8+
 
 ### 安装依赖
 
 ```bash
-# 安装前端依赖
+# 安装所有依赖
 pnpm install
-
-# 安装 Tauri CLI (如果未安装)
-pnpm add -g @tauri-apps/cli
 ```
 
 ### 开发模式
 
 ```bash
-# 启动开发服务器
-cargo tauri dev
+# 启动 Web 开发服务器
+pnpm dev
+
+# 启动 Electron 开发环境 (需要先启动 web 服务)
+pnpm electron:dev
+```
+
+### 服务管理
+
+```bash
+# 启动所有开发服务
+pnpm dev & pnpm electron:dev
+
+# 停止所有开发服务 (手动方式)
+pkill -f 'pnpm.*dev' || pkill -f 'webpack-dev-server' || pkill -f 'vite' || pkill -f 'esbuild'
+
+# 查看运行中的开发服务
+ps aux | grep -E "(pnpm|electron)" | grep -v grep
+
+# 注意: 关闭 Electron 客户端时，开发服务会自动停止
 ```
 
 ### 构建应用
 
 ```bash
 # 构建生产版本
-cargo tauri build
+pnpm build
+pnpm electron:build
 ```
 
 ## 📁 项目结构
