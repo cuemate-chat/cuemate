@@ -178,7 +178,7 @@ export class WindowManager {
       this.updateCloseButtonPosition();
       this.closeButtonWindow.show();
       this.appState.isCloseButtonVisible = true;
-      console.log('🔴 关闭按钮已显示');
+      console.log('关闭按钮已显示');
     }
   }
 
@@ -189,7 +189,7 @@ export class WindowManager {
     if (this.appState.isCloseButtonVisible) {
       this.closeButtonWindow.hide();
       this.appState.isCloseButtonVisible = false;
-      console.log('⚪ 关闭按钮已隐藏');
+      console.log('关闭按钮已隐藏');
     }
   }
 

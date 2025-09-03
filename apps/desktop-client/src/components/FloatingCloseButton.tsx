@@ -60,13 +60,13 @@ export function FloatingCloseButton({ showCloseButton: _showCloseButton }: Float
     e.preventDefault();
     e.stopPropagation();
     
-    // 关键：鼠标进入关闭按钮时，确保焦点管理
+    // 关键：鼠标进入关闭按钮时，通知主进程处理鼠标进入事件
     try {
       if ((window as any).electronAPI) {
-        await (window as any).electronAPI.ensureMainFocus();
+        await (window as any).electronAPI.onMouseEnter();
       }
     } catch (error) {
-      await log('error', `恢复隐形锚点焦点失败: ${error}`);
+      await log('error', `处理鼠标进入事件失败: ${error}`);
     }
     
     if (timeoutRef.current) {

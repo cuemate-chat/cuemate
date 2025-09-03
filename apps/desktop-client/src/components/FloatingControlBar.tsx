@@ -70,13 +70,13 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     e.preventDefault();
     e.stopPropagation();
     
-    // 关键：鼠标进入控制条时，确保焦点管理
+    // 关键：鼠标进入控制条时，通知主进程处理鼠标进入事件
     try {
       if ((window as any).electronAPI) {
-        await (window as any).electronAPI.ensureMainFocus();
+        await (window as any).electronAPI.onMouseEnter();
       }
     } catch (error) {
-      await log('error', `恢复焦点失败: ${error}`);
+      await log('error', `处理鼠标进入事件失败: ${error}`);
     }
     
     // 清除之前的定时器
@@ -86,16 +86,7 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     }
     
     onShowCloseButton();
-    log('info', '🟢 FloatingControlBar 鼠标进入，显示关闭按钮');
-    
-    // 通知显示关闭按钮
-    try {
-      if ((window as any).electronAPI) {
-        await (window as any).electronAPI.showCloseButton();
-      }
-    } catch (error) {
-      await log('error', `显示关闭按钮失败: ${error}`);
-    }
+    log('info', 'FloatingControlBar 鼠标进入，显示关闭按钮');
   };
 
   // 处理鼠标离开事件，添加延迟隐藏
@@ -111,15 +102,6 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     // 延迟隐藏，给用户时间移动到关闭按钮区域
     timeoutRef.current = setTimeout(async () => {
       onHideCloseButton();
-      
-      // 通知隐藏关闭按钮
-      try {
-        if ((window as any).electronAPI) {
-          await (window as any).electronAPI.hideCloseButton();
-        }
-      } catch (error) {
-        await log('error', `隐藏关闭按钮失败: ${error}`);
-      }
     }, 200);
   };
 

@@ -11,7 +11,7 @@ export class ControlBarWindow {
   private isDevelopment: boolean;
   private isMoving: boolean = false;
   private moveStartTime: number = 0;
-  
+
   private readonly config: WindowConfig = {
     id: 'control-bar',
     label: 'control-bar',
@@ -25,9 +25,9 @@ export class ControlBarWindow {
     minimizable: false,
     maximizable: false,
     closable: false,
-    focusable: true,   // 作为主焦点窗口，可以获得焦点
+    focusable: true, // 作为主焦点窗口，可以获得焦点
     show: false,
-    center: true,  // 初始居中显示
+    center: true, // 初始居中显示
   };
 
   constructor(isDevelopment: boolean = false) {
@@ -39,20 +39,20 @@ export class ControlBarWindow {
    */
   public async create(): Promise<void> {
     if (this.window) {
-      console.log('⚠️ control-bar 窗口已存在，跳过创建');
+      console.log('control-bar 窗口已存在，跳过创建');
       return;
     }
 
-    console.log('🎮 创建 control-bar 控制条窗口');
+    console.log('创建 control-bar 控制条窗口');
 
     try {
       // 获取主显示器信息来计算初始位置
       const primaryDisplay = screen.getPrimaryDisplay();
       const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea;
-      
+
       // 初始位置：在主屏幕水平居中，距离顶部 30 像素
       const initialX = displayX + Math.floor((screenWidth - this.config.width) / 2);
-      const initialY = displayY + 30;
+      const initialY = displayY + 20;
 
       this.window = new BrowserWindow({
         width: this.config.width,
@@ -74,8 +74,8 @@ export class ControlBarWindow {
           nodeIntegration: false,
           contextIsolation: true,
           webSecurity: !this.isDevelopment, // 恢复原逻辑，开发模式禁用 webSecurity
-          preload: getPreloadPath('controlBar')
-        }
+          preload: getPreloadPath('controlBar'),
+        },
       });
 
       // 加载页面
@@ -88,11 +88,10 @@ export class ControlBarWindow {
       // 设置窗口事件监听
       this.setupEvents();
 
-      console.log('✅ control-bar 控制条窗口创建成功');
-      console.log(`📍 窗口位置: (${initialX}, ${initialY})`);
-
+      console.log('control-bar 控制条窗口创建成功');
+      console.log(`窗口位置: (${initialX}, ${initialY})`);
     } catch (error) {
-      console.error('❌ 创建 control-bar 窗口失败:', error);
+      console.error('创建 control-bar 窗口失败:', error);
       throw error;
     }
   }
@@ -105,7 +104,7 @@ export class ControlBarWindow {
 
     // 窗口准备显示
     this.window.on('ready-to-show', () => {
-      console.log('🎮 control-bar 窗口准备就绪');
+      console.log('control-bar 窗口准备就绪');
     });
 
     // 鼠标进入窗口区域（用于显示关闭按钮）
@@ -132,12 +131,12 @@ export class ControlBarWindow {
       if (this.isMoving) {
         const moveEndTime = Date.now();
         const moveDuration = moveEndTime - this.moveStartTime;
-        console.log(`📍 control-bar 窗口移动完成，耗时: ${moveDuration}ms`);
-        
+        console.log(`control-bar 窗口移动完成，耗时: ${moveDuration}ms`);
+
         // 发送位置更新事件
         const bounds = this.window!.getBounds();
         this.window!.webContents.send('position-changed', bounds);
-        
+
         this.isMoving = false;
       }
     });
@@ -150,18 +149,18 @@ export class ControlBarWindow {
 
     // 窗口已关闭
     this.window.on('closed', () => {
-      console.log('🎮 control-bar 窗口已关闭');
+      console.log('control-bar 窗口已关闭');
       this.window = null;
     });
 
     // control-bar 现在作为主焦点窗口，应该保持焦点
     this.window.on('focus', () => {
-      console.log('🎯 control-bar 获得焦点（作为主焦点窗口）');
+      console.log('control-bar 获得焦点（作为主焦点窗口）');
     });
 
     // 失去焦点时的处理
     this.window.on('blur', () => {
-      console.log('😶‍🌫️ control-bar 失去焦点');
+      console.log('control-bar 失去焦点');
     });
   }
 
@@ -170,9 +169,9 @@ export class ControlBarWindow {
    */
   public show(): void {
     if (this.window && !this.window.isDestroyed()) {
-      this.window.show();  // 显示并激活，作为主焦点窗口
-      console.log('👀 control-bar 窗口已显示并获得焦点');
-      
+      this.window.show(); // 显示并激活，作为主焦点窗口
+      console.log('control-bar 窗口已显示并获得焦点');
+
       // 确保窗口在最顶层
       this.window.setAlwaysOnTop(true, 'floating');
     }
@@ -184,7 +183,7 @@ export class ControlBarWindow {
   public hide(): void {
     if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
       this.window.hide();
-      console.log('👁️ control-bar 窗口已隐藏');
+      console.log('control-bar 窗口已隐藏');
     }
   }
 
@@ -223,7 +222,7 @@ export class ControlBarWindow {
       const primaryDisplay = screen.getPrimaryDisplay();
       const { x: displayX, width: screenWidth } = primaryDisplay.workArea;
       const windowBounds = this.window.getBounds();
-      
+
       const centerX = displayX + Math.floor((screenWidth - windowBounds.width) / 2);
       this.setPosition(centerX, windowBounds.y);
     }
@@ -266,7 +265,7 @@ export class ControlBarWindow {
     if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
       if (!this.window.isFocused()) {
         this.window.focus();
-        console.log('🎯 control-bar 重新获得焦点');
+        console.log('control-bar 重新获得焦点');
       }
     }
   }
@@ -283,7 +282,7 @@ export class ControlBarWindow {
    */
   public destroy(): void {
     if (this.window && !this.window.isDestroyed()) {
-      console.log('🗑️ 销毁 control-bar 窗口');
+      console.log('销毁 control-bar 窗口');
       this.window.destroy();
       this.window = null;
     }
