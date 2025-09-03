@@ -85,6 +85,7 @@ export default function Logs() {
     'rag-service': 'RAG 知识服务',
     'asr-user': '面试者语音识别',
     'asr-interviewer': '面试官语音识别',
+    'desktop-client': '桌面客户端',
   };
 
   useEffect(() => {
