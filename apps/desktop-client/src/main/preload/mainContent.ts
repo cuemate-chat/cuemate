@@ -7,10 +7,6 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 // 定义主内容窗口可用的 API
 const mainContentAPI = {
-  // === 登录状态通知 API ===
-  notifyLoginStatusChanged: (isLoggedIn: boolean, user?: any) =>
-    ipcRenderer.invoke('notify-login-status-changed', isLoggedIn, user),
-
   // === 窗口事件监听 API ===
   on: (channel: string, callback: (...args: any[]) => void) => {
     // 只允许特定的事件频道

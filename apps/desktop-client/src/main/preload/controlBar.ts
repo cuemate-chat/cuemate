@@ -58,7 +58,7 @@ const controlBarAPI = {
     ];
 
     if (allowedChannels.includes(channel)) {
-      ipcRenderer.on(channel, callback);
+      ipcRenderer.on(channel, (_event, ...args) => callback(...args));
     } else {
       // 预加载脚本中不使用 logger，保持 console.warn
       console.warn(`控制条窗口不允许监听频道: ${channel}`);

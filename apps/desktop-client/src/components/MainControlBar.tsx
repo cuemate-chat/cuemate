@@ -53,7 +53,6 @@ export function MainControlBar({}: MainControlBarProps) {
     const handleLoginStatusChanged = (data: { isLoggedIn: boolean; user?: any }) => {
       setIsLoggedIn(data.isLoggedIn);
       setIsLoading(false);
-      log('info', `登录状态已更新: ${data.isLoggedIn ? '已登录' : '未登录'}`);
     };
 
     // 监听登录状态变化事件

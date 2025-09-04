@@ -9,7 +9,7 @@ export function up(db: any): void {
       email TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       name TEXT,
-      is_logged_in BOOLEAN NOT NULL DEFAULT 0,
+      is_logged_in INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL
     );
 

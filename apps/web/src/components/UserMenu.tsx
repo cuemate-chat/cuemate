@@ -146,28 +146,14 @@ export default function UserMenu() {
 
   const onLogout = async () => {
     try {
-      // 调用后端登出接口，更新数据库状态
+      // 统一在 auth.signout 中处理清理与通知
       await signout();
     } catch (error) {
-      // 即使后端调用失败，也要清除本地状态
       console.warn('登出接口调用失败:', error);
     }
-    
-    // 清除本地存储
-    storage.clearToken();
-    storage.clearUser();
+    // 成功与否都提示并导航
     message.success('已退出登录');
     setOpen(false);
-    
-    // 通知桌面应用登录状态已变化
-    try {
-      if ((window as any).electronAPI && (window as any).electronAPI.notifyLoginStatusChanged) {
-        await (window as any).electronAPI.notifyLoginStatusChanged(false);
-      }
-    } catch (error) {
-      console.warn('通知桌面应用登录状态变化失败:', error);
-    }
-    
     navigate('/login', { replace: true });
   };
 

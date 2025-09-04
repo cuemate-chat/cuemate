@@ -53,15 +53,6 @@ export async function signin(account: string, password: string): Promise<LoginRe
     message.error('获取 license 信息失败:' + error);
   }
 
-  // 通知桌面应用登录状态已变化
-  try {
-    if ((window as any).electronAPI && (window as any).electronAPI.notifyLoginStatusChanged) {
-      await (window as any).electronAPI.notifyLoginStatusChanged(true, response.user);
-    }
-  } catch (error) {
-    console.warn('通知桌面应用登录状态变化失败:', error);
-  }
-
   return response;
 }
 
@@ -85,5 +76,18 @@ export async function changePassword(oldPassword: string, newPassword: string): 
 }
 
 export async function signout(): Promise<void> {
-  await http.post('/auth/signout');
+  let apiError: unknown = null;
+  try {
+    await http.post('/auth/signout');
+  } catch (err) {
+    apiError = err;
+  }
+
+  // 清除本地状态
+  storage.clearToken();
+  storage.clearUser();
+
+  if (apiError) {
+    // 不抛出以保证 UI 正常流转（上层一般会提示“已退出登录”并跳转）
+  }
 }

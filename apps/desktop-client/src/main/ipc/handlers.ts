@@ -10,6 +10,42 @@ import { WindowManager } from '../windows/WindowManager.js';
 export function setupIPC(windowManager: WindowManager): void {
   logger.info('设置 IPC 通信处理器');
 
+  // === 定时轮询登录状态并广播到控制条 ===
+  // 采用集中轮询，避免依赖渲染进程主动通知
+  const POLL_INTERVAL_MS = 5000;
+  const pollLoginStatus = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:3001/auth/login-status', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000),
+      });
+      let isLoggedIn = false;
+      let user: any = undefined;
+      if (response.ok) {
+        const data = await response.json();
+        isLoggedIn = !!data?.isLoggedIn;
+        user = data?.user;
+      } else if (response.status === 401) {
+        isLoggedIn = false;
+      } else {
+        // 对于非 200/401 的异常状态，不更新状态以避免误判
+        return;
+      }
+
+      const controlBarWindow = windowManager.getControlBarWindow();
+      if (controlBarWindow && !controlBarWindow.isDestroyed()) {
+        controlBarWindow.webContents.send('login-status-changed', { isLoggedIn, user });
+      }
+    } catch (error) {
+      // 轮询失败时静默，不中断后续轮询
+      logger.warn({ error }, '登录状态轮询失败');
+    }
+  };
+  // 立即执行一次，然后按间隔轮询
+  pollLoginStatus();
+  setInterval(pollLoginStatus, POLL_INTERVAL_MS);
+
   // === 窗口管理相关 IPC 处理器 ===
 
   /**
@@ -269,7 +305,7 @@ export function setupIPC(windowManager: WindowManager): void {
       logger.info('IPC: 检查用户登录状态');
 
       // 调用 web-api 检查登录状态
-      const response = await fetch('http://localhost:3001/auth/login-status', {
+      const response = await fetch('http://127.0.0.1:3001/auth/login-status', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -280,7 +316,7 @@ export function setupIPC(windowManager: WindowManager): void {
 
       if (response.ok) {
         const data = await response.json();
-        logger.info({ user: data.user }, 'IPC: 用户已登录');
+        logger.info({ isLoggedIn: data.isLoggedIn, user: data.user }, 'IPC: 登录检查完成');
         return {
           success: true,
           isLoggedIn: data.isLoggedIn,
@@ -294,39 +330,20 @@ export function setupIPC(windowManager: WindowManager): void {
         };
       } else {
         logger.warn({ status: response.status }, 'IPC: 登录检查返回异常状态码');
+        // 不误判为未登录：仅返回失败，不改变状态
         return {
-          success: true,
+          success: false,
           isLoggedIn: false,
         };
       }
     } catch (error) {
       logger.error({ error }, 'IPC: 登录状态检查失败');
+      // 不误判为未登录
       return {
         success: false,
         isLoggedIn: false,
         error: error instanceof Error ? error.message : String(error),
       };
-    }
-  });
-
-  /**
-   * 通知登录状态变化
-   */
-  ipcMain.handle('notify-login-status-changed', async (_event, isLoggedIn: boolean, user?: any) => {
-    try {
-      logger.info({ isLoggedIn, user }, 'IPC: 通知登录状态变化');
-
-      // 向控制条窗口发送登录状态变化事件
-      const controlBarWindow = windowManager.getControlBarWindow();
-      if (controlBarWindow && !controlBarWindow.isDestroyed()) {
-        controlBarWindow.webContents.send('login-status-changed', { isLoggedIn, user });
-        logger.info('IPC: 已向控制条窗口发送登录状态变化事件');
-      }
-
-      return { success: true };
-    } catch (error) {
-      logger.error({ error }, 'IPC: 通知登录状态变化失败');
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 
