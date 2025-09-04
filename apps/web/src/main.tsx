@@ -43,7 +43,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/jobs/new" element={<JobsNew />} />
           <Route path="/jobs" element={<JobsList />} />
           <Route path="/questions" element={<Questions />} />
-          <Route path="/preset-questions" element={<PresetQuestions />} />
+          <Route path="/settings/preset-questions" element={<PresetQuestions />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/reviews/:id" element={<ReviewDetail />} />
           <Route path="/help" element={<Help />} />
@@ -55,10 +55,10 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings/logs" element={<Logs />} />
           <Route path="/settings/vector-knowledge" element={<VectorKnowledge />} />
           <Route path="/settings/license" element={<License />} />
-          <Route path="/docker-monitor" element={<DockerMonitor />} />
-          <Route path="/operation-logs" element={<OperationLogs />} />
-          <Route path="/pixel-ads" element={<AdsPixel />} />
-          <Route path="/ads-management" element={<AdsManagement />} />
+          <Route path="/settings/docker-monitor" element={<DockerMonitor />} />
+          <Route path="/settings/operation-logs" element={<OperationLogs />} />
+          <Route path="/settings/pixel-ads" element={<AdsPixel />} />
+          <Route path="/settings/ads-management" element={<AdsManagement />} />
         </Route>
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<Navigate to="/home" />} />

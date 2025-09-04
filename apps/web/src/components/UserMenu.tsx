@@ -110,12 +110,12 @@ export default function UserMenu() {
   };
 
   const onOperationLogs = () => {
-    navigate('/operation-logs');
+    navigate('/settings/operation-logs');
     setOpen(false);
   };
 
   const onDockerMonitor = () => {
-    navigate('/docker-monitor');
+    navigate('/settings/docker-monitor');
     setOpen(false);
   };
 
@@ -130,17 +130,17 @@ export default function UserMenu() {
   };
 
   const onPresetQuestions = () => {
-    navigate('/preset-questions');
+    navigate('/settings/preset-questions');
     setOpen(false);
   };
 
   const onAdsPixel = () => {
-    navigate('/pixel-ads');
+    navigate('/settings/pixel-ads');
     setOpen(false);
   };
 
   const onAdsManagement = () => {
-    navigate('/ads-management');
+    navigate('/settings/ads-management');
     setOpen(false);
   };
 
