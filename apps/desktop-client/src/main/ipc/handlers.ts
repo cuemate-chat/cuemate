@@ -55,31 +55,29 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   /**
-   * 显示关闭按钮 - 已集成到控制条组件中
+   * 显示关闭按钮 - 由控制条组件内部管理
    */
   ipcMain.handle('show-close-button', async () => {
     try {
-      // 关闭按钮现在由控制条组件内部管理，保留接口以兼容
       windowManager.showCloseButton();
-      logger.info('IPC: 显示关闭按钮状态已更新（已集成到控制条）');
+      logger.info('IPC: 显示关闭按钮');
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 显示关闭按钮状态更新失败');
+      logger.error({ error }, 'IPC: 显示关闭按钮失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 
   /**
-   * 隐藏关闭按钮 - 已集成到控制条组件中
+   * 隐藏关闭按钮 - 由控制条组件内部管理
    */
   ipcMain.handle('hide-close-button', async () => {
     try {
-      // 关闭按钮现在由控制条组件内部管理，保留接口以兼容
       windowManager.hideCloseButton();
-      logger.info('IPC: 隐藏关闭按钮状态已更新（已集成到控制条）');
+      logger.info('IPC: 隐藏关闭按钮');
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 隐藏关闭按钮状态更新失败');
+      logger.error({ error }, 'IPC: 隐藏关闭按钮失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -367,7 +365,7 @@ export function setupIPC(windowManager: WindowManager): void {
   // === 鼠标和键盘事件相关 IPC 处理器 ===
 
   /**
-   * 处理关闭按钮点击事件 - 现在由集成的控制条组件处理
+   * 处理关闭按钮点击事件
    */
   ipcMain.handle('close-button-clicked', async () => {
     try {
@@ -381,7 +379,7 @@ export function setupIPC(windowManager: WindowManager): void {
     }
   });
 
-  // 移除了单独的控制条鼠标事件处理，现在由集成的组件内部处理
+  // 控制条鼠标事件由组件内部处理
 
   // === 开发工具相关 IPC 处理器 ===
 

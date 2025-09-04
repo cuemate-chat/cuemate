@@ -16,12 +16,10 @@ const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) 
 };
 
 interface FloatingControlBarProps {
-  // 保留接口但不再使用，为了兼容性
-  onShowCloseButton?: () => void;
-  onHideCloseButton?: () => void;
+  // 组件已完全自管理，不再需要外部回调
 }
 
-export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: FloatingControlBarProps) {
+export function FloatingControlBar({}: FloatingControlBarProps = {}) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // 关闭按钮相关状态
@@ -61,7 +59,6 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     
     // 显示关闭按钮
     setShowCloseButton(true);
-    onShowCloseButton?.();
     log('info', 'FloatingControlBar 鼠标进入，显示关闭按钮');
   };
 
@@ -78,7 +75,6 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
     // 延迟隐藏关闭按钮，给用户时间在同一窗口内操作
     closeButtonTimeoutRef.current = setTimeout(() => {
       setShowCloseButton(false);
-      onHideCloseButton?.();
     }, 200);
   };
 
@@ -107,7 +103,6 @@ export function FloatingControlBar({ onShowCloseButton, onHideCloseButton }: Flo
         {/* 关闭按钮 */}
         <CloseButton 
           showCloseButton={showCloseButton} 
-          onHideCloseButton={onHideCloseButton} 
         />
       </div>
     </Tooltip.Provider>

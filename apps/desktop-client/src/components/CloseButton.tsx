@@ -17,10 +17,9 @@ const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) 
 
 interface CloseButtonProps {
   showCloseButton: boolean;
-  onHideCloseButton?: () => void;
 }
 
-export function CloseButton({ showCloseButton, onHideCloseButton }: CloseButtonProps) {
+export function CloseButton({ showCloseButton }: CloseButtonProps) {
   const [isCloseButtonHovered, setIsCloseButtonHovered] = useState(false);
   const closeButtonTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -66,10 +65,8 @@ export function CloseButton({ showCloseButton, onHideCloseButton }: CloseButtonP
     e.stopPropagation();
     setIsCloseButtonHovered(false);
     
-    // 延迟隐藏
-    closeButtonTimeoutRef.current = setTimeout(() => {
-      onHideCloseButton?.();
-    }, 200);
+    // 延迟隐藏已由 FloatingControlBar 组件统一管理
+    // 这里不需要单独处理隐藏逻辑
   };
 
   return (

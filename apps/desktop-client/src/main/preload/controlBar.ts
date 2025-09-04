@@ -13,6 +13,7 @@ const controlBarAPI = {
   hideFloatingWindows: () => ipcRenderer.invoke('hide-floating-windows'),
   toggleFloatingWindows: () => ipcRenderer.invoke('toggle-floating-windows'),
 
+  // 关闭按钮状态由组件内部管理，保留接口以兼容现有代码
   showCloseButton: () => ipcRenderer.invoke('show-close-button'),
   hideCloseButton: () => ipcRenderer.invoke('hide-close-button'),
 
