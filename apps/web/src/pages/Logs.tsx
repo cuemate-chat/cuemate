@@ -46,12 +46,12 @@ export default function Logs() {
   // 列宽（可调节）
   type ColKey = 'name' | 'project' | 'level' | 'date' | 'size' | 'action';
   const [colWidths, setColWidths] = useState<Record<ColKey, number>>({
-    name: 240,
-    project: 240,
-    level: 220,
-    date: 260,
+    name: 230,
+    project: 230,
+    level: 200,
+    date: 250,
     size: 200,
-    action: 260,
+    action: 250,
   });
   const resizingRef = useRef<{ key: ColKey; startX: number; startW: number } | null>(null);
   const MIN_COL_WIDTH = 80;
@@ -294,76 +294,78 @@ export default function Logs() {
       </div>
 
       <div className="border rounded">
-        <div
-          className="grid text-xs font-medium bg-slate-50 px-3 py-2 border-b select-none"
-          style={{ gridTemplateColumns: gridCols }}
-        >
-          <div className="relative">
-            名称
-            <span
-              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
-              onMouseDown={(e) => startResize('name', e)}
-            />
-          </div>
-          <div className="relative">
-            项目
-            <span
-              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
-              onMouseDown={(e) => startResize('project', e)}
-            />
-          </div>
-          <div className="relative">
-            级别
-            <span
-              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
-              onMouseDown={(e) => startResize('level', e)}
-            />
-          </div>
-          <div className="relative">
-            日期
-            <span
-              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
-              onMouseDown={(e) => startResize('date', e)}
-            />
-          </div>
-          <div className="relative">
-            大小
-            <span
-              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
-              onMouseDown={(e) => startResize('size', e)}
-            />
-          </div>
-          <div className="relative">
-            操作
-            <span
-              className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
-              onMouseDown={(e) => startResize('action', e)}
-            />
-          </div>
-        </div>
-        {items.map((it, idx) => (
-          <div
-            key={idx}
-            className="grid text-sm px-3 py-2 border-b hover:bg-slate-50"
-            style={{ gridTemplateColumns: gridCols }}
-          >
-            <div>
-              {(page - 1) * 10 + idx + 1} . {serviceNameMap[it.service] || it.service}
+        <div className="overflow-x-auto">
+          <div style={{ minWidth: '1200px' }}>
+            <div
+              className="grid text-xs font-medium bg-slate-50 px-3 py-2 border-b select-none"
+              style={{ gridTemplateColumns: gridCols }}
+            >
+              <div className="relative">
+                名称
+                <span
+                  className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+                  onMouseDown={(e) => startResize('name', e)}
+                />
+              </div>
+              <div className="relative">
+                项目
+                <span
+                  className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+                  onMouseDown={(e) => startResize('project', e)}
+                />
+              </div>
+              <div className="relative">
+                级别
+                <span
+                  className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+                  onMouseDown={(e) => startResize('level', e)}
+                />
+              </div>
+              <div className="relative">
+                日期
+                <span
+                  className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+                  onMouseDown={(e) => startResize('date', e)}
+                />
+              </div>
+              <div className="relative">
+                大小
+                <span
+                  className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+                  onMouseDown={(e) => startResize('size', e)}
+                />
+              </div>
+              <div className="relative">
+                操作
+                <span
+                  className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+                  onMouseDown={(e) => startResize('action', e)}
+                />
+              </div>
             </div>
-            <div>{it.service}</div>
-            <div>
-              <LevelPill lvl={it.level} />
-            </div>
-            <div>{it.date}</div>
-            <div>{(it.size / 1024).toFixed(1)} KB</div>
-            <div className="flex items-center gap-2">
-              <button
-                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700"
-                onClick={() => readContent(it)}
+            {items.map((it, idx) => (
+              <div
+                key={idx}
+                className="grid text-sm px-3 py-2 border-b hover:bg-slate-50"
+                style={{ gridTemplateColumns: gridCols }}
               >
-                <EyeIcon className="w-4 h-4" /> 查看
-              </button>
-              <button
+                <div>
+                  {(page - 1) * 10 + idx + 1} . {serviceNameMap[it.service] || it.service}
+                </div>
+                <div>{it.service}</div>
+                <div>
+                  <LevelPill lvl={it.level} />
+                </div>
+                <div>{it.date}</div>
+                <div>{(it.size / 1024).toFixed(1)} KB</div>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                    onClick={() => readContent(it)}
+                  >
+                    <EyeIcon className="w-4 h-4" /> 查看
+                  </button>
+                  <button
                 className="inline-flex items-center gap-1 text-amber-600 hover:text-amber-700"
                 onClick={() => {
                   Modal.confirm({
@@ -425,10 +427,12 @@ export default function Logs() {
                 </svg>
                 删除
               </button>
+              </div>
             </div>
+            ))}
+            {items.length === 0 && <div className="text-center text-slate-500 py-6">暂无数据</div>}
           </div>
-        ))}
-        {items.length === 0 && <div className="text-center text-slate-500 py-6">暂无数据</div>}
+        </div>
       </div>
 
       <div className="flex justify-between items-center mt-3 text-sm">
@@ -453,7 +457,7 @@ export default function Logs() {
           onClick={() => setViewing(null)}
         >
           <div
-            className="bg-white w-[1200px] h-[80vh] max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-slate-200"
+            className="bg-white w-full max-w-[1200px] h-[80vh] max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-slate-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 头部区域 */}

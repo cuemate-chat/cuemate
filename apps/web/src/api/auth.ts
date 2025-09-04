@@ -53,6 +53,19 @@ export async function signin(account: string, password: string): Promise<LoginRe
     message.error('获取 license 信息失败:' + error);
   }
 
+  // 通过 postMessage 通知桌面应用登录状态已变化
+  try {
+    window.postMessage(
+      {
+        type: 'LOGIN_SUCCESS',
+        payload: response.user,
+      },
+      '*',
+    );
+  } catch (error) {
+    console.warn('通知桌面应用登录状态变化失败:', error);
+  }
+
   return response;
 }
 
@@ -76,18 +89,34 @@ export async function changePassword(oldPassword: string, newPassword: string): 
 }
 
 export async function signout(): Promise<void> {
+  // 保证无论接口是否成功，都执行本地清理与通知
   let apiError: unknown = null;
   try {
     await http.post('/auth/signout');
   } catch (err) {
+    // 记录但不抛出，继续执行本地清理与通知
     apiError = err;
   }
 
-  // 清除本地状态
+  // 清除本地状态（无论接口是否成功）
   storage.clearToken();
   storage.clearUser();
 
+  // 通过 postMessage 通知桌面应用登录状态已变化（登出）
+  try {
+    window.postMessage(
+      {
+        type: 'LOGIN_LOGOUT',
+      },
+      '*',
+    );
+  } catch (error) {
+    // 静默处理通知失败
+    console.warn('通知桌面应用登录状态变化失败:', error);
+  }
+
+  // 如果需要，保留原始错误给上层使用（但通常上层无需感知）
   if (apiError) {
-    // 不抛出以保证 UI 正常流转（上层一般会提示“已退出登录”并跳转）
+    // 不抛出以保证 UI 正常流转（上层一般会提示"已退出登录"并跳转）
   }
 }

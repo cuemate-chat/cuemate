@@ -269,7 +269,7 @@ export default function Prompts() {
   // 默认选中第一个岗位后会立即拉取右侧数据
 
   return (
-    <div className="flex gap-6">
+    <div className="flex flex-col lg:flex-row gap-6">
       {/* 左侧岗位 */}
       <CollapsibleSidebar
         isCollapsed={sidebarCollapsed}

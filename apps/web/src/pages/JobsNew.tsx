@@ -219,7 +219,7 @@ export default function JobsNew() {
 
         {/* Step 内容 */}
         {current === 0 && (
-          <div className="mt-6 flex gap-6">
+          <div className="mt-6 flex flex-col lg:flex-row gap-6">
             {/* 左侧示例 */}
             <CollapsibleSidebar
               isCollapsed={sidebarCollapsed}
@@ -397,8 +397,8 @@ export default function JobsNew() {
         )}
 
         {/* 底部操作区 */}
-        <div className="mt-8 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
             <Button onClick={() => (current === 0 ? nav('/home') : handlePrev())}>
               {current === 0 ? '返回主页' : '上一步'}
             </Button>
@@ -429,7 +429,7 @@ export default function JobsNew() {
             </Button>
           )}
           {current === 2 && (
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button disabled={progress < 100} onClick={resetAll}>
                 新建另一个岗位
               </Button>
@@ -456,7 +456,7 @@ export default function JobsNew() {
           onCancel={() => setResumeSampleOpen(false)}
           title="简历示例"
           footer={null}
-          width={820}
+          width="min(820px, 90vw)"
           centered
         >
           <div className="max-h-[65vh] overflow-y-auto">

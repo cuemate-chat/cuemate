@@ -347,51 +347,82 @@ export default function JobsList() {
           </div>
 
           {/* 操作按钮 */}
-          <div className="mt-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <Button onClick={() => (window.location.href = '/settings/vector-knowledge')}>
-                  去往向量知识库
-                </Button>
-                <Button 
-                  disabled={!selectedId}
-                  onClick={() => setUploadModalVisible(true)}
-                >
-                  上传简历
-                </Button>
-                <Button 
-                  disabled={!selectedId || !resumeContent.trim() || optimizeLoading} 
-                  loading={optimizeLoading}
-                  onClick={() => onOptimizeResume()}
-                >
-                  {optimizeLoading ? '优化中...' : '简历优化'}
-                </Button>
-              </div>
-              {selectedId && (
-                <div className="flex items-center gap-2">
-                  {items.find((i) => i.id === selectedId)?.vector_status ? (
-                    <>
-                      <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                      <span className="text-xs text-green-600 font-medium">
-                        已同步到向量库
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <ExclamationTriangleIcon className="w-4 h-4 text-red-500" />
-                      <span className="text-xs text-red-500">
-                        未同步到向量库，点击保存修改按钮即可同步至向量库
-                      </span>
-                    </>
-                  )}
-                </div>
-              )}
+          <div className="mt-6 space-y-4">
+            {/* 功能按钮行 */}
+            <div className="flex flex-wrap items-center gap-3">
+              <Button 
+                onClick={() => (window.location.href = '/settings/vector-knowledge')}
+                className="shrink-0"
+              >
+                <span className="hidden sm:inline">去往向量知识库</span>
+                <span className="sm:hidden">向量库</span>
+              </Button>
+              <Button 
+                disabled={!selectedId}
+                onClick={() => setUploadModalVisible(true)}
+                className="shrink-0"
+              >
+                <span className="hidden sm:inline">上传简历</span>
+                <span className="sm:hidden">上传</span>
+              </Button>
+              <Button 
+                disabled={!selectedId || !resumeContent.trim() || optimizeLoading} 
+                loading={optimizeLoading}
+                onClick={() => onOptimizeResume()}
+                className="shrink-0"
+              >
+                {optimizeLoading ? (
+                  <>
+                    <span className="hidden sm:inline">优化中...</span>
+                    <span className="sm:hidden">优化中...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="hidden sm:inline">简历优化</span>
+                    <span className="sm:hidden">优化</span>
+                  </>
+                )}
+              </Button>
             </div>
-            <div className="space-x-3">
-              <Button type="primary" disabled={!selectedId || loading} onClick={onSave}>
+
+            {/* 状态提示行 */}
+            {selectedId && (
+              <div className="flex items-start gap-2 text-xs">
+                {items.find((i) => i.id === selectedId)?.vector_status ? (
+                  <>
+                    <CheckCircleIcon className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                    <span className="text-green-600 font-medium">
+                      已同步到向量库
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <ExclamationTriangleIcon className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                    <span className="text-red-500">
+                      <span className="hidden sm:inline">未同步到向量库，点击保存修改按钮即可同步至向量库</span>
+                      <span className="sm:hidden">未同步，点击保存即可同步</span>
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* 主要操作按钮行 */}
+            <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100">
+              <Button 
+                type="primary" 
+                disabled={!selectedId || loading} 
+                onClick={onSave}
+                className="shrink-0"
+              >
                 保存修改
               </Button>
-              <Button danger disabled={!selectedId || loading} onClick={onDelete}>
+              <Button 
+                danger 
+                disabled={!selectedId || loading} 
+                onClick={onDelete}
+                className="shrink-0"
+              >
                 删除岗位
               </Button>
             </div>
@@ -404,7 +435,7 @@ export default function JobsList() {
         title="简历优化结果"
         open={optimizeModalVisible}
         onCancel={() => setOptimizeModalVisible(false)}
-        width={1200}
+        width="min(1200px, 95vw)"
         style={{ height: '80vh' }}
         footer={
           <div className="flex justify-between items-center">
@@ -441,7 +472,7 @@ export default function JobsList() {
             {/* 对比内容 */}
             <div className="flex-1 min-h-0">
               <h3 className="text-sm font-medium text-slate-900 mb-3">内容对比（可编辑）</h3>
-              <div className="grid grid-cols-2 gap-4 h-full">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
                 {/* 优化前 */}
                 <div className="flex flex-col h-full">
                   <div className="flex items-center justify-between mb-2">

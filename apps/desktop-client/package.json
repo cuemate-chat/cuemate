@@ -14,7 +14,7 @@
     "build:renderer": "pnpm typecheck && vite build",
     "preview": "vite preview",
     "electron": "npx electron dist/main/index.cjs",
-    "electron:dev": "concurrently --names \"VITE,BUILD,ELECTRON\" \"pnpm dev\" \"pnpm dev:main:watch\" \"pnpm dev:electron\" --kill-others --prefix-colors \"blue,yellow,green\"",
+    "electron:dev": "concurrently --names \"VITE,BUILD,ELECTRON\" \"pnpm dev\" \"pnpm dev:main:watch\" \"pnpm dev:electron\" --prefix-colors \"blue,yellow,green\"",
     "dev:main:watch": "node build-main.js --watch",
     "dev:electron": "wait-on http://localhost:3000 dist/main/index.cjs && electronmon dist/main/index.cjs --watch dist/main --ignore \"*.map\"",
     "package": "electron-builder",

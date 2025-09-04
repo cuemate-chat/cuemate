@@ -237,20 +237,20 @@ export default function Models() {
 
       {/* 右侧卡片 + 搜索 + 分页 */}
       <section className="flex-1 h-full min-h-0">
-        <div className="mb-3 flex justify-between items-center">
+        <div className="mb-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div className="text-slate-900 font-semibold text-lg">{selectedTitle}</div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <Input.Search
               allowClear
               placeholder="搜索模型"
-              style={{ width: 300 }}
+              className="w-full sm:w-[300px]"
               onSearch={(v) => {
                 setFilter((f) => ({ ...f, keyword: v || undefined }));
                 setPage(1);
               }}
             />
             <button
-              className="h-8 px-4 rounded-lg bg-blue-600 text-white shadow-sm"
+              className="h-8 px-4 rounded-lg bg-blue-600 text-white shadow-sm whitespace-nowrap"
               onClick={() => {
                 const k = selectedKeys[0] || 'all';
                 if (k && k.startsWith('provider:')) {
@@ -269,7 +269,8 @@ export default function Models() {
                 }
               }}
             >
-              添加模型
+              <span className="hidden sm:inline">添加模型</span>
+              <span className="sm:hidden">添加</span>
             </button>
           </div>
         </div>
@@ -292,72 +293,77 @@ export default function Models() {
                     </div>
                     <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
                   </div>
-                  <div className="flex items-center justify-between pl-6">
-                    <div className="flex items-center gap-2">
-                      {(() => {
-                        const icon = findProvider(m.provider)?.icon;
-                        if (icon) {
-                          const src = `data:image/svg+xml;utf8,${encodeURIComponent(icon)}`;
-                          return <img src={src} alt="" className="w-5 h-5" />;
-                        }
-                        return null;
-                      })()}
-                      <div className="font-semibold text-slate-900 text-base">{m.name}</div>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${m.scope === 'public' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}
-                      >
-                        {m.scope === 'public' ? '公有' : '私有'}
-                      </span>
-                      {m.status && (
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full ${m.status === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}
-                        >
-                          {m.status === 'ok' ? '已连通' : '不可用'}
-                        </span>
-                      )}
-                    </div>
-                    {/* 右上角操作：仅悬停卡片时显示 */}
-                    <div className="hidden group-hover:flex items-center gap-3">
-                      <button
-                        className="inline-flex items-center justify-center"
-                        title="测试连通性"
-                        onClick={async () => {
-                          try {
-                            setTestingModelId(m.id); // 显示加载遮罩
-                            const res: any = await testModelConnectivity(m.id);
-                            message[res?.ok ? 'success' : 'error'](
-                              res?.ok ? '连通正常' : '连通失败',
-                            );
-                            fetchList();
-                          } catch {
-                            message.error('测试失败');
-                          } finally {
-                            setTestingModelId(null); // 隐藏加载遮罩
+                  <div className="pl-6">
+                    {/* 标题和标签行 */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        {(() => {
+                          const icon = findProvider(m.provider)?.icon;
+                          if (icon) {
+                            const src = `data:image/svg+xml;utf8,${encodeURIComponent(icon)}`;
+                            return <img src={src} alt="" className="w-5 h-5 shrink-0" />;
                           }
-                        }}
-                      >
-                        <LinkOutlined style={{ fontSize: 18, color: '#0ea5e9' }} />
-                      </button>
-                      <button
-                        className="inline-flex items-center justify-center"
-                        title="编辑"
-                        onClick={() => handleEdit(m)}
-                      >
-                        <EditOutlined style={{ fontSize: 18, color: '#2563eb' }} />
-                      </button>
-                      <button
-                        className="inline-flex items-center justify-center"
-                        title="删除"
-                        onClick={() => handleDelete(m.id)}
-                      >
-                        <DeleteOutlined style={{ fontSize: 18, color: '#dc2626' }} />
-                      </button>
+                          return null;
+                        })()}
+                        <div className="font-semibold text-slate-900 text-base truncate">{m.name}</div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${m.scope === 'public' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}
+                          >
+                            {m.scope === 'public' ? '公有' : '私有'}
+                          </span>
+                          {m.status && (
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${m.status === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}
+                            >
+                              {m.status === 'ok' ? '已连通' : '不可用'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {/* 操作按钮：仅悬停卡片时显示 */}
+                      <div className="hidden group-hover:flex items-center gap-3 shrink-0">
+                        <button
+                          className="inline-flex items-center justify-center"
+                          title="测试连通性"
+                          onClick={async () => {
+                            try {
+                              setTestingModelId(m.id); // 显示加载遮罩
+                              const res: any = await testModelConnectivity(m.id);
+                              message[res?.ok ? 'success' : 'error'](
+                                res?.ok ? '连通正常' : '连通失败',
+                              );
+                              fetchList();
+                            } catch {
+                              message.error('测试失败');
+                            } finally {
+                              setTestingModelId(null); // 隐藏加载遮罩
+                            }
+                          }}
+                        >
+                          <LinkOutlined style={{ fontSize: 18, color: '#0ea5e9' }} />
+                        </button>
+                        <button
+                          className="inline-flex items-center justify-center"
+                          title="编辑"
+                          onClick={() => handleEdit(m)}
+                        >
+                          <EditOutlined style={{ fontSize: 18, color: '#2563eb' }} />
+                        </button>
+                        <button
+                          className="inline-flex items-center justify-center"
+                          title="删除"
+                          onClick={() => handleDelete(m.id)}
+                        >
+                          <DeleteOutlined style={{ fontSize: 18, color: '#dc2626' }} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                   {/* 横线分割 */}
                   <div className="my-3 h-px bg-slate-200" />
                   {/* 详情信息：每项不换行，值溢出省略（时间不省略） */}
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm pl-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm pl-6">
                     <div className="flex items-baseline gap-1 min-w-0">
                       <span className="text-slate-500 shrink-0 whitespace-nowrap">供应商：</span>
                       <span className="text-slate-800 font-medium truncate">{providerCn}</span>

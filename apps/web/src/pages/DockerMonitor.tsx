@@ -194,7 +194,7 @@ const DockerMonitor: React.FC = () => {
 
       {/* 统计卡片 */}
       <Row gutter={16} className="mb-6">
-        <Col span={8}>
+        <Col xs={24} sm={8}>
           <Card>
             <Statistic
               title="总容器数"
@@ -203,7 +203,7 @@ const DockerMonitor: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={8}>
           <Card>
             <Statistic
               title="运行中"
@@ -212,7 +212,7 @@ const DockerMonitor: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={8}>
           <Card>
             <Statistic
               title="已停止"
@@ -237,18 +237,21 @@ const DockerMonitor: React.FC = () => {
           </Button>
         }
       >
-        <Table
-          columns={columns}
-          dataSource={containers}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`
-          }}
-        />
+        <div className="overflow-x-auto">
+          <Table
+            columns={columns}
+            dataSource={containers}
+            rowKey="id"
+            loading={loading}
+            scroll={{ x: 800 }}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`
+            }}
+          />
+        </div>
       </Card>
 
       {/* 日志查看器 */}
@@ -258,7 +261,7 @@ const DockerMonitor: React.FC = () => {
         title={`容器日志 - ${selectedContainer?.name}`}
         logs={containerLogs}
         loading={logsLoading}
-        width={1000}
+        width={Math.min(window.innerWidth * 0.9, 1000)}
         height={600}
       />
     </div>
