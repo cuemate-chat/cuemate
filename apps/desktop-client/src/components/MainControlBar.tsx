@@ -48,33 +48,41 @@ export function MainControlBar({}: MainControlBarProps) {
     checkLoginStatus();
   }, []);
 
-  // 监听登录状态变化事件
+  // 监听 WebSocket 登录登出事件
   useEffect(() => {
-    const handleLoginStatusChanged = (data: { isLoggedIn: boolean; user?: any }) => {
+    const handleWebSocketLoginSuccess = (data: { isLoggedIn: boolean; user?: any }) => {
       setIsLoggedIn(data.isLoggedIn);
       setIsLoading(false);
     };
 
-    // 监听登录状态变化事件
+    const handleWebSocketLogout = (data: { isLoggedIn: boolean }) => {
+      setIsLoggedIn(data.isLoggedIn);
+      setIsLoading(false);
+    };
+
+    // 监听 WebSocket 事件
     if ((window as any).electronAPI && (window as any).electronAPI.on) {
-      (window as any).electronAPI.on('login-status-changed', handleLoginStatusChanged);
+      (window as any).electronAPI.on('websocket-login-success', handleWebSocketLoginSuccess);
+      (window as any).electronAPI.on('websocket-logout', handleWebSocketLogout);
     }
 
     // 清理监听器
     return () => {
       if ((window as any).electronAPI && (window as any).electronAPI.off) {
-        (window as any).electronAPI.off('login-status-changed', handleLoginStatusChanged);
+        (window as any).electronAPI.off('websocket-login-success', handleWebSocketLoginSuccess);
+        (window as any).electronAPI.off('websocket-logout', handleWebSocketLogout);
       }
     };
   }, []);
 
-  // 处理 logo 点击事件 - 跳转到帮助文档
+  // 处理 logo 点击事件 - 跳转到帮助文档  
   const handleLogoClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     try {
+      // 使用原有的 IPC 方式（因为这是在 Electron 渲染进程中）
       if ((window as any).electronAPI && 'openExternalUrl' in (window as any).electronAPI) {
-        await ((window as any).electronAPI as any).openExternalUrl('https://cuemate.chat');
+        await ((window as any).electronAPI as any).openExternalUrl('https://docs.cuemate.chat');
       }
     } catch (error) {
       await log('error', `打开链接失败: ${error}`);

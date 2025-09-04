@@ -22,6 +22,7 @@ import { registerReviewRoutes } from './routes/reviews.js';
 import { registerVectorRoutes } from './routes/vectors.js';
 import { logger as serviceLogger } from './utils/logger.js';
 import { OperationLogger } from './utils/operation-logger.js';
+import { CueMateWebSocketServer } from './websocket/websocket-server.js';
 
 config();
 
@@ -93,6 +94,22 @@ async function start() {
   const host = process.env.WEB_API_HOST || '0.0.0.0';
   await app.listen({ port, host });
   app.log.info(`Web API running at http://${host}:${port}`);
+
+  // 启动 WebSocket 服务器（使用相同端口，WebSocketServer 会自动处理 HTTP upgrade）
+  const wsServer = new CueMateWebSocketServer(port);
+  
+  // 装饰 app 实例，以便其他地方可以访问 WebSocket 服务器
+  app.decorate('wsServer', wsServer);
+
+  // 添加 WebSocket 状态查询端点
+  app.get('/ws/status', async () => {
+    const clientCounts = wsServer.getClientCounts();
+    return {
+      status: 'running',
+      clients: clientCounts,
+      timestamp: Date.now()
+    };
+  });
 }
 
 start();

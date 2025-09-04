@@ -54,7 +54,8 @@ const controlBarAPI = {
       'position-changed',
       'app-state-changed',
       'shortcut-triggered',
-      'login-status-changed', // 添加登录状态变化事件
+      'websocket-login-success', // WebSocket 登录成功事件
+      'websocket-logout',        // WebSocket 登出事件
     ];
 
     if (allowedChannels.includes(channel)) {

@@ -3,10 +3,12 @@ import type { AppState } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
 import { ControlBarWindow } from './ControlBarWindow.js';
 import { MainContentWindow } from './MainContentWindow.js';
+import { WebSocketClient } from '../websocket/WebSocketClient.js';
 
 export class WindowManager {
   private controlBarWindow: ControlBarWindow;
   private mainContentWindow: MainContentWindow;
+  private webSocketClient: WebSocketClient;
   private isDevelopment: boolean;
   private appState: AppState;
 
@@ -23,6 +25,9 @@ export class WindowManager {
     // 创建窗口实例 - control-bar 现在作为主焦点窗口，关闭按钮已集成
     this.controlBarWindow = new ControlBarWindow(this.isDevelopment);
     this.mainContentWindow = new MainContentWindow(this.isDevelopment);
+    
+    // 创建 WebSocket 客户端
+    this.webSocketClient = new WebSocketClient(this);
   }
 
   /**
@@ -45,6 +50,9 @@ export class WindowManager {
 
       // 4. 显示浮动窗口（control-bar）
       this.showFloatingWindows();
+
+      // 5. 启动 WebSocket 连接
+      this.webSocketClient.connect();
 
       logger.info('窗口管理器初始化完成');
     } catch (error) {
@@ -216,11 +224,21 @@ export class WindowManager {
   }
 
   /**
+   * 获取 WebSocket 客户端实例
+   */
+  public getWebSocketClient(): WebSocketClient {
+    return this.webSocketClient;
+  }
+
+  /**
    * 销毁窗口管理器
    */
   public destroy(): void {
     logger.info('销毁窗口管理器');
 
+    // 断开 WebSocket 连接
+    this.webSocketClient.disconnect();
+    
     this.controlBarWindow.destroy();
     this.mainContentWindow.destroy();
   }

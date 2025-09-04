@@ -5,48 +5,10 @@ import { WindowManager } from '../windows/WindowManager.js';
 
 /**
  * 设置 IPC 通信处理器
- * 替代 Tauri 的 command 系统，处理前端和后端之间的通信
+ * command 系统，处理前端和后端之间的通信
  */
 export function setupIPC(windowManager: WindowManager): void {
   logger.info('设置 IPC 通信处理器');
-
-  // === 定时轮询登录状态并广播到控制条 ===
-  // 采用集中轮询，避免依赖渲染进程主动通知
-  const POLL_INTERVAL_MS = 5000;
-  const pollLoginStatus = async () => {
-    try {
-      const response = await fetch('http://127.0.0.1:3001/auth/login-status', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5000),
-      });
-      let isLoggedIn = false;
-      let user: any = undefined;
-      if (response.ok) {
-        const data = await response.json();
-        isLoggedIn = !!data?.isLoggedIn;
-        user = data?.user;
-      } else if (response.status === 401) {
-        isLoggedIn = false;
-      } else {
-        // 对于非 200/401 的异常状态，不更新状态以避免误判
-        return;
-      }
-
-      const controlBarWindow = windowManager.getControlBarWindow();
-      if (controlBarWindow && !controlBarWindow.isDestroyed()) {
-        controlBarWindow.webContents.send('login-status-changed', { isLoggedIn, user });
-      }
-    } catch (error) {
-      // 轮询失败时静默，不中断后续轮询
-      logger.warn({ error }, '登录状态轮询失败');
-    }
-  };
-  // 立即执行一次，然后按间隔轮询
-  pollLoginStatus();
-  setInterval(pollLoginStatus, POLL_INTERVAL_MS);
-
-  // === 窗口管理相关 IPC 处理器 ===
 
   /**
    * 显示浮动窗口

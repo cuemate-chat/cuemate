@@ -53,15 +53,15 @@ export async function signin(account: string, password: string): Promise<LoginRe
     message.error('获取 license 信息失败:' + error);
   }
 
-  // 通过 postMessage 通知桌面应用登录状态已变化
+  // 通过 WebSocket 通知桌面应用登录状态已变化
   try {
-    window.postMessage(
-      {
-        type: 'LOGIN_SUCCESS',
-        payload: response.user,
-      },
-      '*',
-    );
+    // 检查是否在 Electron 环境中
+    if (typeof window !== 'undefined' && (window as any).process?.versions?.electron) {
+      // 使用 WebSocket 通信
+      const { getWebSocketBridge } = await import('../utils/websocketBridge');
+      const bridge = getWebSocketBridge();
+      bridge.notifyLoginSuccess(response.user);
+    }
   } catch (error) {
     console.warn('通知桌面应用登录状态变化失败:', error);
   }
@@ -102,14 +102,15 @@ export async function signout(): Promise<void> {
   storage.clearToken();
   storage.clearUser();
 
-  // 通过 postMessage 通知桌面应用登录状态已变化（登出）
+  // 通过 WebSocket 通知桌面应用登录状态已变化（登出）
   try {
-    window.postMessage(
-      {
-        type: 'LOGIN_LOGOUT',
-      },
-      '*',
-    );
+    // 检查是否在 Electron 环境中
+    if (typeof window !== 'undefined' && (window as any).process?.versions?.electron) {
+      // 使用 WebSocket 通信
+      const { getWebSocketBridge } = await import('../utils/websocketBridge');
+      const bridge = getWebSocketBridge();
+      bridge.notifyLogout();
+    }
   } catch (error) {
     // 静默处理通知失败
     console.warn('通知桌面应用登录状态变化失败:', error);

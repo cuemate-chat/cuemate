@@ -79,6 +79,16 @@ export function registerAuthRoutes(app: FastifyInstance) {
       autoGetUser: false,
     });
 
+    // 通过 WebSocket 推送登录成功事件给 desktop 端
+    try {
+      (app as any).wsServer?.broadcast({
+        type: 'LOGIN_SUCCESS',
+        user: user
+      }, 'desktop');
+    } catch (error) {
+      app.log.warn({ error }, 'WebSocket 推送登录成功事件失败');
+    }
+
     return { token, user };
   });
 
@@ -268,6 +278,15 @@ export function registerAuthRoutes(app: FastifyInstance) {
           userName: userRow?.name,
           autoGetUser: false,
         });
+
+        // 通过 WebSocket 推送登出事件给 desktop 端
+        try {
+          (app as any).wsServer?.broadcast({
+            type: 'LOGOUT'
+          }, 'desktop');
+        } catch (error) {
+          app.log.warn({ error }, 'WebSocket 推送登出事件失败');
+        }
 
         return { success: true };
       } catch (err) {

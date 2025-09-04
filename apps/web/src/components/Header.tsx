@@ -62,18 +62,28 @@ export default function Header() {
     );
   };
 
-  // 客户端中为“帮助中心”采用外部浏览器打开逻辑
-  const handleHelpClick = (e: React.MouseEvent) => {
+  // 客户端中为"帮助中心"采用外部浏览器打开逻辑
+  const handleHelpClick = async (e: React.MouseEvent) => {
+    const helpUrl = 'https://cuemate.chat';
+    
     if (isElectron()) {
+      // 在 Electron 客户端中，阻止默认行为，使用 WebSocket 通信
       e.preventDefault();
-      // 在客户端中使用外部浏览器打开帮助页面
-      const helpUrl = 'https://cuemate.chat'; // 替换为实际的帮助页面地址
-      if (typeof window !== 'undefined' && (window as any).electronAPI?.openExternal) {
-        (window as any).electronAPI.openExternal(helpUrl);
-      } else {
+      
+      try {
+        // 使用 WebSocket 通信方式
+        const { getWebSocketBridge } = await import('../utils/websocketBridge');
+        const bridge = getWebSocketBridge();
+        bridge.openExternal(helpUrl);
+        console.log('已通过 WebSocket 发送打开外部链接请求');
+      } catch (error) {
+        console.error('WebSocket 通信失败，使用降级方案:', error);
         // 降级方案：直接使用 window.open
         window.open(helpUrl, '_blank');
       }
+    } else {
+      // 在普通浏览器中，直接使用默认行为打开新标签页
+      // 不需要 preventDefault，让 <a> 标签的默认行为生效
     }
   };
 
