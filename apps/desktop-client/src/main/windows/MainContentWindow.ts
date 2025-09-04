@@ -17,7 +17,7 @@ export class MainContentWindow {
     label: 'main-content',
     width: 1200,
     height: 800,
-    alwaysOnTop: false, // 主内容窗口不需要总是置顶
+    alwaysOnTop: true, // 主内容窗口也需要悬浮，但层级低于悬浮窗口
     frame: true, // 有标题栏和边框
     transparent: false, // 不透明
     skipTaskbar: false, // 在任务栏显示
@@ -65,7 +65,7 @@ export class MainContentWindow {
         x: initialX,
         y: initialY,
         icon: getWindowIconPath(), // 设置窗口图标
-        alwaysOnTop: this.config.alwaysOnTop,
+        alwaysOnTop: true, // 主内容窗口也需要悬浮
         frame: this.config.frame,
         transparent: this.config.transparent,
         skipTaskbar: this.config.skipTaskbar,
@@ -231,7 +231,10 @@ export class MainContentWindow {
         this.window.setBounds(this.lastBounds);
       }
 
-      this.window.show(); // 显示并激活窗口，允许键盘输入
+      this.window.show(); // 显示窗口
+      this.window.setAlwaysOnTop(true, 'normal'); // 设置为普通悬浮窗口
+      this.window.setVisibleOnAllWorkspaces(true); // 在所有工作区可见
+      this.window.moveTop(); // 移到当前层级最顶部
       logger.info('main-content 窗口已显示');
     }
   }

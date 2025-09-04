@@ -14,7 +14,7 @@
     "build:renderer": "pnpm typecheck && vite build",
     "preview": "vite preview",
     "electron": "npx electron dist/main/index.cjs",
-    "electron:dev": "pnpm build:main && pnpm electron",
+    "electron:dev": "concurrently --names \"VITE,ELECTRON\" \"pnpm dev\" \"pnpm build:main && pnpm electron\" --prefix-colors \"blue,green\"",
     "dev:main:manual": "node build-main.js",
     "dev:electron": "electron dist/main/index.cjs",
     "package": "electron-builder",

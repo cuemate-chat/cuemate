@@ -18,7 +18,7 @@ export class ControlBarWindow {
     label: 'control-bar',
     width: 1000,
     height: 100,
-    alwaysOnTop: true,
+    alwaysOnTop: true, // 悬浮窗口需要总是置顶
     frame: false,
     transparent: true,
     skipTaskbar: true,
@@ -26,7 +26,7 @@ export class ControlBarWindow {
     minimizable: false,
     maximizable: false,
     closable: false,
-    focusable: true, // 作为主焦点窗口，可以获得焦点
+    focusable: true, // 可以处理鼠标和键盘事件
     show: false,
     center: true, // 初始居中显示
   };
@@ -61,7 +61,7 @@ export class ControlBarWindow {
         x: initialX,
         y: initialY,
         icon: getWindowIconPath(), // 设置窗口图标
-        alwaysOnTop: this.config.alwaysOnTop,
+        alwaysOnTop: true, // 创建时就设置为置顶
         frame: this.config.frame,
         transparent: this.config.transparent,
         skipTaskbar: this.config.skipTaskbar,
@@ -78,6 +78,11 @@ export class ControlBarWindow {
           preload: getPreloadPath('controlBar'),
         },
       });
+
+      // 设置最高层级，确保显示在所有应用之上（包括全屏应用）
+      this.window.setAlwaysOnTop(true, 'screen-saver');
+      this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+      this.window.setFullScreenable(false);
 
       // 加载页面
       if (this.isDevelopment) {
@@ -170,11 +175,14 @@ export class ControlBarWindow {
    */
   public show(): void {
     if (this.window && !this.window.isDestroyed()) {
-      this.window.show(); // 显示并激活，作为主焦点窗口
-      logger.info('control-bar 窗口已显示并获得焦点');
+      this.window.show(); // 显示窗口但不争抢焦点
+      logger.info('control-bar 窗口已显示');
 
-      // 确保窗口在最顶层
-      this.window.setAlwaysOnTop(true, 'floating');
+      // 确保窗口在最顶层，使用最高级别悬浮在所有应用之上（包括全屏应用）
+      this.window.setAlwaysOnTop(true, 'screen-saver');
+      this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+      this.window.setFullScreenable(false);
+      this.window.moveTop();
     }
   }
 
