@@ -472,14 +472,18 @@ export default function Prompts() {
                       {it.description}
                     </div>
                     <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
-                      <span>{dayjs(it.created_at).format('YYYY-MM-DD HH:mm')}</span>
-                      <div className="space-x-2">
-                        <Button size="small" onClick={() => openModal(it)}>
-                          编辑
-                        </Button>
-                        <Button
-                          size="small"
-                          danger
+                      <span className="flex-1 mr-2 truncate">{dayjs(it.created_at).format('YYYY-MM-DD HH:mm')}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button 
+                          onClick={() => openModal(it)} 
+                          className="w-6 h-6 flex items-center justify-center rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+                          title="编辑"
+                        >
+                          <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
                           onClick={async (e) => {
                             e.stopPropagation();
                             await deleteInterviewQuestion(it.id);
@@ -487,9 +491,13 @@ export default function Prompts() {
                             await reloadList();
                             await refreshJobs(); // 刷新岗位列表
                           }}
+                          className="w-6 h-6 flex items-center justify-center rounded bg-red-100 hover:bg-red-200 transition-colors"
+                          title="删除"
                         >
-                          删除
-                        </Button>
+                          <svg className="w-3 h-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   </Card>

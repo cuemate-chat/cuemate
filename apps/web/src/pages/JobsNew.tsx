@@ -225,7 +225,7 @@ export default function JobsNew() {
               isCollapsed={sidebarCollapsed}
               onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
               title="示例岗位"
-              className="h-[calc(100vh-280px)] min-h-[500px] max-h-[700px]"
+              className="h-[calc(100vh-200px)] sm:h-[calc(100vh-250px)] lg:h-[calc(100vh-320px)] min-h-[500px] sm:min-h-[550px] lg:min-h-[600px]"
             >
               <div className="p-4 space-y-2 overflow-y-auto h-full">
                 {JOB_EXAMPLES.map((ex, index) => (
