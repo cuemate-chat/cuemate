@@ -1,0 +1,525 @@
+import {
+    DeleteOutlined,
+    EditOutlined,
+    LinkOutlined,
+} from '@ant-design/icons';
+import { Input, Modal, Tree } from 'antd';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+    deleteModel,
+    getModel,
+    listModels,
+    selectUserModel,
+    testModelConnectivity,
+    upsertModel,
+} from '../../api/models';
+import CollapsibleSidebar from '../../components/CollapsibleSidebar';
+import FullScreenOverlay from '../../components/FullScreenOverlay';
+import { message } from '../../components/Message';
+import PaginationBar from '../../components/PaginationBar';
+import { findProvider, providerManifests } from '../../providers';
+import ModelEditDrawer from './ModelEditDrawer';
+import ProviderPickerDrawer from './ProviderPickerDrawer';
+
+export default function ModelsList() {
+  const [loading, setLoading] = useState(false);
+  const [testingModelId, setTestingModelId] = useState<string | null>(null);
+  const [list, setList] = useState<any[]>([]);
+  const [filter, setFilter] = useState<{
+    type?: string;
+    keyword?: string;
+    scope?: 'public' | 'private';
+    providerId?: string;
+  }>({ type: 'llm' });
+  const [editing, setEditing] = useState<any | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
+  const [total, setTotal] = useState(0);
+  const [selectedTitle, setSelectedTitle] = useState<string>('全部模型');
+  const [selectedKeys, setSelectedKeys] = useState<string[]>(['all']);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
+  // 侧拉弹框状态
+  const [providerPickerOpen, setProviderPickerOpen] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<any>(null);
+  
+  // 中央区域高度：视口 - Header(56) - Footer(48) - Main 上下内边距(48)
+  const MAIN_HEIGHT = 'calc(100vh - 56px - 48px - 48px)';
+  // 纵向间距自适应（行间距）：大屏更大，小屏较小
+  const [rowGap, setRowGap] = useState<number>(16);
+
+  useEffect(() => {
+    const computeGap = () => {
+      const h = window.innerHeight;
+      // 小屏(<=800): 16px, 中屏(<=900): 24px, 大屏: 32px
+      const gap = h > 900 ? 32 : h > 800 ? 24 : 16;
+      setRowGap(gap);
+    };
+    computeGap();
+    window.addEventListener('resize', computeGap);
+    return () => window.removeEventListener('resize', computeGap);
+  }, []);
+
+  const requestIdRef = useRef(0);
+
+  const providers = useMemo(
+    () => ({
+      public: providerManifests
+        .filter((p) => p.scope === 'public')
+        .map((p) => ({ id: p.id, name: p.name, icon: p.icon })),
+      private: providerManifests
+        .filter((p) => p.scope === 'private')
+        .map((p) => ({ id: p.id, name: p.name, icon: p.icon })),
+    }),
+    [],
+  );
+
+  const treeData = useMemo(() => {
+    const iconNode = (svg?: string) => {
+      if (!svg) return null;
+      const src = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+      return <img src={src} alt="" style={{ width: 16, height: 16 }} />;
+    };
+    const map = (scope: 'public' | 'private', title: string) => ({
+      key: `scope:${scope}`,
+      title,
+      children: providers[scope].map((p) => ({
+        key: `provider:${p.id}`,
+        title: (
+          <div className="flex items-center gap-2">
+            {iconNode(p.icon)}
+            <span>{p.name}</span>
+          </div>
+        ),
+      })),
+    });
+    return [
+      {
+        key: 'all',
+        title: '全部模型',
+        children: [map('public', '公有模型'), map('private', '私有模型')],
+      },
+    ];
+  }, [providers]);
+
+  const fetchList = async () => {
+    const reqId = ++requestIdRef.current;
+    setLoading(true);
+    try {
+      const res: any = await listModels({
+        type: filter.type,
+        keyword: filter.keyword,
+        scope: filter.scope,
+        provider: filter.providerId,
+      });
+      const all = (res.list || []) as any[];
+      const totalCount = all.length;
+      const lastPage = Math.max(1, Math.ceil(totalCount / pageSize));
+
+      if (page > lastPage) {
+        const newPage = lastPage;
+        if (requestIdRef.current === reqId) {
+          setTotal(totalCount);
+          const startIdx = (newPage - 1) * pageSize;
+          setList(all.slice(startIdx, startIdx + pageSize));
+          setPage(newPage);
+        }
+        return;
+      }
+
+      if (requestIdRef.current === reqId) {
+        setTotal(totalCount);
+        const start = (page - 1) * pageSize;
+        setList(all.slice(start, start + pageSize));
+      }
+    } catch (e: any) {
+      console.error('获取模型失败:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  async function handleEdit(m: any) {
+    // 进入编辑。如果当前用户未绑定模型，则默认绑定一次（后端 /models/select 需要登录态）。
+    try {
+      const me = (JSON.parse(localStorage.getItem('auth_user') || 'null') || {}) as any;
+      if (!me?.selected_model_id) {
+        try {
+          await selectUserModel(m.id);
+        } catch (error) {
+          console.error('Failed to select user model:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to get user info:', error);
+    }
+    try {
+      const res: any = await getModel(m.id);
+      const detail = res || {};
+      if (detail.model) {
+        const normalizedParams = (detail.params || []).map((p: any) => ({
+          ...p,
+          required: !!p.required,
+        }));
+        setEditing({ ...detail.model, params: normalizedParams });
+        return;
+      }
+    } catch (error) {
+      console.error('Failed to get model details:', error);
+    }
+    setEditing(m);
+  }
+
+  async function handleDelete(id: string) {
+    Modal.confirm({
+      title: '确认删除模型',
+      content: '确定要删除该模型吗？删除后无法恢复。',
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      async onOk() {
+        try {
+          await deleteModel(id);
+          message.success('已删除');
+          // 删除后立即刷新，保障页码回退逻辑生效
+          await fetchList();
+        } catch (error) {
+          console.error('删除失败：', error);
+        }
+      }
+    });
+  }
+
+  useEffect(() => {
+    fetchList();
+  }, [filter.type, filter.keyword, filter.scope, filter.providerId, page, pageSize]);
+
+  const handleAddModel = () => {
+    const k = selectedKeys[0] || 'all';
+    if (k && k.startsWith('provider:')) {
+      // 已选中具体供应商，直接进入表单
+      const pid = k.split(':')[1];
+      const defaultCredentials = getDefaultCredentialsByProvider(pid);
+      setEditing({
+        scope: filter.scope || 'public',
+        type: 'llm',
+        provider: pid,
+        params: getDefaultParamsByProvider(pid),
+        ...defaultCredentials,
+      });
+    } else {
+      setProviderPickerOpen(true);
+    }
+  };
+
+  const handleProviderPick = (providerId: string) => {
+    // 不关闭一级侧拉框，保存选中的供应商信息
+    const provider = findProvider(providerId);
+    setSelectedProvider(provider);
+    
+    // 打开二级侧拉框
+    const defaultCredentials = getDefaultCredentialsByProvider(providerId);
+    setEditing({
+      scope: filter.scope || 'public',
+      type: 'llm',
+      provider: providerId,
+      params: getDefaultParamsByProvider(providerId),
+      ...defaultCredentials,
+    });
+  };
+
+  const handleBackToProviderPicker = () => {
+    // 关闭二级侧拉框，回到一级侧拉框
+    setEditing(null);
+    setSelectedProvider(null);
+  };
+
+  const handleModelSave = async (formData: any) => {
+    // 组装 credentials：根据 provider 定义的字段收集
+    const provider = findProvider(formData.provider);
+    const fields =
+      provider?.credentialFieldsPerModel?.[formData.model_name] ||
+      provider?.credentialFieldsPerModel?.default ||
+      provider?.credentialFields ||
+      [];
+    const credentials: Record<string, any> = {};
+    fields.forEach((f) => {
+      if (formData[f.key] !== undefined && formData[f.key] !== '') credentials[f.key] = formData[f.key];
+    });
+    const payload: any = {
+      ...formData,
+      icon: formData.icon ?? `/logo-icon.png`,
+      version: formData.version ?? formData.model_name,
+      credentials,
+      params: (formData.params || []).map((p: any) => ({
+        ...p,
+        required: !!p.required,
+      })),
+    };
+    await upsertModel(payload);
+    
+    // 保存成功后关闭所有侧拉框
+    setEditing(null);
+    setProviderPickerOpen(false);
+    setSelectedProvider(null);
+    
+    message.success('已保存');
+    fetchList();
+  };
+
+  return (
+    <div className="flex gap-4 relative" style={{ height: MAIN_HEIGHT }}>
+      {/* 全屏遮罩组件 */}
+      <FullScreenOverlay
+        visible={!!testingModelId}
+        title="正在测试连通性"
+        subtitle="请稍候，正在验证模型连接..."
+        type="testing"
+      />
+
+      {/* 左侧树 */}
+      <CollapsibleSidebar
+        isCollapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        title="大模型供应商"
+        className="h-full"
+      >
+        <div className="p-4 h-full overflow-y-auto">
+          <Tree
+            defaultExpandAll
+            selectedKeys={selectedKeys as any}
+            onSelect={(keys) => {
+              const k = (keys?.[0] as string) || 'all';
+              setSelectedKeys(keys as string[]);
+              if (k === 'all') setFilter((f) => ({ ...f, scope: undefined, providerId: undefined }));
+              else if (k.startsWith('scope:'))
+                setFilter((f) => ({ ...f, scope: k.split(':')[1] as any, providerId: undefined }));
+              else if (k.startsWith('provider:'))
+                setFilter((f) => ({ ...f, providerId: k.split(':')[1] }));
+              setPage(1);
+              // 设置右侧标题
+              if (k === 'all') setSelectedTitle('全部模型');
+              else if (k.startsWith('scope:')) {
+                const sc = k.split(':')[1];
+                setSelectedTitle(sc === 'public' ? '公有模型' : '私有模型');
+              } else if (k.startsWith('provider:')) {
+                const pid = k.split(':')[1];
+                setSelectedTitle(findProvider(pid)?.name || '全部模型');
+              }
+            }}
+            treeData={treeData as any}
+          />
+        </div>
+      </CollapsibleSidebar>
+
+      {/* 右侧卡片 + 搜索 + 分页 */}
+      <section className="flex-1 h-full min-h-0">
+        <div className="mb-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <div className="text-slate-900 font-semibold text-lg">{selectedTitle}</div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <Input.Search
+              allowClear
+              placeholder="搜索模型"
+              className="w-full sm:w-[300px]"
+              onSearch={(v) => {
+                setFilter((f) => ({ ...f, keyword: v || undefined }));
+                setPage(1);
+              }}
+            />
+            <button
+              className="h-8 px-4 rounded-lg bg-blue-600 text-white shadow-sm whitespace-nowrap"
+              onClick={handleAddModel}
+            >
+              <span className="hidden sm:inline">添加模型</span>
+              <span className="sm:hidden">添加</span>
+            </button>
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-4 h-[calc(100%-56px)] overflow-y-auto">
+          {loading && <div className="text-slate-500 text-sm">加载中…</div>}
+          <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: rowGap }}>
+            {list.map((m, idx) => {
+              const providerCn = findProvider(m.provider)?.name || m.provider;
+              const typeCn = m.type === 'llm' ? '大语言模型' : m.type || '-';
+              const creatorCn = m.created_by === 'admin' ? '管理员' : m.created_by || '-';
+              return (
+                <div
+                  key={m.id}
+                  className="group border p-4 bg-white shadow-sm relative overflow-hidden"
+                >
+                  {/* 左上角序号角标 */}
+                  <div className="pointer-events-none absolute left-0 top-0">
+                    <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
+                      {(page - 1) * pageSize + idx + 1}
+                    </div>
+                    <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
+                  </div>
+                  <div className="pl-6">
+                    {/* 标题和标签行 */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        {(() => {
+                          const icon = findProvider(m.provider)?.icon;
+                          if (icon) {
+                            const src = `data:image/svg+xml;utf8,${encodeURIComponent(icon)}`;
+                            return <img src={src} alt="" className="w-5 h-5 shrink-0" />;
+                          }
+                          return null;
+                        })()}
+                        <div className="font-semibold text-slate-900 text-base truncate">{m.name}</div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${m.scope === 'public' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}
+                          >
+                            {m.scope === 'public' ? '公有' : '私有'}
+                          </span>
+                          {m.status && (
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${m.status === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}
+                            >
+                              {m.status === 'ok' ? '已连通' : '不可用'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {/* 操作按钮：仅悬停卡片时显示 */}
+                      <div className="hidden group-hover:flex items-center gap-3 shrink-0">
+                        <button
+                          className="inline-flex items-center justify-center"
+                          title="测试连通性"
+                          onClick={async () => {
+                            try {
+                              setTestingModelId(m.id); // 显示加载遮罩
+                              const res: any = await testModelConnectivity(m.id);
+                              message[res?.ok ? 'success' : 'error'](
+                                res?.ok ? '连通正常' : '连通失败',
+                              );
+                              fetchList();
+                            } catch {
+                              message.error('测试失败');
+                            } finally {
+                              setTestingModelId(null); // 隐藏加载遮罩
+                            }
+                          }}
+                        >
+                          <LinkOutlined style={{ fontSize: 18, color: '#0ea5e9' }} />
+                        </button>
+                        <button
+                          className="inline-flex items-center justify-center"
+                          title="编辑"
+                          onClick={() => handleEdit(m)}
+                        >
+                          <EditOutlined style={{ fontSize: 18, color: '#2563eb' }} />
+                        </button>
+                        <button
+                          className="inline-flex items-center justify-center"
+                          title="删除"
+                          onClick={() => handleDelete(m.id)}
+                        >
+                          <DeleteOutlined style={{ fontSize: 18, color: '#dc2626' }} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  {/* 横线分割 */}
+                  <div className="my-3 h-px bg-slate-200" />
+                  {/* 详情信息：每项不换行，值溢出省略（时间不省略） */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm pl-6">
+                    <div className="flex items-baseline gap-1 min-w-0">
+                      <span className="text-slate-500 shrink-0 whitespace-nowrap">供应商：</span>
+                      <span className="text-slate-800 font-medium truncate">{providerCn}</span>
+                    </div>
+                    <div className="flex items-baseline gap-1 min-w-0">
+                      <span className="text-slate-500 shrink-0 whitespace-nowrap">模型类型：</span>
+                      <span className="text-slate-800 font-medium truncate">{typeCn}</span>
+                    </div>
+                    <div className="flex items-baseline gap-1 min-w-0">
+                      <span className="text-slate-500 shrink-0 whitespace-nowrap">基础模型：</span>
+                      <span className="text-slate-800 truncate">{m.model_name}</span>
+                    </div>
+                    <div className="flex items-baseline gap-1 min-w-0">
+                      <span className="text-slate-500 shrink-0 whitespace-nowrap">版本号：</span>
+                      <span className="text-slate-800 truncate">{m.version || '-'}</span>
+                    </div>
+                    <div className="flex items-baseline gap-1 min-w-0">
+                      <span className="text-slate-500 shrink-0 whitespace-nowrap">创建者：</span>
+                      <span className="text-slate-800 truncate">{creatorCn}</span>
+                    </div>
+                    <div className="flex items-baseline gap-1 min-w-0">
+                      <span className="text-slate-500 shrink-0 whitespace-nowrap">创建时间：</span>
+                      <span className="text-slate-800 whitespace-nowrap">
+                        {m.created_at ? new Date(m.created_at).toLocaleString() : '-'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-4 flex items-center justify-end gap-3 text-sm text-slate-500">
+            <PaginationBar
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onChange={(p) => setPage(p)}
+              onPageSizeChange={(_, size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+              showSizeChanger={true}
+              pageSizeOptions={['6', '12', '18', '24', '50', '100']}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 侧拉弹框组件 */}
+      <ProviderPickerDrawer
+        open={providerPickerOpen}
+        onClose={() => {
+          setProviderPickerOpen(false);
+          setSelectedProvider(null);
+        }}
+        onPick={handleProviderPick}
+        providers={providers}
+        filterKey={selectedKeys[0] || 'all'}
+      />
+
+      <ModelEditDrawer
+        open={!!editing}
+        data={editing}
+        selectedProvider={selectedProvider}
+        onClose={() => {
+          if (selectedProvider) {
+            // 如果是从供应商选择来的，回到供应商选择
+            handleBackToProviderPicker();
+          } else {
+            // 如果是直接编辑，直接关闭
+            setEditing(null);
+          }
+        }}
+        onBackToProvider={handleBackToProviderPicker}
+        onOk={handleModelSave}
+      />
+    </div>
+  );
+}
+
+function getDefaultParamsByProvider(pid?: string) {
+  const m = pid ? findProvider(pid) : undefined;
+  return m?.defaultParams || [];
+}
+
+function getDefaultCredentialsByProvider(pid?: string) {
+  const m = pid ? findProvider(pid) : undefined;
+  const credentials: Record<string, any> = {};
+  
+  const fields = m?.credentialFields || [];
+  fields.forEach((f) => {
+    if (f.defaultValue) {
+      credentials[f.key] = f.defaultValue;
+    }
+  });
+  
+  return credentials;
+}

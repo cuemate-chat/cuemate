@@ -15,7 +15,7 @@ import JobsNew from './pages/JobsNew';
 import License from './pages/License';
 import Login from './pages/Login';
 import Logs from './pages/Logs';
-import Models from './pages/Models';
+import ModelsList from './pages/ModelsList';
 import OperationLogs from './pages/OperationLogs';
 import PresetQuestions from './pages/PresetQuestions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -50,7 +50,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/legal/user-agreement" element={<UserAgreement />} />
           <Route path="/legal/privacy" element={<PrivacyPolicy />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/settings/models" element={<Models />} />
+          <Route path="/settings/models" element={<ModelsList />} />
           <Route path="/settings/asr" element={<Asr />} />
           <Route path="/settings/logs" element={<Logs />} />
           <Route path="/settings/vector-knowledge" element={<VectorKnowledge />} />
