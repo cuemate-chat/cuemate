@@ -1,9 +1,9 @@
 import { MicrophoneIcon, StopIcon } from '@heroicons/react/24/outline';
 import { Button, Card, Form, Input, InputNumber, Select, Spin, Switch, Tabs } from 'antd';
 import { useEffect, useRef, useState } from 'react';
-import { getAsrConfig, saveAsrConfig, type AsrConfig } from '../api/asr';
-import { message } from '../components/Message';
-import { getAsrServices, normalizeWebSocketUrl, type AsrService } from '../utils/asr';
+import { getAsrConfig, saveAsrConfig, type AsrConfig } from '../../api/asr';
+import { message } from '../../components/Message';
+import { getAsrServices, normalizeWebSocketUrl, type AsrService } from '../../utils/asr';
 
 export default function AsrSettings() {
   const [loading, setLoading] = useState(false);

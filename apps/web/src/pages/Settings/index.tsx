@@ -13,10 +13,10 @@ import {
 import { Select as AntSelect } from 'antd';
 import 'antd/dist/reset.css';
 import { useEffect, useState } from 'react';
-import { changePassword, defaultUserForm, fetchMe, updateMe, userToFormData } from '../api/auth';
-import { storage } from '../api/http';
-import { listModels } from '../api/models';
-import { message } from '../components/Message';
+import { changePassword, defaultUserForm, fetchMe, updateMe, userToFormData } from '../../api/auth';
+import { storage } from '../../api/http';
+import { listModels } from '../../api/models';
+import { message } from '../../components/Message';
 
 export default function Settings() {
   const [form, setForm] = useState(defaultUserForm);

@@ -23,7 +23,7 @@ import {
   Radar as RRadar,
   Tooltip as RTooltip,
 } from 'recharts';
-import { getInterviewDetail } from '../api/reviews';
+import { getInterviewDetail } from '../../api/reviews';
 
 export default function ReviewDetail() {
   const { id } = useParams();

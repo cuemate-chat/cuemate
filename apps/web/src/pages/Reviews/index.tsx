@@ -3,8 +3,8 @@ import { Badge, Button, Empty, Popconfirm, Spin, Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { deleteInterview, listInterviews } from '../api/reviews';
-import { message as globalMessage } from '../components/Message';
+import { deleteInterview, listInterviews } from '../../api/reviews';
+import { message as globalMessage } from '../../components/Message';
 
 export default function Reviews() {
   const nav = useNavigate();

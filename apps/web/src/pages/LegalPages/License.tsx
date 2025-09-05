@@ -1,8 +1,8 @@
 import { CloudArrowUpIcon, DocumentTextIcon, FolderArrowDownIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
-import { storage } from '../api/http';
-import { getLicenseInfo, uploadLicenseFile, uploadQuestions, type LicenseInfo } from '../api/license';
-import { message } from '../components/Message';
+import { storage } from '../../api/http';
+import { getLicenseInfo, uploadLicenseFile, uploadQuestions, type LicenseInfo } from '../../api/license';
+import { message } from '../../components/Message';
 
 
 export default function License() {

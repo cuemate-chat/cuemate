@@ -103,6 +103,31 @@ export default function AdsManagementList() {
     setCreateDrawerOpen(true);
   };
 
+  // 处理跳转链接预览
+  const handlePreviewLink = (ad: PixelAd) => {
+    Modal.confirm({
+      title: '确认跳转',
+      content: (
+        <div className="space-y-3">
+          <div className="text-sm text-slate-600">
+            即将跳转到以下链接：
+          </div>
+          <div className="bg-slate-50 p-3 rounded border text-sm break-all">
+            {ad.link_url}
+          </div>
+          <div className="text-xs text-slate-500">
+            链接将在新窗口中打开
+          </div>
+        </div>
+      ),
+      okText: '确认跳转',
+      cancelText: '取消',
+      onOk: () => {
+        window.open(ad.link_url, '_blank', 'noopener,noreferrer');
+      }
+    });
+  };
+
   // 分页处理
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -304,9 +329,12 @@ export default function AdsManagementList() {
                           <div className="text-sm font-medium text-slate-900">{ad.title}</div>
                           <div className="text-sm text-slate-500 line-clamp-2">{ad.description}</div>
                           <div className="text-xs text-blue-600 mt-1 truncate">
-                            <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                            <button 
+                              onClick={() => handlePreviewLink(ad)} 
+                              className="hover:underline text-left break-all"
+                            >
                               {ad.link_url}
-                            </a>
+                            </button>
                           </div>
                         </div>
                       </td>
@@ -338,7 +366,7 @@ export default function AdsManagementList() {
                       <td className="px-6 py-4 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => window.open(ad.link_url, '_blank')}
+                            onClick={() => handlePreviewLink(ad)}
                             className="text-blue-600 hover:text-blue-900 p-1"
                             title="预览"
                           >

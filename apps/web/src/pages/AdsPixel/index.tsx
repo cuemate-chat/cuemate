@@ -15,9 +15,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { Select } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getBlockConfigs, getPublicActiveAds, type BlockConfig, type PixelAd } from '../api/ads';
-import { message } from '../components/Message';
-import { WEB_API_BASE } from '../config';
+import { getBlockConfigs, getPublicActiveAds, type BlockConfig, type PixelAd } from '../../api/ads';
+import { message } from '../../components/Message';
+import { WEB_API_BASE } from '../../config';
 
 interface AdBlock extends BlockConfig {
   ad?: PixelAd;

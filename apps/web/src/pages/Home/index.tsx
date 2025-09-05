@@ -11,7 +11,7 @@ import {
 import { Button, Select } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { listJobs } from '../api/jobs';
+import { listJobs } from '../../api/jobs';
 
 export default function Home() {
   const nav = useNavigate();

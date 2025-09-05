@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signin } from '../api/auth';
-import { storage } from '../api/http';
-import LeftImage from '../assets/login-left.png';
-import Logo from '../assets/logo-background.png';
-import { message } from '../components/Message';
-import { ROUTES, VALIDATION } from '../constants';
+import { signin } from '../../api/auth';
+import { storage } from '../../api/http';
+import LeftImage from '../../assets/login-left.png';
+import Logo from '../../assets/logo-background.png';
+import { message } from '../../components/Message';
+import { ROUTES, VALIDATION } from '../../constants';
 
 export default function Login() {
   const navigate = useNavigate();
