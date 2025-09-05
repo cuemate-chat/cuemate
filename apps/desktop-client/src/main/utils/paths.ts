@@ -80,6 +80,15 @@ export function getRendererPath(htmlName: string): string {
  */
 export function getAppIconPath(): string {
   const projectRoot = getProjectRoot();
+  if (process.platform === 'darwin') {
+    // macOS 使用 icns，保证 Dock 图标质量与稳定
+    return join(projectRoot, 'assets', 'icon.icns');
+  }
+  if (process.platform === 'win32') {
+    // Windows 使用 ico，用于任务栏和标题栏
+    return join(projectRoot, 'assets', 'icon.ico');
+  }
+  // Linux/其他平台：使用 png（多尺寸由桌面环境处理）
   return join(projectRoot, 'assets', 'logo-icon.png');
 }
 

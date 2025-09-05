@@ -16,16 +16,25 @@ interface RegisteredClient {
 }
 
 export class CueMateWebSocketServer {
-  private wss: WebSocketServer;
+  private wss: WebSocketServer | null = null;
   private clients = new Map<string, RegisteredClient>();
 
-  constructor(port: number = 3001) {
-    this.wss = new WebSocketServer({ port });
+  constructor() {
+    // 构造函数不再直接创建服务器，等待 attachToServer 调用
+  }
+
+  /**
+   * 将 WebSocket 服务器附加到现有的 HTTP 服务器
+   */
+  public attachToServer(httpServer: any, port: number): void {
+    this.wss = new WebSocketServer({ server: httpServer });
     this.setupServer();
-    logger.info(`WebSocket 服务器启动在端口 ${port}`);
+    logger.info(`WebSocket 服务器已附加到 HTTP 服务器，端口 ${port}`);
   }
 
   private setupServer(): void {
+    if (!this.wss) return;
+    
     this.wss.on('connection', (ws: WebSocket, request) => {
       const clientId = this.generateClientId();
       logger.info({ clientId, origin: request.headers.origin }, 'WebSocket 客户端连接');
@@ -255,7 +264,9 @@ export class CueMateWebSocketServer {
    * 关闭 WebSocket 服务器
    */
   public close(): void {
-    this.wss.close();
-    logger.info('WebSocket 服务器已关闭');
+    if (this.wss) {
+      this.wss.close();
+      logger.info('WebSocket 服务器已关闭');
+    }
   }
 }

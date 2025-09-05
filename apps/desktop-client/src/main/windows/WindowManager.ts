@@ -51,9 +51,6 @@ export class WindowManager {
       // 4. 显示浮动窗口（control-bar）
       this.showFloatingWindows();
 
-      // 5. 启动 WebSocket 连接
-      this.webSocketClient.connect();
-
       logger.info('窗口管理器初始化完成');
     } catch (error) {
       logger.error({ error }, '窗口管理器初始化失败');

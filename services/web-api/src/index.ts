@@ -90,18 +90,13 @@ async function start() {
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 
-  const port = Number(process.env.WEB_API_PORT || 3001);
-  const host = process.env.WEB_API_HOST || '0.0.0.0';
-  await app.listen({ port, host });
-  app.log.info(`Web API running at http://${host}:${port}`);
-
-  // 启动 WebSocket 服务器（使用相同端口，WebSocketServer 会自动处理 HTTP upgrade）
-  const wsServer = new CueMateWebSocketServer(port);
+  // 创建 WebSocket 服务器实例（先创建，后面再启动）
+  const wsServer = new CueMateWebSocketServer();
   
-  // 装饰 app 实例，以便其他地方可以访问 WebSocket 服务器
+  // 装饰 app 实例（必须在启动前完成）
   app.decorate('wsServer', wsServer);
 
-  // 添加 WebSocket 状态查询端点
+  // 添加 WebSocket 状态查询端点（必须在启动前注册）
   app.get('/ws/status', async () => {
     const clientCounts = wsServer.getClientCounts();
     return {
@@ -110,6 +105,16 @@ async function start() {
       timestamp: Date.now()
     };
   });
+
+  const port = Number(process.env.WEB_API_PORT || 3001);
+  const host = process.env.WEB_API_HOST || '0.0.0.0';
+  
+  // 启动 Fastify 服务器
+  const address = await app.listen({ port, host });
+  app.log.info(`Web API running at ${address}`);
+  
+  // 将 WebSocket 服务器附加到 HTTP 服务器
+  wsServer.attachToServer(app.server, port);
 }
 
 start();
