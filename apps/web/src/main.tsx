@@ -19,7 +19,7 @@ import Models from './pages/Models';
 import OperationLogs from './pages/OperationLogs';
 import PresetQuestions from './pages/PresetQuestions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
-import Questions from './pages/Questions';
+import QuestionsList from './pages/QuestionsList';
 import ReviewDetail from './pages/ReviewDetail';
 import Reviews from './pages/Reviews';
 import Settings from './pages/Settings';
@@ -42,7 +42,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/home" element={<Home />} />
           <Route path="/jobs/new" element={<JobsNew />} />
           <Route path="/jobs" element={<JobsList />} />
-          <Route path="/questions" element={<Questions />} />
+          <Route path="/questions" element={<QuestionsList />} />
           <Route path="/settings/preset-questions" element={<PresetQuestions />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/reviews/:id" element={<ReviewDetail />} />

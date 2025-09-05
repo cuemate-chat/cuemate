@@ -319,3 +319,23 @@
 .ant-modal-mask {
   z-index: 10000 !important;
 }
+
+.ant-modal-wrap {
+  z-index: 10000 !important;
+}
+
+.ant-modal-content {
+  z-index: 10000 !important;
+}
+
+.ant-modal-header {
+  z-index: 10000 !important;
+}
+
+.ant-modal-body {
+  z-index: 10000 !important;
+}
+
+.ant-modal-footer {
+  z-index: 10000 !important;
+}
