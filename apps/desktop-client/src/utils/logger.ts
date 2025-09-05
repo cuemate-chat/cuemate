@@ -43,13 +43,19 @@ class ElectronLogger implements Logger {
 
   private getTimeString(): string {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hour = String(now.getHours()).padStart(2, '0');
-    const minute = String(now.getMinutes()).padStart(2, '0');
-    const second = String(now.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+    // 使用上海时区格式化时间
+    const timeString = now.toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    // 转换格式从 "2025/09/05 20:16:49" 到 "2025-09-05 20:16:49"
+    return timeString.replace(/\//g, '-');
   }
 
   private getLogFilePath(level: string): string {

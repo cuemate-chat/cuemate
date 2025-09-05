@@ -1,11 +1,14 @@
 import { execSync } from 'child_process';
-import { app, globalShortcut } from 'electron';
+import { app, BrowserWindow, globalShortcut, Menu, MenuItem, shell } from 'electron';
 import type { LogLevel } from '../shared/types.js';
 import { logger } from '../utils/logger.js';
 import { setupIPC } from './ipc/handlers.js';
 import { getAppIconPath } from './utils/paths.js';
 import { setupGlobalShortcuts } from './utils/shortcuts.js';
 import { WindowManager } from './windows/WindowManager.js';
+
+// 在应用启动前设置应用名称
+app.setName('CueMate');
 
 class CueMateApp {
   private windowManager: WindowManager;
@@ -21,6 +24,156 @@ class CueMateApp {
     this.windowManager = new WindowManager(this.isDevelopment);
 
     this.initialize();
+  }
+
+  private createApplicationMenu(): void {
+    const template = [
+      {
+        label: 'CueMate',
+        submenu: [
+          {
+            label: '关于 CueMate',
+            click: async () => {
+              await shell.openExternal('https://github.com/CueMate/CueMate');
+            },
+          },
+          { type: 'separator' },
+          {
+            label: '隐藏 CueMate Web',
+            accelerator: 'Command+H',
+            click: () => {
+              this.windowManager.hideMainContent();
+            },
+          },
+          {
+            label: '隐藏其他',
+            accelerator: 'Command+Option+H',
+            click: () => {
+              this.windowManager.hideFloatingWindows();
+            },
+          },
+          { type: 'separator' },
+          {
+            label: '退出 CueMate',
+            accelerator: process.platform === 'darwin' ? 'Command+Q' : 'Ctrl+Q',
+            click: () => {
+              app.quit();
+            },
+          },
+        ],
+      },
+      {
+        label: '视图',
+        submenu: [
+          {
+            label: '重新加载',
+            accelerator: 'CommandOrControl+R',
+            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
+              if (focusedWindow) {
+                focusedWindow.reload();
+              }
+            },
+          },
+          {
+            label: '强制重新加载',
+            accelerator: 'CommandOrControl+Shift+R',
+            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
+              if (focusedWindow) {
+                focusedWindow.webContents.reloadIgnoringCache();
+              }
+            },
+          },
+          {
+            label: '切换开发者工具',
+            accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
+            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
+              if (focusedWindow) {
+                focusedWindow.webContents.toggleDevTools();
+              }
+            },
+          },
+          { type: 'separator' },
+          {
+            label: '实际大小',
+            accelerator: 'CommandOrControl+0',
+            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
+              if (focusedWindow) {
+                focusedWindow.webContents.setZoomLevel(0);
+              }
+            },
+          },
+          {
+            label: '放大',
+            accelerator: 'CommandOrControl+Plus',
+            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
+              if (focusedWindow) {
+                const currentZoom = focusedWindow.webContents.getZoomLevel();
+                focusedWindow.webContents.setZoomLevel(currentZoom + 1);
+              }
+            },
+          },
+          {
+            label: '缩小',
+            accelerator: 'CommandOrControl+-',
+            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
+              if (focusedWindow) {
+                const currentZoom = focusedWindow.webContents.getZoomLevel();
+                focusedWindow.webContents.setZoomLevel(currentZoom - 1);
+              }
+            },
+          },
+          { type: 'separator' },
+          {
+            label: '切换全屏',
+            accelerator: process.platform === 'darwin' ? 'Ctrl+Command+F' : 'F11',
+            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
+              if (focusedWindow) {
+                focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
+              }
+            },
+          },
+        ],
+      },
+      {
+        label: '窗口',
+        submenu: [
+          {
+            label: '最小化',
+            accelerator: 'CommandOrControl+M',
+            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
+              if (focusedWindow) {
+                focusedWindow.minimize();
+              }
+            },
+          },
+          {
+            label: '关闭',
+            accelerator: 'CommandOrControl+W',
+            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
+              if (focusedWindow) {
+                focusedWindow.close();
+              }
+            },
+          },
+        ],
+      },
+      {
+        label: '帮助',
+        submenu: [
+          {
+            label: '访问官网',
+            click: async () => {
+              await shell.openExternal('https://github.com/CueMate/CueMate');
+            },
+          },
+        ],
+      },
+    ];
+
+    const menu = Menu.buildFromTemplate(template as any);
+    Menu.setApplicationMenu(menu);
+
+    logger.info('自定义应用菜单已设置');
   }
 
   private setupLoggingEnvironment(): void {
@@ -56,15 +209,39 @@ class CueMateApp {
     app.whenReady().then(() => {
       logger.info('应用已准备就绪，开始初始化窗口管理器');
 
+      // 创建自定义菜单
+      this.createApplicationMenu();
+
       // 设置应用图标
       try {
         const iconPath = getAppIconPath();
         logger.info({ iconPath }, '应用图标路径');
 
-        // 在 macOS 上设置 Dock 图标
-        if (process.platform === 'darwin') {
-          app.dock.setIcon(iconPath);
-          logger.info('macOS Dock 图标已设置');
+        // 在 macOS 上设置 Dock 图标并确保可见
+        if (process.platform === 'darwin' && app.dock) {
+          try {
+            // 确保应用在 Dock 中可见
+            app.dock.show();
+            logger.info('Dock 已显示');
+
+            // 验证文件是否存在和可读
+            const fs = require('fs');
+            if (!fs.existsSync(iconPath)) {
+              throw new Error(`图标文件不存在: ${iconPath}`);
+            }
+
+            const stats = fs.statSync(iconPath);
+            logger.info({ iconPath, size: stats.size, isFile: stats.isFile() }, '图标文件信息');
+
+            // 设置图标
+            app.dock.setIcon(iconPath);
+            logger.info('macOS Dock 图标已设置并确保可见');
+          } catch (dockError: any) {
+            logger.error(
+              { dockError: dockError.message || dockError, iconPath },
+              'macOS Dock 图标设置失败',
+            );
+          }
         }
       } catch (error) {
         logger.warn({ error }, '设置应用图标失败');
@@ -86,6 +263,7 @@ class CueMateApp {
       // macOS: 当点击 dock 图标时重新激活
       app.on('activate', () => {
         logger.info('应用被重新激活 (Dock 图标点击)');
+        this.ensureDockIcon();
         this.windowManager.showFloatingWindows();
       });
 
@@ -164,33 +342,36 @@ class CueMateApp {
   private cleanup(): void {
     logger.info('清理应用资源');
 
-    // macOS: 确保 Dock 图标保持正确直到应用完全退出
-    if (process.platform === 'darwin') {
-      try {
-        const iconPath = getAppIconPath();
-        // 在退出前立即设置图标，避免显示默认图标
-        app.dock.setIcon(iconPath);
-        logger.info('Dock 图标在退出前已确认设置');
-
-        // 延迟一小段时间确保图标设置生效
-        setTimeout(() => {
-          try {
-            app.dock.setIcon(iconPath);
-            logger.info('Dock 图标再次确认设置');
-          } catch (error) {
-            logger.warn({ error }, '退出前再次设置 Dock 图标失败');
-          }
-        }, 100);
-      } catch (error) {
-        logger.warn({ error }, '退出前设置 Dock 图标失败');
-      }
-    }
-
     // 注销所有全局快捷键
     globalShortcut.unregisterAll();
 
     // 清理窗口管理器
     this.windowManager.destroy();
+  }
+
+  // 确保 Dock 图标始终正确显示的方法
+  private ensureDockIcon(): void {
+    if (process.platform === 'darwin' && app.dock) {
+      try {
+        const iconPath = getAppIconPath();
+        logger.debug({ iconPath }, '确保 Dock 图标路径');
+
+        // 验证文件
+        const fs = require('fs');
+        if (!fs.existsSync(iconPath)) {
+          throw new Error(`图标文件不存在: ${iconPath}`);
+        }
+
+        app.dock.show();
+        app.dock.setIcon(iconPath);
+        logger.debug('Dock 图标已确保显示');
+      } catch (error: any) {
+        logger.error(
+          { error: error.message || error, iconPath: getAppIconPath() },
+          '确保 Dock 图标显示失败',
+        );
+      }
+    }
   }
 
   // 日志方法（供 IPC 使用）

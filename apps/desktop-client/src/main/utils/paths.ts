@@ -81,7 +81,7 @@ export function getRendererPath(htmlName: string): string {
 export function getAppIconPath(): string {
   const projectRoot = getProjectRoot();
   if (process.platform === 'darwin') {
-    // macOS 使用 icns，保证 Dock 图标质量与稳定
+    // macOS 使用icns
     return join(projectRoot, 'assets', 'icon.icns');
   }
   if (process.platform === 'win32') {
