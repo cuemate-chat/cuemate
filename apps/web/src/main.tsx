@@ -14,7 +14,7 @@ import JobsList from './pages/JobsList';
 import JobsNew from './pages/JobsNew';
 import License from './pages/License';
 import Login from './pages/Login';
-import Logs from './pages/Logs';
+import LogsList from './pages/LogsList';
 import ModelsList from './pages/ModelsList';
 import OperationLogs from './pages/OperationLogs';
 import PresetQuestions from './pages/PresetQuestions';
@@ -52,7 +52,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/models" element={<ModelsList />} />
           <Route path="/settings/asr" element={<Asr />} />
-          <Route path="/settings/logs" element={<Logs />} />
+          <Route path="/settings/logs" element={<LogsList />} />
           <Route path="/settings/vector-knowledge" element={<VectorKnowledge />} />
           <Route path="/settings/license" element={<License />} />
           <Route path="/settings/docker-monitor" element={<DockerMonitor />} />
