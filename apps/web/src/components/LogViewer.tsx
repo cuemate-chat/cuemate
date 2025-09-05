@@ -1,16 +1,11 @@
-import { CopyOutlined } from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
-import { Button, Modal, Spin } from 'antd';
-import React from 'react';
-import { message } from './Message';
+import { Spin } from 'antd';
+import React, { useEffect, useState } from 'react';
 
 interface LogViewerProps {
-  visible: boolean;
-  onClose: () => void;
   title?: string;
   logs: string;
   loading?: boolean;
-  width?: number;
   height?: number;
 }
 
@@ -30,64 +25,22 @@ const cleanLogs = (logs: string) => {
 };
 
 const LogViewer: React.FC<LogViewerProps> = ({
-  visible,
-  onClose,
   title = '日志查看器',
   logs,
   loading = false,
-  width = 1000,
   height = 600
 }) => {
-  // 复制日志内容
-  const copyLogs = async () => {
-    try {
-      await navigator.clipboard.writeText(logs);
-      message.success('日志内容已复制到剪贴板');
-    } catch (error) {
-      // 降级方案：使用传统的复制方法
-      const textArea = document.createElement('textarea');
-      textArea.value = logs;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      message.success('日志内容已复制到剪贴板');
-    }
-  };
-
+  const [editorKey, setEditorKey] = useState(0);
   const cleanedLogs = cleanLogs(logs);
-  const editorHeight = height - 60; // 减去标题栏和命令栏的高度
+  const editorHeight = height - 40; // 减去标题栏高度
+
+  // 当 logs 变化时强制重新渲染 Monaco Editor
+  useEffect(() => {
+    setEditorKey(prev => prev + 1);
+  }, [logs]);
 
   return (
-    <Modal
-      title={
-        <div className="flex items-center justify-between w-full pr-8">
-          <div className="flex items-center space-x-2">
-            <span className="text-green-500">●</span>
-            <span>{title}</span>
-          </div>
-          <Button
-            type="primary"
-            icon={<CopyOutlined />}
-            onClick={copyLogs}
-            title="复制日志内容"
-            size="small"
-            style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
-          >
-            复制
-          </Button>
-        </div>
-      }
-      open={visible}
-      onCancel={onClose}
-      footer={null}
-      width={width}
-      centered
-      bodyStyle={{ 
-        padding: 0,
-        height: `${height}px`
-      }}
-    >
+    <div style={{ height: `${height}px` }}>
       <Spin spinning={loading}>
         <div className="h-full">
           <div className="bg-gray-800 text-gray-300 px-4 py-2 text-sm border-b border-gray-700">
@@ -95,6 +48,7 @@ const LogViewer: React.FC<LogViewerProps> = ({
           </div>
           <div style={{ height: `${editorHeight}px` }}>
             <Editor
+              key={editorKey}
               height="100%"
               language="plaintext"
               theme="vs-dark"
@@ -126,7 +80,7 @@ const LogViewer: React.FC<LogViewerProps> = ({
           </div>
         </div>
       </Spin>
-    </Modal>
+    </div>
   );
 };
 
