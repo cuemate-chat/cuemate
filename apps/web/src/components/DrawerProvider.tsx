@@ -99,11 +99,11 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
       }
     });
 
-    // 如果没有提供 footer，默认显示关闭按钮
+    // 如果没有提供 footer，默认显示取消按钮
     if (!footer) {
       footer = (
         <div style={{ textAlign: 'right' }}>
-          <Button onClick={onClose}>关闭</Button>
+          <Button onClick={onClose}>取消</Button>
         </div>
       );
     }

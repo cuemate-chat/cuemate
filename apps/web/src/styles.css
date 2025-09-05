@@ -310,3 +310,12 @@
 .ant-message .ant-message-notice {
   z-index: 10001 !important;
 }
+
+/* 全局设置 Antd Modal 组件的 zIndex，确保在所有侧拉弹框之上 */
+.ant-modal {
+  z-index: 10000 !important;
+}
+
+.ant-modal-mask {
+  z-index: 10000 !important;
+}

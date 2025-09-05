@@ -1,14 +1,14 @@
-import { InboxOutlined } from '@ant-design/icons';
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { Button, Input, Modal, Upload } from 'antd';
+import { Button, Input, Modal } from 'antd';
 import { useEffect, useState } from 'react';
-import { http } from '../api/http';
-import { deleteJob, extractResumeText, listJobs, updateJob, type JobWithResume } from '../api/jobs';
-import CollapsibleSidebar from '../components/CollapsibleSidebar';
-import FullScreenOverlay from '../components/FullScreenOverlay';
-import { ApplicationIcon, LightbulbIcon, WarningIcon } from '../components/Icons';
-import { message as globalMessage } from '../components/Message';
-
+import { http } from '../../api/http';
+import { deleteJob, extractResumeText, listJobs, updateJob, type JobWithResume } from '../../api/jobs';
+import CollapsibleSidebar from '../../components/CollapsibleSidebar';
+import FullScreenOverlay from '../../components/FullScreenOverlay';
+import { WarningIcon } from '../../components/Icons';
+import { message as globalMessage } from '../../components/Message';
+import ResumeOptimizeDrawer from './ResumeOptimizeDrawer';
+import UploadResumeDrawer from './UploadResumeDrawer';
 
 export default function JobsList() {
   const [items, setItems] = useState<JobWithResume[]>([]);
@@ -137,10 +137,10 @@ export default function JobsList() {
             </div>
           </div>
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
-                            <div className="font-medium mb-1">
-                  <WarningIcon className="w-4 h-4 inline mr-1" />
-                  重要提醒：
-                </div>
+            <div className="font-medium mb-1">
+              <WarningIcon className="w-4 h-4 inline mr-1" />
+              重要提醒：
+            </div>
             <div>删除后，所有相关的简历、押题、向量库数据都将被永久清除，请谨慎操作！</div>
           </div>
         </div>
@@ -430,174 +430,25 @@ export default function JobsList() {
         </div>
       </div>
       
-      {/* 简历优化结果弹窗 */}
-      <Modal
-        title="简历优化结果"
-        open={optimizeModalVisible}
-        onCancel={() => setOptimizeModalVisible(false)}
-        width="min(1200px, 95vw)"
-        style={{ height: '80vh' }}
-        footer={
-          <div className="flex justify-between items-center">
-            <div className="text-xs text-gray-500">
-                              <LightbulbIcon className="w-4 h-4 inline mr-1" />
-                提示：您可以编辑下方简历内容，然后选择应用哪个版本
-            </div>
-            <div className="flex gap-3 mr-12">
-              <Button onClick={() => setOptimizeModalVisible(false)}>
-                取消
-              </Button>
-              <Button type="primary" 
-                loading={optimizeLoading}
-                onClick={() => onOptimizeResume(true)}
-              >
-                重新优化
-              </Button>
-            </div>
-          </div>
-        }
-      >
-        {optimizeResult && (
-          <div className="space-y-4 h-[70vh] flex flex-col">
-            {/* 优化建议 */}
-            <div className="flex-shrink-0">
-              <h3 className="text-sm font-medium text-slate-900 mb-2">优化建议</h3>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-h-32 overflow-y-auto">
-                <div className="text-sm text-blue-800 whitespace-pre-wrap">
-                  {optimizeResult.suggestions}
-                </div>
-              </div>
-            </div>
-            
-            {/* 对比内容 */}
-            <div className="flex-1 min-h-0">
-              <h3 className="text-sm font-medium text-slate-900 mb-3">内容对比（可编辑）</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
-                {/* 优化前 */}
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-medium text-red-600 flex items-center gap-1">
-                      <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                      优化前
-                    </div>
-                    <Button 
-                      size="small" 
-                      type="text" 
-                      onClick={() => {
-                        Modal.confirm({
-                          title: '确认应用优化前版本',
-                          content: '此操作将用优化前的内容覆盖当前简历，请慎重考虑。确定要应用吗？',
-                          okText: '确定应用',
-                          okType: 'danger',
-                          cancelText: '取消',
-                          onOk: () => applyResumeContent('original')
-                        });
-                      }}
-                      className="text-xs text-red-600 hover:text-red-700"
-                    >
-                      应用此版本 <ApplicationIcon className="w-4 h-4 inline ml-1" />
-                    </Button>
-                  </div>
-                  <Input.TextArea
-                    value={tempOriginalResume}
-                    onChange={(e) => setTempOriginalResume(e.target.value)}
-                    className="flex-1 min-h-0"
-                    placeholder="优化前的简历内容"
-                    style={{ 
-                      height: '100%',
-                      resize: 'none'
-                    }}
-                  />
-                  <div className="text-right text-xs text-slate-500 mt-1">
-                    {tempOriginalResume.length} 字
-                  </div>
-                </div>
-                
-                {/* 优化后 */}
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-medium text-green-600 flex items-center gap-1">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      优化后
-                    </div>
-                    <Button 
-                      size="small" 
-                      type="text" 
-                      onClick={() => {
-                        Modal.confirm({
-                          title: '确认应用优化后版本',
-                          content: '此操作将用优化后的内容覆盖当前简历，请慎重考虑。确定要应用吗？',
-                          okText: '确定应用',
-                          okType: 'primary',
-                          cancelText: '取消',
-                          onOk: () => applyResumeContent('optimized')
-                        });
-                      }}
-                      className="text-xs text-green-600 hover:text-green-700"
-                    >
-                      应用此版本 ✅
-                    </Button>
-                  </div>
-                  <Input.TextArea
-                    value={tempOptimizedResume}
-                    onChange={(e) => setTempOptimizedResume(e.target.value)}
-                    className="flex-1 min-h-0"
-                    placeholder="优化后的简历内容"
-                    style={{ 
-                      height: '100%',
-                      resize: 'none'
-                    }}
-                  />
-                  <div className="text-right text-xs text-slate-500 mt-1">
-                    {tempOptimizedResume.length} 字 / 20000
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </Modal>
-      
-      {/* 上传简历弹窗 */}
-      <Modal
-        title="上传简历文件"
+      {/* 上传简历侧拉弹框 */}
+      <UploadResumeDrawer
         open={uploadModalVisible}
-        onCancel={() => setUploadModalVisible(false)}
-        width={600}
-        footer={
-          <div className="flex justify-end gap-3">
-            <Button onClick={() => setUploadModalVisible(false)}>
-              取消
-            </Button>
-          </div>
-        }
-      >
-        <div className="py-4">
-          <Upload.Dragger
-            name="file"
-            multiple={false}
-            accept=".pdf,.doc,.docx"
-            beforeUpload={handleFileUpload}
-            showUploadList={false}
-            className="mb-4"
-          >
-            <p className="ant-upload-drag-icon">
-              <InboxOutlined />
-            </p>
-            <p className="ant-upload-text">点击或拖拽文件到此区域上传</p>
-            <p className="ant-upload-hint">
-              支持 PDF、DOC、DOCX 格式的简历文件，文件将自动解析为文本并填入简历信息栏
-            </p>
-          </Upload.Dragger>
-          
-          {uploadLoading && (
-            <div className="text-center text-blue-600">
-              <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              正在解析文件内容...
-            </div>
-          )}
-        </div>
-      </Modal>
+        onClose={() => setUploadModalVisible(false)}
+        onFileUpload={handleFileUpload}
+        uploadLoading={uploadLoading}
+      />
+      
+      {/* 简历优化侧拉弹框 */}
+      <ResumeOptimizeDrawer
+        open={optimizeModalVisible}
+        onClose={() => setOptimizeModalVisible(false)}
+        optimizeResult={optimizeResult}
+        tempOriginalResume={tempOriginalResume}
+        tempOptimizedResume={tempOptimizedResume}
+        onApplyResumeContent={applyResumeContent}
+        onTempOriginalChange={setTempOriginalResume}
+        onTempOptimizedChange={setTempOptimizedResume}
+      />
       
       {/* 全屏遮罩组件 - 简历优化 */}
       <FullScreenOverlay
