@@ -11,7 +11,6 @@ const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) 
     }
   } catch (error) {
     // 如果日志命令失败，静默处理
-    console.warn('日志发送失败:', error);
   }
 };
 
@@ -31,8 +30,6 @@ export function FloatingControlBar({}: FloatingControlBarProps = {}) {
     const setupGlobalShortcut = async () => {
       try {
         if ((window as any).electronAPI) {
-          // 全局快捷键由主进程处理，这里只是通知已准备好
-          await log('info', '组件已初始化，全局快捷键由主进程管理');
         }
       } catch (error) {
         await log('error', `组件初始化失败: ${error}`);
@@ -59,7 +56,6 @@ export function FloatingControlBar({}: FloatingControlBarProps = {}) {
     
     // 显示关闭按钮
     setShowCloseButton(true);
-    log('info', 'FloatingControlBar 鼠标进入，显示关闭按钮');
   };
 
   // 处理容器鼠标离开事件

@@ -11,7 +11,6 @@ const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) 
     }
   } catch (error) {
     // 如果日志命令失败，静默处理
-    console.warn('日志发送失败:', error);
   }
 };
 
@@ -26,12 +25,9 @@ export function CloseButton({ showCloseButton }: CloseButtonProps) {
   // 关闭按钮功能
   const minimizeWindow = async () => {
     try {
-      await log('info', '开始隐藏所有浮动窗口...');
-      
       // 使用 Electron API 隐藏浮动窗口
       if ((window as any).electronAPI) {
         await (window as any).electronAPI.hideFloatingWindows();
-        await log('info', '所有浮动窗口已隐藏');
       }
     } catch (error) {
       await log('error', `隐藏窗口失败: ${error}`);
@@ -56,7 +52,6 @@ export function CloseButton({ showCloseButton }: CloseButtonProps) {
     }
     
     setIsCloseButtonHovered(true);
-    await log('info', 'FloatingCloseButton 鼠标进入事件触发');
   };
 
   // 关闭按钮区域鼠标离开

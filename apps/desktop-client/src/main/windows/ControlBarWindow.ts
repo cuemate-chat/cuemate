@@ -11,7 +11,6 @@ export class ControlBarWindow {
   private window: BrowserWindow | null = null;
   private isDevelopment: boolean;
   private isMoving: boolean = false;
-  private moveStartTime: number = 0;
 
   private readonly config: WindowConfig = {
     id: 'control-bar',
@@ -109,9 +108,7 @@ export class ControlBarWindow {
     if (!this.window) return;
 
     // 窗口准备显示
-    this.window.on('ready-to-show', () => {
-      logger.info('control-bar 窗口准备就绪');
-    });
+    this.window.on('ready-to-show', () => {});
 
     // 鼠标进入窗口区域（用于显示关闭按钮）
     this.window.on('enter-full-screen', () => {
@@ -128,17 +125,11 @@ export class ControlBarWindow {
     // 窗口开始移动
     this.window.on('will-move', () => {
       this.isMoving = true;
-      this.moveStartTime = Date.now();
-      logger.info('control-bar 窗口开始移动');
     });
 
     // 窗口移动完成
     this.window.on('moved', () => {
       if (this.isMoving) {
-        const moveEndTime = Date.now();
-        const moveDuration = moveEndTime - this.moveStartTime;
-        logger.info(`control-bar 窗口移动完成，耗时: ${moveDuration}ms`);
-
         // 发送位置更新事件
         const bounds = this.window!.getBounds();
         this.window!.webContents.send('position-changed', bounds);
@@ -155,19 +146,14 @@ export class ControlBarWindow {
 
     // 窗口已关闭
     this.window.on('closed', () => {
-      logger.info('control-bar 窗口已关闭');
       this.window = null;
     });
 
     // control-bar 现在作为主焦点窗口，应该保持焦点
-    this.window.on('focus', () => {
-      logger.info('control-bar 获得焦点（作为主焦点窗口）');
-    });
+    this.window.on('focus', () => {});
 
     // 失去焦点时的处理
-    this.window.on('blur', () => {
-      logger.info('control-bar 失去焦点');
-    });
+    this.window.on('blur', () => {});
   }
 
   /**
@@ -176,7 +162,6 @@ export class ControlBarWindow {
   public show(): void {
     if (this.window && !this.window.isDestroyed()) {
       this.window.show(); // 显示窗口但不争抢焦点
-      logger.info('control-bar 窗口已显示');
 
       // 确保窗口在最顶层，使用最高级别悬浮在所有应用之上（包括全屏应用）
       this.window.setAlwaysOnTop(true, 'screen-saver');
@@ -192,7 +177,6 @@ export class ControlBarWindow {
   public hide(): void {
     if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
       this.window.hide();
-      logger.info('control-bar 窗口已隐藏');
     }
   }
 
@@ -274,7 +258,6 @@ export class ControlBarWindow {
     if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
       if (!this.window.isFocused()) {
         this.window.focus();
-        logger.info('control-bar 重新获得焦点');
       }
     }
   }

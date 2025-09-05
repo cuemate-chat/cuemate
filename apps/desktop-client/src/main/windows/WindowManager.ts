@@ -1,9 +1,9 @@
 import type { BrowserWindow } from 'electron';
 import type { AppState } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
+import { WebSocketClient } from '../websocket/WebSocketClient.js';
 import { ControlBarWindow } from './ControlBarWindow.js';
 import { MainContentWindow } from './MainContentWindow.js';
-import { WebSocketClient } from '../websocket/WebSocketClient.js';
 
 export class WindowManager {
   private controlBarWindow: ControlBarWindow;
@@ -25,7 +25,7 @@ export class WindowManager {
     // 创建窗口实例 - control-bar 现在作为主焦点窗口，关闭按钮已集成
     this.controlBarWindow = new ControlBarWindow(this.isDevelopment);
     this.mainContentWindow = new MainContentWindow(this.isDevelopment);
-    
+
     // 创建 WebSocket 客户端
     this.webSocketClient = new WebSocketClient(this);
   }
@@ -39,7 +39,7 @@ export class WindowManager {
     try {
       // 1. 创建控制条窗口（现在作为主焦点窗口）
       await this.controlBarWindow.create();
-      logger.info('control-bar 控制条窗口已创建（作为主焦点窗口）');
+      logger.info('control-bar 控制条窗口已创建');
 
       // 2. 创建主内容窗口（初始隐藏）
       await this.mainContentWindow.create();
@@ -65,31 +65,20 @@ export class WindowManager {
     // 监听控制条窗口事件
     const controlBarWindow = this.controlBarWindow.getBrowserWindow();
     if (controlBarWindow) {
-      controlBarWindow.on('focus', () => {
-        logger.info('control-bar 获得焦点（作为主焦点窗口，这是正常的）');
-      });
-
-      // 关闭按钮已集成到控制条窗口中，不需要单独处理移动事件
+      controlBarWindow.on('focus', () => {});
     }
-
-    // 关闭按钮已集成到控制条窗口中，不需要单独监听事件
 
     // 监听主内容窗口事件
     const mainContentWindow = this.mainContentWindow.getBrowserWindow();
     if (mainContentWindow) {
       // 允许 main-content 在交互期间获得焦点（以便键盘输入）。
-      // 当 main-content 失去焦点或被隐藏/关闭后，再恢复到 control-bar。
-      mainContentWindow.on('focus', () => {
-        logger.info('main-content 获得焦点（允许输入，不立刻切回 control-bar）');
-      });
+      mainContentWindow.on('focus', () => {});
 
       mainContentWindow.on('blur', () => {
-        logger.info('main-content 失去焦点，恢复 control-bar 焦点');
         setTimeout(() => this.ensureMainFocus(), 0);
       });
 
       mainContentWindow.on('hide', () => {
-        logger.info('main-content 被隐藏，恢复 control-bar 焦点');
         setTimeout(() => this.ensureMainFocus(), 0);
       });
 
@@ -106,7 +95,6 @@ export class WindowManager {
    */
   public ensureMainFocus(): void {
     this.controlBarWindow.ensureFocus();
-    logger.info('焦点已恢复到 control-bar 主焦点窗口');
   }
 
   /**
@@ -153,7 +141,6 @@ export class WindowManager {
    */
   public showCloseButton(): void {
     this.appState.isCloseButtonVisible = true;
-    logger.info('显示关闭按钮');
   }
 
   /**
@@ -161,7 +148,6 @@ export class WindowManager {
    */
   public hideCloseButton(): void {
     this.appState.isCloseButtonVisible = false;
-    logger.info('隐藏关闭按钮');
   }
 
   /**
@@ -170,8 +156,7 @@ export class WindowManager {
   public showMainContent(): void {
     this.mainContentWindow.show();
     this.appState.isMainContentVisible = true;
-    logger.info('主内容窗口已显示');
-    // 不立即切回 control-bar，允许用户在 main-content 输入
+    // 主内容窗口已显示
   }
 
   /**
@@ -180,7 +165,7 @@ export class WindowManager {
   public hideMainContent(): void {
     this.mainContentWindow.hide();
     this.appState.isMainContentVisible = false;
-    logger.info('主内容窗口已隐藏');
+    // 主内容窗口已隐藏
 
     // 立即恢复焦点
     this.ensureMainFocus();
@@ -203,7 +188,7 @@ export class WindowManager {
   public openExternalUrl(url: string): void {
     const { shell } = require('electron');
     shell.openExternal(url);
-    logger.info({ url }, '🔗 打开外部链接');
+    logger.info({ url }, '打开外部链接');
   }
 
   /**
@@ -235,7 +220,7 @@ export class WindowManager {
 
     // 断开 WebSocket 连接
     this.webSocketClient.disconnect();
-    
+
     this.controlBarWindow.destroy();
     this.mainContentWindow.destroy();
   }

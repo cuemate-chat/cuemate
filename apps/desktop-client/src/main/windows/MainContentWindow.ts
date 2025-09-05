@@ -116,23 +116,19 @@ export class MainContentWindow {
 
     // 窗口显示时
     this.window.on('show', () => {
-      logger.info('main-content 窗口已显示');
+      // 窗口已显示
     });
 
     // 窗口隐藏时
     this.window.on('hide', () => {
-      logger.info('main-content 窗口已隐藏');
+      // 窗口已隐藏
     });
 
     // 窗口获得焦点时（应该立即转移到主焦点窗口）
-    this.window.on('focus', () => {
-      logger.info('main-content 获得焦点（将转移到主焦点）');
-    });
+    this.window.on('focus', () => {});
 
     // 窗口失去焦点
-    this.window.on('blur', () => {
-      logger.info('main-content 失去焦点');
-    });
+    this.window.on('blur', () => {});
 
     // 窗口尺寸改变
     this.window.on('resized', () => {
@@ -235,7 +231,7 @@ export class MainContentWindow {
       this.window.setAlwaysOnTop(true, 'normal'); // 设置为普通悬浮窗口
       this.window.setVisibleOnAllWorkspaces(true); // 在所有工作区可见
       this.window.moveTop(); // 移到当前层级最顶部
-      logger.info('main-content 窗口已显示');
+      // 窗口已显示
     }
   }
 
@@ -248,7 +244,7 @@ export class MainContentWindow {
       this.lastBounds = this.window.getBounds();
 
       this.window.hide();
-      logger.info('main-content 窗口已隐藏');
+      // 窗口已隐藏
     }
   }
 

@@ -13,7 +13,6 @@ const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) 
     }
   } catch (error) {
     // 如果日志命令失败，静默处理
-    console.warn('日志发送失败:', error);
   }
 };
 
@@ -104,7 +103,6 @@ export function MainControlBar({}: MainControlBarProps) {
     try {
       if ((window as any).electronAPI) {
         await (window as any).electronAPI.showMainContent();
-        await log('info', '主应用窗口已显示');
       }
     } catch (error) {
       await log('error', `显示主应用失败: ${error}`);
