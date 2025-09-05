@@ -16,7 +16,7 @@ import License from './pages/License';
 import Login from './pages/Login';
 import LogsList from './pages/LogsList';
 import ModelsList from './pages/ModelsList';
-import OperationLogs from './pages/OperationLogs';
+import OperationLogsList from './pages/OperationLogsList';
 import PresetQuestions from './pages/PresetQuestions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import QuestionsList from './pages/QuestionsList';
@@ -56,7 +56,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings/vector-knowledge" element={<VectorKnowledge />} />
           <Route path="/settings/license" element={<License />} />
           <Route path="/settings/docker-monitor" element={<DockerMonitor />} />
-          <Route path="/settings/operation-logs" element={<OperationLogs />} />
+          <Route path="/settings/operation-logs" element={<OperationLogsList />} />
           <Route path="/settings/pixel-ads" element={<AdsPixel />} />
           <Route path="/settings/ads-management" element={<AdsManagement />} />
         </Route>
