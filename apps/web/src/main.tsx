@@ -4,7 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import AuthGuard from './components/AuthGuard';
 import Layout from './components/Layout';
 import { MessageContainer } from './components/Message';
-import AdsManagement from './pages/AdsManagement';
+import AdsManagementList from './pages/AdsManagementList';
 import AdsPixel from './pages/AdsPixel';
 import Asr from './pages/Asr';
 import DockerMonitorList from './pages/DockerMonitorList';
@@ -17,7 +17,7 @@ import Login from './pages/Login';
 import LogsList from './pages/LogsList';
 import ModelsList from './pages/ModelsList';
 import OperationLogsList from './pages/OperationLogsList';
-import PresetQuestions from './pages/PresetQuestions';
+import PresetQuestionsList from './pages/PresetQuestionsList';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import QuestionsList from './pages/QuestionsList';
 import ReviewDetail from './pages/ReviewDetail';
@@ -43,7 +43,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/jobs/new" element={<JobsNew />} />
           <Route path="/jobs" element={<JobsList />} />
           <Route path="/questions" element={<QuestionsList />} />
-          <Route path="/settings/preset-questions" element={<PresetQuestions />} />
+          <Route path="/settings/preset-questions" element={<PresetQuestionsList />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/reviews/:id" element={<ReviewDetail />} />
           <Route path="/help" element={<Help />} />
@@ -58,7 +58,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings/docker-monitor" element={<DockerMonitorList />} />
           <Route path="/settings/operation-logs" element={<OperationLogsList />} />
           <Route path="/settings/pixel-ads" element={<AdsPixel />} />
-          <Route path="/settings/ads-management" element={<AdsManagement />} />
+          <Route path="/settings/ads-management" element={<AdsManagementList />} />
         </Route>
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<Navigate to="/home" />} />

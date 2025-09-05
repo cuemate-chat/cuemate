@@ -1,7 +1,7 @@
 import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import { Input, Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
-import { listTags } from '../api/questions';
+import { listTags } from '../../api/questions';
 import {
   SearchFilters,
   VectorDocument,
@@ -12,10 +12,12 @@ import {
   searchJobs,
   searchQuestions,
   searchResumes
-} from '../api/vector';
-import FullScreenOverlay from '../components/FullScreenOverlay';
-import { WarningIcon } from '../components/Icons';
-import { message } from '../components/Message';
+} from '../../api/vector';
+import FullScreenOverlay from '../../components/FullScreenOverlay';
+import { WarningIcon } from '../../components/Icons';
+import { message } from '../../components/Message';
+import DocumentDetailDrawer from './DocumentDetailDrawer';
+import FullContentDrawer from './FullContentDrawer';
 
 export default function VectorKnowledge() {
   const [searchResults, setSearchResults] = useState<VectorDocument[]>([]);
@@ -36,15 +38,18 @@ export default function VectorKnowledge() {
     createdFrom: undefined,
     createdTo: undefined,
   });
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
   const [currentDetailDoc, setCurrentDetailDoc] = useState<VectorDocument | null>(null);
   const [relatedData, setRelatedData] = useState<{
     jobs?: VectorDocument[];
     resumes?: VectorDocument[];
     questions?: VectorDocument[];
   } | null>(null);
-  const [activeTab, setActiveTab] = useState('document'); // 控制标签页
   const [currentTab, setCurrentTab] = useState('jobs'); // 控制主标签页：jobs, resumes, questions, sync-status
+  
+  // FullContentDrawer 状态管理
+  const [fullContentDrawerVisible, setFullContentDrawerVisible] = useState(false);
+  const [currentFullContentDoc, setCurrentFullContentDoc] = useState<VectorDocument | null>(null);
   
   // 同步和清空的加载状态
   const [syncLoading, setSyncLoading] = useState(false);
@@ -247,9 +252,8 @@ export default function VectorKnowledge() {
 
   const showDetail = async (doc: VectorDocument) => {
     setCurrentDetailDoc(doc);
-    setDetailModalVisible(true);
+    setDetailDrawerVisible(true);
     setRelatedData(null);
-    setActiveTab('document'); // 重置到第一个标签页
 
     try {
       // 获取关联信息
@@ -787,30 +791,8 @@ export default function VectorKnowledge() {
                             {doc.content.substring(0, 200)}...
                             <button
                               onClick={() => {
-                                const modal = document.createElement('div');
-                                modal.className =
-                                  'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-                                modal.innerHTML = `
-                                  <div class="bg-white rounded-lg shadow-xl w-[720px] h-[520px] overflow-hidden">
-                                    <div class="flex justify-between items-center px-5 py-3 border-b">
-                                      <h3 class="text-base font-semibold">${getDocumentName(doc)}</h3>
-                                      <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                      </button>
-                                    </div>
-                                    <div class="p-5 h-[calc(520px-48px)] overflow-y-auto">
-                                      <div class="text-sm text-gray-600 mb-2"><span class="font-medium">来源:</span> ${getSourceDisplayName(doc.metadata.source || '')}</div>
-                                      <div class="text-sm text-gray-600 mb-2"><span class="font-medium">类型:</span> ${getTypeDisplayName(doc.metadata.type || '')}</div>
-                                      <div class="text-sm text-gray-600 mb-4"><span class="font-medium">创建时间:</span> ${formatDate(doc.metadata.createdAt || doc.metadata.timestamp || '')}</div>
-                                      <div class="bg-gray-50 border rounded-md p-4 text-sm text-gray-900 whitespace-pre-wrap">${doc.content}
-                                      </div>
-                                    </div>
-                                  </div>
-                                `;
-                                document.body.appendChild(modal);
-                                modal.addEventListener('click', (e) => {
-                                  if (e.target === modal) modal.remove();
-                                });
+                                setCurrentFullContentDoc(doc);
+                                setFullContentDrawerVisible(true);
                               }}
                               className="ml-2 text-blue-600 hover:text-blue-800 underline"
                             >
@@ -864,203 +846,20 @@ export default function VectorKnowledge() {
           </div>
         )}
 
-        {/* 详情弹窗 */}
-        <Modal
-          title="详细信息"
-          open={detailModalVisible}
-          onCancel={() => setDetailModalVisible(false)}
-          footer={null}
-          width={960}
-          centered
-          zIndex={5000}
-          styles={{ body: { height: '60vh', overflow: 'auto' } }}
-        >
-          {currentDetailDoc && (
-            <div className="space-y-6">
-              {/* 顶部标签：按文档类型显示 */}
-              <div className="border-b border-gray-200">
-                <nav className="-mb-px flex space-x-8">
-                  {(() => {
-                    const type = currentDetailDoc.metadata.type;
-                    const tabs: { key: string; label: string }[] = [];
-                    if (type === 'jobs') {
-                      tabs.push({ key: 'document', label: '岗位信息' });
-                      tabs.push({
-                        key: 'resumes',
-                        label: `相关简历 (${relatedData?.resumes?.length || 0})`,
-                      });
-                      tabs.push({
-                        key: 'questions',
-                        label: `相关押题 (${relatedData?.questions?.length || 0})`,
-                      });
-                    } else if (type === 'resumes') {
-                      tabs.push({ key: 'document', label: '简历信息' });
-                      tabs.push({
-                        key: 'jobs',
-                        label: `相关岗位 (${relatedData?.jobs?.length || 0})`,
-                      });
-                      tabs.push({
-                        key: 'questions',
-                        label: `相关押题 (${relatedData?.questions?.length || 0})`,
-                      });
-                    } else if (type === 'questions') {
-                      tabs.push({ key: 'document', label: '押题信息' });
-                      tabs.push({
-                        key: 'jobs',
-                        label: `相关岗位 (${relatedData?.jobs?.length || 0})`,
-                      });
-                      tabs.push({
-                        key: 'resumes',
-                        label: `相关简历 (${relatedData?.resumes?.length || 0})`,
-                      });
-                    } else {
-                      tabs.push({ key: 'document', label: '文档信息' });
-                    }
-                    return tabs.map((t) => (
-                      <button
-                        key={t.key}
-                        onClick={() => setActiveTab(t.key)}
-                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                          activeTab === t.key
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                        }`}
-                      >
-                        {t.label}
-                      </button>
-                    ));
-                  })()}
-                </nav>
-              </div>
-
-              {/* 标签页内容 */}
-              {activeTab === 'document' && (
-                <div className="space-y-4">
-                  {/* 文档基本信息 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="md:col-span-2">
-                      <span className="font-medium text-gray-700">ID:</span>
-                      <span className="ml-2 text-gray-900 break-all">{currentDetailDoc.id}</span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">类型:</span>
-                      <span className="ml-2 text-gray-900">
-                        {getTypeDisplayName(currentDetailDoc.metadata.type || '')}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">来源:</span>
-                      <span className="ml-2 text-gray-900">
-                        {getSourceDisplayName(currentDetailDoc.metadata.source || '')}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">创建时间:</span>
-                      <span className="ml-2 text-gray-900">
-                        {currentDetailDoc.metadata.timestamp || currentDetailDoc.metadata.createdAt
-                          ? formatDate(
-                              currentDetailDoc.metadata.createdAt ||
-                                currentDetailDoc.metadata.timestamp,
-                            )
-                          : '未知'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 文档内容 */}
-                  <div>
-                    <div className="font-medium text-gray-700 mb-2">内容:</div>
-                    <div className="bg-gray-50 p-4 rounded-md text-sm text-gray-900 whitespace-pre-wrap max-h-70 overflow-y-auto">
-                      {currentDetailDoc.content}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 相关简历标签页 */}
-              {activeTab === 'resumes' && (
-                <div className="space-y-4">
-                  {relatedData?.resumes && relatedData.resumes.length > 0 ? (
-                    // 只展示一条的精致卡片
-                    <div className="border rounded-lg overflow-hidden">
-                      <div className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
-                        <h4 className="font-medium text-slate-900">
-                          {relatedData.resumes[0].metadata.title || '简历标题'}
-                        </h4>
-                        <span className="text-xs text-slate-500">
-                          ID: {relatedData.resumes[0].id}
-                        </span>
-                      </div>
-                      <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-100 overflow-y-auto">
-                        {relatedData.resumes[0].content}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center text-gray-500 py-8">暂无相关简历信息</div>
-                  )}
-                </div>
-              )}
-
-              {/* 相关押题标签页 */}
-              {activeTab === 'questions' && (
-                <div className="space-y-4">
-                  {relatedData?.questions && relatedData.questions.length > 0 ? (
-                    relatedData.questions.map((question, index) => (
-                      <div key={question.id} className="border rounded-lg p-4 relative">
-                        {/* 左上角序号 */}
-                        <div className="absolute left-0 top-0">
-                          <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
-                            {index + 1}
-                          </div>
-                          <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
-                        </div>
-                        <div className="flex justify-between items-start mb-2 ml-6">
-                          <h4 className="font-medium text-gray-900">
-                            {question.metadata.title || '押题标题'}
-                          </h4>
-                          <span className="text-xs text-gray-500">ID: {question.id}</span>
-                        </div>
-                        <div className="text-sm text-gray-600 mb-2 ml-6">
-                          {question.metadata.tagName && (
-                            <span className="font-medium">标签: {question.metadata.tagName}</span>
-                          )}
-                        </div>
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-80 overflow-y-auto ml-6">
-                          {question.content}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center text-gray-500 py-8">暂无相关押题信息</div>
-                  )}
-                </div>
-              )}
-
-              {/* 相关岗位标签页 */}
-              {activeTab === 'jobs' && (
-                <div className="space-y-4">
-                  {relatedData?.jobs && relatedData.jobs.length > 0 ? (
-                    // 只展示一条岗位信息的精致卡片
-                    <div className="border rounded-lg overflow-hidden">
-                      <div className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
-                        <h4 className="font-medium text-slate-900">
-                          {relatedData.jobs[0].metadata.title || '岗位标题'}
-                        </h4>
-                        <span className="text-xs text-slate-500">ID: {relatedData.jobs[0].id}</span>
-                      </div>
-                      <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-100 overflow-y-auto">
-                        {relatedData.jobs[0].content}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center text-gray-500 py-8">暂无相关岗位信息</div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </Modal>
+        {/* 详情侧拉弹框 */}
+        <DocumentDetailDrawer
+          open={detailDrawerVisible}
+          onClose={() => setDetailDrawerVisible(false)}
+          document={currentDetailDoc}
+          relatedData={relatedData}
+        />
         
+        {/* 完整内容侧拉弹框 */}
+        <FullContentDrawer
+          open={fullContentDrawerVisible}
+          onClose={() => setFullContentDrawerVisible(false)}
+          document={currentFullContentDoc}
+        />
         {/* 全屏遮罩组件 */}
         <FullScreenOverlay
           visible={syncLoading}
@@ -1102,7 +901,7 @@ const SyncStatusOverview = ({
 
   const loadSyncStatus = async () => {
     try {
-      const { getSyncStatus } = await import('../api/vector');
+      const { getSyncStatus } = await import('../../api/vector');
       // 不传jobId获取汇总统计
       const status = await getSyncStatus();
       // 转换API返回的类型格式
@@ -1123,7 +922,7 @@ const SyncStatusOverview = ({
     try {
       setLoading(true);
       onSyncStart?.();
-      const { syncAll } = await import('../api/vector');
+      const { syncAll } = await import('../../api/vector');
       // 不传jobId同步所有数据
       const result = await syncAll('');
       if (result.success) {
@@ -1190,7 +989,7 @@ const SyncStatusOverview = ({
         try {
           setCleanLoading(true);
           onCleanStart?.();
-          const { cleanAllVectorData } = await import('../api/vector');
+          const { cleanAllVectorData } = await import('../../api/vector');
           const result = await cleanAllVectorData();
           if (result.success) {
             message.success(result.message);
