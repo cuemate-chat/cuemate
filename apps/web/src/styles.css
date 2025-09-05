@@ -301,3 +301,12 @@
     );
   }
 }
+
+/* 全局设置 Antd Message 组件的 zIndex */
+.ant-message {
+  z-index: 10001 !important;
+}
+
+.ant-message .ant-message-notice {
+  z-index: 10001 !important;
+}
