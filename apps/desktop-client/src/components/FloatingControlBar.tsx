@@ -1,18 +1,8 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { useEffect, useRef, useState } from 'react';
+import { logger } from '../utils/rendererLogger.js';
 import { CloseButton } from './CloseButton.js';
 import { MainControlBar } from './MainControlBar.js';
-
-// 日志工具函数 - 使用 Electron IPC
-const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) => {
-  try {
-    if ((window as any).electronAPI) {
-      await (window as any).electronAPI.log({ level, message });
-    }
-  } catch (error) {
-    // 如果日志命令失败，静默处理
-  }
-};
 
 interface FloatingControlBarProps {
   // 组件已完全自管理，不再需要外部回调
@@ -32,7 +22,7 @@ export function FloatingControlBar({}: FloatingControlBarProps = {}) {
         if ((window as any).electronAPI) {
         }
       } catch (error) {
-        await log('error', `组件初始化失败: ${error}`);
+        await logger.error(`组件初始化失败: ${error}`);
       }
     };
 

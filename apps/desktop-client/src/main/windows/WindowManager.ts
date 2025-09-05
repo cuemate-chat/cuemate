@@ -50,8 +50,6 @@ export class WindowManager {
 
       // 4. 显示浮动窗口（control-bar）
       this.showFloatingWindows();
-
-      logger.info('窗口管理器初始化完成');
     } catch (error) {
       logger.error({ error }, '窗口管理器初始化失败');
       throw error;

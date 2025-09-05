@@ -4,17 +4,7 @@ import { Layout } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import CueMateLogo from '../assets/CueMate.png';
 import CueMateLogo2 from '../assets/CueMate2.png';
-
-// 日志工具函数 - 使用 Electron IPC
-const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) => {
-  try {
-    if ((window as any).electronAPI) {
-      await (window as any).electronAPI.log({ level, message });
-    }
-  } catch (error) {
-    // 如果日志命令失败，静默处理
-  }
-};
+import { logger } from '../utils/rendererLogger.js';
 
 interface MainControlBarProps {
   // 移除未使用的参数
@@ -34,11 +24,11 @@ export function MainControlBar({}: MainControlBarProps) {
           if (result.success) {
             setIsLoggedIn(result.isLoggedIn);
           } else {
-            await log('error', `登录状态检查失败: ${result.error}`);
+            await logger.error(`登录状态检查失败: ${result.error}`);
           }
         }
       } catch (error) {
-        await log('error', `登录状态检查异常: ${error}`);
+        await logger.error(`登录状态检查异常: ${error}`);
       } finally {
         setIsLoading(false);
       }
@@ -84,7 +74,7 @@ export function MainControlBar({}: MainControlBarProps) {
         await ((window as any).electronAPI as any).openExternalUrl('https://docs.cuemate.chat');
       }
     } catch (error) {
-      await log('error', `打开链接失败: ${error}`);
+      await logger.error(`打开链接失败: ${error}`);
     }
   };
 
@@ -105,7 +95,7 @@ export function MainControlBar({}: MainControlBarProps) {
         await (window as any).electronAPI.showMainContent();
       }
     } catch (error) {
-      await log('error', `显示主应用失败: ${error}`);
+      await logger.error(`显示主应用失败: ${error}`);
     }
   };
 

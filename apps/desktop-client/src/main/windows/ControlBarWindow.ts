@@ -94,7 +94,6 @@ export class ControlBarWindow {
       this.setupEvents();
 
       logger.info('control-bar 控制条窗口创建成功');
-      logger.info(`窗口位置: (${initialX}, ${initialY})`);
     } catch (error) {
       logger.error({ error }, '创建 control-bar 窗口失败');
       throw error;
@@ -193,7 +192,6 @@ export class ControlBarWindow {
   public setPosition(x: number, y: number): void {
     if (this.window && !this.window.isDestroyed()) {
       this.window.setPosition(x, y);
-      logger.info(`control-bar 窗口位置已更新: (${x}, ${y})`);
     }
   }
 

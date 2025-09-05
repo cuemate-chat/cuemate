@@ -57,7 +57,7 @@ export class MainContentWindow {
 
       // 在主屏幕居中显示
       const initialX = displayX + Math.floor((screenWidth - this.config.width) / 2);
-      const initialY = displayY + Math.floor((screenHeight - this.config.height) / 2);
+      const initialY = displayY + Math.floor((screenHeight - this.config.height) / 2) + 20;
 
       this.window = new BrowserWindow({
         width: this.config.width,
@@ -96,7 +96,6 @@ export class MainContentWindow {
       this.setupEvents();
 
       logger.info('main-content 主内容窗口创建成功');
-      logger.info(`窗口位置: (${initialX}, ${initialY})`);
     } catch (error) {
       logger.error({ error }, '创建 main-content 窗口失败');
       throw error;
@@ -110,9 +109,7 @@ export class MainContentWindow {
     if (!this.window) return;
 
     // 窗口准备显示
-    this.window.on('ready-to-show', () => {
-      logger.info('main-content 窗口准备就绪');
-    });
+    this.window.on('ready-to-show', () => {});
 
     // 窗口显示时
     this.window.on('show', () => {
@@ -145,7 +142,6 @@ export class MainContentWindow {
     // 窗口移动
     this.window.on('moved', () => {
       const bounds = this.window!.getBounds();
-      logger.info(`main-content 窗口位置已改变: (${bounds.x}, ${bounds.y})`);
 
       // 保存窗口状态
       this.lastBounds = bounds;
@@ -272,7 +268,6 @@ export class MainContentWindow {
   public center(): void {
     if (this.window && !this.window.isDestroyed()) {
       this.window.center();
-      logger.info('main-content 窗口已居中');
     }
   }
 

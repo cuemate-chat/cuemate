@@ -2,17 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useRef, useState } from 'react';
-
-// 日志工具函数 - 使用 Electron IPC
-const log = async (level: 'info' | 'warn' | 'error' | 'debug', message: string) => {
-  try {
-    if ((window as any).electronAPI) {
-      await (window as any).electronAPI.log({ level, message });
-    }
-  } catch (error) {
-    // 如果日志命令失败，静默处理
-  }
-};
+import { logger } from '../utils/rendererLogger.js';
 
 interface CloseButtonProps {
   showCloseButton: boolean;
@@ -30,7 +20,7 @@ export function CloseButton({ showCloseButton }: CloseButtonProps) {
         await (window as any).electronAPI.hideFloatingWindows();
       }
     } catch (error) {
-      await log('error', `隐藏窗口失败: ${error}`);
+      await logger.error(`隐藏窗口失败: ${error}`);
     }
   };
 

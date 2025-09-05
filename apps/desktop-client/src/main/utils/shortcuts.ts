@@ -72,11 +72,6 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
   });
 
   logger.info(`快捷键注册完成: 成功 ${registeredCount} 个, 失败 ${failedCount} 个`);
-
-  // 验证快捷键是否已注册
-  shortcuts.forEach((shortcut) => {
-    const isRegistered = globalShortcut.isRegistered(shortcut.accelerator);
-  });
 }
 
 /**
