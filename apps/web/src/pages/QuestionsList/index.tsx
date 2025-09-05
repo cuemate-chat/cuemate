@@ -312,9 +312,8 @@ export default function QuestionsList() {
       {/* 右侧押题卡片 */}
       <div className="flex-1 min-w-0">
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm md:h-[calc(100vh-175px)] min-h-0 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-lg font-semibold"></div>
-            <div className="flex items-center gap-2">
+          <div className="mb-4">
+            <div className="flex flex-wrap items-center gap-2">
               <DatePicker
                 placeholder="按日期过滤"
                 value={filterDay ? (dayjs as any)(filterDay) : undefined}
@@ -386,7 +385,7 @@ export default function QuestionsList() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {items.map((it, idx) => (
                   <Card key={it.id} className="relative h-full">
                     <div className="pointer-events-none absolute left-0 top-0">
