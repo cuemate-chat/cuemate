@@ -1,5 +1,13 @@
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app
+
+# 安装构建依赖
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN npm install -g pnpm
 
 # 复制工作区元数据和需要的 package.json 以使用根锁文件安装
