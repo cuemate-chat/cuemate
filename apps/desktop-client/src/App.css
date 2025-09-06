@@ -91,6 +91,43 @@
   cursor: pointer;
 }
 
+/* 登录提示容器 */
+.login-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* 可点击的登录提示 */
+.login-prompt.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.login-prompt.clickable:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.02);
+}
+
+/* 加载动画样式 */
+.loading-dots {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+}
+
+.loading-dots .dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: inline-block;
+}
+
 /* 悬浮窗口控制按钮 */
 .floating-overlay-btn {
   width: 32px;

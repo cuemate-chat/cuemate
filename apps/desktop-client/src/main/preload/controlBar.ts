@@ -18,6 +18,7 @@ const controlBarAPI = {
   hideCloseButton: () => ipcRenderer.invoke('hide-close-button'),
 
   showMainContent: () => ipcRenderer.invoke('show-main-content'),
+  hideMainContent: () => ipcRenderer.invoke('hide-main-content'),
   toggleMainContent: () => ipcRenderer.invoke('toggle-main-content'),
 
   getAppState: () => ipcRenderer.invoke('get-app-state'),
@@ -55,7 +56,7 @@ const controlBarAPI = {
       'app-state-changed',
       'shortcut-triggered',
       'websocket-login-success', // WebSocket 登录成功事件
-      'websocket-logout',        // WebSocket 登出事件
+      'websocket-logout', // WebSocket 登出事件
     ];
 
     if (allowedChannels.includes(channel)) {

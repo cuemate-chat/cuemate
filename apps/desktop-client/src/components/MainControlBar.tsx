@@ -10,10 +10,34 @@ interface MainControlBarProps {
   // 移除未使用的参数
 }
 
+// 加载动画组件
+const LoadingDots = () => {
+  return (
+    <div className="loading-dots">
+      <motion.span
+        animate={{ opacity: [0.3, 1, 0.3] }}
+        transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
+        className="dot"
+      />
+      <motion.span
+        animate={{ opacity: [0.3, 1, 0.3] }}
+        transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }}
+        className="dot"
+      />
+      <motion.span
+        animate={{ opacity: [0.3, 1, 0.3] }}
+        transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }}
+        className="dot"
+      />
+    </div>
+  );
+};
+
 export function MainControlBar({}: MainControlBarProps) {
   const [isLogoHovered, setIsLogoHovered] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMainAppVisible, setIsMainAppVisible] = useState(false);
 
   // 检查登录状态
   useEffect(() => {
@@ -49,10 +73,21 @@ export function MainControlBar({}: MainControlBarProps) {
       setIsLoading(false);
     };
 
+    // 监听主应用窗口显示/隐藏事件
+    const handleMainAppShow = () => {
+      setIsMainAppVisible(true);
+    };
+
+    const handleMainAppHide = () => {
+      setIsMainAppVisible(false);
+    };
+
     // 监听 WebSocket 事件
     if ((window as any).electronAPI && (window as any).electronAPI.on) {
       (window as any).electronAPI.on('websocket-login-success', handleWebSocketLoginSuccess);
       (window as any).electronAPI.on('websocket-logout', handleWebSocketLogout);
+      (window as any).electronAPI.on('main-app-show', handleMainAppShow);
+      (window as any).electronAPI.on('main-app-hide', handleMainAppHide);
     }
 
     // 清理监听器
@@ -60,6 +95,8 @@ export function MainControlBar({}: MainControlBarProps) {
       if ((window as any).electronAPI && (window as any).electronAPI.off) {
         (window as any).electronAPI.off('websocket-login-success', handleWebSocketLoginSuccess);
         (window as any).electronAPI.off('websocket-logout', handleWebSocketLogout);
+        (window as any).electronAPI.off('main-app-show', handleMainAppShow);
+        (window as any).electronAPI.off('main-app-hide', handleMainAppHide);
       }
     };
   }, []);
@@ -87,15 +124,38 @@ export function MainControlBar({}: MainControlBarProps) {
     setIsLogoHovered(false);
   };
 
-  const openMainApp = async (e: React.MouseEvent) => {
+  // 处理登录提示点击事件 - 打开主应用（一次性）
+  const handleLoginPromptClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     try {
       if ((window as any).electronAPI) {
         await (window as any).electronAPI.showMainContent();
+        setIsMainAppVisible(true);
       }
     } catch (error) {
       await logger.error(`显示主应用失败: ${error}`);
+    }
+  };
+
+  // 处理右侧按钮点击 - 根据主应用窗口状态切换显示/隐藏
+  const handleToggleMainApp = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      if ((window as any).electronAPI) {
+        if (isMainAppVisible) {
+          // 如果主应用窗口显示，则隐藏
+          await (window as any).electronAPI.hideMainContent();
+          setIsMainAppVisible(false);
+        } else {
+          // 如果主应用窗口隐藏，则显示
+          await (window as any).electronAPI.showMainContent();
+          setIsMainAppVisible(true);
+        }
+      }
+    } catch (error) {
+      await logger.error(`切换主应用显示状态失败: ${error}`);
     }
   };
 
@@ -126,7 +186,7 @@ export function MainControlBar({}: MainControlBarProps) {
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content className="radix-tooltip-content">
-            访问 CueMate 官网
+            访问 CueMate 网站
             <Tooltip.Arrow className="radix-tooltip-arrow" />
           </Tooltip.Content>
         </Tooltip.Portal>
@@ -145,13 +205,23 @@ export function MainControlBar({}: MainControlBarProps) {
             ) : isLoggedIn ? (
               `已登录，欢迎使用 CueMate`
             ) : (
-              '欢迎使用 CueMate, 请先登录'
+              <div 
+                className="login-prompt clickable"
+                onClick={handleLoginPromptClick}
+              >
+                欢迎使用 CueMate, 请先登录
+                <LoadingDots />
+              </div>
             )}
           </motion.div>
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content className="radix-tooltip-content">
-            点击右侧按钮打开主应用
+            {isLoggedIn ? (
+              '点击右侧按钮打开主应用'
+            ) : (
+              '点击此处或右侧按钮打开主应用'
+            )}
             <Tooltip.Arrow className="radix-tooltip-arrow" />
           </Tooltip.Content>
         </Tooltip.Portal>
@@ -161,7 +231,7 @@ export function MainControlBar({}: MainControlBarProps) {
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
           <button 
-            onClick={openMainApp} 
+            onClick={handleToggleMainApp} 
             className="floating-overlay-btn"
           >
             <motion.div
@@ -174,7 +244,15 @@ export function MainControlBar({}: MainControlBarProps) {
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content className="radix-tooltip-content">
-            打开主应用窗口，快捷键 <span className="shortcut-key"> ⌘</span> + <span className="shortcut-key">J</span>
+            {isMainAppVisible ? (
+              <>
+                关闭主应用窗口，快捷键 <span className="shortcut-key"> ⌘</span> + <span className="shortcut-key">J</span>
+              </>
+            ) : (
+              <>
+                打开主应用窗口，快捷键 <span className="shortcut-key"> ⌘</span> + <span className="shortcut-key">J</span>
+              </>
+            )}
             <Tooltip.Arrow className="radix-tooltip-arrow" />
           </Tooltip.Content>
         </Tooltip.Portal>
