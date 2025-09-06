@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Modal } from 'antd';
 import Logo from '../assets/logo-background.png';
 import UserMenu from './UserMenu';
 
@@ -64,27 +65,45 @@ export default function Header() {
 
   // 客户端中为"帮助中心"采用外部浏览器打开逻辑
   const handleHelpClick = async (e: React.MouseEvent) => {
+    e.preventDefault(); // 总是阻止默认行为，显示确认弹框
     const helpUrl = 'https://cuemate.chat';
     
-    if (isElectron()) {
-      // 在 Electron 客户端中，阻止默认行为，使用 WebSocket 通信
-      e.preventDefault();
-      
-      try {
-        // 使用 WebSocket 通信方式
-        const { getWebSocketBridge } = await import('../utils/websocketBridge');
-        const bridge = getWebSocketBridge();
-        bridge.openExternal(helpUrl);
-        console.log('已通过 WebSocket 发送打开外部链接请求');
-      } catch (error) {
-        console.error('WebSocket 通信失败，使用降级方案:', error);
-        // 降级方案：直接使用 window.open
-        window.open(helpUrl, '_blank');
+    Modal.confirm({
+      title: '确认跳转到外部网站',
+      content: (
+        <div className="space-y-3">
+          <div className="text-sm text-slate-600">
+            即将跳转到帮助中心网站：
+          </div>
+          <div className="bg-slate-50 p-3 rounded border text-sm break-all">
+            {helpUrl}
+          </div>
+          <div className="text-xs text-slate-500">
+            链接将在{isElectron() ? '外部浏览器' : '新标签页'}中打开
+          </div>
+        </div>
+      ),
+      okText: '确认跳转',
+      cancelText: '取消',
+      onOk: async () => {
+        if (isElectron()) {
+          try {
+            // 使用 WebSocket 通信方式
+            const { getWebSocketBridge } = await import('../utils/websocketBridge');
+            const bridge = getWebSocketBridge();
+            bridge.openExternal(helpUrl);
+            console.log('已通过 WebSocket 发送打开外部链接请求');
+          } catch (error) {
+            console.error('WebSocket 通信失败，使用降级方案:', error);
+            // 降级方案：直接使用 window.open
+            window.open(helpUrl, '_blank');
+          }
+        } else {
+          // 在普通浏览器中，打开新标签页
+          window.open(helpUrl, '_blank', 'noopener,noreferrer');
+        }
       }
-    } else {
-      // 在普通浏览器中，直接使用默认行为打开新标签页
-      // 不需要 preventDefault，让 <a> 标签的默认行为生效
-    }
+    });
   };
 
   return (

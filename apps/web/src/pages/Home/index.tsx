@@ -34,8 +34,8 @@ export default function Home() {
   const selectOptions = useMemo(() => jobs.map((j) => ({ value: j.id, label: j.title })), [jobs]);
 
   return (
-    <div className="min-h-[calc(100vh-120px)] max-h-[calc(100vh-120px)] overflow-y-auto flex flex-col">
-      <div className="relative py-4 sm:py-6 md:py-8 lg:py-12 flex-grow flex flex-col justify-center min-h-fit">
+    <div className="bg-transparent">
+      <div className="relative py-4 sm:py-6 md:py-8 lg:py-12">
         {/* Hero Section */}
         <section className="pb-4 sm:pb-6 md:pb-8">
           <div className="container px-4 sm:px-6 lg:px-8">

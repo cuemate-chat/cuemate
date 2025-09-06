@@ -150,11 +150,28 @@ export default function AdsManagementList() {
 
   // 重置搜索
   const handleReset = () => {
-    setSearchTerm('');
-    setStatusFilter('');
-    setBlockFilter('');
-    setCurrentPage(1);
-    fetchAds(1, pageSize, '', '', '');
+    Modal.confirm({
+      title: '确认重置搜索条件',
+      content: (
+        <div className="space-y-2">
+          <div className="text-sm text-slate-600">
+            此操作将清除所有筛选和搜索条件，并返回到第一页
+          </div>
+          <div className="text-xs text-slate-500">
+            包括：搜索关键词、状态筛选、块信息筛选
+          </div>
+        </div>
+      ),
+      okText: '确认重置',
+      cancelText: '取消',
+      onOk: () => {
+        setSearchTerm('');
+        setStatusFilter('');
+        setBlockFilter('');
+        setCurrentPage(1);
+        fetchAds(1, pageSize, '', '', '');
+      }
+    });
   };
 
   // 格式化日期
