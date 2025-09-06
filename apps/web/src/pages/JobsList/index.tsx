@@ -1,8 +1,8 @@
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { Button, Input, Modal } from 'antd';
 import { useEffect, useState } from 'react';
-import { http } from '../../api/http';
 import { deleteJob, extractResumeText, listJobs, updateJob, type JobWithResume } from '../../api/jobs';
+import { optimizeResumeWithLLM } from '../../api/llm';
 import CollapsibleSidebar from '../../components/CollapsibleSidebar';
 import FullScreenOverlay from '../../components/FullScreenOverlay';
 import { WarningIcon } from '../../components/Icons';
@@ -175,7 +175,7 @@ export default function JobsList() {
     });
   };
 
-  // 简历优化功能
+  // 简历优化功能 - 直接调用 LLM Router
   const onOptimizeResume = async (forceRefresh = false) => {
     if (!selectedId || !resumeContent.trim()) return;
     
@@ -189,25 +189,16 @@ export default function JobsList() {
     
     setOptimizeLoading(true);
     try {
-      // 获取当前用户的模型配置
-      const userData = await http.get<{ user: any }>('/auth/me');
-      const selectedModelId = userData.user.selected_model_id;
-      
-      if (!selectedModelId) {
-        throw new Error('请先在设置中配置大模型');
-      }
-      
-      // 调用LLM进行简历优化
-      const result = await http.post<{
-        success: boolean;
-        suggestions: string;
-        optimizedResume: string;
-        warning?: string;
-      }>('/jobs/optimize-resume', {
-        jobId: selectedId,
-        resumeContent: resumeContent,
+      // 调用 LLM API
+      const result = await optimizeResumeWithLLM({
         jobDescription: description,
+        resumeContent: resumeContent,
       });
+      
+      // 验证优化后简历的长度
+      const originalLength = resumeContent.length;
+      const optimizedLength = result.optimizedResume.length;
+      const minRequiredLength = Math.floor(originalLength * 0.8); // 至少80%的长度
       
       const newResult = {
         suggestions: result.suggestions,
@@ -220,9 +211,9 @@ export default function JobsList() {
       setTempOptimizedResume(newResult.optimizedResume);
       setOptimizeModalVisible(true);
       
-      // 如果有警告信息，显示警告
-      if (result.warning) {
-        globalMessage.warning(result.warning); // 显示警告
+      // 如果优化后的内容太短，显示警告
+      if (optimizedLength < minRequiredLength) {
+        globalMessage.warning(`优化后的简历较短（${optimizedLength}字），建议在此基础上补充更多详细信息。原简历${originalLength}字。`);
       }
       
     } catch (error: any) {

@@ -24,6 +24,9 @@ export const config = {
   // RAG 服务地址
   RAG_SERVICE_URL: import.meta.env.VITE_RAG_SERVICE_URL || 'http://localhost:3003',
 
+  // LLM Router 服务地址
+  LLM_ROUTER_URL: import.meta.env.VITE_LLM_ROUTER_URL || 'http://localhost:3002',
+
   // ASR WebSocket 服务地址
   ASR_USER_WS_URL: import.meta.env.VITE_ASR_USER_WS_URL || 'ws://localhost:8001/asr',
   ASR_INTERVIEWER_WS_URL: import.meta.env.VITE_ASR_INTERVIEWER_WS_URL || 'ws://localhost:8002/asr',
