@@ -68,7 +68,7 @@ export const getSyncStatus = async (jobId?: string): Promise<SyncStatusResponse>
 
 export async function syncAll(jobId?: string): Promise<any> {
   const response = await http.post('/vectors/sync-all', { jobId });
-  return response.data;
+  return response;
 }
 
 export async function cleanAllVectorData(): Promise<{
@@ -79,7 +79,7 @@ export async function cleanAllVectorData(): Promise<{
   error?: string;
 }> {
   const response = await http.post('/vectors/clean-all');
-  return response.data;
+  return response;
 }
 
 // 搜索所有文档

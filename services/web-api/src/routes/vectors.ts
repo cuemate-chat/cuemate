@@ -124,7 +124,12 @@ export function registerVectorRoutes(app: FastifyInstance) {
       // 解析请求体
       let body;
       try {
-        body = z.object({ jobId: z.string().min(1).optional() }).parse((req as any).body || {});
+        body = z.object({ 
+          jobId: z.preprocess(
+            (val) => (val === '' ? undefined : val),
+            z.string().min(1).optional()
+          )
+        }).parse((req as any).body || {});
       } catch (parseError: any) {
         app.log.error({ err: parseError }, 'Request body parse failed');
         return reply.code(400).send(buildPrefixedError('请求参数格式错误', parseError, 400));
