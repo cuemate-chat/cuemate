@@ -128,6 +128,91 @@
   display: inline-block;
 }
 
+/* 已登录状态控制栏样式 */
+.logged-in-control-bar {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+}
+
+/* 控制栏分隔线 */
+.control-bar-divider {
+  width: 1px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Listen 按钮样式 */
+.listen-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(37, 99, 235, 0.2);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  height: 32px;
+}
+
+.listen-btn:hover {
+  background: rgba(29, 78, 216, 0.4);
+}
+
+.listen-btn.hovered {
+  background: rgba(29, 78, 216, 0.4);
+}
+
+/* Ask question 按钮样式 */
+.ask-question-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  height: 32px;
+}
+
+.ask-question-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 可见性切换按钮样式 */
+.visibility-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.visibility-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* 悬浮窗口控制按钮 */
 .floating-overlay-btn {
   width: 32px;
@@ -276,6 +361,20 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 3px;
   padding: 2px 4px;
+  margin: 0 2px;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* 快捷键图标样式 */
+.shortcut-key-icon {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 5px 4px;
   margin: 0 2px;
   font-size: 12px;
   font-weight: 500;

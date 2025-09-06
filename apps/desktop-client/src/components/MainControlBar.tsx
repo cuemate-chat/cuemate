@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import CueMateLogo from '../assets/CueMate.png';
 import CueMateLogo2 from '../assets/CueMate2.png';
 import { logger } from '../utils/rendererLogger.js';
+import { LoggedInControlBar } from './LoggedInControlBar';
 
 interface MainControlBarProps {
   // 移除未使用的参数
@@ -192,19 +193,35 @@ export function MainControlBar({}: MainControlBarProps) {
         </Tooltip.Portal>
       </Tooltip.Root>
 
-      {/* 欢迎文字 */}
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-          <motion.div 
-            className="welcome-text"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.2 }}
-          >
-            {isLoading ? (
-              '正在检查登录状态...'
-            ) : isLoggedIn ? (
-              `已登录，欢迎使用 CueMate`
-            ) : (
+      {/* 欢迎文字 / 已登录控制栏 */}
+      {isLoading ? (
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <motion.div 
+              className="welcome-text"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              正在检查登录状态...
+            </motion.div>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content className="radix-tooltip-content">
+              正在检查登录状态
+              <Tooltip.Arrow className="radix-tooltip-arrow" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      ) : isLoggedIn ? (
+        <LoggedInControlBar />
+      ) : (
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <motion.div 
+              className="welcome-text"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
               <div 
                 className="login-prompt clickable"
                 onClick={handleLoginPromptClick}
@@ -212,20 +229,16 @@ export function MainControlBar({}: MainControlBarProps) {
                 欢迎使用 CueMate, 请先登录
                 <LoadingDots />
               </div>
-            )}
-          </motion.div>
-        </Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Content className="radix-tooltip-content">
-            {isLoggedIn ? (
-              '点击右侧按钮打开主应用'
-            ) : (
-              '点击此处或右侧按钮打开主应用'
-            )}
-            <Tooltip.Arrow className="radix-tooltip-arrow" />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
+            </motion.div>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content className="radix-tooltip-content">
+              点击此处或右侧按钮打开主应用
+              <Tooltip.Arrow className="radix-tooltip-arrow" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      )}
 
       {/* 悬浮窗口按钮 */}
       <Tooltip.Root>
