@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { createTag, deleteTag, updateTag } from '../../api/questions';
 import DrawerProvider, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProvider';
 import { message as globalMessage } from '../../components/Message';
+import PaginationBar from '../../components/PaginationBar';
 
 interface TagManagerDrawerProps {
   open: boolean;
@@ -22,12 +23,30 @@ const TagManagerDrawer: React.FC<TagManagerDrawerProps> = ({
   const [editingName, setEditingName] = useState<string>('');
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [newTagName, setNewTagName] = useState('');
   const [loading, setLoading] = useState(false);
 
   const filtered = tags
     .filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+
+  // 分页处理
+  const total = filtered.length;
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = filtered.slice(startIndex, endIndex);
+
+  // 分页处理函数
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (current: number, size: number) => {
+    void current;
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   const columns: any[] = [
     {
@@ -36,7 +55,7 @@ const TagManagerDrawer: React.FC<TagManagerDrawerProps> = ({
       width: 100,
       align: 'center' as const,
       render: (_: any, __: any, index: number) => (
-        <span className="text-slate-500">{index + 1}</span>
+        <span className="text-slate-500">{startIndex + index + 1}</span>
       ),
     },
     {
@@ -218,20 +237,27 @@ const TagManagerDrawer: React.FC<TagManagerDrawerProps> = ({
             <Table
               size="small"
               columns={columns}
-              dataSource={filtered}
+              dataSource={paginatedData}
               rowKey="id"
               scroll={{ y: pageSize <= 10 ? undefined : 'calc(70vh - 200px)' }}
-              pagination={{ 
-                pageSize, 
-                showTotal: (total) => `共 ${total} 条`,
-                showSizeChanger: true,
-                pageSizeOptions: ['10', '20', '50'],
-                onShowSizeChange: (_, size) => {
-                  setPageSize(size);
-                }
-              }}
+              pagination={false}
             />
           </div>
+          
+          {/* 分页组件 */}
+          {total > 0 && (
+            <div className="flex justify-center mt-4">
+              <PaginationBar
+                page={currentPage}
+                pageSize={pageSize}
+                total={total}
+                onChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                showSizeChanger={true}
+                pageSizeOptions={['10', '20', '50']}
+              />
+            </div>
+          )}
         </div>
       </DrawerContent>
       <DrawerFooter>
