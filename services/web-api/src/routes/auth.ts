@@ -55,6 +55,21 @@ export function registerAuthRoutes(app: FastifyInstance) {
     // 更新用户登录状态为已登录
     app.db.prepare('UPDATE users SET is_logged_in = 1 WHERE id = ?').run(row.id);
 
+    // 获取用户选中模型的完整信息
+    let selectedModel = null;
+    let modelParams = [];
+    if (row.selected_model_id) {
+      selectedModel = app.db
+        .prepare('SELECT * FROM models WHERE id = ? AND is_enabled = 1')
+        .get(row.selected_model_id);
+      
+      if (selectedModel) {
+        modelParams = app.db
+          .prepare('SELECT * FROM model_params WHERE model_id = ?')
+          .all(row.selected_model_id);
+      }
+    }
+
     const user = {
       id: row.id,
       email: row.email,
@@ -64,6 +79,8 @@ export function registerAuthRoutes(app: FastifyInstance) {
       locale: row.locale ?? 'zh-CN',
       timezone: row.timezone ?? 'Asia/Shanghai',
       selected_model_id: row.selected_model_id ?? null,
+      model: selectedModel,
+      model_params: modelParams,
     };
 
     // 记录登录成功
@@ -104,7 +121,29 @@ export function registerAuthRoutes(app: FastifyInstance) {
           )
           .get(payload.uid);
         if (!row) return reply.code(404).send({ error: '用户不存在' });
-        return { user: row };
+        
+        // 获取用户选中模型的完整信息
+        let selectedModel = null;
+        let modelParams = [];
+        if (row.selected_model_id) {
+          selectedModel = (app as any).db
+            .prepare('SELECT * FROM models WHERE id = ? AND is_enabled = 1')
+            .get(row.selected_model_id);
+          
+          if (selectedModel) {
+            modelParams = (app as any).db
+              .prepare('SELECT * FROM model_params WHERE model_id = ?')
+              .all(row.selected_model_id);
+          }
+        }
+
+        const user = {
+          ...row,
+          model: selectedModel,
+          model_params: modelParams,
+        };
+
+        return { user };
       } catch (err) {
         return reply.code(401).send(buildPrefixedError('获取当前用户失败', err, 401));
       }
@@ -119,18 +158,39 @@ export function registerAuthRoutes(app: FastifyInstance) {
         // 查询是否有已登录的用户（is_logged_in = 1）
         const loggedInUser = app.db
           .prepare(
-            'SELECT id, email, name, created_at, theme, locale, timezone FROM users WHERE is_logged_in = 1 LIMIT 1',
+            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id FROM users WHERE is_logged_in = 1 LIMIT 1',
           )
           .get();
 
         if (loggedInUser) {
+          // 获取用户选中模型的完整信息
+          let selectedModel = null;
+          let modelParams = [];
+          if (loggedInUser.selected_model_id) {
+            selectedModel = app.db
+              .prepare('SELECT * FROM models WHERE id = ? AND is_enabled = 1')
+              .get(loggedInUser.selected_model_id);
+            
+            if (selectedModel) {
+              modelParams = app.db
+                .prepare('SELECT * FROM model_params WHERE model_id = ?')
+                .all(loggedInUser.selected_model_id);
+            }
+          }
+
+          const user = {
+            ...loggedInUser,
+            model: selectedModel,
+            model_params: modelParams,
+          };
+
           app.log.info(
             { userId: loggedInUser.id, userName: loggedInUser.name },
             '检查到已登录用户',
           );
           return {
             isLoggedIn: true,
-            user: loggedInUser,
+            user: user,
           };
         } else {
           app.log.info('检查到没有已登录用户');
@@ -189,6 +249,27 @@ export function registerAuthRoutes(app: FastifyInstance) {
           .get(payload.uid);
         if (row?.timezone) setLoggerTimeZone(row.timezone);
 
+        // 获取用户选中模型的完整信息
+        let selectedModel = null;
+        let modelParams = [];
+        if (row?.selected_model_id) {
+          selectedModel = (app as any).db
+            .prepare('SELECT * FROM models WHERE id = ? AND is_enabled = 1')
+            .get(row.selected_model_id);
+          
+          if (selectedModel) {
+            modelParams = (app as any).db
+              .prepare('SELECT * FROM model_params WHERE model_id = ?')
+              .all(row.selected_model_id);
+          }
+        }
+
+        const user = {
+          ...row,
+          model: selectedModel,
+          model_params: modelParams,
+        };
+
         // 记录用户设置更新
         await logOperation(app, req, {
           ...OPERATION_MAPPING.AUTH,
@@ -202,7 +283,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
           autoGetUser: false,
         });
 
-        return { success: true, user: row };
+        return { success: true, user };
       } catch (err) {
         return reply.code(401).send(buildPrefixedError('更新用户设置失败', err, 401));
       }

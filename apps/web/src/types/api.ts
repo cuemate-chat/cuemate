@@ -19,6 +19,39 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+// 模型相关类型
+export interface Model {
+  id: string;
+  name: string;
+  provider: string;
+  type: string;
+  scope: string;
+  model_name: string;
+  icon?: string;
+  version?: string;
+  base_url?: string;
+  api_url?: string;
+  api_key?: string;
+  created_by?: string;
+  is_enabled: number;
+  created_at: number;
+  updated_at?: number;
+}
+
+export interface ModelParam {
+  id: string;
+  model_id: string;
+  label?: string;
+  param_key: string;
+  ui_type: string;
+  value?: string;
+  default_value?: string;
+  required: number;
+  extra?: any;
+  created_at: number;
+  updated_at?: number;
+}
+
 // 用户相关类型
 export interface User {
   id: string;
@@ -30,6 +63,8 @@ export interface User {
   locale?: string;
   timezone?: string;
   selected_model_id?: string;
+  model?: Model | null;
+  model_params?: ModelParam[];
   created_at?: number;
   updated_at?: number;
   // 保持兼容性
