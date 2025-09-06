@@ -123,6 +123,48 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   /**
+   * 显示AI问答窗口
+   */
+  ipcMain.handle('show-ai-question', async () => {
+    try {
+      windowManager.showAIQuestion();
+      logger.info('IPC: 显示AI问答窗口命令已执行');
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 显示AI问答窗口失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 隐藏AI问答窗口
+   */
+  ipcMain.handle('hide-ai-question', async () => {
+    try {
+      windowManager.hideAIQuestion();
+      logger.info('IPC: 隐藏AI问答窗口命令已执行');
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 隐藏AI问答窗口失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 切换AI问答窗口显示状态
+   */
+  ipcMain.handle('toggle-ai-question', async () => {
+    try {
+      windowManager.toggleAIQuestion();
+      logger.info('IPC: 切换AI问答窗口命令已执行');
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 切换AI问答窗口失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
    * 获取应用状态
    */
   ipcMain.handle('get-app-state', async () => {

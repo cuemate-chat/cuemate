@@ -30,8 +30,7 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
       accelerator: 'CommandOrControl+Return',
       callback: () => {
         logger.info('全局快捷键触发: CommandOrControl+Return - AI提问功能');
-        // TODO: 实现AI提问功能
-        console.log('AI提问功能被触发');
+        windowManager.toggleAIQuestion();
       },
     },
     {

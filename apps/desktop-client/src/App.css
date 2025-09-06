@@ -404,6 +404,152 @@
   pointer-events: auto;
 }
 
+/* AI 问答窗口样式 */
+.ai-question-window {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  max-height: 600px;
+  background: rgba(30, 30, 30, 0.7);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 100001;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-window-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ai-window-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.ai-window-header {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.ai-window-header h3 {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.ai-window-header p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  margin: 0;
+}
+
+.ai-window-input-area {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.ai-window-textarea {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 12px;
+  color: white;
+  font-size: 14px;
+  resize: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.ai-window-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ai-window-textarea:focus {
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.ai-window-send-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.8);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ai-window-send-btn:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 1);
+  transform: scale(1.05);
+}
+
+.ai-window-send-btn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ai-window-response-area {
+  flex: 1;
+  min-height: 200px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.ai-response-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+.ai-loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* 响应式设计 */
 @media (max-width: 480px) {
   .welcome-text {
@@ -419,5 +565,10 @@
   .floating-overlay-btn {
     width: 24px;
     height: 24px;
+  }
+  
+  .ai-question-window {
+    width: 90%;
+    max-width: 400px;
   }
 }

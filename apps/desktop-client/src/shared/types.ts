@@ -58,6 +58,7 @@ export interface AppState {
   isControlBarVisible: boolean;
   isCloseButtonVisible: boolean;
   isMainContentVisible: boolean;
+  isAIQuestionVisible: boolean;
 }
 
 // 日志级别
@@ -91,6 +92,9 @@ export interface ElectronAPI {
   ensureMainFocus: () => Promise<void>;
   toggleFloatingWindows?: () => Promise<void>;
   toggleMainContent?: () => Promise<void>;
+  showAIQuestion?: () => Promise<void>;
+  hideAIQuestion?: () => Promise<void>;
+  toggleAIQuestion?: () => Promise<void>;
 
   // 应用控制
   quitApp: () => Promise<void>;

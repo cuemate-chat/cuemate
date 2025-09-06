@@ -2,12 +2,14 @@ import type { BrowserWindow } from 'electron';
 import type { AppState } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
 import { WebSocketClient } from '../websocket/WebSocketClient.js';
+import { AIQuestionWindow } from './AIQuestionWindow.js';
 import { ControlBarWindow } from './ControlBarWindow.js';
 import { MainContentWindow } from './MainContentWindow.js';
 
 export class WindowManager {
   private controlBarWindow: ControlBarWindow;
   private mainContentWindow: MainContentWindow;
+  private aiQuestionWindow: AIQuestionWindow;
   private webSocketClient: WebSocketClient;
   private isDevelopment: boolean;
   private appState: AppState;
@@ -20,11 +22,13 @@ export class WindowManager {
       isControlBarVisible: true,
       isCloseButtonVisible: false, // 关闭按钮状态由组件内部管理
       isMainContentVisible: false,
+      isAIQuestionVisible: false,
     };
 
     // 创建窗口实例 - control-bar 现在作为主焦点窗口，关闭按钮已集成
     this.controlBarWindow = new ControlBarWindow(this.isDevelopment);
     this.mainContentWindow = new MainContentWindow(this.isDevelopment);
+    this.aiQuestionWindow = new AIQuestionWindow(this.isDevelopment); // 将在 initialize 中重新创建
 
     // 创建 WebSocket 客户端
     this.webSocketClient = new WebSocketClient(this);
@@ -41,14 +45,22 @@ export class WindowManager {
       // 2. 创建主内容窗口（初始隐藏）
       await this.mainContentWindow.create();
 
-      // 3. 设置窗口事件监听
+      // 3. 创建AI问答窗口（初始隐藏），传递 ControlBar 窗口引用
+      const controlBarBrowserWindow = this.controlBarWindow.getBrowserWindow();
+      this.aiQuestionWindow = new AIQuestionWindow(
+        this.isDevelopment,
+        controlBarBrowserWindow || undefined,
+      );
+      await this.aiQuestionWindow.create();
+
+      // 4. 设置窗口事件监听
       this.setupWindowEvents();
 
-      // 4. 连接 WebSocket 客户端
+      // 5. 连接 WebSocket 客户端
       this.webSocketClient.connect();
       logger.info('WebSocket 客户端连接已启动');
 
-      // 5. 显示浮动窗口（control-bar）
+      // 6. 显示浮动窗口（control-bar）
       this.showFloatingWindows();
     } catch (error) {
       logger.error({ error }, '窗口管理器初始化失败');
@@ -204,6 +216,33 @@ export class WindowManager {
   }
 
   /**
+   * 显示AI问答窗口
+   */
+  public showAIQuestion(): void {
+    this.aiQuestionWindow.show();
+    this.appState.isAIQuestionVisible = true;
+  }
+
+  /**
+   * 隐藏AI问答窗口
+   */
+  public hideAIQuestion(): void {
+    this.aiQuestionWindow.hide();
+    this.appState.isAIQuestionVisible = false;
+  }
+
+  /**
+   * 切换AI问答窗口显示状态
+   */
+  public toggleAIQuestion(): void {
+    if (this.appState.isAIQuestionVisible) {
+      this.hideAIQuestion();
+    } else {
+      this.showAIQuestion();
+    }
+  }
+
+  /**
    * 获取 WebSocket 客户端实例
    */
   public getWebSocketClient(): WebSocketClient {
@@ -221,5 +260,6 @@ export class WindowManager {
 
     this.controlBarWindow.destroy();
     this.mainContentWindow.destroy();
+    this.aiQuestionWindow.destroy();
   }
 }

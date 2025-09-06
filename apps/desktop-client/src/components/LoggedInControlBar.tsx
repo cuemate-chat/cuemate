@@ -10,16 +10,19 @@ interface LoggedInControlBarProps {
 export function LoggedInControlBar({}: LoggedInControlBarProps) {
   const [isListenHovered, setIsListenHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
-
-
   const handleListenClick = () => {
     // TODO: 实现 Listen 功能
     console.log('Listen clicked');
   };
 
-  const handleAskQuestionClick = () => {
-    // TODO: 实现 Ask question 功能
-    console.log('Ask question clicked');
+  const handleAskQuestionClick = async () => {
+    try {
+      if ((window as any).electronAPI) {
+        await (window as any).electronAPI.toggleAIQuestion();
+      }
+    } catch (error) {
+      console.error('打开AI问题窗口失败:', error);
+    }
   };
 
   const handleVisibilityToggle = () => {
