@@ -49,7 +49,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
             transition={{ duration: 0.2 }}
           >
             <motion.div
-              whileHover={{ scale: 1.2 }}
+              whileHover={{ scale: 1.1 }}
               transition={{ duration: 0.2 }}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
@@ -76,7 +76,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
             transition={{ duration: 0.2 }}
           >
             <motion.div
-              whileHover={{ scale: 1.2 }}
+              whileHover={{ scale: 1.1 }}
               transition={{ duration: 0.2 }}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
