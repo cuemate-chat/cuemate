@@ -63,7 +63,7 @@ ${params.resumeContent}
 
 **注意：优化后的简历必须保持原有的详细程度，在此基础上进行改进，绝不能简化或缩短内容。**`;
   
-  // 直接调用 LLM Router
+  // 直接调用 LLM Router 并传递动态 provider 参数
   const llmResponse = await fetch(`${config.LLM_ROUTER_URL}/completion`, {
     method: 'POST',
     headers: {
@@ -82,7 +82,7 @@ ${params.resumeContent}
       ],
       temperature: modelParams.temperature || 0.7,
       maxTokens: Math.max(modelParams.max_tokens || 4000, 4000),
-      // 传递模型配置
+      // 动态 provider 配置参数
       provider: model.provider,
       model: model.model_name,
       apiKey: model.api_key,
