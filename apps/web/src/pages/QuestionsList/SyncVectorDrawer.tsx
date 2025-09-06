@@ -1,5 +1,6 @@
 import { Button } from 'antd';
 import React, { useState } from 'react';
+import { CloudArrowUpIcon, CircleStackIcon, ChartBarIcon, InformationCircleIcon, CheckCircleIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import DrawerProvider, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProvider';
 import { message as globalMessage } from '../../components/Message';
 
@@ -45,29 +46,117 @@ const SyncVectorDrawer: React.FC<SyncVectorDrawerProps> = ({
       onClose={onClose}
       width="50%"
     >
-      <DrawerHeader>同步向量库</DrawerHeader>
+      <DrawerHeader>
+        <div className="flex items-center gap-2">
+          <CircleStackIcon className="w-5 h-5 text-blue-600" />
+          <span>同步向量库</span>
+        </div>
+      </DrawerHeader>
       <DrawerContent>
-        <div className="space-y-5 h-[70vh] flex flex-col">
-          <div className="text-[13px] text-slate-600">
-            查看当前岗位押题在向量库中的同步情况
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-lg border border-slate-200 p-4 bg-slate-50">
-              <div className="text-xs text-slate-500">总数</div>
-              <div className="mt-1 text-2xl font-semibold">{syncStats?.total ?? '-'}</div>
-            </div>
-            <div className="rounded-lg border border-emerald-200 p-4 bg-emerald-50">
-              <div className="text-xs text-emerald-700">已同步</div>
-              <div className="mt-1 text-2xl font-semibold text-emerald-700">{syncStats?.synced ?? '-'}</div>
-            </div>
-            <div className="rounded-lg border border-rose-200 p-4 bg-rose-50">
-              <div className="text-xs text-rose-700">未同步</div>
-              <div className="mt-1 text-2xl font-semibold text-rose-700">{syncStats?.unsynced ?? '-'}</div>
+        <div className="space-y-6">
+          {/* 功能介绍 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <CloudArrowUpIcon className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+              <div>
+                <div className="text-sm font-medium text-blue-700 mb-2">🔄 向量库同步</div>
+                <div className="text-sm text-blue-600 space-y-1">
+                  <div>• 将岗位押题同步到向量知识库，便于智能检索和相似度匹配</div>
+                  <div>• 支持批量同步操作，自动处理重复和无效数据</div>
+                  <div>• 同步后可在面试复盘中快速找到相关问题和答案</div>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <div className="flex-1"></div>
+
+          {/* 同步状态统计 */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <ChartBarIcon className="w-5 h-5 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">同步状态统计</span>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="rounded-lg border border-slate-200 p-4 bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
+                <div className="absolute top-2 right-2">
+                  <ChartBarIcon className="w-4 h-4 text-slate-400" />
+                </div>
+                <div className="text-xs text-slate-500 mb-1">总押题数</div>
+                <div className="text-2xl font-bold text-slate-700">{syncStats?.total ?? '-'}</div>
+                <div className="text-xs text-slate-500 mt-1">当前岗位下的全部押题</div>
+              </div>
+              <div className="rounded-lg border border-emerald-200 p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 relative overflow-hidden">
+                <div className="absolute top-2 right-2">
+                  <CheckCircleIcon className="w-4 h-4 text-emerald-500" />
+                </div>
+                <div className="text-xs text-emerald-700 mb-1">已同步</div>
+                <div className="text-2xl font-bold text-emerald-700">{syncStats?.synced ?? '-'}</div>
+                <div className="text-xs text-emerald-600 mt-1">已加入向量库</div>
+              </div>
+              <div className="rounded-lg border border-rose-200 p-4 bg-gradient-to-br from-rose-50 to-rose-100 relative overflow-hidden">
+                <div className="absolute top-2 right-2">
+                  <XCircleIcon className="w-4 h-4 text-rose-500" />
+                </div>
+                <div className="text-xs text-rose-700 mb-1">未同步</div>
+                <div className="text-2xl font-bold text-rose-700">{syncStats?.unsynced ?? '-'}</div>
+                <div className="text-xs text-rose-600 mt-1">待处理的押题</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 同步进度可视化 */}
+          {syncStats && syncStats.total > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <ArrowPathIcon className="w-5 h-5 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">同步进度</span>
+              </div>
+              <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-full transition-all duration-300"
+                  style={{ width: `${(syncStats.synced / syncStats.total * 100)}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-2">
+                <span>同步率: {((syncStats.synced / syncStats.total) * 100).toFixed(1)}%</span>
+                <span>{syncStats.synced}/{syncStats.total}</span>
+              </div>
+            </div>
+          )}
+
+          {/* 操作说明 */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <InformationCircleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="text-sm font-medium text-yellow-700 mb-2">💡 同步说明</div>
+                <div className="text-sm text-yellow-600 space-y-1">
+                  <div>• 批量同步会处理当前岗位下的所有押题数据</div>
+                  <div>• 系统会自动跳过已同步的内容，只处理新增或变更的数据</div>
+                  <div>• 同步过程中会清理无效的向量库残留数据</div>
+                  <div>• 建议在添加新押题后及时进行同步操作</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 当前状态提示 */}
+          {!jobId && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+              <XCircleIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <div className="text-sm text-gray-500">请先选择要同步的岗位</div>
+            </div>
+          )}
+
+          {syncing && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <div className="text-sm text-blue-700">
+                  正在批量同步押题到向量库，请稍候...
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </DrawerContent>
       <DrawerFooter>

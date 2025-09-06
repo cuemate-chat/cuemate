@@ -80,19 +80,19 @@ const DocumentDetailDrawer: React.FC<DocumentDetailDrawerProps> = ({
     >
       <DrawerHeader>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-            <span className="text-white text-lg font-semibold">
+          <div className="w-10 h-10 bg-[#1d4ed8]/20 rounded-full flex items-center justify-center">
+            <span className="text-[#1d4ed8] text-lg font-semibold">
               {document.metadata.type === 'jobs' ? '岗' : 
                document.metadata.type === 'resumes' ? '简' : 
                document.metadata.type === 'questions' ? '题' : '文'}
             </span>
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-lg font-semibold text-[#3b82f6]">
               {getDocumentTypeLabel(document.metadata.type)} - 详细信息
             </h3>
-            <div className="text-sm text-white/80">
-              ID: {document.id.slice(0, 8)}...
+            <div className="text-sm text-[#3b82f6]/80">
+              ID: {document.id}
             </div>
           </div>
         </div>

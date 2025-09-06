@@ -1,3 +1,4 @@
+import EyeIcon from '@heroicons/react/16/solid/EyeIcon';
 import {
   ArrowPathIcon,
   ArrowsPointingOutIcon,
@@ -6,7 +7,6 @@ import {
   ClockIcon,
   ComputerDesktopIcon,
   CurrencyDollarIcon,
-  EyeIcon,
   LinkIcon,
   PaintBrushIcon,
   PhotoIcon,
@@ -18,6 +18,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getBlockConfigs, getPublicActiveAds, type BlockConfig, type PixelAd } from '../../api/ads';
 import { message } from '../../components/Message';
 import { WEB_API_BASE } from '../../config';
+import MockUploadDrawer from './MockUploadDrawer';
 
 interface AdBlock extends BlockConfig {
   ad?: PixelAd;
@@ -67,7 +68,6 @@ export default function AdsPixel() {
   
   // 模拟上传的临时数据
   const [tempAds, setTempAds] = useState<Record<string, { title: string; image: string; link?: string }>>({});
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   
   // 筛选和高亮
   const [selectedBlockFilter, setSelectedBlockFilter] = useState<string>('');
@@ -191,14 +191,14 @@ export default function AdsPixel() {
     }
   };
 
-  const handleMockUpload = () => {
-    if (!selectedBlock || !uploadedFile) {
+  const handleMockUpload = (file: File) => {
+    if (!selectedBlock || !file) {
       message.error('请选择要上传的图片！');
       return;
     }
 
     // 创建图片 URL
-    const imageUrl = URL.createObjectURL(uploadedFile);
+    const imageUrl = URL.createObjectURL(file);
     
     // 添加到临时数据
     setTempAds(prev => {
@@ -217,33 +217,8 @@ export default function AdsPixel() {
     message.success(`模拟上传到块 ${selectedBlock.block_id} 成功！价格: ¥${price}`);
     setShowUploadModal(false);
     setSelectedBlock(null);
-    setUploadedFile(null);
   };
   
-  // 处理文件上传
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setUploadedFile(file);
-    } else {
-      message.error('请选择图片文件！');
-    }
-  };
-  
-  // 处理拖放上传
-  const handleFileDrop = (event: React.DragEvent) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      setUploadedFile(file);
-    } else {
-      message.error('请选择图片文件！');
-    }
-  };
-  
-  const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault();
-  };
 
 
 
@@ -641,7 +616,7 @@ export default function AdsPixel() {
         )}
 
         {/* 操作指南 - 悬浮在最顶层，可折叠 */}
-        <div className="absolute bottom-4 left-4 bg-white bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs text-gray-700 border border-gray-200 transition-all duration-300 z-[9999]">
+        <div className="absolute bottom-4 left-4 bg-white bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs text-gray-700 border border-gray-200 transition-all duration-300 z-[9996]">
           <div className="flex items-center justify-between p-2 cursor-pointer" onClick={() => setIsControlsCollapsed(!isControlsCollapsed)}>
             <div className="font-semibold text-gray-900 flex items-center gap-2">
               <ComputerDesktopIcon className="w-4 h-4" />
@@ -676,7 +651,7 @@ export default function AdsPixel() {
         </div>
 
         {/* 状态图例 - 悬浮在最顶层，可折叠 */}
-        <div className="absolute bottom-4 right-4 bg-white bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs border border-gray-200 transition-all duration-300 z-[9999]">
+        <div className="absolute bottom-4 right-4 bg-white bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs border border-gray-200 transition-all duration-300 z-[9996]">
           <div className="flex items-center justify-between p-2 cursor-pointer" onClick={() => setIsLegendCollapsed(!isLegendCollapsed)}>
             <div className="font-semibold text-gray-900 flex items-center gap-2">
               <PaintBrushIcon className="w-4 h-4" />
@@ -719,89 +694,16 @@ export default function AdsPixel() {
         
       </div>
 
-      {/* 模拟上传弹窗 */}
-      {showUploadModal && selectedBlock && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white border border-gray-300 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-            <h3 className="text-xl font-semibold mb-4 text-gray-900 flex items-center gap-2">
-              <PhotoIcon className="w-6 h-6 text-blue-600" />
-              模拟上传到块 {selectedBlock.block_id}
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <EyeIcon className="w-4 h-4" />
-                  块信息
-                </label>
-                <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 border border-gray-200">
-                  <div>网格位置: {selectedBlock.x}, {selectedBlock.y}</div>
-                  <div>网格大小: {selectedBlock.width} × {selectedBlock.height}</div>
-                  <div>像素大小: {selectedBlock.pixelWidth} × {selectedBlock.pixelHeight} px</div>
-                  <div>块类型: <span className="text-blue-600">{selectedBlock.type === 'square' ? '正方形' : selectedBlock.type === 'horizontal' ? '横长方形' : '竖长方形'}</span></div>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <PhotoIcon className="w-4 h-4" />
-                  上传文件
-                </label>
-                <div 
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer"
-                  onDrop={handleFileDrop}
-                  onDragOver={handleDragOver}
-                  onClick={() => document.getElementById('file-upload')?.click()}
-                >
-                  {uploadedFile ? (
-                    <div className="space-y-2">
-                      <img 
-                        src={URL.createObjectURL(uploadedFile)} 
-                        alt="预览" 
-                        className="max-w-full max-h-32 mx-auto rounded" 
-                      />
-                      <div className="text-sm text-green-600 font-medium">{uploadedFile.name}</div>
-                      <div className="text-xs text-gray-500">点击更换图片</div>
-                    </div>
-                  ) : (
-                    <div>
-                      <PhotoIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                      <div className="text-gray-600">
-                        点击或拖拽图片到此处<br/>
-                        <span className="text-xs text-gray-500">支持 JPG, PNG, GIF 格式</span>
-                      </div>
-                    </div>
-                  )}
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleMockUpload}
-                disabled={!uploadedFile}
-                className={`px-6 py-2 text-white rounded-lg transition-all shadow-lg ${
-                  uploadedFile 
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' 
-                    : 'bg-gray-400 cursor-not-allowed'
-                }`}
-              >
-                {uploadedFile ? '模拟上传' : '请选择图片'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 模拟上传侧拉弹框 */}
+      <MockUploadDrawer
+        open={showUploadModal}
+        onClose={() => {
+          setShowUploadModal(false);
+          setSelectedBlock(null);
+        }}
+        selectedBlock={selectedBlock}
+        onUpload={handleMockUpload}
+      />
     </div>
   );
 }

@@ -919,38 +919,70 @@ const SyncStatusOverview = ({
   };
 
   const handleSyncAll = async () => {
-    try {
-      setLoading(true);
-      onSyncStart?.();
-      const { syncAll } = await import('../../api/vector');
-      // 不传jobId同步所有数据
-      const result = await syncAll('');
-      if (result.success) {
-        message.success('同步完成！');
-        loadSyncStatus(); // 重新加载状态
-      } else {
-        message.error('同步失败：' + (result.error || '未知错误'));
+    Modal.confirm({
+      title: '确认同步所有数据',
+      content: (
+        <div className="space-y-3">
+          <div className="text-blue-600 font-medium">
+            此操作将同步系统中的所有数据到向量库，可能需要较长时间
+          </div>
+          <div className="space-y-2 text-sm text-gray-700">
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs">1</span>
+              <span>所有岗位信息</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs">2</span>
+              <span>所有简历信息</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs">3</span>
+              <span>所有面试押题</span>
+            </div>
+          </div>
+          <div className="text-xs text-gray-500">
+            同步完成后，向量搜索功能将能够检索到最新的数据内容
+          </div>
+        </div>
+      ),
+      okText: '确认同步',
+      okType: 'primary',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          setLoading(true);
+          onSyncStart?.();
+          const { syncAll } = await import('../../api/vector');
+          // 不传jobId同步所有数据
+          const result = await syncAll('');
+          if (result.success) {
+            message.success('同步完成！');
+            loadSyncStatus(); // 重新加载状态
+          } else {
+            message.error('同步失败：' + (result.error || '未知错误'));
+          }
+        } catch (error: any) {
+          let errorMessage = '同步失败：';
+          
+          if (error.response?.status === 401) {
+            errorMessage += '登录已过期，请重新登录';
+          } else if (error.response?.status === 503) {
+            errorMessage += 'RAG服务不可用，请检查服务是否正常运行';
+          } else if (error.response?.data?.error) {
+            errorMessage += error.response.data.error;
+          } else if (error.message) {
+            errorMessage += error.message;
+          } else {
+            errorMessage += '未知错误';
+          }
+          
+          message.error(errorMessage);
+        } finally {
+          setLoading(false);
+          onSyncEnd?.();
+        }
       }
-    } catch (error: any) {
-      let errorMessage = '同步失败：';
-      
-      if (error.response?.status === 401) {
-        errorMessage += '登录已过期，请重新登录';
-      } else if (error.response?.status === 503) {
-        errorMessage += 'RAG服务不可用，请检查服务是否正常运行';
-      } else if (error.response?.data?.error) {
-        errorMessage += error.response.data.error;
-      } else if (error.message) {
-        errorMessage += error.message;
-      } else {
-        errorMessage += '未知错误';
-      }
-      
-      message.error(errorMessage);
-    } finally {
-      setLoading(false);
-      onSyncEnd?.();
-    }
+    });
   };
 
   const handleCleanAll = async () => {
