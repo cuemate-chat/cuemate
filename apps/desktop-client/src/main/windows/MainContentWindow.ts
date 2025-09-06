@@ -43,8 +43,6 @@ export class MainContentWindow {
       return;
     }
 
-    logger.info('创建 main-content 主内容窗口');
-
     try {
       // 获取主显示器信息来计算初始位置
       const primaryDisplay = screen.getPrimaryDisplay();
@@ -94,8 +92,6 @@ export class MainContentWindow {
 
       // 设置窗口事件监听
       this.setupEvents();
-
-      logger.info('main-content 主内容窗口创建成功');
     } catch (error) {
       logger.error({ error }, '创建 main-content 窗口失败');
       throw error;
