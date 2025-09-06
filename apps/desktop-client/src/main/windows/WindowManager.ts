@@ -34,21 +34,21 @@ export class WindowManager {
    * 初始化窗口管理器
    */
   public async initialize(): Promise<void> {
-    logger.info('开始初始化窗口管理器');
-
     try {
       // 1. 创建控制条窗口（现在作为主焦点窗口）
       await this.controlBarWindow.create();
-      logger.info('control-bar 控制条窗口已创建');
 
       // 2. 创建主内容窗口（初始隐藏）
       await this.mainContentWindow.create();
-      logger.info('main-content 主内容窗口已创建');
 
       // 3. 设置窗口事件监听
       this.setupWindowEvents();
 
-      // 4. 显示浮动窗口（control-bar）
+      // 4. 连接 WebSocket 客户端
+      this.webSocketClient.connect();
+      logger.info('WebSocket 客户端连接已启动');
+
+      // 5. 显示浮动窗口（control-bar）
       this.showFloatingWindows();
     } catch (error) {
       logger.error({ error }, '窗口管理器初始化失败');

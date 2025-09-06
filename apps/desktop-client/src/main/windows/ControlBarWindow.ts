@@ -43,8 +43,6 @@ export class ControlBarWindow {
       return;
     }
 
-    logger.info('创建 control-bar 控制条窗口');
-
     try {
       // 获取主显示器信息来计算初始位置
       const primaryDisplay = screen.getPrimaryDisplay();

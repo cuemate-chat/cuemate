@@ -130,7 +130,6 @@ export class MainContentWindow {
     // 窗口尺寸改变
     this.window.on('resized', () => {
       const bounds = this.window!.getBounds();
-      logger.info(`main-content 窗口尺寸已改变: ${bounds.width}x${bounds.height}`);
 
       // 保存窗口状态
       this.lastBounds = bounds;
