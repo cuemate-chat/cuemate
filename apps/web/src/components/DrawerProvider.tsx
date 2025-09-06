@@ -16,10 +16,10 @@ const useStyle = createStyles(({ token }) => ({
     backgroundColor: 'rgba(0, 0, 0, 0.25)',
   },
   'drawer-header': {
-    background: `linear-gradient(135deg, ${token.blue6} 0%, ${token.purple6} 100%)`,
-    color: '#fff',
-    borderBottom: 'none',
-    fontWeight: 600,
+    background: '#e5eefc',
+    color: '#3b82f6',
+    borderBottom: `1px solid ${token.colorBorderSecondary}`,
+    fontWeight: 400,
     padding: '20px 24px',
   },
   'drawer-footer': {
@@ -137,11 +137,11 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
       border: 'none',
     },
     header: {
-      borderBottom: 'none',
-      background: `linear-gradient(135deg, ${token.blue6} 0%, ${token.purple6} 100%)`,
-      color: '#fff',
+      borderBottom: `1px solid ${token.colorBorderSecondary}`,
+      background: '#e5eefc',
+      color: '#3b82f6',
       fontSize: '18px',
-      fontWeight: 600,
+      fontWeight: 400,
       padding: '16px 24px',
     },
     body: {
@@ -174,7 +174,7 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
         flex: 1, 
         overflowY: 'auto', 
         padding: '24px',
-        background: `linear-gradient(135deg, ${token.blue1} 0%, ${token.purple1} 100%)`,
+        background: token.colorBgContainer,
       }}>
         {content}
       </div>

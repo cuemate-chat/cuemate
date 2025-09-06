@@ -46,7 +46,7 @@ export default function ProviderPickerDrawer({
     <DrawerProvider
       open={open}
       onClose={onClose}
-      width="60%"
+      width="65%"
     >
       <DrawerHeader>选择供应商</DrawerHeader>
       <DrawerContent>
@@ -79,10 +79,16 @@ export default function ProviderPickerDrawer({
       </DrawerContent>
       <DrawerFooter>
         <div className="flex justify-end gap-2">
-          <Button onClick={handleCopy}>
+          <Button 
+            onClick={handleCopy}
+            className="text-slate-600 hover:text-slate-800"
+          >
             复制
           </Button>
-          <Button onClick={onClose}>
+          <Button 
+            onClick={onClose}
+            className="text-slate-600 hover:text-slate-800"
+          >
             关闭
           </Button>
         </div>

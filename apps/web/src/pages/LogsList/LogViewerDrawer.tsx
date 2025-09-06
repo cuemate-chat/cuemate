@@ -133,29 +133,29 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
       <DrawerHeader>
         {logItem ? (
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-white text-lg font-semibold">
+            <div className="w-10 h-10 bg-[#1d4ed8]/20 rounded-full flex items-center justify-center">
+              <span className="text-[#1d4ed8] text-lg font-semibold">
                 {logItem.service.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-[#1d4ed8]">
                 {serviceNameMap[logItem.service] || logItem.service}
               </h3>
-              <div className="flex items-center gap-2 text-sm text-white/80">
+              <div className="flex items-center gap-2 text-sm text-[#3b82f6]">
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  logItem.level === 'error' ? 'bg-red-500/20 text-red-200' :
-                  logItem.level === 'warn' ? 'bg-yellow-500/20 text-yellow-200' :
-                  logItem.level === 'info' ? 'bg-blue-500/20 text-blue-200' :
-                  'bg-white/20 text-white/80'
+                  logItem.level === 'error' ? 'bg-red-500/20 text-red-700' :
+                  logItem.level === 'warn' ? 'bg-yellow-500/20 text-yellow-700' :
+                  logItem.level === 'info' ? 'bg-blue-500/20 text-blue-700' :
+                  'bg-[#1d4ed8]/20 text-[#1d4ed8]'
                 }`}>
                   {logItem.level.toUpperCase()}
                 </span>
-                <span className="text-white/60">•</span>
+                <span className="text-[#3b82f6]/60">•</span>
                 <span>{logItem.date}</span>
                 {logContent && (
                   <>
-                    <span className="text-white/60">•</span>
+                    <span className="text-[#3b82f6]/60">•</span>
                     <span>{logContent.lines.length} 行日志</span>
                   </>
                 )}
@@ -163,7 +163,7 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
             </div>
           </div>
         ) : (
-          <span className="text-white font-semibold">日志查看器</span>
+          <span className="text-[#1d4ed8] font-semibold">日志查看器</span>
         )}
       </DrawerHeader>
       <DrawerContent>

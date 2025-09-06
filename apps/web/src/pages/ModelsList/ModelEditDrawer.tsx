@@ -119,10 +119,10 @@ export default function ModelEditDrawer({
             // 添加模式：显示面包屑导航
             <>
               <button
-                className="text-white hover:text-blue-200 hover:underline"
+                className="text-[#1d4ed8] hover:text-[#2563eb] hover:underline transition-colors"
                 onClick={onBackToProvider}
               >
-                选择供应商
+                重新选择供应商
               </button>
               <span className="text-slate-400">→</span>
               <span className="flex items-center gap-2 font-medium">
