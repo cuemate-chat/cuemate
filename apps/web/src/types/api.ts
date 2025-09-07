@@ -29,9 +29,8 @@ export interface Model {
   model_name: string;
   icon?: string;
   version?: string;
-  base_url?: string;
-  api_url?: string;
-  api_key?: string;
+  credentials?: string; // JSON 字符串，包含凭据信息
+  status?: string; // 连通状态：ok/fail/null
   created_by?: string;
   is_enabled: number;
   created_at: number;

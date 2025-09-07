@@ -13,6 +13,7 @@ import {
     testModelConnectivity,
     upsertModel,
 } from '../../api/models';
+import { storage } from '../../api/http';
 import CollapsibleSidebar from '../../components/CollapsibleSidebar';
 import FullScreenOverlay from '../../components/FullScreenOverlay';
 import { message } from '../../components/Message';
@@ -256,7 +257,27 @@ export default function ModelsList() {
         required: !!p.required,
       })),
     };
-    await upsertModel(payload);
+    
+    const updatedModel = await upsertModel(payload);
+    
+    // 同步更新 localStorage 中的用户数据
+    const currentUser = storage.getUser();
+    if (currentUser && currentUser.selected_model_id === formData.id) {
+      // 如果保存的是当前用户选中的模型，则更新 localStorage
+      const updatedUser = {
+        ...currentUser,
+        model: {
+          ...updatedModel,
+          credentials: JSON.stringify(credentials), // 确保 credentials 是 JSON 字符串
+        },
+        model_params: (formData.params || []).map((p: any) => ({
+          ...p,
+          model_id: formData.id,
+          required: !!p.required,
+        })),
+      };
+      storage.setUser(updatedUser);
+    }
     
     // 保存成功后关闭所有侧拉框
     setEditing(null);

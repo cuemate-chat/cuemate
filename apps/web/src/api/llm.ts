@@ -14,15 +14,17 @@ export interface OptimizeResumeResponse {
 /**
  * 直接调用 LLM Router 优化简历
  */
-export async function optimizeResumeWithLLM(params: OptimizeResumeRequest): Promise<OptimizeResumeResponse> {
+export async function optimizeResumeWithLLM(
+  params: OptimizeResumeRequest,
+): Promise<OptimizeResumeResponse> {
   // 从 localStorage 获取用户的完整模型配置
   const userData = storage.getUser();
   if (!userData?.model) {
     throw new Error('请先在设置中配置大模型');
   }
-  
+
   const { model, model_params } = userData;
-  
+
   // 构建参数对象
   const modelParams: Record<string, any> = {};
   model_params?.forEach((param: any) => {
@@ -34,7 +36,7 @@ export async function optimizeResumeWithLLM(params: OptimizeResumeRequest): Prom
       modelParams[param.param_key] = value;
     }
   });
-  
+
   // 构建优化提示词
   const optimizePrompt = `作为一名专业的简历优化师，请根据目标岗位要求对以下简历进行全面优化。
 
@@ -62,7 +64,17 @@ ${params.resumeContent}
 }
 
 **注意：优化后的简历必须保持原有的详细程度，在此基础上进行改进，绝不能简化或缩短内容。**`;
-  
+
+  // 构建 credentials 对象，从 model.credentials 中解析
+  const finalCredentials = model.credentials ? JSON.parse(model.credentials) : {};
+
+  // 直接传递用户配置的 model_params 数组
+  const finalModelParams =
+    model_params?.map((param: any) => ({
+      param_key: param.param_key,
+      value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
+    })) || [];
+
   // 直接调用 LLM Router 并传递动态 provider 参数
   const llmResponse = await fetch(`${config.LLM_ROUTER_URL}/completion`, {
     method: 'POST',
@@ -70,6 +82,10 @@ ${params.resumeContent}
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
+      provider: model.provider,
+      model: model.model_name,
+      credentials: finalCredentials,
+      model_params: finalModelParams,
       messages: [
         {
           role: 'system',
@@ -80,40 +96,36 @@ ${params.resumeContent}
           content: optimizePrompt,
         },
       ],
-      temperature: modelParams.temperature || 0.7,
-      maxTokens: Math.max(modelParams.max_tokens || 4000, 4000),
-      // 动态 provider 配置参数
-      provider: model.provider,
-      model: model.model_name,
-      apiKey: model.api_key,
-      baseUrl: model.base_url,
     }),
   });
-  
+
   if (!llmResponse.ok) {
     const errorText = await llmResponse.text();
     throw new Error(`LLM Router 调用失败: ${llmResponse.status} - ${errorText}`);
   }
-  
+
   const llmResult = await llmResponse.json();
+
+  // LLM Router 返回的格式是 {content: "JSON字符串", usage: {...}, ...}
   const content = llmResult.content;
-  
+
   if (!content) {
     throw new Error('LLM Router 返回内容为空');
   }
-  
+
   // 尝试解析JSON格式的回复
   let result;
   try {
+    // 解析 content 中的 JSON 字符串
     result = JSON.parse(content);
   } catch (e) {
     // 如果不是JSON格式，则简单处理
     result = {
-      suggestions: '优化建议：' + content.substring(0, 500),
+      suggestions: '优化建议：AI返回的内容不是标准JSON格式',
       optimizedResume: content,
     };
   }
-  
+
   return {
     suggestions: result.suggestions || '暂无具体建议',
     optimizedResume: result.optimizedResume || content,
