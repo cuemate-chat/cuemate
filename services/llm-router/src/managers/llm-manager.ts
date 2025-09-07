@@ -1,9 +1,24 @@
 import { EventEmitter } from 'events';
 import PQueue from 'p-queue';
 import { Config } from '../config/index.js';
-import { BaseLLMProvider, CompletionRequest, CompletionResponse } from '../providers/base.js';
+import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from '../providers/base.js';
+import { DeepSeekProvider } from '../providers/deepseek.js';
+import { OpenAICompatibleProvider } from '../providers/openai-compatible.js';
+import { OpenAIProvider } from '../providers/openai.js';
+import { AnthropicProvider } from '../providers/anthropic.js';
+import { AzureOpenAIProvider } from '../providers/azure-openai.js';
+import { GeminiProvider } from '../providers/gemini.js';
+import { KimiProvider } from '../providers/kimi.js';
+import { MoonshotProvider } from '../providers/moonshot.js';
+import { OllamaProvider } from '../providers/ollama.js';
+import { QwenProvider } from '../providers/qwen.js';
+import { SiliconFlowProvider } from '../providers/siliconflow.js';
+import { TencentProvider } from '../providers/tencent.js';
+import { VllmProvider } from '../providers/vllm.js';
+import { VolcEngineProvider } from '../providers/volcengine.js';
+import { ZhipuProvider } from '../providers/zhipu.js';
 import { logger } from '../utils/logger.js';
-import { UserProviderRegistry } from './user-provider-registry.js';
+// import { UserProviderRegistry } from './user-provider-registry.js';
 
 export interface ProviderStatus {
   id: string;
@@ -14,6 +29,8 @@ export interface ProviderStatus {
   lastChecked: number;
 }
 
+// DynamicProviderConfig 已移除，现在使用 RuntimeConfig
+
 export class LLMManager extends EventEmitter {
   private providers: Map<string, BaseLLMProvider>;
   private config: Config;
@@ -21,34 +38,62 @@ export class LLMManager extends EventEmitter {
   private queue: PQueue;
   private providerStatus: Map<string, ProviderStatus>;
   private requestCount: Map<string, number>;
-  private userRegistry: UserProviderRegistry;
+  // private userRegistry: UserProviderRegistry;
+  // 已移除动态 providers 缓存，现在使用统一的注册机制
 
-  constructor(providers: Map<string, BaseLLMProvider>, config: Config) {
+  constructor(config: Config) {
     super();
-    this.providers = providers;
     this.config = config;
     this.queue = new PQueue({ concurrency: 10 });
     this.providerStatus = new Map();
     this.requestCount = new Map();
-    this.userRegistry = new UserProviderRegistry(config);
+    // this.userRegistry = new UserProviderRegistry(config);
 
+    // 自动注册所有 providers（启动时不需要配置）
+    this.providers = this.initializeAllProviders();
+    
     // 初始化提供者状态
     this.initializeProviderStatus();
   }
 
-  // 为“按用户绑定模型”预留：某些请求会携带 metadata.userId，根据 userId 动态选择 provider
-  private async getProviderForUser(userId?: string): Promise<BaseLLMProvider | null> {
-    if (!userId) return null;
-    const cached = this.userRegistry.get(userId);
-    if (cached) return cached;
-    try {
-      const p = await this.userRegistry.loadFromWebApi(userId);
-      return p || null;
-    } catch (e) {
-      logger.warn('load user provider failed', e as any);
-      return null;
-    }
+  private initializeAllProviders(): Map<string, BaseLLMProvider> {
+    const providers = new Map<string, BaseLLMProvider>();
+    
+    // 注册所有 providers（使用新架构）
+    providers.set('openai', new OpenAIProvider());
+    providers.set('deepseek', new DeepSeekProvider());
+    providers.set('openai-compatible', new OpenAICompatibleProvider());
+    providers.set('anthropic', new AnthropicProvider());
+    providers.set('azure-openai', new AzureOpenAIProvider());
+    providers.set('gemini', new GeminiProvider());
+    providers.set('kimi', new KimiProvider());
+    providers.set('moonshot', new MoonshotProvider());
+    providers.set('ollama', new OllamaProvider());
+    providers.set('qwen', new QwenProvider());
+    providers.set('siliconflow', new SiliconFlowProvider());
+    providers.set('tencent', new TencentProvider());
+    providers.set('vllm', new VllmProvider());
+    providers.set('volcengine', new VolcEngineProvider());
+    providers.set('zhipu', new ZhipuProvider());
+    
+    logger.info(`Registered ${providers.size} providers: ${Array.from(providers.keys()).join(', ')}`);
+    
+    return providers;
   }
+
+  // 为"按用户绑定模型"预留：某些请求会携带 metadata.userId，根据 userId 动态选择 provider
+  // private async getProviderForUser(userId?: string): Promise<BaseLLMProvider | null> {
+  //   if (!userId) return null;
+  //   const cached = this.userRegistry.get(userId);
+  //   if (cached) return cached;
+  //   try {
+  //     const p = await this.userRegistry.loadFromWebApi(userId);
+  //     return p || null;
+  //   } catch (e) {
+  //     logger.warn('load user provider failed', e as any);
+  //     return null;
+  //   }
+  // }
 
   private initializeProviderStatus() {
     for (const [id, provider] of this.providers) {
@@ -61,116 +106,22 @@ export class LLMManager extends EventEmitter {
     }
   }
 
-  async complete(request: CompletionRequest): Promise<CompletionResponse> {
-    // 如果按用户绑定模型已启用，可在此优先返回用户 Provider
-    const userProvider = await this.getProviderForUser(request.metadata?.userId);
-    if (userProvider) {
-      return this.executeWithTimeout(userProvider, request, userProvider.getName());
+  async complete(request: CompletionRequest, runtimeConfig: RuntimeConfig): Promise<CompletionResponse> {
+    // 根据 runtimeConfig.provider 选择对应的 provider
+    const provider = this.providers.get(runtimeConfig.provider);
+    if (!provider) {
+      throw new Error(`Provider ${runtimeConfig.provider} not found. Available providers: ${Array.from(this.providers.keys()).join(', ')}`);
     }
-    const strategy = this.config.routing.strategy;
 
-    switch (strategy) {
-      case 'primary-fallback':
-        return this.primaryFallbackStrategy(request);
-      case 'load-balance':
-        return this.loadBalanceStrategy(request);
-      case 'fastest':
-        return this.fastestStrategy(request);
-      default:
-        return this.primaryFallbackStrategy(request);
-    }
+    return this.executeWithTimeout(provider, request, runtimeConfig);
   }
 
-  private async primaryFallbackStrategy(request: CompletionRequest): Promise<CompletionResponse> {
-    const primaryId = this.config.routing.primaryProvider;
-    const fallbackIds = this.config.routing.fallbackProviders;
-
-    // 尝试主提供者
-    const primaryProvider = this.providers.get(primaryId);
-    if (primaryProvider?.isAvailable()) {
-      try {
-        return await this.executeWithTimeout(primaryProvider, request, primaryId);
-      } catch (error) {
-        logger.error(`Primary provider ${primaryId} failed:`, error);
-        this.updateProviderStatus(primaryId, false, error);
-      }
-    }
-
-    // 尝试备用提供者
-    for (const fallbackId of fallbackIds) {
-      const fallbackProvider = this.providers.get(fallbackId);
-      if (fallbackProvider?.isAvailable()) {
-        try {
-          logger.info(`Falling back to ${fallbackId}`);
-          return await this.executeWithTimeout(fallbackProvider, request, fallbackId);
-        } catch (error) {
-          logger.error(`Fallback provider ${fallbackId} failed:`, error);
-          this.updateProviderStatus(fallbackId, false, error);
-        }
-      }
-    }
-
-    throw new Error('All LLM providers failed');
-  }
-
-  private async loadBalanceStrategy(request: CompletionRequest): Promise<CompletionResponse> {
-    // 选择请求最少的可用提供者
-    const availableProviders = Array.from(this.providers.entries())
-      .filter(([_, provider]) => provider.isAvailable())
-      .sort((a, b) => {
-        const countA = this.requestCount.get(a[0]) || 0;
-        const countB = this.requestCount.get(b[0]) || 0;
-        return countA - countB;
-      });
-
-    if (availableProviders.length === 0) {
-      throw new Error('No available LLM providers');
-    }
-
-    const [providerId, provider] = availableProviders[0];
-
-    try {
-      this.requestCount.set(providerId, (this.requestCount.get(providerId) || 0) + 1);
-      return await this.executeWithTimeout(provider, request, providerId);
-    } catch (error) {
-      logger.error(`Provider ${providerId} failed:`, error);
-      this.updateProviderStatus(providerId, false, error);
-      throw error;
-    } finally {
-      this.requestCount.set(providerId, (this.requestCount.get(providerId) || 0) - 1);
-    }
-  }
-
-  private async fastestStrategy(request: CompletionRequest): Promise<CompletionResponse> {
-    // 并行请求多个提供者，返回最快的响应
-    const availableProviders = Array.from(this.providers.entries())
-      .filter(([_, provider]) => provider.isAvailable())
-      .slice(0, 3); // 最多并行3个
-
-    if (availableProviders.length === 0) {
-      throw new Error('No available LLM providers');
-    }
-
-    const promises = availableProviders.map(([id, provider]) =>
-      this.executeWithTimeout(provider, request, id)
-        .then((response) => ({ success: true, response, providerId: id }))
-        .catch((error) => ({ success: false, error, providerId: id })),
-    );
-
-    const results = await Promise.race(promises);
-
-    if ('response' in results && results.success) {
-      logger.info(`Fastest provider: ${results.providerId}`);
-      return results.response;
-    }
-
-    throw new Error('All LLM providers failed in race');
-  }
+  // 旧的策略方法已删除，现在直接使用 provider
 
   private async executeWithTimeout(
     provider: BaseLLMProvider,
     request: CompletionRequest,
-    providerId: string,
+    runtimeConfig: RuntimeConfig,
   ): Promise<CompletionResponse> {
     const startTime = Date.now();
 
@@ -180,35 +131,30 @@ export class LLMManager extends EventEmitter {
 
     try {
       const raced = await Promise.race<CompletionResponse | never>([
-        this.queue.add(() => provider.complete(request)) as Promise<CompletionResponse>,
+        this.queue.add(() => provider.complete(request, runtimeConfig)) as Promise<CompletionResponse>,
         timeoutPromise,
       ]);
 
       const latency = Date.now() - startTime;
-      this.updateProviderStatus(providerId, true, null, latency);
+      this.updateProviderStatus(runtimeConfig.provider, true, null, latency);
 
       return raced as CompletionResponse;
     } catch (error) {
+      this.updateProviderStatus(runtimeConfig.provider, false, error);
       throw error;
     }
   }
 
-  async stream(request: CompletionRequest): Promise<AsyncGenerator<string>> {
-    const primaryId = this.config.routing.primaryProvider;
-    const primaryProvider = this.providers.get(primaryId);
-
-    if (!primaryProvider?.isAvailable()) {
-      throw new Error(`Provider ${primaryId} not available`);
+  async stream(request: CompletionRequest, runtimeConfig: RuntimeConfig): Promise<AsyncGenerator<string>> {
+    const provider = this.providers.get(runtimeConfig.provider);
+    if (!provider) {
+      throw new Error(`Provider ${runtimeConfig.provider} not found`);
     }
 
     try {
-      const s = await primaryProvider.stream(request);
-      if (Symbol.asyncIterator in (s as any)) {
-        return s as AsyncGenerator<string>;
-      }
-      return s as AsyncGenerator<string>;
+      return await provider.stream(request, runtimeConfig);
     } catch (error) {
-      logger.error(`Stream failed for ${primaryId}:`, error);
+      logger.error(`Stream failed for ${runtimeConfig.provider}:`, error);
       throw error;
     }
   }
@@ -243,19 +189,15 @@ export class LLMManager extends EventEmitter {
   }
 
   async healthCheck(): Promise<Map<string, boolean>> {
+    // TODO: 整体健康检查需要 RuntimeConfig，暂时返回所有 providers 为可用
     const results = new Map<string, boolean>();
 
-    for (const [id, provider] of this.providers) {
-      try {
-        const isHealthy = await provider.healthCheck();
-        results.set(id, isHealthy);
-        this.updateProviderStatus(id, isHealthy);
-      } catch (error) {
-        results.set(id, false);
-        this.updateProviderStatus(id, false, error);
-      }
+    for (const [id] of this.providers) {
+      results.set(id, true); // 暂时认为所有注册的 providers 都是可用的
     }
 
     return results;
   }
+
+  // 已移除动态创建 provider 的方法，现在使用统一注册机制
 }

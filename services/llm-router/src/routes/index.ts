@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { LLMManager } from '../managers/llm-manager.js';
 import { AzureOpenAIProvider } from '../providers/azure-openai.js';
-import { BaseLLMProvider, CompletionRequest } from '../providers/base.js';
+import { BaseLLMProvider, CompletionRequest, RuntimeConfig } from '../providers/base.js';
 import { DeepSeekProvider } from '../providers/deepseek.js';
 import { GeminiProvider } from '../providers/gemini.js';
 import { KimiProvider } from '../providers/kimi.js';
@@ -21,19 +21,59 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
   // 生成完整答案
   fastify.post('/completion', async (request, reply) => {
     try {
-      const body = request.body as CompletionRequest;
-      const response = await llmManager.complete(body);
+      const body = request.body as CompletionRequest & {
+        provider?: string;
+        model?: string;
+        credentials?: Record<string, any>;
+        model_params?: Array<{ param_key: string; value: any }>;
+      };
+
+      if (!body.provider || !body.model) {
+        return reply.code(400).send({ error: 'provider and model are required' });
+      }
+
+      // 构建 RuntimeConfig
+      const runtimeConfig: RuntimeConfig = {
+        provider: body.provider,
+        model: body.model,
+        credentials: body.credentials || {},
+        model_params: body.model_params || [],
+      };
+
+      // 从请求体中移除配置字段，保留消息内容
+      const { provider, model, credentials, model_params, ...cleanedBody } = body;
+      const response = await llmManager.complete(cleanedBody, runtimeConfig);
       return response;
     } catch (error) {
       logger.error('Completion request failed:', error);
-      return reply.code(500).send({ error: 'Completion failed' });
+      return reply.code(500).send({
+        error: 'Completion failed',
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
   });
 
   // 流式生成答案
   fastify.post('/completion/stream', async (request, reply) => {
     try {
-      const body = request.body as CompletionRequest;
+      const body = request.body as CompletionRequest & {
+        provider?: string;
+        model?: string;
+        credentials?: Record<string, any>;
+        model_params?: Array<{ param_key: string; value: any }>;
+      };
+
+      if (!body.provider || !body.model) {
+        return reply.code(400).send({ error: 'provider and model are required' });
+      }
+
+      // 构建 RuntimeConfig
+      const runtimeConfig: RuntimeConfig = {
+        provider: body.provider,
+        model: body.model,
+        credentials: body.credentials || {},
+        model_params: body.model_params || [],
+      };
 
       reply.raw.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -41,7 +81,8 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         Connection: 'keep-alive',
       });
 
-      const stream = await llmManager.stream(body);
+      const { provider, model, credentials, model_params, ...cleanedBody } = body;
+      const stream = await llmManager.stream(cleanedBody, runtimeConfig);
 
       for await (const chunk of stream) {
         reply.raw.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
@@ -76,7 +117,17 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         maxTokens: 200,
       };
 
-      const response = await llmManager.complete(outlineRequest);
+      // 使用默认配置进行 outline 生成
+      const defaultConfig: RuntimeConfig = {
+        provider: 'openai',
+        model: 'gpt-3.5-turbo',
+        credentials: { api_key: '', base_url: '' },
+        model_params: [
+          { param_key: 'temperature', value: 0.3 },
+          { param_key: 'max_tokens', value: 200 },
+        ],
+      };
+      const response = await llmManager.complete(outlineRequest, defaultConfig);
 
       // 解析要点
       const points = response.content
@@ -170,51 +221,58 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       let provider: BaseLLMProvider;
       switch (providerId) {
         case 'openai':
-          provider = new OpenAIProvider(config);
+          provider = new OpenAIProvider();
           break;
         case 'azure-openai':
-          provider = new AzureOpenAIProvider(config);
+          provider = new AzureOpenAIProvider();
           break;
         case 'ollama':
-          provider = new OllamaProvider(config);
+          provider = new OllamaProvider();
           break;
         case 'deepseek':
-          provider = new DeepSeekProvider(config);
+          provider = new DeepSeekProvider();
           break;
         case 'kimi':
-          provider = new KimiProvider(config);
+          provider = new KimiProvider();
           break;
         case 'gemini':
-          provider = new GeminiProvider(config);
+          provider = new GeminiProvider();
           break;
         case 'qwen':
-          provider = new QwenProvider(config);
+          provider = new QwenProvider();
           break;
         case 'zhipu':
-          provider = new ZhipuProvider(config);
+          provider = new ZhipuProvider();
           break;
         case 'siliconflow':
-          provider = new SiliconFlowProvider(config);
+          provider = new SiliconFlowProvider();
           break;
         case 'tencent':
-          provider = new TencentProvider(config);
+          provider = new TencentProvider();
           break;
         case 'volcengine':
-          provider = new VolcEngineProvider(config);
+          provider = new VolcEngineProvider();
           break;
         case 'vllm':
-          provider = new VllmProvider(config);
+          provider = new VllmProvider();
           break;
         case 'moonshot':
-          provider = new MoonshotProvider(config);
+          provider = new MoonshotProvider();
           break;
         default:
-          provider = new OpenAICompatibleProvider({ id: providerId, ...config });
+          provider = new OpenAICompatibleProvider(providerId);
       }
 
       if (mode === 'chat' || mode === 'both') {
         try {
-          chatOk = await provider.healthCheck();
+          // 构建 RuntimeConfig 用于健康检查
+          const runtimeConfig: RuntimeConfig = {
+            provider: providerId,
+            model: model,
+            credentials: config,
+            model_params: [],
+          };
+          chatOk = await provider.healthCheck(runtimeConfig);
         } catch (error) {
           logger.error({ err: error }, 'Chat health check failed');
           chatOk = false;
@@ -265,12 +323,12 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
           : mode === 'embeddings'
             ? !!embedOk
             : !!chatOk && (embedOk === undefined ? true : !!embedOk);
-      
+
       // 构建包含错误信息的响应
       const response: any = { ok, chatOk, embedOk };
       if (chatError) response.chatError = chatError;
       if (embedError) response.embedError = embedError;
-      
+
       return response;
     } catch (error) {
       return reply.code(200).send({ ok: false, error: (error as any)?.message || 'probe failed' });

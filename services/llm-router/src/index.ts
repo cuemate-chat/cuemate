@@ -3,7 +3,6 @@ import cors from '@fastify/cors';
 import Fastify from 'fastify';
 import { config } from './config/index.js';
 import { LLMManager } from './managers/llm-manager.js';
-import { initializeProviders } from './providers/index.js';
 import { createRoutes } from './routes/index.js';
 import { logger } from './utils/logger.js';
 
@@ -26,11 +25,8 @@ async function buildServer() {
   fastify.addHook('onResponse', hooks.onResponse as any);
   hooks.setErrorHandler(fastify as any);
 
-  // 初始化 LLM 提供者
-  const providers = await initializeProviders(config);
-
-  // 初始化 LLM 管理器
-  const llmManager = new LLMManager(providers, config);
+  // 初始化 LLM 管理器（现在自动注册 providers）
+  const llmManager = new LLMManager(config);
 
   // 设置路由
   await createRoutes(fastify, llmManager);
