@@ -228,99 +228,50 @@ export default function AsrSettings() {
   };
 
   // 语音测试功能
-  const startRecording = async () => {
+  // 面试官模式：系统音频识别（通过Desktop捕获系统音频）
+  const startInterviewerRecording = async () => {
     try {
-      // 防止重复连接
-      if (isConnectingRef.current || isRecording) {
-        console.log('正在连接中或已在录音，跳过');
-        return;
-      }
+      console.log('启动面试官系统音频识别模式');
       
-      isConnectingRef.current = true;
-      setTranscriptText("正在连接语音识别服务...");
-      
-      // 确保之前的连接完全清理
-      await stopRecording();
-      
-      // 等待一小段时间确保资源完全释放
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // 根据选择的服务确定音频源
-      const isInterviewerService = testService.includes('8002');
-      let stream;
-      
-      if (isInterviewerService) {
-        // 面试官服务：使用Desktop系统音频捕获
-        if (!webSocketService.getConnectionState()) {
-          try {
-            await webSocketService.connect();
-            setDesktopConnected(true);
-          } catch (error) {
-            message.error('无法连接到Desktop服务，请确保桌面客户端已启动');
-            isConnectingRef.current = false;
-            return;
-          }
+      // 1. 连接Desktop服务获取系统音频
+      if (!webSocketService.getConnectionState()) {
+        try {
+          await webSocketService.connect();
+          setDesktopConnected(true);
+        } catch (error) {
+          message.error('无法连接到Desktop服务，请确保桌面客户端已启动');
+          isConnectingRef.current = false;
+          return;
         }
-
-        // 开始系统音频捕获
-        webSocketService.startSystemAudioCapture({
-          sampleRate: 16000,
-          channels: 1
-        });
-
-        setIsSystemAudioCapturing(true);
-        message.info('正在通过Desktop捕获系统音频...');
-
-        // 创建一个虚拟的MediaStream用于界面显示
-        // 实际音频数据将通过WebSocket接收
-        stream = new MediaStream();
-      } else {
-        // 面试者服务：使用麦克风
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       }
-      
-      // 保存流的引用
-      streamRef.current = stream;
-      
-      // 设置音频上下文和分析器
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = 256;
-      
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      source.connect(analyserRef.current);
-      
-      // 开始绘制波形
-      drawWaveform();
-      
-      // 连接 WebSocket
-      websocketRef.current = new WebSocket(testService);
+
+      // 2. 启动系统音频捕获
+      webSocketService.startSystemAudioCapture({
+        sampleRate: 16000,
+        channels: 1
+      });
+
+      setIsSystemAudioCapturing(true);
+      message.info('正在通过Desktop捕获系统音频...');
+
+      // 3. 连接ASR服务，接收Desktop转发的音频数据并进行识别
+      const asrServiceUrl = testService;
+      websocketRef.current = new WebSocket(asrServiceUrl);
       
       websocketRef.current.onopen = () => {
-        console.log('WebSocket 连接成功:', testService);
-        message.success('已连接到语音识别服务');
-        setTranscriptText("已连接，等待语音输入...");
-        isConnectingRef.current = false; // 连接成功后重置标志
+        console.log('面试官ASR WebSocket连接成功:', asrServiceUrl);
+        message.success('系统音频识别服务已连接');
+        setTranscriptText("系统音频识别已启动，等待音频输入...");
+        isConnectingRef.current = false;
       };
       
       websocketRef.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('收到 WebSocket 数据:', data);
+          console.log('系统音频识别结果:', data);
           
-          // 收到响应时减少待处理计数
           if (pendingChunksRef.current > 0) {
             pendingChunksRef.current--;
-          }
-
-          if (data.type === "ready_to_stop") {
-            console.log("Ready to stop received");
-            setTranscriptText(prev => `${prev}\n\n[处理完成]`);
-            if (websocketRef.current) {
-              websocketRef.current.close();
-              websocketRef.current = null;
-            }
-            return;
           }
 
           // 构建显示文本
@@ -348,72 +299,140 @@ export default function AsrSettings() {
             displayText += `[转录中] ${data.buffer_transcription}\n`;
           }
           
-          if (data.buffer_diarization) {
-            displayText += `[分离中] ${data.buffer_diarization}\n`;
-          }
-
-          // 显示处理延迟信息
-          if (data.remaining_time_transcription > 0 || data.remaining_time_diarization > 0) {
-            displayText += `[延迟: 转录${(data.remaining_time_transcription || 0).toFixed(1)}s`;
-            if (data.remaining_time_diarization > 0) {
-              displayText += `, 分离${data.remaining_time_diarization.toFixed(1)}s`;
-            }
-            displayText += ']\n';
-          }
-
-          // 处理其他可能的文本格式
-          if (!displayText && data.text) {
-            displayText = data.text;
-          }
-
-          // 更新转录结果
           if (displayText.trim()) {
             setTranscriptText(displayText.trim());
           } else if (data.status === "no_audio_detected") {
-            setTranscriptText("未检测到音频输入，请对着麦克风说话...");
+            setTranscriptText("未检测到系统音频输入...");
           }
 
         } catch (error) {
-          console.error('解析 WebSocket 数据失败:', error, event.data);
+          console.error('处理系统音频识别结果失败:', error);
         }
-      };
-      
-      websocketRef.current.onclose = (event) => {
-        console.log('WebSocket 连接关闭', { code: event.code, reason: event.reason, wasClean: event.wasClean });
-        if (!event.wasClean && isRecording) {
-          message.warning('与语音识别服务的连接意外断开');
-        }
-        isConnectingRef.current = false;
       };
       
       websocketRef.current.onerror = (error) => {
-        console.error('WebSocket 连接错误:', error);
-        const servicePort = testService.includes('8001') ? '8001' : '8002';
-        message.error(`ASR 服务 (${servicePort}) 连接失败`);
-        setTranscriptText(`[错误] WebSocket 连接失败\n服务地址: ${testService}\n请检查 Docker 服务是否启动`);
-        isConnectingRef.current = false; // 重置连接标志
+        console.error('系统音频识别WebSocket错误:', error);
+        message.error('系统音频识别服务连接失败');
+        setTranscriptText('[错误] 系统音频识别服务连接失败\n请检查ASR服务是否启动');
+        isConnectingRef.current = false;
+        stopRecording();
+      };
+
+      setIsRecording(true);
+      setRecordingTime(0);
+      
+      // 启动计时器
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+    } catch (error) {
+      message.error('启动系统音频识别失败');
+      console.error('系统音频识别错误:', error);
+      isConnectingRef.current = false;
+    }
+  };
+
+  // 面试者模式：麦克风音频识别（直接通过浏览器获取麦克风）
+  const startIntervieweeRecording = async () => {
+    try {
+      console.log('启动面试者麦克风音频识别模式');
+      
+      // 1. 获取麦克风权限和音频流
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      
+      // 2. 设置音频上下文用于波形显示
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 256;
+      
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      source.connect(analyserRef.current);
+      
+      // 开始绘制波形
+      drawWaveform();
+      
+      // 3. 连接ASR服务
+      const asrServiceUrl = testService;
+      websocketRef.current = new WebSocket(asrServiceUrl);
+      
+      websocketRef.current.onopen = () => {
+        console.log('面试者ASR WebSocket连接成功:', asrServiceUrl);
+        message.success('麦克风识别服务已连接');
+        setTranscriptText("麦克风识别已启动，请开始说话...");
+        isConnectingRef.current = false;
+      };
+      
+      websocketRef.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('麦克风音频识别结果:', data);
+          
+          if (pendingChunksRef.current > 0) {
+            pendingChunksRef.current--;
+          }
+
+          // 构建显示文本
+          let displayText = '';
+          
+          // 处理已确认的转录行
+          if (data.lines && Array.isArray(data.lines)) {
+            data.lines.forEach((line: any) => {
+              let lineText = '';
+              if (line.speaker === -2) {
+                lineText = `[静音 ${line.beg || ''}-${line.end || ''}]`;
+              } else if (line.speaker > 0) {
+                lineText = `说话人${line.speaker}: ${line.text || ''}`;
+              } else if (line.text) {
+                lineText = line.text;
+              }
+              if (lineText) {
+                displayText += lineText + '\n';
+              }
+            });
+          }
+
+          // 添加缓冲区内容
+          if (data.buffer_transcription) {
+            displayText += `[转录中] ${data.buffer_transcription}\n`;
+          }
+          
+          if (displayText.trim()) {
+            setTranscriptText(displayText.trim());
+          } else if (data.status === "no_audio_detected") {
+            setTranscriptText("未检测到语音信号，请检查麦克风...");
+          }
+
+        } catch (error) {
+          console.error('处理麦克风音频识别结果失败:', error);
+        }
+      };
+      
+      websocketRef.current.onerror = (error) => {
+        console.error('麦克风音频识别WebSocket错误:', error);
+        message.error('麦克风识别服务连接失败');
+        setTranscriptText('[错误] 麦克风识别服务连接失败\n请检查ASR服务是否启动');
+        isConnectingRef.current = false;
         stopRecording();
       };
       
-      // 设置录音器
+      // 4. 设置MediaRecorder录制麦克风音频并发送到ASR服务
       recorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      
+    
       recorderRef.current.ondataavailable = (event) => {
-        // 只有当数据大小大于0且WebSocket连接正常时才发送
         if (event.data && event.data.size > 0) {
           if (websocketRef.current?.readyState === WebSocket.OPEN) {
             try {
               const now = Date.now();
               const timeSinceLastSend = now - lastSendTimeRef.current;
               
-              // 限制发送频率，避免服务端过载
-              if (timeSinceLastSend < 200) { // 最小200ms间隔
+              if (timeSinceLastSend < 200) {
                 console.debug('发送频率过高，跳过此次数据');
                 return;
               }
               
-              // 检查待处理的数据包数量
-              if (pendingChunksRef.current > 5) { // 限制待处理数据包数量
+              if (pendingChunksRef.current > 5) {
                 console.warn('服务端处理较慢，跳过此次数据发送');
                 return;
               }
@@ -421,35 +440,25 @@ export default function AsrSettings() {
               websocketRef.current.send(event.data);
               lastSendTimeRef.current = now;
               pendingChunksRef.current++;
-              console.debug('音频数据已发送:', event.data.size, 'bytes', `待处理:${pendingChunksRef.current}`);
+              console.debug('麦克风音频数据已发送:', event.data.size, 'bytes');
             } catch (error) {
-              console.error('发送音频数据失败:', error);
-              // 发送失败时停止录音，避免持续错误
+              console.error('发送麦克风音频数据失败:', error);
               stopRecording();
             }
-          } else if (websocketRef.current?.readyState === WebSocket.CONNECTING) {
-            console.debug('WebSocket正在连接中，跳过此次数据发送');
-          } else {
-            console.warn('WebSocket连接已断开，停止录音', { 
-              readyState: websocketRef.current?.readyState,
-              isRecording 
-            });
-            isConnectingRef.current = false;
-            stopRecording();
           }
         }
       };
       
       recorderRef.current.onerror = (event) => {
-        console.error('录音器错误:', event);
+        console.error('麦克风录音器错误:', event);
         message.error('录音过程中发生错误');
         isConnectingRef.current = false;
         stopRecording();
       };
       
-      // 根据服务类型调整发送频率，减少服务端负载
-      const chunkInterval = isInterviewerService ? 500 : 250; // 面试官服务降低发送频率
-      recorderRef.current.start(chunkInterval);
+      // 启动录制，250ms间隔发送
+      recorderRef.current.start(250);
+
       setIsRecording(true);
       setRecordingTime(0);
       
@@ -460,10 +469,40 @@ export default function AsrSettings() {
       
     } catch (error) {
       message.error('无法访问麦克风，请检查浏览器权限');
-      console.error('Recording error:', error);
-      isConnectingRef.current = false; // 重置连接标志
+      console.error('麦克风识别错误:', error);
+      isConnectingRef.current = false;
     }
   };
+
+  // 统一的启动入口，根据服务类型选择不同的识别模式
+  const startRecording = async () => {
+    if (isConnectingRef.current || isRecording) {
+      console.log('正在连接中或已在录音，跳过');
+      return;
+    }
+    
+    isConnectingRef.current = true;
+    setTranscriptText("正在连接语音识别服务...");
+    
+    // 确保之前的连接完全清理
+    await stopRecording();
+    
+    // 等待一小段时间确保资源完全释放
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // 根据选择的服务确定音频源和识别模式
+    const isInterviewerService = testService.includes('8002');
+    
+    if (isInterviewerService) {
+      // 面试官模式：系统音频识别
+      await startInterviewerRecording();
+    } else {
+      // 面试者模式：麦克风识别
+      await startIntervieweeRecording();
+    }
+  };
+
+  // 停止录音功能
   
   const stopRecording = async () => {
     // 重置连接状态标志
