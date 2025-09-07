@@ -595,10 +595,10 @@ export default function AsrSettings() {
       }
     };
 
-    const handleSystemAudioStatus = (message: any) => {
-      console.log('System audio status:', message.type, message.data);
+    const handleSystemAudioStatus = (wsMessage: any) => {
+      console.log('System audio status:', wsMessage.type, wsMessage.data);
       
-      switch (message.type) {
+      switch (wsMessage.type) {
         case 'SYSTEM_AUDIO_CAPTURE_STARTED':
           message.success('系统音频捕获已开始');
           setTranscriptText('系统音频捕获已启动，等待音频输入...');
@@ -606,12 +606,13 @@ export default function AsrSettings() {
           
         case 'SYSTEM_AUDIO_CAPTURE_FAILED':
         case 'SYSTEM_AUDIO_ERROR':
-          message.error(`系统音频捕获失败: ${message.data?.error || '未知错误'}`);
+          message.error(`系统音频捕获失败: ${wsMessage.data?.error || '未知错误'}`);
           setIsSystemAudioCapturing(false);
-          setTranscriptText(`[错误] ${message.data?.error || '系统音频捕获失败'}`);
+          setTranscriptText(`[错误] ${wsMessage.data?.error || '系统音频捕获失败'}`);
           break;
           
         case 'SYSTEM_AUDIO_CAPTURE_STOPPED':
+          message.info('系统音频捕获已停止');
           setIsSystemAudioCapturing(false);
           console.log('系统音频捕获已停止');
           break;

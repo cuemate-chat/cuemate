@@ -98,6 +98,25 @@ export class CueMateWebSocketServer {
         this.handleRecordingResult(message);
         break;
 
+      case 'START_SYSTEM_AUDIO_CAPTURE':
+        this.handleStartSystemAudioCapture(message);
+        break;
+
+      case 'STOP_SYSTEM_AUDIO_CAPTURE':
+        this.handleStopSystemAudioCapture();
+        break;
+
+      case 'SYSTEM_AUDIO_DATA':
+        this.handleSystemAudioData(message);
+        break;
+
+      case 'SYSTEM_AUDIO_CAPTURE_STARTED':
+      case 'SYSTEM_AUDIO_CAPTURE_STOPPED':
+      case 'SYSTEM_AUDIO_CAPTURE_FAILED':
+      case 'SYSTEM_AUDIO_ERROR':
+        this.handleSystemAudioStatus(message);
+        break;
+
       default:
         logger.warn({ messageType: message.type, clientId }, 'WebSocket: 未知消息类型');
     }
@@ -268,5 +287,89 @@ export class CueMateWebSocketServer {
       this.wss.close();
       logger.info('WebSocket 服务器已关闭');
     }
+  }
+
+  /**
+   * 处理开始系统音频捕获请求 (Web -> Desktop)
+   */
+  private handleStartSystemAudioCapture(message: WebSocketMessage): void {
+    // 转发给 desktop 客户端
+    const desktopClients = Array.from(this.clients.values()).filter(client => client.type === 'desktop');
+    
+    if (desktopClients.length === 0) {
+      logger.warn('WebSocket: 没有可用的 desktop 客户端来处理系统音频捕获请求');
+      return;
+    }
+
+    desktopClients.forEach(client => {
+      try {
+        client.ws.send(JSON.stringify({
+          type: 'START_SYSTEM_AUDIO_CAPTURE',
+          data: message.data
+        }));
+        logger.info({ clientId: client.id }, 'WebSocket: 已转发 START_SYSTEM_AUDIO_CAPTURE 到 desktop');
+      } catch (error) {
+        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 START_SYSTEM_AUDIO_CAPTURE 失败');
+      }
+    });
+  }
+
+  /**
+   * 处理停止系统音频捕获请求 (Web -> Desktop)
+   */
+  private handleStopSystemAudioCapture(): void {
+    // 转发给 desktop 客户端
+    const desktopClients = Array.from(this.clients.values()).filter(client => client.type === 'desktop');
+    
+    desktopClients.forEach(client => {
+      try {
+        client.ws.send(JSON.stringify({
+          type: 'STOP_SYSTEM_AUDIO_CAPTURE'
+        }));
+        logger.info({ clientId: client.id }, 'WebSocket: 已转发 STOP_SYSTEM_AUDIO_CAPTURE 到 desktop');
+      } catch (error) {
+        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 STOP_SYSTEM_AUDIO_CAPTURE 失败');
+      }
+    });
+  }
+
+  /**
+   * 处理系统音频数据 (Desktop -> Web)
+   */
+  private handleSystemAudioData(message: WebSocketMessage): void {
+    // 转发给 web 客户端
+    const webClients = Array.from(this.clients.values()).filter(client => client.type === 'web');
+    
+    webClients.forEach(client => {
+      try {
+        client.ws.send(JSON.stringify({
+          type: 'SYSTEM_AUDIO_DATA',
+          data: message.data
+        }));
+        logger.debug({ clientId: client.id }, 'WebSocket: 已转发 SYSTEM_AUDIO_DATA 到 web');
+      } catch (error) {
+        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 SYSTEM_AUDIO_DATA 失败');
+      }
+    });
+  }
+
+  /**
+   * 处理系统音频状态消息 (Desktop -> Web)
+   */
+  private handleSystemAudioStatus(message: WebSocketMessage): void {
+    // 转发给 web 客户端
+    const webClients = Array.from(this.clients.values()).filter(client => client.type === 'web');
+    
+    webClients.forEach(client => {
+      try {
+        client.ws.send(JSON.stringify({
+          type: message.type,
+          data: message.data
+        }));
+        logger.info({ clientId: client.id, messageType: message.type }, 'WebSocket: 已转发系统音频状态到 web');
+      } catch (error) {
+        logger.error({ error, clientId: client.id }, 'WebSocket: 转发系统音频状态失败');
+      }
+    });
   }
 }
