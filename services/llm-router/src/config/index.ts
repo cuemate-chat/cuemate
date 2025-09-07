@@ -16,7 +16,7 @@ const configSchema = z.object({
     strategy: z.enum(['primary-fallback', 'load-balance', 'fastest']).default('primary-fallback'),
     primaryProvider: z.string().default('openai'),
     fallbackProviders: z.array(z.string()).default(['moonshot', 'glm', 'qwen']),
-    timeout: z.number().default(30000), // 30 seconds
+    timeout: z.number().default(120000), // 120 seconds (2 minutes)
     retryAttempts: z.number().default(2),
     retryDelay: z.number().default(1000),
   }),
@@ -97,7 +97,7 @@ export const config = configSchema.parse({
     strategy: 'primary-fallback',
     primaryProvider: 'openai',
     fallbackProviders: ['moonshot', 'glm', 'qwen'],
-    timeout: 30000,
+    timeout: 120000,
     retryAttempts: 2,
     retryDelay: 1000,
   },
