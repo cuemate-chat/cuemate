@@ -1,4 +1,4 @@
-/* NSPanel 多窗口架构，不需要全屏覆盖样式 */
+/* ============================App/ControlBarApp============================ */
 
 /* 应用容器 */
 .app-container {
@@ -17,6 +17,8 @@
   padding-top: 0;
 }
 
+/* ============================MainControlBar============================ */
+
 /* 悬浮控制栏样式 - NSPanel 窗口 */
 .floating-control-bar {
   position: relative;
@@ -32,8 +34,8 @@
   align-items: center;
   transition: all 0.3s ease;
   z-index: 100000;
-  padding: 0 16px; /* 增加左右内边距，让logo和按钮不贴边 */
-  gap: 12px; /* 增加元素间距 */
+  padding: 0 8px; /* 增加左右内边距，让logo和按钮不贴边 */
+  gap: 8px; /* 增加元素间距 */
 }
 
 .floating-control-bar:hover {
@@ -128,21 +130,48 @@
   display: inline-block;
 }
 
+/* 悬浮窗口控制按钮 */
+.floating-overlay-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0; /* 防止按钮被压缩 */
+}
+
+.floating-overlay-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+  opacity: 0.8;
+}
+
+/* ============================LoggedInControlBar============================ */
+
 /* 已登录状态控制栏样式 */
 .logged-in-control-bar {
   display: flex;
   align-items: center;
-  flex: 1;
+  /* flex: 1; */
   justify-content: center;
   height: 100%;
-  gap: 16px;
+  gap: 8px;
 }
 
-/* 控制栏分隔线 */
-.control-bar-divider {
+/* Radix UI Separator 垂直分隔线样式 */
+.vertical-separator {
   width: 1px;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.3);
+  height: 60%;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0;
 }
 
 /* Listen 按钮样式 */
@@ -150,9 +179,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(37, 99, 235, 0.2);
+  background: rgba(7, 36, 82, 0.8);
   color: white;
-  border: none;
+  border: 1px solid rgba(25, 106, 204, 0.6);
   border-radius: 20px;
   padding: 6px 12px;
   font-size: 14px;
@@ -164,11 +193,13 @@
 }
 
 .listen-btn:hover {
-  background: rgba(29, 78, 216, 0.4);
+  background: rgba(7, 36, 82, 0.6);
+  border-color: rgba(25, 106, 204, 0.8);
 }
 
 .listen-btn.hovered {
-  background: rgba(29, 78, 216, 0.4);
+  background: rgba(7, 36, 82, 0.6);
+  border-color: rgba(25, 106, 204, 0.8);
 }
 
 /* Ask question 按钮样式 */
@@ -210,33 +241,12 @@
 }
 
 .visibility-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(156, 163, 175, 0.2);
+  border: 1px solid rgba(156, 163, 175, 0.4);
+  color: #9ca3af;
 }
 
-/* 悬浮窗口控制按钮 */
-.floating-overlay-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  flex-shrink: 0; /* 防止按钮被压缩 */
-}
-
-.floating-overlay-btn:hover {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.4);
-  color: #60a5fa;
-  opacity: 0.8;
-}
-
+/* ============================CloseButton============================ */
 
 /* 关闭按钮 */
 .close-floating-btn-separate {
@@ -269,118 +279,7 @@
   transform: scale(1.05); /* 添加悬浮放大效果，与logo一致 */
 }
 
-/* Radix Tooltip 样式 */
-.radix-tooltip-content {
-  background: rgba(30, 30, 30, 0.9);
-  color: white;
-  padding: 0 12px;  /* 减少垂直 padding，只保留水平 padding */
-  border-radius: 6px;
-  font-size: 14px;
-  white-space: nowrap;
-  z-index: 100001;
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  animation-duration: 400ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity;
-  height: 42px;  /* 固定高度，与左侧控制栏一致 */
-  display: flex;
-  align-items: center;  /* 内容垂直居中 */
-  box-sizing: border-box;  /* 确保 padding 和 border 包含在高度内 */
-}
-
-.radix-tooltip-content[data-state='delayed-open'][data-side='top'] {
-  animation-name: slideDownAndFade;
-}
-
-.radix-tooltip-content[data-state='delayed-open'][data-side='right'] {
-  animation-name: slideLeftAndFade;
-}
-
-.radix-tooltip-content[data-state='delayed-open'][data-side='bottom'] {
-  animation-name: slideUpAndFade;
-}
-
-.radix-tooltip-content[data-state='delayed-open'][data-side='left'] {
-  animation-name: slideRightAndFade;
-}
-
-.radix-tooltip-arrow {
-  fill: rgba(30, 30, 30, 0.9);
-}
-
-@keyframes slideDownAndFade {
-  from {
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideLeftAndFade {
-  from {
-    opacity: 0;
-    transform: translateX(2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideUpAndFade {
-  from {
-    opacity: 0;
-    transform: translateY(2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideRightAndFade {
-  from {
-    opacity: 0;
-    transform: translateX(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* 快捷键字符样式 */
-.shortcut-key {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  padding: 2px 4px;
-  margin: 0 2px;
-  font-size: 12px;
-  font-weight: 500;
-  min-width: 16px;
-  text-align: center;
-}
-
-/* 快捷键图标样式 */
-.shortcut-key-icon {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  padding: 5px 4px;
-  margin: 0 2px;
-  font-size: 12px;
-  font-weight: 500;
-  min-width: 16px;
-  text-align: center;
-}
+/* ============================FloatingControlBar============================ */
 
 /* 浮动控制栏容器 */
 .floating-control-bar-container {
@@ -403,6 +302,9 @@
   background-color: rgba(0,0,0,0.01);
   pointer-events: auto;
 }
+
+
+/* ============================AIQuestionWindow============================ */
 
 /* AI 问答窗口样式 */
 .ai-question-window {
@@ -545,10 +447,8 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+
+/* ============================Responsive============================ */
 
 /* 响应式设计 */
 @media (max-width: 480px) {
@@ -571,4 +471,125 @@
     width: 90%;
     max-width: 400px;
   }
+}
+
+/* ============================通用============================ */
+
+/* Radix Tooltip 样式 */
+.radix-tooltip-content {
+  background: rgba(30, 30, 30, 0.9);
+  color: white;
+  padding: 0 12px;  /* 减少垂直 padding，只保留水平 padding */
+  border-radius: 6px;
+  font-size: 14px;
+  white-space: nowrap;
+  z-index: 100001;
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  height: 42px;  /* 固定高度，与左侧控制栏一致 */
+  display: flex;
+  align-items: center;  /* 内容垂直居中 */
+  box-sizing: border-box;  /* 确保 padding 和 border 包含在高度内 */
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='top'] {
+  animation-name: slideDownAndFade;
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='right'] {
+  animation-name: slideLeftAndFade;
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='bottom'] {
+  animation-name: slideUpAndFade;
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='left'] {
+  animation-name: slideRightAndFade;
+}
+
+.radix-tooltip-arrow {
+  fill: rgba(30, 30, 30, 0.9);
+}
+
+/* 快捷键字符样式 */
+.shortcut-key {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin: 0 2px;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* 快捷键图标样式 */
+.shortcut-key-icon {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 5px 4px;
+  margin: 0 2px;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* 动画样式 */
+@keyframes slideDownAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideLeftAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideUpAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideRightAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

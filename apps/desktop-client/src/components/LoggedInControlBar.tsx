@@ -1,3 +1,4 @@
+import * as Separator from '@radix-ui/react-separator';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { CornerDownLeft, Eye, EyeOff, Type, Volume2 } from 'lucide-react';
@@ -35,7 +36,11 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
   return (
     <div className="logged-in-control-bar">
       {/* 左侧分隔线 */}
-      <div className="control-bar-divider"></div>
+      <Separator.Root 
+        orientation="vertical" 
+        className="vertical-separator"
+        decorative 
+      />
       
       {/* Listen 按钮 */}
       <Tooltip.Root>
@@ -54,7 +59,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Volume2 size={16} />
-              <span>语音</span>
+              <span>语音识别</span>
             </motion.div>
           </motion.button>
         </Tooltip.Trigger>
@@ -80,8 +85,8 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
               transition={{ duration: 0.2 }}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              <Type size={16} />
-              <span>AI</span>
+              <Type size={16} className="text-gray-500" />
+              <span>提问 AI</span>
             </motion.div>
           </motion.button>
         </Tooltip.Trigger>
@@ -106,20 +111,24 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
               whileHover={{ scale: 1.2 }}
               transition={{ duration: 0.2 }}
             >
-              {isVisible ? <Eye size={16} /> : <EyeOff size={16} />}
+              {isVisible ? <Eye size={18} /> : <EyeOff size={18} />}
             </motion.div>
           </motion.button>
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content className="radix-tooltip-content">
-            {isVisible ? '当前可见，点击隐藏' : '当前隐藏，点击显示'}
+            {isVisible ? '当前可见，点击隐藏程序坞 Dock 图标，以及截图、共享屏幕不可见' : '当前隐藏，点击显示程序坞 Dock 图标，以及截图、共享屏幕可见'}
             <Tooltip.Arrow className="radix-tooltip-arrow" />
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>
       
       {/* 右侧分隔线 */}
-      <div className="control-bar-divider"></div>
+      <Separator.Root 
+        orientation="vertical" 
+        className="vertical-separator"
+        decorative 
+      />
     </div>
   );
 }

@@ -119,6 +119,10 @@ export class WebSocketClient {
         this.handleStopSystemAudioCapture();
         break;
 
+      case 'GET_AUDIO_DEVICES':
+        this.handleGetAudioDevices(message);
+        break;
+
       default:
         logger.warn({ messageType: message.type }, 'WebSocket: 未知消息类型');
     }
@@ -199,7 +203,8 @@ export class WebSocketClient {
       this.systemAudioCapture = new SystemAudioCapture({
         sampleRate: message.data?.sampleRate || 16000,
         channels: message.data?.channels || 1,
-        bitDepth: 16
+        bitDepth: 16,
+        device: message.data?.device || 'default'
       });
 
       // 设置音频数据回调
@@ -246,6 +251,42 @@ export class WebSocketClient {
         type: 'SYSTEM_AUDIO_CAPTURE_FAILED',
         data: {
           error: error instanceof Error ? error.message : String(error),
+          timestamp: Date.now()
+        }
+      });
+    }
+  }
+
+  /**
+   * 处理获取音频设备请求
+   */
+  private async handleGetAudioDevices(message: WebSocketMessage): Promise<void> {
+    try {
+      logger.info('WebSocket: 获取系统音频设备列表');
+      
+      // 使用SystemAudioCapture的静态方法获取设备列表
+      const devices = await SystemAudioCapture.getAudioDevices();
+      
+      // 发送设备列表响应
+      this.send({
+        type: `GET_AUDIO_DEVICES_RESPONSE_${message.data?.requestId}`,
+        data: {
+          success: true,
+          devices,
+          timestamp: Date.now()
+        }
+      });
+
+    } catch (error) {
+      logger.error('获取音频设备列表失败:', error);
+      
+      // 发送错误响应
+      this.send({
+        type: `GET_AUDIO_DEVICES_RESPONSE_${message.data?.requestId}`,
+        data: {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+          devices: [{ id: 'default', name: '默认音频输出设备' }],
           timestamp: Date.now()
         }
       });
