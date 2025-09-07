@@ -152,14 +152,20 @@ function copyNativeModule() {
     const destDir = resolve(__dirname, 'dist/native/screen_capture_audio');
     const destFile = resolve(destDir, 'index.node');
     
+    console.log('检查原生模块:', sourceNativeModule);
+    console.log('文件存在:', existsSync(sourceNativeModule));
+    
     if (existsSync(sourceNativeModule)) {
       if (!existsSync(destDir)) {
+        console.log('创建目标目录:', destDir);
         mkdirSync(destDir, { recursive: true });
       }
+      console.log('复制文件:', sourceNativeModule, '->', destFile);
       copyFileSync(sourceNativeModule, destFile);
       console.log('原生模块复制成功');
     } else {
       console.warn('原生模块未找到，跳过复制');
+      console.warn('期望路径:', sourceNativeModule);
     }
   } catch (error) {
     console.error('复制原生模块失败:', error);

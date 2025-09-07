@@ -4,8 +4,24 @@ import { logger } from '../../utils/logger.js';
 // 加载原生模块
 let ScreenCaptureAudio: any = null;
 try {
-  const nativeModulePath = path.join(__dirname, '../native/screen_capture_audio');
-  ScreenCaptureAudio = require(nativeModulePath).ScreenCaptureAudio;
+  // 在开发环境和生产环境使用不同的路径
+  let nativeModulePath: string;
+  
+  if (process.env.NODE_ENV === 'development') {
+    // 开发环境：直接从源码目录加载
+    nativeModulePath = path.join(__dirname, '../native/screen_capture_audio');
+  } else {
+    // 生产环境：从编译后的dist目录加载.node文件
+    // __dirname 在生产环境中指向 dist/main，需要到 dist/native
+    nativeModulePath = path.join(__dirname, '../native/screen_capture_audio/index.node');
+  }
+  
+  const nativeModule = require(nativeModulePath);
+  // 如果是直接加载.node文件，ScreenCaptureAudio就是导出的类
+  // 如果是通过index.js加载，需要访问.ScreenCaptureAudio属性
+  ScreenCaptureAudio = nativeModule.ScreenCaptureAudio || nativeModule;
+  
+  logger.info('原生音频捕获模块加载成功');
 } catch (error) {
   logger.error('加载原生音频捕获模块失败:', error);
 }
@@ -29,7 +45,7 @@ export class SystemAudioCapture {
       sampleRate: options.sampleRate || 16000,
       channels: options.channels || 1,
       bitDepth: options.bitDepth || 16,
-      device: options.device || 'default'
+      device: options.device || 'default',
     };
 
     // 初始化原生模块实例
@@ -55,7 +71,7 @@ export class SystemAudioCapture {
 
     try {
       logger.info('开始启动系统音频捕获...');
-      
+
       // 使用原生模块配置
       const config = {
         sampleRate: this.options.sampleRate,
@@ -68,25 +84,26 @@ export class SystemAudioCapture {
         onError: (error: Error) => {
           logger.error('系统音频捕获错误:', error);
           this.isCapturing = false;
-          
+
           // 检查是否是权限错误
           if (error.message.includes('Permission') || error.message.includes('Screen Recording')) {
-            const permissionError = new Error('需要系统权限：请在"系统偏好设置 > 安全性与隐私 > 屏幕录制"中允许此应用');
+            const permissionError = new Error(
+              '需要系统权限：请在"系统偏好设置 > 安全性与隐私 > 屏幕录制"中允许此应用',
+            );
             if (this.onErrorCallback) {
               this.onErrorCallback(permissionError);
             }
           } else if (this.onErrorCallback) {
             this.onErrorCallback(error);
           }
-        }
+        },
       };
 
       // 启动原生音频捕获
       this.nativeCapture.startCapture(config);
       this.isCapturing = true;
-      
+
       logger.info('系统音频捕获已启动 (使用 ScreenCaptureKit)');
-      
     } catch (error) {
       logger.error('启动系统音频捕获失败:', error);
       this.isCapturing = false;
@@ -104,7 +121,7 @@ export class SystemAudioCapture {
     }
 
     logger.info('停止系统音频捕获...');
-    
+
     if (this.nativeCapture) {
       this.nativeCapture.stopCapture();
     }
@@ -137,7 +154,7 @@ export class SystemAudioCapture {
   /**
    * 获取可用的音频设备列表 (macOS)
    */
-  public static async getAudioDevices(): Promise<Array<{id: string, name: string}>> {
+  public static async getAudioDevices(): Promise<Array<{ id: string; name: string }>> {
     try {
       if (ScreenCaptureAudio) {
         return ScreenCaptureAudio.getAudioDevices();
