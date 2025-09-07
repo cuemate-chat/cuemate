@@ -1,8 +1,9 @@
-import { MicrophoneIcon, StopIcon } from '@heroicons/react/24/outline';
+import { MicrophoneIcon, StopIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { Button, Card, Form, Input, InputNumber, Select, Spin, Switch, Tabs } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { getAsrConfig, saveAsrConfig, type AsrConfig } from '../../api/asr';
 import { message } from '../../components/Message';
+import { webSocketService } from '../../services/webSocketService';
 import { getAsrServices, normalizeWebSocketUrl, type AsrService } from '../../utils/asr';
 
 export default function AsrSettings() {
@@ -28,6 +29,11 @@ export default function AsrSettings() {
   const isConnectingRef = useRef(false);
   const lastSendTimeRef = useRef<number>(0);
   const pendingChunksRef = useRef<number>(0);
+  
+  // 系统音频相关状态
+  const [isSystemAudioCapturing, setIsSystemAudioCapturing] = useState(false);
+  const [desktopConnected, setDesktopConnected] = useState(false);
+  const systemAudioQueueRef = useRef<Blob[]>([]);
 
   // 加载配置
   const loadConfig = async () => {
@@ -244,17 +250,30 @@ export default function AsrSettings() {
       let stream;
       
       if (isInterviewerService) {
-        // 面试官服务：尝试捕获系统音频
-        try {
-          stream = await navigator.mediaDevices.getDisplayMedia({ 
-            video: false, 
-            audio: true 
-          });
-          message.info('已开始捕获系统音频输出');
-        } catch (error) {
-          message.warning('无法直接捕获系统音频，将使用麦克风替代测试');
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // 面试官服务：使用Desktop系统音频捕获
+        if (!webSocketService.getConnectionState()) {
+          try {
+            await webSocketService.connect();
+            setDesktopConnected(true);
+          } catch (error) {
+            message.error('无法连接到Desktop服务，请确保桌面客户端已启动');
+            isConnectingRef.current = false;
+            return;
+          }
         }
+
+        // 开始系统音频捕获
+        webSocketService.startSystemAudioCapture({
+          sampleRate: 16000,
+          channels: 1
+        });
+
+        setIsSystemAudioCapturing(true);
+        message.info('正在通过Desktop捕获系统音频...');
+
+        // 创建一个虚拟的MediaStream用于界面显示
+        // 实际音频数据将通过WebSocket接收
+        stream = new MediaStream();
       } else {
         // 面试者服务：使用麦克风
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -452,6 +471,14 @@ export default function AsrSettings() {
     lastSendTimeRef.current = 0;
     pendingChunksRef.current = 0;
     
+    // 停止系统音频捕获
+    if (isSystemAudioCapturing) {
+      webSocketService.stopSystemAudioCapture();
+      setIsSystemAudioCapturing(false);
+      setDesktopConnected(false);
+      systemAudioQueueRef.current = [];
+    }
+    
     // 停止音频波形动画
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
@@ -546,6 +573,57 @@ export default function AsrSettings() {
     setTimeout(() => {
       drawDefaultWaveform();
     }, 100);
+
+    // 设置WebSocket消息监听
+    const handleSystemAudioData = (message: any) => {
+      if (message.data?.audioData && websocketRef.current?.readyState === WebSocket.OPEN) {
+        try {
+          // 将base64音频数据转换为Blob
+          const audioData = atob(message.data.audioData);
+          const audioBuffer = new Uint8Array(audioData.length);
+          for (let i = 0; i < audioData.length; i++) {
+            audioBuffer[i] = audioData.charCodeAt(i);
+          }
+          const audioBlob = new Blob([audioBuffer], { type: 'audio/wav' });
+          
+          // 发送到ASR WebSocket
+          websocketRef.current.send(audioBlob);
+          console.debug('System audio data sent to ASR:', audioBlob.size, 'bytes');
+        } catch (error) {
+          console.error('处理系统音频数据失败:', error);
+        }
+      }
+    };
+
+    const handleSystemAudioStatus = (message: any) => {
+      console.log('System audio status:', message.type, message.data);
+      
+      switch (message.type) {
+        case 'SYSTEM_AUDIO_CAPTURE_STARTED':
+          message.success('系统音频捕获已开始');
+          setTranscriptText('系统音频捕获已启动，等待音频输入...');
+          break;
+          
+        case 'SYSTEM_AUDIO_CAPTURE_FAILED':
+        case 'SYSTEM_AUDIO_ERROR':
+          message.error(`系统音频捕获失败: ${message.data?.error || '未知错误'}`);
+          setIsSystemAudioCapturing(false);
+          setTranscriptText(`[错误] ${message.data?.error || '系统音频捕获失败'}`);
+          break;
+          
+        case 'SYSTEM_AUDIO_CAPTURE_STOPPED':
+          setIsSystemAudioCapturing(false);
+          console.log('系统音频捕获已停止');
+          break;
+      }
+    };
+
+    // 注册消息监听器
+    webSocketService.onMessage('SYSTEM_AUDIO_DATA', handleSystemAudioData);
+    webSocketService.onMessage('SYSTEM_AUDIO_CAPTURE_STARTED', handleSystemAudioStatus);
+    webSocketService.onMessage('SYSTEM_AUDIO_CAPTURE_FAILED', handleSystemAudioStatus);
+    webSocketService.onMessage('SYSTEM_AUDIO_ERROR', handleSystemAudioStatus);
+    webSocketService.onMessage('SYSTEM_AUDIO_CAPTURE_STOPPED', handleSystemAudioStatus);
     
     // 清理函数
     return () => {
@@ -553,6 +631,13 @@ export default function AsrSettings() {
       stopRecording().catch(error => {
         console.warn('清理资源时出错:', error);
       });
+      
+      // 移除消息监听器
+      webSocketService.offMessage('SYSTEM_AUDIO_DATA', handleSystemAudioData);
+      webSocketService.offMessage('SYSTEM_AUDIO_CAPTURE_STARTED', handleSystemAudioStatus);
+      webSocketService.offMessage('SYSTEM_AUDIO_CAPTURE_FAILED', handleSystemAudioStatus);
+      webSocketService.offMessage('SYSTEM_AUDIO_ERROR', handleSystemAudioStatus);
+      webSocketService.offMessage('SYSTEM_AUDIO_CAPTURE_STOPPED', handleSystemAudioStatus);
     };
   }, []);
 
@@ -993,8 +1078,9 @@ export default function AsrSettings() {
                 {/* 录音状态信息 */}
                 <div className="space-y-2 text-sm">
                   {isRecording && (
-                    <div className="text-lg font-mono text-red-500">
-                      ⏱️ {formatTime(recordingTime)}
+                    <div className="flex items-center gap-2 text-lg font-mono text-red-500">
+                      <ClockIcon className="w-5 h-5" />
+                      {formatTime(recordingTime)}
                     </div>
                   )}
                 </div>
@@ -1008,9 +1094,10 @@ export default function AsrSettings() {
                   <li>• 选择要测试的服务端口</li>
                   {testService.includes('8002') ? (
                     <>
-                      <li>• <strong>面试官音频：</strong>点击按钮选择"共享系统音频"</li>
-                      <li>• 播放音频文件或视频时会被捕获</li>
-                      <li>• 如果无法捕获系统音频，会降级为麦克风</li>
+                      <li>• <strong>面试官音频：</strong>需要启动桌面客户端</li>
+                      <li>• 桌面客户端将捕获系统音频输出(喇叭声音)</li>
+                      <li>• 在macOS上需要授予"屏幕录制"权限</li>
+                      <li>• 桌面连接状态: <span className={desktopConnected ? 'text-green-600' : 'text-red-600'}>{desktopConnected ? '已连接' : '未连接'}</span></li>
                     </>
                   ) : (
                     <>

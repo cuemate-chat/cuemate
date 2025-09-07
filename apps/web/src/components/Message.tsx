@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { 
+  CheckCircleIcon, 
+  XCircleIcon, 
+  ExclamationTriangleIcon, 
+  InformationCircleIcon 
+} from '@heroicons/react/24/outline';
 
 type MessageType = 'success' | 'error' | 'warning' | 'info';
 
@@ -74,10 +80,10 @@ export const MessageContainer: React.FC = () => {
           }}
         >
           <div className="flex items-center justify-center gap-2">
-            {m.type === 'success' && <span className="text-green-600">✓</span>}
-            {m.type === 'error' && <span className="text-red-600">✗</span>}
-            {m.type === 'warning' && <span className="text-yellow-600">⚠</span>}
-            {m.type === 'info' && <span className="text-blue-600">ℹ</span>}
+            {m.type === 'success' && <CheckCircleIcon className="w-4 h-4 text-green-600" />}
+            {m.type === 'error' && <XCircleIcon className="w-4 h-4 text-red-600" />}
+            {m.type === 'warning' && <ExclamationTriangleIcon className="w-4 h-4 text-yellow-600" />}
+            {m.type === 'info' && <InformationCircleIcon className="w-4 h-4 text-blue-600" />}
             <span className="msg-text">{m.text}</span>
           </div>
         </div>

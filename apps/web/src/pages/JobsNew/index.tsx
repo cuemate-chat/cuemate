@@ -331,7 +331,7 @@ export default function JobsNew() {
                         placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n[错误] 文件解析失败：${err.message}\n\n请将简历文本手动粘贴到下方输入框，或尝试转换文件格式后重新上传。`;
                       } else if (err?.message?.includes('不支持') || err?.message?.includes('格式')) {
                         errorMessage = `不支持的文件格式：${err.message}`;
-                        placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n🚫 ${err.message}\n\n请将简历文本直接粘贴到下方输入框，或将文件转换为PDF、DOCX格式后重新上传。`;
+                        placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n[错误] ${err.message}\n\n请将简历文本直接粘贴到下方输入框，或将文件转换为PDF、DOCX格式后重新上传。`;
                       }
                       
                       setResumeText(placeholderText);
