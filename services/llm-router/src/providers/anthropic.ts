@@ -1,58 +1,130 @@
 import OpenAI from 'openai';
 import { logger } from '../utils/logger.js';
-import { OpenAICompatibleProvider } from './openai-compatible.js';
+import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
-export interface AnthropicConfig {
-  apiKey: string;
-  baseUrl?: string;
-  model: string;
-  temperature?: number;
-  maxTokens?: number;
-  [key: string]: any; // 允许其他动态字段
-}
-
-export class AnthropicProvider extends OpenAICompatibleProvider {
-  constructor(cfg: AnthropicConfig) {
-    super({
-      id: 'anthropic',
-      baseUrl: cfg.baseUrl || 'https://api.anthropic.com/v1',
-      apiKey: cfg.apiKey,
-      model: cfg.model,
-      temperature: cfg.temperature ?? 0.7,
-      maxTokens: cfg.maxTokens ?? 2000,
-      // 传递其他动态字段（除了已明确指定的）
-      ...Object.fromEntries(
-        Object.entries(cfg).filter(
-          ([key]) => !['baseUrl', 'apiKey', 'model', 'temperature', 'maxTokens'].includes(key),
-        ),
-      ),
-    });
+export class AnthropicProvider extends BaseLLMProvider {
+  constructor() {
+    super('anthropic');
   }
 
-  async healthCheck(): Promise<boolean> {
+  async complete(request: CompletionRequest, config: RuntimeConfig): Promise<CompletionResponse> {
+    // 从 RuntimeConfig 中解析参数
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url || 'https://api.anthropic.com/v1';
+    
+    if (!apiKey) {
+      throw new Error('Anthropic API key is required');
+    }
+
+    // 从 model_params 中解析参数
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
+
+    // 创建临时客户端
+    const client = new OpenAI({
+      apiKey: apiKey,
+      baseURL: baseUrl,
+    });
+
+    const startTime = Date.now();
+
     try {
-      const client = new OpenAI({
-        apiKey: (this as any).config.apiKey,
-        baseURL: (this as any).config.baseUrl,
+      const completion = await client.chat.completions.create({
+        model: config.model,
+        messages: request.messages,
+        temperature: request.temperature ?? temperature,
+        max_tokens: request.maxTokens ?? maxTokens,
+        stream: false,
       });
+
+      const response = completion.choices[0];
+      const latency = Date.now() - startTime;
+
+      return {
+        content: response.message?.content || '',
+        usage: completion.usage
+          ? {
+              promptTokens: completion.usage.prompt_tokens,
+              completionTokens: completion.usage.completion_tokens,
+              totalTokens: completion.usage.total_tokens,
+            }
+          : undefined,
+        model: completion.model,
+        provider: 'anthropic',
+        latency,
+      };
+    } catch (error) {
+      logger.error('Anthropic completion failed:', error);
+      throw error;
+    }
+  }
+
+  async *stream(request: CompletionRequest, config: RuntimeConfig): AsyncGenerator<string> {
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url || 'https://api.anthropic.com/v1';
+    
+    if (!apiKey) {
+      throw new Error('Anthropic API key is required');
+    }
+
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
+
+    const client = new OpenAI({
+      apiKey: apiKey,
+      baseURL: baseUrl,
+    });
+
+    try {
+      const stream = await client.chat.completions.create({
+        model: config.model,
+        messages: request.messages,
+        temperature: request.temperature ?? temperature,
+        max_tokens: request.maxTokens ?? maxTokens,
+        stream: true,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content;
+        if (content) {
+          yield content;
+        }
+      }
+    } catch (error) {
+      logger.error('Anthropic stream failed:', error);
+      throw error;
+    }
+  }
+
+  async healthCheck(config: RuntimeConfig): Promise<boolean> {
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url || 'https://api.anthropic.com/v1';
+    
+    if (!apiKey) {
+      throw new Error('Anthropic API key is required');
+    }
+
+    const client = new OpenAI({
+      apiKey: apiKey,
+      baseURL: baseUrl,
+    });
+
+    try {
       try {
         await client.models.list();
         return true;
       } catch {}
-      try {
-        await client.chat.completions.create({
-          model: (this as any).config.model,
-          messages: [{ role: 'user', content: 'ping' }],
-          max_tokens: 1,
-          temperature: 0,
-        });
-        return true;
-      } catch (e) {
-        logger.error('Anthropic healthCheck failed', e as any);
-        return false;
-      }
-    } catch {
-      return false;
+      
+      await client.chat.completions.create({
+        model: config.model,
+        messages: [{ role: 'user', content: 'ping' }],
+        max_tokens: 1,
+        temperature: 0,
+      });
+      return true;
+    } catch (error) {
+      logger.error('Anthropic healthCheck failed:', error);
+      throw error;
     }
   }
 }

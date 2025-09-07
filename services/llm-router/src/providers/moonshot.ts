@@ -1,57 +1,40 @@
 import axios from 'axios';
 import { logger } from '../utils/logger.js';
-import { BaseLLMProvider, CompletionRequest, CompletionResponse } from './base.js';
-
-export interface MoonshotConfig {
-  apiKey?: string;
-  baseUrl?: string;
-  model: string;
-  temperature?: number;
-  maxTokens?: number;
-  [key: string]: any; // 允许其他动态字段
-}
+import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 export class MoonshotProvider extends BaseLLMProvider {
-  constructor(cfg: MoonshotConfig) {
-    super('moonshot', {
-      apiKey: cfg.apiKey,
-      baseUrl: cfg.baseUrl || 'https://api.moonshot.cn/v1',
-      model: cfg.model,
-      temperature: cfg.temperature ?? 0.7,
-      maxTokens: cfg.maxTokens ?? 2000,
-      // 传递其他动态字段（除了已明确指定的）
-      ...Object.fromEntries(
-        Object.entries(cfg).filter(
-          ([key]) => !['apiKey', 'baseUrl', 'model', 'temperature', 'maxTokens'].includes(key),
-        ),
-      ),
-    });
+  constructor() {
+    super('moonshot');
   }
 
-  isAvailable(): boolean {
-    return !!this.config.apiKey;
-  }
-
-  async complete(request: CompletionRequest): Promise<CompletionResponse> {
-    if (!this.config.apiKey) {
+  async complete(request: CompletionRequest, config: RuntimeConfig): Promise<CompletionResponse> {
+    // 从 RuntimeConfig 中解析参数
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url || 'https://api.moonshot.cn/v1';
+    
+    if (!apiKey) {
       throw new Error('Moonshot API key not configured');
     }
+
+    // 从 model_params 中解析参数
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
 
     const startTime = Date.now();
 
     try {
       const response = await axios.post(
-        `${this.config.baseUrl}/chat/completions`,
+        `${baseUrl}/chat/completions`,
         {
-          model: this.config.model,
+          model: config.model,
           messages: request.messages,
-          temperature: request.temperature || this.config.temperature,
-          max_tokens: request.maxTokens || this.config.maxTokens,
+          temperature: request.temperature || temperature,
+          max_tokens: request.maxTokens || maxTokens,
           stream: false,
         },
         {
           headers: {
-            Authorization: `Bearer ${this.config.apiKey}`,
+            Authorization: `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
           },
         },
@@ -79,24 +62,30 @@ export class MoonshotProvider extends BaseLLMProvider {
     }
   }
 
-  async *stream(request: CompletionRequest): AsyncGenerator<string> {
-    if (!this.config.apiKey) {
+  async *stream(request: CompletionRequest, config: RuntimeConfig): AsyncGenerator<string> {
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url || 'https://api.moonshot.cn/v1';
+    
+    if (!apiKey) {
       throw new Error('Moonshot API key not configured');
     }
 
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
+
     try {
       const response = await axios.post(
-        `${this.config.baseUrl}/chat/completions`,
+        `${baseUrl}/chat/completions`,
         {
-          model: this.config.model,
+          model: config.model,
           messages: request.messages,
-          temperature: request.temperature || this.config.temperature,
-          max_tokens: request.maxTokens || this.config.maxTokens,
+          temperature: request.temperature || temperature,
+          max_tokens: request.maxTokens || maxTokens,
           stream: true,
         },
         {
           headers: {
-            Authorization: `Bearer ${this.config.apiKey}`,
+            Authorization: `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
             Accept: 'text/event-stream',
           },
@@ -136,15 +125,18 @@ export class MoonshotProvider extends BaseLLMProvider {
     }
   }
 
-  async healthCheck(): Promise<boolean> {
-    if (!this.config.apiKey) {
+  async healthCheck(config: RuntimeConfig): Promise<boolean> {
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url || 'https://api.moonshot.cn/v1';
+    
+    if (!apiKey) {
       return false;
     }
 
     try {
-      await axios.get(`${this.config.baseUrl}/models`, {
+      await axios.get(`${baseUrl}/models`, {
         headers: {
-          Authorization: `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         timeout: 5000,
       });

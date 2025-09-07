@@ -1,42 +1,115 @@
 import OpenAI from 'openai';
 import { logger } from '../utils/logger.js';
-import { OpenAICompatibleProvider } from './openai-compatible.js';
+import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
-export interface AzureOpenAIConfig {
-  baseUrl: string; // https://{resource}.openai.azure.com/openai/deployments/{deployment}/
-  apiKey: string;
-  model: string; // 部署名称
-  api_version?: string;
-  deployment_name?: string;
-  temperature?: number;
-  maxTokens?: number;
-  [key: string]: any; // 允许其他动态字段
-}
-
-export class AzureOpenAIProvider extends OpenAICompatibleProvider {
-  constructor(cfg: AzureOpenAIConfig) {
-    super({
-      id: 'azure-openai',
-      baseUrl: cfg.baseUrl,
-      apiKey: cfg.apiKey,
-      model: cfg.model,
-      temperature: cfg.temperature ?? 0.7,
-      maxTokens: cfg.maxTokens ?? 2000,
-      // 传递其他动态字段（除了已明确指定的）
-      ...Object.fromEntries(
-        Object.entries(cfg).filter(
-          ([key]) => !['baseUrl', 'apiKey', 'model', 'temperature', 'maxTokens'].includes(key),
-        ),
-      ),
-    });
+export class AzureOpenAIProvider extends BaseLLMProvider {
+  constructor() {
+    super('azure-openai');
   }
 
-  async healthCheck(): Promise<boolean> {
+  async complete(request: CompletionRequest, config: RuntimeConfig): Promise<CompletionResponse> {
+    // 从 RuntimeConfig 中解析参数
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url;
+    
+    if (!apiKey || !baseUrl) {
+      throw new Error('Azure OpenAI requires api_key and base_url in credentials');
+    }
+
+    // 从 model_params 中解析参数
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
+
+    // 创建临时客户端
+    const client = new OpenAI({
+      apiKey: apiKey,
+      baseURL: baseUrl,
+    });
+
+    const startTime = Date.now();
+
     try {
-      const client = new OpenAI({
-        apiKey: (this as any).config.apiKey,
-        baseURL: (this as any).config.baseUrl,
+      const completion = await client.chat.completions.create({
+        model: config.model,
+        messages: request.messages,
+        temperature: request.temperature ?? temperature,
+        max_tokens: request.maxTokens ?? maxTokens,
+        stream: false,
       });
+
+      const response = completion.choices[0];
+      const latency = Date.now() - startTime;
+
+      return {
+        content: response.message?.content || '',
+        usage: completion.usage
+          ? {
+              promptTokens: completion.usage.prompt_tokens,
+              completionTokens: completion.usage.completion_tokens,
+              totalTokens: completion.usage.total_tokens,
+            }
+          : undefined,
+        model: completion.model,
+        provider: 'azure-openai',
+        latency,
+      };
+    } catch (error) {
+      logger.error('Azure OpenAI completion failed:', error);
+      throw error;
+    }
+  }
+
+  async *stream(request: CompletionRequest, config: RuntimeConfig): AsyncGenerator<string> {
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url;
+    
+    if (!apiKey || !baseUrl) {
+      throw new Error('Azure OpenAI requires api_key and base_url in credentials');
+    }
+
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
+
+    const client = new OpenAI({
+      apiKey: apiKey,
+      baseURL: baseUrl,
+    });
+
+    try {
+      const stream = await client.chat.completions.create({
+        model: config.model,
+        messages: request.messages,
+        temperature: request.temperature ?? temperature,
+        max_tokens: request.maxTokens ?? maxTokens,
+        stream: true,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content;
+        if (content) {
+          yield content;
+        }
+      }
+    } catch (error) {
+      logger.error('Azure OpenAI stream failed:', error);
+      throw error;
+    }
+  }
+
+  async healthCheck(config: RuntimeConfig): Promise<boolean> {
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url;
+    
+    if (!apiKey || !baseUrl) {
+      throw new Error('Azure OpenAI requires api_key and base_url in credentials');
+    }
+
+    const client = new OpenAI({
+      apiKey: apiKey,
+      baseURL: baseUrl,
+    });
+
+    try {
       try {
         await client.models.list();
         return true;
@@ -44,7 +117,7 @@ export class AzureOpenAIProvider extends OpenAICompatibleProvider {
       // Azure OpenAI 通常不支持 /models，退化为一次超轻量调用
       try {
         await client.chat.completions.create({
-          model: (this as any).config.model,
+          model: config.model,
           messages: [{ role: 'user', content: 'ping' }],
           max_tokens: 1,
           temperature: 0,

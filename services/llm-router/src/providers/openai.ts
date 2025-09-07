@@ -1,61 +1,39 @@
 import OpenAI from 'openai';
 import { logger } from '../utils/logger.js';
-import { BaseLLMProvider, CompletionRequest, CompletionResponse } from './base.js';
-
-export interface OpenAIConfig {
-  apiKey?: string;
-  baseUrl?: string;
-  model: string;
-  temperature?: number;
-  maxTokens?: number;
-  [key: string]: any; // 允许其他动态字段
-}
+import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 export class OpenAIProvider extends BaseLLMProvider {
-  private client: OpenAI | null = null;
+  constructor() {
+    super('openai');
+  }
 
-  constructor(cfg: OpenAIConfig) {
-    super('openai', {
-      apiKey: cfg.apiKey,
-      baseUrl: cfg.baseUrl,
-      model: cfg.model,
-      temperature: cfg.temperature ?? 0.7,
-      maxTokens: cfg.maxTokens ?? 2000,
-      // 传递其他动态字段（除了已明确指定的）
-      ...Object.fromEntries(
-        Object.entries(cfg).filter(
-          ([key]) => !['apiKey', 'baseUrl', 'model', 'temperature', 'maxTokens'].includes(key),
-        ),
-      ),
+  async complete(request: CompletionRequest, config: RuntimeConfig): Promise<CompletionResponse> {
+    // 从 credentials 和 model_params 中解析 OpenAI 需要的参数
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url;
+    
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required');
+    }
+
+    // 从 model_params 中解析参数
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
+
+    // 创建临时客户端
+    const client = new OpenAI({
+      apiKey: apiKey,
+      ...(baseUrl && baseUrl !== 'https://api.openai.com/v1' && { baseURL: baseUrl }),
     });
-
-    if (this.config.apiKey) {
-      this.client = new OpenAI({
-        apiKey: this.config.apiKey,
-        // 只有当 baseUrl 存在且不是默认值时才传递
-        ...(this.config.baseUrl &&
-          this.config.baseUrl !== 'https://api.openai.com/v1' && { baseURL: this.config.baseUrl }),
-      });
-    }
-  }
-
-  isAvailable(): boolean {
-    return !!this.client;
-  }
-
-  async complete(request: CompletionRequest): Promise<CompletionResponse> {
-    if (!this.client) {
-      throw new Error('OpenAI client not initialized');
-    }
 
     const startTime = Date.now();
 
     try {
-      const completion = await this.client.chat.completions.create({
-        model: this.config.model || 'gpt-4-turbo-preview',
+      const completion = await client.chat.completions.create({
+        model: config.model,
         messages: request.messages,
-        temperature: request.temperature || this.config.temperature,
-        max_tokens: request.maxTokens || this.config.maxTokens,
+        temperature: request.temperature ?? temperature,
+        max_tokens: request.maxTokens ?? maxTokens,
         stream: false,
       });
 
@@ -81,17 +59,30 @@ export class OpenAIProvider extends BaseLLMProvider {
     }
   }
 
-  async *stream(request: CompletionRequest): AsyncGenerator<string> {
-    if (!this.client) {
-      throw new Error('OpenAI client not initialized');
+  async *stream(request: CompletionRequest, config: RuntimeConfig): AsyncGenerator<string> {
+    // 从 credentials 和 model_params 中解析参数
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url;
+    
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required');
     }
 
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
+
+    // 创建临时客户端
+    const client = new OpenAI({
+      apiKey: apiKey,
+      ...(baseUrl && baseUrl !== 'https://api.openai.com/v1' && { baseURL: baseUrl }),
+    });
+
     try {
-      const stream = await this.client.chat.completions.create({
-        model: this.config.model || 'gpt-4-turbo-preview',
+      const stream = await client.chat.completions.create({
+        model: config.model,
         messages: request.messages,
-        temperature: request.temperature || this.config.temperature,
-        max_tokens: request.maxTokens || this.config.maxTokens,
+        temperature: request.temperature ?? temperature,
+        max_tokens: request.maxTokens ?? maxTokens,
         stream: true,
       });
 
@@ -107,27 +98,36 @@ export class OpenAIProvider extends BaseLLMProvider {
     }
   }
 
-  async healthCheck(): Promise<boolean> {
-    if (!this.client) {
-      throw new Error('OpenAI client not initialized');
+  async healthCheck(config: RuntimeConfig): Promise<boolean> {
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url;
+    
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required');
     }
+
+    // 创建临时客户端
+    const client = new OpenAI({
+      apiKey: apiKey,
+      ...(baseUrl && baseUrl !== 'https://api.openai.com/v1' && { baseURL: baseUrl }),
+    });
 
     try {
       // 先尝试列出模型（快速检查API连接性）
       try {
-        await this.client.models.list();
+        await client.models.list();
       } catch {}
       
       // 然后实际测试指定模型是否可用 - 发送一个简单的测试请求
-      await this.client.chat.completions.create({
-        model: this.config.model,
+      await client.chat.completions.create({
+        model: config.model,
         messages: [{ role: 'user', content: 'ping' }],
         temperature: 0,
         max_tokens: 1,
       });
       return true;
     } catch (error) {
-      logger.error(`OpenAI health check failed for model ${this.config.model}:`, error);
+      logger.error(`OpenAI health check failed for model ${config.model}:`, error);
       // 抛出异常而不是返回false，这样路由可以捕获具体的错误信息
       throw error;
     }

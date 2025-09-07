@@ -1,58 +1,125 @@
 import OpenAI from 'openai';
 import { logger } from '../utils/logger.js';
-import { OpenAICompatibleProvider } from './openai-compatible.js';
+import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
-export interface DeepSeekConfig {
-  apiKey?: string;
-  baseUrl?: string;
-  model: string;
-  temperature?: number;
-  maxTokens?: number;
-  [key: string]: any; // 允许其他动态字段
-}
-
-export class DeepSeekProvider extends OpenAICompatibleProvider {
-  constructor(cfg: DeepSeekConfig) {
-    super({
-      id: 'deepseek',
-      baseUrl: cfg.baseUrl || 'https://api.deepseek.com/v1',
-      apiKey: cfg.apiKey,
-      model: cfg.model,
-      temperature: cfg.temperature ?? 0.3,
-      maxTokens: cfg.maxTokens ?? 2000,
-      // 传递其他动态字段（除了已明确指定的）
-      ...Object.fromEntries(
-        Object.entries(cfg).filter(
-          ([key]) => !['baseUrl', 'apiKey', 'model', 'temperature', 'maxTokens'].includes(key),
-        ),
-      ),
-    });
+export class DeepSeekProvider extends BaseLLMProvider {
+  constructor() {
+    super('deepseek');
   }
 
-  async healthCheck(): Promise<boolean> {
+  async complete(request: CompletionRequest, config: RuntimeConfig): Promise<CompletionResponse> {
+    // 从 credentials 和 model_params 中解析 DeepSeek 需要的参数
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url || 'https://api.deepseek.com';
+    
+    if (!apiKey) {
+      throw new Error('DeepSeek API key is required');
+    }
+
+    // 从 model_params 中解析参数
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
+
+    // 创建临时客户端
+    const client = new OpenAI({
+      apiKey: apiKey,
+      baseURL: baseUrl,
+    });
+
+    const startTime = Date.now();
+
     try {
-      const client = new OpenAI({
-        apiKey: (this as any).config.apiKey,
-        baseURL: (this as any).config.baseUrl,
+      const completion = await client.chat.completions.create({
+        model: config.model,
+        messages: request.messages,
+        temperature: request.temperature ?? temperature,
+        max_tokens: request.maxTokens ?? maxTokens,
+        stream: false,
       });
-      try {
-        await client.models.list();
-        return true;
-      } catch {}
-      try {
-        await client.chat.completions.create({
-          model: (this as any).config.model,
-          messages: [{ role: 'user', content: 'ping' }],
-          max_tokens: 1,
-          temperature: 0,
-        });
-        return true;
-      } catch (e) {
-        logger.error('DeepSeek healthCheck failed', e as any);
-        return false;
+
+      const response = completion.choices[0];
+      const latency = Date.now() - startTime;
+
+      return {
+        content: response.message?.content || '',
+        usage: completion.usage
+          ? {
+              promptTokens: completion.usage.prompt_tokens,
+              completionTokens: completion.usage.completion_tokens,
+              totalTokens: completion.usage.total_tokens,
+            }
+          : undefined,
+        model: completion.model,
+        provider: 'deepseek',
+        latency,
+      };
+    } catch (error) {
+      logger.error('DeepSeek completion failed:', error);
+      throw error;
+    }
+  }
+
+  async *stream(request: CompletionRequest, config: RuntimeConfig): AsyncGenerator<string> {
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url || 'https://api.deepseek.com';
+    
+    if (!apiKey) {
+      throw new Error('DeepSeek API key is required');
+    }
+
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
+
+    const client = new OpenAI({
+      apiKey: apiKey,
+      baseURL: baseUrl,
+    });
+
+    try {
+      const stream = await client.chat.completions.create({
+        model: config.model,
+        messages: request.messages,
+        temperature: request.temperature ?? temperature,
+        max_tokens: request.maxTokens ?? maxTokens,
+        stream: true,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content;
+        if (content) {
+          yield content;
+        }
       }
-    } catch {
-      return false;
+    } catch (error) {
+      logger.error('DeepSeek stream failed:', error);
+      throw error;
+    }
+  }
+
+  async healthCheck(config: RuntimeConfig): Promise<boolean> {
+    const apiKey = config.credentials.api_key;
+    const baseUrl = config.credentials.base_url || 'https://api.deepseek.com';
+    
+    if (!apiKey) {
+      throw new Error('DeepSeek API key is required');
+    }
+
+    const client = new OpenAI({
+      apiKey: apiKey,
+      baseURL: baseUrl,
+    });
+
+    try {
+      await client.chat.completions.create({
+        model: config.model,
+        messages: [{ role: 'user', content: 'ping' }],
+        temperature: 0,
+        max_tokens: 1,
+      });
+      return true;
+    } catch (error) {
+      logger.error(`DeepSeek health check failed for model ${config.model}:`, error);
+      throw error;
     }
   }
 }

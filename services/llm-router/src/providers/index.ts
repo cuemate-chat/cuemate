@@ -14,136 +14,53 @@ import { VllmProvider } from './vllm.js';
 import { VolcEngineProvider } from './volcengine.js';
 import { ZhipuProvider } from './zhipu.js';
 
+// 这个函数现在已经不再使用，因为我们改为在 LLMManager 中直接注册所有 providers
+// 保留这个函数以避免编译错误，但现在返回空的 Map
 export async function initializeProviders(
   _config: Config = config,
 ): Promise<Map<string, BaseLLMProvider>> {
   const providers = new Map<string, BaseLLMProvider>();
 
+  // 新架构中，所有 providers 都在启动时注册，不再需要这个初始化函数
+  // 只需要返回空的 Map 以保持兼容性
+  
   try {
-    if (_config.providers.deepseek.apiKey) {
-      const p = new DeepSeekProvider({
-        apiKey: _config.providers.deepseek.apiKey,
-        model: _config.providers.deepseek.model,
-      });
-      if (p.isAvailable()) providers.set('deepseek', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
-  try {
-    if (_config.providers.ollama.baseUrl) {
-      const p = new OllamaProvider({
-        baseUrl: _config.providers.ollama.baseUrl,
-        model: _config.providers.ollama.model,
-      });
-      if (p.isAvailable()) providers.set('ollama', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
-  try {
-    if (_config.providers.azureOpenai.baseUrl && _config.providers.azureOpenai.apiKey) {
-      const p = new AzureOpenAIProvider({
-        baseUrl: _config.providers.azureOpenai.baseUrl,
-        apiKey: _config.providers.azureOpenai.apiKey,
-        model: _config.providers.azureOpenai.model,
-      });
-      if (p.isAvailable()) providers.set('azure-openai', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
-
-  try {
-    if (_config.providers.zhipu.apiKey) {
-      const p = new ZhipuProvider({
-        apiKey: _config.providers.zhipu.apiKey,
-        model: _config.providers.zhipu.model,
-      });
-      if (p.isAvailable()) providers.set('zhipu', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
-  try {
-    if (_config.providers.anthropic.apiKey) {
-      const p = new AnthropicProvider({
-        apiKey: _config.providers.anthropic.apiKey,
-        model: _config.providers.anthropic.model,
-      });
-      if (p.isAvailable()) providers.set('anthropic', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
-  try {
-    if (_config.providers.gemini.apiKey) {
-      const p = new GeminiProvider({
-        apiKey: _config.providers.gemini.apiKey,
-        model: _config.providers.gemini.model,
-      });
-      if (p.isAvailable()) providers.set('gemini', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
-  try {
-    if (_config.providers.kimi.apiKey) {
-      const p = new KimiProvider({
-        apiKey: _config.providers.kimi.apiKey,
-        model: _config.providers.kimi.model,
-      });
-      if (p.isAvailable()) providers.set('kimi', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
-  try {
-    if (_config.providers.volcengine.apiKey) {
-      const p = new VolcEngineProvider({
-        apiKey: _config.providers.volcengine.apiKey,
-        model: _config.providers.volcengine.model,
-      });
-      if (p.isAvailable()) providers.set('volcengine', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
-  try {
-    if (_config.providers.tencent.apiKey) {
-      const p = new TencentProvider({
-        apiKey: _config.providers.tencent.apiKey,
-        model: _config.providers.tencent.model,
-      });
-      if (p.isAvailable()) providers.set('tencent', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
-  try {
-    if (_config.providers.siliconflow.apiKey) {
-      const p = new SiliconFlowProvider({
-        apiKey: _config.providers.siliconflow.apiKey,
-        model: _config.providers.siliconflow.model,
-      });
-      if (p.isAvailable()) providers.set('siliconflow', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
-  try {
-    if (_config.providers.vllm.baseUrl) {
-      const p = new VllmProvider({
-        baseUrl: _config.providers.vllm.baseUrl,
-        model: _config.providers.vllm.model,
-      });
-      if (p.isAvailable()) providers.set('vllm', p as unknown as BaseLLMProvider);
-    }
-  } catch {}
-
-  if (Array.isArray((config as any).providers.dynamic)) {
-    for (const d of (config as any).providers.dynamic) {
-      try {
-        const p = new OpenAICompatibleProvider({
-          id: d.id || d.provider || 'custom',
-          baseUrl: d.base_url || d.baseUrl,
-          apiKey: d.api_key || d.apiKey,
-          model: d.model_name || d.model,
-          temperature: Number(d.temperature ?? d.params?.temperature ?? 0.7),
-          maxTokens: Number(d.max_tokens ?? d.params?.max_tokens ?? 2000),
-        });
-        if (p.isAvailable()) {
-          providers.set(p.getName(), p as BaseLLMProvider);
+    // 注册所有 providers，但不需要配置，因为它们现在使用 RuntimeConfig
+    const allProviders = [
+      new DeepSeekProvider(),
+      new OllamaProvider(),
+      new AzureOpenAIProvider(),
+      new ZhipuProvider(),
+      new AnthropicProvider(),
+      new GeminiProvider(),
+      new KimiProvider(),
+      new VolcEngineProvider(),
+      new TencentProvider(),
+      new SiliconFlowProvider(),
+      new VllmProvider(),
+    ];
+    
+    // 将所有 providers 添加到 Map 中
+    allProviders.forEach(provider => {
+      providers.set(provider.getName(), provider);
+    });
+    
+    // 处理动态 providers
+    if (Array.isArray((config as any).providers.dynamic)) {
+      for (const d of (config as any).providers.dynamic) {
+        try {
+          const p = new OpenAICompatibleProvider(d.id || d.provider || 'custom');
+          providers.set(p.getName(), p);
           logger.info(`Dynamic provider initialized: ${p.getName()}`);
+        } catch (e) {
+          logger.warn('Failed to init dynamic provider', e);
         }
-      } catch (e) {
-        logger.warn('Failed to init dynamic provider', e);
       }
     }
-  }
-
-  if (providers.size === 0) {
-    logger.warn('No LLM providers configured');
+    
+    logger.info(`Initialized ${providers.size} providers: ${Array.from(providers.keys()).join(', ')}`);
+  } catch (error) {
+    logger.error('Failed to initialize providers:', error);
   }
 
   return providers;

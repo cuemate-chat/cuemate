@@ -1,46 +1,134 @@
 import OpenAI from 'openai';
 import { logger } from '../utils/logger.js';
-import { OpenAICompatibleProvider } from './openai-compatible.js';
+import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
-export interface OllamaConfig {
-  baseUrl: string; // http://localhost:11434
-  model: string; // llama3.1:8b 等
-  temperature?: number;
-  maxTokens?: number;
-  num_predict?: number; // Ollama 特有的参数
-  [key: string]: any; // 允许其他动态字段
-}
-
-export class OllamaProvider extends OpenAICompatibleProvider {
-  constructor(cfg: OllamaConfig) {
-    super({
-      id: 'ollama',
-      baseUrl: cfg.baseUrl,
-      model: cfg.model,
-      temperature: cfg.temperature ?? 0.3,
-      maxTokens: cfg.maxTokens ?? 1024,
-      // 传递其他动态字段（除了已明确指定的）
-      ...Object.fromEntries(
-        Object.entries(cfg).filter(
-          ([key]) => !['baseUrl', 'model', 'temperature', 'maxTokens'].includes(key),
-        ),
-      ),
-    });
+export class OllamaProvider extends BaseLLMProvider {
+  constructor() {
+    super('ollama');
   }
 
-  async healthCheck(): Promise<boolean> {
+  async complete(request: CompletionRequest, config: RuntimeConfig): Promise<CompletionResponse> {
+    // 从 RuntimeConfig 中解析参数
+    const baseUrl = config.credentials.base_url; // http://localhost:11434
+    
+    if (!baseUrl) {
+      throw new Error('Ollama requires base_url in credentials');
+    }
+
+    // 从 model_params 中解析参数
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.3;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 1024;
+    const numPredict = config.model_params.find(p => p.param_key === 'num_predict')?.value; // Ollama 特有
+
+    // 创建临时客户端（Ollama 不需要 API key）
+    const client = new OpenAI({
+      baseURL: baseUrl,
+      apiKey: 'ollama', // Ollama 不需要真实 API key
+    });
+
+    const startTime = Date.now();
+
     try {
-      const client = new OpenAI({
-        baseURL: (this as any).config.baseUrl,
-        apiKey: (this as any).config.apiKey,
-      });
+      const requestBody: any = {
+        model: config.model,
+        messages: request.messages,
+        temperature: request.temperature ?? temperature,
+        max_tokens: request.maxTokens ?? maxTokens,
+        stream: false,
+      };
+      
+      // 添加 Ollama 特有参数
+      if (numPredict) {
+        requestBody.num_predict = numPredict;
+      }
+
+      const completion = await client.chat.completions.create(requestBody);
+
+      const response = completion.choices[0];
+      const latency = Date.now() - startTime;
+
+      return {
+        content: response.message?.content || '',
+        usage: completion.usage
+          ? {
+              promptTokens: completion.usage.prompt_tokens,
+              completionTokens: completion.usage.completion_tokens,
+              totalTokens: completion.usage.total_tokens,
+            }
+          : undefined,
+        model: completion.model,
+        provider: 'ollama',
+        latency,
+      };
+    } catch (error) {
+      logger.error('Ollama completion failed:', error);
+      throw error;
+    }
+  }
+
+  async *stream(request: CompletionRequest, config: RuntimeConfig): AsyncGenerator<string> {
+    const baseUrl = config.credentials.base_url;
+    
+    if (!baseUrl) {
+      throw new Error('Ollama requires base_url in credentials');
+    }
+
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.3;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 1024;
+    const numPredict = config.model_params.find(p => p.param_key === 'num_predict')?.value;
+
+    const client = new OpenAI({
+      baseURL: baseUrl,
+      apiKey: 'ollama',
+    });
+
+    try {
+      const requestBody: any = {
+        model: config.model,
+        messages: request.messages,
+        temperature: request.temperature ?? temperature,
+        max_tokens: request.maxTokens ?? maxTokens,
+        stream: true,
+      };
+      
+      if (numPredict) {
+        requestBody.num_predict = numPredict;
+      }
+
+      const stream = await client.chat.completions.create(requestBody) as any;
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content;
+        if (content) {
+          yield content;
+        }
+      }
+    } catch (error) {
+      logger.error('Ollama stream failed:', error);
+      throw error;
+    }
+  }
+
+  async healthCheck(config: RuntimeConfig): Promise<boolean> {
+    const baseUrl = config.credentials.base_url;
+    
+    if (!baseUrl) {
+      throw new Error('Ollama requires base_url in credentials');
+    }
+
+    const client = new OpenAI({
+      baseURL: baseUrl,
+      apiKey: 'ollama',
+    });
+
+    try {
       try {
         await client.models.list();
         return true;
       } catch {}
       try {
         await client.chat.completions.create({
-          model: (this as any).config.model,
+          model: config.model,
           messages: [{ role: 'user', content: 'ping' }],
           max_tokens: 1,
           temperature: 0,
