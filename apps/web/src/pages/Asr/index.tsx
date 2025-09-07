@@ -34,6 +34,61 @@ export default function AsrSettings() {
   const [isSystemAudioCapturing, setIsSystemAudioCapturing] = useState(false);
   const [desktopConnected, setDesktopConnected] = useState(false);
   const systemAudioQueueRef = useRef<Blob[]>([]);
+  
+  // 音频设备相关状态
+  const [availableAudioDevices, setAvailableAudioDevices] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedAudioDevice, setSelectedAudioDevice] = useState<string>('default');
+  const [availableMicDevices, setAvailableMicDevices] = useState<Array<{ deviceId: string; label: string }>>([]);
+  const [selectedMicDevice, setSelectedMicDevice] = useState<string>('');
+
+  // 获取系统音频设备（用于面试官模式）
+  const loadAudioDevices = async () => {
+    try {
+      if (webSocketService.getConnectionState()) {
+        // 从Desktop客户端获取真实的系统音频设备列表
+        const devices = await webSocketService.getSystemAudioDevices();
+        setAvailableAudioDevices(devices);
+        console.log('已加载系统音频设备:', devices);
+      } else {
+        console.warn('Desktop客户端未连接，提供默认设备选项');
+        setAvailableAudioDevices([
+          { id: 'default', name: '默认音频输出设备' },
+          { id: 'builtin', name: 'MacBook Pro扬声器' },
+          { id: 'blackhole', name: 'BlackHole 2ch' },
+          { id: 'dtaudioplugin', name: 'DTAudioPlugin' },
+          { id: 'headphones', name: '耳机/外接音响' }
+        ]);
+      }
+    } catch (error) {
+      console.error('获取系统音频设备失败:', error);
+      // 发生错误时提供默认选项
+      setAvailableAudioDevices([
+        { id: 'default', name: '默认音频输出设备' },
+        { id: 'builtin', name: 'MacBook Pro扬声器' }
+      ]);
+    }
+  };
+
+  // 获取麦克风设备（用于面试者模式）
+  const loadMicDevices = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const micDevices = devices
+        .filter(device => device.kind === 'audioinput')
+        .map(device => ({
+          deviceId: device.deviceId,
+          label: device.label || `麦克风 ${device.deviceId.slice(0, 8)}...`
+        }));
+      
+      setAvailableMicDevices(micDevices);
+      if (micDevices.length > 0 && !selectedMicDevice) {
+        setSelectedMicDevice(micDevices[0].deviceId);
+      }
+    } catch (error) {
+      console.error('获取麦克风设备失败:', error);
+      setAvailableMicDevices([{ deviceId: '', label: '默认麦克风' }]);
+    }
+  };
 
   // 加载配置
   const loadConfig = async () => {
@@ -245,10 +300,11 @@ export default function AsrSettings() {
         }
       }
 
-      // 2. 启动系统音频捕获
+      // 2. 启动系统音频捕获（使用选择的设备）
       webSocketService.startSystemAudioCapture({
         sampleRate: 16000,
-        channels: 1
+        channels: 1,
+        device: selectedAudioDevice
       });
 
       setIsSystemAudioCapturing(true);
@@ -302,7 +358,7 @@ export default function AsrSettings() {
           if (displayText.trim()) {
             setTranscriptText(displayText.trim());
           } else if (data.status === "no_audio_detected") {
-            setTranscriptText("未检测到系统音频输入...");
+            setTranscriptText("未检测到系统音频信号，请检查扬声器/音响输出...");
           }
 
         } catch (error) {
@@ -338,8 +394,11 @@ export default function AsrSettings() {
     try {
       console.log('启动面试者麦克风音频识别模式');
       
-      // 1. 获取麦克风权限和音频流
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // 1. 获取麦克风权限和音频流（使用选择的设备）
+      const constraints: MediaStreamConstraints = {
+        audio: selectedMicDevice ? { deviceId: { exact: selectedMicDevice } } : true
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       
       // 2. 设置音频上下文用于波形显示
@@ -607,6 +666,8 @@ export default function AsrSettings() {
 
   useEffect(() => {
     loadConfig();
+    loadAudioDevices(); // 加载系统音频设备
+    loadMicDevices();   // 加载麦克风设备
     
     // 启动默认波形动画
     setTimeout(() => {
@@ -1073,6 +1134,78 @@ export default function AsrSettings() {
                 label: `${service.displayName} - ${service.description} (${service.url})`
               }))}
             />
+          </div>
+
+          {/* 音频设备选择 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {testService.includes('8002') ? (
+              // 面试官模式：系统音频设备选择
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  系统音频源
+                </label>
+                <Select
+                  value={selectedAudioDevice}
+                  onChange={setSelectedAudioDevice}
+                  style={{ width: '100%' }}
+                  placeholder="选择系统音频输出设备"
+                  options={availableAudioDevices.map(device => ({
+                    value: device.id,
+                    label: device.name
+                  }))}
+                  loading={availableAudioDevices.length === 0}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  选择要捕获音频的扬声器/音响设备
+                </p>
+              </div>
+            ) : (
+              // 面试者模式：麦克风设备选择
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  麦克风音源
+                </label>
+                <Select
+                  value={selectedMicDevice}
+                  onChange={setSelectedMicDevice}
+                  style={{ width: '100%' }}
+                  placeholder="选择麦克风设备"
+                  options={availableMicDevices.map(device => ({
+                    value: device.deviceId,
+                    label: device.label
+                  }))}
+                  loading={availableMicDevices.length === 0}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  选择要使用的麦克风设备
+                </p>
+              </div>
+            )}
+
+            {/* Desktop连接状态 */}
+            {testService.includes('8002') && (
+              <div className="flex items-center">
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className={`w-3 h-3 rounded-full ${desktopConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <span className="text-sm font-medium">
+                      Desktop客户端
+                    </span>
+                  </div>
+                  <span className={`text-xs ${desktopConnected ? 'text-green-600' : 'text-red-600'}`}>
+                    {desktopConnected ? '已连接' : '未连接'}
+                  </span>
+                  {!desktopConnected && (
+                    <button
+                      onClick={() => webSocketService.connect()}
+                      className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                    >
+                      尝试重新连接
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -162,12 +162,13 @@ export class WebSocketService {
   /**
    * 开始系统音频捕获
    */
-  public startSystemAudioCapture(options?: { sampleRate?: number; channels?: number }): void {
+  public startSystemAudioCapture(options?: { sampleRate?: number; channels?: number; device?: string }): void {
     this.send({
       type: 'START_SYSTEM_AUDIO_CAPTURE',
       data: {
         sampleRate: options?.sampleRate || 16000,
-        channels: options?.channels || 1
+        channels: options?.channels || 1,
+        device: options?.device || 'default'
       }
     });
   }
@@ -178,6 +179,45 @@ export class WebSocketService {
   public stopSystemAudioCapture(): void {
     this.send({
       type: 'STOP_SYSTEM_AUDIO_CAPTURE'
+    });
+  }
+
+  /**
+   * 获取系统音频设备列表
+   */
+  public async getSystemAudioDevices(): Promise<Array<{ id: string; name: string }>> {
+    return new Promise((resolve, reject) => {
+      if (!this.getConnectionState()) {
+        reject(new Error('WebSocket not connected'));
+        return;
+      }
+
+      // 生成唯一的请求ID
+      const requestId = Date.now().toString();
+      
+      // 设置超时处理
+      const timeout = setTimeout(() => {
+        this.messageHandlers.delete(`GET_AUDIO_DEVICES_RESPONSE_${requestId}`);
+        reject(new Error('Get audio devices timeout'));
+      }, 5000);
+
+      // 注册响应处理器
+      this.onMessage(`GET_AUDIO_DEVICES_RESPONSE_${requestId}`, (message: WebSocketMessage) => {
+        clearTimeout(timeout);
+        this.messageHandlers.delete(`GET_AUDIO_DEVICES_RESPONSE_${requestId}`);
+        
+        if (message.data?.success) {
+          resolve(message.data.devices || []);
+        } else {
+          reject(new Error(message.data?.error || 'Failed to get audio devices'));
+        }
+      });
+
+      // 发送获取设备请求
+      this.send({
+        type: 'GET_AUDIO_DEVICES',
+        data: { requestId }
+      });
     });
   }
 }
