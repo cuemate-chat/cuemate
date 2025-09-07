@@ -1,6 +1,7 @@
 import { build } from 'esbuild';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { copyFileSync, existsSync, mkdirSync } from 'fs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -144,6 +145,27 @@ async function buildPreloadScripts(watchMode = false) {
   }
 }
 
+// 复制原生模块
+function copyNativeModule() {
+  try {
+    const sourceNativeModule = resolve(__dirname, 'src/main/native/screen_capture_audio/build/Release/screen_capture_audio.node');
+    const destDir = resolve(__dirname, 'dist/native/screen_capture_audio');
+    const destFile = resolve(destDir, 'index.node');
+    
+    if (existsSync(sourceNativeModule)) {
+      if (!existsSync(destDir)) {
+        mkdirSync(destDir, { recursive: true });
+      }
+      copyFileSync(sourceNativeModule, destFile);
+      console.log('原生模块复制成功');
+    } else {
+      console.warn('原生模块未找到，跳过复制');
+    }
+  } catch (error) {
+    console.error('复制原生模块失败:', error);
+  }
+}
+
 // 主构建函数
 async function buildAll(watchMode = false) {
   console.log('开始构建 Electron 主进程和预加载脚本');
@@ -154,6 +176,9 @@ async function buildAll(watchMode = false) {
       buildMain(true),
       buildPreloadScripts(true),
     ]);
+    
+    // 复制原生模块
+    copyNativeModule();
     
     console.log('Electron 主进程构建监听已启动');
     
@@ -176,6 +201,9 @@ async function buildAll(watchMode = false) {
       buildMain(),
       buildPreloadScripts(),
     ]);
+    
+    // 复制原生模块
+    copyNativeModule();
     
     console.log('Electron 主进程构建完成');
   }

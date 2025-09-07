@@ -8,7 +8,7 @@
 #include <string>
 #include <utility>
 
-API_AVAILABLE(macos(12.3))
+API_AVAILABLE(macos(13.0))
 @interface ScreenCaptureAudioHandler : NSObject <SCStreamDelegate>
 
 @property (nonatomic, strong) SCStream *stream;
@@ -34,6 +34,7 @@ API_AVAILABLE(macos(12.3))
 
 - (void)dealloc {
     [self stopCapture];
+    [super dealloc];
 }
 
 - (void)startCaptureWithConfiguration:(SCStreamConfiguration *)config {
@@ -42,7 +43,7 @@ API_AVAILABLE(macos(12.3))
         return;
     }
     
-    if (@available(macOS 12.3, *)) {
+    if (@available(macOS 13.0, *)) {
         [SCShareableContent getShareableContentWithCompletionHandler:^(SCShareableContent *shareableContent, NSError *error) {
             if (error) {
                 NSLog(@"ScreenCaptureAudio: 获取共享内容失败: %@", error.localizedDescription);
@@ -164,19 +165,20 @@ API_AVAILABLE(macos(12.3))
 
 // C++ 包装器类实现
 ScreenCaptureAudioWrapper::ScreenCaptureAudioWrapper() {
-    handler = (__bridge_retained void*)[[ScreenCaptureAudioHandler alloc] init];
+    handler = (void*)[[ScreenCaptureAudioHandler alloc] init];
 }
 
 ScreenCaptureAudioWrapper::~ScreenCaptureAudioWrapper() {
-    ScreenCaptureAudioHandler *audioHandler = (__bridge_transfer ScreenCaptureAudioHandler*)handler;
+    ScreenCaptureAudioHandler *audioHandler = (ScreenCaptureAudioHandler*)handler;
     [audioHandler stopCapture];
-    audioHandler = nil;
+    [audioHandler release];
+    handler = nil;
 }
 
 void ScreenCaptureAudioWrapper::startCapture(int sampleRate, int channels, 
                                            std::function<void(const char*, size_t)> audioCallback,
                                            std::function<void(const std::string&)> errorCallback) {
-    ScreenCaptureAudioHandler *audioHandler = (__bridge ScreenCaptureAudioHandler*)handler;
+    ScreenCaptureAudioHandler *audioHandler = (ScreenCaptureAudioHandler*)handler;
     
     if (@available(macOS 13.0, *)) {
         SCStreamConfiguration *config = [[SCStreamConfiguration alloc] init];
@@ -202,12 +204,12 @@ void ScreenCaptureAudioWrapper::startCapture(int sampleRate, int channels,
 }
 
 void ScreenCaptureAudioWrapper::stopCapture() {
-    ScreenCaptureAudioHandler *audioHandler = (__bridge ScreenCaptureAudioHandler*)handler;
+    ScreenCaptureAudioHandler *audioHandler = (ScreenCaptureAudioHandler*)handler;
     [audioHandler stopCapture];
 }
 
 bool ScreenCaptureAudioWrapper::isCapturing() const {
-    ScreenCaptureAudioHandler *audioHandler = (__bridge ScreenCaptureAudioHandler*)handler;
+    ScreenCaptureAudioHandler *audioHandler = (ScreenCaptureAudioHandler*)handler;
     return audioHandler.isCapturing;
 }
 
