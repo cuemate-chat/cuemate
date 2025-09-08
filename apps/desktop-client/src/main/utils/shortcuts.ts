@@ -29,8 +29,10 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
     {
       accelerator: 'CommandOrControl+Return',
       callback: () => {
-        logger.info('全局快捷键触发: CommandOrControl+Return - AI提问功能');
-        windowManager.toggleAIQuestion();
+        logger.info('全局快捷键触发: CommandOrControl+Return - 关闭所有悬浮窗口');
+        // 隐藏所有悬浮窗口，包括AI问答窗口
+        windowManager.hideFloatingWindows();
+        windowManager.hideAIQuestion();
       },
     },
     {
@@ -51,9 +53,10 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
       accelerator: 'CommandOrControl+Shift+H',
       callback: () => {
         logger.info('全局快捷键触发: CommandOrControl+Shift+H');
-        // 隐藏所有窗口
+        // 隐藏所有窗口，包括AI问答窗口
         windowManager.hideFloatingWindows();
         windowManager.hideMainContent();
+        windowManager.hideAIQuestion();
       },
     },
   ];

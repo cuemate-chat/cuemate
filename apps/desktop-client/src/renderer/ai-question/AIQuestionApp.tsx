@@ -1,5 +1,6 @@
+import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
-import { Copy, CornerDownLeft, X } from 'lucide-react';
+import { Copy, CornerDownLeft, Eraser, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import CueMateLogo from '../../assets/CueMate.png';
 
@@ -205,12 +206,18 @@ export function AIQuestionApp() {
   const handleClose = async () => {
     try {
       if ((window as any).electronAPI) {
-        await (window as any).electronAPI.hideAIQuestion();
+        await (window as any).electronAPI.toggleAIQuestion();
       }
     } catch (error) {
       console.error('关闭AI问题窗口失败:', error);
     }
   };
+
+  const handleClearMessages = () => {
+    setMessages([]);
+  };
+
+  // 使用原生可清除输入（type="search"），无需自定义清空按钮
 
   return (
     <div className="ai-question-app">
@@ -224,7 +231,7 @@ export function AIQuestionApp() {
         <div className="ai-window-header">
           <div className="ai-header-left">
             <img src={CueMateLogo} alt="CueMate" className="ai-logo" />
-            <div className="ai-title">Think</div>
+            <div className="ai-title">{isLoading ? 'Think' : 'AI Response'}</div>
             {isLoading && <LoadingDots />}
           </div>
           <button 
@@ -257,27 +264,68 @@ export function AIQuestionApp() {
 
         {/* Footer - 输入区域 */}
         <div className="ai-window-footer">
-          <input
-            type="text"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="询问 AI 任意问题"
-            className="ai-input-field"
-          />
+          <div className="ai-input-container">
+            <input
+              type="search"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="询问 AI 任意问题"
+              className="ai-input-field"
+            />
+          </div>
           <div className="ai-input-actions">
-            <button className="ai-copy-btn">
-              <Copy size={16} />
-              复制
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!question.trim() || isLoading}
-              className="ai-submit-btn"
-            >
-              <span className="ai-submit-text">提交</span>
-              <CornerDownLeft size={16} />
-            </button>
+            <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div className="ai-action">
+                  <button 
+                    className="ai-clear-btn"
+                    onClick={handleClearMessages}
+                    title="清除对话记录"
+                  >
+                    <Eraser size={16} />
+                  </button>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
+                清空当前聊天框内容
+                <Tooltip.Arrow className="radix-tooltip-arrow" />
+              </Tooltip.Content>
+            </Tooltip.Root>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div className="ai-action">
+                  <button className="ai-copy-btn" title="复制对话">
+                    <Copy size={16} />
+                  </button>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
+                复制当前 AI 回答内容
+                <Tooltip.Arrow className="radix-tooltip-arrow" />
+              </Tooltip.Content>
+            </Tooltip.Root>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div className="ai-action">
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!question.trim() || isLoading}
+                    className="ai-submit-btn"
+                    title="提交（Enter）"
+                  >
+                    <span className="ai-submit-text">提交</span>
+                    <CornerDownLeft size={16} />
+                  </button>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
+                提交当前问题给到 AI
+                <Tooltip.Arrow className="radix-tooltip-arrow" />
+              </Tooltip.Content>
+            </Tooltip.Root>
+            </Tooltip.Provider>
           </div>
         </div>
       </motion.div>
