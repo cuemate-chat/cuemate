@@ -1,8 +1,6 @@
-import 'animate.css/animate.min.css';
 import { motion } from 'framer-motion';
 import { Copy, CornerDownLeft, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import ScrollAnimation from 'react-animate-on-scroll';
+import { useRef, useState } from 'react';
 import CueMateLogo from '../../assets/CueMate.png';
 
 // 解析 Markdown 格式的代码块
@@ -167,67 +165,6 @@ export function AIQuestionApp() {
     }
   ]);
 
-  // 添加滚动位置透明度检测
-  useEffect(() => {
-    const container = messagesRef.current;
-    if (!container) return;
-
-    const fadeZoneHeight = 60;
-
-    const handleScroll = () => {
-      // 处理AI消息
-      const aiElements = container.querySelectorAll('.ai-message-ai .ai-message-content');
-      aiElements.forEach((el) => {
-        const rect = el.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        const relativeTop = rect.top - containerRect.top;
-        const elementBottom = relativeTop + rect.height;
-
-        // 只有在渐变区域内才设置透明度，否则保持默认状态
-        if (relativeTop < fadeZoneHeight && elementBottom > 0 && relativeTop >= 0) {
-          const distanceFromTop = Math.max(0, relativeTop);
-          const alpha = Math.max(0.1, distanceFromTop / fadeZoneHeight);
-          (el as HTMLElement).style.opacity = alpha.toString();
-          (el as HTMLElement).style.transition = 'opacity 0.1s ease';
-        } else {
-          // 确保在区域外完全可见
-          (el as HTMLElement).style.opacity = '1';
-        }
-      });
-
-      // 处理User消息
-      const userElements = container.querySelectorAll('.ai-message-user .ai-message-content');
-      userElements.forEach((el) => {
-        const rect = el.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        const relativeTop = rect.top - containerRect.top;
-        const elementBottom = relativeTop + rect.height;
-
-        // 只有在渐变区域内才设置透明度，否则保持默认状态
-        if (relativeTop < fadeZoneHeight && elementBottom > 0 && relativeTop >= 0) {
-          const distanceFromTop = Math.max(0, relativeTop);
-          const alpha = Math.max(0.1, distanceFromTop / fadeZoneHeight);
-          (el as HTMLElement).style.opacity = alpha.toString();
-          (el as HTMLElement).style.transition = 'opacity 0.1s ease';
-        } else {
-          // 确保在区域外完全可见
-          (el as HTMLElement).style.opacity = '1';
-        }
-      });
-    };
-
-    // 确保所有消息初始状态完全可见
-    const allElements = container.querySelectorAll('.ai-message-content');
-    allElements.forEach((el) => {
-      (el as HTMLElement).style.opacity = '1';
-    });
-
-    container.addEventListener('scroll', handleScroll);
-    // 注释掉初始调用，让文字在初始状态完全可见
-    // handleScroll();
-
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [messages]);
 
   const handleSubmit = async () => {
     if (!question.trim()) return;
@@ -301,20 +238,12 @@ export function AIQuestionApp() {
         {/* Body - 对话区域 */}
         <div className="ai-window-body" ref={messagesRef}>
           <div className="ai-messages">
-            {messages.map((message, index) => (
-              <ScrollAnimation
-                key={message.id}
-                animateIn="animate__fadeInUp"
-                animateOnce={true}
-                delay={Math.min(index * 30, 500)}
-                duration={0.6}
-              >
-                <div className={`ai-message ai-message-${message.type}`}>
-                  <div className="ai-message-content">
-                    {renderMessageContent(message.content)}
-                  </div>
+            {messages.map((message) => (
+              <div key={message.id} className={`ai-message ai-message-${message.type}`}>
+                <div className="ai-message-content">
+                  {renderMessageContent(message.content)}
                 </div>
-              </ScrollAnimation>
+              </div>
             ))}
             {isLoading && (
               <div className="ai-message ai-message-ai">

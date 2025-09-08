@@ -110,11 +110,6 @@ export class AIQuestionWindow {
       event.preventDefault();
       this.hide();
     });
-
-    // 窗口失去焦点时隐藏
-    this.window.on('blur', () => {
-      this.hide();
-    });
   }
 
   /**
@@ -159,7 +154,6 @@ export class AIQuestionWindow {
 
     try {
       this.window.hide();
-      logger.info('ai-question 窗口已隐藏');
     } catch (error) {
       logger.error({ error }, '隐藏 ai-question 窗口失败');
     }
