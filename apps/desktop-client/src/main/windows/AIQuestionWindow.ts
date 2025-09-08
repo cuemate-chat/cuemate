@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
 import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
@@ -10,12 +10,11 @@ import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/pat
 export class AIQuestionWindow {
   private window: BrowserWindow | null = null;
   private isDevelopment: boolean;
-  private controlBarWindow: BrowserWindow | null = null;
 
   private readonly config: WindowConfig = {
     id: 'ai-question',
     label: 'ai-question',
-    width: 500,
+    width: 700,
     height: 600,
     alwaysOnTop: true, // 悬浮窗口
     frame: false, // 无边框
@@ -30,9 +29,8 @@ export class AIQuestionWindow {
     center: true,
   };
 
-  constructor(isDevelopment: boolean = false, controlBarWindow?: BrowserWindow) {
+  constructor(isDevelopment: boolean = false) {
     this.isDevelopment = isDevelopment;
-    this.controlBarWindow = controlBarWindow || null;
   }
 
   /**
@@ -45,11 +43,13 @@ export class AIQuestionWindow {
     }
 
     try {
-      // 计算 AI 窗口位置 - 始终在 ControlBar 下方显示
-      const controlBarBounds = this.controlBarWindow!.getBounds();
-      const initialX =
-        controlBarBounds.x + Math.floor((controlBarBounds.width - this.config.width) / 2);
-      const initialY = controlBarBounds.y + controlBarBounds.height + 10; // ControlBar 下方 10px
+      // 获取主显示器信息来计算初始位置 - 和 MainContentWindow 一样
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea;
+
+      // 在主屏幕居中显示 - 显示在 ControlBarWindow 下方
+      const initialX = displayX + Math.floor((screenWidth - this.config.width) / 2);
+      const initialY = displayY + 90;
 
       this.window = new BrowserWindow({
         width: this.config.width,

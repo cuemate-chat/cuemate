@@ -28,7 +28,7 @@ export class WindowManager {
     // 创建窗口实例 - control-bar 现在作为主焦点窗口，关闭按钮已集成
     this.controlBarWindow = new ControlBarWindow(this.isDevelopment);
     this.mainContentWindow = new MainContentWindow(this.isDevelopment);
-    this.aiQuestionWindow = new AIQuestionWindow(this.isDevelopment); // 将在 initialize 中重新创建
+    this.aiQuestionWindow = new AIQuestionWindow(this.isDevelopment);
 
     // 创建 WebSocket 客户端
     this.webSocketClient = new WebSocketClient(this);
@@ -45,12 +45,7 @@ export class WindowManager {
       // 2. 创建主内容窗口（初始隐藏）
       await this.mainContentWindow.create();
 
-      // 3. 创建AI问答窗口（初始隐藏），传递 ControlBar 窗口引用
-      const controlBarBrowserWindow = this.controlBarWindow.getBrowserWindow();
-      this.aiQuestionWindow = new AIQuestionWindow(
-        this.isDevelopment,
-        controlBarBrowserWindow || undefined,
-      );
+      // 3. 创建AI问答窗口（初始隐藏）
       await this.aiQuestionWindow.create();
 
       // 4. 设置窗口事件监听
