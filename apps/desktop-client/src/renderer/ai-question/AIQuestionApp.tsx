@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { Copy, CornerDownLeft, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import ScrollAnimation from 'react-animate-on-scroll';
+import 'animate.css/animate.min.css';
 import CueMateLogo from '../../assets/CueMate.png';
 
 // 解析 Markdown 格式的代码块
@@ -165,36 +167,55 @@ export function AIQuestionApp() {
     }
   ]);
 
-  // 检测并更新固定位置前两行文字颜色
+  // 添加滚动位置透明度检测
   useEffect(() => {
-    const zoneHeight = 56; // 前两行的高度
-    const zoneTop = 36; // header高度 + 间距
-    
-    function onScroll() {
-      document.querySelectorAll('.ai-message-content').forEach(el => {
+    const container = messagesRef.current;
+    if (!container) return;
+
+    const fadeZoneHeight = 60;
+
+    const handleScroll = () => {
+      // 处理AI消息
+      const aiElements = container.querySelectorAll('.ai-message-ai .ai-message-content');
+      aiElements.forEach((el) => {
         const rect = el.getBoundingClientRect();
-        // 检测元素是否在固定的顶部区域内
-        if (rect.top >= zoneTop && rect.top < zoneTop + zoneHeight) {
-          el.classList.add('in-top-zone');
+        const containerRect = container.getBoundingClientRect();
+        const relativeTop = rect.top - containerRect.top;
+        const elementBottom = relativeTop + rect.height;
+
+        if (relativeTop < fadeZoneHeight && elementBottom > 0) {
+          const distanceFromTop = Math.max(0, relativeTop);
+          const alpha = Math.max(0.1, distanceFromTop / fadeZoneHeight);
+          (el as HTMLElement).style.opacity = alpha.toString();
+          (el as HTMLElement).style.transition = 'opacity 0.1s ease';
         } else {
-          el.classList.remove('in-top-zone');
+          (el as HTMLElement).style.opacity = '1';
         }
       });
-    }
 
-    // 监听多个可能的滚动容器
-    const messagesContainer = messagesRef.current;
-    if (messagesContainer) {
-      messagesContainer.addEventListener('scroll', onScroll);
-      // 也监听window滚动，以防万一
-      window.addEventListener('scroll', onScroll);
-      onScroll(); // 初始检测
-      
-      return () => {
-        messagesContainer.removeEventListener('scroll', onScroll);
-        window.removeEventListener('scroll', onScroll);
-      };
-    }
+      // 处理User消息
+      const userElements = container.querySelectorAll('.ai-message-user .ai-message-content');
+      userElements.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const relativeTop = rect.top - containerRect.top;
+        const elementBottom = relativeTop + rect.height;
+
+        if (relativeTop < fadeZoneHeight && elementBottom > 0) {
+          const distanceFromTop = Math.max(0, relativeTop);
+          const alpha = Math.max(0.1, distanceFromTop / fadeZoneHeight);
+          (el as HTMLElement).style.opacity = alpha.toString();
+          (el as HTMLElement).style.transition = 'opacity 0.1s ease';
+        } else {
+          (el as HTMLElement).style.opacity = '1';
+        }
+      });
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => container.removeEventListener('scroll', handleScroll);
   }, [messages]);
 
   const handleSubmit = async () => {
@@ -226,7 +247,7 @@ export function AIQuestionApp() {
     }, 2000);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -269,12 +290,20 @@ export function AIQuestionApp() {
         {/* Body - 对话区域 */}
         <div className="ai-window-body" ref={messagesRef}>
           <div className="ai-messages">
-            {messages.map((message) => (
-              <div key={message.id} className={`ai-message ai-message-${message.type}`}>
-                <div className="ai-message-content">
-                  {renderMessageContent(message.content)}
+            {messages.map((message, index) => (
+              <ScrollAnimation
+                key={message.id}
+                animateIn="animate__fadeInUp"
+                animateOnce={true}
+                delay={Math.min(index * 30, 500)}
+                duration={0.6}
+              >
+                <div className={`ai-message ai-message-${message.type}`}>
+                  <div className="ai-message-content">
+                    {renderMessageContent(message.content)}
+                  </div>
                 </div>
-              </div>
+              </ScrollAnimation>
             ))}
             {isLoading && (
               <div className="ai-message ai-message-ai">
@@ -292,7 +321,7 @@ export function AIQuestionApp() {
             type="text"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="询问 AI 任意问题"
             className="ai-input-field"
           />
