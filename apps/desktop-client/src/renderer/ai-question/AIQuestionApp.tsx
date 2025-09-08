@@ -1,8 +1,8 @@
+import 'animate.css/animate.min.css';
 import { motion } from 'framer-motion';
 import { Copy, CornerDownLeft, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import ScrollAnimation from 'react-animate-on-scroll';
-import 'animate.css/animate.min.css';
 import CueMateLogo from '../../assets/CueMate.png';
 
 // 解析 Markdown 格式的代码块
@@ -183,12 +183,14 @@ export function AIQuestionApp() {
         const relativeTop = rect.top - containerRect.top;
         const elementBottom = relativeTop + rect.height;
 
-        if (relativeTop < fadeZoneHeight && elementBottom > 0) {
+        // 只有在渐变区域内才设置透明度，否则保持默认状态
+        if (relativeTop < fadeZoneHeight && elementBottom > 0 && relativeTop >= 0) {
           const distanceFromTop = Math.max(0, relativeTop);
           const alpha = Math.max(0.1, distanceFromTop / fadeZoneHeight);
           (el as HTMLElement).style.opacity = alpha.toString();
           (el as HTMLElement).style.transition = 'opacity 0.1s ease';
         } else {
+          // 确保在区域外完全可见
           (el as HTMLElement).style.opacity = '1';
         }
       });
@@ -201,19 +203,28 @@ export function AIQuestionApp() {
         const relativeTop = rect.top - containerRect.top;
         const elementBottom = relativeTop + rect.height;
 
-        if (relativeTop < fadeZoneHeight && elementBottom > 0) {
+        // 只有在渐变区域内才设置透明度，否则保持默认状态
+        if (relativeTop < fadeZoneHeight && elementBottom > 0 && relativeTop >= 0) {
           const distanceFromTop = Math.max(0, relativeTop);
           const alpha = Math.max(0.1, distanceFromTop / fadeZoneHeight);
           (el as HTMLElement).style.opacity = alpha.toString();
           (el as HTMLElement).style.transition = 'opacity 0.1s ease';
         } else {
+          // 确保在区域外完全可见
           (el as HTMLElement).style.opacity = '1';
         }
       });
     };
 
+    // 确保所有消息初始状态完全可见
+    const allElements = container.querySelectorAll('.ai-message-content');
+    allElements.forEach((el) => {
+      (el as HTMLElement).style.opacity = '1';
+    });
+
     container.addEventListener('scroll', handleScroll);
-    handleScroll();
+    // 注释掉初始调用，让文字在初始状态完全可见
+    // handleScroll();
 
     return () => container.removeEventListener('scroll', handleScroll);
   }, [messages]);
