@@ -29,10 +29,9 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
     {
       accelerator: 'CommandOrControl+Return',
       callback: () => {
-        logger.info('全局快捷键触发: CommandOrControl+Return - 关闭所有悬浮窗口');
-        // 隐藏所有悬浮窗口，包括AI问答窗口
+        logger.info('全局快捷键触发: CommandOrControl+Return - 隐藏浮动窗口');
+        // 只隐藏浮动窗口，不影响AI问答窗口的独立状态
         windowManager.hideFloatingWindows();
-        windowManager.hideAIQuestion();
       },
     },
     {
@@ -53,10 +52,16 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
       accelerator: 'CommandOrControl+Shift+H',
       callback: () => {
         logger.info('全局快捷键触发: CommandOrControl+Shift+H');
-        // 隐藏所有窗口，包括AI问答窗口
+        // 隐藏浮动窗口和主内容窗口，但不影响AI问答窗口的独立状态
         windowManager.hideFloatingWindows();
         windowManager.hideMainContent();
-        windowManager.hideAIQuestion();
+      },
+    },
+    {
+      accelerator: 'CommandOrControl+Shift+A',
+      callback: () => {
+        logger.info('全局快捷键触发: CommandOrControl+Shift+A - 切换AI问答窗口');
+        windowManager.toggleAIQuestion();
       },
     },
   ];
@@ -206,9 +211,11 @@ export function getRegisteredShortcuts(): string[] {
   const shortcuts = [
     'CommandOrControl+\\',
     'CommandOrControl+J',
+    'CommandOrControl+Return',
     'CommandOrControl+Alt+Q',
     'CommandOrControl+Alt+S',
     'CommandOrControl+Shift+H',
+    'CommandOrControl+Shift+A',
   ];
 
   return shortcuts.filter((shortcut) => globalShortcut.isRegistered(shortcut));
