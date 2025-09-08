@@ -13,6 +13,13 @@ export class WindowManager {
   private webSocketClient: WebSocketClient;
   private isDevelopment: boolean;
   private appState: AppState;
+  private windowStatesBeforeHide: {
+    isMainContentVisible: boolean;
+    isAIQuestionVisible: boolean;
+  } = {
+    isMainContentVisible: false,
+    isAIQuestionVisible: false,
+  }; // 保存所有窗口隐藏前的状态
 
   constructor(isDevelopment: boolean = false) {
     this.isDevelopment = isDevelopment;
@@ -112,6 +119,17 @@ export class WindowManager {
     this.appState.isControlBarVisible = true;
     this.appState.isCloseButtonVisible = true; // 统一状态管理
 
+    // 恢复所有窗口之前的状态
+    if (this.windowStatesBeforeHide.isMainContentVisible) {
+      this.mainContentWindow.show();
+      this.appState.isMainContentVisible = true;
+    }
+    
+    if (this.windowStatesBeforeHide.isAIQuestionVisible) {
+      this.aiQuestionWindow.show();
+      this.appState.isAIQuestionVisible = true;
+    }
+
     // 初始时确保焦点在 control-bar
     setTimeout(() => this.ensureMainFocus(), 100);
   }
@@ -121,6 +139,23 @@ export class WindowManager {
    */
   public hideFloatingWindows(): void {
     logger.info('隐藏浮动窗口');
+
+    // 保存所有窗口当前状态
+    this.windowStatesBeforeHide = {
+      isMainContentVisible: this.appState.isMainContentVisible,
+      isAIQuestionVisible: this.appState.isAIQuestionVisible,
+    };
+    
+    // 隐藏所有相关窗口
+    if (this.appState.isMainContentVisible) {
+      this.mainContentWindow.hide();
+      this.appState.isMainContentVisible = false;
+    }
+    
+    if (this.appState.isAIQuestionVisible) {
+      this.aiQuestionWindow.hide();
+      this.appState.isAIQuestionVisible = false;
+    }
 
     this.controlBarWindow.hide();
     this.appState.isControlBarVisible = false;

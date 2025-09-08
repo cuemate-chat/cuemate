@@ -1,7 +1,7 @@
 import { build } from 'esbuild';
+import { copyFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { copyFileSync, existsSync, mkdirSync } from 'fs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -91,8 +91,10 @@ async function buildPreloadScripts(watchMode = false) {
       entry: resolve(__dirname, 'src/main/preload/controlBar.ts'),
       output: resolve(__dirname, 'dist/main/preload/controlBar.js'),
     },
-    // closeButton 预加载脚本已删除，关闭按钮已集成到控制条中
-    // main-content 窗口直接加载 localhost:80，不需要预加载脚本
+    {
+      entry: resolve(__dirname, 'src/main/preload/aiQuestion.ts'),
+      output: resolve(__dirname, 'dist/main/preload/aiQuestion.js'),
+    },
   ];
 
   try {
