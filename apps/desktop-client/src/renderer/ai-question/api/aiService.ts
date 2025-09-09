@@ -54,23 +54,6 @@ class AIService {
         return result.success ? result.userData : null;
       }
 
-      // 开发环境模拟数据
-      if (process.env.NODE_ENV === 'development') {
-        return {
-          model: {
-            provider: 'openai',
-            model_name: 'gpt-3.5-turbo',
-            credentials: JSON.stringify({
-              api_key: 'your-api-key',
-              base_url: 'https://api.openai.com/v1'
-            })
-          },
-          model_params: [
-            { param_key: 'temperature', value: 0.7 },
-            { param_key: 'max_tokens', value: 2000 }
-          ]
-        };
-      }
 
       return null;
     } catch (error) {
