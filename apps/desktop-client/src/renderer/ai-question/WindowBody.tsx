@@ -2,8 +2,8 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import 'animate.css/animate.min.css';
 import { Copy, StopCircle } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { MessageData, ScrollFadeMessageList } from '../components/ScrollFadeMessage';
 import { useScrollFadeEffect } from '../hooks/useScrollFadeEffect';
-import { ScrollFadeMessageList, MessageData } from '../components/ScrollFadeMessage';
 
 // 使用现代化的公共组件架构
 // 所有ScrollAnimation和渐变功能已提取为独立组件
@@ -40,12 +40,11 @@ export function WindowBody({ messages, isLoading }: WindowBodyProps) {
   }, [messages, isLoading]);
 
   return (
-    <>
+    <div className="ai-window-body" ref={messagesRef}>
       <ScrollFadeMessageList
-        ref={messagesRef}
         messages={messageData}
         isLoading={isLoading}
-        containerClassName="ai-window-body"
+        containerClassName=""
         messagesClassName="ai-messages"
         animationProps={{
           animationType: 'animate__fadeInUp',
@@ -127,6 +126,6 @@ export function WindowBody({ messages, isLoading }: WindowBodyProps) {
           </div>
         </Tooltip.Provider>
       </div>
-    </>
+    </div>
   );
 }
