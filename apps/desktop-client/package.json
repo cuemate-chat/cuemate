@@ -31,6 +31,7 @@
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-tooltip": "^1.2.8",
     "animate.css": "^4.1.1",
+    "antd": "^5.27.3",
     "clsx": "^2.1.1",
     "framer-motion": "^11.0.23",
     "lucide-react": "^0.454.0",
