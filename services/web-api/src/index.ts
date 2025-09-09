@@ -7,6 +7,7 @@ import fastifyStatic from '@fastify/static';
 import { config } from 'dotenv';
 import Fastify from 'fastify';
 import { registerAdsRoutes } from './routes/ads.js';
+import { registerAIConversationRoutes } from './routes/ai-conversations.js';
 import { registerAsrRoutes } from './routes/asr.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerDockerRoutes } from './routes/docker.js';
@@ -86,6 +87,7 @@ async function start() {
   registerLicenseRoutes(app as any);
   registerAdsRoutes(app as any);
   registerOperationLogRoutes(app as any);
+  registerAIConversationRoutes(app as any);
   registerDockerRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));

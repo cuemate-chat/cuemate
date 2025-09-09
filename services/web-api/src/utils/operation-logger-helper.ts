@@ -114,4 +114,9 @@ export const OPERATION_MAPPING = {
     menu: MenuType.ACCOUNT_SETTINGS,
     type: ResourceType.SYSTEM,
   },
+  // AI对话
+  AI_CONVERSATION: {
+    menu: '智能AI',
+    type: 'ai_conversation',
+  },
 } as const;
