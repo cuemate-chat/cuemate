@@ -1,4 +1,6 @@
+import * as Tooltip from '@radix-ui/react-tooltip';
 import 'animate.css/animate.min.css';
+import { Copy, StopCircle } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import ScrollAnimation from 'react-animate-on-scroll';
 
@@ -121,12 +123,12 @@ const renderMessageContent = (content: string) => {
   });
 };
 
-interface MessageBodyProps {
+interface WindowBodyProps {
   messages: Array<{id: string, type: 'user' | 'ai', content: string}>;
   isLoading: boolean;
 }
 
-export function MessageBody({ messages, isLoading }: MessageBodyProps) {
+export function WindowBody({ messages, isLoading }: WindowBodyProps) {
   const messagesRef = useRef<HTMLDivElement>(null);
 
   // 滚动到最新消息
@@ -256,6 +258,63 @@ export function MessageBody({ messages, isLoading }: MessageBodyProps) {
             </div>
           </div>
         )}
+      </div>
+      {/* 底部居中悬浮分段按钮 */}
+      <div className="ai-floating-actions">
+        <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+          <div className="ai-segmented">
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <button
+                  className="ai-segmented-btn ai-segmented-btn-left"
+                  onClick={() => {
+                    const evt = new CustomEvent('ai-question-stop');
+                    window.dispatchEvent(evt);
+                  }}
+                  disabled={!isLoading}
+                  title="停止对话"
+                >
+                  <StopCircle size={16} />
+                  <span className="ai-segmented-text">停止对话</span>
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
+                  点击停止当前提问
+                  <Tooltip.Arrow className="radix-tooltip-arrow" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+            <div className="ai-separator" />
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <button
+                  className="ai-segmented-btn ai-segmented-btn-right"
+                  onClick={async () => {
+                    try {
+                      const text = messages
+                        .map(m => `${m.type === 'user' ? '用户' : 'AI'}: ${m.content}`)
+                        .join('\n\n');
+                      await navigator.clipboard.writeText(text);
+                    } catch (e) {
+                      console.error('复制对话失败:', e);
+                    }
+                  }}
+                  title="复制所有对话内容"
+                >
+                  <Copy size={16} />
+                  <span className="ai-segmented-text">复制对话</span>
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
+                  复制所有对话内容
+                  <Tooltip.Arrow className="radix-tooltip-arrow" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </div>
+        </Tooltip.Provider>
       </div>
     </div>
   );

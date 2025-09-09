@@ -1,33 +1,13 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
-import { Copy, CornerDownLeft, Eraser, X } from 'lucide-react';
+import { Copy, CornerDownLeft, Eraser } from 'lucide-react';
 import React, { useState } from 'react';
-import CueMateLogo from '../../assets/CueMate.png';
-import { MessageBody } from './MessageBody';
+import { WindowBody } from './WindowBody.tsx';
+import { WindowFooter } from './WindowFooter.tsx';
+import { WindowHeader } from './WindowHeader.tsx';
 
 
-// 加载动画组件
-const LoadingDots = () => {
-  return (
-    <div className="loading-dots">
-      <motion.span
-        animate={{ opacity: [0.3, 1, 0.3] }}
-        transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
-        className="dot"
-      />
-      <motion.span
-        animate={{ opacity: [0.3, 1, 0.3] }}
-        transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }}
-        className="dot"
-      />
-      <motion.span
-        animate={{ opacity: [0.3, 1, 0.3] }}
-        transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }}
-        className="dot"
-      />
-    </div>
-  );
-};
+// 加载动画组件移动至 WindowHeader
 
 export function AIQuestionApp() {
   const [question, setQuestion] = useState('');
@@ -137,25 +117,13 @@ export function AIQuestionApp() {
         transition={{ duration: 0.2 }}
       >
         {/* Header */}
-        <div className="ai-window-header">
-          <div className="ai-header-left">
-            <img src={CueMateLogo} alt="CueMate" className="ai-logo" />
-            <div className="ai-title">{isLoading ? 'Think' : 'AI Response'}</div>
-            {isLoading && <LoadingDots />}
-          </div>
-          <button 
-            className="ai-window-close-btn"
-            onClick={handleClose}
-          >
-            <X size={16} />
-          </button>
-        </div>
+        <WindowHeader isLoading={isLoading} onClose={handleClose} />
 
         {/* Body - 对话区域 */}
-        <MessageBody messages={messages} isLoading={isLoading} />
+        <WindowBody messages={messages} isLoading={isLoading} />
 
         {/* Footer - 输入区域 */}
-        <div className="ai-window-footer">
+        <WindowFooter>
           <div className="ai-input-container">
             <input
               type="search"
@@ -219,7 +187,7 @@ export function AIQuestionApp() {
             </Tooltip.Root>
             </Tooltip.Provider>
           </div>
-        </div>
+        </WindowFooter>
       </motion.div>
     </div>
   );

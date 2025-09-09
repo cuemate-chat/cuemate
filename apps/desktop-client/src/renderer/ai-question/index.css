@@ -41,6 +41,12 @@
   gap: 4px;
 }
 
+.ai-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .ai-logo {
   width: 20px;
   height: 20px;
@@ -69,8 +75,8 @@
   display: inline-block;
 }
 
-.ai-window-close-btn {
-  width: 20px;
+/* 通用头部按钮：用于历史记录和关闭 */
+.ai-header-btn {
   height: 20px;
   border: none;
   border-radius: 4px;
@@ -81,22 +87,22 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
+  padding: 2px 8px;
+  gap: 6px;
 }
 
-.ai-window-header:hover .ai-window-close-btn {
+.ai-header-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 悬浮头部时显示右侧按钮 */
+.ai-window-header:hover .ai-header-btn {
   display: flex;
 }
 
-.ai-window-close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-50%) scale(1.05);
+.ai-header-btn-text {
+  font-size: 12px;
 }
-
-
 
 /* Footer 样式 */
 .ai-window-footer {
@@ -106,6 +112,70 @@
   padding: 4px 8px;
   background: rgba(255, 255, 255, 0.05);
   height: 28px;
+}
+
+/* 底部居中悬浮的分段按钮容器 */
+.ai-floating-actions {
+  position: sticky;
+  bottom: 0px; /* 位于 Footer 上方 */
+  z-index: 20;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* 只让内部按钮可交互 */
+}
+
+.ai-segmented {
+  display: flex;
+  align-items: stretch;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto; /* 允许按钮点击 */
+}
+
+.ai-segmented-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: white;
+  background: transparent;
+  border: none;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ai-segmented-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.ai-segmented-btn:disabled {
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+}
+
+.ai-segmented-btn-left {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.ai-segmented-btn-right {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.ai-separator {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.ai-segmented-text {
+  font-size: 12px;
 }
 
 .ai-input-container {
@@ -247,8 +317,8 @@ input[type="search"]::-webkit-search-cancel-button {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
 }
 
-/* ============================MessageBody============================ */
-/* MessageBody 组件样式 */
+/* ============================WindowBody============================ */
+/* WindowBody 组件样式 */
 
 /* Body 样式 - 重新定义以消除重复 */
 .ai-window-body {
