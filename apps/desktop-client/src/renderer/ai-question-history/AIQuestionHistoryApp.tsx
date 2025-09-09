@@ -20,7 +20,6 @@ export function AIQuestionHistoryApp() {
   // 加载对话历史
   const loadConversations = useCallback(async (page: number = 1, search?: string) => {
     try {
-      console.log('开始加载对话历史, page:', page, 'search:', search);
       setIsLoading(true);
       const result = await conversationHistoryService.getConversationHistory(
         page, 
@@ -29,9 +28,6 @@ export function AIQuestionHistoryApp() {
         search
       );
       
-      console.log('获取对话历史结果:', result);
-      console.log('conversations 数组:', result.items);
-      console.log('conversations 长度:', result.items?.length);
       setConversations(result.items);
       setTotalItems(result.total);
     } catch (error) {
@@ -69,21 +65,9 @@ export function AIQuestionHistoryApp() {
       // 获取对话详情
       const detail: ConversationDetailResponse = await conversationHistoryService.getConversationDetail(conversation.id);
       
-      // 发送消息给AI问答窗口
-      if ((window as any).electronAPI?.loadConversation) {
-        const messages = detail.messages.map(msg => ({
-          id: msg.id.toString(),
-          type: msg.message_type === 'user' ? 'user' as const : 'ai' as const,
-          content: msg.content
-        }));
-        
-        await (window as any).electronAPI.loadConversation({
-          conversationId: conversation.id,
-          messages: messages
-        });
-        
-        // 显示AI问答窗口
-        await (window as any).electronAPI.showAIQuestion?.();
+      // 显示AI问答窗口（暂时只显示窗口，稍后实现加载对话功能）
+      if ((window as any).electronHistoryAPI?.showAIQuestion) {
+        await (window as any).electronHistoryAPI.showAIQuestion();
       }
     } catch (error) {
       console.error('加载对话详情失败:', error);

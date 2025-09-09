@@ -49,7 +49,7 @@ export class ConversationHistoryService {
 
   private async initUserData() {
     try {
-      const result = await (window as any).electronAPI.getUserData();
+      const result = await (window as any).electronHistoryAPI.getUserData();
       if (result.success) {
         this.userData = result.userData;
         this.token = result.userData.token;

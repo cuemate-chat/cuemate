@@ -12,7 +12,7 @@ export function WindowHeader({ onClose, searchValue, onSearchChange }: WindowHea
     <div className="ai-window-header">
       <div className="ai-header-left">
         <History size={16} />
-        <div className="ai-title">历史记录</div>
+        <div className="ai-title">历史记录-测试版本</div>
       </div>
 
       {/* 搜索框 */}

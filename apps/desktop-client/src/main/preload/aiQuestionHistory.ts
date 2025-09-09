@@ -5,6 +5,8 @@ const api = {
   hideHistory: () => ipcRenderer.invoke('hide-ai-question-history'),
   toggleHistory: () => ipcRenderer.invoke('toggle-ai-question-history'),
   closeSelf: () => ipcRenderer.invoke('hide-ai-question-history'),
+  showAIQuestion: () => ipcRenderer.invoke('show-ai-question'),
+  getUserData: () => ipcRenderer.invoke('get-user-data'),
 };
 
 contextBridge.exposeInMainWorld('electronHistoryAPI', api);
