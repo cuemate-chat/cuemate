@@ -478,6 +478,31 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   /**
+   * 加载对话到AI问答窗口
+   */
+  ipcMain.handle('load-conversation', async (_event, conversationData: any) => {
+    try {
+      logger.info('IPC: 收到加载对话命令', conversationData);
+      
+      // 获取AI问答窗口实例
+      const aiQuestionWindow = windowManager.getAIQuestionWindow();
+      const browserWindow = aiQuestionWindow.getBrowserWindow();
+      if (browserWindow) {
+        // 发送对话数据到AI问答窗口
+        browserWindow.webContents.send('load-conversation-data', conversationData);
+        logger.info('IPC: 对话数据已发送到AI问答窗口');
+        return { success: true };
+      } else {
+        logger.warn('IPC: AI问答窗口未找到或未创建');
+        return { success: false, error: 'AI问答窗口未找到' };
+      }
+    } catch (error) {
+      logger.error({ error }, 'IPC: 加载对话失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
    * 获取缓存的用户数据
    */
   ipcMain.handle('get-user-data', () => {

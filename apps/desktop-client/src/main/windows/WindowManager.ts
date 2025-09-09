@@ -284,6 +284,13 @@ export class WindowManager {
   }
 
   /**
+   * 获取AI问答窗口实例
+   */
+  public getAIQuestionWindow(): AIQuestionWindow {
+    return this.aiQuestionWindow;
+  }
+
+  /**
    * 显示AI问答窗口
    */
   public showAIQuestion(): void {

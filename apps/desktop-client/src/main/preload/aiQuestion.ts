@@ -19,6 +19,17 @@ const aiQuestionAPI = {
   // === 历史窗口 API ===
   showAIQuestionHistory: () => ipcRenderer.invoke('show-ai-question-history'),
 
+  // === 对话加载 API ===
+  loadConversation: (conversationData: any) => ipcRenderer.invoke('load-conversation', conversationData),
+  
+  // === 事件监听 API ===
+  onLoadConversation: (callback: (conversationData: any) => void) => {
+    ipcRenderer.on('load-conversation-data', (_event, data) => callback(data));
+  },
+  removeLoadConversationListener: () => {
+    ipcRenderer.removeAllListeners('load-conversation-data');
+  },
+
   // === 日志 API ===
   log: (logMessage: FrontendLogMessage) => ipcRenderer.invoke('frontend-log', logMessage),
 
@@ -46,6 +57,3 @@ contextBridge.exposeInMainWorld('logger', logger);
 // 类型定义（供 TypeScript 使用）
 export type AIQuestionAPI = typeof aiQuestionAPI;
 export type Logger = typeof logger;
-
-// 预加载脚本中不使用 logger，保持 console.log
-console.log('AI问答窗口预加载脚本已加载');

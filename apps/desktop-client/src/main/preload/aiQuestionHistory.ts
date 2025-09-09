@@ -7,6 +7,7 @@ const api = {
   closeSelf: () => ipcRenderer.invoke('hide-ai-question-history'),
   showAIQuestion: () => ipcRenderer.invoke('show-ai-question'),
   getUserData: () => ipcRenderer.invoke('get-user-data'),
+  loadConversation: (data: any) => ipcRenderer.invoke('load-conversation', data),
 };
 
 contextBridge.exposeInMainWorld('electronHistoryAPI', api);
