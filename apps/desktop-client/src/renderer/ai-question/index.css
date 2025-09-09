@@ -290,6 +290,12 @@ input[type="search"]::-webkit-search-cancel-button {
   transition: opacity 0.1s ease;
 }
 
+.message-line {
+  margin: 0;
+  line-height: 1.6;
+  transition: opacity 0.1s ease;
+}
+
 .ai-message-user .ai-message-content {
   background: linear-gradient(to bottom, rgba(59, 130, 246, 0.5), rgba(59, 130, 246, 0.2));
   color: white;

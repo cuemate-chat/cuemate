@@ -41,54 +41,81 @@ const parseMarkdown = (text: string) => {
   return parts.length > 0 ? parts : [{ type: 'text', content: text }];
 };
 
-// 渲染消息内容
+// 渲染消息内容 - 行级别拆分版本
 const renderMessageContent = (content: string) => {
   const parts = parseMarkdown(content);
   
-  return parts.map((part, index) => {
+  return parts.map((part, partIndex) => {
     if (part.type === 'code') {
+      // 代码块也按行拆分
+      const codeLines = part.content.split('\n');
+      
       return (
-        <pre key={index} className="ai-code-block">
+        <pre key={partIndex} className="ai-code-block">
           <code className={`language-${part.language}`}>
-            {part.content}
+            {codeLines.map((codeLine, lineIndex) => (
+              <p 
+                key={`code-${partIndex}-line-${lineIndex}`}
+                className="message-line"
+                data-line={lineIndex}
+                style={{ margin: 0, lineHeight: '1.6' }}
+              >
+                {codeLine || '\u00A0'} {/* 空行使用不间断空格 */}
+              </p>
+            ))}
           </code>
         </pre>
       );
     } else {
-      // 处理内联代码和普通文本
-      const textParts = [];
-      let textIndex = 0;
-      const inlineCodeRegex = /`([^`]+)`/g;
-      let textMatch;
-      
-      while ((textMatch = inlineCodeRegex.exec(part.content)) !== null) {
-        // 添加代码前的文本
-        if (textMatch.index > textIndex) {
-          const beforeText = part.content.slice(textIndex, textMatch.index);
-          if (beforeText) {
-            textParts.push(beforeText);
-          }
-        }
-        
-        // 添加内联代码
-        textParts.push(
-          <code key={`inline-${textMatch.index}`} className="ai-inline-code">
-            {textMatch[1]}
-          </code>
-        );
-        
-        textIndex = textMatch.index + textMatch[0].length;
-      }
-      
-      // 添加剩余文本
-      if (textIndex < part.content.length) {
-        textParts.push(part.content.slice(textIndex));
-      }
+      // 简化版本：先按行拆分，每行单独处理内联代码
+      const lines = part.content.split('\n');
       
       return (
-        <span key={index}>
-          {textParts}
-        </span>
+        <div key={partIndex}>
+          {lines.map((line, lineIndex) => {
+            // 处理每行的内联代码
+            const processLine = (lineText: string) => {
+              const parts = [];
+              let lastIndex = 0;
+              const inlineCodeRegex = /`([^`]+)`/g;
+              let match;
+              
+              while ((match = inlineCodeRegex.exec(lineText)) !== null) {
+                // 添加代码前的文本
+                if (match.index > lastIndex) {
+                  parts.push(lineText.slice(lastIndex, match.index));
+                }
+                
+                // 添加内联代码
+                parts.push(
+                  <code key={`${partIndex}-${lineIndex}-${match.index}`} className="ai-inline-code">
+                    {match[1]}
+                  </code>
+                );
+                
+                lastIndex = match.index + match[0].length;
+              }
+              
+              // 添加剩余文本
+              if (lastIndex < lineText.length) {
+                parts.push(lineText.slice(lastIndex));
+              }
+              
+              return parts.length > 0 ? parts : [lineText];
+            };
+            
+            return (
+              <p 
+                key={`${partIndex}-line-${lineIndex}`} 
+                className="message-line"
+                data-line={lineIndex}
+                style={{ margin: 0, lineHeight: '1.6' }}
+              >
+                {line ? processLine(line) : '\u00A0'} {/* 空行使用不间断空格 */}
+              </p>
+            );
+          })}
+        </div>
       );
     }
   });
@@ -120,45 +147,78 @@ export function MessageBody({ messages, isLoading }: MessageBodyProps) {
       // 固定区域高度 - 适配AI窗口尺寸
       const fadeZoneHeight = 60;
       
-      // 处理AI消息 - 只改变文字透明度
-      const aiElements = container.querySelectorAll('.ai-message-ai .ai-message-content');
-      aiElements.forEach((el) => {
-        const rect = el.getBoundingClientRect();
+      // 处理AI消息 - 行级别文字透明度控制
+      const aiElements = container.querySelectorAll('.ai-message-ai .message-line');
+      aiElements.forEach((lineEl) => {
+        const rect = lineEl.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
         const relativeTop = rect.top - containerRect.top;
-        const elementBottom = relativeTop + rect.height;
+        const lineBottom = relativeTop + rect.height;
         
-        if (relativeTop < fadeZoneHeight && elementBottom > 0) {
+        // 只有行在渐变区域内才处理
+        if (relativeTop < fadeZoneHeight && lineBottom > 0) {
           const distanceFromTop = Math.max(0, relativeTop);
           // 渐进式透明度：每10px降低0.1透明度，从1.0到0.5
           const steps = Math.floor((fadeZoneHeight - distanceFromTop) / 10);
           const alpha = Math.max(0.5, 1.0 - (steps * 0.1));
           
-          (el as HTMLElement).style.opacity = alpha.toString();
-          (el as HTMLElement).style.transition = 'opacity 0.1s ease';
+          (lineEl as HTMLElement).style.opacity = alpha.toString();
+          (lineEl as HTMLElement).style.transition = 'opacity 0.1s ease';
+        } else if (relativeTop >= fadeZoneHeight) {
+          // 在渐变区域下方，完全可见
+          (lineEl as HTMLElement).style.opacity = '1';
         } else {
-          (el as HTMLElement).style.opacity = '1';
+          // 在渐变区域上方，保持最小透明度
+          (lineEl as HTMLElement).style.opacity = '0.5';
         }
       });
 
-      // 处理User消息 - 改变整体透明度
+      // 处理User消息 - 区分短消息和长消息
       const userElements = container.querySelectorAll('.ai-message-user .ai-message-content');
       userElements.forEach((el) => {
         const rect = el.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
         const relativeTop = rect.top - containerRect.top;
-        const elementBottom = relativeTop + rect.height;
+        const relativeBottom = relativeTop + rect.height;
         
-        if (relativeTop < fadeZoneHeight && elementBottom > 0) {
-          const distanceFromTop = Math.max(0, relativeTop);
-          // 渐进式透明度：每10px降低0.1透明度，从1.0到0.5
-          const steps = Math.floor((fadeZoneHeight - distanceFromTop) / 10);
-          const alpha = Math.max(0.5, 1.0 - (steps * 0.1));
+        if (relativeBottom < fadeZoneHeight) {
+          // 短消息：整个消息都在渐变区域内 - 框变色
+          if (relativeTop < fadeZoneHeight) {
+            const distanceFromTop = Math.max(0, relativeTop);
+            const steps = Math.floor((fadeZoneHeight - distanceFromTop) / 10);
+            const alpha = Math.max(0.5, 1.0 - (steps * 0.1));
+            
+            (el as HTMLElement).style.opacity = alpha.toString();
+            (el as HTMLElement).style.transition = 'opacity 0.1s ease';
+          }
+        } else if (relativeTop < fadeZoneHeight) {
+          // 长消息：跨越渐变区域 - 只改变第一行文字颜色
+          (el as HTMLElement).style.opacity = '1'; // 框保持原色
           
-          (el as HTMLElement).style.opacity = alpha.toString();
-          (el as HTMLElement).style.transition = 'opacity 0.1s ease';
+          // 处理第一行透明度
+          const firstLine = el.querySelector('.message-line[data-line="0"]') as HTMLElement;
+          if (firstLine) {
+            const firstLineRect = firstLine.getBoundingClientRect();
+            const firstLineTop = firstLineRect.top - containerRect.top;
+            
+            if (firstLineTop < fadeZoneHeight) {
+              const distanceFromTop = Math.max(0, firstLineTop);
+              const steps = Math.floor((fadeZoneHeight - distanceFromTop) / 10);
+              const alpha = Math.max(0.5, 1.0 - (steps * 0.1));
+              
+              firstLine.style.opacity = alpha.toString();
+              firstLine.style.transition = 'opacity 0.1s ease';
+            } else {
+              firstLine.style.opacity = '1';
+            }
+          }
         } else {
+          // 完全在渐变区域外
           (el as HTMLElement).style.opacity = '1';
+          const firstLine = el.querySelector('.message-line[data-line="0"]') as HTMLElement;
+          if (firstLine) {
+            firstLine.style.opacity = '1';
+          }
         }
       });
     };
