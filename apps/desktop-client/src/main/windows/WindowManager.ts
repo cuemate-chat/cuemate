@@ -1,7 +1,9 @@
 import type { BrowserWindow } from 'electron';
+import { screen } from 'electron';
 import type { AppState } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
 import { WebSocketClient } from '../websocket/WebSocketClient.js';
+import { AIQuestionHistoryWindow } from './AIQuestionHistoryWindow.js';
 import { AIQuestionWindow } from './AIQuestionWindow.js';
 import { ControlBarWindow } from './ControlBarWindow.js';
 import { MainContentWindow } from './MainContentWindow.js';
@@ -13,12 +15,15 @@ export class WindowManager {
   private webSocketClient: WebSocketClient;
   private isDevelopment: boolean;
   private appState: AppState;
+  private aiQuestionHistoryWindow: AIQuestionHistoryWindow;
   private windowStatesBeforeHide: {
     isMainContentVisible: boolean;
     isAIQuestionVisible: boolean;
+    isAIQuestionHistoryVisible: boolean;
   } = {
     isMainContentVisible: false,
     isAIQuestionVisible: false,
+    isAIQuestionHistoryVisible: false,
   }; // 保存所有窗口隐藏前的状态
 
   constructor(isDevelopment: boolean = false) {
@@ -30,12 +35,14 @@ export class WindowManager {
       isCloseButtonVisible: false, // 关闭按钮状态由组件内部管理
       isMainContentVisible: false,
       isAIQuestionVisible: false,
+      isAIQuestionHistoryVisible: false as any,
     };
 
     // 创建窗口实例 - control-bar 现在作为主焦点窗口，关闭按钮已集成
     this.controlBarWindow = new ControlBarWindow(this.isDevelopment);
     this.mainContentWindow = new MainContentWindow(this.isDevelopment);
     this.aiQuestionWindow = new AIQuestionWindow(this.isDevelopment);
+    this.aiQuestionHistoryWindow = new AIQuestionHistoryWindow(this.isDevelopment);
 
     // 创建 WebSocket 客户端
     this.webSocketClient = new WebSocketClient(this);
@@ -54,6 +61,9 @@ export class WindowManager {
 
       // 3. 创建AI问答窗口（初始隐藏）
       await this.aiQuestionWindow.create();
+
+      // 3.1 创建AI问答历史窗口（初始隐藏）
+      await this.aiQuestionHistoryWindow.create();
 
       // 4. 设置窗口事件监听
       this.setupWindowEvents();
@@ -100,6 +110,25 @@ export class WindowManager {
         this.hideMainContent();
       });
     }
+
+    // 监听 AI 问答窗口事件用于联动历史窗口定位
+    const aiWindow = this.aiQuestionWindow.getBrowserWindow();
+    if (aiWindow) {
+      const relayoutHistory = () => {
+        if (this.isAIQuestionHistoryVisible()) {
+          const bounds = this.computeHistoryBoundsNextToAI();
+          if (bounds) {
+            this.aiQuestionHistoryWindow.setBounds(bounds);
+          }
+        }
+      };
+
+      aiWindow.on('move', relayoutHistory);
+      aiWindow.on('moved', relayoutHistory as any);
+      aiWindow.on('resize', relayoutHistory);
+      aiWindow.on('resized', relayoutHistory as any);
+      aiWindow.on('show', relayoutHistory);
+    }
   }
 
   /**
@@ -124,10 +153,14 @@ export class WindowManager {
       this.mainContentWindow.show();
       this.appState.isMainContentVisible = true;
     }
-    
+
     if (this.windowStatesBeforeHide.isAIQuestionVisible) {
       this.aiQuestionWindow.show();
       this.appState.isAIQuestionVisible = true;
+    }
+
+    if (this.windowStatesBeforeHide.isAIQuestionHistoryVisible) {
+      this.showAIQuestionHistoryNextToAI();
     }
 
     // 初始时确保焦点在 control-bar
@@ -144,17 +177,22 @@ export class WindowManager {
     this.windowStatesBeforeHide = {
       isMainContentVisible: this.appState.isMainContentVisible,
       isAIQuestionVisible: this.appState.isAIQuestionVisible,
+      isAIQuestionHistoryVisible: this.isAIQuestionHistoryVisible(),
     };
-    
+
     // 隐藏所有相关窗口
     if (this.appState.isMainContentVisible) {
       this.mainContentWindow.hide();
       this.appState.isMainContentVisible = false;
     }
-    
+
     if (this.appState.isAIQuestionVisible) {
       this.aiQuestionWindow.hide();
       this.appState.isAIQuestionVisible = false;
+    }
+
+    if (this.isAIQuestionHistoryVisible()) {
+      this.aiQuestionHistoryWindow.hide();
     }
 
     this.controlBarWindow.hide();
@@ -259,6 +297,10 @@ export class WindowManager {
   public hideAIQuestion(): void {
     this.aiQuestionWindow.hide();
     this.appState.isAIQuestionVisible = false;
+    // 关闭 AI 窗口时，同步关闭历史窗口
+    if (this.isAIQuestionHistoryVisible()) {
+      this.aiQuestionHistoryWindow.hide();
+    }
   }
 
   /**
@@ -269,6 +311,55 @@ export class WindowManager {
       this.hideAIQuestion();
     } else {
       this.showAIQuestion();
+    }
+  }
+
+  // === 历史窗口相关 ===
+  public isAIQuestionHistoryVisible(): boolean {
+    const w = this.aiQuestionHistoryWindow.getBrowserWindow();
+    return !!(w && w.isVisible());
+  }
+
+  private computeHistoryBoundsNextToAI(): Electron.Rectangle | null {
+    const aiWin = this.aiQuestionWindow.getBrowserWindow();
+    if (!aiWin) return null;
+    const aiBounds = aiWin.getBounds();
+    const display = screen.getDisplayMatching(aiBounds) || screen.getPrimaryDisplay();
+    const workArea = display.workArea;
+    const rightSpace = workArea.x + workArea.width - (aiBounds.x + aiBounds.width);
+    const minWidth = 260;
+    const maxWidth = Math.max(420, Math.floor(workArea.width * 0.5));
+    let width = Math.floor(rightSpace * 0.8);
+    width = Math.max(minWidth, Math.min(width, maxWidth, rightSpace - 10));
+    const x = aiBounds.x + aiBounds.width + 10;
+    const y = aiBounds.y;
+    const height = aiBounds.height;
+    // 若空间不足，回退贴左侧
+    if (x + width > workArea.x + workArea.width) {
+      const leftWidth = Math.floor((aiBounds.x - workArea.x) * 0.7);
+      const leftWidthClamped = Math.max(minWidth, Math.min(leftWidth, maxWidth));
+      const leftX = Math.max(workArea.x, aiBounds.x - 10 - leftWidthClamped);
+      return { x: leftX, y, width: leftWidthClamped, height };
+    }
+    return { x, y, width, height };
+  }
+
+  public showAIQuestionHistoryNextToAI(): void {
+    const bounds = this.computeHistoryBoundsNextToAI();
+    if (!bounds) return;
+    this.aiQuestionHistoryWindow.setBounds(bounds);
+    this.aiQuestionHistoryWindow.show();
+  }
+
+  public hideAIQuestionHistory(): void {
+    this.aiQuestionHistoryWindow.hide();
+  }
+
+  public toggleAIQuestionHistoryNextToAI(): void {
+    if (this.isAIQuestionHistoryVisible()) {
+      this.hideAIQuestionHistory();
+    } else {
+      this.showAIQuestionHistoryNextToAI();
     }
   }
 

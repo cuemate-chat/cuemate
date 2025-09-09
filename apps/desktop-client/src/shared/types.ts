@@ -59,6 +59,7 @@ export interface AppState {
   isCloseButtonVisible: boolean;
   isMainContentVisible: boolean;
   isAIQuestionVisible: boolean;
+  isAIQuestionHistoryVisible?: boolean;
 }
 
 // 日志级别

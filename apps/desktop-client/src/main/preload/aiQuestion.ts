@@ -16,6 +16,9 @@ const aiQuestionAPI = {
   // === 用户数据 API ===
   getUserData: () => ipcRenderer.invoke('get-user-data'),
 
+  // === 历史窗口 API ===
+  showAIQuestionHistory: () => ipcRenderer.invoke('show-ai-question-history'),
+
   // === 日志 API ===
   log: (logMessage: FrontendLogMessage) => ipcRenderer.invoke('frontend-log', logMessage),
 

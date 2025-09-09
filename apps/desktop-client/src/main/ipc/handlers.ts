@@ -167,6 +167,40 @@ export function setupIPC(windowManager: WindowManager): void {
     }
   });
 
+  // 历史窗口相关 IPC
+  ipcMain.handle('show-ai-question-history', async () => {
+    try {
+      windowManager.showAIQuestionHistoryNextToAI();
+      logger.info('IPC: 显示AI问答历史窗口命令已执行');
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 显示AI问答历史窗口失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle('hide-ai-question-history', async () => {
+    try {
+      windowManager.hideAIQuestionHistory();
+      logger.info('IPC: 隐藏AI问答历史窗口命令已执行');
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 隐藏AI问答历史窗口失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle('toggle-ai-question-history', async () => {
+    try {
+      windowManager.toggleAIQuestionHistoryNextToAI();
+      logger.info('IPC: 切换AI问答历史窗口命令已执行');
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 切换AI问答历史窗口失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
   /**
    * 获取应用状态
    */
@@ -324,7 +358,7 @@ export function setupIPC(windowManager: WindowManager): void {
       if (response.ok) {
         const data = await response.json();
         logger.info({ isLoggedIn: data.isLoggedIn, user: data.user }, 'IPC: 登录检查完成');
-        
+
         // 缓存用户数据到全局变量
         if (data.isLoggedIn && data.user) {
           cachedUserData = data.user;
@@ -333,7 +367,7 @@ export function setupIPC(windowManager: WindowManager): void {
           cachedUserData = null;
           logger.info('IPC: 用户未登录，清空缓存');
         }
-        
+
         return {
           success: true,
           isLoggedIn: data.isLoggedIn,

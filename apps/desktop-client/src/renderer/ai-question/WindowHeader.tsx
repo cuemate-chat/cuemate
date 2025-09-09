@@ -46,7 +46,12 @@ export function WindowHeader({ isLoading, onClose, onOpenHistory }: WindowHeader
             <Tooltip.Trigger asChild>
               <button 
                 className="ai-header-btn"
-                onClick={() => onOpenHistory && onOpenHistory()}
+                onClick={() => {
+                  try {
+                    (window as any).electronAPI?.showAIQuestionHistory?.();
+                  } catch {}
+                  onOpenHistory && onOpenHistory();
+                }}
               >
                 <History size={16} />
                 <span className="ai-header-btn-text">历史记录</span>
