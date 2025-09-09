@@ -37,7 +37,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'ai-conversations.list', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
-        const { page = 1, limit = 20, status = 'all' } = req.query as any;
+        const { page = 1, limit = 20, status = 'all', search } = req.query as any;
 
         let whereClause = 'WHERE user_id = ?';
         let params = [payload.uid];
@@ -45,6 +45,12 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
         if (status !== 'all') {
           whereClause += ' AND status = ?';
           params.push(status);
+        }
+
+        // 添加搜索条件
+        if (search && search.trim()) {
+          whereClause += ' AND title LIKE ?';
+          params.push(`%${search.trim()}%`);
         }
 
         // 获取总数

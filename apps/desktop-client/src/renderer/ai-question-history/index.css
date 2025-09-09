@@ -43,6 +43,46 @@ html, body, #root {
   z-index: 10;
 }
 
+/* Header 中间搜索区域 */
+.ai-header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  margin: 0 16px;
+}
+
+.ai-search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-width: 200px;
+  max-width: 300px;
+  width: 100%;
+}
+
+.ai-search-icon {
+  color: rgba(255, 255, 255, 0.6);
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.ai-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  width: 100%;
+  placeholder-color: rgba(255, 255, 255, 0.5);
+}
+
+.ai-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .ai-header-left {
   display: flex;
   align-items: center;
@@ -268,5 +308,270 @@ html, body, #root {
 .radix-tooltip-arrow {
   fill: rgba(30, 30, 30, 0.8);
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+/* ============================= 历史对话页面专用样式 ============================= */
+
+/* 对话历史主体区域 */
+.conversation-history-body {
+  padding: 8px;
+}
+
+.conversation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* 对话卡片 */
+.conversation-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.conversation-card:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.conversation-card-selected {
+  background: rgba(64, 132, 254, 0.2);
+  border-color: rgba(64, 132, 254, 0.4);
+}
+
+.conversation-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.conversation-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.conversation-title-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.conversation-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.conversation-status {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.conversation-delete-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.conversation-card:hover .conversation-delete-btn {
+  opacity: 1;
+}
+
+.conversation-delete-btn:hover {
+  color: rgba(239, 68, 68, 0.8);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.conversation-card-content {
+  margin-bottom: 8px;
+}
+
+.conversation-model-info {
+  display: flex;
+  align-items: center;
+}
+
+.conversation-model {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.conversation-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.conversation-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.conversation-stat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+}
+
+.conversation-time {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* 加载状态 */
+.ai-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 200px;
+}
+
+.ai-loading-text {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+}
+
+/* ============================= 分页组件样式 ============================= */
+
+:root {
+  --color-success: #10b981;
+  --color-info: #3b82f6;
+  --color-error: #ef4444;
+  --color-text-secondary: rgba(255, 255, 255, 0.6);
+}
+
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.pagination-info {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-nav {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+}
+
+.pagination-page {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+}
+
+.pagination-page-active {
+  background: rgba(64, 132, 254, 0.6);
+  border-color: rgba(64, 132, 254, 0.8);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.pagination-dots {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  padding: 0 4px;
+}
+
+.pagination-jump {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+}
+
+.pagination-jump-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 3px;
+  padding: 2px 6px;
+  width: 40px;
+  font-size: 11px;
+  text-align: center;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.pagination-jump-input:focus {
+  border-color: rgba(64, 132, 254, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.pagination-jump-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 
