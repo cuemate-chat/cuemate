@@ -47,8 +47,8 @@ html, body, #root {
 .ai-header-center {
   flex: 1;
   display: flex;
-  justify-content: center;
-  margin: 0 16px;
+  justify-content: flex-start;
+  margin-left: 10px;
 }
 
 .ai-search-container {
@@ -57,10 +57,8 @@ html, body, #root {
   align-items: center;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  padding: 4px 8px;
-  min-width: 200px;
-  max-width: 300px;
-  width: 100%;
+  padding: 2px 4px;
+  width: 70%;
 }
 
 .ai-search-icon {
@@ -76,11 +74,33 @@ html, body, #root {
   color: rgba(255, 255, 255, 0.9);
   font-size: 12px;
   width: 100%;
-  placeholder-color: rgba(255, 255, 255, 0.5);
+  padding-right: 20px;
 }
 
 .ai-search-input::placeholder {
   color: rgba(255, 255, 255, 0.5);
+}
+
+.ai-search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-search-clear:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .ai-header-left {
@@ -116,16 +136,19 @@ html, body, #root {
   background: rgba(255, 255, 255, 0.1);
   color: white;
   cursor: pointer;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
   padding: 2px 8px;
   gap: 6px;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .ai-window-header:hover .ai-header-btn {
-  display: flex;
+  opacity: 1;
+  visibility: visible;
 }
 
 .ai-header-btn:hover {

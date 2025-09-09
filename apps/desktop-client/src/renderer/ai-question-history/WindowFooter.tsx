@@ -1,14 +1,30 @@
-import React from 'react';
+import { Pagination } from './components/Pagination';
 
 interface WindowFooterProps {
-  children?: React.ReactNode;
-  className?: string;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  totalItems: number;
+  pageSize: number;
 }
 
-export function WindowFooter({ children, className }: WindowFooterProps) {
+export function WindowFooter({ 
+  currentPage, 
+  totalPages, 
+  onPageChange, 
+  totalItems, 
+  pageSize 
+}: WindowFooterProps) {
   return (
-    <div className={`ai-window-footer${className ? ` ${className}` : ''}`}>
-      {children}
+    <div className="ai-window-footer">
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        showInfo={true}
+        totalItems={totalItems}
+        pageSize={pageSize}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import 'animate.css/animate.min.css';
 import { useRef } from 'react';
-import { ConversationCard } from './components/ConversationCard';
 import { ConversationHistoryItem } from './api/conversationHistoryService';
+import { ConversationCard } from './components/ConversationCard';
 
 interface WindowBodyProps {
   conversations: ConversationHistoryItem[];
@@ -19,6 +19,11 @@ export function WindowBody({
   onConversationDelete 
 }: WindowBodyProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  console.log('WindowBody 接收到的 props:');
+  console.log('conversations:', conversations);
+  console.log('conversations length:', conversations.length);
+  console.log('isLoading:', isLoading);
 
   return (
     <div className="ai-window-body conversation-history-body" ref={containerRef}>

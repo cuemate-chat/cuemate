@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { WindowBody } from './WindowBody';
 import { WindowFooter } from './WindowFooter';
 import { WindowHeader } from './WindowHeader';
-import { Pagination } from './components/Pagination';
-import { conversationHistoryService, ConversationHistoryItem, ConversationDetailResponse } from './api/conversationHistoryService';
+import { ConversationDetailResponse, ConversationHistoryItem, conversationHistoryService } from './api/conversationHistoryService';
 import './index.css';
 
 export function AIQuestionHistoryApp() {
@@ -21,6 +20,7 @@ export function AIQuestionHistoryApp() {
   // 加载对话历史
   const loadConversations = useCallback(async (page: number = 1, search?: string) => {
     try {
+      console.log('开始加载对话历史, page:', page, 'search:', search);
       setIsLoading(true);
       const result = await conversationHistoryService.getConversationHistory(
         page, 
@@ -29,6 +29,9 @@ export function AIQuestionHistoryApp() {
         search
       );
       
+      console.log('获取对话历史结果:', result);
+      console.log('conversations 数组:', result.items);
+      console.log('conversations 长度:', result.items?.length);
       setConversations(result.items);
       setTotalItems(result.total);
     } catch (error) {
@@ -126,16 +129,13 @@ export function AIQuestionHistoryApp() {
           onConversationSelect={handleConversationSelect}
           onConversationDelete={handleConversationDelete}
         />
-        <WindowFooter>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            showInfo={true}
-            totalItems={totalItems}
-            pageSize={pageSize}
-          />
-        </WindowFooter>
+        <WindowFooter
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          totalItems={totalItems}
+          pageSize={pageSize}
+        />
       </div>
     </div>
   );

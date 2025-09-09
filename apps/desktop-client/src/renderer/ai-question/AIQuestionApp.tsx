@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { WindowBody } from './WindowBody.tsx';
 import { WindowFooter } from './WindowFooter.tsx';
 import { WindowHeader } from './WindowHeader.tsx';
@@ -16,6 +16,9 @@ export function AIQuestionApp() {
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
   const [sequenceNumber, setSequenceNumber] = useState(1);
   const [isInitializing, setIsInitializing] = useState(true);
+  
+  // 创建 ref 用于 WindowBody 实现复制AI回答的功能
+  const copyLastAIResponseRef = useRef<(() => Promise<void>) | null>(null);
 
   // 组件初始化时恢复最近对话
   useEffect(() => {
@@ -223,8 +226,15 @@ export function AIQuestionApp() {
     setMessages([]);
   };
 
-  const handleClearMessages = () => {
-    handleNewChat();
+  const handleAskMore = (questionText: string) => {
+    // 先设置问题，然后立即提交
+    setQuestion(questionText);
+    // 使用 setTimeout 确保状态更新后再提交
+    setTimeout(() => {
+      if (questionText.trim() && !isLoading) {
+        handleSubmit();
+      }
+    }, 0);
   };
 
   // 使用原生可清除输入（type="search"），无需自定义清空按钮
@@ -245,6 +255,8 @@ export function AIQuestionApp() {
           messages={messages} 
           isLoading={isLoading || isInitializing} 
           onNewChat={handleNewChat}
+          onAskMore={handleAskMore}
+          onCopyLastAIResponse={copyLastAIResponseRef}
         />
 
         {/* Footer - 输入区域 */}
@@ -254,7 +266,8 @@ export function AIQuestionApp() {
           onQuestionChange={setQuestion}
           onSubmit={handleSubmit}
           onKeyDown={handleKeyDown}
-          onClearMessages={handleClearMessages}
+          onNewChat={handleNewChat}
+          onCopyLastAIResponse={() => copyLastAIResponseRef.current?.()}
         />
       </motion.div>
     </div>

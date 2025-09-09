@@ -1,5 +1,5 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { History, X, Search } from 'lucide-react';
+import { History, Search, X } from 'lucide-react';
 
 interface WindowHeaderProps {
   onClose: () => void;
@@ -18,14 +18,23 @@ export function WindowHeader({ onClose, searchValue, onSearchChange }: WindowHea
       {/* 搜索框 */}
       <div className="ai-header-center">
         <div className="ai-search-container">
-          <Search size={16} className="ai-search-icon" />
+          <Search size={14} className="ai-search-icon" />
           <input
             type="text"
             className="ai-search-input"
-            placeholder="搜索对话..."
+            placeholder="搜索历史记录..."
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
           />
+          {searchValue && (
+            <button
+              className="ai-search-clear"
+              onClick={() => onSearchChange('')}
+              type="button"
+            >
+              <X size={12} />
+            </button>
+          )}
         </div>
       </div>
 

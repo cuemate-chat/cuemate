@@ -1,6 +1,6 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import 'animate.css/animate.min.css';
-import { Copy, Plus } from 'lucide-react';
+import { Copy, MoreHorizontal, Plus } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { MessageData, ScrollFadeMessageList } from '../components/ScrollFadeMessage';
 import { useScrollFadeEffect } from '../hooks/useScrollFadeEffect';
@@ -12,10 +12,31 @@ interface WindowBodyProps {
   messages: Array<{id: string, type: 'user' | 'ai', content: string}>;
   isLoading: boolean;
   onNewChat?: () => void;
+  onAskMore?: (question: string) => void;
+  onCopyLastAIResponse?: React.MutableRefObject<(() => Promise<void>) | null>;
 }
 
-export function WindowBody({ messages, isLoading, onNewChat }: WindowBodyProps) {
+export function WindowBody({ messages, isLoading, onNewChat, onAskMore, onCopyLastAIResponse }: WindowBodyProps) {
   const messagesRef = useRef<HTMLDivElement>(null);
+
+  // 实现复制最近一次AI回答的逻辑
+  const handleCopyLastAIResponse = async () => {
+    try {
+      const lastAIMessage = messages.filter(m => m.type === 'ai').pop();
+      if (lastAIMessage) {
+        await navigator.clipboard.writeText(lastAIMessage.content);
+      }
+    } catch (e) {
+      console.error('复制AI回答失败:', e);
+    }
+  };
+
+  // 将实现的方法传递给父组件
+  useEffect(() => {
+    if (onCopyLastAIResponse) {
+      onCopyLastAIResponse.current = handleCopyLastAIResponse;
+    }
+  }, [messages, onCopyLastAIResponse]);
 
   // 转换消息格式为MessageData类型
   const messageData: MessageData[] = messages.map(msg => ({
@@ -95,17 +116,41 @@ export function WindowBody({ messages, isLoading, onNewChat }: WindowBodyProps) 
                 <Tooltip.Trigger asChild>
                   <button
                     className="ai-segmented-btn ai-segmented-btn-left"
+                    onClick={() => {
+                      const lastUserMessage = messages.filter(m => m.type === 'user').pop();
+                      if (lastUserMessage && onAskMore) {
+                        const moreQuestion = `告诉我更多关于"${lastUserMessage.content}"的信息`;
+                        onAskMore(moreQuestion);
+                      }
+                    }}
+                    disabled={messages.filter(m => m.type === 'user').length === 0}
+                    title="告诉我关于该问题的更多内容"
+                  >
+                    <MoreHorizontal size={16} />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
+                    告诉我关于该问题的更多内容
+                    <Tooltip.Arrow className="radix-tooltip-arrow" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+              <div className="ai-separator" />
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <button
+                    className="ai-segmented-btn ai-segmented-btn-middle"
                     onClick={() => onNewChat?.()}
                     disabled={isLoading}
                     title="新建提问"
                   >
                     <Plus size={16} />
-                    <span className="ai-segmented-text">新建提问</span>
                   </button>
                 </Tooltip.Trigger>
                 <Tooltip.Portal>
                   <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-                    开始新的对话
+                    点击停止当前窗口提问，新建提问
                     <Tooltip.Arrow className="radix-tooltip-arrow" />
                   </Tooltip.Content>
                 </Tooltip.Portal>
@@ -128,12 +173,11 @@ export function WindowBody({ messages, isLoading, onNewChat }: WindowBodyProps) 
                     title="复制所有对话内容"
                   >
                     <Copy size={16} />
-                    <span className="ai-segmented-text">复制对话</span>
                   </button>
                 </Tooltip.Trigger>
                 <Tooltip.Portal>
                   <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-                    复制所有对话内容
+                    复制以上所有对话内容
                     <Tooltip.Arrow className="radix-tooltip-arrow" />
                   </Tooltip.Content>
                 </Tooltip.Portal>

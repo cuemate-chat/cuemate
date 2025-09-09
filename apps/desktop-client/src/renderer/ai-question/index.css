@@ -164,6 +164,10 @@
   border-bottom-left-radius: 10px;
 }
 
+.ai-segmented-btn-middle {
+  border-radius: 0;
+}
+
 .ai-segmented-btn-right {
   border-top-right-radius: 10px;
   border-bottom-right-radius: 10px;

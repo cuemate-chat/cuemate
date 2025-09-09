@@ -8,7 +8,8 @@ interface WindowFooterProps {
   onQuestionChange: (value: string) => void;
   onSubmit: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
-  onClearMessages: () => void;
+  onNewChat: () => void;
+  onCopyLastAIResponse: () => void;
   className?: string;
 }
 
@@ -18,7 +19,8 @@ export function WindowFooter({
   onQuestionChange, 
   onSubmit, 
   onKeyDown,
-  onClearMessages,
+  onNewChat,
+  onCopyLastAIResponse,
   className 
 }: WindowFooterProps) {
   return (
@@ -40,8 +42,8 @@ export function WindowFooter({
               <div className="ai-action">
                 <button 
                   className="ai-clear-btn"
-                  onClick={onClearMessages}
-                  title="清除对话记录"
+                  onClick={onNewChat}
+                  title="清空当前聊天框内容"
                 >
                   <Eraser size={16} />
                 </button>
@@ -55,13 +57,17 @@ export function WindowFooter({
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <div className="ai-action">
-                <button className="ai-copy-btn" title="复制对话">
+                <button 
+                  className="ai-copy-btn" 
+                  onClick={onCopyLastAIResponse}
+                  title="复制最近一次AI回答"
+                >
                   <Copy size={16} />
                 </button>
               </div>
             </Tooltip.Trigger>
             <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-              复制当前 AI 回答内容
+              复制最近一次AI回答内容
               <Tooltip.Arrow className="radix-tooltip-arrow" />
             </Tooltip.Content>
           </Tooltip.Root>
