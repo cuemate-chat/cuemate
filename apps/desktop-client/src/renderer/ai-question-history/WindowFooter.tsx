@@ -1,30 +1,39 @@
-import { Pagination } from './components/Pagination';
+import { Pagination } from 'antd';
 
 interface WindowFooterProps {
   currentPage: number;
-  totalPages: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (current: number, size: number) => void;
   totalItems: number;
   pageSize: number;
 }
 
 export function WindowFooter({ 
   currentPage, 
-  totalPages, 
   onPageChange, 
+  onPageSizeChange,
   totalItems, 
   pageSize 
 }: WindowFooterProps) {
   return (
     <div className="ai-window-footer">
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={onPageChange}
-        showInfo={true}
-        totalItems={totalItems}
-        pageSize={pageSize}
-      />
+      <div className="pagination-wrapper">
+        <Pagination
+          current={currentPage}
+          total={totalItems}
+          pageSize={pageSize}
+          onChange={onPageChange}
+          showTotal={(total, range) => 
+            `第 ${range[0]}-${range[1]} 条，共 ${total} 条`
+          }
+          showQuickJumper={true}
+          showSizeChanger={true}
+          onShowSizeChange={onPageSizeChange || (() => onPageChange(1))}
+          pageSizeOptions={['5', '10', '20', '50', '100']}
+          size="default"
+          className="custom-pagination"
+        />
+      </div>
     </div>
   );
 }
