@@ -14,6 +14,7 @@ export function AIQuestionApp() {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Array<{id: string, type: 'user' | 'ai', content: string}>>([]);
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+  const [currentConversationStatus, setCurrentConversationStatus] = useState<'active' | 'completed' | 'error' | null>(null);
   const [sequenceNumber, setSequenceNumber] = useState(1);
   const [isInitializing, setIsInitializing] = useState(true);
   
@@ -23,6 +24,44 @@ export function AIQuestionApp() {
   // 组件初始化时恢复最近对话
   useEffect(() => {
     initializeConversation();
+  }, []);
+
+  // 监听历史对话加载事件
+  useEffect(() => {
+    const handleLoadConversation = (conversationData: any) => {
+      console.log('接收到历史对话加载事件:', conversationData);
+      
+      if (conversationData && conversationData.messages) {
+        // 清空当前消息
+        setMessages([]);
+        
+        // 加载历史消息
+        const loadedMessages = conversationData.messages.map((msg: any) => ({
+          id: msg.id,
+          type: msg.type,
+          content: msg.content
+        }));
+        
+        setMessages(loadedMessages);
+        setCurrentConversationId(conversationData.conversationId);
+        setCurrentConversationStatus(conversationData.status || 'active');
+        setSequenceNumber(loadedMessages.length + 1);
+        
+        console.log('历史对话加载完成，消息数量:', loadedMessages.length);
+      }
+    };
+
+    // 注册事件监听器
+    if ((window as any).electronAPI?.onLoadConversation) {
+      (window as any).electronAPI.onLoadConversation(handleLoadConversation);
+    }
+
+    // 清理函数
+    return () => {
+      if ((window as any).electronAPI?.removeLoadConversationListener) {
+        (window as any).electronAPI.removeLoadConversationListener();
+      }
+    };
   }, []);
 
   const initializeConversation = async () => {
@@ -35,6 +74,7 @@ export function AIQuestionApp() {
       if (latestConversation) {
         console.log('恢复现有对话:', latestConversation.conversation.title);
         setCurrentConversationId(latestConversation.conversation.id);
+        setCurrentConversationStatus(latestConversation.conversation.status);
         
         // 恢复消息
         const restoredMessages = latestConversation.messages.map(msg => ({
@@ -49,12 +89,14 @@ export function AIQuestionApp() {
       } else {
         console.log('没有现有对话，准备创建新对话');
         setCurrentConversationId(null);
+        setCurrentConversationStatus(null);
         setSequenceNumber(1);
         setMessages([]);
       }
     } catch (error) {
       console.error('初始化对话失败:', error);
       setCurrentConversationId(null);
+      setCurrentConversationStatus(null);
       setSequenceNumber(1);
       setMessages([]);
     } finally {
@@ -64,6 +106,12 @@ export function AIQuestionApp() {
 
   const handleSubmit = async () => {
     if (!question.trim() || isLoading) return;
+    
+    // 检查当前对话状态，如果已完成则阻止提交
+    if (currentConversationStatus === 'completed') {
+      alert('当前对话已完成，无法继续提问。请点击"新建提问"开始新的对话。');
+      return;
+    }
     
     setIsLoading(true);
     const currentQuestion = question;
@@ -85,6 +133,7 @@ export function AIQuestionApp() {
       }
       
       setCurrentConversationId(conversationId);
+      setCurrentConversationStatus('active');
     }
     
     // 添加用户消息到UI
@@ -222,6 +271,7 @@ export function AIQuestionApp() {
     
     console.log('开始新对话');
     setCurrentConversationId(null);
+    setCurrentConversationStatus(null);
     setSequenceNumber(1);
     setMessages([]);
   };
@@ -268,6 +318,7 @@ export function AIQuestionApp() {
           onKeyDown={handleKeyDown}
           onNewChat={handleNewChat}
           onCopyLastAIResponse={() => copyLastAIResponseRef.current?.()}
+          currentConversationStatus={currentConversationStatus}
         />
       </motion.div>
     </div>

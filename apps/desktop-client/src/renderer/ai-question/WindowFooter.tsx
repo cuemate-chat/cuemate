@@ -10,6 +10,7 @@ interface WindowFooterProps {
   onKeyDown: (e: React.KeyboardEvent) => void;
   onNewChat: () => void;
   onCopyLastAIResponse: () => void;
+  currentConversationStatus?: 'active' | 'completed' | 'error' | null;
   className?: string;
 }
 
@@ -21,8 +22,28 @@ export function WindowFooter({
   onKeyDown,
   onNewChat,
   onCopyLastAIResponse,
+  currentConversationStatus,
   className 
 }: WindowFooterProps) {
+  const isConversationCompleted = currentConversationStatus === 'completed';
+  
+  const handleSubmit = () => {
+    if (isConversationCompleted) {
+      alert('当前对话已完成，无法继续提问。请点击"新建提问"开始新的对话。');
+      return;
+    }
+    onSubmit();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey && isConversationCompleted) {
+      e.preventDefault();
+      alert('当前对话已完成，无法继续提问。请点击"新建提问"开始新的对话。');
+      return;
+    }
+    onKeyDown(e);
+  };
+
   return (
     <div className={`ai-window-footer${className ? ` ${className}` : ''}`}>
       <div className="ai-input-container">
@@ -30,9 +51,10 @@ export function WindowFooter({
           type="search"
           value={question}
           onChange={(e) => onQuestionChange(e.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder="询问 AI 任意问题"
+          onKeyDown={handleKeyDown}
+          placeholder={isConversationCompleted ? "对话已完成，请新建提问" : "询问 AI 任意问题"}
           className="ai-input-field"
+          disabled={isConversationCompleted}
         />
       </div>
       <div className="ai-input-actions">
@@ -75,10 +97,10 @@ export function WindowFooter({
             <Tooltip.Trigger asChild>
               <div className="ai-action">
                 <button
-                  onClick={onSubmit}
-                  disabled={!question.trim() || isLoading}
+                  onClick={handleSubmit}
+                  disabled={!question.trim() || isLoading || isConversationCompleted}
                   className="ai-submit-btn"
-                  title="提交（Enter）"
+                  title={isConversationCompleted ? "对话已完成" : "提交（Enter）"}
                 >
                   <span className="ai-submit-text">提交</span>
                   <CornerDownLeft size={16} />
@@ -86,7 +108,7 @@ export function WindowFooter({
               </div>
             </Tooltip.Trigger>
             <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-              提交当前问题给到 AI
+              {isConversationCompleted ? "对话已完成，无法继续提问" : "提交当前问题给到 AI"}
               <Tooltip.Arrow className="radix-tooltip-arrow" />
             </Tooltip.Content>
           </Tooltip.Root>
