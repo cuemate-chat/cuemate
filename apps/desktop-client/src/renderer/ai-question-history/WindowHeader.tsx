@@ -1,18 +1,19 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { History, Search, X } from 'lucide-react';
+import { History, RefreshCw, Search, X } from 'lucide-react';
 
 interface WindowHeaderProps {
   onClose: () => void;
+  onRefresh?: () => void;
   searchValue: string;
   onSearchChange: (value: string) => void;
 }
 
-export function WindowHeader({ onClose, searchValue, onSearchChange }: WindowHeaderProps) {
+export function WindowHeader({ onClose, onRefresh, searchValue, onSearchChange }: WindowHeaderProps) {
   return (
     <div className="ai-window-header">
       <div className="ai-header-left">
         <History size={16} />
-        <div className="ai-title">历史记录-测试版本</div>
+        <div className="ai-title">历史记录</div>
       </div>
 
       {/* 搜索框 */}
@@ -40,6 +41,25 @@ export function WindowHeader({ onClose, searchValue, onSearchChange }: WindowHea
 
       <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
         <div className="ai-header-right">
+          {onRefresh && (
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <button 
+                  className="ai-header-btn"
+                  onClick={onRefresh}
+                >
+                  <RefreshCw size={12} />
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content className="radix-tooltip-content">
+                  刷新列表
+                  <Tooltip.Arrow className="radix-tooltip-arrow" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          )}
+          
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <button 

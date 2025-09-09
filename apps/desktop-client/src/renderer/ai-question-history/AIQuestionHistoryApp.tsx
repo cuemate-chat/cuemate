@@ -8,6 +8,7 @@ import './index.css';
 export function AIQuestionHistoryApp() {
   // 状态管理
   const [conversations, setConversations] = useState<ConversationHistoryItem[]>([]);
+  const [allConversations, setAllConversations] = useState<ConversationHistoryItem[]>([]); // 存储所有对话，用于前端过滤
   const [isLoading, setIsLoading] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -15,47 +16,100 @@ export function AIQuestionHistoryApp() {
   const [selectedConversationId, setSelectedConversationId] = useState<number>();
   
   const pageSize = 5;
-  const totalPages = Math.ceil(totalItems / pageSize);
 
-  // 加载对话历史
-  const loadConversations = useCallback(async (page: number = 1, search?: string) => {
+  // 加载所有对话历史（用于前端过滤）
+  const loadAllConversations = useCallback(async () => {
     try {
       setIsLoading(true);
+      // 加载大量数据，假设最多1000条
       const result = await conversationHistoryService.getConversationHistory(
-        page, 
-        pageSize, 
-        'all', 
-        search
+        1, 
+        1000, 
+        'all'
       );
       
-      setConversations(result.items);
-      setTotalItems(result.total);
+      setAllConversations(result.items);
+      // 如果没有搜索，显示第一页数据
+      if (!searchValue) {
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        setConversations(result.items.slice(startIndex, endIndex));
+        setTotalItems(result.items.length);
+      } else {
+        // 如果有搜索，应用过滤
+        filterConversations(searchValue, result.items);
+      }
     } catch (error) {
       console.error('加载对话历史失败:', error);
+      setAllConversations([]);
       setConversations([]);
       setTotalItems(0);
     } finally {
       setIsLoading(false);
     }
-  }, [pageSize]);
+  }, [pageSize, currentPage, searchValue]);
+
+  // 前端过滤对话
+  const filterConversations = useCallback((searchTerm: string, allItems?: ConversationHistoryItem[]) => {
+    const items = allItems || allConversations;
+    if (!searchTerm.trim()) {
+      // 没有搜索词，显示分页数据
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      setConversations(items.slice(startIndex, endIndex));
+      setTotalItems(items.length);
+    } else {
+      // 有搜索词，过滤数据
+      const filtered = items.filter(item => 
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.model_provider.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.model_name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      // 应用分页到过滤后的数据
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      setConversations(filtered.slice(startIndex, endIndex));
+      setTotalItems(filtered.length);
+    }
+  }, [allConversations, currentPage, pageSize]);
 
   // 初始化加载
   useEffect(() => {
-    loadConversations(1);
-  }, [loadConversations]);
+    loadAllConversations();
+  }, []);
+
+  // 当页码或搜索词变化时，重新过滤数据
+  useEffect(() => {
+    if (allConversations.length > 0) {
+      filterConversations(searchValue);
+    }
+  }, [currentPage, searchValue, allConversations, filterConversations]);
 
   // 搜索处理
-  const handleSearch = useCallback(async (value: string) => {
+  const handleSearch = useCallback((value: string) => {
     setSearchValue(value);
     setCurrentPage(1); // 重置到第一页
-    await loadConversations(1, value);
-  }, [loadConversations]);
+    // 不需要await，因为useEffect会处理过滤
+  }, []);
 
   // 页码变化处理
-  const handlePageChange = useCallback(async (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-    await loadConversations(page, searchValue);
-  }, [loadConversations, searchValue]);
+    // 不需要await，因为useEffect会处理过滤
+  }, []);
+
+  // 页面大小变化处理
+  const handlePageSizeChange = useCallback((_current: number, _size: number) => {
+    setCurrentPage(1); // 重置到第一页
+    // 这里需要更新pageSize状态，但当前是常量，暂时只重新过滤
+    // filterConversations会在useEffect中自动调用
+  }, []);
+
+  // 刷新数据
+  const handleRefresh = useCallback(() => {
+    loadAllConversations();
+  }, [loadAllConversations]);
 
   // 对话选择处理
   const handleConversationSelect = async (conversation: ConversationHistoryItem) => {
@@ -65,7 +119,22 @@ export function AIQuestionHistoryApp() {
       // 获取对话详情
       const detail: ConversationDetailResponse = await conversationHistoryService.getConversationDetail(conversation.id);
       
-      // 显示AI问答窗口（暂时只显示窗口，稍后实现加载对话功能）
+      // 发送消息给AI问答窗口
+      if ((window as any).electronHistoryAPI?.loadConversation) {
+        const messages = detail.messages.map(msg => ({
+          id: msg.id.toString(),
+          type: msg.message_type === 'user' ? 'user' as const : 'ai' as const,
+          content: msg.content
+        }));
+        
+        await (window as any).electronHistoryAPI.loadConversation({
+          conversationId: conversation.id,
+          status: detail.conversation.status,
+          messages: messages
+        });
+      }
+      
+      // 显示AI问答窗口
       if ((window as any).electronHistoryAPI?.showAIQuestion) {
         await (window as any).electronHistoryAPI.showAIQuestion();
       }
@@ -79,8 +148,8 @@ export function AIQuestionHistoryApp() {
     try {
       const success = await conversationHistoryService.deleteConversation(conversationId);
       if (success) {
-        // 重新加载当前页数据
-        await loadConversations(currentPage, searchValue);
+        // 重新加载数据
+        handleRefresh();
         
         // 如果删除的是当前选中的对话，清除选中状态
         if (selectedConversationId === conversationId) {
@@ -89,6 +158,19 @@ export function AIQuestionHistoryApp() {
       }
     } catch (error) {
       console.error('删除对话失败:', error);
+    }
+  };
+
+  // 对话停止处理
+  const handleConversationStop = async (conversationId: number) => {
+    try {
+      const success = await conversationHistoryService.stopConversation(conversationId);
+      if (success) {
+        // 重新加载数据以更新状态显示
+        handleRefresh();
+      }
+    } catch (error) {
+      console.error('停止对话失败:', error);
     }
   };
 
@@ -102,7 +184,8 @@ export function AIQuestionHistoryApp() {
     <div className="ai-question-app">
       <div className="ai-question-window">
         <WindowHeader 
-          onClose={handleClose} 
+          onClose={handleClose}
+          onRefresh={handleRefresh}
           searchValue={searchValue}
           onSearchChange={handleSearch}
         />
@@ -112,11 +195,12 @@ export function AIQuestionHistoryApp() {
           selectedConversationId={selectedConversationId}
           onConversationSelect={handleConversationSelect}
           onConversationDelete={handleConversationDelete}
+          onConversationStop={handleConversationStop}
         />
         <WindowFooter
           currentPage={currentPage}
-          totalPages={totalPages}
           onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
           totalItems={totalItems}
           pageSize={pageSize}
         />
