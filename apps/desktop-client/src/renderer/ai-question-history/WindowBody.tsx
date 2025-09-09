@@ -9,6 +9,7 @@ interface WindowBodyProps {
   selectedConversationId?: number;
   onConversationSelect: (conversation: ConversationHistoryItem) => void;
   onConversationDelete: (conversationId: number) => void;
+  onConversationStop: (conversationId: number) => void;
 }
 
 export function WindowBody({ 
@@ -16,7 +17,8 @@ export function WindowBody({
   isLoading, 
   selectedConversationId,
   onConversationSelect,
-  onConversationDelete 
+  onConversationDelete,
+  onConversationStop 
 }: WindowBodyProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -44,13 +46,15 @@ export function WindowBody({
       ) : (
         // 对话卡片列表
         <div className="conversation-list">
-          {conversations.map((conversation) => (
+          {conversations.map((conversation, index) => (
             <ConversationCard
               key={conversation.id}
               conversation={conversation}
               onSelect={onConversationSelect}
               onDelete={onConversationDelete}
+              onStop={onConversationStop}
               isSelected={selectedConversationId === conversation.id}
+              index={index + 1}
             />
           ))}
         </div>
