@@ -329,6 +329,46 @@ input[type="search"]::-webkit-search-cancel-button {
   position: relative;
 }
 
+/* 空状态样式 */
+.ai-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.ai-empty-icon {
+  margin-bottom: 20px;
+  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.ai-empty-icon svg {
+  transition: all 0.3s ease;
+}
+
+.ai-empty-state:hover .ai-empty-icon svg {
+  transform: scale(1.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.ai-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+}
+
+.ai-empty-description {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+  max-width: 300px;
+}
+
 .ai-messages {
   display: flex;
   flex-direction: column;

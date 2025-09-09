@@ -13,6 +13,9 @@ const aiQuestionAPI = {
   hideAIQuestion: () => ipcRenderer.invoke('hide-ai-question'),
   toggleAIQuestion: () => ipcRenderer.invoke('toggle-ai-question'),
 
+  // === 用户数据 API ===
+  getUserData: () => ipcRenderer.invoke('get-user-data'),
+
   // === 日志 API ===
   log: (logMessage: FrontendLogMessage) => ipcRenderer.invoke('frontend-log', logMessage),
 

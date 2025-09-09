@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { WindowBody } from './WindowBody.tsx';
 import { WindowFooter } from './WindowFooter.tsx';
 import { WindowHeader } from './WindowHeader.tsx';
+import { aiService } from './api/aiService.ts';
 
 
 // 加载动画组件移动至 WindowHeader
@@ -10,48 +11,7 @@ import { WindowHeader } from './WindowHeader.tsx';
 export function AIQuestionApp() {
   const [question, setQuestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<Array<{id: string, type: 'user' | 'ai', content: string}>>([
-    {
-      id: '1',
-      type: 'user',
-      content: 'listen 是什么意思？'
-    },
-    {
-      id: '2',
-      type: 'ai',
-      content: '日常英语里，表示"听"或"认真听"，比如"Listen to music."\n\n编程里，通常指"监听"，比如服务器监听端口等待连接（如`server.listen(8080)`）。\n\n在编程里，"listen"常见于网络编程，比如Node.js或Python，表示服务器开始等待客户端连接。比如Node.js代码：\n\n```javascript\nconst http = require(\'http\')\nconst server = http.createServer((req, res) => {\n  res.end(\'Hello\')\n})\nserver.listen(3000) // 服务器监听3000端口\n```\n\n这里`listen(3000)`让服务器在3000端口等待请求。'
-    },
-    {
-      id: '3',
-      type: 'user',
-      content: '能解释一下 React Hooks 吗？'
-    },
-    {
-      id: '4',
-      type: 'ai',
-      content: 'React Hooks 是 React 16.8 引入的新特性，让你在函数组件中使用状态和其他 React 特性。\n\n主要 Hooks 包括：\n\n1. **useState** - 管理组件状态\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n2. **useEffect** - 处理副作用\n```javascript\nuseEffect(() => {\n  document.title = `Count: ${count}`;\n}, [count]);\n```\n\n3. **useContext** - 使用 Context\n4. **useReducer** - 复杂状态管理\n5. **useMemo** - 性能优化\n6. **useCallback** - 函数缓存\n\nHooks 让函数组件更强大，代码更简洁。'
-    },
-    {
-      id: '5',
-      type: 'user',
-      content: 'TypeScript 和 JavaScript 有什么区别？'
-    },
-    {
-      id: '6',
-      type: 'ai',
-      content: 'TypeScript 是 JavaScript 的超集，主要区别：\n\n**TypeScript 优势：**\n- 静态类型检查，编译时发现错误\n- 更好的 IDE 支持和代码提示\n- 重构更安全\n- 大型项目维护性更好\n\n**JavaScript 优势：**\n- 更灵活，无需类型定义\n- 学习曲线更平缓\n- 浏览器原生支持\n- 生态更成熟\n\n**示例对比：**\n\nJavaScript:\n```javascript\nfunction greet(name) {\n  return "Hello " + name;\n}\n```\n\nTypeScript:\n```typescript\nfunction greet(name: string): string {\n  return "Hello " + name;\n}\n```\n\n选择建议：大型项目用 TypeScript，小型项目或原型用 JavaScript。'
-    },
-    {
-      id: '7',
-      type: 'user',
-      content: '如何优化网页性能？对于你屏幕里，聊天的内容样式，怎么做到越接近顶部，字体颜色越深，离远了才是纯白色字体的？？？？这个是 css 设计的嘛？还是有现成的组件？？？'
-    },
-    {
-      id: '8',
-      type: 'ai',
-      content: '网页性能优化可以从多个方面入手：\n\n**1. 资源优化**\n- 压缩图片（WebP、AVIF格式）\n- 代码分割和懒加载\n- CDN 加速\n- 启用 Gzip 压缩\n\n**2. 代码优化**\n- 减少 HTTP 请求\n- 合并 CSS/JS 文件\n- 使用缓存策略\n- 避免阻塞渲染\n\n**3. 渲染优化**\n- 使用 CSS3 硬件加速\n- 避免重排重绘\n- 虚拟滚动\n- 图片懒加载\n\n**4. 网络优化**\n- HTTP/2 协议\n- 预加载关键资源\n- 服务端渲染（SSR）\n- 边缘计算\n\n**工具推荐：**\n- Lighthouse 性能检测\n- WebPageTest 详细分析\n- Chrome DevTools 调试\n\n性能优化是一个持续过程，需要根据实际数据调整策略。'
-    }
-  ]);
+  const [messages, setMessages] = useState<Array<{id: string, type: 'user' | 'ai', content: string}>>([]);
 
 
   const handleSubmit = async () => {
@@ -66,21 +26,59 @@ export function AIQuestionApp() {
     setMessages(prev => [...prev, userMessage]);
     
     setIsLoading(true);
+    const currentQuestion = question;
     setQuestion('');
     
-    // TODO: 实现AI问答功能
-    console.log('AI Question:', question);
+    // 创建AI消息占位符
+    const aiMessageId = (Date.now() + 1).toString();
+    const aiMessage = {
+      id: aiMessageId,
+      type: 'ai' as const,
+      content: ''
+    };
+    setMessages(prev => [...prev, aiMessage]);
     
-    // 模拟API调用
-    setTimeout(() => {
-      const aiMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai' as const,
-        content: '这是一个模拟的AI回答。在实际应用中，这里会显示真实的AI回复内容。'
-      };
-      setMessages(prev => [...prev, aiMessage]);
+    try {
+      // 使用 AI 服务进行流式调用
+      await aiService.callAIStream(
+        [{ role: 'user', content: currentQuestion }],
+        (chunk) => {
+          if (chunk.error) {
+            console.error('AI调用出错:', chunk.error);
+            setMessages(prev => prev.map(msg => 
+              msg.id === aiMessageId 
+                ? { ...msg, content: `抱歉，AI调用出错了：${chunk.error}` }
+                : msg
+            ));
+            setIsLoading(false);
+            return;
+          }
+
+          if (chunk.finished) {
+            console.log('AI流式输出完成');
+            setIsLoading(false);
+            return;
+          }
+
+          // 流式更新AI消息内容
+          if (chunk.content) {
+            setMessages(prev => prev.map(msg => 
+              msg.id === aiMessageId 
+                ? { ...msg, content: msg.content + chunk.content }
+                : msg
+            ));
+          }
+        }
+      );
+    } catch (error) {
+      console.error('AI调用失败:', error);
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, content: `AI调用失败：${(error as Error).message}` }
+          : msg
+      ));
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
