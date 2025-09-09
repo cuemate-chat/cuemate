@@ -178,45 +178,47 @@ export class ConversationHistoryService {
   }
 
   /**
+   * 停止对话（将状态改为completed）
+   */
+  async stopConversation(conversationId: number): Promise<boolean> {
+    await this.ensureAuth();
+
+    try {
+      const response = await fetch(`${this.baseURL}/ai/conversations/${conversationId}/stop`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ status: 'completed' })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`停止对话失败 ${response.status}:`, errorText);
+        throw new Error(`停止对话失败: ${response.status} - ${errorText}`);
+      }
+
+      console.log('停止对话成功');
+      return true;
+    } catch (error) {
+      console.error('停止对话失败:', error);
+      return false;
+    }
+  }
+
+  /**
    * 格式化时间显示
    */
   formatTime(timestamp: number): string {
     const date = new Date(timestamp * 1000); // 假设timestamp是秒级时间戳
-    const now = new Date();
-
-    // 如果是今天
-    if (date.toDateString() === now.toDateString()) {
-      return date.toLocaleTimeString('zh-CN', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
-    }
-
-    // 如果是昨天
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (date.toDateString() === yesterday.toDateString()) {
-      return '昨天 ' + date.toLocaleTimeString('zh-CN', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
-    }
-
-    // 如果是本年内
-    if (date.getFullYear() === now.getFullYear()) {
-      return date.toLocaleDateString('zh-CN', { 
-        month: '2-digit', 
-        day: '2-digit' 
-      }) + ' ' + date.toLocaleTimeString('zh-CN', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
-    }
-
-    // 其他情况显示完整日期
-    return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    
+    // 显示完整的年月日时分秒
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
     });
   }
 }
