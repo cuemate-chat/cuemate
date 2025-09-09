@@ -302,16 +302,40 @@ html, body, #root {
 .ai-empty-description { color: rgba(255, 255, 255, 0.8); font-size: 12px; }
 
 /* 滚动条样式（与其他窗口一致） */
-.ai-window-body::-webkit-scrollbar { width: 8px; }
+.ai-window-body::-webkit-scrollbar { 
+  width: 6px; 
+}
 .ai-window-body::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  margin: 4px 0;
 }
 .ai-window-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  transition: background 0.2s ease;
 }
-.ai-window-body::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
+.ai-window-body::-webkit-scrollbar-thumb:hover { 
+  background: rgba(255, 255, 255, 0.4); 
+}
+
+/* 对话列表滚动条样式 */
+.conversation-list::-webkit-scrollbar { 
+  width: 6px; 
+}
+.conversation-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  margin: 4px 0;
+}
+.conversation-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+.conversation-list::-webkit-scrollbar-thumb:hover { 
+  background: rgba(255, 255, 255, 0.4); 
+}
 
 /* Radix Tooltip 主题 */
 .radix-tooltip-content {
@@ -386,6 +410,16 @@ html, body, #root {
   min-width: 0;
 }
 
+.conversation-index {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(12, 83, 208, 0.2);
+  padding: 1px 4px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
 .conversation-title-text {
   color: rgba(255, 255, 255, 0.9);
   font-size: 13px;
@@ -408,6 +442,7 @@ html, body, #root {
   font-weight: 500;
 }
 
+.conversation-stop-btn,
 .conversation-delete-btn {
   background: none;
   border: none;
@@ -417,10 +452,17 @@ html, body, #root {
   border-radius: 3px;
   transition: all 0.2s ease;
   opacity: 0;
+  margin-left: 1px;
 }
 
+.conversation-card:hover .conversation-stop-btn,
 .conversation-card:hover .conversation-delete-btn {
   opacity: 1;
+}
+
+.conversation-stop-btn:hover {
+  color: rgba(251, 191, 36, 0.8);
+  background: rgba(251, 191, 36, 0.1);
 }
 
 .conversation-delete-btn:hover {
@@ -435,6 +477,8 @@ html, body, #root {
 .conversation-model-info {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .conversation-model {
@@ -443,6 +487,18 @@ html, body, #root {
   background: rgba(255, 255, 255, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.conversation-token-used {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(64, 132, 254, 0.2);
+  border: 1px solid rgba(64, 132, 254, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
 }
 
 .conversation-card-footer {
@@ -497,6 +553,147 @@ html, body, #root {
   --color-info: #3b82f6;
   --color-error: #ef4444;
   --color-text-secondary: rgba(255, 255, 255, 0.6);
+}
+
+/* 分页组件容器样式 */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* Ant Design Pagination 组件白色主题样式 */
+.ai-window-footer .custom-pagination {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 12px !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-item {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 6px !important;
+  margin: 0 2px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  line-height: 26px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-item a {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-item-active {
+  background: rgba(64, 132, 254, 0.25) !important;
+  border-color: rgba(64, 132, 254, 0.4) !important;
+  box-shadow: 0 0 8px rgba(64, 132, 254, 0.2) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-item-active a {
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-weight: 600 !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-prev,
+.ai-window-footer .custom-pagination .ant-pagination-next {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 6px !important;
+  margin: 0 4px !important;
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 26px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-prev:hover,
+.ai-window-footer .custom-pagination .ant-pagination-next:hover,
+.ai-window-footer .custom-pagination .ant-pagination-item:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-1px) !important;
+  transition: all 0.2s ease !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-prev .ant-pagination-item-link,
+.ai-window-footer .custom-pagination .ant-pagination-next .ant-pagination-item-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500 !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-prev:hover .ant-pagination-item-link,
+.ai-window-footer .custom-pagination .ant-pagination-next:hover .ant-pagination-item-link,
+.ai-window-footer .custom-pagination .ant-pagination-item:hover a {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-total-text {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 500 !important;
+  margin-right: 16px !important;
+  font-size: 12px !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-options {
+  color: rgba(255, 255, 255, 0.8) !important;
+  margin-left: 16px !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-options .ant-select {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-options .ant-select .ant-select-selector {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 6px !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 12px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-options .ant-select:hover .ant-select-selector {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-simple-pager {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-simple-pager input {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 6px !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 12px !important;
+  width: 50px !important;
+  text-align: center !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-simple-pager input:hover,
+.ai-window-footer .custom-pagination .ant-pagination-simple-pager input:focus {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(64, 132, 254, 0.4) !important;
+  box-shadow: 0 0 4px rgba(64, 132, 254, 0.2) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-jump-prev,
+.ai-window-footer .custom-pagination .ant-pagination-jump-next {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-disabled {
+  opacity: 0.4 !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-disabled:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  transform: none !important;
 }
 
 .pagination-container {
