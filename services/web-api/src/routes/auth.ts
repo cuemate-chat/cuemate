@@ -163,6 +163,9 @@ export function registerAuthRoutes(app: FastifyInstance) {
           .get();
 
         if (loggedInUser) {
+          // 为已登录用户生成JWT token
+          const token = app.jwt.sign({ uid: loggedInUser.id, email: loggedInUser.email, username: loggedInUser.name });
+          
           // 获取用户选中模型的完整信息
           let selectedModel = null;
           let modelParams = [];
@@ -191,6 +194,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
           return {
             isLoggedIn: true,
             user: user,
+            token: token,
           };
         } else {
           app.log.info('检查到没有已登录用户');

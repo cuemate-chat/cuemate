@@ -1,6 +1,6 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import 'animate.css/animate.min.css';
-import { Copy, StopCircle } from 'lucide-react';
+import { Copy, Plus } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { MessageData, ScrollFadeMessageList } from '../components/ScrollFadeMessage';
 import { useScrollFadeEffect } from '../hooks/useScrollFadeEffect';
@@ -11,9 +11,10 @@ import { useScrollFadeEffect } from '../hooks/useScrollFadeEffect';
 interface WindowBodyProps {
   messages: Array<{id: string, type: 'user' | 'ai', content: string}>;
   isLoading: boolean;
+  onNewChat?: () => void;
 }
 
-export function WindowBody({ messages, isLoading }: WindowBodyProps) {
+export function WindowBody({ messages, isLoading, onNewChat }: WindowBodyProps) {
   const messagesRef = useRef<HTMLDivElement>(null);
 
   // 转换消息格式为MessageData类型
@@ -94,20 +95,17 @@ export function WindowBody({ messages, isLoading }: WindowBodyProps) {
                 <Tooltip.Trigger asChild>
                   <button
                     className="ai-segmented-btn ai-segmented-btn-left"
-                    onClick={() => {
-                      const evt = new CustomEvent('ai-question-stop');
-                      window.dispatchEvent(evt);
-                    }}
-                    disabled={!isLoading}
-                    title="停止对话"
+                    onClick={() => onNewChat?.()}
+                    disabled={isLoading}
+                    title="新建提问"
                   >
-                    <StopCircle size={16} />
-                    <span className="ai-segmented-text">停止对话</span>
+                    <Plus size={16} />
+                    <span className="ai-segmented-text">新建提问</span>
                   </button>
                 </Tooltip.Trigger>
                 <Tooltip.Portal>
                   <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-                    点击停止当前提问
+                    开始新的对话
                     <Tooltip.Arrow className="radix-tooltip-arrow" />
                   </Tooltip.Content>
                 </Tooltip.Portal>

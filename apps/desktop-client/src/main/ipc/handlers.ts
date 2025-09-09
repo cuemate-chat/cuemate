@@ -10,8 +10,9 @@ import { WindowManager } from '../windows/WindowManager.js';
 export function setupIPC(windowManager: WindowManager): void {
   logger.info('设置 IPC 通信处理器');
 
-  // 全局缓存用户数据
+  // 全局缓存用户数据和token
   let cachedUserData: any = null;
+  let cachedToken: string | null = null;
 
   /**
    * 显示浮动窗口
@@ -359,12 +360,14 @@ export function setupIPC(windowManager: WindowManager): void {
         const data = await response.json();
         logger.info({ isLoggedIn: data.isLoggedIn, user: data.user }, 'IPC: 登录检查完成');
 
-        // 缓存用户数据到全局变量
+        // 缓存用户数据和token到全局变量
         if (data.isLoggedIn && data.user) {
           cachedUserData = data.user;
-          logger.info('IPC: 用户数据已缓存');
+          cachedToken = data.token;
+          logger.info('IPC: 用户数据和token已缓存');
         } else {
           cachedUserData = null;
+          cachedToken = null;
           logger.info('IPC: 用户未登录，清空缓存');
         }
 
@@ -376,6 +379,7 @@ export function setupIPC(windowManager: WindowManager): void {
       } else if (response.status === 401) {
         logger.info('IPC: 用户未登录');
         cachedUserData = null; // 清空缓存
+        cachedToken = null; // 清空token缓存
         return {
           success: true,
           isLoggedIn: false,
@@ -478,10 +482,12 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('get-user-data', () => {
     logger.info('IPC: 获取缓存的用户数据');
-    if (cachedUserData) {
+    if (cachedUserData && cachedToken) {
       return {
         success: true,
         userData: {
+          user: cachedUserData,
+          token: cachedToken,
           model: cachedUserData.model,
           model_params: cachedUserData.model_params,
         },
