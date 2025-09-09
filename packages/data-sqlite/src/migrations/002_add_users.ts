@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 
 export const version = 2;
-export const name = '002_seed_admin_user';
+export const name = '002_add_users';
 
 export function up(db: any): void {
   const now = Date.now();

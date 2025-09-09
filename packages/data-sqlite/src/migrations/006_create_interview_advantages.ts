@@ -1,5 +1,5 @@
 export const version = 6;
-export const name = '006_enhance_reviews';
+export const name = '006_create_interview_advantages';
 
 /**
  * 扩展面试复盘/评分结构：

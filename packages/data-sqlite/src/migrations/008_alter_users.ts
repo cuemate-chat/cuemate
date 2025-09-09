@@ -1,5 +1,5 @@
 export const version = 8;
-export const name = '008_user_selected_model';
+export const name = '008_alter_users';
 
 export function up(db: any): void {
   // 给用户表添加字段

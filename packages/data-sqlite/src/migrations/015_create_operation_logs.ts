@@ -1,5 +1,5 @@
 export const version = 15;
-export const name = '015_operation_logs';
+export const name = '015_create_operation_logs';
 
 export function up(db: any): void {
   // 创建操作记录表

@@ -1,5 +1,5 @@
 export const version = 9;
-export const name = '009_preset_questions';
+export const name = '009_create_preset_questions';
 
 export function up(db: any): void {
   // 创建预置题库表

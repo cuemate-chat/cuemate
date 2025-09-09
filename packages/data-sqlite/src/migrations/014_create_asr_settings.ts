@@ -1,5 +1,5 @@
 export const version = 14;
-export const name = '014_asr_settings';
+export const name = '014_create_asr_settings';
 
 export function up(db: any): void {
   db.exec(`
