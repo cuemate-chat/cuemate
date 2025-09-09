@@ -355,6 +355,51 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
     }),
   );
 
+  // 停止对话（将状态改为completed）
+  app.patch(
+    '/ai/conversations/:id/stop',
+    withErrorLogging(app.log as any, 'ai-conversations.stop', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const { id } = req.params as any;
+        const { status } = req.body as any;
+
+        // 检查对话是否存在且属于当前用户
+        const conversation = (app as any).db
+          .prepare('SELECT * FROM ai_conversations WHERE id = ? AND user_id = ?')
+          .get(id, payload.uid);
+
+        if (!conversation) {
+          return reply.code(404).send(buildPrefixedError('对话不存在', null, 404));
+        }
+
+        // 只允许将状态改为completed
+        if (status !== 'completed') {
+          return reply.code(400).send(buildPrefixedError('只能将对话状态改为已完成', null, 400));
+        }
+
+        // 更新对话状态
+        (app as any).db
+          .prepare('UPDATE ai_conversations SET status = ?, updated_at = unixepoch() WHERE id = ?')
+          .run(status, id);
+
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.AI_CONVERSATION,
+          operation: 'update',
+          resourceId: id,
+          resourceName: conversation.title,
+          message: `停止对话，状态改为已完成`,
+          userId: payload.uid,
+          userName: payload.username,
+        });
+
+        return { message: '对话已停止' };
+      } catch (err) {
+        return reply.code(500).send(buildPrefixedError('停止对话失败', err, 500));
+      }
+    }),
+  );
+
   // 批量添加消息（用于保存完整对话）
   app.post(
     '/ai/conversations/:id/messages/batch',
