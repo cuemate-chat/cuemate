@@ -64,6 +64,22 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
   const { styles } = useStyle();
   const token = useTheme();
 
+  // 自动检测当前弹框层级
+  const getCurrentLevel = () => {
+    // 检查当前有多少个 Drawer 在 DOM 中
+    const drawers = document.querySelectorAll('.ant-drawer');
+    return Math.min(drawers.length + 1, 3); // 最多支持3级
+  };
+
+  // 根据层级计算 z-index
+  const getZIndex = (level: number) => {
+    switch (level) {
+      case 1: return 9997;
+      case 2: return 9998;
+      case 3: return 9999;
+      default: return 9997;
+    }
+  };
 
   // 解析子组件，提取 header、content、footer
   const parseChildren = () => {
@@ -151,7 +167,7 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
       styles={drawerStyles}
       footer={footer}
       getContainer={() => document.body}
-      zIndex={9997} // 固定为一级弹框层级
+      zIndex={getZIndex(getCurrentLevel())}
       {...props}
     >
       <div style={{ 

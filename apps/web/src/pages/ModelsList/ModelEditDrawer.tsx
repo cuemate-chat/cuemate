@@ -4,7 +4,8 @@ import {
 } from '@ant-design/icons';
 import { Button, Input, Select, Switch, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
-import DrawerProvider, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProvider';
+import { testModelConnectivity } from '../../api/models';
+import DrawerProviderLevel2, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProviderLevel2';
 import { message } from '../../components/Message';
 import { findProvider } from '../../providers';
 
@@ -68,31 +69,20 @@ export default function ModelEditDrawer({
       return;
     }
 
-    // 收集凭证信息
-    const provider = findProvider(form.provider);
-    const fields =
-      provider?.credentialFieldsPerModel?.[form.model_name] ||
-      provider?.credentialFieldsPerModel?.default ||
-      provider?.credentialFields ||
-      [];
-    const credentials: Record<string, any> = {};
-    fields.forEach((f) => {
-      if (form[f.key] !== undefined && form[f.key] !== '') credentials[f.key] = form[f.key];
-    });
-
-    if (Object.keys(credentials).length === 0) {
-      message.warning('请先填写必要的凭证信息');
+    // 检查是否有模型ID（如果是编辑已有模型）
+    if (!form.id) {
+      message.warning('请先保存模型后再测试连接');
       return;
     }
 
     setTesting(true);
     try {
-      // 这里需要调用测试连接的API，暂时模拟一下
-      // 实际应该调用 testModelConnectivity 或类似的API
-      await new Promise(resolve => setTimeout(resolve, 2000)); // 模拟2秒延迟
-      message.success('连接测试成功！');
+      const result = await testModelConnectivity(form.id);
+      console.log('测试连接结果:', result);
+      message.success('连接测试成功！模型可以正常使用');
     } catch (error: any) {
-      message.error(error?.message || '连接测试失败');
+      console.error('测试连接失败:', error);
+      message.error(error?.message || '连接测试失败，请检查配置信息');
     } finally {
       setTesting(false);
     }
@@ -108,7 +98,7 @@ export default function ModelEditDrawer({
   };
 
   return (
-    <DrawerProvider
+    <DrawerProviderLevel2
       open={open}
       onClose={onClose}
       width="55%"
@@ -430,7 +420,7 @@ export default function ModelEditDrawer({
           </Button>
         </div>
       </DrawerFooter>
-    </DrawerProvider>
+    </DrawerProviderLevel2>
   );
 }
 
