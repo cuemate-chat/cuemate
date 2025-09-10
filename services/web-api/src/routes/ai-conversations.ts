@@ -31,26 +31,151 @@ const updateConversationSchema = z.object({
 });
 
 export function registerAIConversationRoutes(app: FastifyInstance) {
+  // 获取AI对话统计信息
+  app.get(
+    '/ai/conversations/stats',
+    withErrorLogging(app.log as any, 'ai-conversations.stats', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+
+        // 获取总体统计
+        const totalStats = (app as any).db
+          .prepare(`
+            SELECT 
+              COUNT(*) as total,
+              COALESCE(SUM(token_used), 0) as totalTokens,
+              COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
+              COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
+              COUNT(CASE WHEN status = 'error' THEN 1 END) as error
+            FROM ai_conversations 
+            WHERE user_id = ?
+          `)
+          .get(payload.uid);
+
+        // 获取今天的对话数
+        const todayStats = (app as any).db
+          .prepare(`
+            SELECT 
+              COUNT(*) as todayConversations
+            FROM ai_conversations 
+            WHERE user_id = ? 
+            AND created_at >= strftime('%s', 'now', 'start of day')
+          `)
+          .get(payload.uid);
+
+        // 获取今天的提问数（user消息）
+        const todayQuestionsStats = (app as any).db
+          .prepare(`
+            SELECT 
+              COUNT(*) as todayQuestions
+            FROM ai_messages m
+            JOIN ai_conversations c ON m.conversation_id = c.id
+            WHERE c.user_id = ? 
+            AND m.message_type = 'user'
+            AND m.created_at >= strftime('%s', 'now', 'start of day')
+          `)
+          .get(payload.uid);
+
+        // 获取总提问数（user消息）
+        const totalQuestionsStats = (app as any).db
+          .prepare(`
+            SELECT 
+              COUNT(*) as totalQuestions
+            FROM ai_messages m
+            JOIN ai_conversations c ON m.conversation_id = c.id
+            WHERE c.user_id = ? 
+            AND m.message_type = 'user'
+          `)
+          .get(payload.uid);
+
+        // 获取失败对话数（error状态 + 有错误消息的对话）
+        const failedStats = (app as any).db
+          .prepare(`
+            SELECT 
+              COUNT(DISTINCT c.id) as failedConversations
+            FROM ai_conversations c
+            LEFT JOIN ai_messages m ON c.id = m.conversation_id AND m.error_message IS NOT NULL
+            WHERE c.user_id = ? 
+            AND (c.status = 'error' OR m.id IS NOT NULL)
+          `)
+          .get(payload.uid);
+
+        const stats = {
+          total: totalStats.total || 0,
+          active: totalStats.active || 0,
+          completed: totalStats.completed || 0,
+          error: totalStats.error || 0,
+          totalTokens: totalStats.totalTokens || 0,
+          todayConversations: todayStats.todayConversations || 0,
+          todayQuestions: todayQuestionsStats.todayQuestions || 0,
+          totalQuestions: totalQuestionsStats.totalQuestions || 0,
+          failedConversations: failedStats.failedConversations || 0,
+        };
+
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.AI_CONVERSATION,
+          operation: 'view',
+          resourceId: undefined,
+          resourceName: undefined,
+          message: `获取AI对话统计信息`,
+          userId: payload.uid,
+          userName: payload.username,
+        });
+
+        return stats;
+      } catch (err) {
+        return reply.code(401).send(buildPrefixedError('获取统计信息失败', err, 401));
+      }
+    }),
+  );
+
   // 获取用户的AI对话列表
   app.get(
     '/ai/conversations',
     withErrorLogging(app.log as any, 'ai-conversations.list', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
-        const { page = 1, limit = 20, status = 'all', search } = req.query as any;
+        const { 
+          page = 1, 
+          limit = 20, 
+          status, 
+          search, 
+          model_provider,
+          start_time,
+          end_time 
+        } = req.query as any;
 
         let whereClause = 'WHERE user_id = ?';
         let params = [payload.uid];
 
-        if (status !== 'all') {
+        // 状态筛选
+        if (status && status !== '') {
           whereClause += ' AND status = ?';
           params.push(status);
         }
 
-        // 添加搜索条件
+        // 模型提供商筛选
+        if (model_provider && model_provider !== '') {
+          whereClause += ' AND model_provider = ?';
+          params.push(model_provider);
+        }
+
+        // 搜索条件（支持标题和模型名称）
         if (search && search.trim()) {
-          whereClause += ' AND title LIKE ?';
-          params.push(`%${search.trim()}%`);
+          whereClause += ' AND (title LIKE ? OR model_name LIKE ?)';
+          const searchTerm = `%${search.trim()}%`;
+          params.push(searchTerm, searchTerm);
+        }
+
+        // 时间范围筛选
+        if (start_time) {
+          whereClause += ' AND created_at >= ?';
+          params.push(parseInt(start_time));
+        }
+
+        if (end_time) {
+          whereClause += ' AND created_at <= ?';
+          params.push(parseInt(end_time));
         }
 
         // 获取总数
@@ -470,6 +595,110 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           return reply.code(400).send(buildPrefixedError('请求参数错误', err.errors, 400));
         }
         return reply.code(500).send(buildPrefixedError('批量添加消息失败', err, 500));
+      }
+    }),
+  );
+
+  // 批量删除AI对话记录
+  app.post(
+    '/ai/conversations/batch-delete',
+    withErrorLogging(app.log as any, 'ai-conversations.batch-delete', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const { conversation_ids } = req.body as any;
+
+        if (!Array.isArray(conversation_ids) || conversation_ids.length === 0) {
+          return reply.code(400).send(buildPrefixedError('对话ID列表不能为空', null, 400));
+        }
+
+        // 验证所有对话都属于当前用户
+        const placeholders = conversation_ids.map(() => '?').join(', ');
+        const conversations = (app as any).db
+          .prepare(`
+            SELECT id, title FROM ai_conversations 
+            WHERE id IN (${placeholders}) AND user_id = ?
+          `)
+          .all(...conversation_ids, payload.uid);
+
+        if (conversations.length !== conversation_ids.length) {
+          return reply.code(403).send(buildPrefixedError('包含不属于您的对话', null, 403));
+        }
+
+        // 批量删除对话
+        const deleteResult = (app as any).db
+          .prepare(`DELETE FROM ai_conversations WHERE id IN (${placeholders}) AND user_id = ?`)
+          .run(...conversation_ids, payload.uid);
+
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.AI_CONVERSATION,
+          operation: 'delete',
+          resourceId: conversation_ids.join(','),
+          resourceName: `${conversations.length}个对话`,
+          message: `批量删除${conversations.length}个对话`,
+          userId: payload.uid,
+          userName: payload.username,
+        });
+
+        return { 
+          message: `成功删除${conversations.length}个对话`,
+          deletedCount: deleteResult.changes 
+        };
+      } catch (err) {
+        return reply.code(500).send(buildPrefixedError('批量删除对话失败', err, 500));
+      }
+    }),
+  );
+
+  // 按时间删除AI对话记录
+  app.post(
+    '/ai/conversations/delete-before',
+    withErrorLogging(app.log as any, 'ai-conversations.delete-before', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const { before_time } = req.body as any;
+
+        if (!before_time || typeof before_time !== 'number') {
+          return reply.code(400).send(buildPrefixedError('时间参数无效', null, 400));
+        }
+
+        // 先查询要删除的对话数量
+        const countResult = (app as any).db
+          .prepare(`
+            SELECT COUNT(*) as count FROM ai_conversations 
+            WHERE user_id = ? AND created_at < ?
+          `)
+          .get(payload.uid, before_time);
+
+        const deleteCount = countResult.count || 0;
+
+        if (deleteCount === 0) {
+          return reply.code(200).send({ 
+            message: '没有找到符合条件的对话',
+            deletedCount: 0 
+          });
+        }
+
+        // 删除指定时间之前的对话
+        const deleteResult = (app as any).db
+          .prepare(`DELETE FROM ai_conversations WHERE user_id = ? AND created_at < ?`)
+          .run(payload.uid, before_time);
+
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.AI_CONVERSATION,
+          operation: 'delete',
+          resourceId: undefined,
+          resourceName: `${deleteCount}个历史对话`,
+          message: `按时间删除${deleteCount}个对话（${new Date(before_time * 1000).toLocaleString()}之前）`,
+          userId: payload.uid,
+          userName: payload.username,
+        });
+
+        return { 
+          message: `成功删除${deleteCount}个历史对话`,
+          deletedCount: deleteResult.changes 
+        };
+      } catch (err) {
+        return reply.code(500).send(buildPrefixedError('按时间删除对话失败', err, 500));
       }
     }),
   );

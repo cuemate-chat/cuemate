@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import { MessageContainer } from './components/Message';
 import AdsManagementList from './pages/AdsManagementList';
 import AdsPixel from './pages/AdsPixel';
+import AIRecords from './pages/AIRecords';
 import Asr from './pages/Asr';
 import DockerMonitorList from './pages/DockerMonitorList';
 import Help from './pages/Help';
@@ -54,6 +55,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings/asr" element={<Asr />} />
           <Route path="/settings/logs" element={<LogsList />} />
           <Route path="/settings/vector-knowledge" element={<VectorKnowledge />} />
+          <Route path="/settings/ai-records" element={<AIRecords />} />
           <Route path="/settings/license" element={<License />} />
           <Route path="/settings/docker-monitor" element={<DockerMonitorList />} />
           <Route path="/settings/operation-logs" element={<OperationLogsList />} />

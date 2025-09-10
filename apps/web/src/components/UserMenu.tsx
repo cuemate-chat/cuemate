@@ -1,5 +1,6 @@
 import {
   ArrowRightOnRectangleIcon,
+  ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
   CpuChipIcon,
@@ -129,6 +130,11 @@ export default function UserMenu() {
     setOpen(false);
   };
 
+  const onAIRecords = () => {
+    navigate('/settings/ai-records');
+    setOpen(false);
+  };
+
   const onPresetQuestions = () => {
     navigate('/settings/preset-questions');
     setOpen(false);
@@ -231,6 +237,12 @@ export default function UserMenu() {
             onClick={onVectorKnowledge}
           >
             <CubeIcon className="w-4 h-4" /> 向量知识库
+          </button>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+            onClick={onAIRecords}
+          >
+            <ChatBubbleLeftRightIcon className="w-4 h-4" /> AI 对话记录
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
