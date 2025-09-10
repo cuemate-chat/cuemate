@@ -65,7 +65,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
               COUNT(*) as todayConversations
             FROM ai_conversations 
             WHERE user_id = ? 
-            AND created_at >= strftime('%s', 'now', 'start of day')
+            AND created_at >= strftime('%s', date('now', 'start of day'))
           `)
           .get(payload.uid);
 
@@ -78,7 +78,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
             JOIN ai_conversations c ON m.conversation_id = c.id
             WHERE c.user_id = ? 
             AND m.message_type = 'user'
-            AND m.created_at >= strftime('%s', 'now', 'start of day')
+            AND m.created_at >= strftime('%s', date('now', 'start of day'))
           `)
           .get(payload.uid);
 
