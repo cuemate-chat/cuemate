@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/tencent_cloud_icon_svg',
   modelNamePlaceholder: '如 deepseek-v3 / deepseek-r1 / hunyuan-pro',
   baseModels: ['deepseek-v3', 'deepseek-r1', 'hunyuan-pro', 'hunyuan-standard', 'hunyuan-lite'],
   credentialFields: [

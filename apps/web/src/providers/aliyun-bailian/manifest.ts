@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/aliyun_bai_lian_icon_svg',
   modelNamePlaceholder: '如 qwen-max / qwen-plus / qwen2.5-7b-instruct',
   baseModels: [
     'qwen3-0.6b',

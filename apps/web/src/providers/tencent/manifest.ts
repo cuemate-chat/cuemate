@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/tencent_icon_svg',
   modelNamePlaceholder: '如 hunyuan-pro / hunyuan-standard',
   baseModels: [
     'hunyuan-pro',

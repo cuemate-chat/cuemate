@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/kimi_icon_svg',
   modelNamePlaceholder: '如 moonshot-v1-8k / moonshot-v1-32k',
   baseModels: [
     'moonshot-v1-128k',

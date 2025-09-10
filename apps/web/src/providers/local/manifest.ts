@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'private',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/local_icon_svg',
   modelNamePlaceholder: '如 llama3.1:8b（配合 Ollama/vLLM/xInference 等）',
   baseModels: [
     'deepseek-r1:1.5b',

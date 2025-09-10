@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'private',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/xinference_icon_svg',
   modelNamePlaceholder: '如 qwen2.5-7b-instruct / llama2-chat',
   baseModels: [
     'deepseek-coder',

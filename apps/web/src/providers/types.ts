@@ -27,6 +27,7 @@ export interface ProviderManifest {
   scope: ProviderScope; // 公有/私有/本地
   kind: ModelKind; // 模型类型
   icon?: string; // 图标 URL（可选）
+  icon_url?: string; // 图标文件路径，用于存储到数据库
   modelNamePlaceholder?: string;
   baseModels?: string[]; // 该提供商支持的“基础模型/版本”列表
   credentialFieldsPerModel?: Record<string, ProviderField[]>; // 针对不同基础模型定制凭据字段

@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/anthropic_icon_svg',
   modelNamePlaceholder: '如 claude-4-sonnet / claude-3-5-sonnet',
   baseModels: [
     'claude-4-sonnet',

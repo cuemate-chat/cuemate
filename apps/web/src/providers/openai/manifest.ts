@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/openai_icon_svg',
   modelNamePlaceholder: '如 gpt-5, gpt-4o, gpt-3.5-turbo 等',
   baseModels: [
     'gpt-5',

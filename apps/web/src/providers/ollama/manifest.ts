@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'private',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/ollama_icon_svg',
   modelNamePlaceholder: '如 deepseek-r1:7b / qwen2.5:7b-instruct',
   baseModels: [
     // DeepSeek-R1 家族

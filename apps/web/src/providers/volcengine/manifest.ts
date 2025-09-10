@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/volcanic_engine_icon_svg',
   modelNamePlaceholder: '如 doubao-pro-32k / ep-xxxxxxxxxx-yyyy',
   baseModels: [
     // Doubao 系列常见模型（可根据需要扩展/调整）

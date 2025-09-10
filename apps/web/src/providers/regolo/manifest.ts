@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/regolo_icon_svg',
   modelNamePlaceholder: '如 Phi-4 / Llama-3.3-70B-Instruct',
   baseModels: [
     'Phi-4',

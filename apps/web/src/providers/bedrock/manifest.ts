@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/bedrock_icon_svg',
   modelNamePlaceholder:
     '如 anthropic.claude-instant-v1 / meta.llama3-70b-instruct / mistral.mistral-7b-instruct-v0.2',
   baseModels: [

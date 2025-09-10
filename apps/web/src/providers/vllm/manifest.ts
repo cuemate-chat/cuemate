@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'private',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/vllm_icon_svg',
   modelNamePlaceholder: '如 facebook/opt-125m / BAAI/Aquila-7B',
   baseModels: ['facebook/opt-125m', 'BAAI/Aquila-7B', 'BAAI/AquilaChat-7B'],
   credentialFields: [

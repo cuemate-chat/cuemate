@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/gemini_icon_svg',
   modelNamePlaceholder: '如 gemini-1.5-pro / gemini-1.0-pro-vision',
   baseModels: [
     'gemini-2.0-flash-exp',

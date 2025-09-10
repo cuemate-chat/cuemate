@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/zhipuai_icon_svg',
   modelNamePlaceholder: '如 glm-4 / glm-4v / glm-3-turbo',
   baseModels: [
     'glm-4-plus',

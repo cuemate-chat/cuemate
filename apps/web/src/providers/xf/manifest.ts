@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/xf_icon_svg',
   modelNamePlaceholder: '如 generalv3.5 / generalv3 / generalv2',
   baseModels: [
     'generalv3.5',

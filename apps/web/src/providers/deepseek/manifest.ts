@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/deepseek_icon_svg',
   modelNamePlaceholder: '如 deepseek-reasoner / deepseek-chat 或 deepseek-r1:32b',
   baseModels: [
     'deepseek-reasoner',

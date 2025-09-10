@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/azure_icon_svg',
   modelNamePlaceholder: '部署名称，如 gpt-4o-mini 部署',
   baseModels: ['Azure OpenAI', 'gpt-4', 'gpt-4o', 'gpt-4o-mini'],
   credentialFields: [

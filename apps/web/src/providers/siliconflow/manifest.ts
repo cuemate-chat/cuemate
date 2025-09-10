@@ -7,6 +7,7 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
+  icon_url: 'assets/llm/siliconCloud_icon_svg',
   modelNamePlaceholder: '如 Qwen2.5-7B-Instruct / DeepSeek-R1-Distill-Qwen-7B',
   baseModels: [
     'deepseek-ai/DeepSeek-R1-Distill-Llama-8B',
