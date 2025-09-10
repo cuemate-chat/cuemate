@@ -131,32 +131,11 @@ export function registerModelRoutes(app: FastifyInstance) {
 
       // 保存后自动进行连通测试并更新状态
       try {
-        const modelRow = (app as any).db.prepare('SELECT * FROM models WHERE id=?').get(id);
-        const creds = modelRow?.credentials ? JSON.parse(modelRow.credentials) : {};
-        const res = await fetch(getLlmRouterUrl(SERVICE_CONFIG.LLM_ROUTER.ENDPOINTS.PROBE), {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            id: modelRow.provider,
-            provider: modelRow.provider,
-            base_url: creds.base_url || creds.baseUrl,
-            api_key: creds.api_key || creds.apiKey,
-            model_name: modelRow.model_name,
-            temperature: creds.temperature,
-            max_tokens: creds.max_tokens,
-            params: creds,
-            mode: 'both',
-            embed_base_url: creds.embed_base_url || creds.embedBaseUrl,
-            embed_api_key: creds.embed_api_key || creds.embedApiKey,
-            embed_model: creds.embed_model || creds.embedModel,
-          }),
-        });
-        const data = (await res.json()) as any;
-        const ok = !!data?.ok;
-        (app as any).db
-          .prepare('UPDATE models SET status=? WHERE id=?')
-          .run(ok ? 'ok' : 'fail', id);
-      } catch {}
+        await testModelConnectivityInternal(app, id);
+      } catch (error) {
+        // 测试失败不影响保存，只记录错误
+        app.log.error({ modelId: id, error: error instanceof Error ? error.message : String(error) }, 'Model connectivity test failed after save');
+      }
 
       // 记录模型操作
       const isUpdate = body.id && (app as any).db.prepare('SELECT 1 FROM models WHERE id=? AND created_at < ?').get(id, now);
@@ -202,97 +181,14 @@ export function registerModelRoutes(app: FastifyInstance) {
   // 测试连通性（简单调用 llm-router 的 /providers/health-check 或根据凭证直连）
   app.post(
     '/models/:id/test',
-    withErrorLogging(app.log as any, 'models.test', async (req, reply) => {
+    withErrorLogging(app.log as any, 'models.test', async (req) => {
       const id = (req.params as any).id;
-      const model = (app as any).db.prepare('SELECT * FROM models WHERE id=?').get(id);
-      if (!model) return reply.code(404).send({ error: '模型不存在' });
-      const creds = model.credentials ? JSON.parse(model.credentials) : {};
-
-      // 从 model_params 表读取所有运行参数
-      const params = (app as any).db.prepare('SELECT * FROM model_params WHERE model_id=?').all(id);
-      const paramsMap: Record<string, any> = {};
-      for (const p of params) {
-        if (p.value) {
-          // 根据参数类型转换值
-          if (p.param_key === 'temperature') {
-            paramsMap[p.param_key] = parseFloat(p.value);
-          } else if (
-            p.param_key === 'max_tokens' ||
-            p.param_key === 'maxTokens' ||
-            p.param_key === 'num_predict'
-          ) {
-            paramsMap[p.param_key] = parseInt(p.value);
-          } else if (p.param_key === 'stream') {
-            paramsMap[p.param_key] = p.value === 'true';
-          } else {
-            // 其他参数保持原值
-            paramsMap[p.param_key] = p.value;
-          }
-        }
-      }
-
-      // 构建请求体
-      const requestBody = {
-        id: model.provider,
-        provider: model.provider,
-        // 动态传递所有凭证字段（过滤掉 undefined 和 null）
-        ...Object.fromEntries(
-          Object.entries(creds).filter(([_, value]) => value !== undefined && value !== null),
-        ),
-        model_name: model.model_name,
-        // 传递所有运行参数
-        ...paramsMap,
-        // 传递完整的参数映射，供 provider 使用
-        allParams: paramsMap,
-        mode: 'both',
-      };
-
-      // 调试日志
-      app.log.debug(
-        {
-          modelId: id,
-          provider: model.provider,
-          modelName: model.model_name,
-          credentials: creds,
-          params: paramsMap,
-          requestBody,
-          llmRouterBase: getLlmRouterUrl(),
-        },
-        'Testing model connectivity',
-      );
-
       try {
-        app.log.debug('Calling llm-router probe endpoint...');
-        const res = await fetch(getLlmRouterUrl(SERVICE_CONFIG.LLM_ROUTER.ENDPOINTS.PROBE), {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(requestBody),
-        });
-
-        app.log.debug({ status: res.status }, 'llm-router response status');
-        app.log.debug(
-          { headers: Object.fromEntries(res.headers.entries()) },
-          'llm-router response headers',
-        );
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          app.log.error({ errorText }, 'llm-router error response');
-          throw new Error(`llm-router responded with status ${res.status}: ${errorText}`);
-        }
-
-        const data = (await res.json()) as any;
-        app.log.debug({ data }, 'llm-router response data');
-
-        const ok = !!data?.ok;
-        (app as any).db
-          .prepare('UPDATE models SET status=? WHERE id=?')
-          .run(ok ? 'ok' : 'fail', id);
-        return { ok, chatOk: data?.chatOk, embedOk: data?.embedOk };
-      } catch (e) {
-        app.log.error({ err: e }, 'Error calling llm-router');
-        (app as any).db.prepare('UPDATE models SET status=? WHERE id=?').run('fail', id);
-        return { ok: false, error: (e as any)?.message || 'probe failed' };
+        const result = await testModelConnectivityInternal(app, id);
+        return result;
+      } catch (error) {
+        const message = (error as Error).message || 'probe failed';
+        return { ok: false, error: message };
       }
     }),
   );
@@ -343,4 +239,84 @@ export function registerModelRoutes(app: FastifyInstance) {
       return { model, params };
     }),
   );
+}
+
+// 内部测试模型连接性函数，复用现有测试逻辑
+async function testModelConnectivityInternal(app: FastifyInstance, modelId: string) {
+  const model = (app as any).db.prepare('SELECT * FROM models WHERE id=?').get(modelId);
+  if (!model) {
+    throw new Error('模型不存在');
+  }
+  
+  const creds = model.credentials ? JSON.parse(model.credentials) : {};
+
+  // 从 model_params 表读取所有运行参数
+  const params = (app as any).db.prepare('SELECT * FROM model_params WHERE model_id=?').all(modelId);
+  const paramsMap: Record<string, any> = {};
+  for (const p of params) {
+    if (p.value) {
+      // 根据参数类型转换值
+      if (p.param_key === 'temperature') {
+        paramsMap[p.param_key] = parseFloat(p.value);
+      } else if (
+        p.param_key === 'max_tokens' ||
+        p.param_key === 'maxTokens' ||
+        p.param_key === 'num_predict'
+      ) {
+        paramsMap[p.param_key] = parseInt(p.value);
+      } else if (p.param_key === 'stream') {
+        paramsMap[p.param_key] = p.value === 'true';
+      } else {
+        paramsMap[p.param_key] = p.value;
+      }
+    }
+  }
+
+  // 构建请求体 - 按照llm-router期望的格式
+  const requestBody = {
+    provider: model.provider,
+    model_name: model.model_name,
+    mode: 'both',
+    // 直接传递所有凭证字段，llm-router会自动处理字段名映射
+    ...Object.fromEntries(
+      Object.entries(creds).filter(([_, value]) => value !== undefined && value !== null),
+    ),
+    // 传递完整的参数映射，供 provider 使用
+    allParams: paramsMap,
+  };
+
+  // 调试日志：打印发送的请求体
+  app.log.info({ 
+    modelId,
+    provider: model.provider, 
+    model_name: model.model_name,
+    credentials: creds,
+    requestBody 
+  }, '发送给llm-router的请求体');
+
+  const res = await fetch(getLlmRouterUrl(SERVICE_CONFIG.LLM_ROUTER.ENDPOINTS.PROBE), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    app.log.error({ status: res.status, body: text }, 'llm-router probe failed');
+    (app as any).db.prepare('UPDATE models SET status=? WHERE id=?').run('fail', modelId);
+    throw new Error(`测试失败: ${res.status} ${text}`);
+  }
+
+  const data = (await res.json()) as any;
+  const ok = !!data?.ok;
+  
+  // 更新模型状态
+  (app as any).db.prepare('UPDATE models SET status=? WHERE id=?').run(ok ? 'ok' : 'fail', modelId);
+  
+  if (!ok) {
+    const errorMsg = data?.error || data?.chatError || data?.embedError || 'Unknown error';
+    throw new Error(`连接测试失败: ${errorMsg}`);
+  }
+  
+  return { ok, chatOk: data?.chatOk, embedOk: data?.embedOk };
 }

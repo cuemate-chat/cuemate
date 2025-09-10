@@ -185,17 +185,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       Object.keys(body).forEach((key) => {
         // 跳过非凭证字段
         if (!['provider', 'id', 'model_name', 'model', 'mode', 'allParams'].includes(key)) {
-          // 字段名映射：将前端的下划线格式转换为后端的驼峰格式
-          let mappedKey = key;
-          if (key === 'base_url') mappedKey = 'baseUrl';
-          else if (key === 'api_key') mappedKey = 'apiKey';
-          else if (key === 'api_version') mappedKey = 'apiVersion';
-          else if (key === 'deployment_name') mappedKey = 'deploymentName';
-          else if (key === 'embed_base_url') mappedKey = 'embedBaseUrl';
-          else if (key === 'embed_api_key') mappedKey = 'embedApiKey';
-          else if (key === 'embed_model') mappedKey = 'embedModel';
-
-          config[mappedKey] = body[key];
+          config[key] = body[key];
         }
       });
 
@@ -283,8 +273,8 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       if (mode === 'embeddings' || mode === 'both') {
         try {
           // 对于 OpenAI，通常使用相同的 API Key 和 Base URL 进行聊天和向量嵌入
-          const embedBaseUrl = config.baseUrl;
-          const embedApiKey = config.apiKey;
+          const embedBaseUrl = config.base_url;
+          const embedApiKey = config.api_key;
           const embedModel = 'text-embedding-3-small';
 
           // 调试日志
