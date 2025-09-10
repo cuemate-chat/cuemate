@@ -1,0 +1,308 @@
+/* 页面根元素重置，避免出现浏览器整体滚动条 */
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+/* ============================Interviewer============================ */
+/* 基础布局 */
+.interviewer-app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.interviewer-window {
+  width: 100%;
+  height: 100%;
+  background: rgba(30, 30, 30, 0.7);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-radius: 12px;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Header */
+.interviewer-window-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: transparent;
+  height: 28px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Header 中间区域 */
+.interviewer-header-center {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+  margin-left: 10px;
+}
+
+.interviewer-title {
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.interviewer-title-icon {
+  width: 16px;
+  height: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Header 右侧按钮 */
+.interviewer-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.interviewer-header-btn {
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 2px 8px;
+  gap: 6px;
+}
+
+.interviewer-header-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.interviewer-header-btn-text {
+  font-size: 12px;
+}
+
+/* Body */
+.interviewer-window-body {
+  flex: 1;
+  padding: 8px 16px 16px 16px;
+  overflow-y: auto;
+  background: transparent;
+  position: relative;
+}
+
+/* 空状态样式 */
+.interviewer-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.interviewer-empty-icon {
+  margin-bottom: 20px;
+  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.interviewer-empty-icon svg {
+  transition: all 0.3s ease;
+}
+
+.interviewer-empty-state:hover .interviewer-empty-icon svg {
+  transform: scale(1.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.interviewer-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+}
+
+.interviewer-empty-description {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+  max-width: 80%;
+}
+
+/* 语音识别状态 */
+.interviewer-recording-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.interviewer-recording-icon {
+  margin-bottom: 20px;
+  color: #ef4444;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.interviewer-recording-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+}
+
+.interviewer-recording-description {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+  max-width: 80%;
+}
+
+/* 语音识别结果 */
+.interviewer-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+  padding: 8px 0;
+}
+
+.interviewer-result-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.interviewer-result-content {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  transition: opacity 0.1s ease;
+}
+
+.interviewer-result-text {
+  background: rgba(59, 130, 246, 0.2);
+  color: white;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  line-height: 1.5;
+}
+
+.interviewer-result-timestamp {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 8px;
+}
+
+/* Footer */
+.interviewer-window-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  height: 28px;
+}
+
+/* 底部控制按钮 */
+.interviewer-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.interviewer-control-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.interviewer-control-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.interviewer-control-btn:disabled {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+}
+
+.interviewer-control-btn-text {
+  font-size: 12px;
+}
+
+/* Radix Tooltip 样式 */
+.radix-tooltip-content {
+  background: rgba(30, 30, 30, 0.8);
+  color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.2;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  z-index: 9999;
+}
+
+.radix-tooltip-arrow {
+  fill: rgba(30, 30, 30, 0.8);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+/* 滚动条样式 */
+.interviewer-window-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.interviewer-window-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.interviewer-window-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.interviewer-window-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}

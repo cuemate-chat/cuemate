@@ -25,6 +25,10 @@ const controlBarAPI = {
   hideAIQuestion: () => ipcRenderer.invoke('hide-ai-question'),
   toggleAIQuestion: () => ipcRenderer.invoke('toggle-ai-question'),
 
+  showInterviewer: () => ipcRenderer.invoke('show-interviewer'),
+  hideInterviewer: () => ipcRenderer.invoke('hide-interviewer'),
+  toggleInterviewer: () => ipcRenderer.invoke('toggle-interviewer'),
+
   getAppState: () => ipcRenderer.invoke('get-app-state'),
 
   // === 系统交互 API ===

@@ -202,6 +202,40 @@ export function setupIPC(windowManager: WindowManager): void {
     }
   });
 
+  // Interviewer窗口相关 IPC
+  ipcMain.handle('show-interviewer', async () => {
+    try {
+      windowManager.showInterviewerNextToAI();
+      logger.info('IPC: 显示Interviewer窗口命令已执行');
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 显示Interviewer窗口失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle('hide-interviewer', async () => {
+    try {
+      windowManager.hideInterviewer();
+      logger.info('IPC: 隐藏Interviewer窗口命令已执行');
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 隐藏Interviewer窗口失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle('toggle-interviewer', async () => {
+    try {
+      windowManager.toggleInterviewerNextToAI();
+      logger.info('IPC: 切换Interviewer窗口命令已执行');
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 切换Interviewer窗口失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
   /**
    * 获取应用状态
    */
@@ -483,7 +517,7 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('load-conversation', async (_event, conversationData: any) => {
     try {
       logger.info('IPC: 收到加载对话命令', conversationData);
-      
+
       // 获取AI问答窗口实例
       const aiQuestionWindow = windowManager.getAIQuestionWindow();
       const browserWindow = aiQuestionWindow.getBrowserWindow();

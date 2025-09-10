@@ -12,9 +12,14 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
   const [isListenHovered, setIsListenHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
-  const handleListenClick = () => {
-    // TODO: 实现 Listen 功能
-    console.log('Listen clicked');
+  const handleListenClick = async () => {
+    try {
+      if ((window as any).electronAPI) {
+        await (window as any).electronAPI.toggleInterviewer();
+      }
+    } catch (error) {
+      console.error('打开Interviewer窗口失败:', error);
+    }
   };
 
   const handleAskQuestionClick = async () => {

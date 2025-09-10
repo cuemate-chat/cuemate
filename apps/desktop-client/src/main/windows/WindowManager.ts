@@ -6,6 +6,7 @@ import { WebSocketClient } from '../websocket/WebSocketClient.js';
 import { AIQuestionHistoryWindow } from './AIQuestionHistoryWindow.js';
 import { AIQuestionWindow } from './AIQuestionWindow.js';
 import { ControlBarWindow } from './ControlBarWindow.js';
+import { InterviewerWindow } from './InterviewerWindow.js';
 import { MainContentWindow } from './MainContentWindow.js';
 
 export class WindowManager {
@@ -16,14 +17,17 @@ export class WindowManager {
   private isDevelopment: boolean;
   private appState: AppState;
   private aiQuestionHistoryWindow: AIQuestionHistoryWindow;
+  private interviewerWindow: InterviewerWindow;
   private windowStatesBeforeHide: {
     isMainContentVisible: boolean;
     isAIQuestionVisible: boolean;
     isAIQuestionHistoryVisible: boolean;
+    isInterviewerVisible: boolean;
   } = {
     isMainContentVisible: false,
     isAIQuestionVisible: false,
     isAIQuestionHistoryVisible: false,
+    isInterviewerVisible: false,
   }; // 保存所有窗口隐藏前的状态
 
   constructor(isDevelopment: boolean = false) {
@@ -43,6 +47,7 @@ export class WindowManager {
     this.mainContentWindow = new MainContentWindow(this.isDevelopment);
     this.aiQuestionWindow = new AIQuestionWindow(this.isDevelopment);
     this.aiQuestionHistoryWindow = new AIQuestionHistoryWindow(this.isDevelopment);
+    this.interviewerWindow = new InterviewerWindow(this.isDevelopment);
 
     // 创建 WebSocket 客户端
     this.webSocketClient = new WebSocketClient(this);
@@ -64,6 +69,9 @@ export class WindowManager {
 
       // 3.1 创建AI问答历史窗口（初始隐藏）
       await this.aiQuestionHistoryWindow.create();
+
+      // 3.2 创建Interviewer窗口（初始隐藏）
+      await this.interviewerWindow.create();
 
       // 4. 设置窗口事件监听
       this.setupWindowEvents();
@@ -141,23 +149,29 @@ export class WindowManager {
       });
     }
 
-    // 监听 AI 问答窗口事件用于联动历史窗口定位
+    // 监听 AI 问答窗口事件用于联动历史窗口和interviewer窗口定位
     const aiWindow = this.aiQuestionWindow.getBrowserWindow();
     if (aiWindow) {
-      const relayoutHistory = () => {
+      const relayoutSideWindows = () => {
         if (this.isAIQuestionHistoryVisible()) {
-          const bounds = this.computeHistoryBoundsNextToAI();
-          if (bounds) {
-            this.aiQuestionHistoryWindow.setBounds(bounds);
+          const historyBounds = this.computeHistoryBoundsNextToAI();
+          if (historyBounds) {
+            this.aiQuestionHistoryWindow.setBounds(historyBounds);
+          }
+        }
+        if (this.isInterviewerVisible()) {
+          const interviewerBounds = this.computeInterviewerBoundsNextToAI();
+          if (interviewerBounds) {
+            this.interviewerWindow.setBounds(interviewerBounds);
           }
         }
       };
 
-      aiWindow.on('move', relayoutHistory);
-      aiWindow.on('moved', relayoutHistory as any);
-      aiWindow.on('resize', relayoutHistory);
-      aiWindow.on('resized', relayoutHistory as any);
-      aiWindow.on('show', relayoutHistory);
+      aiWindow.on('move', relayoutSideWindows);
+      aiWindow.on('moved', relayoutSideWindows as any);
+      aiWindow.on('resize', relayoutSideWindows);
+      aiWindow.on('resized', relayoutSideWindows as any);
+      aiWindow.on('show', relayoutSideWindows);
     }
   }
 
@@ -191,6 +205,10 @@ export class WindowManager {
       this.showAIQuestionHistoryNextToAI();
     }
 
+    if (this.windowStatesBeforeHide.isInterviewerVisible) {
+      this.showInterviewerNextToAI();
+    }
+
     // 初始时确保焦点在 control-bar
     setTimeout(() => this.ensureMainFocus(), 100);
   }
@@ -204,6 +222,7 @@ export class WindowManager {
       isMainContentVisible: this.appState.isMainContentVisible,
       isAIQuestionVisible: this.appState.isAIQuestionVisible,
       isAIQuestionHistoryVisible: this.isAIQuestionHistoryVisible(),
+      isInterviewerVisible: this.isInterviewerVisible(),
     };
 
     // 隐藏所有相关窗口
@@ -219,6 +238,10 @@ export class WindowManager {
 
     if (this.isAIQuestionHistoryVisible()) {
       this.aiQuestionHistoryWindow.hide();
+    }
+
+    if (this.isInterviewerVisible()) {
+      this.interviewerWindow.hide();
     }
 
     this.controlBarWindow.hide();
@@ -361,18 +384,12 @@ export class WindowManager {
     const rightSpace = workArea.x + workArea.width - (aiBounds.x + aiBounds.width);
     const minWidth = 260;
     const maxWidth = Math.max(420, Math.floor(workArea.width * 0.5));
+    const spacing = Math.floor(rightSpace * 0.1); // 10% 的 rightSpace 作为间距
     let width = Math.floor(rightSpace * 0.8);
-    width = Math.max(minWidth, Math.min(width, maxWidth, rightSpace - 20));
-    const x = aiBounds.x + aiBounds.width + 20;
+    width = Math.max(minWidth, Math.min(width, maxWidth, rightSpace - spacing));
+    const x = aiBounds.x + aiBounds.width + spacing;
     const y = aiBounds.y;
     const height = aiBounds.height;
-    // 若空间不足，回退贴左侧
-    if (x + width > workArea.x + workArea.width) {
-      const leftWidth = Math.floor((aiBounds.x - workArea.x) * 0.7);
-      const leftWidthClamped = Math.max(minWidth, Math.min(leftWidth, maxWidth));
-      const leftX = Math.max(workArea.x, aiBounds.x - 10 - leftWidthClamped);
-      return { x: leftX, y, width: leftWidthClamped, height };
-    }
     return { x, y, width, height };
   }
 
@@ -395,6 +412,49 @@ export class WindowManager {
     }
   }
 
+  // === Interviewer窗口相关 ===
+  public isInterviewerVisible(): boolean {
+    const w = this.interviewerWindow.getBrowserWindow();
+    return !!(w && w.isVisible());
+  }
+
+  private computeInterviewerBoundsNextToAI(): Electron.Rectangle | null {
+    const aiWin = this.aiQuestionWindow.getBrowserWindow();
+    if (!aiWin) return null;
+    const aiBounds = aiWin.getBounds();
+    const display = screen.getDisplayMatching(aiBounds) || screen.getPrimaryDisplay();
+    const workArea = display.workArea;
+    const leftSpace = aiBounds.x - workArea.x;
+    const minWidth = 260;
+    const maxWidth = Math.max(420, Math.floor(workArea.width * 0.5));
+    const spacing = Math.floor(leftSpace * 0.1); // 10% 的 leftSpace 作为间距
+    let width = Math.floor(leftSpace * 0.8);
+    width = Math.max(minWidth, Math.min(width, maxWidth, leftSpace - spacing));
+    const x = Math.max(workArea.x, aiBounds.x - spacing - width);
+    const y = aiBounds.y;
+    const height = aiBounds.height;
+    return { x, y, width, height };
+  }
+
+  public showInterviewerNextToAI(): void {
+    const bounds = this.computeInterviewerBoundsNextToAI();
+    if (!bounds) return;
+    this.interviewerWindow.setBounds(bounds);
+    this.interviewerWindow.show();
+  }
+
+  public hideInterviewer(): void {
+    this.interviewerWindow.hide();
+  }
+
+  public toggleInterviewerNextToAI(): void {
+    if (this.isInterviewerVisible()) {
+      this.hideInterviewer();
+    } else {
+      this.showInterviewerNextToAI();
+    }
+  }
+
   /**
    * 获取 WebSocket 客户端实例
    */
@@ -412,5 +472,7 @@ export class WindowManager {
     this.controlBarWindow.destroy();
     this.mainContentWindow.destroy();
     this.aiQuestionWindow.destroy();
+    this.aiQuestionHistoryWindow.destroy();
+    this.interviewerWindow.destroy();
   }
 }

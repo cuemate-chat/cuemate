@@ -99,6 +99,10 @@ async function buildPreloadScripts(watchMode = false) {
       entry: resolve(__dirname, 'src/main/preload/aiQuestionHistory.ts'),
       output: resolve(__dirname, 'dist/main/preload/aiQuestionHistory.js'),
     },
+    {
+      entry: resolve(__dirname, 'src/main/preload/interviewer.ts'),
+      output: resolve(__dirname, 'dist/main/preload/interviewer.js'),
+    },
   ];
 
   try {
