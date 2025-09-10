@@ -154,8 +154,11 @@ export function ConversationCard({
             </Tooltip.Trigger>
             <Tooltip.Portal>
               <Tooltip.Content className="radix-tooltip-content">
+                模型标题: {conversation.model_title}<br/>
                 模型提供商: {conversation.model_provider}<br/>
-                模型名称: {conversation.model_name}
+                模型名称: {conversation.model_name}<br/>
+                模型类型: {conversation.model_type}<br/>
+                {conversation.model_version && `模型版本: ${conversation.model_version}`}
                 <Tooltip.Arrow className="radix-tooltip-arrow" />
               </Tooltip.Content>
             </Tooltip.Portal>
@@ -192,6 +195,19 @@ export function ConversationCard({
             <Tooltip.Portal>
               <Tooltip.Content className="radix-tooltip-content">
                 总消息数: {conversation.message_count} 条（用户和AI各 {conversation.message_count/2} 条）
+                <Tooltip.Arrow className="radix-tooltip-arrow" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <div className="conversation-stat">
+                <span>Token: {conversation.token_used}</span>
+              </div>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content className="radix-tooltip-content">
+                消耗Token数量: {conversation.token_used}
                 <Tooltip.Arrow className="radix-tooltip-arrow" />
               </Tooltip.Content>
             </Tooltip.Portal>

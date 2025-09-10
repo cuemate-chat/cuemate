@@ -5,8 +5,14 @@
 export interface ConversationHistoryItem {
   id: number;
   title: string;
+  model_id: string;
+  model_title: string;
   model_provider: string;
   model_name: string;
+  model_type: string;
+  model_icon: string;
+  model_version: string;
+  model_credentials: string;
   message_count: number;
   token_used: number;
   status: 'active' | 'completed' | 'error';
@@ -91,8 +97,12 @@ export class ConversationHistoryService {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
-        status,
       });
+      
+      // 只有当status不是'all'时才添加status参数
+      if (status && status !== 'all') {
+        params.append('status', status);
+      }
 
       // 如果有搜索关键词，添加到参数中
       if (searchKeyword && searchKeyword.trim()) {

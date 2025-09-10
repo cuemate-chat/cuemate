@@ -26,11 +26,11 @@ export function WindowFooter({
           showTotal={(total, range) => 
             `第 ${range[0]}-${range[1]} 条，共 ${total} 条`
           }
-          showQuickJumper={true}
-          showSizeChanger={true}
-          onShowSizeChange={onPageSizeChange || (() => onPageChange(1))}
-          pageSizeOptions={['5', '10', '20', '50', '100']}
-          size="default"
+          showQuickJumper={false}
+          showSizeChanger={false}
+          size="small"
+          simple={totalItems > pageSize * 10}
+          showLessItems={true}
           className="custom-pagination"
         />
       </div>
