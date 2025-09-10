@@ -3,7 +3,6 @@ import { Pagination } from 'antd';
 interface WindowFooterProps {
   currentPage: number;
   onPageChange: (page: number) => void;
-  onPageSizeChange?: (current: number, size: number) => void;
   totalItems: number;
   pageSize: number;
 }
@@ -11,7 +10,6 @@ interface WindowFooterProps {
 export function WindowFooter({ 
   currentPage, 
   onPageChange, 
-  onPageSizeChange,
   totalItems, 
   pageSize 
 }: WindowFooterProps) {
@@ -23,14 +21,20 @@ export function WindowFooter({
           total={totalItems}
           pageSize={pageSize}
           onChange={onPageChange}
-          showTotal={(total, range) => 
-            `第 ${range[0]}-${range[1]} 条，共 ${total} 条`
+          showTotal={(total) => 
+            `共 ${total} 条`
           }
           showQuickJumper={false}
           showSizeChanger={false}
           size="small"
-          simple={totalItems > pageSize * 10}
+          simple={Math.ceil(totalItems / pageSize) > 4}
           showLessItems={true}
+          itemRender={(page, type, originalElement) => {
+            if (type === 'page') {
+              return <span style={{ padding: '0 6px', fontSize: '12px' }}>{page}</span>;
+            }
+            return originalElement;
+          }}
           className="custom-pagination"
         />
       </div>
