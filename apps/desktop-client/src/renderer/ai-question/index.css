@@ -10,8 +10,8 @@
 }
 
 .ai-question-window {
-  width: 700px;
-  height: 600px;
+  width: 100%;
+  height: 100%;
   background: rgba(30, 30, 30, 0.7);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
@@ -370,7 +370,7 @@ input[type="search"]::-webkit-search-cancel-button {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.6);
   line-height: 1.5;
-  max-width: 300px;
+  max-width: 80%;
 }
 
 .ai-messages {

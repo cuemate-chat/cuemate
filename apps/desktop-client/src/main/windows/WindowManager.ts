@@ -74,9 +74,39 @@ export class WindowManager {
 
       // 6. 显示浮动窗口（control-bar）
       this.showFloatingWindows();
+
+      // 7. 监听屏幕分辨率变化
+      this.setupScreenEvents();
     } catch (error) {
       logger.error({ error }, '窗口管理器初始化失败');
       throw error;
+    }
+  }
+
+  /**
+   * 设置屏幕事件监听
+   */
+  private setupScreenEvents(): void {
+    // 监听显示器变化事件
+    screen.on('display-added', () => {
+      this.updateAIWindowSize();
+    });
+
+    screen.on('display-removed', () => {
+      this.updateAIWindowSize();
+    });
+
+    screen.on('display-metrics-changed', () => {
+      this.updateAIWindowSize();
+    });
+  }
+
+  /**
+   * 更新AI窗口尺寸
+   */
+  private updateAIWindowSize(): void {
+    if (this.appState.isAIQuestionVisible) {
+      this.aiQuestionWindow.updateWindowSize();
     }
   }
 
@@ -142,8 +172,6 @@ export class WindowManager {
    * 显示浮动窗口
    */
   public showFloatingWindows(): void {
-    logger.info('显示浮动窗口');
-
     this.controlBarWindow.show();
     this.appState.isControlBarVisible = true;
     this.appState.isCloseButtonVisible = true; // 统一状态管理
@@ -171,8 +199,6 @@ export class WindowManager {
    * 隐藏浮动窗口
    */
   public hideFloatingWindows(): void {
-    logger.info('隐藏浮动窗口');
-
     // 保存所有窗口当前状态
     this.windowStatesBeforeHide = {
       isMainContentVisible: this.appState.isMainContentVisible,
@@ -266,7 +292,6 @@ export class WindowManager {
   public openExternalUrl(url: string): void {
     const { shell } = require('electron');
     shell.openExternal(url);
-    logger.info({ url }, '打开外部链接');
   }
 
   /**
@@ -337,8 +362,8 @@ export class WindowManager {
     const minWidth = 260;
     const maxWidth = Math.max(420, Math.floor(workArea.width * 0.5));
     let width = Math.floor(rightSpace * 0.8);
-    width = Math.max(minWidth, Math.min(width, maxWidth, rightSpace - 10));
-    const x = aiBounds.x + aiBounds.width + 10;
+    width = Math.max(minWidth, Math.min(width, maxWidth, rightSpace - 20));
+    const x = aiBounds.x + aiBounds.width + 20;
     const y = aiBounds.y;
     const height = aiBounds.height;
     // 若空间不足，回退贴左侧
@@ -381,8 +406,6 @@ export class WindowManager {
    * 销毁窗口管理器
    */
   public destroy(): void {
-    logger.info('销毁窗口管理器');
-
     // 断开 WebSocket 连接
     this.webSocketClient.disconnect();
 

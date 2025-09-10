@@ -253,7 +253,7 @@ export default function ModelsList() {
     const payload: any = {
       ...formData,
       icon: providerIconUrl,
-      version: formData.model_name, // 直接使用model_name作为version
+      version: formData.version || 'v1',
       credentials,
       params: (formData.params || []).map((p: any) => ({
         ...p,

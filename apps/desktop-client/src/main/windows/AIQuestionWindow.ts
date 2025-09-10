@@ -14,8 +14,8 @@ export class AIQuestionWindow {
   private readonly config: WindowConfig = {
     id: 'ai-question',
     label: 'ai-question',
-    width: 700,
-    height: 600,
+    width: 700, // 将被动态计算覆盖
+    height: 600, // 将被动态计算覆盖
     alwaysOnTop: true, // 悬浮窗口
     frame: false, // 无边框
     transparent: true, // 透明
@@ -34,26 +34,56 @@ export class AIQuestionWindow {
   }
 
   /**
+   * 计算AI问答窗口的动态尺寸
+   */
+  private calculateWindowSize(): { width: number; height: number } {
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { width: screenWidth, height: screenHeight } = primaryDisplay.workArea;
+
+    // ControlBar固定尺寸和位置
+    const controlBarHeight = 100;
+    const controlBarY = 10;
+
+    // 动态计算AI窗口尺寸
+    const aiWidth = Math.floor(screenWidth * 0.46);
+    const availableHeight = screenHeight - controlBarHeight - controlBarY;
+    const aiHeight = Math.floor(availableHeight * 0.75);
+
+    // 设置最小尺寸限制
+    const minWidth = 400;
+    const minHeight = 300;
+    const maxWidth = Math.floor(screenWidth * 0.8); // 最大不超过屏幕80%
+    const maxHeight = Math.floor(screenHeight * 0.9); // 最大不超过屏幕90%
+
+    return {
+      width: Math.max(minWidth, Math.min(aiWidth, maxWidth)),
+      height: Math.max(minHeight, Math.min(aiHeight, maxHeight)),
+    };
+  }
+
+  /**
    * 创建AI问答窗口
    */
   public async create(): Promise<void> {
     if (this.window) {
-      logger.info('ai-question 窗口已存在，跳过创建');
       return;
     }
 
     try {
-      // 获取主显示器信息来计算初始位置 - 和 MainContentWindow 一样
+      // 获取主显示器信息来计算初始位置
       const primaryDisplay = screen.getPrimaryDisplay();
       const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea;
 
+      // 计算动态尺寸
+      const { width: dynamicWidth, height: dynamicHeight } = this.calculateWindowSize();
+
       // 在主屏幕居中显示 - 显示在 ControlBarWindow 下方
-      const initialX = displayX + Math.floor((screenWidth - this.config.width) / 2);
+      const initialX = displayX + Math.floor((screenWidth - dynamicWidth) / 2);
       const initialY = displayY + 90;
 
       this.window = new BrowserWindow({
-        width: this.config.width,
-        height: this.config.height,
+        width: dynamicWidth,
+        height: dynamicHeight,
         x: initialX,
         y: initialY,
         icon: getWindowIconPath(),
@@ -87,7 +117,6 @@ export class AIQuestionWindow {
         this.window.webContents.openDevTools({ mode: 'detach' });
       }
 
-
       // 加载页面
       if (this.isDevelopment) {
         await this.window.loadURL('http://localhost:3000/src/renderer/ai-question/');
@@ -97,8 +126,6 @@ export class AIQuestionWindow {
 
       // 设置窗口事件监听
       this.setupEvents();
-
-      logger.info('ai-question 窗口创建成功');
     } catch (error) {
       logger.error({ error }, '创建 ai-question 窗口失败');
       throw error;
@@ -142,8 +169,6 @@ export class AIQuestionWindow {
       this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       this.window.setFullScreenable(false);
       this.window.moveTop();
-
-      logger.info('ai-question 窗口已显示');
     } catch (error) {
       logger.error({ error }, '显示 ai-question 窗口失败');
     }
@@ -195,7 +220,6 @@ export class AIQuestionWindow {
     if (this.window) {
       this.window.destroy();
       this.window = null;
-      logger.info('ai-question 窗口已销毁');
     }
   }
 
@@ -204,5 +228,36 @@ export class AIQuestionWindow {
    */
   public isVisible(): boolean {
     return this.window ? this.window.isVisible() : false;
+  }
+
+  /**
+   * 重新计算并更新窗口尺寸
+   * 用于屏幕分辨率变化时的动态调整
+   */
+  public updateWindowSize(): void {
+    if (!this.window) {
+      logger.warn('ai-question 窗口不存在，无法更新尺寸');
+      return;
+    }
+
+    try {
+      const { width: newWidth, height: newHeight } = this.calculateWindowSize();
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea;
+
+      // 重新计算居中位置
+      const newX = displayX + Math.floor((screenWidth - newWidth) / 2);
+      const newY = displayY + 90;
+
+      // 更新窗口尺寸和位置
+      this.window.setBounds({
+        x: newX,
+        y: newY,
+        width: newWidth,
+        height: newHeight,
+      });
+    } catch (error) {
+      logger.error({ error }, '更新 ai-question 窗口尺寸失败');
+    }
   }
 }

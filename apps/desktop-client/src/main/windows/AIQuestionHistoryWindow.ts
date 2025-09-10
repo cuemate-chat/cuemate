@@ -31,7 +31,6 @@ export class AIQuestionHistoryWindow {
 
   public async create(): Promise<void> {
     if (this.window) {
-      logger.info('ai-question-history 窗口已存在，跳过创建');
       return;
     }
     try {
@@ -75,13 +74,11 @@ export class AIQuestionHistoryWindow {
       }
 
       this.setupEvents();
-      
+
       // 开发环境下打开独立的 DevTools
       if (this.isDevelopment) {
         this.window.webContents.openDevTools({ mode: 'detach' });
       }
-      
-      logger.info('ai-question-history 窗口创建成功');
     } catch (error) {
       logger.error({ error }, '创建 ai-question-history 窗口失败');
       throw error;
@@ -128,7 +125,6 @@ export class AIQuestionHistoryWindow {
     if (this.window) {
       this.window.destroy();
       this.window = null;
-      logger.info('ai-question-history 窗口已销毁');
     }
   }
 }

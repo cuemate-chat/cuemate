@@ -235,7 +235,7 @@ export default function AIRecordsList() {
         const options = [
           { label: '全部模型', value: '' },
           ...response.list.map((model: any) => ({
-            label: `${model.provider} · ${model.model_name} · ${model.version || 'v1'} · ${model.name}`,
+            label: `${model.provider} · ${model.model_name} · ${model.name}`,
             value: model.id,
             icon: model.icon,
           }))
