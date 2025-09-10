@@ -5,8 +5,14 @@
 interface ConversationData {
   id: number;
   title: string;
+  model_id: string;
+  model_title: string;
   model_provider: string;
   model_name: string;
+  model_type: string;
+  model_icon: string;
+  model_version: string;
+  model_credentials: string;
   model_config?: Record<string, any>;
   message_count: number;
   token_used: number;
@@ -68,7 +74,7 @@ export class ConversationService {
   private getHeaders() {
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.token}`,
+      Authorization: `Bearer ${this.token}`,
     };
   }
 
@@ -77,7 +83,7 @@ export class ConversationService {
    */
   async getLatestActiveConversation(): Promise<ConversationWithMessages | null> {
     await this.ensureAuth();
-    
+
     try {
       const response = await fetch(`${this.baseURL}/ai/conversations?limit=1&status=active`, {
         method: 'GET',
@@ -135,7 +141,7 @@ export class ConversationService {
       hasUserData: !!this.userData,
       hasUser: !!this.userData?.user,
       hasModel: !!this.userData?.user?.model,
-      model: this.userData?.user?.model
+      model: this.userData?.user?.model,
     });
 
     if (!this.userData?.user?.model) {
@@ -157,12 +163,18 @@ export class ConversationService {
 
     const requestData = {
       title: title.length > 255 ? title.substring(0, 255) : title,
+      model_id: this.userData.user.model.id,
+      model_title: this.userData.user.model.name,
       model_provider: this.userData.user.model.provider || 'openai',
       model_name: this.userData.user.model.model_name || 'gpt-3.5-turbo',
+      model_type: this.userData.user.model.type || 'llm',
+      model_icon: this.userData.user.model.icon || '',
+      model_version: this.userData.user.model.version || '',
+      model_credentials: this.userData.user.model.credentials
+        ? JSON.stringify(this.userData.user.model.credentials)
+        : '',
       model_config: modelConfig,
     };
-    
-    console.log('创建对话请求数据:', requestData);
 
     try {
       const response = await fetch(`${this.baseURL}/ai/conversations`, {
@@ -196,7 +208,7 @@ export class ConversationService {
     sequenceNumber: number,
     tokenCount: number = 0,
     responseTimeMs?: number,
-    errorMessage?: string
+    errorMessage?: string,
   ): Promise<boolean> {
     await this.ensureAuth();
 
@@ -242,16 +254,19 @@ export class ConversationService {
       token_count?: number;
       response_time_ms?: number;
       error_message?: string;
-    }>
+    }>,
   ): Promise<boolean> {
     await this.ensureAuth();
 
     try {
-      const response = await fetch(`${this.baseURL}/ai/conversations/${conversationId}/messages/batch`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({ messages }),
-      });
+      const response = await fetch(
+        `${this.baseURL}/ai/conversations/${conversationId}/messages/batch`,
+        {
+          method: 'POST',
+          headers: this.getHeaders(),
+          body: JSON.stringify({ messages }),
+        },
+      );
 
       if (!response.ok) {
         throw new Error(`批量保存消息失败: ${response.status}`);
@@ -270,7 +285,7 @@ export class ConversationService {
   async updateConversationStatus(
     conversationId: number,
     status: 'active' | 'completed' | 'error',
-    tokenUsed?: number
+    tokenUsed?: number,
   ): Promise<boolean> {
     await this.ensureAuth();
 

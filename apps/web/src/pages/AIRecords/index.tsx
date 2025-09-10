@@ -1,15 +1,15 @@
 import { EyeIcon, TrashIcon } from '@heroicons/react/24/outline';
 import {
+  CalendarDaysIcon,
   ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
+  HashtagIcon,
   PlayIcon,
-  CalendarDaysIcon,
   QuestionMarkCircleIcon,
   XCircleIcon,
-  HashtagIcon,
 } from '@heroicons/react/24/solid';
-import { Button, DatePicker, Popconfirm, Select, Table } from 'antd';
+import { Button, Popconfirm, Select, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
@@ -20,6 +20,7 @@ import {
   type AIConversation,
   type AIConversationStats,
 } from '../../api/ai-conversations';
+import { listModels } from '../../api/models';
 import { message } from '../../components/Message';
 import PaginationBar from '../../components/PaginationBar';
 import AIConversationDetailDrawer from './AIConversationDetailDrawer';
@@ -35,15 +36,18 @@ export default function AIRecordsList() {
   // 筛选条件
   const [filters, setFilters] = useState({
     status: '',
-    model_provider: '',
+    model_id: '',
     keyword: '',
-    startTime: '',
-    endTime: '',
   });
 
   // 详情侧拉弹框状态
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
   const [viewingConversation, setViewingConversation] = useState<AIConversation | null>(null);
+
+  // 模型列表状态
+  const [modelOptions, setModelOptions] = useState<Array<{label: string, value: string, icon?: string}>>([
+    { label: '全部模型', value: '' }
+  ]);
 
   // 状态选项
   const statusOptions = [
@@ -53,21 +57,12 @@ export default function AIRecordsList() {
     { label: '出错', value: 'error' },
   ];
 
-  // 模型提供商选项
-  const providerOptions = [
-    { label: '全部提供商', value: '' },
-    { label: 'OpenAI', value: 'openai' },
-    { label: 'Claude', value: 'anthropic' },
-    { label: 'Google', value: 'google' },
-    { label: '本地模型', value: 'local' },
-  ];
-
   // Ant Design Table 列定义
   const columns: ColumnsType<AIConversation> = [
     {
       title: '序号',
       key: 'index',
-      width: '8%',
+      width: '5%',
       render: (_value: any, _record: any, index: number) => (
         <div className="text-center">
           {(page - 1) * pageSize + index + 1}
@@ -77,7 +72,7 @@ export default function AIRecordsList() {
     {
       title: '对话信息',
       key: 'conversation',
-      width: '35%',
+      width: '30%',
       render: (record: AIConversation) => (
         <div className="flex flex-col">
           <div className="flex items-center gap-2 mb-1">
@@ -86,8 +81,20 @@ export default function AIRecordsList() {
               {record.title}
             </span>
           </div>
-          <div className="text-sm text-gray-500">
-            {record.model_provider} · {record.model_name}
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            {record.model_icon && (
+              <img 
+                src={record.model_icon} 
+                alt={record.model_title}
+                className="w-4 h-4 rounded"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            )}
+            <span>{record.model_title || record.model_name}</span>
+            <span>·</span>
+            <span>{record.model_provider}</span>
           </div>
         </div>
       ),
@@ -95,7 +102,7 @@ export default function AIRecordsList() {
     {
       title: '消息统计',
       key: 'stats',
-      width: '15%',
+      width: '12%',
       render: (record: AIConversation) => (
         <div className="flex flex-col">
           <div className="text-sm text-gray-900">
@@ -110,7 +117,7 @@ export default function AIRecordsList() {
     {
       title: '创建时间',
       key: 'created_at',
-      width: '17%',
+      width: '15%',
       render: (record: AIConversation) => (
         <div className="text-sm text-gray-900">
           {dayjs(record.created_at * 1000).format('YYYY-MM-DD HH:mm:ss')}
@@ -118,9 +125,19 @@ export default function AIRecordsList() {
       ),
     },
     {
+      title: '更新时间',
+      key: 'updated_at',
+      width: '15%',
+      render: (record: AIConversation) => (
+        <div className="text-sm text-gray-900">
+          {dayjs(record.updated_at * 1000).format('YYYY-MM-DD HH:mm:ss')}
+        </div>
+      ),
+    },
+    {
       title: '状态',
       key: 'status',
-      width: '10%',
+      width: '8%',
       render: (record: AIConversation) => (
         <span className={getStatusBadge(record.status)}>
           {getStatusText(record.status)}
@@ -163,13 +180,11 @@ export default function AIRecordsList() {
         page,
         pageSize,
         ...filters,
-        startTime: filters.startTime ? dayjs(filters.startTime).unix() : undefined,
-        endTime: filters.endTime ? dayjs(filters.endTime).unix() : undefined,
       };
       
       const response = await fetchAIConversations(params);
-      setConversations(response?.items || []);
-      setTotal(response?.total || 0);
+      setConversations(response.items || []);
+      setTotal(response.total || 0);
     } catch (error) {
       console.error('加载AI对话记录失败：', error);
       message.error('加载AI对话记录失败');
@@ -204,11 +219,33 @@ export default function AIRecordsList() {
 
   useEffect(() => {
     loadAIConversations();
-  }, [page, pageSize, filters]);
+  }, [page, pageSize, filters.status, filters.model_id, filters.keyword]);
 
   useEffect(() => {
     loadStats();
+    loadModelOptions();
   }, []);
+
+  // 加载模型选项
+  const loadModelOptions = async () => {
+    try {
+      const response = await listModels({});
+      if (response && response.list) {
+        // 构建模型选项，包含详细信息
+        const options = [
+          { label: '全部模型', value: '' },
+          ...response.list.map((model: any) => ({
+            label: `${model.provider} · ${model.model_name} · ${model.version || 'v1'} · ${model.name}`,
+            value: model.id,
+            icon: model.icon,
+          }))
+        ];
+        setModelOptions(options);
+      }
+    } catch (error) {
+      console.error('加载模型列表失败:', error);
+    }
+  };
 
   // 搜索操作
   const handleSearch = () => {
@@ -220,10 +257,8 @@ export default function AIRecordsList() {
   const handleReset = () => {
     setFilters({
       status: '',
-      model_provider: '',
+      model_id: '',
       keyword: '',
-      startTime: '',
-      endTime: '',
     });
     setPage(1);
   };
@@ -280,7 +315,7 @@ export default function AIRecordsList() {
     <div className="p-6 space-y-6">
       {/* 页面标题 */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">AI 记录</h1>
+        <h1 className="text-2xl font-bold text-gray-900">AI 对话记录</h1>
         <p className="text-gray-600 mt-1">查看和管理AI对话记录</p>
       </div>
 
@@ -380,7 +415,7 @@ export default function AIRecordsList() {
 
       {/* 筛选区域 */}
       <div className="bg-white p-4 rounded-lg shadow border">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
             <Select
@@ -393,36 +428,35 @@ export default function AIRecordsList() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">模型提供商</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">模型供应商</label>
             <Select
-              value={filters.model_provider}
-              onChange={(value) => setFilters(prev => ({ ...prev, model_provider: value }))}
-              options={providerOptions}
+              value={filters.model_id}
+              onChange={(value) => setFilters(prev => ({ ...prev, model_id: value }))}
               className="w-full"
               style={{ height: 42 }}
-              placeholder="选择提供商"
-            />
+              placeholder="选择模型"
+              popupMatchSelectWidth={400}
+              optionLabelProp="label"
+            >
+              {modelOptions.map((option) => (
+                <Select.Option key={option.value} value={option.value} label={option.label}>
+                  <div className="flex items-center gap-2 py-1">
+                    {option.icon && (
+                      <img 
+                        src={option.icon} 
+                        alt=""
+                        className="w-4 h-4 rounded flex-shrink-0"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <span className="truncate">{option.label}</span>
+                  </div>
+                </Select.Option>
+              ))}
+            </Select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">开始时间</label>
-            <DatePicker
-              value={filters.startTime ? dayjs(filters.startTime) : null}
-              onChange={(date) => setFilters(prev => ({ ...prev, startTime: date ? date.format('YYYY-MM-DD') : '' }))}
-              className="w-full [&_.ant-picker]:!h-[42px]"
-              placeholder="选择开始时间"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">结束时间</label>
-            <DatePicker
-              value={filters.endTime ? dayjs(filters.endTime) : null}
-              onChange={(date) => setFilters(prev => ({ ...prev, endTime: date ? date.format('YYYY-MM-DD') : '' }))}
-              className="w-full [&_.ant-picker]:!h-[42px]"
-              placeholder="选择结束时间"
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">关键词</label>
             <input
@@ -433,8 +467,8 @@ export default function AIRecordsList() {
               placeholder="搜索对话标题或模型名称"
             />
           </div>
-          <div className="col-span-2 flex items-end gap-2">
-            <Button type="primary" onClick={handleSearch} className="h-[42px]">搜索</Button>
+          <div className="flex items-end">
+            <Button type="primary" onClick={handleSearch} className="h-[42px] mr-2">搜索</Button>
             <Button onClick={handleReset} className="h-[42px]">重置</Button>
           </div>
         </div>

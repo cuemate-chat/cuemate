@@ -7,8 +7,14 @@ import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helpe
 // 请求体验证模式
 const createConversationSchema = z.object({
   title: z.string().min(1).max(255),
+  model_id: z.string().min(1).max(50),
+  model_title: z.string().min(1).max(100),
   model_provider: z.string().min(1).max(50),
   model_name: z.string().min(1).max(100),
+  model_type: z.string().min(1).max(50),
+  model_icon: z.string().optional().default(''),
+  model_version: z.string().optional().default(''),
+  model_credentials: z.string().optional().default(''),
   model_config: z.object({}).passthrough().optional(),
 });
 
@@ -140,7 +146,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           limit = 20, 
           status, 
           search, 
-          model_provider,
+          model_id,
           start_time,
           end_time 
         } = req.query as any;
@@ -154,10 +160,10 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           params.push(status);
         }
 
-        // 模型提供商筛选
-        if (model_provider && model_provider !== '') {
-          whereClause += ' AND model_provider = ?';
-          params.push(model_provider);
+        // 模型ID筛选
+        if (model_id && model_id !== '') {
+          whereClause += ' AND model_id = ?';
+          params.push(model_id);
         }
 
         // 搜索条件（支持标题和模型名称）
@@ -188,8 +194,9 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
         const offset = (page - 1) * limit;
         const rows = (app as any).db
           .prepare(`
-            SELECT id, title, model_provider, model_name, message_count, 
-                   token_used, status, created_at, updated_at
+            SELECT id, title, model_id, model_title, model_provider, model_name, 
+                   model_type, model_icon, model_version, model_credentials,
+                   message_count, token_used, status, created_at, updated_at
             FROM ai_conversations 
             ${whereClause}
             ORDER BY updated_at DESC 
@@ -290,14 +297,22 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
         const result = (app as any).db
           .prepare(`
             INSERT INTO ai_conversations (
-              title, user_id, model_provider, model_name, model_config
-            ) VALUES (?, ?, ?, ?, ?)
+              title, user_id, model_id, model_title, model_provider, 
+              model_name, model_type, model_icon, model_version, 
+              model_credentials, model_config
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `)
           .run(
             validatedData.title,
             payload.uid,
+            validatedData.model_id,
+            validatedData.model_title,
             validatedData.model_provider,
             validatedData.model_name,
+            validatedData.model_type,
+            validatedData.model_icon,
+            validatedData.model_version,
+            validatedData.model_credentials,
             validatedData.model_config ? JSON.stringify(validatedData.model_config) : null,
           );
 

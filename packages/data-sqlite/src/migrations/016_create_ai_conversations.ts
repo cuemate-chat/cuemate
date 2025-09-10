@@ -8,6 +8,12 @@ export function up(db: any): void {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       user_id INTEGER,
+      model_id TEXT,
+      model_title TEXT,
+      model_type TEXT NOT NULL DEFAULT 'llm',
+      model_icon TEXT,
+      model_version TEXT,
+      model_credentials TEXT,
       model_provider TEXT NOT NULL,
       model_name TEXT NOT NULL,
       model_config TEXT,
@@ -91,7 +97,7 @@ export function down(db: any): void {
   db.exec('DROP TRIGGER IF EXISTS update_ai_conversations_timestamp');
   db.exec('DROP TRIGGER IF EXISTS update_conversation_on_message_insert');
   db.exec('DROP TRIGGER IF EXISTS update_conversation_on_message_delete');
-  
+
   // 删除表
   db.exec('DROP TABLE IF EXISTS ai_messages');
   db.exec('DROP TABLE IF EXISTS ai_conversations');
