@@ -99,13 +99,6 @@ export function AIQuestionHistoryApp() {
     // 不需要await，因为useEffect会处理过滤
   }, []);
 
-  // 页面大小变化处理
-  const handlePageSizeChange = useCallback((_current: number, _size: number) => {
-    setCurrentPage(1); // 重置到第一页
-    // 这里需要更新pageSize状态，但当前是常量，暂时只重新过滤
-    // filterConversations会在useEffect中自动调用
-  }, []);
-
   // 刷新数据
   const handleRefresh = useCallback(() => {
     loadAllConversations();
@@ -200,7 +193,6 @@ export function AIQuestionHistoryApp() {
         <WindowFooter
           currentPage={currentPage}
           onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
           totalItems={totalItems}
           pageSize={pageSize}
         />

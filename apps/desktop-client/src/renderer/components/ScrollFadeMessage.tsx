@@ -3,7 +3,8 @@
  * 整合动画和渐变效果的完整消息组件
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Copy, Check } from 'lucide-react';
 import { AnimatedMessage, AnimatedMessageProps } from './AnimatedMessage';
 import { renderContentByLines, LineRenderOptions } from '../utils/messageRenderer';
 import { FadeConfig } from '../utils/fadeCalculator';
@@ -38,6 +39,9 @@ export const ScrollFadeMessage: React.FC<ScrollFadeMessageProps> = ({
   customRender,
   ...animationProps
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
+  
   const defaultMessageClassName = `ai-message ai-message-${message.type}`;
   const defaultContentClassName = 'ai-message-content';
 
@@ -45,12 +49,35 @@ export const ScrollFadeMessage: React.FC<ScrollFadeMessageProps> = ({
     ? customRender(message, renderOptions)
     : renderContentByLines(message.content, renderOptions);
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('复制失败:', error);
+    }
+  };
+
   return (
     <AnimatedMessage {...animationProps}>
-      <div className={messageClassName || defaultMessageClassName}>
+      <div 
+        className={`${messageClassName || defaultMessageClassName} ${isHovered ? 'message-hovered' : ''}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         <div className={contentClassName || defaultContentClassName}>
           {renderedContent}
         </div>
+        {isHovered && (
+          <button
+            className="message-copy-btn"
+            onClick={handleCopy}
+            title={copied ? '已复制' : '复制内容'}
+          >
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+          </button>
+        )}
       </div>
     </AnimatedMessage>
   );

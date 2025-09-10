@@ -63,6 +63,42 @@ class CueMateApp {
         ],
       },
       {
+        label: '编辑',
+        submenu: [
+          {
+            label: '撤销',
+            accelerator: 'CommandOrControl+Z',
+            role: 'undo'
+          },
+          {
+            label: '重做',
+            accelerator: 'Shift+CommandOrControl+Z',
+            role: 'redo'
+          },
+          { type: 'separator' },
+          {
+            label: '剪切',
+            accelerator: 'CommandOrControl+X',
+            role: 'cut'
+          },
+          {
+            label: '复制',
+            accelerator: 'CommandOrControl+C',
+            role: 'copy'
+          },
+          {
+            label: '粘贴',
+            accelerator: 'CommandOrControl+V',
+            role: 'paste'
+          },
+          {
+            label: '全选',
+            accelerator: 'CommandOrControl+A',
+            role: 'selectall'
+          }
+        ]
+      },
+      {
         label: '视图',
         submenu: [
           {

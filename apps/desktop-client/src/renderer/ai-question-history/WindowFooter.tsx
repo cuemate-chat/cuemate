@@ -27,14 +27,7 @@ export function WindowFooter({
           showQuickJumper={false}
           showSizeChanger={false}
           size="small"
-          simple={Math.ceil(totalItems / pageSize) > 4}
           showLessItems={true}
-          itemRender={(page, type, originalElement) => {
-            if (type === 'page') {
-              return <span style={{ padding: '0 6px', fontSize: '12px' }}>{page}</span>;
-            }
-            return originalElement;
-          }}
           className="custom-pagination"
         />
       </div>

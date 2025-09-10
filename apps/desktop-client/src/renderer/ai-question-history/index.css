@@ -684,7 +684,11 @@ html, body, #root {
 
 .ai-window-footer .custom-pagination .ant-pagination-jump-prev,
 .ai-window-footer .custom-pagination .ant-pagination-jump-next {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.ai-window-footer .custom-pagination .ant-pagination-item-ellipsis {
+  color: rgba(255, 255, 255, 0.95) !important;
 }
 
 .ai-window-footer .custom-pagination .ant-pagination-disabled {
