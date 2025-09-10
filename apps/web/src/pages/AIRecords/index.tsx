@@ -23,6 +23,7 @@ import {
 import { listModels } from '../../api/models';
 import { message } from '../../components/Message';
 import PaginationBar from '../../components/PaginationBar';
+import { findProvider } from '../../providers';
 import AIConversationDetailDrawer from './AIConversationDetailDrawer';
 
 export default function AIRecordsList() {
@@ -73,31 +74,49 @@ export default function AIRecordsList() {
       title: '对话信息',
       key: 'conversation',
       width: '30%',
-      render: (record: AIConversation) => (
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2 mb-1">
-            <ChatBubbleLeftRightIcon className="w-4 h-4 text-blue-500" />
-            <span className="text-sm font-medium text-gray-900 truncate">
-              {record.title}
-            </span>
+      render: (record: AIConversation) => {
+        // 获取provider的图标内容用于显示
+        const provider = findProvider(record.model_provider);
+        const iconContent = provider?.icon;
+        const iconSrc = iconContent ? `data:image/svg+xml;utf8,${encodeURIComponent(iconContent)}` : null;
+        
+        return (
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-1">
+              <ChatBubbleLeftRightIcon className="w-4 h-4 text-blue-500" />
+              <span className="text-sm font-medium text-gray-900 truncate">
+                {record.title}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1 text-sm text-gray-500">
+              <div className="flex items-center gap-2">
+                {iconSrc && (
+                  <img 
+                    src={iconSrc} 
+                    alt={record.model_provider}
+                    className="w-4 h-4 rounded flex-shrink-0"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                )}
+                <span className="font-medium">{record.model_title || record.model_name}</span>
+                <span>·</span>
+                <span>{record.model_provider}</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span>类型: {record.model_type}</span>
+                {record.model_version && (
+                  <>
+                    <span>·</span>
+                    <span>版本: {record.model_version}</span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            {record.model_icon && (
-              <img 
-                src={record.model_icon} 
-                alt={record.model_title}
-                className="w-4 h-4 rounded"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            )}
-            <span>{record.model_title || record.model_name}</span>
-            <span>·</span>
-            <span>{record.model_provider}</span>
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       title: '消息统计',
@@ -234,11 +253,16 @@ export default function AIRecordsList() {
         // 构建模型选项，包含详细信息
         const options = [
           { label: '全部模型', value: '' },
-          ...response.list.map((model: any) => ({
-            label: `${model.provider} · ${model.model_name} · ${model.name}`,
-            value: model.id,
-            icon: model.icon,
-          }))
+          ...response.list.map((model: any) => {
+            // 获取provider的图标内容
+            const provider = findProvider(model.provider);
+            const iconContent = provider?.icon;
+            return {
+              label: `${model.provider} - ${model.name}`,
+              value: model.id,
+              icon: iconContent ? `data:image/svg+xml;utf8,${encodeURIComponent(iconContent)}` : null,
+            };
+          })
         ];
         setModelOptions(options);
       }
@@ -435,7 +459,6 @@ export default function AIRecordsList() {
               className="w-full"
               style={{ height: 42 }}
               placeholder="选择模型"
-              popupMatchSelectWidth={400}
               optionLabelProp="label"
             >
               {modelOptions.map((option) => (
