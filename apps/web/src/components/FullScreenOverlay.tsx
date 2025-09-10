@@ -79,7 +79,7 @@ const FullScreenOverlay: React.FC<FullScreenOverlayProps> = ({
   };
 
   return (
-    <div className={`fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm transition-all duration-300 ${className}`}>
+    <div className={`fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm transition-all duration-300 ${className}`}>
       {/* 背景动画 */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10 animate-pulse"></div>

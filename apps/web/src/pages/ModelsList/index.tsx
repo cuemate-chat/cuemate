@@ -1,19 +1,19 @@
 import {
-    DeleteOutlined,
-    EditOutlined,
-    LinkOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
 import { Input, Modal, Tree } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-    deleteModel,
-    getModel,
-    listModels,
-    selectUserModel,
-    testModelConnectivity,
-    upsertModel,
-} from '../../api/models';
 import { storage } from '../../api/http';
+import {
+  deleteModel,
+  getModel,
+  listModels,
+  selectUserModel,
+  testModelConnectivity,
+  upsertModel,
+} from '../../api/models';
 import CollapsibleSidebar from '../../components/CollapsibleSidebar';
 import FullScreenOverlay from '../../components/FullScreenOverlay';
 import { message } from '../../components/Message';
@@ -247,10 +247,13 @@ export default function ModelsList() {
     fields.forEach((f) => {
       if (formData[f.key] !== undefined && formData[f.key] !== '') credentials[f.key] = formData[f.key];
     });
+    // 获取provider的icon_url路径，用于存储到数据库
+    const providerIconUrl = provider?.icon_url ?? null;
+    
     const payload: any = {
       ...formData,
-      icon: formData.icon ?? `/logo-icon.png`,
-      version: formData.version ?? formData.model_name,
+      icon: providerIconUrl,
+      version: formData.model_name, // 直接使用model_name作为version
       credentials,
       params: (formData.params || []).map((p: any) => ({
         ...p,
