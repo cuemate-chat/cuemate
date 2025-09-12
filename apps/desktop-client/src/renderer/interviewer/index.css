@@ -43,12 +43,11 @@ html, body, #root {
   z-index: 10;
 }
 
-/* Header 中间区域 */
-.interviewer-header-center {
-  flex: 1;
+/* Header 左侧区域 */
+.interviewer-header-left {
   display: flex;
-  justify-content: flex-start;
-  margin-left: 10px;
+  align-items: center;
+  width: 30%;
 }
 
 .interviewer-title {
@@ -57,7 +56,7 @@ html, body, #root {
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .interviewer-title-icon {
@@ -70,7 +69,9 @@ html, body, #root {
 .interviewer-header-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5%;
+  width: 70%;
+  justify-content: flex-end;
 }
 
 .interviewer-header-btn {
@@ -96,13 +97,404 @@ html, body, #root {
   font-size: 12px;
 }
 
+/* Select 下拉框样式 */
+.interviewer-select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 40%;
+}
+
+.interviewer-select-trigger {
+  height: 20px;
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  padding: 2px 24px 2px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.interviewer-select-trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.interviewer-select-trigger:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.interviewer-select-trigger option {
+  background: rgba(30, 30, 30, 0.95);
+  color: white;
+  padding: 8px 12px;
+}
+
+.interviewer-select-icon {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Transcript 按钮样式 - 默认无背景，悬浮时显示 */
+.interviewer-transcript-btn {
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 2px 8px;
+  gap: 6px;
+  font-size: 12px;
+  width: 30%;
+}
+
+.interviewer-transcript-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* Body */
 .interviewer-window-body {
   flex: 1;
-  padding: 8px 16px 16px 16px;
+  padding: 16px;
   overflow-y: auto;
   background: transparent;
   position: relative;
+}
+
+/* Live Insights Grid */
+.live-insights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* Insight Cards */
+.insight-card {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  text-align: left;
+  width: 100%;
+}
+
+.insight-card:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.insight-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+}
+
+.insight-card:hover .insight-card-icon {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.insight-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.insight-card-title {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* 选中状态 */
+.insight-card-selected {
+  background: rgba(59, 130, 246, 0.3) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+}
+
+/* 语音测试面板 */
+.voice-test-panel {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+}
+
+.test-section {
+  margin-bottom: 24px;
+}
+
+.test-section:last-child {
+  margin-bottom: 0;
+}
+
+.test-section-title {
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 12px 0;
+}
+
+.test-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.device-select-wrapper {
+  position: relative;
+  flex: 1;
+  width: 50%;
+  max-width: 50%;
+}
+
+.device-select {
+  width: 100%;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 5px 32px 5px 12px;
+  font-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.device-select:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.device-select option {
+  background: rgba(30, 30, 30, 0.95);
+  color: white;
+}
+
+.select-icon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.test-status {
+  font-size: 12px;
+  font-weight: 500;
+  width: 20%;
+  max-width: 20%;
+  display: flex;
+  align-items: center;
+}
+
+.test-status.untested {
+  color: #ef4444;
+}
+
+.test-status.testing {
+  color: #eab308;
+}
+
+.test-status.success {
+  color: #22c55e;
+}
+
+.test-status.failed {
+  color: #ef4444;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Radix UI Tooltip 样式 */
+.radix-tooltip-content {
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  max-width: 250px;
+  word-wrap: break-word;
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='top'] {
+  animation-name: slideDownAndFade;
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='right'] {
+  animation-name: slideLeftAndFade;
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='bottom'] {
+  animation-name: slideUpAndFade;
+}
+
+.radix-tooltip-content[data-state='delayed-open'][data-side='left'] {
+  animation-name: slideRightAndFade;
+}
+
+.radix-tooltip-arrow {
+  fill: rgba(0, 0, 0, 0.9);
+}
+
+@keyframes slideUpAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideRightAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideDownAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideLeftAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.test-button {
+  background: rgba(59, 130, 246, 0.2);
+  color: white;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  width: 15%;
+  max-width: 15%;
+}
+
+.test-button:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.6);
+}
+
+.test-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.recognition-result {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 6px;
+}
+
+.recognition-result h5 {
+  color: #22c55e;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0 0 6px 0;
+}
+
+.recognized-text {
+  color: white;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.error-message {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+}
+
+.error-message h5 {
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0 0 6px 0;
+}
+
+.error-text {
+  color: #fca5a5;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 /* 空状态样式 */

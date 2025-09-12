@@ -5,8 +5,7 @@ import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
 
 export function InterviewerApp() {
   const [isRecording, setIsRecording] = useState(false);
-  const [hasResults, setHasResults] = useState(false);
-  const [results, setResults] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState('Default');
 
   const handleStartRecording = () => {
     setIsRecording(true);
@@ -16,35 +15,29 @@ export function InterviewerApp() {
 
   const handleStopRecording = () => {
     setIsRecording(false);
-    setHasResults(true);
     // TODO: 停止语音识别
     console.log('停止语音识别');
-    // 添加示例结果
-    setResults(['这是语音识别的示例结果文本']);
   };
 
-  const handleClearResults = () => {
-    setHasResults(false);
-    setResults([]);
+
+  const handleModelChange = (model: string) => {
+    setSelectedModel(model);
+    console.log('Model changed to:', model);
   };
 
-  const handleClose = async () => {
-    try {
-      (window as any).electronInterviewerAPI?.closeSelf?.();
-    } catch {}
+  const handleTranscriptToggle = () => {
+    console.log('Toggle transcript');
   };
 
   return (
     <div className="interviewer-app">
       <div className="interviewer-window">
         <InterviewerWindowHeader 
-          onClose={handleClose}
-          onClearResults={handleClearResults}
+          selectedModel={selectedModel}
+          onModelChange={handleModelChange}
+          onTranscriptToggle={handleTranscriptToggle}
         />
-        <InterviewerWindowBody 
-          hasResults={hasResults}
-          results={results}
-        />
+        <InterviewerWindowBody />
         <InterviewerWindowFooter
           isRecording={isRecording}
           onStartRecording={handleStartRecording}

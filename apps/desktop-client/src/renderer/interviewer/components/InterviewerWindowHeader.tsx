@@ -1,52 +1,51 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { Volume2, X } from 'lucide-react';
+import { AudioLines, ChevronDown, Mic } from 'lucide-react';
 
 interface InterviewerWindowHeaderProps {
-  onClose: () => void;
-  onClearResults: () => void;
+  selectedModel?: string;
+  onModelChange?: (model: string) => void;
+  onTranscriptToggle?: () => void;
 }
 
-export function InterviewerWindowHeader({ onClose, onClearResults }: InterviewerWindowHeaderProps) {
+export function InterviewerWindowHeader({ 
+  selectedModel = "Default",
+  onModelChange,
+  onTranscriptToggle
+}: InterviewerWindowHeaderProps) {
   return (
     <div className="interviewer-window-header">
-      <div className="interviewer-header-center">
+      <div className="interviewer-header-left">
         <div className="interviewer-title">
-          <Volume2 size={16} className="interviewer-title-icon" />
+          <Mic size={16} className="interviewer-title-icon" />
           <span>语音识别</span>
         </div>
       </div>
       
       <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
         <div className="interviewer-header-right">
+          <div className="interviewer-select-wrapper">
+            <select 
+              className="interviewer-select-trigger"
+              value={selectedModel}
+              onChange={(e) => onModelChange?.(e.target.value)}
+            >
+              <option value="Default">Default</option>
+            </select>
+            <ChevronDown size={14} className="interviewer-select-icon" />
+          </div>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <button 
-                className="interviewer-header-btn"
-                onClick={onClearResults}
+                className="interviewer-transcript-btn"
+                onClick={onTranscriptToggle}
               >
-                <span className="interviewer-header-btn-text">清空</span>
+                <AudioLines size={14} />
+                <span>转录</span>
               </button>
             </Tooltip.Trigger>
             <Tooltip.Portal>
               <Tooltip.Content className="radix-tooltip-content">
-                清空识别结果
-                <Tooltip.Arrow className="radix-tooltip-arrow" />
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
-          
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <button 
-                className="interviewer-header-btn"
-                onClick={onClose}
-              >
-                <X size={16} />
-              </button>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-                关闭当前窗口
+                查看转录内容
                 <Tooltip.Arrow className="radix-tooltip-arrow" />
               </Tooltip.Content>
             </Tooltip.Portal>
