@@ -26,7 +26,7 @@ export class MainContentWindow {
     maximizable: true,
     closable: true, // 可关闭（但会被阻止并改为隐藏）
     focusable: true, // 允许获得焦点，以便用户可以输入内容
-    show: false,
+    show: true,
     center: true,
   };
 

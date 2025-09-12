@@ -20,7 +20,7 @@ export class ControlBarWindow {
     alwaysOnTop: true, // 悬浮窗口需要总是置顶
     frame: false,
     transparent: true,
-    skipTaskbar: true,
+    skipTaskbar: false,
     resizable: false,
     minimizable: false,
     maximizable: false,

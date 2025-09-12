@@ -394,7 +394,6 @@ export function setupIPC(windowManager: WindowManager): void {
 
       if (response.ok) {
         const data = await response.json();
-        logger.info({ isLoggedIn: data.isLoggedIn, user: data.user }, 'IPC: 登录检查完成');
 
         // 缓存用户数据和token到全局变量
         if (data.isLoggedIn && data.user) {

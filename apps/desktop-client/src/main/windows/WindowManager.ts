@@ -61,8 +61,10 @@ export class WindowManager {
       // 1. 创建控制条窗口（现在作为主焦点窗口）
       await this.controlBarWindow.create();
 
-      // 2. 创建主内容窗口（初始隐藏）
+      // 2. 创建主内容窗口
       await this.mainContentWindow.create();
+      // 启动时显示 main-content，确保 Dock 入口建立
+      this.showMainContent();
 
       // 3. 创建AI问答窗口（初始隐藏）
       await this.aiQuestionWindow.create();
