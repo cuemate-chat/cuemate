@@ -1,9 +1,9 @@
 import { execSync } from 'child_process';
-import { app, BrowserWindow, globalShortcut, Menu, MenuItem, shell } from 'electron';
+import { app, BrowserWindow, globalShortcut, Menu, MenuItem, nativeImage, shell } from 'electron';
 import type { LogLevel } from '../shared/types.js';
 import { logger } from '../utils/logger.js';
 import { setupIPC } from './ipc/handlers.js';
-import { getAppIconPath } from './utils/paths.js';
+import { getAppIconPath, getProjectRoot } from './utils/paths.js';
 import { setupGlobalShortcuts } from './utils/shortcuts.js';
 import { WindowManager } from './windows/WindowManager.js';
 
@@ -34,7 +34,7 @@ class CueMateApp {
           {
             label: '关于 CueMate',
             click: async () => {
-              await shell.openExternal('https://github.com/CueMate/CueMate');
+              await shell.openExternal('https://github.com/CueMate-Chat/CueMate');
             },
           },
           { type: 'separator' },
@@ -68,35 +68,35 @@ class CueMateApp {
           {
             label: '撤销',
             accelerator: 'CommandOrControl+Z',
-            role: 'undo'
+            role: 'undo',
           },
           {
             label: '重做',
             accelerator: 'Shift+CommandOrControl+Z',
-            role: 'redo'
+            role: 'redo',
           },
           { type: 'separator' },
           {
             label: '剪切',
             accelerator: 'CommandOrControl+X',
-            role: 'cut'
+            role: 'cut',
           },
           {
             label: '复制',
             accelerator: 'CommandOrControl+C',
-            role: 'copy'
+            role: 'copy',
           },
           {
             label: '粘贴',
             accelerator: 'CommandOrControl+V',
-            role: 'paste'
+            role: 'paste',
           },
           {
             label: '全选',
             accelerator: 'CommandOrControl+A',
-            role: 'selectall'
-          }
-        ]
+            role: 'selectall',
+          },
+        ],
       },
       {
         label: '视图',
@@ -199,7 +199,7 @@ class CueMateApp {
           {
             label: '访问官网',
             click: async () => {
-              await shell.openExternal('https://github.com/CueMate/CueMate');
+              await shell.openExternal('https://github.com/CueMate-Chat/CueMate');
             },
           },
         ],
@@ -256,6 +256,10 @@ class CueMateApp {
         // 在 macOS 上设置 Dock 图标并确保可见
         if (process.platform === 'darwin' && app.dock) {
           try {
+            // 确保激活策略为常规模式，避免 Dock 图标缺失
+            if (typeof (app as any).setActivationPolicy === 'function') {
+              (app as any).setActivationPolicy('regular');
+            }
             // 确保应用在 Dock 中可见
             app.dock.show();
             logger.info('Dock 已显示');
@@ -269,9 +273,36 @@ class CueMateApp {
             const stats = fs.statSync(iconPath);
             logger.info({ iconPath, size: stats.size, isFile: stats.isFile() }, '图标文件信息');
 
-            // 设置图标
-            app.dock.setIcon(iconPath);
-            logger.info('macOS Dock 图标已设置并确保可见');
+            // 开发模式下动态设置 Dock 图标；打包环境由 bundle 内 icns 提供
+            if (this.isDevelopment) {
+              let setOk = false;
+              const trySet = (p: string) => {
+                const i = nativeImage.createFromPath(p);
+                if (i && !i.isEmpty()) {
+                  app.dock.setIcon(i);
+                  logger.info({ p }, 'macOS Dock 图标已设置');
+                  return true;
+                }
+                return false;
+              };
+
+              // 先尝试 icns
+              setOk = trySet(iconPath);
+              if (!setOk) {
+                // 回退到 png
+                const path = require('path');
+                const pngPath = path.join(getProjectRoot(), 'assets', 'logo-icon.png');
+                setOk = trySet(pngPath);
+                if (!setOk) {
+                  logger.warn(
+                    { iconPath, pngPath },
+                    '无法从 icns/png 加载图标，使用默认 Electron 图标',
+                  );
+                }
+              }
+            } else {
+              logger.info('打包环境：由应用 bundle 内 icns 提供 Dock 图标');
+            }
           } catch (dockError: any) {
             logger.error(
               { dockError: dockError.message || dockError, iconPath },
