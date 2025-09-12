@@ -91,10 +91,7 @@
           ]
         }
       ],
-      "entitlements": {
-        "com.apple.security.device.audio-input": true,
-        "com.apple.security.device.screen-recording": true
-      },
+      "entitlements": "build/entitlements.mac.plist",
       "extendInfo": {
         "NSMicrophoneUsageDescription": "CueMate 需要访问麦克风进行语音识别测试",
         "NSScreenCaptureDescription": "CueMate 需要屏幕录制权限来捕获系统音频扬声器输出进行扬声器测试",
