@@ -46,7 +46,8 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
 
         // 获取总体统计
         const totalStats = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             SELECT 
               COUNT(*) as total,
               COALESCE(SUM(token_used), 0) as totalTokens,
@@ -55,23 +56,27 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
               COUNT(CASE WHEN status = 'error' THEN 1 END) as error
             FROM ai_conversations 
             WHERE user_id = ?
-          `)
+          `,
+          )
           .get(payload.uid);
 
         // 获取今天的对话数
         const todayStats = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             SELECT 
               COUNT(*) as todayConversations
             FROM ai_conversations 
             WHERE user_id = ? 
             AND created_at >= strftime('%s', date('now', 'start of day'))
-          `)
+          `,
+          )
           .get(payload.uid);
 
         // 获取今天的提问数（user消息）
         const todayQuestionsStats = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             SELECT 
               COUNT(*) as todayQuestions
             FROM ai_messages m
@@ -79,31 +84,36 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
             WHERE c.user_id = ? 
             AND m.message_type = 'user'
             AND m.created_at >= strftime('%s', date('now', 'start of day'))
-          `)
+          `,
+          )
           .get(payload.uid);
 
         // 获取总提问数（user消息）
         const totalQuestionsStats = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             SELECT 
               COUNT(*) as totalQuestions
             FROM ai_messages m
             JOIN ai_conversations c ON m.conversation_id = c.id
             WHERE c.user_id = ? 
             AND m.message_type = 'user'
-          `)
+          `,
+          )
           .get(payload.uid);
 
         // 获取失败对话数（error状态 + 有错误消息的对话）
         const failedStats = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             SELECT 
               COUNT(DISTINCT c.id) as failedConversations
             FROM ai_conversations c
             LEFT JOIN ai_messages m ON c.id = m.conversation_id AND m.error_message IS NOT NULL
             WHERE c.user_id = ? 
             AND (c.status = 'error' OR m.id IS NOT NULL)
-          `)
+          `,
+          )
           .get(payload.uid);
 
         const stats = {
@@ -141,14 +151,14 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'ai-conversations.list', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
-        const { 
-          page = 1, 
-          limit = 20, 
-          status, 
-          search, 
+        const {
+          page = 1,
+          limit = 20,
+          status,
+          search,
           model_id,
           start_time,
-          end_time 
+          end_time,
         } = req.query as any;
 
         let whereClause = 'WHERE user_id = ?';
@@ -193,15 +203,17 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
         // 获取对话列表
         const offset = (page - 1) * limit;
         const rows = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             SELECT id, title, model_id, model_title, model_provider, model_name, 
                    model_type, model_icon, model_version, model_credentials,
                    message_count, token_used, status, created_at, updated_at
             FROM ai_conversations 
             ${whereClause}
-            ORDER BY updated_at DESC 
+            ORDER BY created_at DESC 
             LIMIT ? OFFSET ?
-          `)
+          `,
+          )
           .all(...params, limit, offset);
 
         await logOperation(app, req, {
@@ -231,10 +243,12 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
 
         // 获取对话基本信息
         const conversation = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             SELECT * FROM ai_conversations 
             WHERE id = ? AND user_id = ?
-          `)
+          `,
+          )
           .get(id, payload.uid);
 
         if (!conversation) {
@@ -243,11 +257,13 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
 
         // 获取对话消息
         const messages = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             SELECT * FROM ai_messages 
             WHERE conversation_id = ? 
             ORDER BY sequence_number ASC
-          `)
+          `,
+          )
           .all(id);
 
         // 解析JSON字段
@@ -295,13 +311,15 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
         const validatedData = createConversationSchema.parse(req.body);
 
         const result = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             INSERT INTO ai_conversations (
               title, user_id, model_id, model_title, model_provider, 
               model_name, model_type, model_icon, model_version, 
               model_credentials, model_config
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `)
+          `,
+          )
           .run(
             validatedData.title,
             payload.uid,
@@ -356,17 +374,17 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
 
         const updates = [];
         const values = [];
-        
+
         if (validatedData.title) {
           updates.push('title = ?');
           values.push(validatedData.title);
         }
-        
+
         if (validatedData.status) {
           updates.push('status = ?');
           values.push(validatedData.status);
         }
-        
+
         if (validatedData.token_used !== undefined) {
           updates.push('token_used = ?');
           values.push(validatedData.token_used);
@@ -417,9 +435,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
         }
 
         // 删除对话（外键约束会自动删除相关消息）
-        (app as any).db
-          .prepare('DELETE FROM ai_conversations WHERE id = ?')
-          .run(id);
+        (app as any).db.prepare('DELETE FROM ai_conversations WHERE id = ?').run(id);
 
         await logOperation(app, req, {
           ...OPERATION_MAPPING.AI_CONVERSATION,
@@ -456,13 +472,15 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
         }
 
         const result = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             INSERT INTO ai_messages (
               conversation_id, message_type, content, content_format,
               sequence_number, token_count, response_time_ms, 
               error_message, metadata
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `)
+          `,
+          )
           .run(
             validatedData.conversation_id,
             validatedData.message_type,
@@ -629,10 +647,12 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
         // 验证所有对话都属于当前用户
         const placeholders = conversation_ids.map(() => '?').join(', ');
         const conversations = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             SELECT id, title FROM ai_conversations 
             WHERE id IN (${placeholders}) AND user_id = ?
-          `)
+          `,
+          )
           .all(...conversation_ids, payload.uid);
 
         if (conversations.length !== conversation_ids.length) {
@@ -654,9 +674,9 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           userName: payload.username,
         });
 
-        return { 
+        return {
           message: `成功删除${conversations.length}个对话`,
-          deletedCount: deleteResult.changes 
+          deletedCount: deleteResult.changes,
         };
       } catch (err) {
         return reply.code(500).send(buildPrefixedError('批量删除对话失败', err, 500));
@@ -678,18 +698,20 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
 
         // 先查询要删除的对话数量
         const countResult = (app as any).db
-          .prepare(`
+          .prepare(
+            `
             SELECT COUNT(*) as count FROM ai_conversations 
             WHERE user_id = ? AND created_at < ?
-          `)
+          `,
+          )
           .get(payload.uid, before_time);
 
         const deleteCount = countResult.count || 0;
 
         if (deleteCount === 0) {
-          return reply.code(200).send({ 
+          return reply.code(200).send({
             message: '没有找到符合条件的对话',
-            deletedCount: 0 
+            deletedCount: 0,
           });
         }
 
@@ -708,9 +730,9 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           userName: payload.username,
         });
 
-        return { 
+        return {
           message: `成功删除${deleteCount}个历史对话`,
-          deletedCount: deleteResult.changes 
+          deletedCount: deleteResult.changes,
         };
       } catch (err) {
         return reply.code(500).send(buildPrefixedError('按时间删除对话失败', err, 500));

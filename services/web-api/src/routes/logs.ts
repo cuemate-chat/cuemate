@@ -108,6 +108,13 @@ export function registerLogRoutes(app: FastifyInstance) {
       if (a.date !== b.date) {
         return b.date.localeCompare(a.date);
       }
+      // 首先按级别排序
+      const levelOrder = { error: 0, warn: 1, debug: 2, info: 3 };
+      const aLevelOrder = levelOrder[a.level];
+      const bLevelOrder = levelOrder[b.level];
+      if (aLevelOrder !== bLevelOrder) {
+        return aLevelOrder - bLevelOrder;
+      }
       // 然后按服务名称优先级排序
       const serviceOrder: Record<string, number> = {
         'web-api': 0,
@@ -117,14 +124,9 @@ export function registerLogRoutes(app: FastifyInstance) {
         'asr-interviewer': 4,
         'desktop-client': 5,
       };
-      const aOrder = serviceOrder[a.service] ?? 999;
-      const bOrder = serviceOrder[b.service] ?? 999;
-      if (aOrder !== bOrder) {
-        return aOrder - bOrder;
-      }
-      // 最后按级别
-      const levelOrder = { error: 0, warn: 1, debug: 2, info: 3 };
-      return levelOrder[a.level] - levelOrder[b.level];
+      const aServiceOrder = serviceOrder[a.service] ?? 999;
+      const bServiceOrder = serviceOrder[b.service] ?? 999;
+      return aServiceOrder - bServiceOrder;
     });
 
     const ps = clampPageSize(pageSize);

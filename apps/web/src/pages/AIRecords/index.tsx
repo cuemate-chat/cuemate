@@ -100,7 +100,9 @@ export default function AIRecordsList() {
                     }}
                   />
                 )}
-                <span className="font-medium">{record.model_title || record.model_name}</span>
+                <span className="font-medium">{record.model_title}</span>
+                <span>·</span>
+                <span>{record.model_name}</span>
                 <span>·</span>
                 <span>{record.model_provider}</span>
               </div>
@@ -125,7 +127,7 @@ export default function AIRecordsList() {
       render: (record: AIConversation) => (
         <div className="flex flex-col">
           <div className="text-sm text-gray-900">
-            {record.message_count} 条消息
+            {record.message_count/2} 条对话
           </div>
           <div className="text-sm text-gray-500">
             {record.token_used} tokens
