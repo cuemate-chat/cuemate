@@ -53,7 +53,7 @@ API_AVAILABLE(macos(13.0))
                 return;
             }
             
-            // 创建内容过滤器以捕获系统音频
+            // 创建内容过滤器以捕获系统音频扬声器
             // 使用显示器内容而不是窗口
             NSArray *displays = shareableContent.displays;
             if (displays.count == 0) {

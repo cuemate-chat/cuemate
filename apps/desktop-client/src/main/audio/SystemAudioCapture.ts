@@ -1,42 +1,35 @@
 import * as path from 'path';
 import { logger } from '../../utils/logger.js';
 
-// 加载原生模块
+// 惰性加载原生模块，避免在主进程初始化阶段触发系统框架加载
 let ScreenCaptureAudio: any = null;
-try {
-  // 在开发环境和生产环境使用不同的路径
-  let nativeModulePath: string;
-  
-  if (process.env.NODE_ENV === 'development') {
-    // 开发环境：直接从源码目录加载
-    nativeModulePath = path.join(__dirname, '../../src/main/native/screen_capture_audio');
-  } else {
-    // 生产环境：从编译后的dist目录加载.node文件
-    // __dirname 在生产环境中指向 dist/main，需要到 dist/native
-    nativeModulePath = path.join(__dirname, '../native/screen_capture_audio/index.node');
+let nativeTried = false;
+function ensureNativeLoaded(): void {
+  if (ScreenCaptureAudio || nativeTried) return;
+  nativeTried = true;
+  try {
+    let nativeModulePath: string;
+    if (process.env.NODE_ENV === 'development') {
+      nativeModulePath = path.join(__dirname, '../../src/main/native/screen_capture_audio');
+    } else {
+      nativeModulePath = path.join(__dirname, '../native/screen_capture_audio/index.node');
+    }
+
+    logger.info(`尝试加载系统音频扬声器捕获模块：${nativeModulePath}`);
+    const fs = require('fs');
+    if (!fs.existsSync(nativeModulePath)) {
+      throw new Error(`原生模块文件不存在: ${nativeModulePath}`);
+    }
+
+    const nativeModule = require(nativeModulePath);
+    ScreenCaptureAudio = nativeModule.ScreenCaptureAudio || nativeModule;
+    logger.info('原生音频捕获模块加载成功', {
+      hasScreenCaptureAudio: !!ScreenCaptureAudio,
+      moduleKeys: Object.keys(nativeModule),
+    });
+  } catch (error) {
+    logger.error('加载原生音频捕获模块失败:', error);
   }
-  
-  logger.info(`尝试加载系统音频捕获模块：${nativeModulePath}`);
-  logger.info(`当前环境：${process.env.NODE_ENV}`);
-  logger.info(`__dirname：${__dirname}`);
-  
-  // 检查文件是否存在
-  const fs = require('fs');
-  if (!fs.existsSync(nativeModulePath)) {
-    throw new Error(`原生模块文件不存在: ${nativeModulePath}`);
-  }
-  
-  const nativeModule = require(nativeModulePath);
-  // 如果是直接加载.node文件，ScreenCaptureAudio就是导出的类
-  // 如果是通过index.js加载，需要访问.ScreenCaptureAudio属性
-  ScreenCaptureAudio = nativeModule.ScreenCaptureAudio || nativeModule;
-  
-  logger.info('原生音频捕获模块加载成功', { 
-    hasScreenCaptureAudio: !!ScreenCaptureAudio,
-    moduleKeys: Object.keys(nativeModule)
-  });
-} catch (error) {
-  logger.error('加载原生音频捕获模块失败:', error);
 }
 
 interface SystemAudioCaptureOptions {
@@ -60,30 +53,31 @@ export class SystemAudioCapture {
       bitDepth: options.bitDepth || 16,
       device: options.device || 'default',
     };
-
-    // 初始化原生模块实例
-    if (ScreenCaptureAudio) {
-      this.nativeCapture = new ScreenCaptureAudio();
-    } else {
-      logger.error('ScreenCaptureAudio 原生模块未可用');
-    }
+    // 惰性加载原生模块到真正需要时
   }
 
   /**
-   * 开始捕获系统音频输出
+   * 开始捕获系统音频扬声器输出
    */
   public async startCapture(): Promise<void> {
     if (this.isCapturing) {
-      logger.warn('系统音频捕获已在进行中');
+      logger.warn('系统音频扬声器捕获已在进行中');
       return;
     }
 
-    if (!this.nativeCapture) {
+    // 首次使用时再加载原生模块
+    if (!ScreenCaptureAudio) {
+      ensureNativeLoaded();
+    }
+    if (!ScreenCaptureAudio) {
       throw new Error('原生音频捕获模块未可用，请确保编译成功');
+    }
+    if (!this.nativeCapture) {
+      this.nativeCapture = new ScreenCaptureAudio();
     }
 
     try {
-      logger.info('开始启动系统音频捕获...');
+      logger.info('开始启动系统音频扬声器捕获...');
 
       // 使用原生模块配置
       const config = {
@@ -95,7 +89,7 @@ export class SystemAudioCapture {
           }
         },
         onError: (error: Error) => {
-          logger.error('系统音频捕获错误:', error);
+          logger.error('系统音频扬声器捕获错误:', error);
           this.isCapturing = false;
 
           // 检查是否是权限错误
@@ -116,9 +110,9 @@ export class SystemAudioCapture {
       this.nativeCapture.startCapture(config);
       this.isCapturing = true;
 
-      logger.info('系统音频捕获已启动 (使用 ScreenCaptureKit)');
+      logger.info('系统音频扬声器捕获已启动 (使用 ScreenCaptureKit)');
     } catch (error) {
-      logger.error('启动系统音频捕获失败:', error);
+      logger.error('启动系统音频扬声器捕获失败:', error);
       this.isCapturing = false;
       throw error;
     }
@@ -129,18 +123,18 @@ export class SystemAudioCapture {
    */
   public stopCapture(): void {
     if (!this.isCapturing) {
-      logger.warn('系统音频捕获未在进行中');
+      logger.warn('系统音频扬声器捕获未在进行中');
       return;
     }
 
-    logger.info('停止系统音频捕获...');
+    logger.info('停止系统音频扬声器捕获...');
 
     if (this.nativeCapture) {
       this.nativeCapture.stopCapture();
     }
 
     this.isCapturing = false;
-    logger.info('系统音频捕获已停止');
+    logger.info('系统音频扬声器捕获已停止');
   }
 
   /**

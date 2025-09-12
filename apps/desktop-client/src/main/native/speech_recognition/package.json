@@ -7,6 +7,6 @@
     "node-addon-api": "^8.0.0"
   },
   "scripts": {
-    "build": "node-gyp rebuild"
+    "build": "CXXFLAGS='-arch arm64' LDFLAGS='-arch arm64' node-gyp rebuild --arch=arm64"
   }
 }

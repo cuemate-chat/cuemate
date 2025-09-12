@@ -1,4 +1,4 @@
-import { MicrophoneIcon, StopIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { ClockIcon, MicrophoneIcon, StopIcon } from '@heroicons/react/24/outline';
 import { Button, Card, Form, Input, InputNumber, Select, Spin, Switch, Tabs } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { getAsrConfig, saveAsrConfig, type AsrConfig } from '../../api/asr';
@@ -30,7 +30,7 @@ export default function AsrSettings() {
   const lastSendTimeRef = useRef<number>(0);
   const pendingChunksRef = useRef<number>(0);
   
-  // 系统音频相关状态
+  // 系统音频扬声器相关状态
   const [isSystemAudioCapturing, setIsSystemAudioCapturing] = useState(false);
   const [desktopConnected, setDesktopConnected] = useState(false);
   const systemAudioQueueRef = useRef<Blob[]>([]);
@@ -41,14 +41,14 @@ export default function AsrSettings() {
   const [availableMicDevices, setAvailableMicDevices] = useState<Array<{ deviceId: string; label: string }>>([]);
   const [selectedMicDevice, setSelectedMicDevice] = useState<string>('');
 
-  // 获取系统音频设备（用于面试官模式）
+  // 获取系统音频扬声器设备（用于面试官模式）
   const loadAudioDevices = async () => {
     try {
       if (webSocketService.getConnectionState()) {
-        // 从Desktop客户端获取真实的系统音频设备列表
+        // 从Desktop客户端获取真实的系统音频扬声器设备列表
         const devices = await webSocketService.getSystemAudioDevices();
         setAvailableAudioDevices(devices);
-        console.log('已加载系统音频设备:', devices);
+        console.log('已加载系统音频扬声器设备:', devices);
       } else {
         console.warn('Desktop客户端未连接，提供默认设备选项');
         setAvailableAudioDevices([
@@ -60,7 +60,7 @@ export default function AsrSettings() {
         ]);
       }
     } catch (error) {
-      console.error('获取系统音频设备失败:', error);
+      console.error('获取系统音频扬声器设备失败:', error);
       // 发生错误时提供默认选项
       setAvailableAudioDevices([
         { id: 'default', name: '默认音频输出设备' },
@@ -104,7 +104,7 @@ export default function AsrSettings() {
           name: s.name,
           url: normalizeWebSocketUrl(s.url, s.name),
           displayName: s.name === 'asr-user' ? '面试者语音识别' : '面试官语音识别',
-          description: s.name === 'asr-user' ? '麦克风输入' : '系统音频输出'
+          description: s.name === 'asr-user' ? '麦克风输入' : '系统音频扬声器输出'
         }));
       } else {
         asrServices = getAsrServices();
@@ -283,12 +283,12 @@ export default function AsrSettings() {
   };
 
   // 语音测试功能
-  // 面试官模式：系统音频识别（通过Desktop捕获系统音频）
+  // 面试官模式：系统音频扬声器识别（通过Desktop捕获系统音频扬声器）
   const startInterviewerRecording = async () => {
     try {
-      console.log('启动面试官系统音频识别模式');
+      console.log('启动面试官系统音频扬声器识别模式');
       
-      // 1. 连接Desktop服务获取系统音频
+      // 1. 连接Desktop服务获取系统音频扬声器
       if (!webSocketService.getConnectionState()) {
         try {
           await webSocketService.connect();
@@ -300,7 +300,7 @@ export default function AsrSettings() {
         }
       }
 
-      // 2. 启动系统音频捕获（使用选择的设备）
+      // 2. 启动系统音频扬声器捕获（使用选择的设备）
       webSocketService.startSystemAudioCapture({
         sampleRate: 16000,
         channels: 1,
@@ -308,7 +308,7 @@ export default function AsrSettings() {
       });
 
       setIsSystemAudioCapturing(true);
-      message.info('正在通过Desktop捕获系统音频...');
+      message.info('正在通过Desktop捕获系统音频扬声器...');
 
       // 3. 连接ASR服务，接收Desktop转发的音频数据并进行识别
       const asrServiceUrl = testService;
@@ -316,15 +316,15 @@ export default function AsrSettings() {
       
       websocketRef.current.onopen = () => {
         console.log('面试官ASR WebSocket连接成功:', asrServiceUrl);
-        message.success('系统音频识别服务已连接');
-        setTranscriptText("系统音频识别已启动，等待音频输入...");
+        message.success('系统音频扬声器识别服务已连接');
+        setTranscriptText("系统音频扬声器识别已启动，等待音频输入...");
         isConnectingRef.current = false;
       };
       
       websocketRef.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('系统音频识别结果:', data);
+          console.log('系统音频扬声器识别结果:', data);
           
           if (pendingChunksRef.current > 0) {
             pendingChunksRef.current--;
@@ -358,18 +358,18 @@ export default function AsrSettings() {
           if (displayText.trim()) {
             setTranscriptText(displayText.trim());
           } else if (data.status === "no_audio_detected") {
-            setTranscriptText("未检测到系统音频信号，请检查扬声器/音响输出...");
+            setTranscriptText("未检测到系统音频扬声器信号，请检查扬声器/音响输出...");
           }
 
         } catch (error) {
-          console.error('处理系统音频识别结果失败:', error);
+          console.error('处理系统音频扬声器识别结果失败:', error);
         }
       };
       
       websocketRef.current.onerror = (error) => {
-        console.error('系统音频识别WebSocket错误:', error);
-        message.error('系统音频识别服务连接失败');
-        setTranscriptText('[错误] 系统音频识别服务连接失败\n请检查ASR服务是否启动');
+        console.error('系统音频扬声器识别WebSocket错误:', error);
+        message.error('系统音频扬声器识别服务连接失败');
+        setTranscriptText('[错误] 系统音频扬声器识别服务连接失败\n请检查ASR服务是否启动');
         isConnectingRef.current = false;
         stopRecording();
       };
@@ -383,8 +383,8 @@ export default function AsrSettings() {
       }, 1000);
       
     } catch (error) {
-      message.error('启动系统音频识别失败');
-      console.error('系统音频识别错误:', error);
+      message.error('启动系统音频扬声器识别失败');
+      console.error('系统音频扬声器识别错误:', error);
       isConnectingRef.current = false;
     }
   };
@@ -553,7 +553,7 @@ export default function AsrSettings() {
     const isInterviewerService = testService.includes('8002');
     
     if (isInterviewerService) {
-      // 面试官模式：系统音频识别
+      // 面试官模式：系统音频扬声器识别
       await startInterviewerRecording();
     } else {
       // 面试者模式：麦克风识别
@@ -569,7 +569,7 @@ export default function AsrSettings() {
     lastSendTimeRef.current = 0;
     pendingChunksRef.current = 0;
     
-    // 停止系统音频捕获
+    // 停止系统音频扬声器捕获
     if (isSystemAudioCapturing) {
       webSocketService.stopSystemAudioCapture();
       setIsSystemAudioCapturing(false);
@@ -666,7 +666,7 @@ export default function AsrSettings() {
 
   useEffect(() => {
     loadConfig();
-    loadAudioDevices(); // 加载系统音频设备
+    loadAudioDevices(); // 加载系统音频扬声器设备
     loadMicDevices();   // 加载麦克风设备
     
     // 启动默认波形动画
@@ -690,7 +690,7 @@ export default function AsrSettings() {
           websocketRef.current.send(audioBlob);
           console.debug('System audio data sent to ASR:', audioBlob.size, 'bytes');
         } catch (error) {
-          console.error('处理系统音频数据失败:', error);
+          console.error('处理系统音频扬声器数据失败:', error);
         }
       }
     };
@@ -700,21 +700,21 @@ export default function AsrSettings() {
       
       switch (wsMessage.type) {
         case 'SYSTEM_AUDIO_CAPTURE_STARTED':
-          message.success('系统音频捕获已开始');
-          setTranscriptText('系统音频捕获已启动，等待音频输入...');
+          message.success('系统音频扬声器捕获已开始');
+          setTranscriptText('系统音频扬声器捕获已启动，等待音频输入...');
           break;
           
         case 'SYSTEM_AUDIO_CAPTURE_FAILED':
         case 'SYSTEM_AUDIO_ERROR':
-          message.error(`系统音频捕获失败: ${wsMessage.data?.error || '未知错误'}`);
+          message.error(`系统音频扬声器捕获失败: ${wsMessage.data?.error || '未知错误'}`);
           setIsSystemAudioCapturing(false);
-          setTranscriptText(`[错误] ${wsMessage.data?.error || '系统音频捕获失败'}`);
+          setTranscriptText(`[错误] ${wsMessage.data?.error || '系统音频扬声器捕获失败'}`);
           break;
           
         case 'SYSTEM_AUDIO_CAPTURE_STOPPED':
-          message.info('系统音频捕获已停止');
+          message.info('系统音频扬声器捕获已停止');
           setIsSystemAudioCapturing(false);
-          console.log('系统音频捕获已停止');
+          console.log('系统音频扬声器捕获已停止');
           break;
       }
     };
@@ -1139,16 +1139,16 @@ export default function AsrSettings() {
           {/* 音频设备选择 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {testService.includes('8002') ? (
-              // 面试官模式：系统音频设备选择
+              // 面试官模式：系统音频扬声器设备选择
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  系统音频源
+                  系统音频扬声器源
                 </label>
                 <Select
                   value={selectedAudioDevice}
                   onChange={setSelectedAudioDevice}
                   style={{ width: '100%' }}
-                  placeholder="选择系统音频输出设备"
+                  placeholder="选择系统音频扬声器输出设备"
                   options={availableAudioDevices.map(device => ({
                     value: device.id,
                     label: device.name
@@ -1224,7 +1224,7 @@ export default function AsrSettings() {
                     {isRecording 
                       ? '停止捕获' 
                       : testService.includes('8002') 
-                        ? '开始捕获系统音频' 
+                        ? '开始捕获系统音频扬声器' 
                         : '开始录音'
                     }
                   </Button>
@@ -1268,7 +1268,7 @@ export default function AsrSettings() {
                   {testService.includes('8002') ? (
                     <>
                       <li>• <strong>面试官音频：</strong>需要启动桌面客户端</li>
-                      <li>• 桌面客户端将捕获系统音频输出(喇叭声音)</li>
+                      <li>• 桌面客户端将捕获系统音频扬声器输出(喇叭声音)</li>
                       <li>• 在macOS上需要授予"屏幕录制"权限</li>
                       <li>• 桌面连接状态: <span className={desktopConnected ? 'text-green-600' : 'text-red-600'}>{desktopConnected ? '已连接' : '未连接'}</span></li>
                     </>

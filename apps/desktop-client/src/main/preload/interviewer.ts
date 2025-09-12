@@ -28,12 +28,13 @@ const interviewerAPI = {
     stopRecognition: () => ipcRenderer.invoke('speech-recognition-stop'),
   },
 
-  // === 系统音频捕获 API ===
+  // === 系统音频扬声器捕获 API ===
   systemAudioCapture: {
     isAvailable: () => ipcRenderer.invoke('system-audio-capture-available'),
     getStatus: () => ipcRenderer.invoke('system-audio-capture-status'),
     getDevices: () => ipcRenderer.invoke('system-audio-get-devices'),
-    startCapture: (options?: { sampleRate?: number; channels?: number }) => ipcRenderer.invoke('system-audio-capture-start', options),
+    startCapture: (options?: { sampleRate?: number; channels?: number }) =>
+      ipcRenderer.invoke('system-audio-capture-start', options),
     stopCapture: () => ipcRenderer.invoke('system-audio-capture-stop'),
   },
 

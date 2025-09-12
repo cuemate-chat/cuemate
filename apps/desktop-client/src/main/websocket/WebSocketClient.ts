@@ -1,8 +1,8 @@
-import WebSocket from 'ws';
 import { shell } from 'electron';
+import WebSocket from 'ws';
 import { logger } from '../../utils/logger.js';
-import type { WindowManager } from '../windows/WindowManager.js';
 import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
+import type { WindowManager } from '../windows/WindowManager.js';
 
 interface WebSocketMessage {
   type: string;
@@ -36,11 +36,11 @@ export class WebSocketClient {
       this.ws.on('open', () => {
         logger.info('WebSocket 连接成功');
         this.reconnectAttempts = 0;
-        
+
         // 注册为 desktop 客户端
         this.send({
           type: 'REGISTER',
-          client: 'desktop'
+          client: 'desktop',
         });
       });
 
@@ -61,7 +61,6 @@ export class WebSocketClient {
       this.ws.on('error', (error) => {
         logger.error({ error }, 'WebSocket 连接错误');
       });
-
     } catch (error) {
       logger.error({ error }, 'WebSocket 连接初始化失败');
       this.handleReconnect();
@@ -88,7 +87,7 @@ export class WebSocketClient {
         if (controlBarWindow && !controlBarWindow.isDestroyed()) {
           controlBarWindow.webContents.send('websocket-login-success', {
             isLoggedIn: true,
-            user: message.user
+            user: message.user,
           });
         }
         logger.info('WebSocket: 用户登录成功，已通知 control-bar');
@@ -99,7 +98,7 @@ export class WebSocketClient {
         const controlBarWindowLogout = this.windowManager.getControlBarWindow();
         if (controlBarWindowLogout && !controlBarWindowLogout.isDestroyed()) {
           controlBarWindowLogout.webContents.send('websocket-logout', {
-            isLoggedIn: false
+            isLoggedIn: false,
           });
         }
         logger.info('WebSocket: 用户登出，已通知 control-bar');
@@ -155,7 +154,7 @@ export class WebSocketClient {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       logger.info(`${this.reconnectDelay / 1000}秒后尝试重连 (第 ${this.reconnectAttempts} 次)`);
-      
+
       this.reconnectInterval = setTimeout(() => {
         this.connect();
       }, this.reconnectDelay);
@@ -188,12 +187,12 @@ export class WebSocketClient {
   }
 
   /**
-   * 处理开始系统音频捕获请求
+   * 处理开始系统音频扬声器捕获请求
    */
   private async handleStartSystemAudioCapture(message: WebSocketMessage): Promise<void> {
     try {
-      logger.info('WebSocket: 开始系统音频捕获');
-      
+      logger.info('WebSocket: 开始系统音频扬声器捕获');
+
       // 如果已经在捕获，先停止
       if (this.systemAudioCapture?.isCaptureActive()) {
         this.systemAudioCapture.stopCapture();
@@ -204,7 +203,7 @@ export class WebSocketClient {
         sampleRate: message.data?.sampleRate || 16000,
         channels: message.data?.channels || 1,
         bitDepth: 16,
-        device: message.data?.device || 'default'
+        device: message.data?.device || 'default',
       });
 
       // 设置音频数据回调
@@ -214,45 +213,44 @@ export class WebSocketClient {
           type: 'SYSTEM_AUDIO_DATA',
           data: {
             audioData: audioData.toString('base64'),
-            timestamp: Date.now()
-          }
+            timestamp: Date.now(),
+          },
         });
       });
 
       // 设置错误回调
       this.systemAudioCapture.onError((error: Error) => {
-        logger.error('系统音频捕获错误:', error);
+        logger.error('系统音频扬声器捕获错误:', error);
         this.send({
           type: 'SYSTEM_AUDIO_ERROR',
           data: {
             error: error.message,
-            timestamp: Date.now()
-          }
+            timestamp: Date.now(),
+          },
         });
       });
 
       // 开始捕获
       await this.systemAudioCapture.startCapture();
-      
+
       // 发送成功响应
       this.send({
         type: 'SYSTEM_AUDIO_CAPTURE_STARTED',
         data: {
           success: true,
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       });
-
     } catch (error) {
-      logger.error('启动系统音频捕获失败:', error);
-      
+      logger.error('启动系统音频扬声器捕获失败:', error);
+
       // 发送错误响应
       this.send({
         type: 'SYSTEM_AUDIO_CAPTURE_FAILED',
         data: {
           error: error instanceof Error ? error.message : String(error),
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       });
     }
   }
@@ -262,24 +260,23 @@ export class WebSocketClient {
    */
   private async handleGetAudioDevices(message: WebSocketMessage): Promise<void> {
     try {
-      logger.info('WebSocket: 获取系统音频设备列表');
-      
+      logger.info('WebSocket: 获取系统音频扬声器设备列表');
+
       // 使用SystemAudioCapture的静态方法获取设备列表
       const devices = await SystemAudioCapture.getAudioDevices();
-      
+
       // 发送设备列表响应
       this.send({
         type: `GET_AUDIO_DEVICES_RESPONSE_${message.data?.requestId}`,
         data: {
           success: true,
           devices,
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       });
-
     } catch (error) {
       logger.error('获取音频设备列表失败:', error);
-      
+
       // 发送错误响应
       this.send({
         type: `GET_AUDIO_DEVICES_RESPONSE_${message.data?.requestId}`,
@@ -287,19 +284,19 @@ export class WebSocketClient {
           success: false,
           error: error instanceof Error ? error.message : String(error),
           devices: [{ id: 'default', name: '默认音频输出设备' }],
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       });
     }
   }
 
   /**
-   * 处理停止系统音频捕获请求
+   * 处理停止系统音频扬声器捕获请求
    */
   private handleStopSystemAudioCapture(): void {
     try {
-      logger.info('WebSocket: 停止系统音频捕获');
-      
+      logger.info('WebSocket: 停止系统音频扬声器捕获');
+
       if (this.systemAudioCapture) {
         this.systemAudioCapture.stopCapture();
         this.systemAudioCapture = null;
@@ -310,20 +307,19 @@ export class WebSocketClient {
         type: 'SYSTEM_AUDIO_CAPTURE_STOPPED',
         data: {
           success: true,
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       });
-
     } catch (error) {
-      logger.error('停止系统音频捕获失败:', error);
-      
+      logger.error('停止系统音频扬声器捕获失败:', error);
+
       // 发送错误响应
       this.send({
         type: 'SYSTEM_AUDIO_CAPTURE_FAILED',
         data: {
           error: error instanceof Error ? error.message : String(error),
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       });
     }
   }

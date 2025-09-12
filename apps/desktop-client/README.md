@@ -1,10 +1,10 @@
 # CueMate Desktop Audio Client
 
-CueMate 桌面音频捕获客户端，用于捕获系统音频并发送到远程 ASR 服务进行语音识别。
+CueMate 桌面音频捕获客户端，用于捕获系统音频扬声器并发送到远程 ASR 服务进行语音识别。
 
 ## ✨ 功能特性
 
-- 🎵 **系统音频捕获**: 基于 macOS ScreenCaptureKit 框架的原生音频捕获
+- 🎵 **系统音频扬声器捕获**: 基于 macOS ScreenCaptureKit 框架的原生音频捕获
 - 🔄 **跨架构支持**: 支持 Intel (x86_64) 和 Apple Silicon (arm64)
 - 📡 **实时传输**: WebSocket 连接到远程 ASR 服务
 - 🎛️ **设备管理**: 自动检测和管理音频设备
@@ -14,7 +14,7 @@ CueMate 桌面音频捕获客户端，用于捕获系统音频并发送到远程
 
 ### macOS ScreenCaptureKit
 - **系统要求**: macOS 13.0+ (Ventura)
-- **权限要求**: 屏幕录制权限 (包含系统音频)
+- **权限要求**: 屏幕录制权限 (包含系统音频扬声器)
 - **技术优势**: 
   - 无需虚拟音频驱动
   - 系统级音频捕获
@@ -135,17 +135,17 @@ apps/desktop-client/
 
 ### 4. 开始捕获
 - 点击"🎤 开始音频捕获"
-- 系统音频将实时发送到 ASR 服务
+- 系统音频扬声器将实时发送到 ASR 服务
 
 ## 🔧 技术架构
 
 ### 音频处理流程
 ```
-系统音频输出 → ScreenCaptureKit → 原生模块 → TypeScript接口 → WebSocket → ASR服务
+系统音频扬声器输出 → ScreenCaptureKit → 原生模块 → TypeScript接口 → WebSocket → ASR服务
 ```
 
 ### 关键技术栈
-- **ScreenCaptureKit**: macOS 原生系统音频捕获框架
+- **ScreenCaptureKit**: macOS 原生系统音频扬声器捕获框架
 - **Objective-C++**: ScreenCaptureKit API 调用层 (.mm 文件)
 - **C++**: Node.js 原生模块绑定层 (.cpp 文件)
 - **Node.js N-API**: JavaScript ↔ 原生代码桥接
@@ -195,7 +195,7 @@ apps/desktop-client/
 - 确认 macOS 版本 ≥ 13.0
 - 重新安装依赖: `rm -rf node_modules && pnpm install`
 
-### 系统音频捕获权限错误
+### 系统音频扬声器捕获权限错误
 - 系统偏好设置 → 安全性与隐私 → 屏幕录制
 - 添加并勾选 CueMate Desktop Client
 - 重启应用使权限生效
@@ -216,7 +216,7 @@ apps/desktop-client/
 - **屏幕录制权限** (必需):
   - 系统偏好设置 → 安全性与隐私 → 屏幕录制
   - 添加 CueMate Desktop Client 应用
-  - ScreenCaptureKit 框架需要此权限来捕获系统音频
+  - ScreenCaptureKit 框架需要此权限来捕获系统音频扬声器
 
 ### 权限配置步骤
 1. 首次启动应用时，系统会弹出权限请求对话框
@@ -225,7 +225,7 @@ apps/desktop-client/
 4. 重启应用以使权限生效
 
 ### 注意事项
-- 屏幕录制权限包含了系统音频捕获权限
+- 屏幕录制权限包含了系统音频扬声器捕获权限
 - 不需要单独的麦克风权限 (我们不捕获麦克风)
 - 开发模式下同样需要配置权限
 

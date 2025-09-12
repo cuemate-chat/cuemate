@@ -51,7 +51,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
       
       // 请求语音识别权限
       const permission = await electronAPI.speechRecognition.requestPermission();
-      throw new Error(JSON.stringify(permission));
+      console.log('permission', JSON.stringify(permission));
       if (!permission.authorized) {
         throw new Error(`语音识别权限被拒绝，状态: ${permission.status}`);
       }
@@ -109,19 +109,19 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
     try {
       const electronAPI = (window as any).electronInterviewerAPI;
       if (!electronAPI || !electronAPI.systemAudioCapture) {
-        throw new Error('系统音频捕获服务不可用');
+        throw new Error('系统音频扬声器捕获服务不可用');
       }
       
-      // 检查系统音频捕获是否可用
+      // 检查系统音频扬声器捕获是否可用
       const isAvailable = await electronAPI.systemAudioCapture.isAvailable();
       if (!isAvailable) {
-        throw new Error('系统音频捕获不可用，请检查权限设置');
+        throw new Error('系统音频扬声器捕获不可用，请检查权限设置');
       }
       
       let audioDetected = false;
       let audioData: number[] = [];
       
-      // 监听系统音频数据
+      // 监听系统音频扬声器数据
       const handleAudioData = (buffer: ArrayBuffer) => {
         // 将 ArrayBuffer 转换为 Float32Array
         const floatArray = new Float32Array(buffer);
@@ -144,7 +144,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
       
       // 监听音频捕获错误
       const handleAudioError = (errorMessage: string) => {
-        console.error('系统音频捕获错误:', errorMessage);
+        console.error('系统音频扬声器捕获错误:', errorMessage);
         setSpeakerStatus('failed');
         setErrorMessage(`音频捕获失败：${errorMessage}`);
       };

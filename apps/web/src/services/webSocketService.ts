@@ -32,7 +32,7 @@ export class WebSocketService {
           // 注册为 web 客户端
           this.send({
             type: 'REGISTER',
-            client: 'web'
+            client: 'web',
           });
 
           resolve();
@@ -50,7 +50,7 @@ export class WebSocketService {
         this.ws.onclose = (event) => {
           console.log('WebSocket: 连接关闭', { code: event.code, reason: event.reason });
           this.isConnected = false;
-          
+
           if (!event.wasClean && this.reconnectAttempts < this.maxReconnectAttempts) {
             this.handleReconnect();
           }
@@ -61,7 +61,6 @@ export class WebSocketService {
           this.isConnected = false;
           reject(error);
         };
-
       } catch (error) {
         console.error('WebSocket: 连接初始化失败', error);
         reject(error);
@@ -77,7 +76,7 @@ export class WebSocketService {
 
     const handlers = this.messageHandlers.get(message.type);
     if (handlers) {
-      handlers.forEach(handler => {
+      handlers.forEach((handler) => {
         try {
           handler(message);
         } catch (error) {
@@ -131,10 +130,12 @@ export class WebSocketService {
    */
   private handleReconnect(): void {
     this.reconnectAttempts++;
-    console.log(`WebSocket: ${this.reconnectDelay / 1000}秒后尝试重连 (第 ${this.reconnectAttempts} 次)`);
-    
+    console.log(
+      `WebSocket: ${this.reconnectDelay / 1000}秒后尝试重连 (第 ${this.reconnectAttempts} 次)`,
+    );
+
     setTimeout(() => {
-      this.connect().catch(error => {
+      this.connect().catch((error) => {
         console.error('WebSocket: 重连失败', error);
       });
     }, this.reconnectDelay);
@@ -160,30 +161,34 @@ export class WebSocketService {
   }
 
   /**
-   * 开始系统音频捕获
+   * 开始系统音频扬声器捕获
    */
-  public startSystemAudioCapture(options?: { sampleRate?: number; channels?: number; device?: string }): void {
+  public startSystemAudioCapture(options?: {
+    sampleRate?: number;
+    channels?: number;
+    device?: string;
+  }): void {
     this.send({
       type: 'START_SYSTEM_AUDIO_CAPTURE',
       data: {
         sampleRate: options?.sampleRate || 16000,
         channels: options?.channels || 1,
-        device: options?.device || 'default'
-      }
+        device: options?.device || 'default',
+      },
     });
   }
 
   /**
-   * 停止系统音频捕获
+   * 停止系统音频扬声器捕获
    */
   public stopSystemAudioCapture(): void {
     this.send({
-      type: 'STOP_SYSTEM_AUDIO_CAPTURE'
+      type: 'STOP_SYSTEM_AUDIO_CAPTURE',
     });
   }
 
   /**
-   * 获取系统音频设备列表
+   * 获取系统音频扬声器设备列表
    */
   public async getSystemAudioDevices(): Promise<Array<{ id: string; name: string }>> {
     return new Promise((resolve, reject) => {
@@ -194,7 +199,7 @@ export class WebSocketService {
 
       // 生成唯一的请求ID
       const requestId = Date.now().toString();
-      
+
       // 设置超时处理
       const timeout = setTimeout(() => {
         this.messageHandlers.delete(`GET_AUDIO_DEVICES_RESPONSE_${requestId}`);
@@ -205,7 +210,7 @@ export class WebSocketService {
       this.onMessage(`GET_AUDIO_DEVICES_RESPONSE_${requestId}`, (message: WebSocketMessage) => {
         clearTimeout(timeout);
         this.messageHandlers.delete(`GET_AUDIO_DEVICES_RESPONSE_${requestId}`);
-        
+
         if (message.data?.success) {
           resolve(message.data.devices || []);
         } else {
@@ -216,7 +221,7 @@ export class WebSocketService {
       // 发送获取设备请求
       this.send({
         type: 'GET_AUDIO_DEVICES',
-        data: { requestId }
+        data: { requestId },
       });
     });
   }

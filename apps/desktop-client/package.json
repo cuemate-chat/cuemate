@@ -12,16 +12,18 @@
     "dev:main:build": "node build-main.js",
     "typecheck": "tsc --noEmit",
     "build": "pnpm typecheck && pnpm build:native && pnpm build:main && pnpm build:renderer",
-    "build:native": "node-gyp rebuild --directory=src/main/native/screen_capture_audio && node-gyp rebuild --directory=src/main/native/speech_recognition",
+    "build:native": "CXXFLAGS='-arch arm64' LDFLAGS='-arch arm64' node-gyp rebuild --arch=arm64 --directory=src/main/native/screen_capture_audio && CXXFLAGS='-arch arm64' LDFLAGS='-arch arm64' node-gyp rebuild --arch=arm64 --directory=src/main/native/speech_recognition",
+    "build:native:electron": "ELECTRON_VERSION=\"$(node -p \"require('electron/package.json').version\")\" && CXXFLAGS='-arch arm64' LDFLAGS='-arch arm64' node-gyp rebuild --arch=arm64 --runtime=electron --target=$ELECTRON_VERSION --dist-url=https://electronjs.org/headers --directory=src/main/native/screen_capture_audio && CXXFLAGS='-arch arm64' LDFLAGS='-arch arm64' node-gyp rebuild --arch=arm64 --runtime=electron --target=$ELECTRON_VERSION --dist-url=https://electronjs.org/headers --directory=src/main/native/speech_recognition",
     "build:main": "pnpm typecheck && node build-main.js",
     "build:renderer": "pnpm typecheck && vite build",
     "preview": "vite preview",
     "electron": "npx electron dist/main/index.cjs",
-    "electron:dev": "concurrently --names \"VITE,ELECTRON\" \"pnpm dev\" \"pnpm build:native && pnpm build:main && pnpm electron\" --prefix-colors \"blue,green\"",
+    "electron:dev": "concurrently --names \"VITE,ELECTRON\" \"pnpm dev\" \"pnpm build:native:electron && pnpm build:main && pnpm electron\" --prefix-colors \"blue,green\"",
     "dev:main:manual": "node build-main.js",
     "dev:electron": "electron dist/main/index.cjs",
     "package": "electron-builder",
     "dist": "pnpm build && electron-builder --publish=never",
+    "dev:mac-app": "pnpm build && electron-builder --mac --dir --publish=never && APP=\"$(ls -d release/mac*/CueMate.app | head -n 1)\" && echo $APP && open \"$APP\"",
     "clean": "rimraf dist",
     "rebuild": "pnpm clean && pnpm build",
     "install": "pnpm build:native"
@@ -95,7 +97,10 @@
       },
       "extendInfo": {
         "NSMicrophoneUsageDescription": "CueMate 需要访问麦克风进行语音识别测试",
-        "NSScreenCaptureDescription": "CueMate 需要屏幕录制权限来捕获系统音频输出进行扬声器测试"
+        "NSScreenCaptureDescription": "CueMate 需要屏幕录制权限来捕获系统音频扬声器输出进行扬声器测试",
+        "NSSpeechRecognitionUsageDescription": "CueMate 需要语音识别权限以将语音转为文本",
+        "NSCameraUsageDescription": "CueMate 需要访问摄像头以进行视频或连续互通相机功能",
+        "NSCameraUseContinuityCameraDeviceType": true
       }
     },
     "win": {
