@@ -181,9 +181,9 @@ Napi::Value SpeechRecognition::StartRecognition(const Napi::CallbackInfo& info) 
         1
     );
     
-    __block bool setupOk = true;
-    __block NSString *setupError = nil;
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __block bool setupOk = true;
+        __block NSString *setupError = nil;
         // Check permissions before starting audio engine
         SFSpeechRecognizerAuthorizationStatus speechStatus = [SFSpeechRecognizer authorizationStatus];
         if (speechStatus != SFSpeechRecognizerAuthorizationStatusAuthorized) {
@@ -237,19 +237,29 @@ Napi::Value SpeechRecognition::StartRecognition(const Napi::CallbackInfo& info) 
         // retain ownership
         this->recognizer = (__bridge_retained void*)speechRecognizer;
         this->audioEngine = (__bridge_retained void*)audioEngine;
+        
+        // 成功启动，通过回调通知
+        if (setupOk) {
+            auto successCallback = [](Napi::Env env, Napi::Function jsCallback) {
+                Napi::Object resultObj = Napi::Object::New(env);
+                resultObj.Set("success", true);
+                resultObj.Set("message", Napi::String::New(env, "Speech recognition started"));
+                jsCallback.Call({ resultObj });
+            };
+            tsfn.BlockingCall(successCallback);
+        } else {
+            // 处理错误
+            std::string errorMsg = setupError ? std::string([setupError UTF8String]) : std::string("Unknown error");
+            auto errorCallback = [errorMsg](Napi::Env env, Napi::Function jsCallback) {
+                Napi::Object resultObj = Napi::Object::New(env);
+                resultObj.Set("success", false);
+                resultObj.Set("error", Napi::String::New(env, errorMsg));
+                jsCallback.Call({ resultObj });
+            };
+            tsfn.BlockingCall(errorCallback);
+            tsfn.Release();
+        }
     });
-    if (!setupOk) {
-        std::string errorMsg = setupError ? std::string([setupError UTF8String]) : std::string("Unknown error");
-        auto errorCallback = [errorMsg](Napi::Env env, Napi::Function jsCallback) {
-            Napi::Object resultObj = Napi::Object::New(env);
-            resultObj.Set("success", false);
-            resultObj.Set("error", Napi::String::New(env, errorMsg));
-            jsCallback.Call({ resultObj });
-        };
-        tsfn.BlockingCall(errorCallback);
-        tsfn.Release();
-        return env.Undefined();
-    }
     
     return env.Undefined();
 }
