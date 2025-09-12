@@ -59,7 +59,7 @@ export class InterviewerWindow {
           nodeIntegration: false,
           contextIsolation: true,
           webSecurity: !this.isDevelopment,
-          devTools: this.isDevelopment,
+          devTools: true, // 语音识别窗口始终允许开发者工具
           preload: getPreloadPath('interviewer'),
         },
       });
@@ -76,10 +76,8 @@ export class InterviewerWindow {
 
       this.setupEvents();
 
-      // 开发环境下打开独立的 DevTools
-      if (this.isDevelopment) {
-        this.window.webContents.openDevTools({ mode: 'detach' });
-      }
+      // 语音识别窗口始终打开独立的 DevTools 用于调试音频功能
+      this.window.webContents.openDevTools({ mode: 'detach' });
 
       logger.info('interviewer 窗口创建成功');
     } catch (error) {

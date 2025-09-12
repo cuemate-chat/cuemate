@@ -20,6 +20,23 @@ const interviewerAPI = {
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 
+  // === 本地语音识别 API ===
+  speechRecognition: {
+    isAvailable: () => ipcRenderer.invoke('speech-recognition-available'),
+    requestPermission: () => ipcRenderer.invoke('speech-recognition-request-permission'),
+    startRecognition: () => ipcRenderer.invoke('speech-recognition-start'),
+    stopRecognition: () => ipcRenderer.invoke('speech-recognition-stop'),
+  },
+
+  // === 系统音频捕获 API ===
+  systemAudioCapture: {
+    isAvailable: () => ipcRenderer.invoke('system-audio-capture-available'),
+    getStatus: () => ipcRenderer.invoke('system-audio-capture-status'),
+    getDevices: () => ipcRenderer.invoke('system-audio-get-devices'),
+    startCapture: (options?: { sampleRate?: number; channels?: number }) => ipcRenderer.invoke('system-audio-capture-start', options),
+    stopCapture: () => ipcRenderer.invoke('system-audio-capture-stop'),
+  },
+
   // === 事件监听 API ===
   on: (channel: string, callback: (...args: any[]) => void) => {
     // 只允许特定的事件频道
@@ -28,6 +45,9 @@ const interviewerAPI = {
       'voice-recognition-error',
       'voice-recognition-start',
       'voice-recognition-stop',
+      'speech-recognition-result',
+      'system-audio-data',
+      'system-audio-error',
     ];
 
     if (allowedChannels.includes(channel)) {

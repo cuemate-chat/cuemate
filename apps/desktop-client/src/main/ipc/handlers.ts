@@ -2,6 +2,8 @@ import { app, dialog, ipcMain, shell } from 'electron';
 import type { FrontendLogMessage } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
 import { WindowManager } from '../windows/WindowManager.js';
+import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
+import * as path from 'path';
 
 /**
  * 设置 IPC 通信处理器
@@ -556,6 +558,229 @@ export function setupIPC(windowManager: WindowManager): void {
         success: false,
         error: '用户数据未缓存，请检查登录状态',
       };
+    }
+  });
+
+  // === 本地语音识别 API ===
+  let speechRecognitionModule: any = null;
+  let speechRecognizer: any = null;
+
+  // 加载语音识别模块
+  const loadSpeechRecognitionModule = () => {
+    if (!speechRecognitionModule) {
+      try {
+        let modulePath: string;
+        
+        if (process.env.NODE_ENV === 'development') {
+          // 开发环境：从源码目录加载
+          modulePath = path.join(__dirname, '../../src/main/native/speech_recognition/build/Release/speech_recognition.node');
+        } else {
+          // 生产环境：从 dist 目录加载
+          modulePath = path.join(__dirname, '../native/speech_recognition/index.node');
+        }
+        
+        logger.info(`尝试加载语音识别模块：${modulePath}`);
+        speechRecognitionModule = require(modulePath);
+        logger.info('语音识别原生模块加载成功');
+      } catch (error) {
+        logger.error({ error }, '语音识别原生模块加载失败');
+        throw error;
+      }
+    }
+    return speechRecognitionModule;
+  };
+
+  /**
+   * 检查本地语音识别是否可用
+   */
+  ipcMain.handle('speech-recognition-available', async () => {
+    try {
+      const module = loadSpeechRecognitionModule();
+      const recognizer = new module.SpeechRecognition();
+      const available = recognizer.isAvailable();
+      return { success: true, available };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 检查语音识别可用性失败');
+      return { success: false, available: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 请求语音识别权限
+   */
+  ipcMain.handle('speech-recognition-request-permission', async () => {
+    return new Promise((resolve) => {
+      try {
+        const module = loadSpeechRecognitionModule();
+        const recognizer = new module.SpeechRecognition();
+        
+        recognizer.requestPermission((result: any) => {
+          logger.info('语音识别权限结果:', result);
+          resolve({ success: true, ...result });
+        });
+      } catch (error) {
+        logger.error({ error }, 'IPC: 请求语音识别权限失败');
+        resolve({ success: false, error: error instanceof Error ? error.message : String(error) });
+      }
+    });
+  });
+
+  /**
+   * 开始语音识别
+   */
+  ipcMain.handle('speech-recognition-start', async (event) => {
+    return new Promise((resolve) => {
+      try {
+        const module = loadSpeechRecognitionModule();
+        
+        // 停止之前的识别任务
+        if (speechRecognizer) {
+          try {
+            speechRecognizer.stopRecognition();
+          } catch (e) {
+            logger.warn('停止之前的识别任务时出错:', e);
+          }
+        }
+        
+        speechRecognizer = new module.SpeechRecognition();
+        
+        speechRecognizer.startRecognition((result: any) => {
+          logger.info('语音识别结果:', result);
+          
+          // 发送结果到渲染进程
+          event.sender.send('speech-recognition-result', result);
+          
+          if (result.success && result.isFinal) {
+            resolve({ success: true, text: result.text });
+          } else if (!result.success) {
+            resolve({ success: false, error: result.error });
+          }
+        });
+        
+        logger.info('语音识别已开始');
+      } catch (error) {
+        logger.error({ error }, 'IPC: 开始语音识别失败');
+        resolve({ success: false, error: error instanceof Error ? error.message : String(error) });
+      }
+    });
+  });
+
+  /**
+   * 停止语音识别
+   */
+  ipcMain.handle('speech-recognition-stop', async () => {
+    try {
+      if (speechRecognizer) {
+        speechRecognizer.stopRecognition();
+        speechRecognizer = null;
+        logger.info('语音识别已停止');
+        return { success: true };
+      } else {
+        return { success: false, error: '没有正在进行的语音识别任务' };
+      }
+    } catch (error) {
+      logger.error({ error }, 'IPC: 停止语音识别失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  // === 系统音频捕获相关 IPC 处理器 ===
+  let systemAudioCapture: SystemAudioCapture | null = null;
+
+  /**
+   * 开始系统音频捕获
+   */
+  ipcMain.handle('system-audio-capture-start', async (event, options?: { sampleRate?: number; channels?: number }) => {
+    try {
+      logger.info('开始系统音频捕获');
+
+      if (systemAudioCapture && systemAudioCapture.isCaptureActive()) {
+        return { success: false, error: '系统音频捕获已在进行中' };
+      }
+
+      // 创建音频捕获实例
+      systemAudioCapture = new SystemAudioCapture(options || {});
+
+      // 设置音频数据回调
+      systemAudioCapture.onData((audioData: Buffer) => {
+        // 将音频数据发送给渲染进程
+        event.sender.send('system-audio-data', audioData);
+      });
+
+      // 设置错误回调
+      systemAudioCapture.onError((error: Error) => {
+        logger.error('系统音频捕获错误:', error);
+        event.sender.send('system-audio-error', error.message);
+      });
+
+      // 启动捕获
+      await systemAudioCapture.startCapture();
+
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 开始系统音频捕获失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 停止系统音频捕获
+   */
+  ipcMain.handle('system-audio-capture-stop', async () => {
+    try {
+      if (systemAudioCapture) {
+        systemAudioCapture.stopCapture();
+        systemAudioCapture = null;
+        logger.info('系统音频捕获已停止');
+        return { success: true };
+      } else {
+        return { success: false, error: '没有正在进行的系统音频捕获任务' };
+      }
+    } catch (error) {
+      logger.error({ error }, 'IPC: 停止系统音频捕获失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 检查系统音频捕获是否可用
+   */
+  ipcMain.handle('system-audio-capture-available', async () => {
+    try {
+      // 尝试获取音频设备列表来测试模块是否可用
+      const devices = await SystemAudioCapture.getAudioDevices();
+      return devices.length > 0;
+    } catch (error) {
+      logger.error({ error }, 'IPC: 检查系统音频捕获可用性失败');
+      return false;
+    }
+  });
+
+  /**
+   * 检查系统音频捕获状态
+   */
+  ipcMain.handle('system-audio-capture-status', async () => {
+    try {
+      return {
+        active: systemAudioCapture ? systemAudioCapture.isCaptureActive() : false,
+        available: true
+      };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 获取系统音频捕获状态失败');
+      return { active: false, available: false };
+    }
+  });
+
+  /**
+   * 获取系统音频设备列表
+   */
+  ipcMain.handle('system-audio-get-devices', async () => {
+    try {
+      const devices = await SystemAudioCapture.getAudioDevices();
+      return { success: true, devices };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 获取音频设备列表失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error), devices: [] };
     }
   });
 

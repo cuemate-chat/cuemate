@@ -9,11 +9,21 @@ try {
   
   if (process.env.NODE_ENV === 'development') {
     // 开发环境：直接从源码目录加载
-    nativeModulePath = path.join(__dirname, '../native/screen_capture_audio');
+    nativeModulePath = path.join(__dirname, '../../src/main/native/screen_capture_audio');
   } else {
     // 生产环境：从编译后的dist目录加载.node文件
     // __dirname 在生产环境中指向 dist/main，需要到 dist/native
     nativeModulePath = path.join(__dirname, '../native/screen_capture_audio/index.node');
+  }
+  
+  logger.info(`尝试加载系统音频捕获模块：${nativeModulePath}`);
+  logger.info(`当前环境：${process.env.NODE_ENV}`);
+  logger.info(`__dirname：${__dirname}`);
+  
+  // 检查文件是否存在
+  const fs = require('fs');
+  if (!fs.existsSync(nativeModulePath)) {
+    throw new Error(`原生模块文件不存在: ${nativeModulePath}`);
   }
   
   const nativeModule = require(nativeModulePath);
@@ -21,7 +31,10 @@ try {
   // 如果是通过index.js加载，需要访问.ScreenCaptureAudio属性
   ScreenCaptureAudio = nativeModule.ScreenCaptureAudio || nativeModule;
   
-  logger.info('原生音频捕获模块加载成功');
+  logger.info('原生音频捕获模块加载成功', { 
+    hasScreenCaptureAudio: !!ScreenCaptureAudio,
+    moduleKeys: Object.keys(nativeModule)
+  });
 } catch (error) {
   logger.error('加载原生音频捕获模块失败:', error);
 }

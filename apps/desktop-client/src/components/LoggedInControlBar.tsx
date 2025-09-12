@@ -1,7 +1,7 @@
 import * as Separator from '@radix-ui/react-separator';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
-import { CornerDownLeft, Eye, EyeOff, Type, Volume2 } from 'lucide-react';
+import { AudioLines, CornerDownLeft, Eye, EyeOff, Type } from 'lucide-react';
 import { useState } from 'react';
 
 interface LoggedInControlBarProps {
@@ -63,7 +63,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
               transition={{ duration: 0.2 }}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              <Volume2 size={16} />
+              <AudioLines size={16} />
               <span>语音识别</span>
             </motion.div>
           </motion.button>

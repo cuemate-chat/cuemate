@@ -1,6 +1,6 @@
-import { ChevronDown, GraduationCap, Loader2, MessageSquare, Mic, Users } from 'lucide-react';
-import { useState } from 'react';
 import * as Tooltip from '@radix-ui/react-tooltip';
+import { CheckCircle, ChevronDown, Clock, GraduationCap, Loader2, MessageSquare, Mic, Users, XCircle } from 'lucide-react';
+import { useState } from 'react';
 
 interface InterviewerWindowBodyProps {}
 
@@ -30,68 +30,143 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
     }
   };
 
-  // 麦克风测试
+  // 麦克风测试 - 使用本地语音识别
   const testMicrophone = async () => {
     setMicStatus('testing');
     setRecognizedText('');
     setErrorMessage('');
     
     try {
-      // 请求麦克风权限并开始录音
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { deviceId: selectedMic ? { exact: selectedMic } : undefined }
-      });
-      
-      // 检查是否支持语音识别
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        throw new Error('浏览器不支持语音识别功能');
+      // 检查本地语音识别是否可用
+      const electronAPI = (window as any).electronInterviewerAPI;
+      if (!electronAPI || !electronAPI.speechRecognition) {
+        throw new Error('本地语音识别服务不可用');
       }
       
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'zh-CN';
-      recognition.continuous = false;
-      recognition.interimResults = false;
+      // 检查语音识别是否可用
+      const isAvailable = await electronAPI.speechRecognition.isAvailable();
+      if (!isAvailable) {
+        throw new Error('macOS 语音识别服务不可用，请检查系统设置');
+      }
       
-      recognition.onresult = (event: any) => {
-        const result = event.results[0][0].transcript;
-        setRecognizedText(result);
-        setMicStatus('success');
+      // 请求语音识别权限
+      const permission = await electronAPI.speechRecognition.requestPermission();
+      throw new Error(JSON.stringify(permission));
+      if (!permission.authorized) {
+        throw new Error(`语音识别权限被拒绝，状态: ${permission.status}`);
+      }
+      
+      // 监听语音识别结果
+      const handleRecognitionResult = (result: any) => {
+        console.log('语音识别结果:', result);
+        if (result.success) {
+          if (result.text) {
+            setRecognizedText(result.text);
+            setMicStatus('success');
+          }
+        } else {
+          throw new Error(result.error || '语音识别失败');
+        }
       };
       
-      recognition.onerror = (event: any) => {
-        throw new Error(`语音识别错误: ${event.error}`);
-      };
+      // 添加事件监听器
+      electronAPI.on('speech-recognition-result', handleRecognitionResult);
       
-      recognition.onend = () => {
-        stream.getTracks().forEach(track => track.stop());
-      };
-      
-      recognition.start();
+      // 开始语音识别
+      const startResult = await electronAPI.speechRecognition.startRecognition();
+      if (startResult && !startResult.success) {
+        throw new Error(startResult.error || '启动语音识别失败');
+      }
       
       // 10秒后自动停止
-      setTimeout(() => {
-        recognition.stop();
-        if (recognizedText === '') {
-          setMicStatus('failed');
-          setErrorMessage('未识别到语音内容，请确保麦克风正常工作并说话');
+      setTimeout(async () => {
+        try {
+          await electronAPI.speechRecognition.stopRecognition();
+          electronAPI.off('speech-recognition-result', handleRecognitionResult);
+          
+          if (recognizedText === '') {
+            setMicStatus('failed');
+            setErrorMessage('未识别到语音内容，请确保麦克风正常工作并清晰说话');
+          }
+        } catch (error: any) {
+          console.error('停止语音识别失败:', error);
         }
       }, 10000);
       
     } catch (error: any) {
+      console.error('麦克风测试失败:', error);
       setMicStatus('failed');
       setErrorMessage(`麦克风测试失败：${error.message}`);
     }
   };
 
-  // 扬声器测试
+  // 扬声器测试 - 使用真实音频捕获验证
   const testSpeaker = async () => {
     setSpeakerStatus('testing');
     setRecognizedText('');
     setErrorMessage('');
     
     try {
-      // 创建音频上下文
+      const electronAPI = (window as any).electronInterviewerAPI;
+      if (!electronAPI || !electronAPI.systemAudioCapture) {
+        throw new Error('系统音频捕获服务不可用');
+      }
+      
+      // 检查系统音频捕获是否可用
+      const isAvailable = await electronAPI.systemAudioCapture.isAvailable();
+      if (!isAvailable) {
+        throw new Error('系统音频捕获不可用，请检查权限设置');
+      }
+      
+      let audioDetected = false;
+      let audioData: number[] = [];
+      
+      // 监听系统音频数据
+      const handleAudioData = (buffer: ArrayBuffer) => {
+        // 将 ArrayBuffer 转换为 Float32Array
+        const floatArray = new Float32Array(buffer);
+        
+        // 计算音频能量级别
+        let energy = 0;
+        for (let i = 0; i < floatArray.length; i++) {
+          energy += Math.abs(floatArray[i]);
+        }
+        energy = energy / floatArray.length;
+        
+        // 记录能量级别
+        audioData.push(energy);
+        
+        // 如果能量级别超过阈值，认为检测到音频
+        if (energy > 0.01) {
+          audioDetected = true;
+        }
+      };
+      
+      // 监听音频捕获错误
+      const handleAudioError = (errorMessage: string) => {
+        console.error('系统音频捕获错误:', errorMessage);
+        setSpeakerStatus('failed');
+        setErrorMessage(`音频捕获失败：${errorMessage}`);
+      };
+      
+      // 添加事件监听器
+      electronAPI.on('system-audio-data', handleAudioData);
+      electronAPI.on('system-audio-error', handleAudioError);
+      
+      // 开始音频捕获
+      const captureResult = await electronAPI.systemAudioCapture.startCapture({
+        sampleRate: 16000,
+        channels: 1
+      });
+      
+      if (!captureResult.success) {
+        throw new Error(captureResult.error || '启动音频捕获失败');
+      }
+      
+      // 等待一小段时间确保捕获已经开始
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 创建音频上下文并播放测试音频
       const audioContext = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
       
       // 生成测试音频 (1000Hz 正弦波，持续2秒)
@@ -119,15 +194,43 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
       
       source.connect(audioContext.destination);
       
-      source.onended = () => {
-        setSpeakerStatus('success');
-        setRecognizedText('扬声器音频输出正常');
-        audioContext.close();
+      // 播放完成后检查是否捕获到音频
+      source.onended = async () => {
+        // 等待一点时间让音频数据处理完
+        setTimeout(async () => {
+          try {
+            // 停止音频捕获
+            await electronAPI.systemAudioCapture.stopCapture();
+            
+            // 移除事件监听器
+            electronAPI.off('system-audio-data', handleAudioData);
+            electronAPI.off('system-audio-error', handleAudioError);
+            
+            // 关闭音频上下文
+            audioContext.close();
+            
+            // 检查是否检测到音频
+            if (audioDetected) {
+              setSpeakerStatus('success');
+              const maxEnergy = Math.max(...audioData);
+              const avgEnergy = audioData.reduce((a, b) => a + b, 0) / audioData.length;
+              setRecognizedText(`扬声器测试成功！检测到音频输出（平均能量：${avgEnergy.toFixed(4)}，峰值：${maxEnergy.toFixed(4)}）`);
+            } else {
+              setSpeakerStatus('failed');
+              setErrorMessage('扬声器测试失败：未检测到音频输出，请检查扬声器连接和音量设置');
+            }
+          } catch (error: any) {
+            setSpeakerStatus('failed');
+            setErrorMessage(`扬声器测试后处理失败：${error.message}`);
+          }
+        }, 500);
       };
       
+      // 开始播放测试音频
       source.start();
       
     } catch (error: any) {
+      console.error('扬声器测试失败:', error);
       setSpeakerStatus('failed');
       setErrorMessage(`扬声器测试失败：${error.message}`);
     }
@@ -175,11 +278,21 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'untested': return '未测试';
+      case 'untested': return '暂未测试';
       case 'testing': return '正在测试';
       case 'success': return '测试成功';
       case 'failed': return '测试失败';
-      default: return '未测试';
+      default: return '暂未测试';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'untested': return <Clock size={12} />;
+      case 'testing': return <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />;
+      case 'success': return <CheckCircle size={12} />;
+      case 'failed': return <XCircle size={12} />;
+      default: return <Clock size={12} />;
     }
   };
 
@@ -226,7 +339,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
                 <ChevronDown size={14} className="select-icon" />
               </div>
               <div className={`test-status ${getStatusColor(micStatus)}`}>
-                {micStatus === 'testing' && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite', marginRight: '4px' }} />}
+                {getStatusIcon(micStatus)}
                 {getStatusText(micStatus)}
               </div>
               <Tooltip.Root>
@@ -270,7 +383,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
                 <ChevronDown size={14} className="select-icon" />
               </div>
               <div className={`test-status ${getStatusColor(speakerStatus)}`}>
-                {speakerStatus === 'testing' && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite', marginRight: '4px' }} />}
+                {getStatusIcon(speakerStatus)}
                 {getStatusText(speakerStatus)}
               </div>
               <Tooltip.Root>

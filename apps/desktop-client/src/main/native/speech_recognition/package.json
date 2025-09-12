@@ -1,0 +1,12 @@
+{
+  "name": "speech_recognition",
+  "version": "1.0.0",
+  "description": "macOS native speech recognition module",
+  "main": "index.js",
+  "dependencies": {
+    "node-addon-api": "^8.0.0"
+  },
+  "scripts": {
+    "build": "node-gyp rebuild"
+  }
+}

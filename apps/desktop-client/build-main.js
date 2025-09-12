@@ -158,24 +158,44 @@ async function buildPreloadScripts(watchMode = false) {
 // 复制原生模块
 function copyNativeModule() {
   try {
-    const sourceNativeModule = resolve(__dirname, 'src/main/native/screen_capture_audio/build/Release/screen_capture_audio.node');
-    const destDir = resolve(__dirname, 'dist/native/screen_capture_audio');
-    const destFile = resolve(destDir, 'index.node');
+    // 复制屏幕录制音频模块
+    const sourceScreenCapture = resolve(__dirname, 'src/main/native/screen_capture_audio/build/Release/screen_capture_audio.node');
+    const destScreenCaptureDir = resolve(__dirname, 'dist/native/screen_capture_audio');
+    const destScreenCaptureFile = resolve(destScreenCaptureDir, 'index.node');
     
-    console.log('检查原生模块:', sourceNativeModule);
-    console.log('文件存在:', existsSync(sourceNativeModule));
+    console.log('检查屏幕录制音频模块:', sourceScreenCapture);
+    console.log('文件存在:', existsSync(sourceScreenCapture));
     
-    if (existsSync(sourceNativeModule)) {
-      if (!existsSync(destDir)) {
-        console.log('创建目标目录:', destDir);
-        mkdirSync(destDir, { recursive: true });
+    if (existsSync(sourceScreenCapture)) {
+      if (!existsSync(destScreenCaptureDir)) {
+        console.log('创建目标目录:', destScreenCaptureDir);
+        mkdirSync(destScreenCaptureDir, { recursive: true });
       }
-      console.log('复制文件:', sourceNativeModule, '->', destFile);
-      copyFileSync(sourceNativeModule, destFile);
-      console.log('原生模块复制成功');
+      console.log('复制文件:', sourceScreenCapture, '->', destScreenCaptureFile);
+      copyFileSync(sourceScreenCapture, destScreenCaptureFile);
+      console.log('屏幕录制音频模块复制成功');
     } else {
-      console.warn('原生模块未找到，跳过复制');
-      console.warn('期望路径:', sourceNativeModule);
+      console.warn('屏幕录制音频模块未找到，跳过复制');
+    }
+
+    // 复制语音识别模块
+    const sourceSpeechRecognition = resolve(__dirname, 'src/main/native/speech_recognition/build/Release/speech_recognition.node');
+    const destSpeechRecognitionDir = resolve(__dirname, 'dist/native/speech_recognition');
+    const destSpeechRecognitionFile = resolve(destSpeechRecognitionDir, 'index.node');
+    
+    console.log('检查语音识别模块:', sourceSpeechRecognition);
+    console.log('文件存在:', existsSync(sourceSpeechRecognition));
+    
+    if (existsSync(sourceSpeechRecognition)) {
+      if (!existsSync(destSpeechRecognitionDir)) {
+        console.log('创建目标目录:', destSpeechRecognitionDir);
+        mkdirSync(destSpeechRecognitionDir, { recursive: true });
+      }
+      console.log('复制文件:', sourceSpeechRecognition, '->', destSpeechRecognitionFile);
+      copyFileSync(sourceSpeechRecognition, destSpeechRecognitionFile);
+      console.log('语音识别模块复制成功');
+    } else {
+      console.warn('语音识别模块未找到，跳过复制');
     }
   } catch (error) {
     console.error('复制原生模块失败:', error);

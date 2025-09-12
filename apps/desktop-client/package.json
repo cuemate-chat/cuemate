@@ -12,7 +12,7 @@
     "dev:main:build": "node build-main.js",
     "typecheck": "tsc --noEmit",
     "build": "pnpm typecheck && pnpm build:native && pnpm build:main && pnpm build:renderer",
-    "build:native": "node-gyp rebuild --directory=src/main/native/screen_capture_audio",
+    "build:native": "node-gyp rebuild --directory=src/main/native/screen_capture_audio && node-gyp rebuild --directory=src/main/native/speech_recognition",
     "build:main": "pnpm typecheck && node build-main.js",
     "build:renderer": "pnpm typecheck && vite build",
     "preview": "vite preview",
@@ -88,7 +88,15 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "entitlements": {
+        "com.apple.security.device.audio-input": true,
+        "com.apple.security.device.screen-recording": true
+      },
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "CueMate 需要访问麦克风进行语音识别测试",
+        "NSScreenCaptureDescription": "CueMate 需要屏幕录制权限来捕获系统音频输出进行扬声器测试"
+      }
     },
     "win": {
       "icon": "assets/icon.ico",

@@ -384,8 +384,8 @@ export class WindowManager {
     const rightSpace = workArea.x + workArea.width - (aiBounds.x + aiBounds.width);
     const minWidth = 260;
     const maxWidth = Math.max(420, Math.floor(workArea.width * 0.5));
-    const spacing = Math.floor(rightSpace * 0.1); // 10% 的 rightSpace 作为间距
-    let width = Math.floor(rightSpace * 0.8);
+    const spacing = Math.floor(rightSpace * 0.05); // 5% 的 rightSpace 作为间距
+    let width = Math.floor(rightSpace * 0.9);
     width = Math.max(minWidth, Math.min(width, maxWidth, rightSpace - spacing));
     const x = aiBounds.x + aiBounds.width + spacing;
     const y = aiBounds.y;
@@ -427,8 +427,8 @@ export class WindowManager {
     const leftSpace = aiBounds.x - workArea.x;
     const minWidth = 260;
     const maxWidth = Math.max(420, Math.floor(workArea.width * 0.5));
-    const spacing = Math.floor(leftSpace * 0.1); // 10% 的 leftSpace 作为间距
-    let width = Math.floor(leftSpace * 0.8);
+    const spacing = Math.floor(leftSpace * 0.05); // 5% 的 leftSpace 作为间距
+    let width = Math.floor(leftSpace * 0.9);
     width = Math.max(minWidth, Math.min(width, maxWidth, leftSpace - spacing));
     const x = Math.max(workArea.x, aiBounds.x - spacing - width);
     const y = aiBounds.y;
