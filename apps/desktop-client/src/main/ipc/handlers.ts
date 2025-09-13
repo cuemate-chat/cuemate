@@ -1,5 +1,5 @@
 import { app, dialog, ipcMain, shell } from 'electron';
-import * as path from 'path';
+import WebSocket from 'ws';
 import type { FrontendLogMessage } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
 import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
@@ -22,7 +22,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('show-floating-windows', async () => {
     try {
       windowManager.showFloatingWindows();
-      logger.info('IPC: 显示浮动窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 显示浮动窗口失败');
@@ -50,7 +49,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('toggle-floating-windows', async () => {
     try {
       windowManager.toggleFloatingWindows();
-      logger.info('IPC: 切换浮动窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 切换浮动窗口失败');
@@ -64,7 +62,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('show-close-button', async () => {
     try {
       windowManager.showCloseButton();
-      logger.info('IPC: 显示关闭按钮');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 显示关闭按钮失败');
@@ -78,7 +75,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('hide-close-button', async () => {
     try {
       windowManager.hideCloseButton();
-      logger.info('IPC: 隐藏关闭按钮');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 隐藏关闭按钮失败');
@@ -92,7 +88,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('show-main-content', async () => {
     try {
       windowManager.showMainContent();
-      logger.info('IPC: 显示主内容窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 显示主内容窗口失败');
@@ -106,7 +101,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('hide-main-content', async () => {
     try {
       windowManager.hideMainContent();
-      logger.info('IPC: 隐藏主内容窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 隐藏主内容窗口失败');
@@ -120,7 +114,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('toggle-main-content', async () => {
     try {
       windowManager.toggleMainContent();
-      logger.info('IPC: 切换主内容窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 切换主内容窗口失败');
@@ -134,7 +127,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('show-ai-question', async () => {
     try {
       windowManager.showAIQuestion();
-      logger.info('IPC: 显示AI问答窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 显示AI问答窗口失败');
@@ -148,7 +140,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('hide-ai-question', async () => {
     try {
       windowManager.hideAIQuestion();
-      logger.info('IPC: 隐藏AI问答窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 隐藏AI问答窗口失败');
@@ -162,7 +153,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('toggle-ai-question', async () => {
     try {
       windowManager.toggleAIQuestion();
-      logger.info('IPC: 切换AI问答窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 切换AI问答窗口失败');
@@ -174,7 +164,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('show-ai-question-history', async () => {
     try {
       windowManager.showAIQuestionHistoryNextToAI();
-      logger.info('IPC: 显示AI问答历史窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 显示AI问答历史窗口失败');
@@ -185,7 +174,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('hide-ai-question-history', async () => {
     try {
       windowManager.hideAIQuestionHistory();
-      logger.info('IPC: 隐藏AI问答历史窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 隐藏AI问答历史窗口失败');
@@ -208,7 +196,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('show-interviewer', async () => {
     try {
       windowManager.showInterviewerNextToAI();
-      logger.info('IPC: 显示Interviewer窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 显示Interviewer窗口失败');
@@ -230,7 +217,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('toggle-interviewer', async () => {
     try {
       windowManager.toggleInterviewerNextToAI();
-      logger.info('IPC: 切换Interviewer窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 切换Interviewer窗口失败');
@@ -244,7 +230,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('get-app-state', async () => {
     try {
       const appState = windowManager.getAppState();
-      logger.info({ appState }, 'IPC: 获取应用状态');
       return { success: true, data: appState };
     } catch (error) {
       logger.error({ error }, 'IPC: 获取应用状态失败');
@@ -259,7 +244,6 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('quit-app', async () => {
     try {
-      logger.info('IPC: 收到退出应用命令');
       app.quit();
       return { success: true };
     } catch (error) {
@@ -273,7 +257,6 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('restart-app', async () => {
     try {
-      logger.info('IPC: 收到重启应用命令');
       app.relaunch();
       app.quit();
       return { success: true };
@@ -297,7 +280,6 @@ export function setupIPC(windowManager: WindowManager): void {
         nodeVersion: process.versions.node,
         chromeVersion: process.versions.chrome,
       };
-      logger.info({ appInfo }, 'IPC: 获取应用信息');
       return { success: true, data: appInfo };
     } catch (error) {
       logger.error({ error }, 'IPC: 获取应用信息失败');
@@ -312,7 +294,6 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('open-external-url', async (_event, url: string) => {
     try {
-      logger.info({ url }, 'IPC: 打开外部链接');
       await shell.openExternal(url);
       return { success: true };
     } catch (error) {
@@ -331,7 +312,6 @@ export function setupIPC(windowManager: WindowManager): void {
         title: '选择文件夹',
       });
 
-      logger.info({ result }, 'IPC: 文件夹对话框结果');
       return {
         success: true,
         data: {
@@ -358,7 +338,6 @@ export function setupIPC(windowManager: WindowManager): void {
       };
 
       const result = await dialog.showOpenDialog(dialogOptions);
-      logger.info({ result }, 'IPC: 文件对话框结果');
 
       return {
         success: true,
@@ -380,8 +359,6 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('check-login-status', async () => {
     try {
-      logger.info('IPC: 检查用户登录状态');
-
       // 调用 web-api 检查登录状态
       const response = await fetch('http://127.0.0.1:3001/auth/login-status', {
         method: 'GET',
@@ -560,142 +537,6 @@ export function setupIPC(windowManager: WindowManager): void {
     }
   });
 
-  // === 本地语音识别 API ===
-  let speechRecognitionModule: any = null;
-  let speechRecognizer: any = null;
-
-  // 加载语音识别模块
-  const loadSpeechRecognitionModule = () => {
-    if (speechRecognitionModule) return speechRecognitionModule;
-    try {
-      let modulePath: string;
-      if (process.env.NODE_ENV === 'development') {
-        modulePath = path.join(__dirname, '../../src/main/native/speech_recognition');
-      } else {
-        modulePath = path.join(__dirname, '../native/speech_recognition/index.node');
-      }
-
-      logger.info(`尝试加载语音识别模块：${modulePath}`);
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      speechRecognitionModule = require(modulePath);
-      logger.info('语音识别原生模块加载成功');
-      return speechRecognitionModule;
-    } catch (error) {
-      logger.error({ error }, '语音识别原生模块加载失败');
-      throw error;
-    }
-  };
-
-  /**
-   * 检查本地语音识别是否可用
-   */
-  ipcMain.handle('speech-recognition-available', async () => {
-    try {
-      // 避免为可用性检查而提前加载原生模块，防止在 dev 环境触发系统框架/TCC
-      const available = process.platform === 'darwin';
-      return { success: true, available };
-    } catch (error) {
-      logger.error({ error }, 'IPC: 检查语音识别可用性失败');
-      return {
-        success: false,
-        available: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
-  });
-
-  /**
-   * 请求语音识别权限
-   */
-  ipcMain.handle('speech-recognition-request-permission', async () => {
-    return new Promise((resolve) => {
-      try {
-        const module = loadSpeechRecognitionModule();
-        const recognizer = new module.SpeechRecognition();
-
-        recognizer.requestPermission((result: any) => {
-          logger.info('语音识别权限结果:', result);
-          resolve({ success: true, ...result });
-        });
-      } catch (error) {
-        logger.error({ error }, 'IPC: 请求语音识别权限失败');
-        resolve({ success: false, error: error instanceof Error ? error.message : String(error) });
-      }
-    });
-  });
-
-  /**
-   * 开始语音识别
-   */
-  ipcMain.handle('speech-recognition-start', async (event) => {
-    return new Promise((resolve) => {
-      try {
-        const isDev = process.env.NODE_ENV === 'development';
-        if (isDev && process.platform === 'darwin') {
-          // 在开发模式下先显式请求权限，避免因 Info.plist 不完整导致 TCC 触发异常
-          try {
-            const moduleForPerm = loadSpeechRecognitionModule();
-            const tmp = new moduleForPerm.SpeechRecognition();
-            tmp.requestPermission((perm: any) => {
-              logger.info('开发模式下权限检查结果:', perm);
-            });
-          } catch (e) {
-            logger.warn('开发模式下权限预检查失败（可忽略）:', e);
-          }
-        }
-
-        const module = loadSpeechRecognitionModule();
-
-        // 停止之前的识别任务
-        if (speechRecognizer) {
-          try {
-            speechRecognizer.stopRecognition();
-          } catch (e) {
-            logger.warn('停止之前的识别任务时出错:', e);
-          }
-        }
-
-        speechRecognizer = new module.SpeechRecognition();
-
-        speechRecognizer.startRecognition((result: any) => {
-          logger.info('语音识别结果:', result);
-
-          // 发送结果到渲染进程
-          event.sender.send('speech-recognition-result', result);
-
-          if (result.success && result.isFinal) {
-            resolve({ success: true, text: result.text });
-          } else if (!result.success) {
-            resolve({ success: false, error: result.error });
-          }
-        });
-
-        logger.info('语音识别已开始');
-      } catch (error) {
-        logger.error({ error }, 'IPC: 开始语音识别失败');
-        resolve({ success: false, error: error instanceof Error ? error.message : String(error) });
-      }
-    });
-  });
-
-  /**
-   * 停止语音识别
-   */
-  ipcMain.handle('speech-recognition-stop', async () => {
-    try {
-      if (speechRecognizer) {
-        speechRecognizer.stopRecognition();
-        speechRecognizer = null;
-        logger.info('语音识别已停止');
-        return { success: true };
-      } else {
-        return { success: false, error: '没有正在进行的语音识别任务' };
-      }
-    } catch (error) {
-      logger.error({ error }, 'IPC: 停止语音识别失败');
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  });
 
   // === 系统音频扬声器捕获相关 IPC 处理器 ===
   let systemAudioCapture: SystemAudioCapture | null = null;
@@ -769,6 +610,152 @@ export function setupIPC(windowManager: WindowManager): void {
     } catch (error) {
       logger.error({ error }, 'IPC: 检查系统音频扬声器捕获可用性失败');
       return false;
+    }
+  });
+
+  // ASR WebSocket 连接管理
+  let micAsrWebSocket: WebSocket | null = null;
+
+  /**
+   * 麦克风测试 - 30秒采集 + 真实 ASR 识别
+   */
+  ipcMain.handle('mic-test-start', async (event, _options?: { deviceId?: string }) => {
+    try {
+      logger.info('开始麦克风测试，连接 cuemate-asr-user 服务');
+      
+      // 创建到 ASR 服务的 WebSocket 连接
+      const asrServiceUrl = 'ws://localhost:8001';
+      micAsrWebSocket = new WebSocket(asrServiceUrl);
+
+      micAsrWebSocket!.on('open', () => {
+        logger.info('麦克风 ASR 服务连接成功');
+        // 不发送状态消息，只记录日志
+      });
+
+      micAsrWebSocket!.on('message', (data: any) => {
+        try {
+          const result = JSON.parse(data.toString());
+          logger.info('麦克风 ASR 识别结果:', result);
+          
+          // 构建显示文本
+          let displayText = '';
+          
+          if (result.lines && Array.isArray(result.lines)) {
+            result.lines.forEach((line: any) => {
+              if (line.text) {
+                displayText += line.text + '\n';
+              }
+            });
+          }
+          
+          if (result.buffer_transcription) {
+            displayText += `[转录中] ${result.buffer_transcription}\n`;
+          }
+          
+          if (displayText.trim()) {
+            event.sender.send('mic-test-result', { 
+              success: true, 
+              text: displayText.trim() 
+            });
+          }
+        } catch (error) {
+          logger.error('处理麦克风 ASR 结果失败:', error);
+        }
+      });
+
+      micAsrWebSocket!.on('error', (error: any) => {
+        logger.error('麦克风 ASR WebSocket 错误:', error);
+        event.sender.send('mic-test-result', { 
+          success: false, 
+          error: '连接麦克风识别服务失败，请确保 cuemate-asr-user 服务已启动' 
+        });
+      });
+
+      micAsrWebSocket!.on('close', () => {
+        logger.info('麦克风 ASR WebSocket 连接关闭');
+        micAsrWebSocket = null;
+      });
+
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 麦克风测试启动失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 发送麦克风音频数据到 ASR 服务
+   */
+  ipcMain.handle('mic-send-audio', async (_event, audioData: Buffer) => {
+    try {
+      if (micAsrWebSocket && micAsrWebSocket.readyState === WebSocket.OPEN) {
+        micAsrWebSocket.send(audioData);
+        return { success: true };
+      } else {
+        return { success: false, error: 'ASR 服务未连接' };
+      }
+    } catch (error) {
+      logger.error({ error }, 'IPC: 发送麦克风音频数据失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 扬声器测试 - 只做音频捕获，发送数据到渲染进程
+   */
+  ipcMain.handle('speaker-test-start', async (event, _options?: { deviceId?: string }) => {
+    try {
+      logger.info('开始扬声器音频捕获');
+
+      if (systemAudioCapture && systemAudioCapture.isCaptureActive()) {
+        return { success: false, error: '系统音频捕获已在进行中' };
+      }
+
+      // 创建音频捕获实例
+      systemAudioCapture = new SystemAudioCapture({ sampleRate: 16000, channels: 1 });
+
+      // 设置音频数据回调 - 发送到渲染进程
+      systemAudioCapture.onData((audioData: Buffer) => {
+        // 将音频数据发送到渲染进程
+        event.sender.send('speaker-audio-data', audioData.buffer.slice(
+          audioData.byteOffset,
+          audioData.byteOffset + audioData.byteLength
+        ));
+      });
+
+      // 设置错误回调
+      systemAudioCapture.onError((error: Error) => {
+        logger.error('扬声器测试音频捕获错误:', error);
+        event.sender.send('speaker-test-result', { 
+          success: false, 
+          error: `音频捕获失败: ${error.message}` 
+        });
+      });
+
+      // 启动捕获
+      await systemAudioCapture.startCapture();
+
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 扬声器测试启动失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 停止测试
+   */
+  ipcMain.handle('test-stop', async () => {
+    try {
+      if (systemAudioCapture) {
+        systemAudioCapture.stopCapture();
+        systemAudioCapture = null;
+        logger.info('音频测试已停止');
+      }
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 停止测试失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 

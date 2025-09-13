@@ -178,25 +178,6 @@ function copyNativeModule() {
       console.warn('屏幕录制音频模块未找到，跳过复制');
     }
 
-    // 复制语音识别模块
-    const sourceSpeechRecognition = resolve(__dirname, 'src/main/native/speech_recognition/build/Release/speech_recognition.node');
-    const destSpeechRecognitionDir = resolve(__dirname, 'dist/native/speech_recognition');
-    const destSpeechRecognitionFile = resolve(destSpeechRecognitionDir, 'index.node');
-    
-    console.log('检查语音识别模块:', sourceSpeechRecognition);
-    console.log('文件存在:', existsSync(sourceSpeechRecognition));
-    
-    if (existsSync(sourceSpeechRecognition)) {
-      if (!existsSync(destSpeechRecognitionDir)) {
-        console.log('创建目标目录:', destSpeechRecognitionDir);
-        mkdirSync(destSpeechRecognitionDir, { recursive: true });
-      }
-      console.log('复制文件:', sourceSpeechRecognition, '->', destSpeechRecognitionFile);
-      copyFileSync(sourceSpeechRecognition, destSpeechRecognitionFile);
-      console.log('语音识别模块复制成功');
-    } else {
-      console.warn('语音识别模块未找到，跳过复制');
-    }
   } catch (error) {
     console.error('复制原生模块失败:', error);
   }

@@ -19,7 +19,7 @@ export class AIQuestionWindow {
     alwaysOnTop: true, // 悬浮窗口
     frame: false, // 无边框
     transparent: true, // 透明
-    skipTaskbar: true, // 不在任务栏显示
+    skipTaskbar: false, // 不在任务栏显示
     resizable: false, // 不可调整大小
     minimizable: false,
     maximizable: false,

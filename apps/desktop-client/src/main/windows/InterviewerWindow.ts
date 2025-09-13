@@ -15,7 +15,7 @@ export class InterviewerWindow {
     alwaysOnTop: true,
     frame: false,
     transparent: true,
-    skipTaskbar: true,
+    skipTaskbar: false,
     resizable: false,
     minimizable: false,
     maximizable: false,

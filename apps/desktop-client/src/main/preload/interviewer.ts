@@ -20,13 +20,6 @@ const interviewerAPI = {
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 
-  // === 本地语音识别 API ===
-  speechRecognition: {
-    isAvailable: () => ipcRenderer.invoke('speech-recognition-available'),
-    requestPermission: () => ipcRenderer.invoke('speech-recognition-request-permission'),
-    startRecognition: () => ipcRenderer.invoke('speech-recognition-start'),
-    stopRecognition: () => ipcRenderer.invoke('speech-recognition-stop'),
-  },
 
   // === 系统音频扬声器捕获 API ===
   systemAudioCapture: {
@@ -38,6 +31,14 @@ const interviewerAPI = {
     stopCapture: () => ipcRenderer.invoke('system-audio-capture-stop'),
   },
 
+  // === 音频测试 API ===
+  audioTest: {
+    startMicTest: (options?: { deviceId?: string }) => ipcRenderer.invoke('mic-test-start', options),
+    startSpeakerTest: (options?: { deviceId?: string }) => ipcRenderer.invoke('speaker-test-start', options),
+    stopTest: () => ipcRenderer.invoke('test-stop'),
+    sendMicAudio: (audioData: ArrayBuffer) => ipcRenderer.invoke('mic-send-audio', audioData),
+  },
+
   // === 事件监听 API ===
   on: (channel: string, callback: (...args: any[]) => void) => {
     // 只允许特定的事件频道
@@ -46,9 +47,13 @@ const interviewerAPI = {
       'voice-recognition-error',
       'voice-recognition-start',
       'voice-recognition-stop',
-      'speech-recognition-result',
       'system-audio-data',
       'system-audio-error',
+      'mic-test-status',
+      'mic-test-result',
+      'speaker-test-status',
+      'speaker-test-result',
+      'speaker-audio-data',
     ];
 
     if (allowedChannels.includes(channel)) {

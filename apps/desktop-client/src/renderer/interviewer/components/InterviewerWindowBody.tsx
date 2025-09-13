@@ -1,6 +1,6 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { CheckCircle, ChevronDown, Clock, GraduationCap, Loader2, MessageSquare, Mic, Users, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface InterviewerWindowBodyProps {}
 
@@ -14,6 +14,11 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
   const [speakerStatus, setSpeakerStatus] = useState<'untested' | 'testing' | 'success' | 'failed'>('untested');
   const [recognizedText, setRecognizedText] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+
+  // 在组件挂载时获取设备列表
+  useEffect(() => {
+    getDevices();
+  }, []);
 
   // 获取设备列表
   const getDevices = async () => {
@@ -30,209 +35,275 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
     }
   };
 
-  // 麦克风测试 - 使用本地语音识别
+  // 麦克风测试 - 30秒真实 ASR 识别（直接 WebSocket 连接）
   const testMicrophone = async () => {
     setMicStatus('testing');
     setRecognizedText('');
     setErrorMessage('');
     
+    let stream: MediaStream | null = null;
+    let recorder: MediaRecorder | null = null;
+    let websocket: WebSocket | null = null;
+    let testTimer: NodeJS.Timeout | null = null;
+    let hasRecognitionResult = false;
+    
+    const cleanup = () => {
+      if (testTimer) {
+        clearTimeout(testTimer);
+        testTimer = null;
+      }
+      if (recorder && recorder.state === 'recording') {
+        recorder.stop();
+      }
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        // 发送结束信号
+        const emptyBlob = new Blob([], { type: 'audio/webm' });
+        websocket.send(emptyBlob);
+        setTimeout(() => websocket?.close(), 500);
+      }
+    };
+    
     try {
-      // 检查本地语音识别是否可用
-      const electronAPI = (window as any).electronInterviewerAPI;
-      if (!electronAPI || !electronAPI.speechRecognition) {
-        throw new Error('本地语音识别服务不可用');
-      }
+      console.log('开始麦克风测试 - 直接连接 ASR 服务');
       
-      // 检查语音识别是否可用
-      const isAvailable = await electronAPI.speechRecognition.isAvailable();
-      if (!isAvailable) {
-        throw new Error('macOS 语音识别服务不可用，请检查系统设置');
-      }
+      // 1. 获取麦克风权限和音频流
+      const constraints: MediaStreamConstraints = {
+        audio: selectedMic ? { deviceId: { exact: selectedMic } } : true
+      };
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
       
-      // 请求语音识别权限
-      const permission = await electronAPI.speechRecognition.requestPermission();
-      console.log('permission', JSON.stringify(permission));
-      if (!permission.authorized) {
-        throw new Error(`语音识别权限被拒绝，状态: ${permission.status}`);
-      }
+      // 2. 连接到麦克风 ASR 服务
+      websocket = new WebSocket('ws://localhost:8001/asr');
       
-      // 监听语音识别结果
-      const handleRecognitionResult = (result: any) => {
-        console.log('语音识别结果:', result);
-        if (result.success) {
-          if (result.text) {
-            setRecognizedText(result.text);
-            setMicStatus('success');
-          }
-        } else {
-          throw new Error(result.error || '语音识别失败');
+      websocket.onopen = () => {
+        console.log('已连接到麦克风 ASR 服务');
+        
+        // 3. 创建 MediaRecorder 开始录音
+        if (stream) {
+          recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+          
+          recorder.ondataavailable = (event) => {
+            if (websocket && websocket.readyState === WebSocket.OPEN && event.data.size > 0) {
+              websocket.send(event.data);
+            }
+          };
+          
+          recorder.onerror = (event) => {
+            console.error('录音器错误:', event);
+            setMicStatus('failed');
+            setErrorMessage('录音过程中发生错误');
+            cleanup();
+          };
+          
+          // 开始录制，每100ms发送一次数据
+          recorder.start(100);
         }
       };
       
-      // 添加事件监听器
-      electronAPI.on('speech-recognition-result', handleRecognitionResult);
-      
-      // 开始语音识别
-      const startResult = await electronAPI.speechRecognition.startRecognition();
-      if (startResult && !startResult.success) {
-        throw new Error(startResult.error || '启动语音识别失败');
-      }
-      
-      // 10秒后自动停止
-      setTimeout(async () => {
+      websocket.onmessage = (event) => {
         try {
-          await electronAPI.speechRecognition.stopRecognition();
-          electronAPI.off('speech-recognition-result', handleRecognitionResult);
+          const data = JSON.parse(event.data);
           
-          if (recognizedText === '') {
-            setMicStatus('failed');
-            setErrorMessage('未识别到语音内容，请确保麦克风正常工作并清晰说话');
+          if (data.type === 'ready_to_stop') {
+            console.log('收到停止信号，处理完成');
+            return;
           }
-        } catch (error: any) {
-          console.error('停止语音识别失败:', error);
+          
+          // 提取纯净的转录文本
+          let transcriptionText = '';
+          if (data.lines && data.lines.length > 0) {
+            transcriptionText = data.lines
+              .filter((line: any) => line.speaker !== -2) // 过滤静音片段
+              .map((line: any) => line.text || '')
+              .join(' ');
+          }
+          if (data.buffer_transcription) {
+            transcriptionText += ' ' + data.buffer_transcription;
+          }
+          
+          if (transcriptionText.trim()) {
+            hasRecognitionResult = true;
+            setRecognizedText(transcriptionText.trim());
+          }
+        } catch (error) {
+          console.error('解析 ASR 响应失败:', error);
         }
-      }, 10000);
+      };
+      
+      websocket.onerror = (error) => {
+        console.error('WebSocket 连接错误:', error);
+        setMicStatus('failed');
+        setErrorMessage('连接麦克风识别服务失败');
+        cleanup();
+      };
+      
+      websocket.onclose = () => {
+        console.log('WebSocket 连接已关闭');
+      };
+      
+      // 4. 设置30秒超时
+      testTimer = setTimeout(() => {
+        cleanup();
+        
+        // 评估测试结果
+        if (hasRecognitionResult) {
+          setMicStatus('success');
+        } else {
+          setMicStatus('failed');
+          setErrorMessage('30秒内未收到任何识别结果，请检查麦克风和 ASR 服务');
+        }
+      }, 30000);
       
     } catch (error: any) {
       console.error('麦克风测试失败:', error);
       setMicStatus('failed');
-      setErrorMessage(`麦克风测试失败：${error.message}`);
+      if (error.name === 'NotAllowedError') {
+        setErrorMessage('麦克风权限被拒绝，请在设置中允许麦克风访问');
+      } else if (error.name === 'NotFoundError') {
+        setErrorMessage('未找到麦克风设备，请检查设备连接');
+      } else {
+        setErrorMessage(`麦克风测试失败：${error.message}`);
+      }
+      
+      cleanup();
     }
   };
 
-  // 扬声器测试 - 使用真实音频捕获验证
+  // 扬声器测试 - 30秒真实 ASR 识别（直接 WebSocket + 原生扬声器捕获）
   const testSpeaker = async () => {
     setSpeakerStatus('testing');
     setRecognizedText('');
     setErrorMessage('');
     
-    try {
+    let websocket: WebSocket | null = null;
+    let testTimer: NodeJS.Timeout | null = null;
+    let hasRecognitionResult = false;
+    let audioDataListener: any = null;
+    
+    const cleanup = async () => {
+      if (testTimer) {
+        clearTimeout(testTimer);
+        testTimer = null;
+      }
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        // 发送结束信号
+        const emptyBlob = new Blob([], { type: 'audio/webm' });
+        websocket.send(emptyBlob);
+        setTimeout(() => websocket?.close(), 500);
+      }
+      if (audioDataListener) {
+        const electronAPI = (window as any).electronInterviewerAPI;
+        electronAPI?.off('speaker-audio-data', audioDataListener);
+      }
+      // 停止原生扬声器捕获
       const electronAPI = (window as any).electronInterviewerAPI;
-      if (!electronAPI || !electronAPI.systemAudioCapture) {
-        throw new Error('系统音频扬声器捕获服务不可用');
-      }
+      electronAPI?.audioTest?.stopTest();
+    };
+    
+    try {
+      console.log('开始扬声器测试 - 直接连接 ASR 服务 + 原生扬声器捕获');
       
-      // 检查系统音频扬声器捕获是否可用
-      const isAvailable = await electronAPI.systemAudioCapture.isAvailable();
-      if (!isAvailable) {
-        throw new Error('系统音频扬声器捕获不可用，请检查权限设置');
-      }
-      
-      let audioDetected = false;
-      let audioData: number[] = [];
-      
-      // 监听系统音频扬声器数据
-      const handleAudioData = (buffer: ArrayBuffer) => {
-        // 将 ArrayBuffer 转换为 Float32Array
-        const floatArray = new Float32Array(buffer);
-        
-        // 计算音频能量级别
-        let energy = 0;
-        for (let i = 0; i < floatArray.length; i++) {
-          energy += Math.abs(floatArray[i]);
-        }
-        energy = energy / floatArray.length;
-        
-        // 记录能量级别
-        audioData.push(energy);
-        
-        // 如果能量级别超过阈值，认为检测到音频
-        if (energy > 0.01) {
-          audioDetected = true;
-        }
-      };
-      
-      // 监听音频捕获错误
-      const handleAudioError = (errorMessage: string) => {
-        console.error('系统音频扬声器捕获错误:', errorMessage);
+      const electronAPI = (window as any).electronInterviewerAPI;
+      if (!electronAPI || !electronAPI.audioTest) {
         setSpeakerStatus('failed');
-        setErrorMessage(`音频捕获失败：${errorMessage}`);
-      };
-      
-      // 添加事件监听器
-      electronAPI.on('system-audio-data', handleAudioData);
-      electronAPI.on('system-audio-error', handleAudioError);
-      
-      // 开始音频捕获
-      const captureResult = await electronAPI.systemAudioCapture.startCapture({
-        sampleRate: 16000,
-        channels: 1
-      });
-      
-      if (!captureResult.success) {
-        throw new Error(captureResult.error || '启动音频捕获失败');
+        setErrorMessage('音频测试服务不可用');
+        return;
       }
       
-      // 等待一小段时间确保捕获已经开始
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 1. 连接到扬声器 ASR 服务
+      websocket = new WebSocket('ws://localhost:8002/asr');
       
-      // 创建音频上下文并播放测试音频
-      const audioContext = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
-      
-      // 生成测试音频 (1000Hz 正弦波，持续2秒)
-      const sampleRate = audioContext.sampleRate;
-      const duration = 2;
-      const frequency = 1000;
-      const buffer = audioContext.createBuffer(1, sampleRate * duration, sampleRate);
-      const channelData = buffer.getChannelData(0);
-      
-      for (let i = 0; i < buffer.length; i++) {
-        channelData[i] = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.3;
-      }
-      
-      const source = audioContext.createBufferSource();
-      source.buffer = buffer;
-      
-      // 尝试设置输出设备（如果支持）
-      if ((audioContext as any).setSinkId && selectedSpeaker) {
-        try {
-          await (audioContext as any).setSinkId(selectedSpeaker);
-        } catch (err) {
-          console.warn('无法设置输出设备:', err);
+      websocket.onopen = async () => {
+        console.log('已连接到扬声器 ASR 服务');
+        
+        // 2. 启动原生扬声器音频捕获
+        const result = await electronAPI.audioTest.startSpeakerTest({ deviceId: selectedSpeaker });
+        if (!result.success) {
+          setSpeakerStatus('failed');
+          setErrorMessage(result.error || '启动扬声器捕获失败');
+          cleanup();
+          return;
         }
-      }
-      
-      source.connect(audioContext.destination);
-      
-      // 播放完成后检查是否捕获到音频
-      source.onended = async () => {
-        // 等待一点时间让音频数据处理完
-        setTimeout(async () => {
-          try {
-            // 停止音频捕获
-            await electronAPI.systemAudioCapture.stopCapture();
-            
-            // 移除事件监听器
-            electronAPI.off('system-audio-data', handleAudioData);
-            electronAPI.off('system-audio-error', handleAudioError);
-            
-            // 关闭音频上下文
-            audioContext.close();
-            
-            // 检查是否检测到音频
-            if (audioDetected) {
-              setSpeakerStatus('success');
-              const maxEnergy = Math.max(...audioData);
-              const avgEnergy = audioData.reduce((a, b) => a + b, 0) / audioData.length;
-              setRecognizedText(`扬声器测试成功！检测到音频输出（平均能量：${avgEnergy.toFixed(4)}，峰值：${maxEnergy.toFixed(4)}）`);
-            } else {
-              setSpeakerStatus('failed');
-              setErrorMessage('扬声器测试失败：未检测到音频输出，请检查扬声器连接和音量设置');
-            }
-          } catch (error: any) {
-            setSpeakerStatus('failed');
-            setErrorMessage(`扬声器测试后处理失败：${error.message}`);
+        
+        // 3. 监听原生模块发送的音频数据
+        audioDataListener = (audioData: ArrayBuffer) => {
+          if (websocket && websocket.readyState === WebSocket.OPEN && audioData.byteLength > 0) {
+            // 将 ArrayBuffer 转换为 Blob 并发送
+            const blob = new Blob([audioData], { type: 'audio/webm' });
+            websocket.send(blob);
           }
-        }, 500);
+        };
+        
+        electronAPI.on('speaker-audio-data', audioDataListener);
       };
       
-      // 开始播放测试音频
-      source.start();
+      websocket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'ready_to_stop') {
+            console.log('收到停止信号，处理完成');
+            return;
+          }
+          
+          // 提取纯净的转录文本
+          let transcriptionText = '';
+          if (data.lines && data.lines.length > 0) {
+            transcriptionText = data.lines
+              .filter((line: any) => line.speaker !== -2) // 过滤静音片段
+              .map((line: any) => line.text || '')
+              .join(' ');
+          }
+          if (data.buffer_transcription) {
+            transcriptionText += ' ' + data.buffer_transcription;
+          }
+          
+          if (transcriptionText.trim()) {
+            hasRecognitionResult = true;
+            setRecognizedText(transcriptionText.trim());
+          }
+        } catch (error) {
+          console.error('解析 ASR 响应失败:', error);
+        }
+      };
+      
+      websocket.onerror = (error) => {
+        console.error('WebSocket 连接错误:', error);
+        setSpeakerStatus('failed');
+        setErrorMessage('连接扬声器识别服务失败');
+        cleanup();
+      };
+      
+      websocket.onclose = () => {
+        console.log('扬声器 WebSocket 连接已关闭');
+      };
+      
+      // 4. 设置30秒超时
+      testTimer = setTimeout(async () => {
+        await cleanup();
+        
+        // 评估测试结果
+        if (hasRecognitionResult) {
+          setSpeakerStatus('success');
+        } else {
+          setSpeakerStatus('failed');
+          setErrorMessage('30秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务');
+        }
+      }, 30000);
       
     } catch (error: any) {
       console.error('扬声器测试失败:', error);
       setSpeakerStatus('failed');
-      setErrorMessage(`扬声器测试失败：${error.message}`);
+      if (error.name === 'SecurityError') {
+        setErrorMessage('安全权限错误，请确保已授予屏幕录制权限');
+      } else {
+        setErrorMessage(`扬声器测试失败：${error.message}`);
+      }
+      
+      await cleanup();
     }
   };
 
