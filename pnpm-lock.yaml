@@ -56,6 +56,9 @@ importers:
       framer-motion:
         specifier: ^11.0.23
         version: 11.18.2(react-dom@18.3.1)(react@18.3.1)
+      lottie-react:
+        specifier: ^2.4.1
+        version: 2.4.1(react-dom@18.3.1)(react@18.3.1)
       lucide-react:
         specifier: ^0.454.0
         version: 0.454.0(react@18.3.1)
@@ -106,7 +109,7 @@ importers:
         specifier: ^8.2.2
         version: 8.2.2
       electron:
-        specifier: ^28.0.0
+        specifier: 28.3.3
         version: 28.3.3
       electron-builder:
         specifier: ^24.9.1
@@ -6533,6 +6536,21 @@ packages:
       duck: 0.1.12
       option: 0.2.4
       underscore: 1.13.7
+    dev: false
+
+  /lottie-react@2.4.1(react-dom@18.3.1)(react@18.3.1):
+    resolution: {integrity: sha512-LQrH7jlkigIIv++wIyrOYFLHSKQpEY4zehPicL9bQsrt1rnoKRYCYgpCUe5maqylNtacy58/sQDZTkwMcTRxZw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    dependencies:
+      lottie-web: 5.13.0
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+    dev: false
+
+  /lottie-web@5.13.0:
+    resolution: {integrity: sha512-+gfBXl6sxXMPe8tKQm7qzLnUy5DUPJPKIyRHwtpCpyUEYjHYRJC/5gjUvdkuO2c3JllrPtHXH5UJJK8LRYl5yQ==}
     dev: false
 
   /loupe@3.2.0:
