@@ -208,7 +208,7 @@ export class ControlBarWindow {
       this.originalBounds = this.window.getBounds();
 
       // 设置圆形图标尺寸和位置
-      const circleSize = 60; // 稍微大一点，为了更好的视觉效果
+      const circleSize = 50;
       const primaryDisplay = screen.getPrimaryDisplay();
       const {
         x: displayX,
@@ -229,23 +229,11 @@ export class ControlBarWindow {
         height: circleSize,
       });
       this.window.setHasShadow(false);
-
-      // 强制窗口背景透明（运行时设置）
-      try {
-        this.window.setBackgroundColor('#00000000');
-        this.window.setOpacity(0.99);
-        setTimeout(() => this.window?.setOpacity(1.0), 50);
-      } catch (e) {
-        logger.debug({ e }, '设置运行时透明失败');
-      }
-
+      
       // 向渲染进程发送圆形模式切换事件
       this.window.webContents.send('switch-to-circle-mode', { circleSize });
 
       this.isCircleMode = true;
-
-      // 小圆模式时打开开发者工具用于调试透明效果
-      this.window.webContents.openDevTools({ mode: 'detach' });
 
       if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:circle');
     } catch (error) {

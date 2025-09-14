@@ -29,4 +29,15 @@ function initializeApp() {
   if ((window as any).logger) {
     (window as any).logger.info('控制条窗口 React 应用已启动');
   }
+
+  // 监听圆形模式切换事件
+  if ((window as any).electronAPI) {
+    (window as any).electronAPI.onSwitchToCircleMode(() => {
+      document.documentElement.classList.add('circle-mode');
+    });
+    
+    (window as any).electronAPI.onSwitchToNormalMode(() => {
+      document.documentElement.classList.remove('circle-mode');
+    });
+  }
 }
