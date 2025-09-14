@@ -15,6 +15,151 @@
   gap: 0;
   pointer-events: auto;
   padding-top: 0;
+  background: transparent;
+}
+
+/* 小圆模式时，app-container 也要变成圆形尺寸 */
+html.circle-mode .app-container {
+  width: 70px;
+  height: 70px;
+  justify-content: center;
+  padding-top: 0;
+}
+
+/* ============================语音识别多状态样式============================ */
+
+/* 语音识别容器 */
+.voice-recognition-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 录制中控制组 */
+.voice-recording-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 停止状态控制组 */
+.voice-stopped-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 单个图标按钮 - 参考眼睛按钮样式 */
+.voice-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  -webkit-app-region: no-drag;
+}
+
+.voice-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.pause-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+
+.play-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* 组合按钮 - 矩形背景，参考眼睛按钮样式 */
+.voice-group-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  -webkit-app-region: no-drag;
+}
+
+.voice-group-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.02);
+}
+
+.done-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: white;
+}
+
+.done-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.wave-icon {
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.wave-0 { transform: scaleY(0.8); }
+.wave-1 { transform: scaleY(1.0); }
+.wave-2 { transform: scaleY(1.2); }
+
+.done-icon {
+  fill: currentColor;
+}
+
+/* 暗色主题语音控制 */
+@media (prefers-color-scheme: dark) {
+  .voice-control-btn {
+    color: #ccc;
+  }
+  
+  .voice-control-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+  
+  .pause-btn {
+    color: #f87171;
+  }
+  
+  .play-btn {
+    color: #4ade80;
+  }
+  
+  .wave-indicator {
+    color: #60a5fa;
+  }
+  
+  .arrow-btn {
+    color: #9ca3af;
+  }
+  
+  .arrow-btn:hover {
+    color: #d1d5db;
+    background: rgba(255, 255, 255, 0.1);
+  }
 }
 
 /* ============================MainControlBar============================ */

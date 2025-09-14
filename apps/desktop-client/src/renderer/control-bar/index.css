@@ -166,6 +166,71 @@
   animation: pulse 0.3s ease-in-out;
 }
 
+/* 仅在小圆模式下让根画布透明 */
+html.circle-mode, html.circle-mode body, html.circle-mode #root { background: rgba(0, 0, 0, 0) !important; }
+
+/* 圆形图标容器 - 容器透明，只在内部画圆 */
+.circle-icon-container {
+  width: 100vh; /* 使用视口高度确保是正圆形 */
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed; /* 固定定位，确保覆盖整个窗口 */
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0);
+  backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  -webkit-app-region: drag; /* 允许拖动整个容器 */
+}
+
+.circle-icon-container:hover {
+  transform: scale(1.1);
+}
+
+/* 圆形图标 - 在透明容器内画圆形背景 */
+.circle-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag; /* 确保可以点击 */
+}
+
+/* 圆形图标logo */
+.circle-icon-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  user-select: none;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.circle-icon-container:hover .circle-icon-logo {
+  transform: scale(1.05);
+}
+
+/* 暗色主题圆形图标 */
+@media (prefers-color-scheme: dark) {
+  .circle-icon {
+    background: rgba(30, 30, 30, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
 /* 响应式调整 */
 @media (max-width: 320px) {
   .control-bar {
@@ -181,5 +246,14 @@
   .search-button {
     min-width: 100px;
     padding: 4px 8px;
+  }
+  
+  .circle-icon {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .circle-icon-text {
+    font-size: 20px;
   }
 }
