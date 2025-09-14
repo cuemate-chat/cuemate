@@ -1,5 +1,5 @@
 import './App.css';
-import { FloatingControlBar } from './components/FloatingControlBar';
+import { FloatingControlBar } from './renderer/control-bar/components/FloatingControlBar';
 
 function App() {
   return (

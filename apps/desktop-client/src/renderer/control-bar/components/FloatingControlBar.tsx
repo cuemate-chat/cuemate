@@ -1,7 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { useEffect, useState } from 'react';
-import CueMate2 from '../assets/CueMate2.png';
-import { logger } from '../utils/rendererLogger.js';
+import CueMate2 from '../../../assets/CueMate2.png';
+import { logger } from '../../../utils/rendererLogger.js';
 import { CloseButton } from './CloseButton.js';
 import { MainControlBar } from './MainControlBar.js';
 

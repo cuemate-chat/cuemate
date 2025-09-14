@@ -2,9 +2,9 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { Layout } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import CueMateLogo from '../assets/CueMate.png';
-import CueMateLogo2 from '../assets/CueMate2.png';
-import { logger } from '../utils/rendererLogger.js';
+import CueMateLogo from '../../../assets/CueMate.png';
+import CueMateLogo2 from '../../../assets/CueMate2.png';
+import { logger } from '../../../utils/rendererLogger.js';
 import { LoggedInControlBar } from './LoggedInControlBar';
 
 interface MainControlBarProps {

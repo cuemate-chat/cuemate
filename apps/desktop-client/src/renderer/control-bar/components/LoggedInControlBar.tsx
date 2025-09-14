@@ -3,7 +3,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, CornerDownLeft, Eye, EyeOff, Pause, Play, Square, Type } from 'lucide-react';
 import { useState } from 'react';
-import { LottieAudioLines } from './LottieAudioLines';
+import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 
 interface LoggedInControlBarProps {
   // 暂时不添加任何 props

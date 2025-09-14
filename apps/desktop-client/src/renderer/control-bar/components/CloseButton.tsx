@@ -2,7 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useState } from 'react';
-import { logger } from '../utils/rendererLogger.js';
+import { logger } from '../../../utils/rendererLogger.js';
 
 interface CloseButtonProps {
   showCloseButton: boolean;
