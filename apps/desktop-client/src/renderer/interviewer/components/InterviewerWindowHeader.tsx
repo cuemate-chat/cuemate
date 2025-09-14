@@ -55,16 +55,17 @@ export function InterviewerWindowHeader({
           {isRecognizing ? (
             <LottieAudioLines 
               size={16} 
-              src="/src/assets/Microphone.gif"
               alt="Recording"
             />
           ) : (
             <Mic size={16} className="interviewer-title-icon" />
           )}
           <span>语音识别</span>
-          <div className="interviewer-timer">
-            <span className="timer-display">{formatDuration(duration)}</span>
-          </div>
+          {hasStarted && (
+            <div className="interviewer-timer">
+              <span className="timer-display">{formatDuration(duration)}</span>
+            </div>
+          )}
         </div>
       </div>
       

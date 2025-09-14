@@ -2,9 +2,12 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { CheckCircle, ChevronDown, Clock, GraduationCap, Loader2, MessageSquare, Mic, Users, XCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-interface InterviewerWindowBodyProps {}
+interface InterviewerWindowBodyProps {
+  onStartTesting?: () => void;
+  onStopTesting?: () => void;
+}
 
-export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
+export function InterviewerWindowBody({ onStartTesting, onStopTesting }: InterviewerWindowBodyProps) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([]);
   const [speakerDevices, setSpeakerDevices] = useState<MediaDeviceInfo[]>([]);
@@ -40,6 +43,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
     setMicStatus('testing');
     setRecognizedText('');
     setErrorMessage('');
+    onStartTesting?.(); // 开始测试时通知父组件
     
     let stream: MediaStream | null = null;
     let recorder: MediaRecorder | null = null;
@@ -155,6 +159,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
           setMicStatus('failed');
           setErrorMessage('30秒内未收到任何识别结果，请检查麦克风和 ASR 服务');
         }
+        onStopTesting?.(); // 测试结束时通知父组件
       }, 30000);
       
     } catch (error: any) {
@@ -169,6 +174,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
       }
       
       cleanup();
+      onStopTesting?.(); // 错误情况下也通知父组件测试结束
     }
   };
 
@@ -177,6 +183,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
     setSpeakerStatus('testing');
     setRecognizedText('');
     setErrorMessage('');
+    onStartTesting?.(); // 开始测试时通知父组件
     
     let websocket: WebSocket | null = null;
     let testTimer: NodeJS.Timeout | null = null;
@@ -292,6 +299,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
           setSpeakerStatus('failed');
           setErrorMessage('30秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务');
         }
+        onStopTesting?.(); // 测试结束时通知父组件
       }, 30000);
       
     } catch (error: any) {
@@ -304,6 +312,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
       }
       
       await cleanup();
+      onStopTesting?.(); // 错误情况下也通知父组件测试结束
     }
   };
 
@@ -418,7 +427,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
                   <button 
                     className="test-button"
                     onClick={testMicrophone}
-                    disabled={micStatus === 'testing'}
+                    disabled={micStatus === 'testing' || speakerStatus === 'testing'}
                   >
                     测试
                   </button>
@@ -462,7 +471,7 @@ export function InterviewerWindowBody({}: InterviewerWindowBodyProps) {
                   <button 
                     className="test-button"
                     onClick={testSpeaker}
-                    disabled={speakerStatus === 'testing'}
+                    disabled={speakerStatus === 'testing' || micStatus === 'testing'}
                   >
                     测试
                   </button>

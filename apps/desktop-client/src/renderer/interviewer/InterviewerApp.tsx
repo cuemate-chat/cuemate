@@ -6,6 +6,7 @@ import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
 export function InterviewerApp() {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedModel, setSelectedModel] = useState('Default');
+  const [isRecognizing, setIsRecognizing] = useState(false); // 新增状态
 
   const handleStartRecording = () => {
     setIsRecording(true);
@@ -17,6 +18,17 @@ export function InterviewerApp() {
     setIsRecording(false);
     // TODO: 停止语音识别
     console.log('停止语音识别');
+  };
+
+  // 新增：处理语音识别测试
+  const handleStartTesting = () => {
+    setIsRecognizing(true);
+    console.log('开始语音识别测试');
+  };
+
+  const handleStopTesting = () => {
+    setIsRecognizing(false);
+    console.log('停止语音识别测试');
   };
 
 
@@ -36,12 +48,17 @@ export function InterviewerApp() {
           selectedModel={selectedModel}
           onModelChange={handleModelChange}
           onTranscriptToggle={handleTranscriptToggle}
+          isRecognizing={isRecognizing}
         />
-        <InterviewerWindowBody />
+        <InterviewerWindowBody 
+          onStartTesting={handleStartTesting}
+          onStopTesting={handleStopTesting}
+        />
         <InterviewerWindowFooter
           isRecording={isRecording}
           onStartRecording={handleStartRecording}
           onStopRecording={handleStopRecording}
+          isRecognizing={isRecognizing}
         />
       </div>
     </div>
