@@ -230,8 +230,8 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
                     transition={{ duration: 0.2 }}
                   >
                     <LottieAudioLines 
-                      size={18} 
-                      src="/src/assets/Done.gif"
+                      size={20} 
+                      src="/src/assets/Equalizer.gif"
                       alt="Done"
                     />
                   </motion.div>
