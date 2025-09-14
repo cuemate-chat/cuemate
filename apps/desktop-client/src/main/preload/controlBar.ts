@@ -25,6 +25,8 @@ const controlBarAPI = {
   hideAIQuestion: () => ipcRenderer.invoke('hide-ai-question'),
   toggleAIQuestion: () => ipcRenderer.invoke('toggle-ai-question'),
 
+  toggleAIQuestionHistory: () => ipcRenderer.invoke('toggle-ai-question-history'),
+
   showInterviewer: () => ipcRenderer.invoke('show-interviewer'),
   hideInterviewer: () => ipcRenderer.invoke('hide-interviewer'),
   toggleInterviewer: () => ipcRenderer.invoke('toggle-interviewer'),
@@ -54,6 +56,15 @@ const controlBarAPI = {
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 
+  // === 圆形模式事件监听 ===
+  onSwitchToCircleMode: (callback: (data: { circleSize: number }) => void) => {
+    ipcRenderer.on('switch-to-circle-mode', (_event, data) => callback(data));
+  },
+  
+  onSwitchToNormalMode: (callback: () => void) => {
+    ipcRenderer.on('switch-to-normal-mode', (_event) => callback());
+  },
+
   // === 事件监听 API ===
   on: (channel: string, callback: (...args: any[]) => void) => {
     // 只允许特定的事件频道
@@ -65,6 +76,8 @@ const controlBarAPI = {
       'shortcut-triggered',
       'websocket-login-success', // WebSocket 登录成功事件
       'websocket-logout', // WebSocket 登出事件
+      'switch-to-circle-mode', // 圆形模式切换
+      'switch-to-normal-mode', // 正常模式切换
     ];
 
     if (allowedChannels.includes(channel)) {
