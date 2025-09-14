@@ -2,8 +2,8 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import 'animate.css/animate.min.css';
 import { Copy, MoreHorizontal, Plus } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { MessageData, ScrollFadeMessageList } from '../components/ScrollFadeMessage';
-import { useScrollFadeEffect } from '../hooks/useScrollFadeEffect';
+import { MessageData, ScrollFadeMessageList } from '../../shared/components/ScrollFadeMessage';
+import { useScrollFadeEffect } from '../../hooks/useScrollFadeEffect';
 
 // 使用现代化的公共组件架构
 // 所有ScrollAnimation和渐变功能已提取为独立组件

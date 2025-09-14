@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import React, { useEffect, useRef, useState } from 'react';
-import { WindowBody } from './WindowBody.tsx';
-import { WindowFooter } from './WindowFooter.tsx';
-import { WindowHeader } from './WindowHeader.tsx';
+import { WindowBody } from './components/WindowBody.tsx';
+import { WindowFooter } from './components/WindowFooter.tsx';
+import { WindowHeader } from './components/WindowHeader.tsx';
 import { aiService } from './api/aiService.ts';
 import { conversationService } from './api/conversationService.ts';
 

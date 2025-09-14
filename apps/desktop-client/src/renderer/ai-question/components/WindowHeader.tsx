@@ -1,7 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { History, X } from 'lucide-react';
-import CueMateLogo from '../../assets/CueMate.png';
+import CueMateLogo from '../../../assets/CueMate.png';
 
 // 头部内的加载动画
 const LoadingDots = () => {
