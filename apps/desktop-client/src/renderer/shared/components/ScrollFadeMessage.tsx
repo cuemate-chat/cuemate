@@ -6,8 +6,8 @@
 import React, { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { AnimatedMessage, AnimatedMessageProps } from './AnimatedMessage';
-import { renderContentByLines, LineRenderOptions } from '../utils/messageRenderer';
-import { FadeConfig } from '../utils/fadeCalculator';
+import { renderContentByLines, LineRenderOptions } from '../../utils/messageRenderer';
+import { FadeConfig } from '../../utils/fadeCalculator';
 
 export interface MessageData {
   id: string;
