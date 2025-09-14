@@ -47,7 +47,7 @@ html, body, #root {
 .interviewer-header-left {
   display: flex;
   align-items: center;
-  width: 30%;
+  width: 40%;
 }
 
 .interviewer-title {
@@ -68,9 +68,8 @@ html, body, #root {
 /* Header 右侧按钮 */
 .interviewer-header-right {
   display: flex;
-  align-items: center;
-  gap: 5%;
-  width: 70%;
+  align-items: right;
+  width: 60%;
   justify-content: flex-end;
 }
 
@@ -85,8 +84,8 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  padding: 2px 8px;
-  gap: 6px;
+  padding: 2px 4px;
+  gap: 4px;
 }
 
 .interviewer-header-btn:hover {
@@ -101,8 +100,8 @@ html, body, #root {
 .interviewer-select-wrapper {
   position: relative;
   display: flex;
-  align-items: center;
-  width: 40%;
+  align-items: left;
+  width: 55%;
 }
 
 .interviewer-select-trigger {
@@ -156,13 +155,14 @@ html, body, #root {
   color: white;
   cursor: pointer;
   display: flex;
-  align-items: center;
+  align-items: right;
   justify-content: center;
   transition: all 0.2s ease;
-  padding: 2px 8px;
-  gap: 6px;
+  padding: 2px 4px;
+  gap: 4px;
   font-size: 12px;
-  width: 30%;
+  width: 35%;
+  margin-left: 5%;
 }
 
 .interviewer-transcript-btn:hover {
