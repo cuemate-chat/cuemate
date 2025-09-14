@@ -6,6 +6,7 @@ import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/pat
 export class InterviewerWindow {
   private window: BrowserWindow | null = null;
   private isDevelopment: boolean;
+  private parentWindow: BrowserWindow | null = null;
 
   private readonly config: WindowConfig = {
     id: 'interviewer',
@@ -15,7 +16,7 @@ export class InterviewerWindow {
     alwaysOnTop: true,
     frame: false,
     transparent: true,
-    skipTaskbar: false,
+    skipTaskbar: true, // 子窗口不在任务栏显示
     resizable: false,
     minimizable: false,
     maximizable: false,
@@ -25,8 +26,9 @@ export class InterviewerWindow {
     center: false,
   };
 
-  constructor(isDevelopment: boolean = false) {
+  constructor(isDevelopment: boolean = false, parentWindow: BrowserWindow | null = null) {
     this.isDevelopment = isDevelopment;
+    this.parentWindow = parentWindow;
   }
 
   public async create(): Promise<void> {
@@ -44,6 +46,7 @@ export class InterviewerWindow {
         x: displayX + 100,
         y: displayY + 100,
         icon: getWindowIconPath(),
+        parent: this.parentWindow || undefined, // 设置父窗口
         alwaysOnTop: this.config.alwaysOnTop,
         frame: this.config.frame,
         transparent: this.config.transparent,

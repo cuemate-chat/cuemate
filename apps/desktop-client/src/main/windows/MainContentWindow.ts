@@ -4,12 +4,13 @@ import { logger } from '../../utils/logger.js';
 import { getPreloadPath, getWindowIconPath } from '../utils/paths.js';
 
 /**
- * 主内容窗口 - 应用的主要界面
- * 显示主要功能和内容，可以隐藏/显示
+ * 主内容窗口 - 普通功能窗口
+ * 显示主要功能和内容，受 control-bar 控制
  */
 export class MainContentWindow {
   private window: BrowserWindow | null = null;
   private isDevelopment: boolean;
+  private parentWindow: BrowserWindow | null = null;
   private lastBounds: Electron.Rectangle | null = null;
 
   private readonly config: WindowConfig = {
@@ -20,18 +21,19 @@ export class MainContentWindow {
     alwaysOnTop: true, // 主内容窗口也需要悬浮，但层级低于悬浮窗口
     frame: true, // 有标题栏和边框
     transparent: false, // 不透明
-    skipTaskbar: false, // 在任务栏显示
+    skipTaskbar: true, // 不在任务栏显示
     resizable: true, // 可调整大小
     minimizable: true,
     maximizable: true,
     closable: true, // 可关闭（但会被阻止并改为隐藏）
     focusable: true, // 允许获得焦点，以便用户可以输入内容
-    show: true,
+    show: false,
     center: true,
   };
 
-  constructor(isDevelopment: boolean = false) {
+  constructor(isDevelopment: boolean = false, parentWindow: BrowserWindow | null = null) {
     this.isDevelopment = isDevelopment;
+    this.parentWindow = parentWindow;
   }
 
   /**
@@ -63,6 +65,7 @@ export class MainContentWindow {
         x: initialX,
         y: initialY,
         icon: getWindowIconPath(), // 设置窗口图标
+        parent: this.parentWindow || undefined, // 设置父窗口
         alwaysOnTop: true, // 主内容窗口也需要悬浮
         frame: this.config.frame,
         transparent: this.config.transparent,

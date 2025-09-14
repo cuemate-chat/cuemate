@@ -1,9 +1,10 @@
 import { execSync } from 'child_process';
-import { app, BrowserWindow, globalShortcut, Menu, MenuItem, nativeImage, shell } from 'electron';
+import { app, BrowserWindow, globalShortcut, Menu, MenuItem, shell } from 'electron';
 import type { LogLevel } from '../shared/types.js';
 import { logger } from '../utils/logger.js';
 import { setupIPC } from './ipc/handlers.js';
-import { getAppIconPath, getProjectRoot } from './utils/paths.js';
+import { ensureDockActiveAndIcon } from './utils/dock.js';
+import { getAppIconPath } from './utils/paths.js';
 import { setupGlobalShortcuts } from './utils/shortcuts.js';
 import { WindowManager } from './windows/WindowManager.js';
 
@@ -248,67 +249,14 @@ class CueMateApp {
       // 创建自定义菜单
       this.createApplicationMenu();
 
-      // 设置应用图标
+      // 设置应用图标 & 确保 Dock 常驻
       try {
         const iconPath = getAppIconPath();
         logger.info({ iconPath }, '应用图标路径');
 
         // 在 macOS 上设置 Dock 图标并确保可见
         if (process.platform === 'darwin' && app.dock) {
-          try {
-            // 确保激活策略为常规模式，避免 Dock 图标缺失
-            if (typeof (app as any).setActivationPolicy === 'function') {
-              (app as any).setActivationPolicy('regular');
-            }
-            // 确保应用在 Dock 中可见
-            app.dock.show();
-            logger.info('Dock 已显示');
-
-            // 验证文件是否存在和可读
-            const fs = require('fs');
-            if (!fs.existsSync(iconPath)) {
-              throw new Error(`图标文件不存在: ${iconPath}`);
-            }
-
-            const stats = fs.statSync(iconPath);
-            logger.info({ iconPath, size: stats.size, isFile: stats.isFile() }, '图标文件信息');
-
-            // 开发模式下动态设置 Dock 图标；打包环境由 bundle 内 icns 提供
-            if (this.isDevelopment) {
-              let setOk = false;
-              const trySet = (p: string) => {
-                const i = nativeImage.createFromPath(p);
-                if (i && !i.isEmpty()) {
-                  app.dock.setIcon(i);
-                  logger.info({ p }, 'macOS Dock 图标已设置');
-                  return true;
-                }
-                return false;
-              };
-
-              // 先尝试 icns
-              setOk = trySet(iconPath);
-              if (!setOk) {
-                // 回退到 png
-                const path = require('path');
-                const pngPath = path.join(getProjectRoot(), 'assets', 'logo-icon.png');
-                setOk = trySet(pngPath);
-                if (!setOk) {
-                  logger.warn(
-                    { iconPath, pngPath },
-                    '无法从 icns/png 加载图标，使用默认 Electron 图标',
-                  );
-                }
-              }
-            } else {
-              logger.info('打包环境：由应用 bundle 内 icns 提供 Dock 图标');
-            }
-          } catch (dockError: any) {
-            logger.error(
-              { dockError: dockError.message || dockError, iconPath },
-              'macOS Dock 图标设置失败',
-            );
-          }
+          ensureDockActiveAndIcon('ready');
         }
       } catch (error) {
         logger.warn({ error }, '设置应用图标失败');
@@ -330,7 +278,7 @@ class CueMateApp {
       // macOS: 当点击 dock 图标时重新激活
       app.on('activate', () => {
         logger.info('应用被重新激活 (Dock 图标点击)');
-        this.ensureDockIcon();
+        ensureDockActiveAndIcon('activate');
         this.windowManager.showFloatingWindows();
       });
 
@@ -414,31 +362,6 @@ class CueMateApp {
 
     // 清理窗口管理器
     this.windowManager.destroy();
-  }
-
-  // 确保 Dock 图标始终正确显示的方法
-  private ensureDockIcon(): void {
-    if (process.platform === 'darwin' && app.dock) {
-      try {
-        const iconPath = getAppIconPath();
-        logger.debug({ iconPath }, '确保 Dock 图标路径');
-
-        // 验证文件
-        const fs = require('fs');
-        if (!fs.existsSync(iconPath)) {
-          throw new Error(`图标文件不存在: ${iconPath}`);
-        }
-
-        app.dock.show();
-        app.dock.setIcon(iconPath);
-        logger.debug('Dock 图标已确保显示');
-      } catch (error: any) {
-        logger.error(
-          { error: error.message || error, iconPath: getAppIconPath() },
-          '确保 Dock 图标显示失败',
-        );
-      }
-    }
   }
 
   // 日志方法（供 IPC 使用）

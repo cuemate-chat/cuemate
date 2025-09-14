@@ -10,6 +10,7 @@ import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/pat
 export class AIQuestionWindow {
   private window: BrowserWindow | null = null;
   private isDevelopment: boolean;
+  private parentWindow: BrowserWindow | null = null;
 
   private readonly config: WindowConfig = {
     id: 'ai-question',
@@ -19,7 +20,7 @@ export class AIQuestionWindow {
     alwaysOnTop: true, // 悬浮窗口
     frame: false, // 无边框
     transparent: true, // 透明
-    skipTaskbar: false, // 不在任务栏显示
+    skipTaskbar: true, // 子窗口不在任务栏显示
     resizable: false, // 不可调整大小
     minimizable: false,
     maximizable: false,
@@ -29,8 +30,9 @@ export class AIQuestionWindow {
     center: true,
   };
 
-  constructor(isDevelopment: boolean = false) {
+  constructor(isDevelopment: boolean = false, parentWindow: BrowserWindow | null = null) {
     this.isDevelopment = isDevelopment;
+    this.parentWindow = parentWindow;
   }
 
   /**
@@ -87,6 +89,7 @@ export class AIQuestionWindow {
         x: initialX,
         y: initialY,
         icon: getWindowIconPath(),
+        parent: this.parentWindow || undefined, // 设置父窗口
         alwaysOnTop: this.config.alwaysOnTop,
         frame: this.config.frame,
         transparent: this.config.transparent,

@@ -1,16 +1,20 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
+import { ensureDockActiveAndIcon } from '../utils/dock.js';
 import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
 
 /**
- * 控制条窗口 - 主要的浮动交互界面
- * 始终保持在最顶层，支持拖拽和悬停交互
+ * 控制条窗口 - 应用主窗口和控制中心
+ * 管理所有其他窗口，始终保持在最顶层，支持拖拽和悬停交互
  */
 export class ControlBarWindow {
   private window: BrowserWindow | null = null;
   private isDevelopment: boolean;
   private isMoving: boolean = false;
+  private onCloseCallback?: () => void;
+  private isCircleMode: boolean = false; // 是否为圆形图标模式
+  private originalBounds: Electron.Rectangle | null = null; // 保存原始窗口尺寸
 
   private readonly config: WindowConfig = {
     id: 'control-bar',
@@ -20,7 +24,7 @@ export class ControlBarWindow {
     alwaysOnTop: true, // 悬浮窗口需要总是置顶
     frame: false,
     transparent: true,
-    skipTaskbar: false,
+    skipTaskbar: false, // 作为主窗口，显示在 Dock
     resizable: false,
     minimizable: false,
     maximizable: false,
@@ -71,7 +75,7 @@ export class ControlBarWindow {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
-          webSecurity: !this.isDevelopment, // 恢复原逻辑，开发模式禁用 webSecurity
+          webSecurity: false, // 强制禁用以确保透明效果
           preload: getPreloadPath('controlBar'),
         },
       });
@@ -80,6 +84,7 @@ export class ControlBarWindow {
       this.window.setAlwaysOnTop(true, 'screen-saver');
       this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       this.window.setFullScreenable(false);
+      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:create');
 
       // 加载页面
       if (this.isDevelopment) {
@@ -138,7 +143,13 @@ export class ControlBarWindow {
     // 窗口关闭（实际上不会关闭，而是隐藏）
     this.window.on('close', (event) => {
       event.preventDefault();
-      this.hide();
+      // 作为主窗口，关闭时隐藏所有子窗口
+      if (this.onCloseCallback) {
+        this.onCloseCallback();
+      }
+      // 统一切换到圆形图标模式，而不是隐藏窗口
+      this.switchToCircleMode();
+      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:close->circle');
     });
 
     // 窗口已关闭
@@ -165,6 +176,7 @@ export class ControlBarWindow {
       this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       this.window.setFullScreenable(false);
       this.window.moveTop();
+      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:show');
     }
   }
 
@@ -173,7 +185,105 @@ export class ControlBarWindow {
    */
   public hide(): void {
     if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
-      this.window.hide();
+      // 隐藏 control-bar 时，同步触发关闭回调以隐藏所有子窗口
+      if (this.onCloseCallback) {
+        this.onCloseCallback();
+      }
+      // 统一切换到圆形图标模式，而不是隐藏窗口
+      this.switchToCircleMode();
+      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:hide->circle');
+    }
+  }
+
+  /**
+   * 切换到圆形图标模式
+   */
+  public switchToCircleMode(): void {
+    if (!this.window || this.window.isDestroyed() || this.isCircleMode) {
+      return;
+    }
+
+    try {
+      // 保存当前窗口尺寸
+      this.originalBounds = this.window.getBounds();
+
+      // 设置圆形图标尺寸和位置
+      const circleSize = 60; // 稍微大一点，为了更好的视觉效果
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const {
+        x: displayX,
+        y: displayY,
+        width: screenWidth,
+        height: screenHeight,
+      } = primaryDisplay.workArea;
+
+      // 位置：紧贴屏幕右侧，垂直居中
+      const x = displayX + screenWidth - circleSize;
+      const y = displayY + Math.floor((screenHeight - circleSize) / 2);
+
+      // 设置新的窗口尺寸
+      this.window.setBounds({
+        x,
+        y,
+        width: circleSize,
+        height: circleSize,
+      });
+      this.window.setHasShadow(false);
+
+      // 强制窗口背景透明（运行时设置）
+      try {
+        this.window.setBackgroundColor('#00000000');
+        this.window.setOpacity(0.99);
+        setTimeout(() => this.window?.setOpacity(1.0), 50);
+      } catch (e) {
+        logger.debug({ e }, '设置运行时透明失败');
+      }
+
+      // 向渲染进程发送圆形模式切换事件
+      this.window.webContents.send('switch-to-circle-mode', { circleSize });
+
+      this.isCircleMode = true;
+
+      // 小圆模式时打开开发者工具用于调试透明效果
+      this.window.webContents.openDevTools({ mode: 'detach' });
+
+      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:circle');
+    } catch (error) {
+      logger.error({ error }, 'control-bar 切换到圆形图标模式失败');
+    }
+  }
+
+  /**
+   * 从圆形图标模式切换回正常模式
+   */
+  public switchToNormalMode(): void {
+    if (!this.window || this.window.isDestroyed() || !this.isCircleMode || !this.originalBounds) {
+      return;
+    }
+
+    try {
+      // 恢复原始窗口尺寸
+      this.window.setBounds(this.originalBounds);
+
+      // 向渲染进程发送正常模式切换事件
+      this.window.webContents.send('switch-to-normal-mode');
+
+      this.isCircleMode = false;
+      this.originalBounds = null;
+      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:normal');
+    } catch (error) {
+      logger.error({ error }, 'control-bar 切换回正常模式失败');
+    }
+  }
+
+  /**
+   * 切换圆形图标模式
+   */
+  public toggleCircleMode(): void {
+    if (this.isCircleMode) {
+      this.switchToNormalMode();
+    } else {
+      this.switchToCircleMode();
     }
   }
 
@@ -263,6 +373,13 @@ export class ControlBarWindow {
    */
   public isFocused(): boolean {
     return this.window ? this.window.isFocused() : false;
+  }
+
+  /**
+   * 设置窗口关闭回调函数
+   */
+  public setOnCloseCallback(callback: () => void): void {
+    this.onCloseCallback = callback;
   }
 
   /**

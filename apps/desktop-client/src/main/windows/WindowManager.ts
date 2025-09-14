@@ -2,6 +2,7 @@ import type { BrowserWindow } from 'electron';
 import { screen } from 'electron';
 import type { AppState } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
+import { ensureDockActiveAndIcon } from '../utils/dock.js';
 import { WebSocketClient } from '../websocket/WebSocketClient.js';
 import { AIQuestionHistoryWindow } from './AIQuestionHistoryWindow.js';
 import { AIQuestionWindow } from './AIQuestionWindow.js';
@@ -11,13 +12,13 @@ import { MainContentWindow } from './MainContentWindow.js';
 
 export class WindowManager {
   private controlBarWindow: ControlBarWindow;
-  private mainContentWindow: MainContentWindow;
-  private aiQuestionWindow: AIQuestionWindow;
+  private mainContentWindow!: MainContentWindow; // 在initialize中初始化
+  private aiQuestionWindow!: AIQuestionWindow; // 在initialize中初始化
   private webSocketClient: WebSocketClient;
   private isDevelopment: boolean;
   private appState: AppState;
-  private aiQuestionHistoryWindow: AIQuestionHistoryWindow;
-  private interviewerWindow: InterviewerWindow;
+  private aiQuestionHistoryWindow!: AIQuestionHistoryWindow; // 在initialize中初始化
+  private interviewerWindow!: InterviewerWindow; // 在initialize中初始化
   private windowStatesBeforeHide: {
     isMainContentVisible: boolean;
     isAIQuestionVisible: boolean;
@@ -44,10 +45,6 @@ export class WindowManager {
 
     // 创建窗口实例 - control-bar 现在作为主焦点窗口，关闭按钮已集成
     this.controlBarWindow = new ControlBarWindow(this.isDevelopment);
-    this.mainContentWindow = new MainContentWindow(this.isDevelopment);
-    this.aiQuestionWindow = new AIQuestionWindow(this.isDevelopment);
-    this.aiQuestionHistoryWindow = new AIQuestionHistoryWindow(this.isDevelopment);
-    this.interviewerWindow = new InterviewerWindow(this.isDevelopment);
 
     // 创建 WebSocket 客户端
     this.webSocketClient = new WebSocketClient(this);
@@ -61,31 +58,44 @@ export class WindowManager {
       // 1. 创建控制条窗口（现在作为主焦点窗口）
       await this.controlBarWindow.create();
 
-      // 2. 创建主内容窗口
-      await this.mainContentWindow.create();
-      // 启动时显示 main-content，确保 Dock 入口建立
-      this.showMainContent();
+      // 2. 创建子窗口，以control-bar作为父窗口
+      const controlBarBrowserWindow = this.controlBarWindow.getBrowserWindow();
+      this.mainContentWindow = new MainContentWindow(this.isDevelopment, controlBarBrowserWindow);
+      this.aiQuestionWindow = new AIQuestionWindow(this.isDevelopment, controlBarBrowserWindow);
+      this.aiQuestionHistoryWindow = new AIQuestionHistoryWindow(
+        this.isDevelopment,
+        controlBarBrowserWindow,
+      );
+      this.interviewerWindow = new InterviewerWindow(this.isDevelopment, controlBarBrowserWindow);
 
-      // 3. 创建AI问答窗口（初始隐藏）
+      // 3. 创建网页窗口（初始隐藏）
+      await this.mainContentWindow.create();
+
+      // 4. 创建AI问答窗口（初始隐藏）
       await this.aiQuestionWindow.create();
 
-      // 3.1 创建AI问答历史窗口（初始隐藏）
+      // 5. 创建AI问答历史窗口（初始隐藏）
       await this.aiQuestionHistoryWindow.create();
 
-      // 3.2 创建Interviewer窗口（初始隐藏）
+      // 6. 创建Interviewer窗口（初始隐藏）
       await this.interviewerWindow.create();
 
-      // 4. 设置窗口事件监听
+      // 7. 设置控制条窗口关闭回调，隐藏所有子窗口
+      this.controlBarWindow.setOnCloseCallback(() => {
+        this.hideAllChildWindows();
+      });
+
+      // 8. 设置窗口事件监听
       this.setupWindowEvents();
 
-      // 5. 连接 WebSocket 客户端
+      // 9. 连接 WebSocket 客户端
       this.webSocketClient.connect();
       logger.info('WebSocket 客户端连接已启动');
 
-      // 6. 显示浮动窗口（control-bar）
+      // 10. 显示浮动窗口（control-bar）
       this.showFloatingWindows();
 
-      // 7. 监听屏幕分辨率变化
+      // 11. 监听屏幕分辨率变化
       this.setupScreenEvents();
     } catch (error) {
       logger.error({ error }, '窗口管理器初始化失败');
@@ -185,10 +195,13 @@ export class WindowManager {
   }
 
   /**
-   * 显示浮动窗口
+   * 显示浮动窗口（从圆形图标模式切换回正常模式）
    */
   public showFloatingWindows(): void {
+    // 从圆形图标模式切换回正常模式
+    this.controlBarWindow.switchToNormalMode();
     this.controlBarWindow.show();
+    if (process.platform === 'darwin') ensureDockActiveAndIcon('wm:showFloatingWindows');
     this.appState.isControlBarVisible = true;
     this.appState.isCloseButtonVisible = true; // 统一状态管理
 
@@ -216,7 +229,7 @@ export class WindowManager {
   }
 
   /**
-   * 隐藏浮动窗口
+   * 隐藏浮动窗口（切换到圆形图标模式）
    */
   public hideFloatingWindows(): void {
     // 保存所有窗口当前状态
@@ -227,30 +240,16 @@ export class WindowManager {
       isInterviewerVisible: this.isInterviewerVisible(),
     };
 
-    // 隐藏所有相关窗口
-    if (this.appState.isMainContentVisible) {
-      this.mainContentWindow.hide();
-      this.appState.isMainContentVisible = false;
-    }
+    // 隐藏所有子窗口
+    this.hideAllChildWindows();
 
-    if (this.appState.isAIQuestionVisible) {
-      this.aiQuestionWindow.hide();
-      this.appState.isAIQuestionVisible = false;
-    }
-
-    if (this.isAIQuestionHistoryVisible()) {
-      this.aiQuestionHistoryWindow.hide();
-    }
-
-    if (this.isInterviewerVisible()) {
-      this.interviewerWindow.hide();
-    }
-
-    this.controlBarWindow.hide();
-    this.appState.isControlBarVisible = false;
+    // control-bar 切换到圆形图标模式，而不是隐藏
+    this.controlBarWindow.switchToCircleMode();
+    if (process.platform === 'darwin') ensureDockActiveAndIcon('wm:hideFloatingWindows->circle');
+    this.appState.isControlBarVisible = true; // 圆形图标模式依然是可见状态
     this.appState.isCloseButtonVisible = false;
 
-    // 浮动窗口隐藏后，若 main-content 不可见，再恢复 control-bar 焦点
+    // 确保 control-bar 焦点
     setTimeout(() => this.ensureMainFocus(), 100);
   }
 
@@ -258,10 +257,17 @@ export class WindowManager {
    * 切换浮动窗口显示状态
    */
   public toggleFloatingWindows(): void {
-    if (this.appState.isControlBarVisible) {
-      this.hideFloatingWindows();
-    } else {
-      this.showFloatingWindows();
+    // 检查是否为圆形图标模式
+    const controlBarBrowserWindow = this.controlBarWindow.getBrowserWindow();
+    if (controlBarBrowserWindow) {
+      const bounds = controlBarBrowserWindow.getBounds();
+      const isCircleMode = bounds.width <= 90; // 圆形图标的尺寸判断（70px + 余量）
+
+      if (isCircleMode) {
+        this.showFloatingWindows(); // 从圆形图标模式切换回正常模式
+      } else {
+        this.hideFloatingWindows(); // 切换到圆形图标模式
+      }
     }
   }
 
@@ -462,6 +468,39 @@ export class WindowManager {
    */
   public getWebSocketClient(): WebSocketClient {
     return this.webSocketClient;
+  }
+
+  /**
+   * 隐藏所有子窗口（保持状态）
+   */
+  public hideAllChildWindows(): void {
+    // 保存所有窗口当前状态
+    this.windowStatesBeforeHide = {
+      isMainContentVisible: this.appState.isMainContentVisible,
+      isAIQuestionVisible: this.appState.isAIQuestionVisible,
+      isAIQuestionHistoryVisible: this.isAIQuestionHistoryVisible(),
+      isInterviewerVisible: this.isInterviewerVisible(),
+    };
+
+    // 隐藏所有子窗口
+    // 基于实际可见状态隐藏主内容窗口，避免状态不同步导致未隐藏
+    if (this.mainContentWindow.isVisible()) {
+      this.mainContentWindow.hide();
+      this.appState.isMainContentVisible = false;
+    }
+
+    if (this.appState.isAIQuestionVisible) {
+      this.aiQuestionWindow.hide();
+      this.appState.isAIQuestionVisible = false;
+    }
+
+    if (this.isAIQuestionHistoryVisible()) {
+      this.aiQuestionHistoryWindow.hide();
+    }
+
+    if (this.isInterviewerVisible()) {
+      this.interviewerWindow.hide();
+    }
   }
 
   /**
