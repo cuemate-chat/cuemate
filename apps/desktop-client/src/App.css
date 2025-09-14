@@ -1,481 +1,26 @@
-/* ============================App/ControlBarApp============================ */
+/* ============================全局通用样式============================ */
 
-/* 应用容器 */
-.app-container {
-  position: relative;
-  width: 1000px;
-  height: 100px;
-  z-index: 9999;
-  user-select: none;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0;
-  pointer-events: auto;
-  padding-top: 0;
-  background: transparent;
-}
-
-/* 小圆模式时，app-container 也要变成圆形尺寸 */
-html.circle-mode .app-container {
-  width: 50px;
-  height: 50px;
-  justify-content: center;
-  padding-top: 0;
-}
-
-/* ============================语音识别多状态样式============================ */
-
-/* 语音识别容器 */
-.voice-recognition-container {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* 录制中控制组 */
-.voice-recording-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* 停止状态控制组 */
-.voice-stopped-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* 单个图标按钮 - 参考眼睛按钮样式 */
-.voice-icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
-  outline: none;
-  -webkit-app-region: no-drag;
-}
-
-.voice-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: scale(1.05);
-}
-
-.pause-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-
-.play-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-/* 组合按钮 - 矩形背景，参考眼睛按钮样式 */
-.voice-group-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  height: 32px;
-  padding: 0 12px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
-  font-size: 12px;
-  font-weight: 500;
-  outline: none;
-  -webkit-app-region: no-drag;
-}
-
-.voice-group-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: scale(1.02);
-}
-
-.done-btn {
-  background: rgba(239, 68, 68, 0.2);
-  color: white;
-}
-
-.done-btn:hover {
-  background: rgba(239, 68, 68, 0.3);
-}
-
-.wave-icon {
-  transition: all 0.3s ease;
-  color: white;
-}
-
-.wave-0 { transform: scaleY(0.8); }
-.wave-1 { transform: scaleY(1.0); }
-.wave-2 { transform: scaleY(1.2); }
-
-.done-icon {
-  fill: currentColor;
-}
-
-/* 暗色主题语音控制 */
-@media (prefers-color-scheme: dark) {
-  .voice-control-btn {
-    color: #ccc;
-  }
-  
-  .voice-control-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-  }
-  
-  .pause-btn {
-    color: #f87171;
-  }
-  
-  .play-btn {
-    color: #4ade80;
-  }
-  
-  .wave-indicator {
-    color: #60a5fa;
-  }
-  
-  .arrow-btn {
-    color: #9ca3af;
-  }
-  
-  .arrow-btn:hover {
-    color: #d1d5db;
-    background: rgba(255, 255, 255, 0.1);
-  }
-}
-
-/* ============================MainControlBar============================ */
-
-/* 悬浮控制栏样式 - NSPanel 窗口 */
-.floating-control-bar {
-  position: relative;
-  width: 360px; /* 保持原有宽度，关闭按钮独立在外 */
-  height: 42px;
-  pointer-events: auto; /* 恢复：让 NSPanel 能接收鼠标事件 */
-  cursor: pointer;  /* 添加小手光标 */
-  background: rgba(30, 30, 30, 0.7);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border-radius: 25px;
-  display: flex;
-  align-items: center;
-  transition: all 0.3s ease;
-  z-index: 100000;
-  padding: 0 8px; /* 增加左右内边距，让logo和按钮不贴边 */
-  gap: 8px; /* 增加元素间距 */
-}
-
-.floating-control-bar:hover {
-  background: rgba(30, 30, 30, 0.6);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-/* Logo 区域 */
-.logo-section {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0; /* 防止logo被压缩 */
-}
-
-.logo-section:hover {
-  transform: scale(1.05);
-}
-
-.logo-section:active {
-  transform: scale(0.95);
-}
-
-.logo-icon {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo-image {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 2px solid rgba(59, 130, 246, 0.3);
-}
-
-.logo-image:hover {
-  transform: scale(1.05);
-}
-
-/* 欢迎文字 */
-.welcome-text {
-  flex: 1;
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-}
-
-/* 登录提示容器 */
-.login-prompt {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-/* 可点击的登录提示 */
-.login-prompt.clickable {
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 4px 8px;
-  border-radius: 12px;
-}
-
-.login-prompt.clickable:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: scale(1.02);
-}
-
-/* 加载动画样式 */
-.loading-dots {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-left: 4px;
-}
-
-.loading-dots .dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.8);
-  display: inline-block;
-}
-
-/* 悬浮窗口控制按钮 */
-.floating-overlay-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  flex-shrink: 0; /* 防止按钮被压缩 */
-}
-
-.floating-overlay-btn:hover {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.4);
-  color: #60a5fa;
-  opacity: 0.8;
-}
-
-/* ============================LoggedInControlBar============================ */
-
-/* 已登录状态控制栏样式 */
-.logged-in-control-bar {
-  display: flex;
-  align-items: center;
-  /* flex: 1; */
-  justify-content: center;
-  height: 100%;
-  gap: 8px;
-}
-
-/* Radix UI Separator 垂直分隔线样式 */
-.vertical-separator {
-  width: 1px;
-  height: 60%;
-  background: rgba(255, 255, 255, 0.2);
+/* 默认样式重置和基础设置 */
+body, html {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Listen 按钮样式 */
-.listen-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(7, 36, 82, 0.8);
-  color: white;
-  border: 1px solid rgba(25, 106, 204, 0.6);
-  border-radius: 20px;
-  padding: 6px 12px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-  height: 32px;
+* {
+  box-sizing: border-box;
 }
 
-.listen-btn:hover {
-  background: rgba(7, 36, 82, 0.6);
-  border-color: rgba(25, 106, 204, 0.8);
+/* 通用字体设置 */
+.font-apple-system {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.listen-btn.hovered {
-  background: rgba(7, 36, 82, 0.6);
-  border-color: rgba(25, 106, 204, 0.8);
-}
-
-/* Ask question 按钮样式 */
-.ask-question-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 6px 12px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-  height: 32px;
-}
-
-.ask-question-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* 可见性切换按钮样式 */
-.visibility-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.visibility-btn:hover {
-  background: rgba(156, 163, 175, 0.2);
-  border: 1px solid rgba(156, 163, 175, 0.4);
-  color: #9ca3af;
-}
-
-/* ============================CloseButton============================ */
-
-/* 关闭按钮 */
-.close-floating-btn-separate {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 16px;
-  background: rgba(30, 30, 30, 0.7);
-  color: rgba(255, 255, 255, 0.9);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  flex-shrink: 0; /* 防止按钮被压缩 */
-}
-
-.close-floating-btn-separate:hover {
-  background: rgba(30, 30, 30, 0.6);
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: scale(1.05); /* 添加悬浮放大效果，与logo一致 */
-}
-
-.close-floating-btn-separate.hover {
-  background: rgba(30, 30, 30, 0.6);
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: scale(1.05); /* 添加悬浮放大效果，与logo一致 */
-}
-
-/* ============================FloatingControlBar============================ */
-
-/* 浮动控制栏容器 */
-.floating-control-bar-container {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 1000px;
-}
-
-/* 关闭按钮区域 */
-.floating-close-button-area {
-  position: absolute;
-  right: 280px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 42px;
-  background-color: rgba(0,0,0,0.01);
-  pointer-events: auto;
-}
-
-/* ============================Responsive============================ */
-
-/* 响应式设计 */
-@media (max-width: 480px) {
-  .welcome-text {
-    font-size: 12px;
-  }
-  
-  .logo-icon {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .close-floating-btn-separate,
-  .floating-overlay-btn {
-    width: 24px;
-    height: 24px;
-  }
-  
-}
-
-/* ============================通用============================ */
-
-/* Radix Tooltip 样式 */
+/* 通用的 Radix Tooltip 样式（所有窗口共用） */
 .radix-tooltip-content {
   background: rgba(30, 30, 30, 0.9);
   color: white;
-  padding: 0 12px;  /* 减少垂直 padding，只保留水平 padding */
+  padding: 0 12px;
   border-radius: 6px;
   font-size: 14px;
   white-space: nowrap;
@@ -486,10 +31,10 @@ html.circle-mode .app-container {
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
-  height: 42px;  /* 固定高度，与左侧控制栏一致 */
+  height: 42px;
   display: flex;
-  align-items: center;  /* 内容垂直居中 */
-  box-sizing: border-box;  /* 确保 padding 和 border 包含在高度内 */
+  align-items: center;
+  box-sizing: border-box;
 }
 
 .radix-tooltip-content[data-state='delayed-open'][data-side='top'] {
@@ -512,7 +57,7 @@ html.circle-mode .app-container {
   fill: rgba(30, 30, 30, 0.9);
 }
 
-/* 快捷键字符样式 */
+/* 快捷键样式 */
 .shortcut-key {
   display: inline-block;
   background: rgba(255, 255, 255, 0.1);
@@ -526,7 +71,6 @@ html.circle-mode .app-container {
   text-align: center;
 }
 
-/* 快捷键图标样式 */
 .shortcut-key-icon {
   display: inline-block;
   background: rgba(255, 255, 255, 0.1);
@@ -540,7 +84,7 @@ html.circle-mode .app-container {
   text-align: center;
 }
 
-/* 动画样式 */
+/* 通用动画 */
 @keyframes slideDownAndFade {
   from {
     opacity: 0;
@@ -588,4 +132,37 @@ html.circle-mode .app-container {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* 通用按钮无outline样式 */
+button:focus {
+  outline: none;
+}
+
+/* 用户选择禁用 */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* 拖拽禁用 */
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* 拖拽启用 */
+.draggable {
+  -webkit-app-region: drag;
 }
