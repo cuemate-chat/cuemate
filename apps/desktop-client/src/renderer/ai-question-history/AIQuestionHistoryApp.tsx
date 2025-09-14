@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { WindowBody } from './WindowBody';
-import { WindowFooter } from './WindowFooter';
-import { WindowHeader } from './WindowHeader';
+import { WindowBody } from './components/WindowBody';
+import { WindowFooter } from './components/WindowFooter';
+import { WindowHeader } from './components/WindowHeader';
 import { ConversationDetailResponse, ConversationHistoryItem, conversationHistoryService } from './api/conversationHistoryService';
 import './index.css';
 

@@ -1,7 +1,7 @@
 import 'animate.css/animate.min.css';
 import { useRef } from 'react';
-import { ConversationHistoryItem } from './api/conversationHistoryService';
-import { ConversationCard } from './components/ConversationCard';
+import { ConversationHistoryItem } from '../api/conversationHistoryService';
+import { ConversationCard } from './ConversationCard';
 
 interface WindowBodyProps {
   conversations: ConversationHistoryItem[];
