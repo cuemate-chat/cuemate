@@ -1,7 +1,46 @@
 #include <napi.h>
 #include <functional>
 #include <memory>
+#include <fstream>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #include "ScreenCaptureAudio.h"
+
+// C++ 日志函数 - 写入与 Node.js 相同的日志文件
+void cppLog(const std::string& level, const std::string& message) {
+    // 获取当前时间
+    auto now = std::time(nullptr);
+    auto* tm = std::localtime(&now);
+
+    // 构建日志文件路径，格式：/opt/cuemate/logs/LEVEL/desktop-client/YYYY-MM-DD/LEVEL.log
+    std::stringstream pathStream;
+    pathStream << "/opt/cuemate/logs/" << level << "/desktop-client/"
+               << std::put_time(tm, "%Y-%m-%d") << "/" << level << ".log";
+
+    std::ofstream logFile(pathStream.str(), std::ios::app);
+    if (logFile.is_open()) {
+        // 使用与 pino 相同的 JSON 格式
+        auto timestamp = std::time(nullptr) * 1000; // 毫秒时间戳
+
+        // 根据级别设置 pino level 数值
+        int pinoLevel = 30; // info
+        if (level == "error") pinoLevel = 50;
+        else if (level == "warn") pinoLevel = 40;
+        else if (level == "debug") pinoLevel = 20;
+
+        logFile << "{\"level\":" << pinoLevel << ",\"time\":" << timestamp
+                << ",\"ts\":\"" << std::put_time(tm, "%Y-%m-%d %H:%M:%S")
+                << "\",\"service\":\"desktop-client\",\"msg\":\"[CPP] " << message << "\"}" << std::endl;
+        logFile.close();
+    }
+}
+
+// 便利函数
+void cppLogInfo(const std::string& message) { cppLog("info", message); }
+void cppLogError(const std::string& message) { cppLog("error", message); }
+void cppLogWarn(const std::string& message) { cppLog("warn", message); }
+void cppLogDebug(const std::string& message) { cppLog("debug", message); }
 
 // Node.js 音频捕获类
 class ScreenCaptureAudioNode : public Napi::ObjectWrap<ScreenCaptureAudioNode> {
@@ -65,7 +104,17 @@ public:
         }
 
         // 设置音频数据回调
+        cppLogInfo("INDEX_CPP StartCapture 函数开始执行");
+        printf("[INDEX_CPP] 检查 onData 回调\n");
+        fflush(stdout);
+
+        cppLogInfo("INDEX_CPP 检查 config.Has(\"onData\"): " + std::string(config.Has("onData") ? "true" : "false"));
+        if (config.Has("onData")) {
+            cppLogInfo("INDEX_CPP 检查 config.Get(\"onData\").IsFunction(): " + std::string(config.Get("onData").IsFunction() ? "true" : "false"));
+        }
+
         if (config.Has("onData") && config.Get("onData").IsFunction()) {
+            cppLogInfo("INDEX_CPP onData 回调存在，开始设置 audioDataCallback");
             audioDataCallback = Napi::ThreadSafeFunction::New(
                 env,
                 config.Get("onData").As<Napi::Function>(),
@@ -73,9 +122,16 @@ public:
                 0,
                 1
             );
+            cppLogInfo("INDEX_CPP audioDataCallback 设置成功");
+            printf("[INDEX_CPP] audioDataCallback 设置成功\n");
+        } else {
+            cppLogError("INDEX_CPP onData 回调不存在或不是函数");
+            printf("[INDEX_CPP] audioDataCallback 设置失败\n");
         }
 
         // 设置错误回调
+        printf("[INDEX_CPP] 检查 onError 回调\n");
+               
         if (config.Has("onError") && config.Get("onError").IsFunction()) {
             errorCallback = Napi::ThreadSafeFunction::New(
                 env,
@@ -84,14 +140,19 @@ public:
                 0,
                 1
             );
+            printf("[INDEX_CPP] errorCallback 设置成功\n");
+        } else {
+            printf("[INDEX_CPP] errorCallback 设置失败\n");
         }
 
         // 启动音频捕获
+        cppLogInfo("INDEX_CPP 准备调用 wrapper->startCapture");
         wrapper->startCapture(
-            sampleRate, 
+            sampleRate,
             channels,
             [this](const char* data, size_t length) {
                 // 音频数据回调
+                cppLogInfo("INDEX_CPP 收到音频数据回调，大小: " + std::to_string(length) + " bytes");
                 if (audioDataCallback) {
                     audioDataCallback.NonBlockingCall([data, length](Napi::Env env, Napi::Function jsCallback) {
                         Napi::Buffer<char> buffer = Napi::Buffer<char>::Copy(env, data, length);
@@ -101,6 +162,7 @@ public:
             },
             [this](const std::string& errorMessage) {
                 // 错误回调
+                cppLogError("INDEX_CPP 收到错误回调: " + errorMessage);
                 if (errorCallback) {
                     errorCallback.NonBlockingCall([errorMessage](Napi::Env env, Napi::Function jsCallback) {
                         Napi::Error error = Napi::Error::New(env, errorMessage);
