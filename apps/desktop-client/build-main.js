@@ -158,24 +158,24 @@ async function buildPreloadScripts(watchMode = false) {
 // 复制原生模块
 function copyNativeModule() {
   try {
-    // 复制屏幕录制音频模块
-    const sourceScreenCapture = resolve(__dirname, 'src/main/native/screen_capture_audio/build/Release/screen_capture_audio.node');
-    const destScreenCaptureDir = resolve(__dirname, 'dist/native/screen_capture_audio');
-    const destScreenCaptureFile = resolve(destScreenCaptureDir, 'index.node');
-    
-    console.log('检查屏幕录制音频模块:', sourceScreenCapture);
-    console.log('文件存在:', existsSync(sourceScreenCapture));
-    
-    if (existsSync(sourceScreenCapture)) {
-      if (!existsSync(destScreenCaptureDir)) {
-        console.log('创建目标目录:', destScreenCaptureDir);
-        mkdirSync(destScreenCaptureDir, { recursive: true });
+    // 复制音频捕获模块 (Core Audio HAL)
+    const sourceAudioCapture = resolve(__dirname, 'src/main/native/screen_capture_audio/build/Release/screen_capture_audio.node');
+    const destAudioCaptureDir = resolve(__dirname, 'dist/native/screen_capture_audio');
+    const destAudioCaptureFile = resolve(destAudioCaptureDir, 'index.node');
+
+    console.log('检查音频捕获模块 (Core Audio HAL):', sourceAudioCapture);
+    console.log('文件存在:', existsSync(sourceAudioCapture));
+
+    if (existsSync(sourceAudioCapture)) {
+      if (!existsSync(destAudioCaptureDir)) {
+        console.log('创建目标目录:', destAudioCaptureDir);
+        mkdirSync(destAudioCaptureDir, { recursive: true });
       }
-      console.log('复制文件:', sourceScreenCapture, '->', destScreenCaptureFile);
-      copyFileSync(sourceScreenCapture, destScreenCaptureFile);
-      console.log('屏幕录制音频模块复制成功');
+      console.log('复制文件:', sourceAudioCapture, '->', destAudioCaptureFile);
+      copyFileSync(sourceAudioCapture, destAudioCaptureFile);
+      console.log('音频捕获模块复制成功 (Core Audio HAL)');
     } else {
-      console.warn('屏幕录制音频模块未找到，跳过复制');
+      console.warn('音频捕获模块未找到，跳过复制。请先运行 pnpm build:native:electron');
     }
 
   } catch (error) {
@@ -222,7 +222,7 @@ async function buildAll(watchMode = false) {
     // 复制原生模块
     copyNativeModule();
     
-    console.log('Electron 主进程构建完成');
+    console.log('Electron 主进程构建完成 (包含 Core Audio HAL 音频捕获)');
   }
 }
 
