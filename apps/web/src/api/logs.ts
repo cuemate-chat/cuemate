@@ -66,3 +66,8 @@ export async function deleteLogFile(params: {
   const res = await http.delete('/logs/delete?' + qs.toString());
   return res as { success: boolean };
 }
+
+export async function clearTodayLogs() {
+  const res = await http.get('/logs/clear-today');
+  return res as { success: boolean; clearedCount: number };
+}

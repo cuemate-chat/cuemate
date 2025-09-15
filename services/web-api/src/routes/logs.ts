@@ -332,4 +332,110 @@ export function registerLogRoutes(app: FastifyInstance) {
       return reply.code(400).send(buildPrefixedError('参数解析失败', parseErr, 400));
     }
   });
+
+  // 清理今日所有日志文件内容
+  app.get('/logs/clear-today', async (req, reply) => {
+    try {
+      // 获取今日日期（使用本地时区）
+      const today = new Date();
+      const todayStr = today
+        .toLocaleDateString('zh-CN', {
+          timeZone: 'Asia/Shanghai',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        })
+        .replace(/\//g, '-'); // YYYY-MM-DD 格式
+
+      (req as any).log.info({ today: todayStr }, '开始清理今日日志');
+
+      let clearedCount = 0;
+      const errors: string[] = [];
+
+      // 遍历所有日志级别
+      for (const level of LEVELS) {
+        const levelDir = path.join(LOG_BASE_DIR, level);
+
+        // 检查级别目录是否存在
+        if (!fs.existsSync(levelDir)) {
+          continue;
+        }
+
+        // 获取该级别下的所有服务目录
+        const serviceDirs = fs
+          .readdirSync(levelDir, { withFileTypes: true })
+          .filter((dirent) => dirent.isDirectory())
+          .map((dirent) => dirent.name);
+
+        // 遍历每个服务目录
+        for (const service of serviceDirs) {
+          const serviceDir = path.join(levelDir, service);
+
+          // 检查今日目录是否存在
+          const todayDir = path.join(serviceDir, todayStr);
+          if (!fs.existsSync(todayDir)) {
+            continue;
+          }
+
+          // 检查今日日志文件是否存在
+          const logFile = path.join(todayDir, `${level}.log`);
+          if (!fs.existsSync(logFile)) {
+            continue;
+          }
+
+          try {
+            // 清空文件内容（保留文件，只清空内容）
+            fs.writeFileSync(logFile, '', 'utf8');
+            clearedCount++;
+            (req as any).log.debug({ level, service, date: todayStr }, '今日日志文件已清空');
+          } catch (clearErr: any) {
+            const errorMsg = `清空 ${level}/${service}/${todayStr} 失败: ${clearErr.message}`;
+            errors.push(errorMsg);
+            (req as any).log.error(
+              { err: clearErr, level, service, date: todayStr },
+              '清空今日日志文件失败',
+            );
+          }
+        }
+      }
+
+      // 记录操作日志
+      try {
+        await (req as any).jwtVerify();
+        const payload = (req as any).user as any;
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.SYSTEM,
+          resourceId: `today_logs_${todayStr}`,
+          resourceName: `今日日志文件 (${todayStr})`,
+          operation: OperationType.UPDATE,
+          message: `批量清空今日日志文件，共清理 ${clearedCount} 个文件`,
+          status: errors.length > 0 ? 'failed' : 'success',
+          userId: payload.uid,
+        });
+      } catch (authError) {
+        // 日志操作不需要认证，但如果有认证信息就记录操作日志
+        (req as any).log.info('今日日志清空操作未记录操作日志（无认证信息）');
+      }
+
+      (req as any).log.info(
+        {
+          clearedCount,
+          errorCount: errors.length,
+          today: todayStr,
+        },
+        '今日日志清理完成',
+      );
+
+      return {
+        success: true,
+        clearedCount,
+        errorCount: errors.length,
+        errors: errors.length > 0 ? errors : undefined,
+        message: `今日日志清理完成，共清理 ${clearedCount} 个文件${errors.length > 0 ? `，${errors.length} 个文件清理失败` : ''}`,
+      };
+    } catch (error: any) {
+      (req as any).log.error({ err: error }, '清理今日日志失败');
+      return reply.code(500).send(buildPrefixedError('清理今日日志失败', error, 500));
+    }
+  });
 }

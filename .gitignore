@@ -41,6 +41,7 @@ lerna-debug.log*
 *.swp
 *.swo
 *~
+CLAUDE.md
 compile_commands.json
 
 # Tauri

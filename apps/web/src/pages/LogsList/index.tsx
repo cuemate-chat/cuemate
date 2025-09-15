@@ -1,4 +1,4 @@
-import { EyeIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, EyeIcon } from '@heroicons/react/24/outline';
 import {
   BugAntIcon,
   ExclamationTriangleIcon,
@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import {
   clearLogContent as clearLogContentApi,
+  clearTodayLogs as clearTodayLogsApi,
   deleteLogFile as deleteLogFileApi,
   fetchLogs,
   fetchLogServices,
@@ -32,6 +33,7 @@ export default function LogsList() {
   const [items, setItems] = useState<
     Array<{ level: LogLevel; service: string; date: string; size: number; mtimeMs: number }>
   >([]);
+  const [loading, setLoading] = useState(false);
   
   // 日志查看器状态
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -181,21 +183,27 @@ export default function LogsList() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    fetchLogs({
-      level: level || undefined,
-      service: service || undefined,
-      date: date || undefined,
-      page,
-      pageSize,
-    })
-      .then((res) => {
-        setItems(res.items);
-        setTotal(res.total);
-      })
-      .catch((err) => {
-        console.error('加载日志失败：', err);
+  const loadLogs = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchLogs({
+        level: level || undefined,
+        service: service || undefined,
+        date: date || undefined,
+        page,
+        pageSize,
       });
+      setItems(res.items);
+      setTotal(res.total);
+    } catch (err) {
+      console.error('加载日志失败：', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLogs();
   }, [service, level, date, page, pageSize]);
 
   const openLogViewer = (logItem: { level: LogLevel; service: string; date: string }) => {
@@ -208,20 +216,7 @@ export default function LogsList() {
       await clearLogContentApi({ level: it.level, service: it.service, date: it.date });
       message.success('日志清理成功');
       // 清理后重新加载当前页
-      fetchLogs({
-        level: level || undefined,
-        service: service || undefined,
-        date: date || undefined,
-        page,
-        pageSize,
-      })
-        .then((res) => {
-          setItems(res.items);
-          setTotal(res.total);
-        })
-        .catch((err) => {
-          console.error('加载日志失败：', err);
-        });
+      loadLogs();
     } catch (error: any) {
       console.error('日志清理失败：', error);
     }
@@ -232,22 +227,25 @@ export default function LogsList() {
       await deleteLogFileApi({ level: it.level, service: it.service, date: it.date });
       message.success('日志文件已删除');
       // 删除后重新加载当前页
-      fetchLogs({
-        level: level || undefined,
-        service: service || undefined,
-        date: date || undefined,
-        page,
-        pageSize,
-      })
-        .then((res) => {
-          setItems(res.items);
-          setTotal(res.total);
-        })
-        .catch((err) => {
-          console.error('加载日志失败：', err);
-        });
+      loadLogs();
     } catch (error: any) {
       console.error('日志删除失败:', error);
+    }
+  };
+
+  const clearTodayLogs = async () => {
+    try {
+      const result = await clearTodayLogsApi();
+      if (result.success) {
+        message.success(`今日日志清理成功，共清理 ${result.clearedCount} 个日志文件`);
+        // 清理后重新加载当前页
+        loadLogs();
+      } else {
+        message.error('今日日志清理失败');
+      }
+    } catch (error: any) {
+      console.error('今日日志清理失败:', error);
+      message.error('今日日志清理失败');
     }
   };
 
@@ -276,7 +274,51 @@ export default function LogsList() {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-semibold mb-4">日志管理</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-semibold">日志管理</h1>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              Modal.confirm({
+                title: '确认清理今日日志',
+                content: (
+                  <div className="space-y-2">
+                    <p>确定要清理所有今日产生的日志文件内容吗？</p>
+                    <div className="bg-amber-50 p-3 rounded text-sm border border-amber-200">
+                      <div className="text-amber-800">
+                        <WarningIcon className="w-4 h-4 inline mr-1" />
+                        <strong>注意：</strong>此操作将清理所有服务、所有级别的今日日志内容（从今日 00:00 到现在）
+                      </div>
+                      <div className="text-amber-700 mt-1">
+                        • 仅清理日志内容，不会删除日志文件<br/>
+                        • 清理后日志内容将无法恢复<br/>
+                        • 建议在确认无重要日志后再执行此操作
+                      </div>
+                    </div>
+                  </div>
+                ),
+                okText: '确认清理',
+                okType: 'default',
+                cancelText: '取消',
+                onOk: clearTodayLogs,
+              });
+            }}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 hover:border-amber-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <XCircleIcon className="w-4 h-4" />
+            清理今日日志
+          </button>
+          <button
+            onClick={loadLogs}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            刷新
+          </button>
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-4 items-end mb-4">
         <div className="flex flex-col">
@@ -336,6 +378,7 @@ export default function LogsList() {
           pagination={false}
           scroll={{ x: 800 }}
           size="middle"
+          loading={loading}
         />
       </div>
 
