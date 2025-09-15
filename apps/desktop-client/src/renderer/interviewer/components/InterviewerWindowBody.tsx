@@ -15,13 +15,62 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
   const [selectedSpeaker, setSelectedSpeaker] = useState<string>('');
   const [micStatus, setMicStatus] = useState<'untested' | 'testing' | 'success' | 'failed'>('untested');
   const [speakerStatus, setSpeakerStatus] = useState<'untested' | 'testing' | 'success' | 'failed'>('untested');
-  const [recognizedText, setRecognizedText] = useState<string>('');
-  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  // 分离扬声器和麦克风的识别结果存储
+  const [micRecognitionResult, setMicRecognitionResult] = useState<{
+    text: string;
+    error: string;
+    timestamp: number;
+  }>({ text: '', error: '', timestamp: 0 });
+
+  const [speakerRecognitionResult, setSpeakerRecognitionResult] = useState<{
+    text: string;
+    error: string;
+    timestamp: number;
+  }>({ text: '', error: '', timestamp: 0 });
+
+  // 显示状态：用于控制点击状态时展示对应的历史结果
+  const [showingMicResult, setShowingMicResult] = useState(false);
+  const [showingSpeakerResult, setShowingSpeakerResult] = useState(false);
 
   // 在组件挂载时获取设备列表
   useEffect(() => {
     getDevices();
   }, []);
+
+  // 智能识别停止判断函数
+  const shouldStopRecognition = (text: string, startTime: number): boolean => {
+    // 如果计时还未开始，不进行停止判断
+    if (startTime === 0) {
+      return false;
+    }
+
+    const currentTime = Date.now();
+    const elapsedSeconds = (currentTime - startTime) / 1000;
+    const textLength = text.trim().length;
+
+    // 策略1: 如果识别到5-30个字符，且停顿2秒，认为用户说完了
+    if (textLength >= 5 && textLength <= 30 && elapsedSeconds >= 2) {
+      return true;
+    }
+
+    // 策略2: 如果识别到超过30个字符，立即停止（防止过长）
+    if (textLength > 30) {
+      return true;
+    }
+
+    // 策略3: 如果超过15秒且有任何文字，停止识别
+    if (elapsedSeconds > 15 && textLength > 0) {
+      return true;
+    }
+
+    // 策略4: 硬超时 - 30秒无论如何都停止（从WebSocket连接成功开始计时）
+    if (elapsedSeconds > 30) {
+      return true;
+    }
+
+    return false;
+  };
 
   // 获取设备列表
   const getDevices = async () => {
@@ -38,19 +87,24 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
     }
   };
 
-  // 麦克风测试 - 30秒真实 ASR 识别（直接 WebSocket 连接）
+  // 麦克风测试 - 智能识别停止机制
   const testMicrophone = async () => {
     setMicStatus('testing');
-    setRecognizedText('');
-    setErrorMessage('');
+    setShowingMicResult(true);
+    setShowingSpeakerResult(false);
+
+    // 清空麦克风识别结果，保留错误信息用于显示
+    setMicRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
     onStartTesting?.(); // 开始测试时通知父组件
-    
+
     let stream: MediaStream | null = null;
     let recorder: MediaRecorder | null = null;
     let websocket: WebSocket | null = null;
     let testTimer: NodeJS.Timeout | null = null;
     let hasRecognitionResult = false;
-    
+    let recognitionStartTime = 0; // 初始化为0，在WebSocket连接成功后才开始计时
+    let currentRecognizedText = '';
+
     const cleanup = () => {
       if (testTimer) {
         clearTimeout(testTimer);
@@ -84,7 +138,11 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
       
       websocket.onopen = () => {
         console.log('已连接到麦克风 ASR 服务');
-        
+
+        // WebSocket连接成功后才开始计时
+        recognitionStartTime = Date.now();
+        console.log('麦克风识别计时开始');
+
         // 3. 创建 MediaRecorder 开始录音
         if (stream) {
           recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
@@ -98,7 +156,11 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
           recorder.onerror = (event) => {
             console.error('录音器错误:', event);
             setMicStatus('failed');
-            setErrorMessage('录音过程中发生错误');
+            setMicRecognitionResult(prev => ({
+              ...prev,
+              error: '录音过程中发生错误',
+              timestamp: Date.now()
+            }));
             cleanup();
           };
           
@@ -110,12 +172,12 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
       websocket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          
+
           if (data.type === 'ready_to_stop') {
             console.log('收到停止信号，处理完成');
             return;
           }
-          
+
           // 提取纯净的转录文本
           let transcriptionText = '';
           if (data.lines && data.lines.length > 0) {
@@ -127,20 +189,39 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
           if (data.buffer_transcription) {
             transcriptionText += ' ' + data.buffer_transcription;
           }
-          
+
           if (transcriptionText.trim()) {
             hasRecognitionResult = true;
-            setRecognizedText(transcriptionText.trim());
+            currentRecognizedText = transcriptionText.trim();
+
+            // 更新麦克风识别结果
+            setMicRecognitionResult({
+              text: currentRecognizedText,
+              error: '',
+              timestamp: Date.now()
+            });
+
+            // 检查是否应该智能停止识别
+            if (shouldStopRecognition(currentRecognizedText, recognitionStartTime)) {
+              console.log('智能停止：识别到足够内容，停止麦克风测试');
+              cleanup();
+              setMicStatus('success');
+              onStopTesting?.();
+            }
           }
         } catch (error) {
           console.error('解析 ASR 响应失败:', error);
         }
       };
-      
+
       websocket.onerror = (error) => {
         console.error('WebSocket 连接错误:', error);
         setMicStatus('failed');
-        setErrorMessage('连接麦克风识别服务失败');
+        setMicRecognitionResult(prev => ({
+          ...prev,
+          error: '连接麦克风识别服务失败',
+          timestamp: Date.now()
+        }));
         cleanup();
       };
       
@@ -148,48 +229,65 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
         console.log('WebSocket 连接已关闭');
       };
       
-      // 4. 设置30秒超时
+      // 4. 设置总超时（包含连接时间）- 60秒
       testTimer = setTimeout(() => {
         cleanup();
-        
+
         // 评估测试结果
         if (hasRecognitionResult) {
           setMicStatus('success');
         } else {
           setMicStatus('failed');
-          setErrorMessage('30秒内未收到任何识别结果，请检查麦克风和 ASR 服务');
+          setMicRecognitionResult(prev => ({
+            ...prev,
+            error: '连接或识别超时，请检查麦克风和 ASR 服务',
+            timestamp: Date.now()
+          }));
         }
         onStopTesting?.(); // 测试结束时通知父组件
-      }, 30000);
-      
+      }, 60000); // 给连接预留30秒，识别30秒
+
     } catch (error: any) {
       console.error('麦克风测试失败:', error);
       setMicStatus('failed');
+
+      let errorMsg = '';
       if (error.name === 'NotAllowedError') {
-        setErrorMessage('麦克风权限被拒绝，请在设置中允许麦克风访问');
+        errorMsg = '麦克风权限被拒绝，请在设置中允许麦克风访问';
       } else if (error.name === 'NotFoundError') {
-        setErrorMessage('未找到麦克风设备，请检查设备连接');
+        errorMsg = '未找到麦克风设备，请检查设备连接';
       } else {
-        setErrorMessage(`麦克风测试失败：${error.message}`);
+        errorMsg = `麦克风测试失败：${error.message}`;
       }
-      
+
+      setMicRecognitionResult(prev => ({
+        ...prev,
+        error: errorMsg,
+        timestamp: Date.now()
+      }));
+
       cleanup();
       onStopTesting?.(); // 错误情况下也通知父组件测试结束
     }
   };
 
-  // 扬声器测试 - 30秒真实 ASR 识别（直接 WebSocket + 原生扬声器捕获）
+  // 扬声器测试 - 智能识别停止机制
   const testSpeaker = async () => {
     setSpeakerStatus('testing');
-    setRecognizedText('');
-    setErrorMessage('');
+    setShowingSpeakerResult(true);
+    setShowingMicResult(false);
+
+    // 清空扬声器识别结果，保留错误信息用于显示
+    setSpeakerRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
     onStartTesting?.(); // 开始测试时通知父组件
-    
+
     let websocket: WebSocket | null = null;
     let testTimer: NodeJS.Timeout | null = null;
     let hasRecognitionResult = false;
     let audioDataListener: any = null;
-    
+    let recognitionStartTime = 0; // 初始化为0，在WebSocket连接成功后才开始计时
+    let currentRecognizedText = '';
+
     const cleanup = async () => {
       if (testTimer) {
         clearTimeout(testTimer);
@@ -216,7 +314,11 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
       const electronAPI = (window as any).electronInterviewerAPI;
       if (!electronAPI || !electronAPI.audioTest) {
         setSpeakerStatus('failed');
-        setErrorMessage('音频测试服务不可用');
+        setSpeakerRecognitionResult(prev => ({
+          ...prev,
+          error: '音频测试服务不可用',
+          timestamp: Date.now()
+        }));
         return;
       }
       console.log('electronAPI' + '：' + JSON.stringify(electronAPI));
@@ -225,7 +327,11 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
 
       websocket.onopen = async () => {
         console.log('已连接到扬声器 ASR 服务');
-        
+
+        // WebSocket连接成功后才开始计时
+        recognitionStartTime = Date.now();
+        console.log('扬声器识别计时开始');
+
         // 2. 启动原生扬声器音频捕获
         console.log('准备启动扬声器捕获，设备ID:', selectedSpeaker);
         console.log('electronAPI.audioTest对象:', electronAPI.audioTest);
@@ -236,7 +342,11 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
         if (!result.success) {
           console.error('扬声器捕获启动失败:', result.error);
           setSpeakerStatus('failed');
-          setErrorMessage(result.error || '启动扬声器捕获失败');
+          setSpeakerRecognitionResult(prev => ({
+            ...prev,
+            error: result.error || '启动扬声器捕获失败',
+            timestamp: Date.now()
+          }));
           cleanup();
           return;
         }
@@ -261,12 +371,12 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
       websocket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          
+
           if (data.type === 'ready_to_stop') {
             console.log('收到停止信号，处理完成');
             return;
           }
-          
+
           // 提取纯净的转录文本
           let transcriptionText = '';
           if (data.lines && data.lines.length > 0) {
@@ -278,20 +388,39 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
           if (data.buffer_transcription) {
             transcriptionText += ' ' + data.buffer_transcription;
           }
-          
+
           if (transcriptionText.trim()) {
             hasRecognitionResult = true;
-            setRecognizedText(transcriptionText.trim());
+            currentRecognizedText = transcriptionText.trim();
+
+            // 更新扬声器识别结果
+            setSpeakerRecognitionResult({
+              text: currentRecognizedText,
+              error: '',
+              timestamp: Date.now()
+            });
+
+            // 检查是否应该智能停止识别
+            if (shouldStopRecognition(currentRecognizedText, recognitionStartTime)) {
+              console.log('智能停止：识别到足够内容，停止扬声器测试');
+              cleanup();
+              setSpeakerStatus('success');
+              onStopTesting?.();
+            }
           }
         } catch (error) {
           console.error('解析 ASR 响应失败:', error);
         }
       };
-      
+
       websocket.onerror = (error) => {
         console.error('WebSocket 连接错误:', error);
         setSpeakerStatus('failed');
-        setErrorMessage('连接扬声器识别服务失败');
+        setSpeakerRecognitionResult(prev => ({
+          ...prev,
+          error: '连接扬声器识别服务失败',
+          timestamp: Date.now()
+        }));
         cleanup();
       };
       
@@ -299,29 +428,41 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
         console.log('扬声器 WebSocket 连接已关闭');
       };
       
-      // 4. 设置30秒超时
+      // 4. 设置60秒超时（包括连接时间）
       testTimer = setTimeout(async () => {
         await cleanup();
-        
+
         // 评估测试结果
         if (hasRecognitionResult) {
           setSpeakerStatus('success');
         } else {
           setSpeakerStatus('failed');
-          setErrorMessage('30秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务');
+          setSpeakerRecognitionResult(prev => ({
+            ...prev,
+            error: '60秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务',
+            timestamp: Date.now()
+          }));
         }
         onStopTesting?.(); // 测试结束时通知父组件
-      }, 300000);
-      
+      }, 60000);
+
     } catch (error: any) {
       console.error('扬声器测试失败:', error);
       setSpeakerStatus('failed');
+
+      let errorMsg = '';
       if (error.name === 'SecurityError') {
-        setErrorMessage('安全权限错误，请确保已授予屏幕录制权限');
+        errorMsg = '安全权限错误，请确保已授予屏幕录制权限';
       } else {
-        setErrorMessage(`扬声器测试失败：${error.message}`);
+        errorMsg = `扬声器测试失败：${error.message}`;
       }
-      
+
+      setSpeakerRecognitionResult(prev => ({
+        ...prev,
+        error: errorMsg,
+        timestamp: Date.now()
+      }));
+
       await cleanup();
       onStopTesting?.(); // 错误情况下也通知父组件测试结束
     }
@@ -354,6 +495,17 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
     setSelectedCard(cardTitle === selectedCard ? null : cardTitle);
     if (cardTitle === "语音测试") {
       getDevices();
+    }
+  };
+
+  // 处理状态点击 - 显示对应的历史结果
+  const handleStatusClick = (device: 'mic' | 'speaker') => {
+    if (device === 'mic') {
+      setShowingMicResult(true);
+      setShowingSpeakerResult(false);
+    } else {
+      setShowingSpeakerResult(true);
+      setShowingMicResult(false);
     }
   };
 
@@ -429,7 +581,12 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
                 </select>
                 <ChevronDown size={14} className="select-icon" />
               </div>
-              <div className={`test-status ${getStatusColor(micStatus)}`}>
+              <div
+                className={`test-status ${getStatusColor(micStatus)}`}
+                onClick={() => handleStatusClick('mic')}
+                style={{ cursor: 'pointer' }}
+                title="点击查看麦克风识别结果"
+              >
                 {getStatusIcon(micStatus)}
                 {getStatusText(micStatus)}
               </div>
@@ -473,7 +630,12 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
                 </select>
                 <ChevronDown size={14} className="select-icon" />
               </div>
-              <div className={`test-status ${getStatusColor(speakerStatus)}`}>
+              <div
+                className={`test-status ${getStatusColor(speakerStatus)}`}
+                onClick={() => handleStatusClick('speaker')}
+                style={{ cursor: 'pointer' }}
+                title="点击查看扬声器识别结果"
+              >
                 {getStatusIcon(speakerStatus)}
                 {getStatusText(speakerStatus)}
               </div>
@@ -500,17 +662,42 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
             </div>
           </div>
 
-          {recognizedText && (
+          {/* 分离显示麦克风和扬声器的识别结果 */}
+          {showingMicResult && (micRecognitionResult.text || micRecognitionResult.error) && (
             <div className="recognition-result">
-              <h5>识别结果：</h5>
-              <div className="recognized-text">{recognizedText}</div>
+              <h5>麦克风识别结果：</h5>
+              {micRecognitionResult.text && (
+                <div className="recognized-text">{micRecognitionResult.text}</div>
+              )}
+              {micRecognitionResult.error && (
+                <div className="error-text" style={{ color: '#ff6b6b', marginTop: '8px' }}>
+                  {micRecognitionResult.error}
+                </div>
+              )}
+              {micRecognitionResult.timestamp > 0 && (
+                <div className="timestamp" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                  {new Date(micRecognitionResult.timestamp).toLocaleTimeString()}
+                </div>
+              )}
             </div>
           )}
 
-          {errorMessage && (
-            <div className="error-message">
-              <h5>错误信息：</h5>
-              <div className="error-text">{errorMessage}</div>
+          {showingSpeakerResult && (speakerRecognitionResult.text || speakerRecognitionResult.error) && (
+            <div className="recognition-result">
+              <h5>扬声器识别结果：</h5>
+              {speakerRecognitionResult.text && (
+                <div className="recognized-text">{speakerRecognitionResult.text}</div>
+              )}
+              {speakerRecognitionResult.error && (
+                <div className="error-text" style={{ color: '#ff6b6b', marginTop: '8px' }}>
+                  {speakerRecognitionResult.error}
+                </div>
+              )}
+              {speakerRecognitionResult.timestamp > 0 && (
+                <div className="timestamp" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                  {new Date(speakerRecognitionResult.timestamp).toLocaleTimeString()}
+                </div>
+              )}
             </div>
           )}
         </div>
