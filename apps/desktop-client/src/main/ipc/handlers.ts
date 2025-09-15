@@ -537,7 +537,6 @@ export function setupIPC(windowManager: WindowManager): void {
     }
   });
 
-
   // === 系统音频扬声器捕获相关 IPC 处理器 ===
   let systemAudioCapture: SystemAudioCapture | null = null;
 
@@ -622,7 +621,7 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('mic-test-start', async (event, _options?: { deviceId?: string }) => {
     try {
       logger.info('开始麦克风测试，连接 cuemate-asr-user 服务');
-      
+
       // 创建到 ASR 服务的 WebSocket 连接
       const asrServiceUrl = 'ws://localhost:8001';
       micAsrWebSocket = new WebSocket(asrServiceUrl);
@@ -636,10 +635,10 @@ export function setupIPC(windowManager: WindowManager): void {
         try {
           const result = JSON.parse(data.toString());
           logger.info('麦克风 ASR 识别结果:', result);
-          
+
           // 构建显示文本
           let displayText = '';
-          
+
           if (result.lines && Array.isArray(result.lines)) {
             result.lines.forEach((line: any) => {
               if (line.text) {
@@ -647,15 +646,15 @@ export function setupIPC(windowManager: WindowManager): void {
               }
             });
           }
-          
+
           if (result.buffer_transcription) {
             displayText += `[转录中] ${result.buffer_transcription}\n`;
           }
-          
+
           if (displayText.trim()) {
-            event.sender.send('mic-test-result', { 
-              success: true, 
-              text: displayText.trim() 
+            event.sender.send('mic-test-result', {
+              success: true,
+              text: displayText.trim(),
             });
           }
         } catch (error) {
@@ -665,9 +664,9 @@ export function setupIPC(windowManager: WindowManager): void {
 
       micAsrWebSocket!.on('error', (error: any) => {
         logger.error('麦克风 ASR WebSocket 错误:', error);
-        event.sender.send('mic-test-result', { 
-          success: false, 
-          error: '连接麦克风识别服务失败，请确保 cuemate-asr-user 服务已启动' 
+        event.sender.send('mic-test-result', {
+          success: false,
+          error: '连接麦克风识别服务失败，请确保 cuemate-asr-user 服务已启动',
         });
       });
 
@@ -705,7 +704,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('speaker-test-start', async (event, _options?: { deviceId?: string }) => {
     try {
-      logger.info('开始扬声器音频捕获');
+      logger.info('开始扬声器音频捕获systemAudioCapture：' + JSON.stringify(systemAudioCapture));
 
       if (systemAudioCapture && systemAudioCapture.isCaptureActive()) {
         return { success: false, error: '系统音频捕获已在进行中' };
@@ -717,21 +716,23 @@ export function setupIPC(windowManager: WindowManager): void {
       // 设置音频数据回调 - 发送到渲染进程
       systemAudioCapture.onData((audioData: Buffer) => {
         // 将音频数据发送到渲染进程
-        event.sender.send('speaker-audio-data', audioData.buffer.slice(
-          audioData.byteOffset,
-          audioData.byteOffset + audioData.byteLength
-        ));
+        event.sender.send(
+          'speaker-audio-data',
+          audioData.buffer.slice(audioData.byteOffset, audioData.byteOffset + audioData.byteLength),
+        );
       });
 
+      logger.info('代码走到这里！');
       // 设置错误回调
       systemAudioCapture.onError((error: Error) => {
         logger.error('扬声器测试音频捕获错误:', error);
-        event.sender.send('speaker-test-result', { 
-          success: false, 
-          error: `音频捕获失败: ${error.message}` 
+        event.sender.send('speaker-test-result', {
+          success: false,
+          error: `音频捕获失败: ${error.message}`,
         });
       });
 
+      logger.info('代码走到这里2！');
       // 启动捕获
       await systemAudioCapture.startCapture();
 

@@ -20,7 +20,6 @@ const interviewerAPI = {
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 
-
   // === 系统音频扬声器捕获 API ===
   systemAudioCapture: {
     isAvailable: () => ipcRenderer.invoke('system-audio-capture-available'),
@@ -31,10 +30,12 @@ const interviewerAPI = {
     stopCapture: () => ipcRenderer.invoke('system-audio-capture-stop'),
   },
 
-  // === 音频测试 API ===
+  // === 系统音频扬声器音频测试 API ===
   audioTest: {
-    startMicTest: (options?: { deviceId?: string }) => ipcRenderer.invoke('mic-test-start', options),
-    startSpeakerTest: (options?: { deviceId?: string }) => ipcRenderer.invoke('speaker-test-start', options),
+    startMicTest: (options?: { deviceId?: string }) =>
+      ipcRenderer.invoke('mic-test-start', options),
+    startSpeakerTest: (options?: { deviceId?: string }) =>
+      ipcRenderer.invoke('speaker-test-start', options),
     stopTest: () => ipcRenderer.invoke('test-stop'),
     sendMicAudio: (audioData: ArrayBuffer) => ipcRenderer.invoke('mic-send-audio', audioData),
   },

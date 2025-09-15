@@ -1,6 +1,6 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { CheckCircle, ChevronDown, Clock, GraduationCap, Loader2, MessageSquare, Mic, Users, XCircle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface InterviewerWindowBodyProps {
   onStartTesting?: () => void;
@@ -219,32 +219,43 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
         setErrorMessage('音频测试服务不可用');
         return;
       }
-      
+      console.log('electronAPI' + '：' + JSON.stringify(electronAPI));
       // 1. 连接到扬声器 ASR 服务
       websocket = new WebSocket('ws://localhost:8002/asr');
-      
+
       websocket.onopen = async () => {
         console.log('已连接到扬声器 ASR 服务');
         
         // 2. 启动原生扬声器音频捕获
+        console.log('准备启动扬声器捕获，设备ID:', selectedSpeaker);
+        console.log('electronAPI.audioTest对象:', electronAPI.audioTest);
+        console.log('electronAPI.audioTest.startSpeakerTest方法:', typeof electronAPI.audioTest.startSpeakerTest);
+        
         const result = await electronAPI.audioTest.startSpeakerTest({ deviceId: selectedSpeaker });
+        console.log('扬声器捕获启动结果:', result);
         if (!result.success) {
+          console.error('扬声器捕获启动失败:', result.error);
           setSpeakerStatus('failed');
           setErrorMessage(result.error || '启动扬声器捕获失败');
           cleanup();
           return;
         }
+        console.log('扬声器捕获启动成功');
         
         // 3. 监听原生模块发送的音频数据
+        console.log('设置音频数据监听器...');
         audioDataListener = (audioData: ArrayBuffer) => {
+          console.log('收到扬声器音频数据，大小:', audioData.byteLength, 'bytes');
           if (websocket && websocket.readyState === WebSocket.OPEN && audioData.byteLength > 0) {
             // 将 ArrayBuffer 转换为 Blob 并发送
             const blob = new Blob([audioData], { type: 'audio/webm' });
             websocket.send(blob);
+            console.log('已发送音频数据到ASR服务');
           }
         };
         
         electronAPI.on('speaker-audio-data', audioDataListener);
+        console.log('音频数据监听器已设置，等待音频数据...');
       };
       
       websocket.onmessage = (event) => {
@@ -300,7 +311,7 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
           setErrorMessage('30秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务');
         }
         onStopTesting?.(); // 测试结束时通知父组件
-      }, 30000);
+      }, 300000);
       
     } catch (error: any) {
       console.error('扬声器测试失败:', error);

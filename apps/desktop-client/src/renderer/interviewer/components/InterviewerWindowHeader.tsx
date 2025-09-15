@@ -27,6 +27,7 @@ export function InterviewerWindowHeader({
     if (isRecognizing) {
       if (!hasStarted) {
         setHasStarted(true);
+        setDuration(0); // 重新开始时重置时间为0
       }
       interval = setInterval(() => {
         setDuration(prev => prev + 1);
