@@ -357,10 +357,9 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
         audioDataListener = (audioData: ArrayBuffer) => {
           console.log('收到扬声器音频数据，大小:', audioData.byteLength, 'bytes');
           if (websocket && websocket.readyState === WebSocket.OPEN && audioData.byteLength > 0) {
-            // 将 ArrayBuffer 转换为 Blob 并发送
-            const blob = new Blob([audioData], { type: 'audio/webm' });
-            websocket.send(blob);
-            console.log('已发送音频数据到ASR服务');
+            // 发送原始 PCM 数据，ASR 服务会处理格式转换
+            websocket.send(audioData);
+            console.log('已发送PCM音频数据到ASR服务');
           }
         };
         
