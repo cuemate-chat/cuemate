@@ -189,7 +189,7 @@ export function ConversationCard({
             <Tooltip.Trigger asChild>
               <div className="conversation-stat">
                 <Hash size={12} />
-                <span>共 {conversation.message_count/2} 条对话</span>
+                <span>共 {conversation.message_count} 条对话</span>
               </div>
             </Tooltip.Trigger>
             <Tooltip.Portal>
