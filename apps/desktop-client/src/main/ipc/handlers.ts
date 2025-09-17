@@ -99,6 +99,31 @@ export function setupIPC(windowManager: WindowManager): void {
   );
 
   /**
+   * 使用 macOS 本地 say 命令发声
+   */
+  ipcMain.handle('speak-text', async (_event, args: { voice: string; text: string }) => {
+    try {
+      const { voice, text } = args || { voice: '', text: '' };
+      if (process.platform !== 'darwin') {
+        return { success: false, error: 'speak-text only supported on macOS' };
+      }
+      const { exec } = await import('node:child_process');
+      const safeVoice = voice?.replace(/[^\w\- ]/g, '') || 'Alex';
+      const safeText = text?.replace(/"/g, '\\"') || '';
+      await new Promise<void>((resolve, reject) => {
+        exec(`say -v ${safeVoice} "${safeText}"`, (error) => {
+          if (error) return reject(error);
+          resolve();
+        });
+      });
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: speak-text failed');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
    * 设置"提问 AI"按钮的禁用状态
    */
   ipcMain.handle('set-ask-ai-button-disabled', async (_event, disabled: boolean) => {

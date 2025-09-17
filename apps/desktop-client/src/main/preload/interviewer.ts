@@ -33,6 +33,9 @@ const interviewerAPI = {
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 
+  // === 语音合成（macOS say） ===
+  speakText: (voice: string, text: string) => ipcRenderer.invoke('speak-text', { voice, text }),
+
   // === 系统音频扬声器捕获 API ===
   systemAudioCapture: {
     isAvailable: () => ipcRenderer.invoke('system-audio-capture-available'),
