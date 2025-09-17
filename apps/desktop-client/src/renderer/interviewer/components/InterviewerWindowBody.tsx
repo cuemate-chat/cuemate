@@ -1,6 +1,10 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { CheckCircle, ChevronDown, Clock, GraduationCap, Loader2, MessageSquare, Mic, Users, XCircle } from 'lucide-react';
+import { CheckCircle, Clock, GraduationCap, Loader2, MessageSquare, Mic, Users, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { InterviewTrainingEntryBody } from './InterviewTrainingEntryBody';
+import { MockInterviewEntryBody } from './MockInterviewEntryBody';
+import { VoiceQAEntryBody } from './VoiceQAEntryBody';
+import { VoiceTestBody } from './VoiceTestBody';
 
 interface InterviewerWindowBodyProps {
   onStartTesting?: () => void;
@@ -671,144 +675,53 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
       </div>
       
       {selectedCard === "语音测试" && (
-        <div className="voice-test-panel">
-          <div className="test-section">
-            <h4 className="test-section-title">麦克风测试</h4>
-            <div className="test-row">
-              <div className="device-select-wrapper">
-                <select 
-                  className="device-select"
-                  value={selectedMic}
-                  onChange={(e) => setSelectedMic(e.target.value)}
-                >
-                  {micDevices.map(device => (
-                    <option key={device.deviceId} value={device.deviceId}>
-                      {device.label || '默认麦克风'}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="select-icon" />
-              </div>
-              <div
-                className={`test-status ${getStatusColor(micStatus)}`}
-                onClick={() => handleStatusClick('mic')}
-                style={{ cursor: 'pointer' }}
-                title="点击查看麦克风识别结果"
-              >
-                {getStatusIcon(micStatus)}
-                {getStatusText(micStatus)}
-              </div>
-              <Tooltip.Root>
-                <Tooltip.Trigger asChild>
-                  <button 
-                    className="test-button"
-                    onClick={testMicrophone}
-                    disabled={micStatus === 'testing' || speakerStatus === 'testing'}
-                  >
-                    测试
-                  </button>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content 
-                    className="radix-tooltip-content"
-                    sideOffset={5}
-                  >
-                    请说：上午好，下午好，晚上好
-                    <Tooltip.Arrow className="radix-tooltip-arrow" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            </div>
-          </div>
+        <VoiceTestBody
+          micDevices={micDevices}
+          speakerDevices={speakerDevices}
+          selectedMic={selectedMic}
+          onChangeMic={setSelectedMic}
+          selectedSpeaker={selectedSpeaker}
+          onChangeSpeaker={setSelectedSpeaker}
+          micStatus={micStatus}
+          speakerStatus={speakerStatus}
+          onTestMicrophone={testMicrophone}
+          onTestSpeaker={testSpeaker}
+          showingMicResult={showingMicResult}
+          showingSpeakerResult={showingSpeakerResult}
+          micRecognitionResult={micRecognitionResult}
+          speakerRecognitionResult={speakerRecognitionResult}
+          onStatusClick={handleStatusClick}
+          getStatusColor={getStatusColor}
+          getStatusText={getStatusText}
+          getStatusIcon={getStatusIcon}
+        />
+      )}
 
-          <div className="test-section">
-            <h4 className="test-section-title">扬声器测试</h4>
-            <div className="test-row">
-              <div className="device-select-wrapper">
-                <select 
-                  className="device-select"
-                  value={selectedSpeaker}
-                  onChange={(e) => setSelectedSpeaker(e.target.value)}
-                >
-                  {speakerDevices.map(device => (
-                    <option key={device.deviceId} value={device.deviceId}>
-                      {device.label || '默认扬声器'}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="select-icon" />
-              </div>
-              <div
-                className={`test-status ${getStatusColor(speakerStatus)}`}
-                onClick={() => handleStatusClick('speaker')}
-                style={{ cursor: 'pointer' }}
-                title="点击查看扬声器识别结果"
-              >
-                {getStatusIcon(speakerStatus)}
-                {getStatusText(speakerStatus)}
-              </div>
-              <Tooltip.Root>
-                <Tooltip.Trigger asChild>
-                  <button 
-                    className="test-button"
-                    onClick={testSpeaker}
-                    disabled={speakerStatus === 'testing' || micStatus === 'testing'}
-                  >
-                    测试
-                  </button>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content 
-                    className="radix-tooltip-content"
-                    sideOffset={5}
-                  >
-                    播放测试音频
-                    <Tooltip.Arrow className="radix-tooltip-arrow" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            </div>
-          </div>
+      {selectedCard === "语音提问" && (
+        <VoiceQAEntryBody onStart={async () => {
+          if ((window as any).electronAPI) {
+            await (window as any).electronAPI.switchToMode('voice-qa');
+            await (window as any).electronAPI.showAIQuestion();
+          }
+        }} />
+      )}
 
-          {/* 分离显示麦克风和扬声器的识别结果 */}
-          {showingMicResult && (micRecognitionResult.text || micRecognitionResult.error) && (
-            <div className="recognition-result">
-              <h5>麦克风识别结果：</h5>
-              {micRecognitionResult.text && (
-                <div className="recognized-text">{micRecognitionResult.text}</div>
-              )}
-              {micRecognitionResult.error && (
-                <div className="error-text" style={{ color: '#ff6b6b', marginTop: '8px' }}>
-                  {micRecognitionResult.error}
-                </div>
-              )}
-              {micRecognitionResult.timestamp > 0 && (
-                <div className="timestamp" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
-                  {new Date(micRecognitionResult.timestamp).toLocaleTimeString()}
-                </div>
-              )}
-            </div>
-          )}
+      {selectedCard === "模拟面试" && (
+        <MockInterviewEntryBody onStart={async () => {
+          if ((window as any).electronAPI) {
+            await (window as any).electronAPI.switchToMode('mock-interview');
+            await (window as any).electronAPI.showAIQuestion();
+          }
+        }} />
+      )}
 
-          {showingSpeakerResult && (speakerRecognitionResult.text || speakerRecognitionResult.error) && (
-            <div className="recognition-result">
-              <h5>扬声器识别结果：</h5>
-              {speakerRecognitionResult.text && (
-                <div className="recognized-text">{speakerRecognitionResult.text}</div>
-              )}
-              {speakerRecognitionResult.error && (
-                <div className="error-text" style={{ color: '#ff6b6b', marginTop: '8px' }}>
-                  {speakerRecognitionResult.error}
-                </div>
-              )}
-              {speakerRecognitionResult.timestamp > 0 && (
-                <div className="timestamp" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
-                  {new Date(speakerRecognitionResult.timestamp).toLocaleTimeString()}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+      {selectedCard === "面试训练" && (
+        <InterviewTrainingEntryBody onStart={async () => {
+          if ((window as any).electronAPI) {
+            await (window as any).electronAPI.switchToMode('interview-training');
+            await (window as any).electronAPI.showAIQuestion();
+          }
+        }} />
       )}
       </div>
     </Tooltip.Provider>
