@@ -57,6 +57,61 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   /**
+   * 设置AI窗口高度百分比
+   */
+  ipcMain.handle('set-ai-window-height', async (_event, percentage: number) => {
+    try {
+      windowManager.setAIWindowHeightPercentage(percentage);
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 设置AI窗口高度失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 获取AI窗口高度百分比
+   */
+  ipcMain.handle('get-ai-window-height', async () => {
+    try {
+      const percentage = windowManager.getAIWindowHeightPercentage();
+      return { success: true, percentage };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 获取AI窗口高度失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 切换AI窗口模式
+   */
+  ipcMain.handle(
+    'switch-to-mode',
+    async (_event, mode: 'voice-qa' | 'mock-interview' | 'interview-training') => {
+      try {
+        windowManager.switchToMode(mode);
+        return { success: true };
+      } catch (error) {
+        logger.error({ error }, 'IPC: 切换AI窗口模式失败');
+        return { success: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  );
+
+  /**
+   * 设置"提问 AI"按钮的禁用状态
+   */
+  ipcMain.handle('set-ask-ai-button-disabled', async (_event, disabled: boolean) => {
+    try {
+      windowManager.setAskAIButtonDisabled(disabled);
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 设置提问AI按钮禁用状态失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
    * 显示关闭按钮 - 由控制条组件内部管理
    */
   ipcMain.handle('show-close-button', async () => {

@@ -2,7 +2,6 @@ import type { BrowserWindow } from 'electron';
 import { screen } from 'electron';
 import type { AppState } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
-import { ensureDockActiveAndIcon } from '../utils/dock.js';
 import { WebSocketClient } from '../websocket/WebSocketClient.js';
 import { AIQuestionHistoryWindow } from './AIQuestionHistoryWindow.js';
 import { AIQuestionWindow } from './AIQuestionWindow.js';
@@ -29,7 +28,9 @@ export class WindowManager {
     isAIQuestionVisible: false,
     isAIQuestionHistoryVisible: false,
     isInterviewerVisible: false,
-  }; // 保存所有窗口隐藏前的状态
+  };
+
+  private aiWindowHeightPercentage: number = 75; // 默认75%
 
   constructor(isDevelopment: boolean = false) {
     this.isDevelopment = isDevelopment;
@@ -55,21 +56,21 @@ export class WindowManager {
    */
   public async initialize(): Promise<void> {
     try {
-      // 1. 创建控制条窗口（现在作为主焦点窗口）
+      // 1. 创建主内容窗口（作为主窗口）
+      this.mainContentWindow = new MainContentWindow(this.isDevelopment, null);
+      await this.mainContentWindow.create();
+
+      // 2. 创建控制条窗口
       await this.controlBarWindow.create();
 
-      // 2. 创建子窗口，以control-bar作为父窗口
+      // 3. 创建子窗口，以control-bar作为父窗口
       const controlBarBrowserWindow = this.controlBarWindow.getBrowserWindow();
-      this.mainContentWindow = new MainContentWindow(this.isDevelopment, controlBarBrowserWindow);
       this.aiQuestionWindow = new AIQuestionWindow(this.isDevelopment, controlBarBrowserWindow);
       this.aiQuestionHistoryWindow = new AIQuestionHistoryWindow(
         this.isDevelopment,
         controlBarBrowserWindow,
       );
       this.interviewerWindow = new InterviewerWindow(this.isDevelopment, controlBarBrowserWindow);
-
-      // 3. 创建网页窗口（初始隐藏）
-      await this.mainContentWindow.create();
 
       // 4. 创建AI问答窗口（初始隐藏）
       await this.aiQuestionWindow.create();
@@ -198,18 +199,14 @@ export class WindowManager {
    * 显示浮动窗口（从圆形图标模式切换回正常模式）
    */
   public showFloatingWindows(): void {
-    // 从圆形图标模式切换回正常模式
-    this.controlBarWindow.switchToNormalMode();
+    // 显示控制条窗口
     this.controlBarWindow.show();
-    if (process.platform === 'darwin') ensureDockActiveAndIcon('wm:showFloatingWindows');
     this.appState.isControlBarVisible = true;
     this.appState.isCloseButtonVisible = true; // 统一状态管理
 
-    // 恢复所有窗口之前的状态
-    if (this.windowStatesBeforeHide.isMainContentVisible) {
-      this.mainContentWindow.show();
-      this.appState.isMainContentVisible = true;
-    }
+    // main-content 从圆形模式切换回正常模式
+    this.mainContentWindow.switchToNormalMode();
+    this.appState.isMainContentVisible = true;
 
     if (this.windowStatesBeforeHide.isAIQuestionVisible) {
       this.aiQuestionWindow.show();
@@ -243,10 +240,13 @@ export class WindowManager {
     // 隐藏所有子窗口
     this.hideAllChildWindows();
 
-    // control-bar 切换到圆形图标模式，而不是隐藏
-    this.controlBarWindow.switchToCircleMode();
-    if (process.platform === 'darwin') ensureDockActiveAndIcon('wm:hideFloatingWindows->circle');
-    this.appState.isControlBarVisible = true; // 圆形图标模式依然是可见状态
+    // main-content 切换到圆形模式
+    this.mainContentWindow.switchToCircleMode();
+    this.appState.isMainContentVisible = true; // 圆形模式依然是可见状态
+
+    // 隐藏控制条窗口
+    this.controlBarWindow.hide();
+    this.appState.isControlBarVisible = false;
     this.appState.isCloseButtonVisible = false;
 
     // 确保 control-bar 焦点
@@ -257,17 +257,11 @@ export class WindowManager {
    * 切换浮动窗口显示状态
    */
   public toggleFloatingWindows(): void {
-    // 检查是否为圆形图标模式
-    const controlBarBrowserWindow = this.controlBarWindow.getBrowserWindow();
-    if (controlBarBrowserWindow) {
-      const bounds = controlBarBrowserWindow.getBounds();
-      const isCircleMode = bounds.width <= 90; // 圆形图标的尺寸判断（70px + 余量）
-
-      if (isCircleMode) {
-        this.showFloatingWindows(); // 从圆形图标模式切换回正常模式
-      } else {
-        this.hideFloatingWindows(); // 切换到圆形图标模式
-      }
+    // 检查 main-content 是否为圆形模式
+    if (this.mainContentWindow.isInCircleMode()) {
+      this.showFloatingWindows(); // 从圆形图标模式切换回正常模式
+    } else {
+      this.hideFloatingWindows(); // 切换到圆形图标模式
     }
   }
 
@@ -464,6 +458,56 @@ export class WindowManager {
   }
 
   /**
+   * 设置AI窗口高度百分比
+   */
+  public setAIWindowHeightPercentage(percentage: number): void {
+    this.aiWindowHeightPercentage = percentage;
+    this.aiQuestionWindow.setHeightPercentage(percentage);
+
+    // 同步更新其他窗口
+    if (this.isAIQuestionHistoryVisible()) {
+      this.showAIQuestionHistoryNextToAI();
+    }
+    if (this.isInterviewerVisible()) {
+      this.showInterviewerNextToAI();
+    }
+  }
+
+  /**
+   * 获取AI窗口高度百分比
+   */
+  public getAIWindowHeightPercentage(): number {
+    return this.aiWindowHeightPercentage;
+  }
+
+  /**
+   * 切换AI窗口模式
+   */
+  public switchToMode(mode: 'voice-qa' | 'mock-interview' | 'interview-training'): void {
+    // 向 AI Question 窗口发送模式切换事件
+    if (this.aiQuestionWindow.getBrowserWindow()) {
+      this.aiQuestionWindow.getBrowserWindow()!.webContents.send('mode-change', mode);
+    }
+
+    // 向 AI Question History 窗口发送模式切换事件
+    if (this.aiQuestionHistoryWindow.getBrowserWindow()) {
+      this.aiQuestionHistoryWindow.getBrowserWindow()!.webContents.send('mode-change', mode);
+    }
+  }
+
+  /**
+   * 设置"提问 AI"按钮的禁用状态
+   */
+  public setAskAIButtonDisabled(disabled: boolean): void {
+    // 向 control-bar 窗口发送按钮禁用状态事件
+    if (this.controlBarWindow.getBrowserWindow()) {
+      this.controlBarWindow
+        .getBrowserWindow()!
+        .webContents.send('ask-ai-button-disabled', disabled);
+    }
+  }
+
+  /**
    * 获取 WebSocket 客户端实例
    */
   public getWebSocketClient(): WebSocketClient {
@@ -482,13 +526,6 @@ export class WindowManager {
       isInterviewerVisible: this.isInterviewerVisible(),
     };
 
-    // 隐藏所有子窗口
-    // 基于实际可见状态隐藏主内容窗口，避免状态不同步导致未隐藏
-    if (this.mainContentWindow.isVisible()) {
-      this.mainContentWindow.hide();
-      this.appState.isMainContentVisible = false;
-    }
-
     if (this.appState.isAIQuestionVisible) {
       this.aiQuestionWindow.hide();
       this.appState.isAIQuestionVisible = false;
@@ -500,6 +537,12 @@ export class WindowManager {
 
     if (this.isInterviewerVisible()) {
       this.interviewerWindow.hide();
+    }
+
+    // main-content 使用特殊的 hideWindow 方法，避免触发圆形模式切换
+    if (this.mainContentWindow.isVisible()) {
+      this.mainContentWindow.hideWindow();
+      this.appState.isMainContentVisible = false;
     }
   }
 

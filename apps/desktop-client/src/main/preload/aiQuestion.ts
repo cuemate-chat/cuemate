@@ -19,15 +19,38 @@ const aiQuestionAPI = {
   // === 历史窗口 API ===
   showAIQuestionHistory: () => ipcRenderer.invoke('show-ai-question-history'),
 
+  // === 窗口高度管理 API ===
+  setAIWindowHeight: (percentage: number) => ipcRenderer.invoke('set-ai-window-height', percentage),
+  getAIWindowHeight: () => ipcRenderer.invoke('get-ai-window-height'),
+
+  // === 模式切换 API ===
+  switchToMode: (mode: 'voice-qa' | 'mock-interview' | 'interview-training') =>
+    ipcRenderer.invoke('switch-to-mode', mode),
+
   // === 对话加载 API ===
-  loadConversation: (conversationData: any) => ipcRenderer.invoke('load-conversation', conversationData),
-  
+  loadConversation: (conversationData: any) =>
+    ipcRenderer.invoke('load-conversation', conversationData),
+
   // === 事件监听 API ===
   onLoadConversation: (callback: (conversationData: any) => void) => {
     ipcRenderer.on('load-conversation-data', (_event, data) => callback(data));
   },
   removeLoadConversationListener: () => {
     ipcRenderer.removeAllListeners('load-conversation-data');
+  },
+  onWindowHeightChanged: (callback: (data: { heightPercentage: number }) => void) => {
+    ipcRenderer.on('window-height-changed', (_event, data) => callback(data));
+  },
+  removeWindowHeightChangedListener: () => {
+    ipcRenderer.removeAllListeners('window-height-changed');
+  },
+  onModeChange: (
+    callback: (mode: 'voice-qa' | 'mock-interview' | 'interview-training') => void,
+  ) => {
+    ipcRenderer.on('mode-change', (_event, mode) => callback(mode));
+  },
+  removeModeChangeListener: () => {
+    ipcRenderer.removeAllListeners('mode-change');
   },
 
   // === 日志 API ===

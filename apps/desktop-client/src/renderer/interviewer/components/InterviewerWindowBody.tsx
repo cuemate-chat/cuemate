@@ -38,6 +38,20 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
     getDevices();
   }, []);
 
+  // 监听选中状态变化，通知 control-bar 更新"提问 AI"按钮状态
+  useEffect(() => {
+    const isInterviewerModeSelected = selectedCard === "语音提问" || selectedCard === "模拟面试" || selectedCard === "面试训练";
+    
+    // 通知 control-bar 更新"提问 AI"按钮的禁用状态
+    try {
+      if ((window as any).electronAPI) {
+        (window as any).electronAPI.setAskAIButtonDisabled(isInterviewerModeSelected);
+      }
+    } catch (error) {
+      console.error('通知control-bar更新按钮状态失败:', error);
+    }
+  }, [selectedCard]);
+
   // 智能识别停止判断函数
   const shouldStopRecognition = (text: string, startTime: number): boolean => {
     // 如果计时还未开始，不进行停止判断
@@ -520,10 +534,75 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
     }
   ];
 
-  const handleCardClick = (cardTitle: string) => {
-    setSelectedCard(cardTitle === selectedCard ? null : cardTitle);
+  const handleCardClick = async (cardTitle: string) => {
+    const newSelectedCard = cardTitle === selectedCard ? null : cardTitle;
+    setSelectedCard(newSelectedCard);
+    
     if (cardTitle === "语音测试") {
       getDevices();
+    } else if (cardTitle === "语音提问") {
+      if (newSelectedCard === "语音提问") {
+        // 选中状态：切换到 voice-qa 模式并显示 AI 问题窗口
+        try {
+          if ((window as any).electronAPI) {
+            await (window as any).electronAPI.switchToMode('voice-qa');
+            await (window as any).electronAPI.showAIQuestion();
+          }
+        } catch (error) {
+          console.error('切换到语音提问模式失败:', error);
+        }
+      } else {
+        // 取消选中状态：隐藏 AI 问题窗口
+        try {
+          if ((window as any).electronAPI) {
+            await (window as any).electronAPI.hideAIQuestion();
+          }
+        } catch (error) {
+          console.error('隐藏AI问题窗口失败:', error);
+        }
+      }
+    } else if (cardTitle === "模拟面试") {
+      if (newSelectedCard === "模拟面试") {
+        // 选中状态：切换到 mock-interview 模式并显示 AI 问题窗口
+        try {
+          if ((window as any).electronAPI) {
+            await (window as any).electronAPI.switchToMode('mock-interview');
+            await (window as any).electronAPI.showAIQuestion();
+          }
+        } catch (error) {
+          console.error('切换到模拟面试模式失败:', error);
+        }
+      } else {
+        // 取消选中状态：隐藏 AI 问题窗口
+        try {
+          if ((window as any).electronAPI) {
+            await (window as any).electronAPI.hideAIQuestion();
+          }
+        } catch (error) {
+          console.error('隐藏AI问题窗口失败:', error);
+        }
+      }
+    } else if (cardTitle === "面试训练") {
+      if (newSelectedCard === "面试训练") {
+        // 选中状态：切换到 interview-training 模式并显示 AI 问题窗口
+        try {
+          if ((window as any).electronAPI) {
+            await (window as any).electronAPI.switchToMode('interview-training');
+            await (window as any).electronAPI.showAIQuestion();
+          }
+        } catch (error) {
+          console.error('切换到面试训练模式失败:', error);
+        }
+      } else {
+        // 取消选中状态：隐藏 AI 问题窗口
+        try {
+          if ((window as any).electronAPI) {
+            await (window as any).electronAPI.hideAIQuestion();
+          }
+        } catch (error) {
+          console.error('隐藏AI问题窗口失败:', error);
+        }
+      }
     }
   };
 
@@ -581,7 +660,7 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
               onClick={() => handleCardClick(card.title)}
             >
               <div className="insight-card-icon">
-                <IconComponent size={24} />
+                <IconComponent size={20} />
               </div>
               <div className="insight-card-content">
                 <h3 className="insight-card-title">{card.title}</h3>

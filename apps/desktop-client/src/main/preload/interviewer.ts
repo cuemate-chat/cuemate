@@ -14,6 +14,19 @@ const interviewerAPI = {
   toggleInterviewer: () => ipcRenderer.invoke('toggle-interviewer'),
   closeSelf: () => ipcRenderer.invoke('hide-interviewer'),
 
+  // === AI 窗口管理 API ===
+  showAIQuestion: () => ipcRenderer.invoke('show-ai-question'),
+  hideAIQuestion: () => ipcRenderer.invoke('hide-ai-question'),
+  toggleAIQuestion: () => ipcRenderer.invoke('toggle-ai-question'),
+
+  // === 模式切换 API ===
+  switchToMode: (mode: 'voice-qa' | 'mock-interview' | 'interview-training') =>
+    ipcRenderer.invoke('switch-to-mode', mode),
+
+  // === 控制条按钮状态 API ===
+  setAskAIButtonDisabled: (disabled: boolean) =>
+    ipcRenderer.invoke('set-ask-ai-button-disabled', disabled),
+
   // === 日志 API ===
   log: (logMessage: FrontendLogMessage) => ipcRenderer.invoke('frontend-log', logMessage),
 

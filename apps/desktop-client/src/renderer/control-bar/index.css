@@ -166,85 +166,6 @@
   animation: pulse 0.3s ease-in-out;
 }
 
-/* 仅在小圆模式下让根画布透明 */
-html.circle-mode, 
-html.circle-mode body, 
-html.circle-mode #root, 
-html.circle-mode .app-container { 
-  background: rgba(0, 0, 0, 0) !important; 
-  background-color: rgba(0, 0, 0, 0) !important;
-}
-
-/* 圆形图标容器 - 填满窗口的透明容器 */
-.circle-icon-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  background: transparent;
-  cursor: pointer;
-  -webkit-app-region: drag;
-}
-
-/* 圆形按钮 - 小巧居中带阴影 */
-.circle-icon {
-  width: 70%;
-  height: 70%;
-  min-width: 32px;
-  min-height: 32px;
-  max-width: 40px;
-  max-height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    0 4px 16px rgba(0, 0, 0, 0.08),
-    0 2px 8px rgba(0, 0, 0, 0.04);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10px);
-  -webkit-app-region: no-drag;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.circle-icon:hover {
-  transform: scale(1.2);
-  box-shadow: 
-    0 12px 48px rgba(0, 0, 0, 0.16),
-    0 6px 24px rgba(0, 0, 0, 0.12),
-    0 3px 12px rgba(0, 0, 0, 0.08);
-}
-
-/* Logo - 在圆形内居中 */
-.circle-icon-logo {
-  width: 60%;
-  height: 60%;
-  min-width: 20px;
-  min-height: 20px;
-  max-width: 24px;
-  max-height: 24px;
-  object-fit: contain;
-  user-select: none;
-  -webkit-user-drag: none;
-  -khtml-user-drag: none;
-  -moz-user-drag: none;
-  -o-user-drag: none;
-  transition: transform 0.2s ease;
-}
-
-/* 暗色主题圆形图标 */
-@media (prefers-color-scheme: dark) {
-  .circle-icon {
-    background: rgba(30, 30, 30, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-}
-
 /* 响应式调整 */
 @media (max-width: 320px) {
   .control-bar {
@@ -260,15 +181,6 @@ html.circle-mode .app-container {
   .search-button {
     min-width: 100px;
     padding: 4px 8px;
-  }
-  
-  .circle-icon {
-    width: 50px;
-    height: 50px;
-  }
-  
-  .circle-icon-text {
-    font-size: 20px;
   }
 }
 
@@ -640,6 +552,17 @@ html.circle-mode .app-container {
 
 .ask-question-btn:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.ask-question-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.ask-question-btn.disabled:hover {
+  background: transparent;
+  transform: none;
 }
 
 /* 可见性切换按钮样式 */

@@ -31,6 +31,10 @@ const controlBarAPI = {
   hideInterviewer: () => ipcRenderer.invoke('hide-interviewer'),
   toggleInterviewer: () => ipcRenderer.invoke('toggle-interviewer'),
 
+  // === 模式切换 API ===
+  switchToMode: (mode: 'voice-qa' | 'mock-interview' | 'interview-training') =>
+    ipcRenderer.invoke('switch-to-mode', mode),
+
   getAppState: () => ipcRenderer.invoke('get-app-state'),
 
   // === 系统交互 API ===
@@ -60,7 +64,7 @@ const controlBarAPI = {
   onSwitchToCircleMode: (callback: (data: { circleSize: number }) => void) => {
     ipcRenderer.on('switch-to-circle-mode', (_event, data) => callback(data));
   },
-  
+
   onSwitchToNormalMode: (callback: () => void) => {
     ipcRenderer.on('switch-to-normal-mode', (_event) => callback());
   },
@@ -78,6 +82,7 @@ const controlBarAPI = {
       'websocket-logout', // WebSocket 登出事件
       'switch-to-circle-mode', // 圆形模式切换
       'switch-to-normal-mode', // 正常模式切换
+      'ask-ai-button-disabled', // 提问AI按钮禁用状态
     ];
 
     if (allowedChannels.includes(channel)) {

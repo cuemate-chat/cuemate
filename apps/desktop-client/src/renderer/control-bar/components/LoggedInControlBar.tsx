@@ -2,7 +2,7 @@ import * as Separator from '@radix-ui/react-separator';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, CornerDownLeft, Eye, EyeOff, Pause, Play, Square, Type } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 
 interface LoggedInControlBarProps {
@@ -16,6 +16,9 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
   // 语音识别状态：'idle' | 'recording' | 'stopped'
   const [voiceState, setVoiceState] = useState<'idle' | 'recording' | 'stopped'>('idle');
   const [isInterviewerWindowOpen, setIsInterviewerWindowOpen] = useState(false);
+  
+  // "提问 AI"按钮的禁用状态
+  const [isAskAIDisabled, setIsAskAIDisabled] = useState(false);
   
 
   const handleListenClick = async () => {
@@ -65,6 +68,9 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
   const handleAskQuestionClick = async () => {
     try {
       if ((window as any).electronAPI) {
+        // 切换到 voice-qa 模式
+        await (window as any).electronAPI.switchToMode('voice-qa');
+        // 显示 AI 问题窗口
         await (window as any).electronAPI.toggleAIQuestion();
       }
     } catch (error) {
@@ -77,6 +83,23 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
     // TODO: 实现可见性切换功能
     console.log('Visibility toggled:', !isVisible);
   };
+
+  // 监听"提问 AI"按钮禁用状态变化
+  useEffect(() => {
+    const handleAskAIButtonDisabled = (disabled: boolean) => {
+      setIsAskAIDisabled(disabled);
+    };
+
+    if ((window as any).electronAPI && (window as any).electronAPI.on) {
+      (window as any).electronAPI.on('ask-ai-button-disabled', handleAskAIButtonDisabled);
+    }
+
+    return () => {
+      if ((window as any).electronAPI && (window as any).electronAPI.off) {
+        (window as any).electronAPI.off('ask-ai-button-disabled', handleAskAIButtonDisabled);
+      }
+    };
+  }, []);
 
   return (
     <div className="logged-in-control-bar">
@@ -258,9 +281,10 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
           <motion.button
-            className="ask-question-btn"
+            className={`ask-question-btn ${isAskAIDisabled ? 'disabled' : ''}`}
             onClick={handleAskQuestionClick}
-            whileTap={{ scale: 0.95 }}
+            disabled={isAskAIDisabled}
+            whileTap={{ scale: isAskAIDisabled ? 1 : 0.95 }}
             transition={{ duration: 0.2 }}
           >
             <motion.div
@@ -275,7 +299,13 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content className="radix-tooltip-content">
-            您可以询问任何问题给到 AI，快捷键： <span className="shortcut-key">⌘</span> + <span className="shortcut-key-icon"><CornerDownLeft size={12} /></span>
+            {isAskAIDisabled ? (
+              '当前有其他模式正在使用，请先取消选择'
+            ) : (
+              <>
+                您可以询问任何问题给到 AI，快捷键： <span className="shortcut-key">⌘</span> + <span className="shortcut-key-icon"><CornerDownLeft size={12} /></span>
+              </>
+            )}
             <Tooltip.Arrow className="radix-tooltip-arrow" />
           </Tooltip.Content>
         </Tooltip.Portal>
