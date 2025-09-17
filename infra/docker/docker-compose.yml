@@ -36,7 +36,7 @@ services:
       - cuemate-network
     restart: unless-stopped
 
-  # ASR Interviewer - Interviewer Speech Recognition  
+  # ASR Interviewer - Interviewer Speech Recognition
   asr-interviewer:
     image: cuemate-asr-interviewer:${VERSION:-0.1.0}
     container_name: cuemate-asr-interviewer

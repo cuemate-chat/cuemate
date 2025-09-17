@@ -98,7 +98,7 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
     onStartTesting?.(); // 开始测试时通知父组件
 
     let stream: MediaStream | null = null;
-    let recorder: MediaRecorder | null = null;
+    let audioContext: AudioContext | null = null;
     let websocket: WebSocket | null = null;
     let testTimer: NodeJS.Timeout | null = null;
     let hasRecognitionResult = false;
@@ -110,16 +110,15 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
         clearTimeout(testTimer);
         testTimer = null;
       }
-      if (recorder && recorder.state === 'recording') {
-        recorder.stop();
+      if (audioContext) {
+        audioContext.close();
       }
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
       if (websocket && websocket.readyState === WebSocket.OPEN) {
-        // 发送结束信号
-        const emptyBlob = new Blob([], { type: 'audio/webm' });
-        websocket.send(emptyBlob);
+        // 发送结束信号 - 发送空的ArrayBuffer
+        websocket.send(new ArrayBuffer(0));
         setTimeout(() => websocket?.close(), 500);
       }
     };
@@ -136,42 +135,74 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
       // 2. 连接到麦克风 ASR 服务
       websocket = new WebSocket('ws://localhost:8001/asr');
       
-      websocket.onopen = () => {
+      websocket.onopen = async () => {
         console.log('已连接到麦克风 ASR 服务');
 
         // WebSocket连接成功后才开始计时
         recognitionStartTime = Date.now();
         console.log('麦克风识别计时开始');
 
-        // 3. 创建 MediaRecorder 开始录音
+        // 3. 创建 AudioContext 和 AudioWorkletNode 来处理PCM音频
         if (stream) {
-          recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-          
-          recorder.ondataavailable = (event) => {
-            if (websocket && websocket.readyState === WebSocket.OPEN && event.data.size > 0) {
-              websocket.send(event.data);
-            }
-          };
-          
-          recorder.onerror = (event) => {
-            console.error('录音器错误:', event);
-            setMicStatus('failed');
-            setMicRecognitionResult(prev => ({
-              ...prev,
-              error: '录音过程中发生错误',
-              timestamp: Date.now()
-            }));
-            cleanup();
-          };
-          
-          // 开始录制，每100ms发送一次数据
-          recorder.start(100);
+          audioContext = new AudioContext({ sampleRate: 16000 });
+          const source = audioContext.createMediaStreamSource(stream);
+
+          try {
+            // 加载 AudioWorklet 处理器
+            await audioContext.audioWorklet.addModule('/pcm-processor.js');
+
+            // 创建 AudioWorkletNode
+            const workletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
+
+            // 监听来自 AudioWorklet 的消息
+            workletNode.port.onmessage = (event) => {
+              if (event.data.type === 'audiodata' && websocket && websocket.readyState === WebSocket.OPEN) {
+                console.log(`发送PCM音频数据: ${event.data.data.byteLength} 字节`);
+                websocket.send(event.data.data);
+              }
+            };
+
+            // 连接音频节点 - 不连接到destination避免回音
+            source.connect(workletNode);
+            // workletNode.connect(audioContext.destination); // 移除这行避免回音
+
+            console.log('音频处理管道已建立：麦克风 -> AudioContext -> AudioWorklet -> PCM转换 -> WebSocket');
+          } catch (error) {
+            console.error('AudioWorklet加载失败，降级使用ScriptProcessorNode:', error);
+
+            // 降级到 ScriptProcessorNode (兼容性后备方案)
+            const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+            processor.onaudioprocess = (event) => {
+              if (websocket && websocket.readyState === WebSocket.OPEN) {
+                const inputBuffer = event.inputBuffer;
+                const inputData = inputBuffer.getChannelData(0);
+
+                // 转换为 s16le PCM 格式
+                const pcmData = new Int16Array(inputData.length);
+                for (let i = 0; i < inputData.length; i++) {
+                  pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+                }
+
+                console.log(`发送PCM音频数据: ${pcmData.length} 采样点, ${pcmData.byteLength} 字节`);
+                websocket.send(pcmData.buffer);
+              }
+            };
+
+            // 连接音频节点 - 不连接到destination避免回音
+            source.connect(processor);
+            // processor.connect(audioContext.destination); // 移除这行避免回音
+
+            console.log('音频处理管道已建立：麦克风 -> AudioContext -> ScriptProcessor(降级) -> PCM转换 -> WebSocket');
+          }
         }
       };
-      
+
       websocket.onmessage = (event) => {
         try {
+          console.log('麦克风 - 收到WebSocket消息:', event.data);
           const data = JSON.parse(event.data);
+          console.log('麦克风 - 解析后的数据:', JSON.stringify(data, null, 2));
 
           if (data.type === 'ready_to_stop') {
             console.log('收到停止信号，处理完成');
@@ -294,9 +325,8 @@ export function InterviewerWindowBody({ onStartTesting, onStopTesting }: Intervi
         testTimer = null;
       }
       if (websocket && websocket.readyState === WebSocket.OPEN) {
-        // 发送结束信号
-        const emptyBlob = new Blob([], { type: 'audio/webm' });
-        websocket.send(emptyBlob);
+        // 发送结束信号 - 发送空的ArrayBuffer
+        websocket.send(new ArrayBuffer(0));
         setTimeout(() => websocket?.close(), 500);
       }
       if (audioDataListener) {

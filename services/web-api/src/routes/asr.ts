@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
+import { syncASRConfig, syncASRConfigWithRetry } from '../utils/asr-config-sync.js';
 
 const configSchema = z.object({
   name: z.string().min(1).max(50).default('ASR-Gateway'),
@@ -98,6 +99,32 @@ export function registerAsrRoutes(app: FastifyInstance) {
     };
   });
 
+  // ASR 配置同步接口（独立调用）
+  app.post('/asr/sync-config', async (_req, reply) => {
+    try {
+      app.log.info('执行ASR配置同步');
+
+      const result = await syncASRConfigWithRetry(app);
+
+      if (result.success) {
+        return {
+          success: true,
+          message: result.message,
+          syncResults: result.syncResults,
+        };
+      } else {
+        return reply.code(500).send({
+          success: false,
+          message: result.message,
+          syncResults: result.syncResults,
+        });
+      }
+    } catch (error: any) {
+      app.log.error('ASR配置同步接口调用失败:', error);
+      return reply.code(500).send(buildPrefixedError('ASR配置同步失败', error, 500));
+    }
+  });
+
   // 更新 ASR 配置
   app.post('/asr/config', async (req, reply) => {
     try {
@@ -147,85 +174,8 @@ export function registerAsrRoutes(app: FastifyInstance) {
         newConfig.max_context_tokens,
       );
 
-      // 同步配置到 ASR 服务（使用 Docker 内部网络地址）
-      const asrServiceUrls = [
-        'http://cuemate-asr-user:8000',
-        'http://cuemate-asr-interviewer:8000',
-      ];
-      const syncResults = [];
-
-      for (const serviceUrl of asrServiceUrls) {
-        try {
-          // 构建发送给 WhisperLiveKit 的配置对象
-          const whisperConfig = {
-            diarization: newConfig.diarization,
-            punctuation_split: newConfig.punctuation_split,
-            min_chunk_size: newConfig.min_chunk_size,
-            model: newConfig.model,
-            lan: newConfig.language, // WhisperLiveKit 使用 lan 而不是 language
-            task: newConfig.task,
-            backend: newConfig.backend,
-            vac: !newConfig.no_vac, // 注意布尔值转换
-            vac_chunk_size: newConfig.vac_chunk_size,
-            log_level: newConfig.log_level,
-            transcription: true, // 始终启用转录
-            vad: !newConfig.no_vad, // 注意布尔值转换
-            buffer_trimming: newConfig.buffer_trimming,
-            confidence_validation: newConfig.confidence_validation,
-            buffer_trimming_sec: newConfig.buffer_trimming_sec,
-            frame_threshold: newConfig.frame_threshold,
-            beams: newConfig.beams,
-            decoder_type: newConfig.decoder,
-            audio_max_len: newConfig.audio_max_len,
-            audio_min_len: newConfig.audio_min_len,
-            never_fire: newConfig.never_fire,
-            init_prompt: newConfig.init_prompt,
-            static_init_prompt: newConfig.static_init_prompt,
-            max_context_tokens: newConfig.max_context_tokens,
-            diarization_backend: newConfig.diarization_backend,
-          };
-
-          const response = await fetch(`${serviceUrl}/config`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(whisperConfig),
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            syncResults.push({
-              service: serviceUrl,
-              success: true,
-              result: result,
-            });
-            app.log.info(`配置同步到 ${serviceUrl} 成功`);
-          } else {
-            const error = await response.text();
-            syncResults.push({
-              service: serviceUrl,
-              success: false,
-              error: error,
-            });
-            app.log.warn(`配置同步到 ${serviceUrl} 失败: ${error}`);
-          }
-        } catch (error: any) {
-          syncResults.push({
-            service: serviceUrl,
-            success: false,
-            error: error.message,
-          });
-          app.log.error(`连接 ${serviceUrl} 失败: ${error.message}`);
-        }
-      }
-
-      // 检查同步结果
-      const successCount = syncResults.filter((r) => r.success).length;
-      const message =
-        successCount > 0
-          ? `配置已保存成功，${successCount}/${asrServiceUrls.length} 个服务同步成功`
-          : '配置已保存到数据库，但服务同步失败';
+      // 使用新的配置同步方法
+      const syncResult = await syncASRConfig(app);
 
       // 记录操作日志
       try {
@@ -248,8 +198,8 @@ export function registerAsrRoutes(app: FastifyInstance) {
       return {
         success: true,
         config: newConfig,
-        message: message,
-        syncResults: syncResults,
+        message: syncResult.message,
+        syncResults: syncResult.syncResults,
       };
     } catch (error: any) {
       app.log.error({ err: error }, 'Failed to update ASR config');

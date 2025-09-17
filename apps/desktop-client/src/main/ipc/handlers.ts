@@ -547,7 +547,13 @@ export function setupIPC(windowManager: WindowManager): void {
     'system-audio-capture-start',
     async (event, options?: { sampleRate?: number; channels?: number }) => {
       try {
-        logger.info('开始系统音频扬声器捕获');
+        logger.info('开始系统音频扬声器捕获，先同步ASR配置');
+
+        // 1. 先同步ASR配置
+        const configSynced = await syncASRConfig();
+        if (!configSynced) {
+          logger.warn('ASR配置同步失败，但继续音频捕获流程');
+        }
 
         if (systemAudioCapture && systemAudioCapture.isCaptureActive()) {
           return { success: false, error: '系统音频扬声器捕获已在进行中' };
@@ -616,10 +622,47 @@ export function setupIPC(windowManager: WindowManager): void {
   let micAsrWebSocket: WebSocket | null = null;
 
   /**
+   * 同步ASR配置到服务
+   */
+  async function syncASRConfig(): Promise<boolean> {
+    try {
+      logger.info('同步ASR配置到服务');
+      const response = await fetch('http://localhost:3001/asr/sync-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(10000), // 10秒超时
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        logger.info('ASR配置同步成功:', result);
+        return true;
+      } else {
+        const error = await response.text();
+        logger.warn('ASR配置同步失败:', error);
+        return false;
+      }
+    } catch (error) {
+      logger.error('ASR配置同步过程中发生错误:', error);
+      return false;
+    }
+  }
+
+  /**
    * 麦克风测试 - 30秒采集 + 真实 ASR 识别
    */
   ipcMain.handle('mic-test-start', async (event, _options?: { deviceId?: string }) => {
     try {
+      logger.info('开始麦克风测试，先同步ASR配置');
+
+      // 1. 先同步ASR配置
+      const configSynced = await syncASRConfig();
+      if (!configSynced) {
+        logger.warn('ASR配置同步失败，但继续测试流程');
+      }
+
       logger.info('开始麦克风测试，连接 cuemate-asr-user 服务');
 
       // 创建到 ASR 服务的 WebSocket 连接
