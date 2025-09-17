@@ -15,6 +15,8 @@ const mainContentAPI = {
       'window-moved',
       'window-maximized',
       'window-minimized',
+      'switch-to-circle-mode',
+      'switch-to-normal-mode',
     ];
 
     if (allowedChannels.includes(channel)) {
@@ -30,6 +32,20 @@ const mainContentAPI = {
     } else {
       ipcRenderer.removeAllListeners(channel);
     }
+  },
+
+  // === 圆形模式切换 API ===
+  onSwitchToCircleMode: (callback: (data: { circleSize: number }) => void) => {
+    ipcRenderer.on('switch-to-circle-mode', (_event, data) => callback(data));
+  },
+
+  onSwitchToNormalMode: (callback: () => void) => {
+    ipcRenderer.on('switch-to-normal-mode', () => callback());
+  },
+
+  // === 窗口控制 API ===
+  toggleFloatingWindows: () => {
+    ipcRenderer.send('toggle-floating-windows');
   },
 };
 

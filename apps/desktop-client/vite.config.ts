@@ -25,9 +25,10 @@ export default defineConfig({
 
     rollupOptions: {
       input: {
-        // 渲染进程入口（React应用）- main-content 直接加载 localhost:80，不需要构建
+        // 渲染进程入口（React应用）
         'control-bar': resolve(__dirname, 'src/renderer/control-bar/index.html'),
         'ai-question': resolve(__dirname, 'src/renderer/ai-question/index.html'),
+        'main-content': resolve(__dirname, 'src/renderer/main-content/index.html'),
       },
 
       output: {

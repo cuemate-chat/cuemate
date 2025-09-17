@@ -1,7 +1,6 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
-import { ensureDockActiveAndIcon } from '../utils/dock.js';
 import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
 
 /**
@@ -13,8 +12,6 @@ export class ControlBarWindow {
   private isDevelopment: boolean;
   private isMoving: boolean = false;
   private onCloseCallback?: () => void;
-  private isCircleMode: boolean = false; // 是否为圆形图标模式
-  private originalBounds: Electron.Rectangle | null = null; // 保存原始窗口尺寸
 
   private readonly config: WindowConfig = {
     id: 'control-bar',
@@ -24,7 +21,7 @@ export class ControlBarWindow {
     alwaysOnTop: true, // 悬浮窗口需要总是置顶
     frame: false,
     transparent: true,
-    skipTaskbar: false, // 作为主窗口，显示在 Dock
+    skipTaskbar: true, // 不显示在 Dock，纯控制窗口
     resizable: false,
     minimizable: false,
     maximizable: false,
@@ -84,7 +81,6 @@ export class ControlBarWindow {
       this.window.setAlwaysOnTop(true, 'screen-saver');
       this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       this.window.setFullScreenable(false);
-      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:create');
 
       // 加载页面
       if (this.isDevelopment) {
@@ -95,8 +91,6 @@ export class ControlBarWindow {
 
       // 设置窗口事件监听
       this.setupEvents();
-
-      logger.info('control-bar 控制条窗口创建成功');
     } catch (error) {
       logger.error({ error }, '创建 control-bar 窗口失败');
       throw error;
@@ -147,9 +141,8 @@ export class ControlBarWindow {
       if (this.onCloseCallback) {
         this.onCloseCallback();
       }
-      // 统一切换到圆形图标模式，而不是隐藏窗口
-      this.switchToCircleMode();
-      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:close->circle');
+      // 隐藏窗口
+      this.hide();
     });
 
     // 窗口已关闭
@@ -176,7 +169,6 @@ export class ControlBarWindow {
       this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       this.window.setFullScreenable(false);
       this.window.moveTop();
-      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:show');
     }
   }
 
@@ -189,89 +181,8 @@ export class ControlBarWindow {
       if (this.onCloseCallback) {
         this.onCloseCallback();
       }
-      // 统一切换到圆形图标模式，而不是隐藏窗口
-      this.switchToCircleMode();
-      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:hide->circle');
-    }
-  }
-
-  /**
-   * 切换到圆形图标模式
-   */
-  public switchToCircleMode(): void {
-    if (!this.window || this.window.isDestroyed() || this.isCircleMode) {
-      return;
-    }
-
-    try {
-      // 保存当前窗口尺寸
-      this.originalBounds = this.window.getBounds();
-
-      // 设置圆形图标尺寸和位置
-      const circleSize = 50;
-      const primaryDisplay = screen.getPrimaryDisplay();
-      const {
-        x: displayX,
-        y: displayY,
-        width: screenWidth,
-        height: screenHeight,
-      } = primaryDisplay.workArea;
-
-      // 位置：紧贴屏幕右侧，垂直居中
-      const x = displayX + screenWidth - circleSize;
-      const y = displayY + Math.floor((screenHeight - circleSize) / 2);
-
-      // 设置新的窗口尺寸
-      this.window.setBounds({
-        x,
-        y,
-        width: circleSize,
-        height: circleSize,
-      });
-      this.window.setHasShadow(false);
-      
-      // 向渲染进程发送圆形模式切换事件
-      this.window.webContents.send('switch-to-circle-mode', { circleSize });
-
-      this.isCircleMode = true;
-
-      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:circle');
-    } catch (error) {
-      logger.error({ error }, 'control-bar 切换到圆形图标模式失败');
-    }
-  }
-
-  /**
-   * 从圆形图标模式切换回正常模式
-   */
-  public switchToNormalMode(): void {
-    if (!this.window || this.window.isDestroyed() || !this.isCircleMode || !this.originalBounds) {
-      return;
-    }
-
-    try {
-      // 恢复原始窗口尺寸
-      this.window.setBounds(this.originalBounds);
-
-      // 向渲染进程发送正常模式切换事件
-      this.window.webContents.send('switch-to-normal-mode');
-
-      this.isCircleMode = false;
-      this.originalBounds = null;
-      if (process.platform === 'darwin') ensureDockActiveAndIcon('control-bar:normal');
-    } catch (error) {
-      logger.error({ error }, 'control-bar 切换回正常模式失败');
-    }
-  }
-
-  /**
-   * 切换圆形图标模式
-   */
-  public toggleCircleMode(): void {
-    if (this.isCircleMode) {
-      this.switchToNormalMode();
-    } else {
-      this.switchToCircleMode();
+      // 隐藏窗口
+      this.window.hide();
     }
   }
 
