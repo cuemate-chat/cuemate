@@ -11,6 +11,7 @@ export class AIQuestionWindow {
   private window: BrowserWindow | null = null;
   private isDevelopment: boolean;
   private parentWindow: BrowserWindow | null = null;
+  private heightPercentage: number = 75; // 默认75%
 
   private readonly config: WindowConfig = {
     id: 'ai-question',
@@ -49,7 +50,7 @@ export class AIQuestionWindow {
     // 动态计算AI窗口尺寸
     const aiWidth = Math.floor(screenWidth * 0.46);
     const availableHeight = screenHeight - controlBarHeight - controlBarY;
-    const aiHeight = Math.floor(availableHeight * 0.75);
+    const aiHeight = Math.floor(availableHeight * (this.heightPercentage / 100));
 
     // 设置最小尺寸限制
     const minWidth = 400;
@@ -234,6 +235,21 @@ export class AIQuestionWindow {
   }
 
   /**
+   * 设置高度百分比
+   */
+  public setHeightPercentage(percentage: number): void {
+    this.heightPercentage = percentage;
+    this.updateWindowSize();
+  }
+
+  /**
+   * 获取当前高度百分比
+   */
+  public getHeightPercentage(): number {
+    return this.heightPercentage;
+  }
+
+  /**
    * 重新计算并更新窗口尺寸
    * 用于屏幕分辨率变化时的动态调整
    */
@@ -258,6 +274,11 @@ export class AIQuestionWindow {
         y: newY,
         width: newWidth,
         height: newHeight,
+      });
+
+      // 通知渲染进程高度变化
+      this.window.webContents.send('window-height-changed', {
+        heightPercentage: this.heightPercentage,
       });
     } catch (error) {
       logger.error({ error }, '更新 ai-question 窗口尺寸失败');

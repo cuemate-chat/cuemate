@@ -31,7 +31,6 @@ export function InterviewerApp() {
     console.log('停止语音识别测试');
   };
 
-
   const handleModelChange = (model: string) => {
     setSelectedModel(model);
     console.log('Model changed to:', model);
