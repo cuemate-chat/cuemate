@@ -57,6 +57,10 @@ const controlBarAPI = {
   // === 日志 API ===
   log: (logMessage: FrontendLogMessage) => ipcRenderer.invoke('frontend-log', logMessage),
 
+  // === 音频文件保存 API ===
+  saveAudioFile: (audioData: Uint8Array, fileName: string) =>
+    ipcRenderer.invoke('save-audio-file', audioData, fileName),
+
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 

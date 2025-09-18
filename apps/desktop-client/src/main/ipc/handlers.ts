@@ -915,5 +915,34 @@ export function setupIPC(windowManager: WindowManager): void {
     }
   });
 
+  /**
+   * 保存音频文件到data目录
+   */
+  ipcMain.handle('save-audio-file', async (_event, audioData: Uint8Array, fileName: string) => {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+
+      // 创建data目录（如果不存在）
+      const dataDir = path.join(process.cwd(), 'data', 'audio-debug');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+
+      // 保存文件
+      const filePath = path.join(dataDir, fileName);
+      fs.writeFileSync(filePath, Buffer.from(audioData));
+
+      logger.info(`音频文件已保存: ${filePath}, ${audioData.length} 字节`);
+      return { success: true, filePath, size: audioData.length };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 保存音频文件失败');
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
   logger.info('IPC 通信处理器设置完成');
 }

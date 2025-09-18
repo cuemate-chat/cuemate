@@ -8,6 +8,7 @@ interface RecognitionResult {
   timestamp: number;
 }
 
+
 export function VoiceTestBody() {
   const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([]);
   const [speakerDevices, setSpeakerDevices] = useState<MediaDeviceInfo[]>([]);
@@ -103,7 +104,9 @@ export function VoiceTestBody() {
 
     const cleanup = () => {
       if (testTimer) { clearTimeout(testTimer); testTimer = null; }
-      if (audioContext) { audioContext.close(); }
+      if (audioContext && audioContext.state !== 'closed') {
+        audioContext.close().catch(() => {});
+      }
       if (stream) { stream.getTracks().forEach(t => t.stop()); }
       if (websocket && websocket.readyState === WebSocket.OPEN) {
         websocket.send(new ArrayBuffer(0));
@@ -124,9 +127,19 @@ export function VoiceTestBody() {
           try {
             await audioContext.audioWorklet.addModule('/pcm-processor.js');
             const workletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
+            const audioChunks: ArrayBuffer[] = [];
             workletNode.port.onmessage = (event) => {
               if (event.data.type === 'audiodata' && websocket && websocket.readyState === WebSocket.OPEN) {
                 websocket.send(event.data.data);
+              } else if (event.data.type === 'saveaudio') {
+                // 保存音频块用于调试
+                audioChunks.push(event.data.data.slice());
+
+                // 保存为文件（每10个块或测试结束时）
+                if (audioChunks.length >= 10) {
+                  // saveAudioToFile(audioChunks.slice());
+                  audioChunks.length = 0; // 清空数组
+                }
               }
             };
             source.connect(workletNode);

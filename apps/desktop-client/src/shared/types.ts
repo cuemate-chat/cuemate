@@ -131,6 +131,9 @@ export interface ElectronAPI {
   onMouseEnter?: (callback: () => void) => void;
   onMouseLeave?: (callback: () => void) => void;
 
+  // 音频文件保存
+  saveAudioFile?: (audioData: Uint8Array, fileName: string) => Promise<{ success: boolean; filePath?: string; size?: number; error?: string; }>;
+
   // 平台信息
   platform: Platform;
 

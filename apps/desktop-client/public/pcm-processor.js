@@ -48,6 +48,13 @@ class PCMProcessor extends AudioWorkletProcessor {
             data: pcmData.buffer
           });
 
+          // 保存音频数据用于调试
+          this.port.postMessage({
+            type: 'saveaudio',
+            data: pcmData.buffer,
+            timestamp: Date.now()
+          });
+
           this.bufferIndex = 0;
         }
       }
