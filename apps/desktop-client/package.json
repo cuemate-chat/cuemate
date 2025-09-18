@@ -97,6 +97,7 @@
       ],
       "entitlements": "build/entitlements.mac.plist",
       "extendInfo": {
+        "LSUIElement": 1,
         "NSMicrophoneUsageDescription": "CueMate 需要访问麦克风进行语音识别测试",
         "NSScreenCaptureDescription": "CueMate 需要屏幕录制权限来捕获系统音频扬声器输出进行扬声器测试",
         "NSSpeechRecognitionUsageDescription": "CueMate 需要语音识别权限以将语音转为文本",

@@ -80,9 +80,13 @@ export function getRendererPath(htmlName: string): string {
  */
 export function getAppIconPath(): string {
   const projectRoot = getProjectRoot();
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   if (process.platform === 'darwin') {
-    // macOS 使用icns
-    return join(projectRoot, 'assets', 'icon.icns');
+    // 开发环境使用 PNG，生产环境使用 icns
+    return isDevelopment
+      ? join(projectRoot, 'assets', 'logo-icon.png')
+      : join(projectRoot, 'assets', 'icon.icns');
   }
   if (process.platform === 'win32') {
     // Windows 使用 ico，用于任务栏和标题栏

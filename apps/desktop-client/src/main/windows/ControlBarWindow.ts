@@ -21,7 +21,7 @@ export class ControlBarWindow {
     alwaysOnTop: true, // 悬浮窗口需要总是置顶
     frame: false,
     transparent: true,
-    skipTaskbar: true, // 不显示在 Dock，纯控制窗口
+    skipTaskbar: true, // 不显示在任务栏，纯悬浮应用
     resizable: false,
     minimizable: false,
     maximizable: false,

@@ -1,6 +1,6 @@
 import { app, nativeImage } from 'electron';
 import { logger } from '../../utils/logger.js';
-import { getAppIconPath, getProjectRoot } from './paths.js';
+import { getAppIconPath } from './paths.js';
 
 let lastEnsureAt = 0;
 
@@ -9,7 +9,7 @@ let lastEnsureAt = 0;
  * - 仅在 macOS 生效
  * - 多次调用无副作用
  */
-export function ensureDockActiveAndIcon(reason: string = 'ensure'): void {
+export function ensureDockActiveAndIcon(_reason: string = 'ensure'): void {
   if (process.platform !== 'darwin' || !app.dock) return;
 
   // 轻量节流，避免同一时刻重复触发
@@ -34,27 +34,17 @@ export function ensureDockActiveAndIcon(reason: string = 'ensure'): void {
       logger.debug({ e }, 'app.dock.show 失败（可忽略）');
     }
 
-    // 设置 Dock 图标（使用 NativeImage，避免回落默认图标）
+    // 设置 Dock 图标
     try {
       const iconPath = getAppIconPath();
       const img = nativeImage.createFromPath(iconPath);
 
       if (!img || img.isEmpty()) {
-        // 回退 png（开发环境可能使用 png）
-        const path = require('path');
-        const pngPath = path.join(getProjectRoot(), 'assets', 'logo-icon.png');
-        const pngImg = nativeImage.createFromPath(pngPath);
-        if (pngImg && !pngImg.isEmpty()) {
-          app.dock.setIcon(pngImg);
-          logger.debug({ reason, pngPath }, 'Dock 图标已设置（fallback png）');
-          return;
-        }
-        logger.warn({ iconPath }, '无法加载 Dock 图标，可能回退为默认');
+        logger.warn({ iconPath }, '无法加载 Dock 图标');
         return;
       }
 
       app.dock.setIcon(img);
-      logger.debug({ reason, iconPath }, 'Dock 图标已设置');
     } catch (e) {
       logger.warn({ e }, '设置 Dock 图标失败');
     }

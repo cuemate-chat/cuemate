@@ -1,19 +1,19 @@
 import { execSync } from 'child_process';
-import { app, BrowserWindow, globalShortcut, Menu, MenuItem, shell } from 'electron';
+import { app, globalShortcut, Menu, nativeImage, Tray } from 'electron';
 import type { LogLevel } from '../shared/types.js';
 import { logger } from '../utils/logger.js';
 import { setupIPC } from './ipc/handlers.js';
-import { ensureDockActiveAndIcon } from './utils/dock.js';
 import { getAppIconPath } from './utils/paths.js';
 import { setupGlobalShortcuts } from './utils/shortcuts.js';
 import { WindowManager } from './windows/WindowManager.js';
 
-// 在应用启动前设置应用名称
+// 在应用启动前设置应用名称和图标
 app.setName('CueMate');
 
 class CueMateApp {
   private windowManager: WindowManager;
   private isDevelopment: boolean;
+  private tray: Tray | null = null;
 
   constructor() {
     this.isDevelopment = process.env.NODE_ENV === 'development';
@@ -25,192 +25,6 @@ class CueMateApp {
     this.windowManager = new WindowManager(this.isDevelopment);
 
     this.initialize();
-  }
-
-  private createApplicationMenu(): void {
-    const template = [
-      {
-        label: 'CueMate',
-        submenu: [
-          {
-            label: '关于 CueMate',
-            click: async () => {
-              await shell.openExternal('https://github.com/CueMate-Chat/CueMate');
-            },
-          },
-          { type: 'separator' },
-          {
-            label: '隐藏 CueMate Web',
-            accelerator: 'Command+H',
-            click: () => {
-              this.windowManager.hideMainContent();
-            },
-          },
-          {
-            label: '隐藏其他',
-            accelerator: 'Command+Option+H',
-            click: () => {
-              this.windowManager.hideFloatingWindows();
-            },
-          },
-          { type: 'separator' },
-          {
-            label: '退出 CueMate',
-            accelerator: process.platform === 'darwin' ? 'Command+Q' : 'Ctrl+Q',
-            click: () => {
-              app.quit();
-            },
-          },
-        ],
-      },
-      {
-        label: '编辑',
-        submenu: [
-          {
-            label: '撤销',
-            accelerator: 'CommandOrControl+Z',
-            role: 'undo',
-          },
-          {
-            label: '重做',
-            accelerator: 'Shift+CommandOrControl+Z',
-            role: 'redo',
-          },
-          { type: 'separator' },
-          {
-            label: '剪切',
-            accelerator: 'CommandOrControl+X',
-            role: 'cut',
-          },
-          {
-            label: '复制',
-            accelerator: 'CommandOrControl+C',
-            role: 'copy',
-          },
-          {
-            label: '粘贴',
-            accelerator: 'CommandOrControl+V',
-            role: 'paste',
-          },
-          {
-            label: '全选',
-            accelerator: 'CommandOrControl+A',
-            role: 'selectall',
-          },
-        ],
-      },
-      {
-        label: '视图',
-        submenu: [
-          {
-            label: '重新加载',
-            accelerator: 'CommandOrControl+R',
-            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
-              if (focusedWindow) {
-                focusedWindow.reload();
-              }
-            },
-          },
-          {
-            label: '强制重新加载',
-            accelerator: 'CommandOrControl+Shift+R',
-            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
-              if (focusedWindow) {
-                focusedWindow.webContents.reloadIgnoringCache();
-              }
-            },
-          },
-          {
-            label: '切换开发者工具',
-            accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
-            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
-              if (focusedWindow) {
-                focusedWindow.webContents.toggleDevTools();
-              }
-            },
-          },
-          { type: 'separator' },
-          {
-            label: '实际大小',
-            accelerator: 'CommandOrControl+0',
-            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
-              if (focusedWindow) {
-                focusedWindow.webContents.setZoomLevel(0);
-              }
-            },
-          },
-          {
-            label: '放大',
-            accelerator: 'CommandOrControl+Plus',
-            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
-              if (focusedWindow) {
-                const currentZoom = focusedWindow.webContents.getZoomLevel();
-                focusedWindow.webContents.setZoomLevel(currentZoom + 1);
-              }
-            },
-          },
-          {
-            label: '缩小',
-            accelerator: 'CommandOrControl+-',
-            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
-              if (focusedWindow) {
-                const currentZoom = focusedWindow.webContents.getZoomLevel();
-                focusedWindow.webContents.setZoomLevel(currentZoom - 1);
-              }
-            },
-          },
-          { type: 'separator' },
-          {
-            label: '切换全屏',
-            accelerator: process.platform === 'darwin' ? 'Ctrl+Command+F' : 'F11',
-            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
-              if (focusedWindow) {
-                focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
-              }
-            },
-          },
-        ],
-      },
-      {
-        label: '窗口',
-        submenu: [
-          {
-            label: '最小化',
-            accelerator: 'CommandOrControl+M',
-            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
-              if (focusedWindow) {
-                focusedWindow.minimize();
-              }
-            },
-          },
-          {
-            label: '关闭',
-            accelerator: 'CommandOrControl+W',
-            click: (_item: MenuItem, focusedWindow?: BrowserWindow) => {
-              if (focusedWindow) {
-                focusedWindow.close();
-              }
-            },
-          },
-        ],
-      },
-      {
-        label: '帮助',
-        submenu: [
-          {
-            label: '访问官网',
-            click: async () => {
-              await shell.openExternal('https://github.com/CueMate-Chat/CueMate');
-            },
-          },
-        ],
-      },
-    ];
-
-    const menu = Menu.buildFromTemplate(template as any);
-    Menu.setApplicationMenu(menu);
-
-    logger.info('自定义应用菜单已设置');
   }
 
   private setupLoggingEnvironment(): void {
@@ -246,18 +60,20 @@ class CueMateApp {
     app.whenReady().then(() => {
       logger.info('应用已准备就绪，开始初始化窗口管理器');
 
-      // 创建自定义菜单
-      this.createApplicationMenu();
-
       // 设置应用图标 & 确保 Dock 常驻
       try {
         const iconPath = getAppIconPath();
         logger.info({ iconPath }, '应用图标路径');
 
-        // 在 macOS 上设置 Dock 图标并确保可见
-        if (process.platform === 'darwin' && app.dock) {
-          ensureDockActiveAndIcon('ready');
+        // 在 macOS 上隐藏 Dock 图标但保留菜单栏
+        if (process.platform === 'darwin') {
+          // 保持regular模式以确保菜单栏显示，只隐藏dock图标
+          app.dock.hide();
+          logger.info('已隐藏 dock 图标，应用菜单栏保持可用');
         }
+
+        // 创建菜单栏图标（任务栏图标）
+        this.createTrayIcon();
       } catch (error) {
         logger.warn({ error }, '设置应用图标失败');
       }
@@ -275,11 +91,13 @@ class CueMateApp {
           logger.error('窗口管理器初始化失败:', error);
         });
 
-      // macOS: 当点击 dock 图标时重新激活
+      // macOS: 当点击 dock 图标时重新激活（虽然 dock 图标已隐藏，但保留处理逻辑）
       app.on('activate', () => {
-        logger.info('应用被重新激活 (Dock 图标点击)');
-        ensureDockActiveAndIcon('activate');
         this.windowManager.showFloatingWindows();
+        // 在 accessory 模式下，确保应用能够正确激活和聚焦
+        if (process.platform === 'darwin') {
+          app.focus({ steal: true });
+        }
       });
 
       // macOS: 监听 Dock 图标右键菜单的退出选项
@@ -354,8 +172,69 @@ class CueMateApp {
     }
   }
 
+  /**
+   * 创建菜单栏图标（任务栏图标）
+   */
+  private createTrayIcon(): void {
+    try {
+      const iconPath = getAppIconPath();
+      logger.info({ iconPath }, '创建菜单栏图标，图标路径');
+
+      const image = nativeImage.createFromPath(iconPath);
+      logger.info({ isEmpty: image.isEmpty(), size: image.getSize() }, '图标加载结果');
+
+      if (image.isEmpty()) {
+        logger.error('图标为空，无法创建菜单栏图标');
+        return;
+      }
+
+      // 调整图标大小适合菜单栏（macOS 推荐 16x16 或 22x22）
+      const resizedImage = image.resize({ width: 22, height: 22 });
+
+      this.tray = new Tray(resizedImage);
+      this.tray.setToolTip('CueMate - 智能语音面试助手');
+
+      // 创建菜单
+      const contextMenu = Menu.buildFromTemplate([
+        {
+          label: '显示应用',
+          click: () => {
+            this.windowManager.showFloatingWindows();
+            // 在 macOS 上确保应用能够正确激活
+            if (process.platform === 'darwin') {
+              app.focus({ steal: true });
+            }
+          },
+        },
+        {
+          label: '隐藏应用',
+          click: () => {
+            this.windowManager.hideFloatingWindows();
+          },
+        },
+        { type: 'separator' },
+        {
+          label: '退出',
+          click: () => {
+            app.quit();
+          },
+        },
+      ]);
+
+      this.tray.setContextMenu(contextMenu);
+    } catch (error) {
+      logger.error({ error }, '创建菜单栏图标失败');
+    }
+  }
+
   private cleanup(): void {
     logger.info('清理应用资源');
+
+    // 清理菜单栏图标
+    if (this.tray) {
+      this.tray.destroy();
+      this.tray = null;
+    }
 
     // 注销所有全局快捷键
     globalShortcut.unregisterAll();

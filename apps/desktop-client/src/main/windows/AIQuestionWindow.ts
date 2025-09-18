@@ -166,13 +166,19 @@ export class AIQuestionWindow {
 
       // 显示窗口
       this.window.show();
-      this.window.focus();
 
-      // 确保窗口在最顶层
+      // 确保窗口在最顶层，使用最高级别
       this.window.setAlwaysOnTop(true, 'screen-saver');
       this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       this.window.setFullScreenable(false);
       this.window.moveTop();
+
+      // 延迟聚焦，确保层级设置生效后再聚焦
+      setTimeout(() => {
+        if (this.window && !this.window.isDestroyed()) {
+          this.window.focus();
+        }
+      }, 50);
     } catch (error) {
       logger.error({ error }, '显示 ai-question 窗口失败');
     }
