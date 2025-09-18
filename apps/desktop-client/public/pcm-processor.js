@@ -2,7 +2,9 @@
 class PCMProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.bufferSize = 4096;
+    // 增加缓冲区大小以积累约1秒的音频数据
+    // 16000 Hz * 1秒 = 16000 样本，向上取整到 16384
+    this.bufferSize = 16384;
     this.buffer = new Float32Array(this.bufferSize);
     this.bufferIndex = 0;
   }

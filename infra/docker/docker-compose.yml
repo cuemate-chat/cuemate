@@ -22,7 +22,7 @@ services:
     container_name: cuemate-asr-user
     ports:
       - "8001:8000"
-    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--port", "8000", "--no-vac", "--no-vad"]
+    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--port", "8000", "--no-vac", "--no-vad", "--pcm-input"]
     environment:
       - PYTORCH_DISABLE_NET_ACCESS=1
       - ASR_SERVICE_TYPE=user
@@ -42,7 +42,7 @@ services:
     container_name: cuemate-asr-interviewer
     ports:
       - "8002:8000"
-    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--port", "8000", "--no-vac", "--no-vad"]
+    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--port", "8000", "--no-vac", "--no-vad", "--pcm-input"]
     environment:
       - PYTORCH_DISABLE_NET_ACCESS=1
       - ASR_SERVICE_TYPE=interviewer
