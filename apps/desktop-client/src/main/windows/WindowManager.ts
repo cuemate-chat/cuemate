@@ -29,6 +29,7 @@ export class WindowManager {
     isAIQuestionHistoryVisible: false,
     isInterviewerVisible: false,
   };
+  private hasEverBeenHidden: boolean = false;
 
   private aiWindowHeightPercentage: number = 75; // 默认75%
 
@@ -196,29 +197,45 @@ export class WindowManager {
   }
 
   /**
-   * 显示浮动窗口（从圆形图标模式切换回正常模式）
+   * 显示浮动窗口（恢复隐藏前的状态）
    */
   public showFloatingWindows(): void {
     // 显示控制条窗口
     this.controlBarWindow.show();
     this.appState.isControlBarVisible = true;
-    this.appState.isCloseButtonVisible = true; // 统一状态管理
+    this.appState.isCloseButtonVisible = true;
 
-    // main-content 从圆形模式切换回正常模式
-    this.mainContentWindow.switchToNormalMode();
-    this.appState.isMainContentVisible = true;
-
-    if (this.windowStatesBeforeHide.isAIQuestionVisible) {
-      this.aiQuestionWindow.show();
-      this.appState.isAIQuestionVisible = true;
-    }
-
-    if (this.windowStatesBeforeHide.isAIQuestionHistoryVisible) {
-      this.showAIQuestionHistoryNextToAI();
-    }
-
-    if (this.windowStatesBeforeHide.isInterviewerVisible) {
-      this.showInterviewerNextToAI();
+    // 如果从未隐藏过，恢复到当前实际状态；否则恢复到隐藏前的状态
+    if (!this.hasEverBeenHidden) {
+      // 第一次显示，恢复当前实际状态
+      if (this.appState.isMainContentVisible) {
+        this.mainContentWindow.show();
+      }
+      if (this.appState.isAIQuestionVisible) {
+        this.aiQuestionWindow.show();
+      }
+      if (this.isAIQuestionHistoryVisible()) {
+        this.showAIQuestionHistoryNextToAI();
+      }
+      if (this.isInterviewerVisible()) {
+        this.showInterviewerNextToAI();
+      }
+    } else {
+      // 恢复隐藏前的状态
+      if (this.windowStatesBeforeHide.isMainContentVisible) {
+        this.mainContentWindow.show();
+        this.appState.isMainContentVisible = true;
+      }
+      if (this.windowStatesBeforeHide.isAIQuestionVisible) {
+        this.aiQuestionWindow.show();
+        this.appState.isAIQuestionVisible = true;
+      }
+      if (this.windowStatesBeforeHide.isAIQuestionHistoryVisible) {
+        this.showAIQuestionHistoryNextToAI();
+      }
+      if (this.windowStatesBeforeHide.isInterviewerVisible) {
+        this.showInterviewerNextToAI();
+      }
     }
 
     // 初始时确保焦点在 control-bar
@@ -226,42 +243,41 @@ export class WindowManager {
   }
 
   /**
-   * 隐藏浮动窗口（切换到圆形图标模式）
+   * 隐藏浮动窗口（保存当前状态）
    */
   public hideFloatingWindows(): void {
-    // 保存所有窗口当前状态
+    // 保存所有窗口当前的实际可见状态
     this.windowStatesBeforeHide = {
-      isMainContentVisible: this.appState.isMainContentVisible,
-      isAIQuestionVisible: this.appState.isAIQuestionVisible,
+      isMainContentVisible: this.mainContentWindow.isVisible(),
+      isAIQuestionVisible: this.aiQuestionWindow.isVisible(),
       isAIQuestionHistoryVisible: this.isAIQuestionHistoryVisible(),
       isInterviewerVisible: this.isInterviewerVisible(),
     };
+    this.hasEverBeenHidden = true;
 
     // 隐藏所有子窗口
     this.hideAllChildWindows();
 
-    // main-content 切换到圆形模式
-    this.mainContentWindow.switchToCircleMode();
-    this.appState.isMainContentVisible = true; // 圆形模式依然是可见状态
+    // 隐藏 main-content 窗口
+    if (this.mainContentWindow.isVisible()) {
+      this.mainContentWindow.hide();
+      this.appState.isMainContentVisible = false;
+    }
 
     // 隐藏控制条窗口
     this.controlBarWindow.hide();
     this.appState.isControlBarVisible = false;
     this.appState.isCloseButtonVisible = false;
-
-    // 确保 control-bar 焦点
-    setTimeout(() => this.ensureMainFocus(), 100);
   }
 
   /**
    * 切换浮动窗口显示状态
    */
   public toggleFloatingWindows(): void {
-    // 检查 main-content 是否为圆形模式
-    if (this.mainContentWindow.isInCircleMode()) {
-      this.showFloatingWindows(); // 从圆形图标模式切换回正常模式
+    if (this.appState.isControlBarVisible) {
+      this.hideFloatingWindows();
     } else {
-      this.hideFloatingWindows(); // 切换到圆形图标模式
+      this.showFloatingWindows();
     }
   }
 
@@ -518,14 +534,6 @@ export class WindowManager {
    * 隐藏所有子窗口（保持状态）
    */
   public hideAllChildWindows(): void {
-    // 保存所有窗口当前状态
-    this.windowStatesBeforeHide = {
-      isMainContentVisible: this.appState.isMainContentVisible,
-      isAIQuestionVisible: this.appState.isAIQuestionVisible,
-      isAIQuestionHistoryVisible: this.isAIQuestionHistoryVisible(),
-      isInterviewerVisible: this.isInterviewerVisible(),
-    };
-
     if (this.appState.isAIQuestionVisible) {
       this.aiQuestionWindow.hide();
       this.appState.isAIQuestionVisible = false;
@@ -537,12 +545,6 @@ export class WindowManager {
 
     if (this.isInterviewerVisible()) {
       this.interviewerWindow.hide();
-    }
-
-    // main-content 使用特殊的 hideWindow 方法，避免触发圆形模式切换
-    if (this.mainContentWindow.isVisible()) {
-      this.mainContentWindow.hideWindow();
-      this.appState.isMainContentVisible = false;
     }
   }
 

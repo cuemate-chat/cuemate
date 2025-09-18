@@ -1,7 +1,7 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
-import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
+import { getPreloadPath, getWindowIconPath } from '../utils/paths.js';
 
 /**
  * 主内容窗口 - 普通功能窗口
@@ -12,24 +12,22 @@ export class MainContentWindow {
   private isDevelopment: boolean;
   private parentWindow: BrowserWindow | null = null;
   private lastBounds: Electron.Rectangle | null = null;
-  private isCircleMode: boolean = false; // 是否为圆形图标模式
-  private originalBounds: Electron.Rectangle | null = null; // 保存原始窗口尺寸
 
   private readonly config: WindowConfig = {
     id: 'main-content',
     label: 'main-content',
     width: 1200,
     height: 800,
-    alwaysOnTop: true, // 主内容窗口也需要悬浮，但层级低于悬浮窗口
+    alwaysOnTop: false, // 主内容窗口不置顶，保持在底层
     frame: true, // 有标题栏和边框
     transparent: false, // 不透明
-    skipTaskbar: false, // 显示在任务栏/Dock，作为主窗口保持应用图标显示
+    skipTaskbar: true, // 子窗口不在任务栏显示
     resizable: true, // 可调整大小
     minimizable: true,
     maximizable: true,
-    closable: true, // 可关闭（但会被阻止并改为圆形模式）
+    closable: true, // 可关闭
     focusable: true, // 允许获得焦点，以便用户可以输入内容
-    show: true, // 默认显示大窗口
+    show: false, // 默认不显示，由 WindowManager 控制显示时机
     center: true,
   };
 
@@ -68,7 +66,7 @@ export class MainContentWindow {
         y: initialY,
         icon: getWindowIconPath(), // 设置窗口图标
         parent: this.parentWindow || undefined, // 设置父窗口
-        alwaysOnTop: true, // 主内容窗口也需要悬浮
+        alwaysOnTop: false, // 主内容窗口不设置置顶，保持为普通窗口
         frame: this.config.frame,
         transparent: this.config.transparent,
         skipTaskbar: this.config.skipTaskbar,
@@ -77,7 +75,7 @@ export class MainContentWindow {
         maximizable: this.config.maximizable,
         closable: this.config.closable,
         focusable: this.config.focusable,
-        show: this.config.show,
+        show: false, // 创建时不显示，由 WindowManager 控制
         title: 'CueMate',
         titleBarStyle: 'default',
         webPreferences: {
@@ -92,12 +90,8 @@ export class MainContentWindow {
       // 设置最小尺寸
       this.window.setMinimumSize(800, 600);
 
-      // 加载页面
-      if (this.isDevelopment) {
-        await this.window.loadURL('http://localhost:3000/src/renderer/main-content/');
-      } else {
-        await this.window.loadFile(getRendererPath('main-content'));
-      }
+      // 加载Web版CueMate
+      await this.window.loadURL('http://localhost');
 
       // 设置窗口事件监听
       this.setupEvents();
@@ -181,11 +175,11 @@ export class MainContentWindow {
       this.window!.webContents.send('window-maximized', false);
     });
 
-    // 阻止窗口关闭，改为切换到圆形模式
+    // 阻止窗口关闭，改为隐藏
     this.window.on('close', (event) => {
-      logger.info('main-content 窗口尝试关闭，改为切换到圆形模式');
+      logger.info('main-content 窗口尝试关闭，改为隐藏');
       event.preventDefault();
-      this.switchToCircleMode();
+      this.hide();
     });
 
     // 窗口已关闭（实际销毁时）
@@ -227,31 +221,24 @@ export class MainContentWindow {
         this.window.restore();
       }
 
-      // 如果当前是圆形模式，先切换回正常模式
-      if (this.isCircleMode) {
-        this.switchToNormalMode();
-      } else {
-        // 恢复上次的窗口位置和大小
-        if (this.lastBounds) {
-          this.window.setBounds(this.lastBounds);
-        }
+      // 恢复上次的窗口位置和大小
+      if (this.lastBounds) {
+        this.window.setBounds(this.lastBounds);
       }
 
       this.window.show(); // 显示窗口
-      this.window.setAlwaysOnTop(true, 'normal'); // 设置为普通悬浮窗口
-      this.window.setVisibleOnAllWorkspaces(true); // 在所有工作区可见
-      this.window.moveTop(); // 移到当前层级最顶部
+      this.window.setAlwaysOnTop(false); // 主内容窗口不置顶，保持在底层
       // 窗口已显示
     }
   }
 
   /**
-   * 隐藏主内容窗口（实际切换到圆形模式）
+   * 隐藏主内容窗口
    */
   public hide(): void {
     if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
-      // 切换到圆形模式而不是隐藏
-      this.switchToCircleMode();
+      this.lastBounds = this.window.getBounds();
+      this.window.hide();
     }
   }
 
@@ -270,7 +257,7 @@ export class MainContentWindow {
    * 检查窗口是否可见
    */
   public isVisible(): boolean {
-    return this.window ? this.window.isVisible() || this.isCircleMode : false;
+    return this.window ? this.window.isVisible() : false;
   }
 
   /**
@@ -365,114 +352,6 @@ export class MainContentWindow {
     }
   }
 
-  /**
-   * 切换到圆形图标模式
-   */
-  public switchToCircleMode(): void {
-    if (!this.window || this.window.isDestroyed() || this.isCircleMode) {
-      return;
-    }
-
-    try {
-      // 保存当前窗口尺寸和样式
-      this.originalBounds = this.window.getBounds();
-
-      // 设置圆形图标尺寸和位置
-      const circleSize = 50;
-      const primaryDisplay = screen.getPrimaryDisplay();
-      const {
-        x: displayX,
-        y: displayY,
-        width: screenWidth,
-        height: screenHeight,
-      } = primaryDisplay.workArea;
-
-      // 位置：紧贴屏幕右侧，垂直居中
-      const x = displayX + screenWidth - circleSize - 10; // 距离屏幕边缘10px
-      const y = displayY + Math.floor((screenHeight - circleSize) / 2);
-
-      // 设置圆形模式的窗口属性
-      this.window.setResizable(false);
-      this.window.setMinimizable(false);
-      this.window.setMaximizable(false);
-      this.window.setAlwaysOnTop(true, 'floating');
-      this.window.setHasShadow(false);
-      this.window.setSkipTaskbar(true); // 圆形模式不在任务栏显示
-
-      // 临时修改窗口样式为无边框透明
-      this.window.setBackgroundColor('rgba(0, 0, 0, 0)');
-
-      // 设置新的窗口尺寸
-      this.window.setBounds({
-        x,
-        y,
-        width: circleSize,
-        height: circleSize,
-      });
-
-      // 向渲染进程发送圆形模式切换事件
-      this.window.webContents.send('switch-to-circle-mode', { circleSize });
-
-      this.isCircleMode = true;
-
-      logger.info('main-content 切换到圆形图标模式');
-    } catch (error) {
-      logger.error({ error }, 'main-content 切换到圆形图标模式失败');
-    }
-  }
-
-  /**
-   * 从圆形图标模式切换回正常模式
-   */
-  public switchToNormalMode(): void {
-    if (!this.window || this.window.isDestroyed() || !this.isCircleMode || !this.originalBounds) {
-      return;
-    }
-
-    try {
-      // 恢复窗口属性
-      this.window.setResizable(this.config.resizable ?? true);
-      this.window.setMinimizable(this.config.minimizable ?? true);
-      this.window.setMaximizable(this.config.maximizable ?? true);
-      this.window.setAlwaysOnTop(true, 'normal'); // 恢复正常层级
-      this.window.setHasShadow(true);
-      this.window.setSkipTaskbar(this.config.skipTaskbar ?? false); // 恢复任务栏设置
-
-      // 恢复窗口背景色
-      this.window.setBackgroundColor('#ffffff');
-
-      // 恢复原始窗口尺寸
-      this.window.setBounds(this.originalBounds);
-
-      // 向渲染进程发送正常模式切换事件
-      this.window.webContents.send('switch-to-normal-mode');
-
-      this.isCircleMode = false;
-      this.originalBounds = null;
-
-      logger.info('main-content 切换回正常模式');
-    } catch (error) {
-      logger.error({ error }, 'main-content 切换回正常模式失败');
-    }
-  }
-
-  /**
-   * 切换圆形图标模式
-   */
-  public toggleCircleMode(): void {
-    if (this.isCircleMode) {
-      this.switchToNormalMode();
-    } else {
-      this.switchToCircleMode();
-    }
-  }
-
-  /**
-   * 检查是否为圆形模式
-   */
-  public isInCircleMode(): boolean {
-    return this.isCircleMode;
-  }
 
   /**
    * 销毁窗口
@@ -483,7 +362,6 @@ export class MainContentWindow {
       this.window.destroy();
       this.window = null;
       this.lastBounds = null;
-      this.originalBounds = null;
     }
   }
 }
