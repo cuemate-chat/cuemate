@@ -18,8 +18,7 @@ const serviceNameMap: Record<string, string> = {
   'web-api': '后端 API 服务',
   'llm-router': '大模型路由',
   'rag-service': 'RAG 知识服务',
-  'asr-user': '面试者语音识别',
-  'asr-interviewer': '面试官语音识别',
+  'cuemate-asr': '语音识别服务',
   'desktop-client': '桌面客户端',
 };
 

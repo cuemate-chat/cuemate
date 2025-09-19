@@ -743,10 +743,10 @@ export function setupIPC(windowManager: WindowManager): void {
         logger.warn('ASR配置同步失败，但继续测试流程');
       }
 
-      logger.info('开始麦克风测试，连接 cuemate-asr-user 服务');
+      logger.info('开始麦克风测试，连接 cuemate-asr 服务');
 
       // 创建到 ASR 服务的 WebSocket 连接
-      const asrServiceUrl = 'ws://localhost:8001';
+      const asrServiceUrl = 'ws://localhost:10095';
       micAsrWebSocket = new WebSocket(asrServiceUrl);
 
       micAsrWebSocket!.on('open', () => {
@@ -789,7 +789,7 @@ export function setupIPC(windowManager: WindowManager): void {
         logger.error('麦克风 ASR WebSocket 错误:', error);
         event.sender.send('mic-test-result', {
           success: false,
-          error: '连接麦克风识别服务失败，请确保 cuemate-asr-user 服务已启动',
+          error: '连接麦克风识别服务失败，请确保 cuemate-asr 服务已启动',
         });
       });
 

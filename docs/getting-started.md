@@ -17,7 +17,7 @@ pnpm install
 docker compose -f infra/docker/docker-compose.yml up -d
 
 # 或仅启动特定服务
-docker compose -f infra/docker/docker-compose.yml up -d web-api llm-router rag-service asr-user asr-interviewer
+docker compose -f infra/docker/docker-compose.yml up -d web-api llm-router rag-service cuemate-asr
 ```
 
 ## 启动开发服务
@@ -49,15 +49,11 @@ curl http://localhost:3002/health    # LLM Router
 curl http://localhost:3003/health    # RAG Service
 
 # ASR 服务
-curl http://localhost:8001/         # ASR User (WhisperLiveKit)
-curl http://localhost:8002/         # ASR Interviewer (WhisperLiveKit)
+curl http://localhost:10095/        # CueMate ASR (FunASR)
 ```
 
 ## WebSocket 连接测试
 ```bash
-# 面试者语音识别
-ws://localhost:8001/asr
-
-# 面试官语音识别  
-ws://localhost:8002/asr
+# 语音识别服务服务
+ws://localhost:10095/asr
 ```

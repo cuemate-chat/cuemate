@@ -71,8 +71,7 @@ export async function syncASRConfig(app: FastifyInstance): Promise<ASRConfigSync
 
     // 4. 同步配置到ASR服务
     const asrServiceUrls = [
-      'http://cuemate-asr-user:8000',
-      'http://cuemate-asr-interviewer:8000',
+      'http://cuemate-asr:10095',
     ];
 
     const syncResults = [];

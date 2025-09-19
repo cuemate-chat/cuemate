@@ -103,8 +103,8 @@ export default function AsrSettings() {
         asrServices = data.services.map(s => ({
           name: s.name,
           url: normalizeWebSocketUrl(s.url, s.name),
-          displayName: s.name === 'asr-user' ? '面试者语音识别' : '面试官语音识别',
-          description: s.name === 'asr-user' ? '麦克风输入' : '系统音频扬声器输出'
+          displayName: '统一语音识别',
+          description: '支持麦克风和扬声器音频输入'
         }));
       } else {
         asrServices = getAsrServices();
@@ -283,111 +283,6 @@ export default function AsrSettings() {
   };
 
   // 语音测试功能
-  // 面试官模式：系统音频扬声器识别（通过Desktop捕获系统音频扬声器）
-  const startInterviewerRecording = async () => {
-    try {
-      console.log('启动面试官系统音频扬声器识别模式');
-      
-      // 1. 连接Desktop服务获取系统音频扬声器
-      if (!webSocketService.getConnectionState()) {
-        try {
-          await webSocketService.connect();
-          setDesktopConnected(true);
-        } catch (error) {
-          message.error('无法连接到Desktop服务，请确保桌面客户端已启动');
-          isConnectingRef.current = false;
-          return;
-        }
-      }
-
-      // 2. 启动系统音频扬声器捕获（使用选择的设备）
-      webSocketService.startSystemAudioCapture({
-        sampleRate: 16000,
-        channels: 1,
-        device: selectedAudioDevice
-      });
-
-      setIsSystemAudioCapturing(true);
-      message.info('正在通过Desktop捕获系统音频扬声器...');
-
-      // 3. 连接ASR服务，接收Desktop转发的音频数据并进行识别
-      const asrServiceUrl = testService;
-      websocketRef.current = new WebSocket(asrServiceUrl);
-      
-      websocketRef.current.onopen = () => {
-        console.log('面试官ASR WebSocket连接成功:', asrServiceUrl);
-        message.success('系统音频扬声器识别服务已连接');
-        setTranscriptText("系统音频扬声器识别已启动，等待音频输入...");
-        isConnectingRef.current = false;
-      };
-      
-      websocketRef.current.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log('系统音频扬声器识别结果:', data);
-          
-          if (pendingChunksRef.current > 0) {
-            pendingChunksRef.current--;
-          }
-
-          // 构建显示文本
-          let displayText = '';
-          
-          // 处理已确认的转录行
-          if (data.lines && Array.isArray(data.lines)) {
-            data.lines.forEach((line: any) => {
-              let lineText = '';
-              if (line.speaker === -2) {
-                lineText = `[静音 ${line.beg || ''}-${line.end || ''}]`;
-              } else if (line.speaker > 0) {
-                lineText = `说话人${line.speaker}: ${line.text || ''}`;
-              } else if (line.text) {
-                lineText = line.text;
-              }
-              if (lineText) {
-                displayText += lineText + '\n';
-              }
-            });
-          }
-
-          // 添加缓冲区内容
-          if (data.buffer_transcription) {
-            displayText += `[转录中] ${data.buffer_transcription}\n`;
-          }
-          
-          if (displayText.trim()) {
-            setTranscriptText(displayText.trim());
-          } else if (data.status === "no_audio_detected") {
-            setTranscriptText("未检测到系统音频扬声器信号，请检查扬声器/音响输出...");
-          }
-
-        } catch (error) {
-          console.error('处理系统音频扬声器识别结果失败:', error);
-        }
-      };
-      
-      websocketRef.current.onerror = (error) => {
-        console.error('系统音频扬声器识别WebSocket错误:', error);
-        message.error('系统音频扬声器识别服务连接失败');
-        setTranscriptText('[错误] 系统音频扬声器识别服务连接失败\n请检查ASR服务是否启动');
-        isConnectingRef.current = false;
-        stopRecording();
-      };
-
-      setIsRecording(true);
-      setRecordingTime(0);
-      
-      // 启动计时器
-      timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-      
-    } catch (error) {
-      message.error('启动系统音频扬声器识别失败');
-      console.error('系统音频扬声器识别错误:', error);
-      isConnectingRef.current = false;
-    }
-  };
 
   // 面试者模式：麦克风音频识别（直接通过浏览器获取麦克风）
   const startIntervieweeRecording = async () => {
@@ -550,13 +445,13 @@ export default function AsrSettings() {
     await new Promise(resolve => setTimeout(resolve, 500));
     
     // 根据选择的服务确定音频源和识别模式
-    const isInterviewerService = testService.includes('8002');
-    
-    if (isInterviewerService) {
-      // 面试官模式：系统音频扬声器识别
-      await startInterviewerRecording();
+    const isUnifiedService = testService.includes('10095');
+
+    if (isUnifiedService) {
+      // 统一服务：支持麦克风和扬声器模式
+      await startIntervieweeRecording();
     } else {
-      // 面试者模式：麦克风识别
+      // 兼容性：麦克风识别
       await startIntervieweeRecording();
     }
   };
@@ -1138,7 +1033,7 @@ export default function AsrSettings() {
 
           {/* 音频设备选择 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            {testService.includes('8002') ? (
+            {false ? (
               // 面试官模式：系统音频扬声器设备选择
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1183,7 +1078,7 @@ export default function AsrSettings() {
             )}
 
             {/* Desktop连接状态 */}
-            {testService.includes('8002') && (
+            {false && (
               <div className="flex items-center">
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2 mb-1">
@@ -1221,11 +1116,9 @@ export default function AsrSettings() {
                     onClick={isRecording ? stopRecording : startRecording}
                     className="px-8 py-6 h-auto text-lg"
                   >
-                    {isRecording 
-                      ? '停止捕获' 
-                      : testService.includes('8002') 
-                        ? '开始捕获系统音频扬声器' 
-                        : '开始录音'
+                    {isRecording
+                      ? '停止捕获'
+                      : '开始录音'
                     }
                   </Button>
                 </div>
@@ -1265,19 +1158,11 @@ export default function AsrSettings() {
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• 确保 Docker 服务已启动</li>
                   <li>• 选择要测试的服务端口</li>
-                  {testService.includes('8002') ? (
-                    <>
-                      <li>• <strong>面试官音频：</strong>需要启动桌面客户端</li>
-                      <li>• 桌面客户端将捕获系统音频扬声器输出(喇叭声音)</li>
-                      <li>• 在macOS上需要授予"屏幕录制"权限</li>
-                      <li>• 桌面连接状态: <span className={desktopConnected ? 'text-green-600' : 'text-red-600'}>{desktopConnected ? '已连接' : '未连接'}</span></li>
-                    </>
-                  ) : (
-                    <>
-                      <li>• <strong>面试者音频：</strong>允许麦克风权限</li>
-                      <li>• 直接对着麦克风说话进行测试</li>
-                    </>
-                  )}
+                  <>
+                    <li>• <strong>统一音频识别：</strong>允许麦克风权限</li>
+                    <li>• 直接对着麦克风说话进行测试</li>
+                    <li>• 支持实时语音转录和说话人分离</li>
+                  </>
                   <li>• 音频波形显示捕获状态</li>
                   <li>• 右侧显示实时转录和说话人分离结果</li>
                 </ul>

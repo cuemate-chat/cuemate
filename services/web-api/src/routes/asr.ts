@@ -88,12 +88,8 @@ export function registerAsrRoutes(app: FastifyInstance) {
       config,
       services: [
         {
-          name: 'asr-user',
-          url: getWebSocketUrl(8001, 'cuemate-asr-user'),
-        },
-        {
-          name: 'asr-interviewer',
-          url: getWebSocketUrl(8002, 'cuemate-asr-interviewer'),
+          name: 'cuemate-asr',
+          url: getWebSocketUrl(10095, 'cuemate-asr'),
         },
       ],
     };

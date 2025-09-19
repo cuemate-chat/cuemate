@@ -120,9 +120,8 @@ export function registerLogRoutes(app: FastifyInstance) {
         'web-api': 0,
         'llm-router': 1,
         'rag-service': 2,
-        'asr-user': 3,
-        'asr-interviewer': 4,
-        'desktop-client': 5,
+        'cuemate-asr': 3,
+        'desktop-client': 4,
       };
       const aServiceOrder = serviceOrder[a.service] ?? 999;
       const bServiceOrder = serviceOrder[b.service] ?? 999;

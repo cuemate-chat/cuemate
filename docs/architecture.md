@@ -6,17 +6,15 @@
 - **web-api**: 后端API服务
 - **llm-router**: LLM路由服务
 - **rag-service**: RAG知识库服务
-- **asr-user**: 面试者语音识别 (WhisperLiveKit)
-- **asr-interviewer**: 面试官语音识别 (WhisperLiveKit)
+- **cuemate-asr**: 语音识别服务服务 (FunASR)
 
 ## 数据流
-音频→WhisperLiveKit ASR→Web API→LLM路由（并行要点/完整）→RAG检索→前端展示
+音频→FunASR→Web API→LLM路由（并行要点/完整）→RAG检索→前端展示
 
 ## 端口分配
 - **Web API**: 3001
 - **LLM Router**: 3002  
 - **RAG Service**: 3003
-- **ASR User**: 8001 (WebSocket: ws://localhost:8001/asr)
-- **ASR Interviewer**: 8002 (WebSocket: ws://localhost:8002/asr)
+- **CueMate ASR**: 10095 (WebSocket: ws://localhost:10095/asr)
 - **Web Frontend**: 5173 (dev) / 80 (prod)
 - **Desktop App**: 5174 (dev)

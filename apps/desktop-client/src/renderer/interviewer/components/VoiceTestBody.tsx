@@ -117,7 +117,7 @@ export function VoiceTestBody() {
     try {
       const constraints: MediaStreamConstraints = { audio: selectedMic ? { deviceId: { exact: selectedMic } } : true };
       stream = await navigator.mediaDevices.getUserMedia(constraints);
-      websocket = new WebSocket('ws://localhost:8001/asr');
+      websocket = new WebSocket('ws://localhost:10095/asr');
 
       websocket.onopen = async () => {
         recognitionStartTime = Date.now();
@@ -239,7 +239,7 @@ export function VoiceTestBody() {
         return;
       }
 
-      websocket = new WebSocket('ws://localhost:8002/asr');
+      websocket = new WebSocket('ws://localhost:10095/asr');
       websocket.onopen = async () => {
         recognitionStartTime = Date.now();
         const result = await electronAPI.audioTest.startSpeakerTest({ deviceId: selectedSpeaker });

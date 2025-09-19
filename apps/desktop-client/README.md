@@ -130,7 +130,7 @@ apps/desktop-client/
 - 按照系统提示完成安装
 
 ### 3. 配置连接
-- 设置 WebSocket 服务地址 (默认: `ws://localhost:8001`)
+- 设置 WebSocket 服务地址 (默认: `ws://localhost:10095`)
 - 选择音频输入设备 (推荐选择虚拟设备)
 
 ### 4. 开始捕获
@@ -183,7 +183,7 @@ apps/desktop-client/
 
 客户端通过 WebSocket 连接到远程 ASR 服务：
 
-1. **连接**: `ws://your-server:8001/asr`
+1. **连接**: `ws://your-server:10095/asr`
 2. **发送**: 二进制音频数据
 3. **接收**: JSON 格式转录结果
 

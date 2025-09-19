@@ -17,16 +17,10 @@ export interface AsrService {
 export function getAsrServices(): AsrService[] {
   return [
     {
-      name: 'asr-user',
-      url: config.ASR_USER_WS_URL,
-      displayName: '面试者语音识别',
-      description: '麦克风输入',
-    },
-    {
-      name: 'asr-interviewer',
-      url: config.ASR_INTERVIEWER_WS_URL,
-      displayName: '面试官语音识别',
-      description: '系统音频扬声器输出',
+      name: 'cuemate-asr',
+      url: config.ASR_WS_URL,
+      displayName: '语音识别服务',
+      description: '支持麦克风和扬声器音频输入',
     },
   ];
 }
@@ -36,7 +30,7 @@ export function getAsrServices(): AsrService[] {
  * @param serviceUrl 原始服务URL
  * @param serviceName 服务名称
  */
-export function normalizeWebSocketUrl(serviceUrl: string, serviceName: string): string {
+export function normalizeWebSocketUrl(serviceUrl: string, _serviceName: string): string {
   try {
     // 如果是浏览器环境且访问localhost，使用配置中的默认地址
     if (typeof window !== 'undefined') {
@@ -44,16 +38,14 @@ export function normalizeWebSocketUrl(serviceUrl: string, serviceName: string): 
         window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
       if (isLocalhost) {
-        return serviceName === 'asr-interviewer'
-          ? config.ASR_INTERVIEWER_WS_URL
-          : config.ASR_USER_WS_URL;
+        return config.ASR_WS_URL;
       }
     }
 
     // 检查URL是否包含容器名或错误端口
     const url = new URL(serviceUrl);
-    if (url.hostname.startsWith('cuemate-asr-') || url.port === '8000') {
-      const port = serviceName === 'asr-interviewer' ? '8002' : '8001';
+    if (url.hostname.startsWith('cuemate-asr') || url.port === '8000') {
+      const port = '10095';
       const hostname = typeof window !== 'undefined' ? window.location.hostname : url.hostname;
       return `${url.protocol}//${hostname}:${port}${url.pathname}`;
     }
@@ -61,9 +53,7 @@ export function normalizeWebSocketUrl(serviceUrl: string, serviceName: string): 
     return serviceUrl;
   } catch {
     // 解析失败时使用默认值
-    return serviceName === 'asr-interviewer'
-      ? config.ASR_INTERVIEWER_WS_URL
-      : config.ASR_USER_WS_URL;
+    return config.ASR_WS_URL;
   }
 }
 
