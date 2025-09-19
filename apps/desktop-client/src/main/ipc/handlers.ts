@@ -132,12 +132,174 @@ export function setupIPC(windowManager: WindowManager): void {
         })
         .filter(Boolean);
 
-      return { success: true, voices: voiceList };
+      // 按照自定义的四级分类方式分组
+      const categorizedVoices = voiceList.reduce(
+        (categories, voice) => {
+          if (!voice) return categories;
+
+          const [lang, region] = voice.locale.split('_');
+          const language = getLanguageName(lang);
+          const regionName = getRegionName(region);
+
+          // 判断声音类型
+          let category: string;
+          if (voice.name.toLowerCase().includes('siri')) {
+            category = 'Siri';
+          } else if (lang === 'zh') {
+            category = '中文';
+          } else if (lang === 'en') {
+            category = '英文';
+          } else {
+            category = '其他';
+          }
+
+          const subCategory = `${language}(${regionName})`;
+
+          if (!categories[category]) {
+            categories[category] = {};
+          }
+          if (!categories[category][subCategory]) {
+            categories[category][subCategory] = [];
+          }
+          categories[category][subCategory].push(voice);
+
+          return categories;
+        },
+        {} as Record<string, Record<string, any[]>>,
+      );
+
+      // 按优先级排序：中文 > 英文 > Siri > 其他
+      const sortedCategories = Object.entries(categorizedVoices).sort(([a], [b]) => {
+        const order = ['中文', '英文', 'Siri', '其他'];
+        return order.indexOf(a) - order.indexOf(b);
+      });
+
+      // 在每个分类内，按语言排序子分类
+      const finalCategories = sortedCategories.map(([category, subCategories]) => [
+        category,
+        Object.entries(subCategories).sort(([a], [b]) => {
+          // 中文子分类优先
+          if (a.includes('中文') && !b.includes('中文')) return -1;
+          if (!a.includes('中文') && b.includes('中文')) return 1;
+          return a.localeCompare(b);
+        }),
+      ]);
+
+      return { success: true, voiceCategories: finalCategories };
     } catch (error) {
       logger.error({ error }, 'IPC: get-available-voices failed');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
+
+  // 语言代码到语言名称的映射
+  function getLanguageName(langCode: string): string {
+    const languageMap: Record<string, string> = {
+      en: '英语',
+      zh: '普通话',
+      ja: '日语',
+      ko: '韩语',
+      fr: '法语',
+      de: '德语',
+      es: '西班牙语',
+      it: '意大利语',
+      pt: '葡萄牙语',
+      ru: '俄语',
+      ar: '阿拉伯语',
+      hi: '印地语',
+      th: '泰语',
+      vi: '越南语',
+      nl: '荷兰语',
+      sv: '瑞典语',
+      da: '丹麦语',
+      no: '挪威语',
+      fi: '芬兰语',
+      pl: '波兰语',
+      tr: '土耳其语',
+      he: '希伯来语',
+      el: '希腊语',
+      cs: '捷克语',
+      sk: '斯洛伐克语',
+      hu: '匈牙利语',
+      ro: '罗马尼亚语',
+      bg: '保加利亚语',
+      hr: '克罗地亚语',
+      sl: '斯洛文尼亚语',
+      et: '爱沙尼亚语',
+      lv: '拉脱维亚语',
+      lt: '立陶宛语',
+      uk: '乌克兰语',
+      ca: '加泰罗尼亚语',
+      ms: '马来语',
+      id: '印尼语',
+      ta: '泰米尔语',
+      te: '泰卢固语',
+      kn: '卡纳达语',
+      ml: '马拉雅拉姆语',
+      gu: '古吉拉特语',
+      pa: '旁遮普语',
+      bn: '孟加拉语',
+      ur: '乌尔都语',
+    };
+
+    return languageMap[langCode] || langCode.toUpperCase();
+  }
+
+  // 地区代码到地区名称的映射
+  function getRegionName(regionCode: string): string {
+    const regionMap: Record<string, string> = {
+      CN: '中国大陆',
+      TW: '台湾',
+      HK: '香港',
+      US: '美国',
+      GB: '英国',
+      AU: '澳大利亚',
+      CA: '加拿大',
+      FR: '法国',
+      DE: '德国',
+      ES: '西班牙',
+      IT: '意大利',
+      JP: '日本',
+      KR: '韩国',
+      RU: '俄罗斯',
+      BR: '巴西',
+      MX: '墨西哥',
+      IN: '印度',
+      TH: '泰国',
+      VN: '越南',
+      NL: '荷兰',
+      SE: '瑞典',
+      DK: '丹麦',
+      NO: '挪威',
+      FI: '芬兰',
+      PL: '波兰',
+      TR: '土耳其',
+      IL: '以色列',
+      GR: '希腊',
+      CZ: '捷克',
+      SK: '斯洛伐克',
+      HU: '匈牙利',
+      RO: '罗马尼亚',
+      BG: '保加利亚',
+      HR: '克罗地亚',
+      SI: '斯洛文尼亚',
+      EE: '爱沙尼亚',
+      LV: '拉脱维亚',
+      LT: '立陶宛',
+      UA: '乌克兰',
+      SA: '沙特阿拉伯',
+      AE: '阿联酋',
+      EG: '埃及',
+      ZA: '南非',
+      NZ: '新西兰',
+      SG: '新加坡',
+      MY: '马来西亚',
+      ID: '印尼',
+      PH: '菲律宾',
+    };
+
+    return regionMap[regionCode] || regionCode;
+  }
 
   /**
    * 使用 macOS 本地 say 命令发声

@@ -11,8 +11,8 @@ interface InterviewTrainingEntryBodyProps {
 }
 
 export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBodyProps) {
-  const [voices, setVoices] = useState<Voice[]>([]);
-  const [voice, setVoice] = useState('Alex');
+  const [voiceCategories, setVoiceCategories] = useState<Array<[string, Array<[string, Voice[]]>]>>([]);
+  const [voice, setVoice] = useState('Tingting');
   const [testing, setTesting] = useState(false);
   const [lines, setLines] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,17 +22,45 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
     const loadVoices = async () => {
       try {
         const result = await (window as any).electronInterviewerAPI?.getAvailableVoices?.();
-        if (result?.success && result?.voices) {
-          setVoices(result.voices);
-          // 设置默认声音为第一个可用的声音
-          if (result.voices.length > 0) {
-            setVoice(result.voices[0].name);
+        if (result?.success && result?.voiceCategories) {
+          setVoiceCategories(result.voiceCategories);
+          
+          // 优先选择婷婷（中文）
+          const chineseCategory = result.voiceCategories.find(([categoryName]: [string, any]) => categoryName === '中文');
+          if (chineseCategory) {
+            const chineseSubCategories = chineseCategory[1];
+            for (const [, voices] of chineseSubCategories) {
+              const tingtingVoice = voices.find((v: Voice) => 
+                v.name.toLowerCase().includes('tingting') || 
+                v.name.toLowerCase().includes('ting-ting') ||
+                v.name.toLowerCase().includes('婷婷')
+              );
+              if (tingtingVoice) {
+                setVoice(tingtingVoice.name);
+                break;
+              }
+            }
+            // 如果没找到婷婷，选择第一个中文声音
+            if (voice === 'Tingting') {
+              const firstChineseVoice = chineseSubCategories[0]?.[1]?.[0];
+              if (firstChineseVoice) {
+                setVoice(firstChineseVoice.name);
+              }
+            }
+          } else if (result.voiceCategories.length > 0) {
+            // 如果没有中文，选择第一个可用的声音
+            const firstCategory = result.voiceCategories[0];
+            const firstSubCategory = firstCategory[1][0];
+            const firstVoice = firstSubCategory[1][0];
+            if (firstVoice) {
+              setVoice(firstVoice.name);
+            }
           }
         }
       } catch (error) {
         console.error('Failed to load voices:', error);
         // 如果获取失败，使用默认声音
-        setVoices([{ name: 'Alex', locale: 'en_US', description: 'Default voice' }]);
+        setVoiceCategories([['中文', [['普通话(中国大陆)', [{ name: 'Tingting', locale: 'zh_CN', description: 'Default voice' }]]]]]);
       } finally {
         setLoading(false);
       }
@@ -40,18 +68,6 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
 
     loadVoices();
   }, []);
-
-  // 根据语言分组声音
-  const groupedVoices = voices.reduce((groups, voice) => {
-    const lang = voice.locale.split('_')[0];
-    const language = getLanguageName(lang);
-    
-    if (!groups[language]) {
-      groups[language] = [];
-    }
-    groups[language].push(voice);
-    return groups;
-  }, {} as Record<string, Voice[]>);
 
   const speak = async (v: string, text: string) => {
     try {
@@ -65,7 +81,10 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
 
   // 根据声音名称判断语言
   const isEnglishVoice = (voiceName: string) => {
-    const voice = voices.find(v => v.name === voiceName);
+    const voice = voiceCategories
+      .flatMap(([, subCategories]) => subCategories)
+      .flatMap(([, voices]) => voices)
+      .find(v => v.name === voiceName);
     return voice?.locale.startsWith('en_') || false;
   };
 
@@ -96,12 +115,16 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
               {loading ? (
                 <option>加载声音列表...</option>
               ) : (
-                Object.entries(groupedVoices).map(([language, voiceList]) => (
-                  <optgroup key={language} label={language}>
-                    {voiceList.map(v => (
-                      <option key={v.name} value={v.name}>
-                        {v.name} → {v.description}
-                      </option>
+                voiceCategories.map(([categoryName, subCategories]) => (
+                  <optgroup key={categoryName} label={categoryName}>
+                    {subCategories.map(([subCategoryName, voices]) => (
+                      <optgroup key={subCategoryName} label={`  ${subCategoryName}`}>
+                        {voices.map(v => (
+                          <option key={v.name} value={v.name}>
+                            {v.name}
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
                   </optgroup>
                 ))
@@ -133,57 +156,5 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
   );
 }
 
-// 语言代码到语言名称的映射
-function getLanguageName(langCode: string): string {
-  const languageMap: Record<string, string> = {
-    'en': '英语',
-    'zh': '中文',
-    'ja': '日语',
-    'ko': '韩语',
-    'fr': '法语',
-    'de': '德语',
-    'es': '西班牙语',
-    'it': '意大利语',
-    'pt': '葡萄牙语',
-    'ru': '俄语',
-    'ar': '阿拉伯语',
-    'hi': '印地语',
-    'th': '泰语',
-    'vi': '越南语',
-    'nl': '荷兰语',
-    'sv': '瑞典语',
-    'da': '丹麦语',
-    'no': '挪威语',
-    'fi': '芬兰语',
-    'pl': '波兰语',
-    'tr': '土耳其语',
-    'he': '希伯来语',
-    'el': '希腊语',
-    'cs': '捷克语',
-    'sk': '斯洛伐克语',
-    'hu': '匈牙利语',
-    'ro': '罗马尼亚语',
-    'bg': '保加利亚语',
-    'hr': '克罗地亚语',
-    'sl': '斯洛文尼亚语',
-    'et': '爱沙尼亚语',
-    'lv': '拉脱维亚语',
-    'lt': '立陶宛语',
-    'uk': '乌克兰语',
-    'ca': '加泰罗尼亚语',
-    'ms': '马来语',
-    'id': '印尼语',
-    'ta': '泰米尔语',
-    'te': '泰卢固语',
-    'kn': '卡纳达语',
-    'ml': '马拉雅拉姆语',
-    'gu': '古吉拉特语',
-    'pa': '旁遮普语',
-    'bn': '孟加拉语',
-    'ur': '乌尔都语',
-  };
-  
-  return languageMap[langCode] || langCode.toUpperCase();
-}
 
 
