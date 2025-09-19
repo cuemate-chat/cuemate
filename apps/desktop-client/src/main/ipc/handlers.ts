@@ -456,7 +456,6 @@ export function setupIPC(windowManager: WindowManager): void {
         if (data.isLoggedIn && data.user) {
           cachedUserData = data.user;
           cachedToken = data.token;
-          logger.info('IPC: 用户数据和token已缓存');
         } else {
           cachedUserData = null;
           cachedToken = null;
@@ -598,7 +597,6 @@ export function setupIPC(windowManager: WindowManager): void {
    * 获取缓存的用户数据
    */
   ipcMain.handle('get-user-data', () => {
-    logger.info('IPC: 获取缓存的用户数据');
     if (cachedUserData && cachedToken) {
       return {
         success: true,

@@ -25,9 +25,4 @@ function initializeApp() {
     </React.StrictMode>
   );
 
-  // 发送日志到主进程
-  if ((window as any).logger) {
-    (window as any).logger.info('控制条窗口 React 应用已启动');
-  }
-
 }

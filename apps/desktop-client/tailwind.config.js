@@ -2,7 +2,8 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./src/renderer/**/*.{js,ts,jsx,tsx}",
+    "./src/main/preload/**/*.{js,ts}",
   ],
   theme: {
     extend: {

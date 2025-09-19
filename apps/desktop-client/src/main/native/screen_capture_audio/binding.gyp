@@ -22,7 +22,8 @@
         "MACOSX_DEPLOYMENT_TARGET": "10.15",
         "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
         "ARCHS": ["arm64"],
-        "ONLY_ACTIVE_ARCH": "YES"
+        "ONLY_ACTIVE_ARCH": "YES",
+        "OTHER_LDFLAGS": ["-Wl,-w", "-Wl,-no_warn_duplicate_libraries"]
       },
       "defines": [
         "NAPI_DISABLE_CPP_EXCEPTIONS"

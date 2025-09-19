@@ -37,12 +37,6 @@ class CueMateApp {
     if (!process.env.CUEMATE_LOG_TZ && !process.env.TZ) {
       process.env.TZ = 'Asia/Shanghai';
     }
-
-    logger.info('日志环境配置完成', {
-      logLevel: process.env.LOG_LEVEL,
-      timezone: process.env.CUEMATE_LOG_TZ || process.env.TZ,
-      userDataPath: app?.getPath('userData'),
-    });
   }
 
   private initialize(): void {
@@ -58,8 +52,6 @@ class CueMateApp {
   private setupAppEvents(): void {
     // 当应用准备就绪时
     app.whenReady().then(() => {
-      logger.info('应用已准备就绪，开始初始化窗口管理器');
-
       // 设置应用图标 & 确保 Dock 常驻
       try {
         const iconPath = getAppIconPath();
@@ -69,7 +61,6 @@ class CueMateApp {
         if (process.platform === 'darwin') {
           // 保持regular模式以确保菜单栏显示，只隐藏dock图标
           app.dock.hide();
-          logger.info('已隐藏 dock 图标，应用菜单栏保持可用');
         }
 
         // 创建菜单栏图标（任务栏图标）
@@ -178,7 +169,6 @@ class CueMateApp {
   private createTrayIcon(): void {
     try {
       const iconPath = getAppIconPath();
-      logger.info({ iconPath }, '创建菜单栏图标，图标路径');
 
       const image = nativeImage.createFromPath(iconPath);
       logger.info({ isEmpty: image.isEmpty(), size: image.getSize() }, '图标加载结果');
