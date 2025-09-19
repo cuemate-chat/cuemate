@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface Voice {
-  name: string;
+  commandName: string;
+  displayName: string;
   locale: string;
   description: string;
 }
@@ -31,12 +32,12 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
             const chineseSubCategories = chineseCategory[1];
             for (const [, voices] of chineseSubCategories) {
               const tingtingVoice = voices.find((v: Voice) => 
-                v.name.toLowerCase().includes('tingting') || 
-                v.name.toLowerCase().includes('ting-ting') ||
-                v.name.toLowerCase().includes('婷婷')
+                v.commandName.toLowerCase().includes('tingting') || 
+                v.commandName.toLowerCase().includes('ting-ting') ||
+                v.commandName.toLowerCase().includes('婷婷')
               );
               if (tingtingVoice) {
-                setVoice(tingtingVoice.name);
+                setVoice(tingtingVoice.commandName);
                 break;
               }
             }
@@ -44,7 +45,7 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
             if (voice === 'Tingting') {
               const firstChineseVoice = chineseSubCategories[0]?.[1]?.[0];
               if (firstChineseVoice) {
-                setVoice(firstChineseVoice.name);
+                setVoice(firstChineseVoice.commandName);
               }
             }
           } else if (result.voiceCategories.length > 0) {
@@ -53,14 +54,14 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
             const firstSubCategory = firstCategory[1][0];
             const firstVoice = firstSubCategory[1][0];
             if (firstVoice) {
-              setVoice(firstVoice.name);
+              setVoice(firstVoice.commandName);
             }
           }
         }
       } catch (error) {
         console.error('Failed to load voices:', error);
         // 如果获取失败，使用默认声音
-        setVoiceCategories([['中文', [['普通话(中国大陆)', [{ name: 'Tingting', locale: 'zh_CN', description: 'Default voice' }]]]]]);
+        setVoiceCategories([['中文', [['普通话(中国大陆)', [{ commandName: 'Tingting', displayName: 'Tingting (普通话（中国大陆）)', locale: 'zh_CN', description: 'Default voice' }]]]]]);
       } finally {
         setLoading(false);
       }
@@ -84,7 +85,7 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
     const voice = voiceCategories
       .flatMap(([, subCategories]) => subCategories)
       .flatMap(([, voices]) => voices)
-      .find(v => v.name === voiceName);
+      .find(v => v.commandName === voiceName);
     return voice?.locale.startsWith('en_') || false;
   };
 
@@ -116,17 +117,23 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
                 <option>加载声音列表...</option>
               ) : (
                 voiceCategories.map(([categoryName, subCategories]) => (
-                  <optgroup key={categoryName} label={categoryName}>
+                  <React.Fragment key={categoryName}>
+                    <option disabled style={{ fontWeight: 'bold', backgroundColor: '#333' }}>
+                      ── {categoryName} ──
+                    </option>
                     {subCategories.map(([subCategoryName, voices]) => (
-                      <optgroup key={subCategoryName} label={`  ${subCategoryName}`}>
+                      <React.Fragment key={subCategoryName}>
+                        <option disabled style={{ paddingLeft: '20px', backgroundColor: '#444' }}>
+                          {subCategoryName}
+                        </option>
                         {voices.map(v => (
-                          <option key={v.name} value={v.name}>
-                            {v.name}
+                          <option key={v.commandName} value={v.commandName} style={{ paddingLeft: '40px' }}>
+                            {v.displayName}
                           </option>
                         ))}
-                      </optgroup>
+                      </React.Fragment>
                     ))}
-                  </optgroup>
+                  </React.Fragment>
                 ))
               )}
             </select>

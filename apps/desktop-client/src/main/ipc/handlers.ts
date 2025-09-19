@@ -122,8 +122,25 @@ export function setupIPC(windowManager: WindowManager): void {
           const match = line.match(/^([^#]+?)\s+([a-z]{2}_[A-Z]{2})\s+#\s*(.+)$/);
           if (match) {
             const [, name, locale, description] = match;
+            const cleanName = name.trim();
+            const [lang, region] = locale.trim().split('_');
+            const language = getLanguageName(lang);
+            const regionName = getRegionName(region);
+
+            // 生成显示名称
+            let displayName = cleanName;
+
+            // 特殊处理：Tingting 显示为婷婷
+            if (cleanName.toLowerCase() === 'tingting') {
+              displayName = '婷婷';
+            }
+
+            // 给所有声音加上语言和地区信息
+            displayName = `${displayName} (${language}（${regionName}）)`;
+
             return {
-              name: name.trim(),
+              commandName: cleanName, // 用于执行命令的纯英文名称
+              displayName: displayName, // 用于显示的带语言信息名称
               locale: locale.trim(),
               description: description.trim(),
             };
@@ -143,7 +160,7 @@ export function setupIPC(windowManager: WindowManager): void {
 
           // 判断声音类型
           let category: string;
-          if (voice.name.toLowerCase().includes('siri')) {
+          if (voice.commandName.toLowerCase().includes('siri')) {
             category = 'Siri';
           } else if (lang === 'zh') {
             category = '中文';
@@ -174,15 +191,36 @@ export function setupIPC(windowManager: WindowManager): void {
         return order.indexOf(a) - order.indexOf(b);
       });
 
-      // 在每个分类内，按语言排序子分类
+      // 在每个分类内，按语言排序子分类，并让 Tingting 排在第一位
       const finalCategories = sortedCategories.map(([category, subCategories]) => [
         category,
-        Object.entries(subCategories).sort(([a], [b]) => {
-          // 中文子分类优先
-          if (a.includes('中文') && !b.includes('中文')) return -1;
-          if (!a.includes('中文') && b.includes('中文')) return 1;
-          return a.localeCompare(b);
-        }),
+        Object.entries(subCategories)
+          .map(([subCategoryName, voices]) => [
+            subCategoryName,
+            voices.sort((a, b) => {
+              // Tingting 始终排在第一位
+              if (
+                a.commandName.toLowerCase().includes('tingting') &&
+                !b.commandName.toLowerCase().includes('tingting')
+              )
+                return -1;
+              if (
+                !a.commandName.toLowerCase().includes('tingting') &&
+                b.commandName.toLowerCase().includes('tingting')
+              )
+                return 1;
+              // 其他按字母顺序
+              return a.commandName.localeCompare(b.commandName);
+            }),
+          ])
+          .sort((a, b) => {
+            const aName = a[0] as string;
+            const bName = b[0] as string;
+            // 中文子分类优先
+            if (aName.includes('中文') && !bName.includes('中文')) return -1;
+            if (!aName.includes('中文') && bName.includes('中文')) return 1;
+            return aName.localeCompare(bName);
+          }),
       ]);
 
       return { success: true, voiceCategories: finalCategories };
