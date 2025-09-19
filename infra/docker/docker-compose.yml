@@ -16,40 +16,20 @@ services:
       - cuemate-network
     restart: unless-stopped
 
-  # ASR User - User Speech Recognition
-  asr-user:
-    image: cuemate-asr-user:${VERSION:-0.1.0}
-    container_name: cuemate-asr-user
+  # ASR Service - FunASR Real-time Speech Recognition
+  cuemate-asr:
+    image: cuemate-asr:${VERSION:-0.1.0}
+    container_name: cuemate-asr
     ports:
-      - "8001:8000"
-    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--port", "8000", "--no-vac", "--no-vad", "--pcm-input"]
+      - "10095:10095"
     environment:
-      - PYTORCH_DISABLE_NET_ACCESS=1
-      - ASR_SERVICE_TYPE=user
+      - FUNASR_CACHE_DIR=/app/models
       - CUEMATE_LOG_DIR=/opt/cuemate/logs
+      - PYTHONPATH=/app:/app/funasr
       - TZ=Asia/Shanghai
     volumes:
       - /opt/cuemate/logs:/opt/cuemate/logs
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-    networks:
-      - cuemate-network
-    restart: unless-stopped
-
-  # ASR Interviewer - Interviewer Speech Recognition
-  asr-interviewer:
-    image: cuemate-asr-interviewer:${VERSION:-0.1.0}
-    container_name: cuemate-asr-interviewer
-    ports:
-      - "8002:8000"
-    command: ["--model", "base", "--backend", "simulstreaming", "--lan", "zh", "--port", "8000", "--no-vac", "--no-vad", "--pcm-input"]
-    environment:
-      - PYTORCH_DISABLE_NET_ACCESS=1
-      - ASR_SERVICE_TYPE=interviewer
-      - CUEMATE_LOG_DIR=/opt/cuemate/logs
-      - TZ=Asia/Shanghai
-    volumes:
-      - /opt/cuemate/logs:/opt/cuemate/logs
+      - /opt/cuemate/models:/app/models
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
