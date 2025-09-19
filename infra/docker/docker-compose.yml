@@ -132,6 +132,7 @@ services:
       context: ../..
       dockerfile: infra/docker/web/Dockerfile
       args:
+        VERSION: ${VERSION:-0.1.0}
         WEB_API_BASE: ${WEB_API_BASE:-http://localhost:3001}
     container_name: cuemate-web
     ports:

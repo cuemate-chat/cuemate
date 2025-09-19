@@ -19,13 +19,21 @@ RUN pnpm --filter @cuemate/web build
 # --- Runtime ---
 FROM nginx:alpine
 
+# 设置版本环境变量
+ARG VERSION=0.1.0
+ENV VERSION=${VERSION}
+
 # 拷贝构建产物
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 
 # 覆盖默认站点，支持 SPA 路由回退
 COPY infra/docker/web/nginx.conf /etc/nginx/conf.d/default.conf
 
+# 拷贝启动脚本
+COPY infra/docker/web/start.sh /start.sh
+RUN chmod +x /start.sh
+
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "/start.sh"]
 
 
