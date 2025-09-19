@@ -26,30 +26,8 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
         if (result?.success && result?.voiceCategories) {
           setVoiceCategories(result.voiceCategories);
           
-          // 优先选择婷婷（中文）
-          const chineseCategory = result.voiceCategories.find(([categoryName]: [string, any]) => categoryName === '中文');
-          if (chineseCategory) {
-            const chineseSubCategories = chineseCategory[1];
-            for (const [, voices] of chineseSubCategories) {
-              const tingtingVoice = voices.find((v: Voice) => 
-                v.commandName.toLowerCase().includes('tingting') || 
-                v.commandName.toLowerCase().includes('ting-ting') ||
-                v.commandName.toLowerCase().includes('婷婷')
-              );
-              if (tingtingVoice) {
-                setVoice(tingtingVoice.commandName);
-                break;
-              }
-            }
-            // 如果没找到婷婷，选择第一个中文声音
-            if (voice === 'Tingting') {
-              const firstChineseVoice = chineseSubCategories[0]?.[1]?.[0];
-              if (firstChineseVoice) {
-                setVoice(firstChineseVoice.commandName);
-              }
-            }
-          } else if (result.voiceCategories.length > 0) {
-            // 如果没有中文，选择第一个可用的声音
+          // 直接选择第一个声音（因为普通话（中国大陆）现在排在第一位，婷婷就是第一个）
+          if (result.voiceCategories.length > 0) {
             const firstCategory = result.voiceCategories[0];
             const firstSubCategory = firstCategory[1][0];
             const firstVoice = firstSubCategory[1][0];

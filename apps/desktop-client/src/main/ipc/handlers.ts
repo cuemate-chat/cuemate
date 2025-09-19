@@ -216,9 +216,16 @@ export function setupIPC(windowManager: WindowManager): void {
           .sort((a, b) => {
             const aName = a[0] as string;
             const bName = b[0] as string;
-            // 中文子分类优先
+
+            // 普通话（中国大陆）必须排在第一位
+            if (aName.includes('普通话(中国大陆)') && !bName.includes('普通话(中国大陆)'))
+              return -1;
+            if (!aName.includes('普通话(中国大陆)') && bName.includes('普通话(中国大陆)')) return 1;
+
+            // 其他中文子分类优先
             if (aName.includes('中文') && !bName.includes('中文')) return -1;
             if (!aName.includes('中文') && bName.includes('中文')) return 1;
+
             return aName.localeCompare(bName);
           }),
       ]);
