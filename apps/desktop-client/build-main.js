@@ -163,17 +163,11 @@ function copyNativeModule() {
     const destAudioCaptureDir = resolve(__dirname, 'dist/native/screen_capture_audio');
     const destAudioCaptureFile = resolve(destAudioCaptureDir, 'index.node');
 
-    console.log('检查音频捕获模块 (Core Audio HAL):', sourceAudioCapture);
-    console.log('文件存在:', existsSync(sourceAudioCapture));
-
     if (existsSync(sourceAudioCapture)) {
       if (!existsSync(destAudioCaptureDir)) {
-        console.log('创建目标目录:', destAudioCaptureDir);
         mkdirSync(destAudioCaptureDir, { recursive: true });
       }
-      console.log('复制文件:', sourceAudioCapture, '->', destAudioCaptureFile);
       copyFileSync(sourceAudioCapture, destAudioCaptureFile);
-      console.log('音频捕获模块复制成功 (Core Audio HAL)');
     } else {
       console.warn('音频捕获模块未找到，跳过复制。请先运行 pnpm build:native:electron');
     }

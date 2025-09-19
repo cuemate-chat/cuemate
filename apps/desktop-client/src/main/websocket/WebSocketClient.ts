@@ -9,6 +9,8 @@ interface WebSocketMessage {
   data?: any;
   url?: string;
   user?: any;
+  clientId?: string;
+  clientType?: string;
 }
 
 export class WebSocketClient {
@@ -74,6 +76,14 @@ export class WebSocketClient {
     logger.info({ message }, '收到 WebSocket 消息');
 
     switch (message.type) {
+      case 'CONNECTION_ACK':
+        logger.info({ clientId: message.clientId }, 'WebSocket: 连接确认');
+        break;
+
+      case 'REGISTER_ACK':
+        logger.info({ clientType: message.clientType }, 'WebSocket: 注册确认');
+        break;
+
       case 'OPEN_EXTERNAL':
         if (message.url) {
           shell.openExternal(message.url);
