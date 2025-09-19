@@ -11,7 +11,17 @@ import { logger } from './utils/logger.js';
 
 async function buildServer() {
   const fastify: any = Fastify({
-    logger: logger as any,
+    logger: {
+      level: 'info',
+      transport: {
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
+          translateTime: 'HH:MM:ss Z',
+          ignore: 'pid,hostname',
+        },
+      },
+    },
     trustProxy: true,
     bodyLimit: 10485760, // 10MB
   });
@@ -81,7 +91,7 @@ async function start() {
       健康检查: `http://${host}:${port}/health`,
       向量存储类型: config.vectorStore.type || 'chroma',
       嵌入维度: config.embeddings.dimensions?.toString() || '1536',
-      Chroma地址: config.vectorStore.chromaPath || 'http://chroma:8000',
+      Chroma地址: config.vectorStore.chromaPath || 'http://cuemate-chroma:8000',
     });
   } catch (err) {
     logger.error(err);

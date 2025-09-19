@@ -53,9 +53,11 @@ export const config = configSchema.parse({
   },
   vectorStore: {
     type: 'chroma',
-    // 在 Docker 环境中使用 chroma:8000，本地开发使用 localhost:8000
+    // 在 Docker 环境中使用 cuemate-chroma:8000，本地开发使用 localhost:8000
     chromaPath:
-      process.env.NODE_ENV === 'production' ? 'http://chroma:8000' : 'http://localhost:8000',
+      process.env.NODE_ENV === 'production'
+        ? 'http://cuemate-chroma:8000'
+        : 'http://localhost:8000',
     defaultCollection: 'default',
     jobsCollection: 'jobs',
     resumesCollection: 'resumes',
