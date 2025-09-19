@@ -83,7 +83,7 @@ async function start() {
 
     await fastify.listen({ port, host });
 
-    logger.info(`🚀 RAG Service running at http://${host}:${port}`);
+    logger.info(`RAG Service running at http://${host}:${port}`);
 
     // 打印成功启动信息
     printSuccessInfo('RAG Service', port, {

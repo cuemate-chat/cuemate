@@ -55,7 +55,7 @@ async function start() {
 
     await fastify.listen({ port, host });
 
-    logger.info(`🚀 LLM Router running at http://${host}:${port}`);
+    logger.info(`LLM Router running at http://${host}:${port}`);
 
     // 打印成功启动信息
     printSuccessInfo('LLM Router', port, {

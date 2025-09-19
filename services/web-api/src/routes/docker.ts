@@ -190,7 +190,7 @@ export function registerDockerRoutes(app: FastifyInstance) {
   app.get('/docker/containers/:id/logs', async (req, reply) => {
     try {
       const { id } = (req as any).params;
-      const { tail = '100', since } = (req as any).query || {};
+      const { tail = '1000', since } = (req as any).query || {};
 
       let path = `/containers/${id}/logs?stdout=1&stderr=1`;
       if (tail) path += `&tail=${tail}`;
