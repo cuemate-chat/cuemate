@@ -8,7 +8,7 @@ RAG Service 是一个专门处理岗位和简历信息的向量化服务，将�
 
 ### 1. 岗位信息处理
 - 自动分块：将岗位描述按语义分割成小块
-- 向量化：使用 OpenAI 嵌入模型生成向量表示
+- 向量化：使用自定义嵌入算法生成向量表示
 - 元数据管理：存储岗位ID、用户ID、创建时间等信息
 
 ### 2. 简历信息处理
@@ -44,7 +44,7 @@ RAG_HOST=0.0.0.0
 
 # 向量数据库配置
 VECTOR_STORE_TYPE=chroma
-CHROMA_PATH=http://chroma:8000
+CHROMA_PATH=http://cuemate-chroma:8000
 DEFAULT_COLLECTION=default
 JOBS_COLLECTION=jobs
 RESUMES_COLLECTION=resumes
@@ -132,7 +132,7 @@ curl "http://localhost:3003/jobs/search?query=前端开发&userId=user-456&topK=
 
 ## 注意事项
 
-- 需要有效的 OpenAI API Key
+- 使用内置的自定义嵌入算法，无需外部 API
 - Chroma 数据库需要足够的存储空间
 - 建议在生产环境中启用数据加密
 - 定期备份向量数据库数据

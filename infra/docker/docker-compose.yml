@@ -1,7 +1,7 @@
 services:
   # Chroma Vector DB (for RAG)
-  chroma:
-    image: ghcr.io/chroma-core/chroma:0.5.4
+  cuemate-chroma:
+    image: cuemate-chroma:${VERSION:-0.1.0}
     container_name: cuemate-chroma
     ports:
       - "8000:8000"
@@ -111,7 +111,7 @@ services:
       - RAG_HOST=0.0.0.0
       - VECTOR_STORE_TYPE=chroma
       - EMBEDDINGS_PROVIDER=mock
-      - CHROMA_PATH=http://chroma:8000
+      - CHROMA_PATH=http://cuemate-chroma:8000
       - TZ=Asia/Shanghai
     volumes:
       - chroma_data:/opt/cuemate/chroma_data
@@ -122,7 +122,7 @@ services:
     networks:
       - cuemate-network
     depends_on:
-      - chroma
+      - cuemate-chroma
     restart: unless-stopped
 
   # Web 前端（静态站 - Nginx）
