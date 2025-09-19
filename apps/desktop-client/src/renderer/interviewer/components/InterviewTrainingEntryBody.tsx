@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 interface Voice {
@@ -85,12 +86,12 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
         </div>
         <div className="interviewer-right interviewer-controls-column">
           <div className="voice-select">
-            <select 
-              className="device-select" 
-              value={voice} 
-              onChange={(e) => setVoice(e.target.value)}
-              disabled={loading}
-            >
+          <select 
+            className="device-select" 
+            value={voice} 
+            onChange={(e) => setVoice(e.target.value)}
+            disabled={loading}
+          >
               {loading ? (
                 <option>加载声音列表...</option>
               ) : (
@@ -112,10 +113,11 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
                       </React.Fragment>
                     ))}
                   </React.Fragment>
-                ))
-              )}
-            </select>
-          </div>
+            ))
+          )}
+          </select>
+          <ChevronDown size={14} className="select-icon" />
+        </div>
           <button 
             className="test-button voice-test-button" 
             disabled={testing || loading}
