@@ -1,6 +1,6 @@
 // 使用包名导入；tsconfig.paths 已指向源码目录（仅供类型解析），运行时由构建或容器解析
 import { initSqlite } from '@cuemate/data-sqlite';
-import { fastifyLoggingHooks } from '@cuemate/logger';
+import { fastifyLoggingHooks, printBanner, printSuccessInfo } from '@cuemate/logger';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import fastifyStatic from '@fastify/static';
@@ -28,6 +28,10 @@ import { CueMateWebSocketServer } from './websocket/websocket-server.js';
 config();
 
 async function start() {
+  // 打印启动 banner
+  const port = Number(process.env.WEB_API_PORT || 3001);
+  printBanner('Web API', undefined, port);
+
   const app = Fastify({ logger: serviceLogger });
 
   await app.register(cors, {
@@ -94,7 +98,7 @@ async function start() {
 
   // 创建 WebSocket 服务器实例（先创建，后面再启动）
   const wsServer = new CueMateWebSocketServer();
-  
+
   // 装饰 app 实例（必须在启动前完成）
   app.decorate('wsServer', wsServer);
 
@@ -104,19 +108,26 @@ async function start() {
     return {
       status: 'running',
       clients: clientCounts,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   });
 
-  const port = Number(process.env.WEB_API_PORT || 3001);
   const host = process.env.WEB_API_HOST || '0.0.0.0';
-  
+
   // 启动 Fastify 服务器
   const address = await app.listen({ port, host });
   app.log.info(`Web API running at ${address}`);
-  
+
   // 将 WebSocket 服务器附加到 HTTP 服务器
   wsServer.attachToServer(app.server, port);
+
+  // 打印成功启动信息
+  printSuccessInfo('Web API', port, {
+    HTTP地址: `http://${host}:${port}`,
+    WebSocket地址: `ws://${host}:${port}`,
+    健康检查: `http://${host}:${port}/health`,
+    WebSocket状态: `http://${host}:${port}/ws/status`,
+  });
 }
 
 start();

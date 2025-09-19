@@ -30,6 +30,11 @@ RUN mkdir -p /opt/cuemate/logs/info/llm-router \
     && mkdir -p /opt/cuemate/logs/warn/llm-router \
     && mkdir -p /opt/cuemate/logs/error/llm-router \
     && chown -R node:node /opt/cuemate/logs
+
+# 设置版本环境变量
+ARG VERSION=0.1.0
+ENV VERSION=${VERSION}
+
 USER node
 EXPOSE 3002
 ENTRYPOINT ["dumb-init", "--"]

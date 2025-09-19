@@ -1,4 +1,4 @@
-import { fastifyLoggingHooks } from '@cuemate/logger';
+import { fastifyLoggingHooks, printBanner, printSuccessInfo } from '@cuemate/logger';
 import cors from '@fastify/cors';
 import Fastify from 'fastify';
 import { config } from './config/index.js';
@@ -46,14 +46,25 @@ async function buildServer() {
 
 async function start() {
   try {
-    const fastify = await buildServer();
-
+    // 打印启动 banner
     const port = config.server.port;
     const host = config.server.host;
+    printBanner('LLM Router', undefined, port);
+
+    const fastify = await buildServer();
 
     await fastify.listen({ port, host });
 
     logger.info(`🚀 LLM Router running at http://${host}:${port}`);
+
+    // 打印成功启动信息
+    printSuccessInfo('LLM Router', port, {
+      HTTP地址: `http://${host}:${port}`,
+      健康检查: `http://${host}:${port}/health`,
+      路由策略: config.routing.strategy || 'primary-fallback',
+      支持提供商:
+        'openai, moonshot, glm, qwen, deepseek, kimi, gemini, zhipu, siliconflow, tencent, volcengine, vllm, ollama',
+    });
   } catch (err) {
     logger.error(err);
     process.exit(1);

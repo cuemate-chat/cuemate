@@ -116,6 +116,50 @@ function safeJson(input: unknown) {
 export { fastifyLoggingHooks } from './fastify.js';
 export { getLoggerTimeZone, setLoggerTimeZone } from './tz.js';
 
+// Banner 工具函数
+export function printBanner(serviceName: string, version?: string, port?: number) {
+  const serviceVersion = version || process.env.VERSION || '0.1.0';
+  const banner = `
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║    ██████╗██╗   ██╗███████╗███╗   ███╗ █████╗ ████████╗███████╗
+║   ██╔════╝██║   ██║██╔════╝████╗ ████║██╔══██╗╚══██╔══╝██╔════╝
+║   ██║     ██║   ██║█████╗  ██╔████╔██║███████║   ██║   █████╗  
+║   ██║     ╚██╗ ██╔╝██╔══╝  ██║╚██╔╝██║██╔══██║   ██║   ██╔══╝  
+║   ╚██████╗ ╚████╔╝ ███████╗██║ ╚═╝ ██║██║  ██║   ██║   ███████╗
+║    ╚═════╝  ╚═══╝  ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚══════╝
+║                                                              ║
+║  Service: ${serviceName.padEnd(20)} Version: ${serviceVersion.padEnd(10)} ║
+║  Port: ${port ? port.toString().padEnd(20) : 'N/A'.padEnd(20)} ║
+║  Environment: ${(process.env.NODE_ENV || 'development').padEnd(15)} ║
+║  Started: ${new Date().toISOString().padEnd(20)} ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+`;
+  console.log(banner);
+}
+
+// 成功启动信息工具函数
+export function printSuccessInfo(
+  serviceName: string,
+  port: number,
+  additionalInfo?: Record<string, string>,
+) {
+  const separator = '=========================================';
+  console.log(`[SUCCESS] ${separator}`);
+  console.log(`[SUCCESS] 启动完成！`);
+  console.log(`[SUCCESS] 服务名称: ${serviceName}`);
+  console.log(`[SUCCESS] 端口号: ${port}`);
+
+  if (additionalInfo) {
+    Object.entries(additionalInfo).forEach(([key, value]) => {
+      console.log(`[SUCCESS] ${key}: ${value}`);
+    });
+  }
+
+  console.log(`[SUCCESS] ${separator}`);
+}
+
 function formatLocalTime(d: Date, timeZone?: string): string {
   try {
     const parts = new Intl.DateTimeFormat('sv-SE', {

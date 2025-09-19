@@ -42,6 +42,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/web-api/Dockerfile
+      args:
+        VERSION: ${VERSION:-0.1.0}
     container_name: cuemate-web-api
     environment:
       - NODE_ENV=production
@@ -72,6 +74,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/llm-router/Dockerfile
+      args:
+        VERSION: ${VERSION:-0.1.0}
     container_name: cuemate-llm-router
     ports:
       - "3002:3002"
@@ -96,6 +100,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/rag-service/Dockerfile
+      args:
+        VERSION: ${VERSION:-0.1.0}
     container_name: cuemate-rag-service
     ports:
       - "3003:3003"

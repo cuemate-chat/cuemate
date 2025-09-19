@@ -1,4 +1,4 @@
-import { fastifyLoggingHooks } from '@cuemate/logger';
+import { fastifyLoggingHooks, printBanner, printSuccessInfo } from '@cuemate/logger';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import Fastify from 'fastify';
@@ -64,14 +64,25 @@ async function buildServer() {
 
 async function start() {
   try {
-    const fastify = await buildServer();
-
+    // 打印启动 banner
     const port = config.server.port;
     const host = config.server.host;
+    printBanner('RAG Service', undefined, port);
+
+    const fastify = await buildServer();
 
     await fastify.listen({ port, host });
 
     logger.info(`🚀 RAG Service running at http://${host}:${port}`);
+
+    // 打印成功启动信息
+    printSuccessInfo('RAG Service', port, {
+      HTTP地址: `http://${host}:${port}`,
+      健康检查: `http://${host}:${port}/health`,
+      向量存储类型: config.vectorStore.type || 'chroma',
+      嵌入维度: config.embeddings.dimensions?.toString() || '1536',
+      Chroma地址: config.vectorStore.chromaPath || 'http://chroma:8000',
+    });
   } catch (err) {
     logger.error(err);
     process.exit(1);
