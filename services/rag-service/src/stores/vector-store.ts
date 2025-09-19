@@ -29,7 +29,13 @@ export class VectorStore {
   async initialize(): Promise<void> {
     try {
       if (this.config.type === 'chroma') {
-        this.client = new ChromaClient({ path: this.config.chromaPath });
+        // 使用新的连接方式，兼容 Chroma 1.1.0 服务器
+        const url = new URL(this.config.chromaPath);
+        this.client = new ChromaClient({
+          host: url.hostname,
+          port: parseInt(url.port) || 8000,
+          ssl: url.protocol === 'https:'
+        });
 
         // 获取或创建默认集合
         await this.getOrCreateCollection(this.config.defaultCollection);
