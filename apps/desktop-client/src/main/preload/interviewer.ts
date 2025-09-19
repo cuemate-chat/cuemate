@@ -35,6 +35,7 @@ const interviewerAPI = {
 
   // === 语音合成（macOS say） ===
   speakText: (voice: string, text: string) => ipcRenderer.invoke('speak-text', { voice, text }),
+  getAvailableVoices: () => ipcRenderer.invoke('get-available-voices'),
 
   // === 系统音频扬声器捕获 API ===
   systemAudioCapture: {

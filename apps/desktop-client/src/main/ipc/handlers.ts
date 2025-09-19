@@ -99,6 +99,47 @@ export function setupIPC(windowManager: WindowManager): void {
   );
 
   /**
+   * 获取 macOS 系统可用的声音列表
+   */
+  ipcMain.handle('get-available-voices', async () => {
+    try {
+      if (process.platform !== 'darwin') {
+        return { success: false, error: 'get-available-voices only supported on macOS' };
+      }
+      const { exec } = await import('node:child_process');
+      const voices = await new Promise<string>((resolve, reject) => {
+        exec('say -v ?', (error, stdout) => {
+          if (error) return reject(error);
+          resolve(stdout);
+        });
+      });
+
+      // 解析声音列表
+      const voiceLines = voices.split('\n').filter((line) => line.trim());
+      const voiceList = voiceLines
+        .map((line) => {
+          // 解析格式: "VoiceName              locale    # Description"
+          const match = line.match(/^([^#]+?)\s+([a-z]{2}_[A-Z]{2})\s+#\s*(.+)$/);
+          if (match) {
+            const [, name, locale, description] = match;
+            return {
+              name: name.trim(),
+              locale: locale.trim(),
+              description: description.trim(),
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      return { success: true, voices: voiceList };
+    } catch (error) {
+      logger.error({ error }, 'IPC: get-available-voices failed');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
    * 使用 macOS 本地 say 命令发声
    */
   ipcMain.handle('speak-text', async (_event, args: { voice: string; text: string }) => {
