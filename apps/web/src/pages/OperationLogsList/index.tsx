@@ -50,6 +50,7 @@ export default function OperationLogsList() {
   const menuOptions = [
     { value: '', label: '全部' },
     { value: '主页', label: '主页' },
+    { value: 'AI对话', label: 'AI对话' },
     { value: '新建岗位', label: '新建岗位' },
     { value: '岗位列表', label: '岗位列表' },
     { value: '面试押题', label: '面试押题' },
@@ -338,7 +339,7 @@ export default function OperationLogsList() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500">今日操作总数</h3>
                 <p className="text-2xl font-bold text-blue-600">
-                  {stats.dailyStats[0]?.count || 0}
+                  {stats.todayTotal}
                 </p>
               </div>
               <ChartBarIcon className="w-8 h-8 text-blue-500" />
@@ -349,7 +350,7 @@ export default function OperationLogsList() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500">成功操作数</h3>
                 <p className="text-2xl font-bold text-green-600">
-                  {stats.statusStats.find(s => s.status === 'success')?.count || 0}
+                  {stats.todaySuccess}
                 </p>
               </div>
               <CheckCircleIcon className="w-8 h-8 text-green-500" />
@@ -360,7 +361,7 @@ export default function OperationLogsList() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500">失败操作数</h3>
                 <p className="text-2xl font-bold text-red-600">
-                  {stats.statusStats.find(s => s.status === 'failed')?.count || 0}
+                  {stats.todayFailed}
                 </p>
               </div>
               <XCircleIcon className="w-8 h-8 text-red-500" />

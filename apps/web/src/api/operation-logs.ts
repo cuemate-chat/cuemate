@@ -42,6 +42,9 @@ export interface OperationStats {
   dailyStats: Array<{ date: string; count: number }>;
   userStats: Array<{ user_id: string; user_name: string; count: number }>;
   interviewCount: number;
+  todayTotal: number;
+  todaySuccess: number;
+  todayFailed: number;
 }
 
 // 查询参数类型
@@ -73,7 +76,9 @@ export interface BatchDeleteParams {
 /**
  * 获取操作记录列表
  */
-export const fetchOperationLogs = async (params: OperationLogQuery): Promise<OperationLogResponse> => {
+export const fetchOperationLogs = async (
+  params: OperationLogQuery,
+): Promise<OperationLogResponse> => {
   const cleanParams: Record<string, string> = {};
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== '') {
@@ -117,13 +122,13 @@ export const exportOperationLogs = async (params: {
   const token = localStorage.getItem('auth_token');
   const searchParams = new URLSearchParams(cleanParams);
   const response = await fetch(`/api/operation-logs/export?${searchParams}`, {
-    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  
+
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
-  
+
   // 下载文件
   const blob = await response.blob();
   const url = window.URL.createObjectURL(blob);
@@ -146,21 +151,23 @@ export const deleteOperationLog = async (id: number): Promise<{ success: boolean
 /**
  * 批量删除操作记录
  */
-export const batchDeleteOperationLogs = async (params: BatchDeleteParams): Promise<{ success: boolean; deletedCount: number }> => {
+export const batchDeleteOperationLogs = async (
+  params: BatchDeleteParams,
+): Promise<{ success: boolean; deletedCount: number }> => {
   // http.delete 不支持 body，所以使用原始 fetch
   const token = localStorage.getItem('auth_token');
   const response = await fetch('/api/operation-logs', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(params),
   });
-  
+
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
-  
+
   return response.json();
 };
