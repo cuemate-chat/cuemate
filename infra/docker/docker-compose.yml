@@ -23,13 +23,12 @@ services:
     ports:
       - "10095:10095"
     environment:
-      - FUNASR_CACHE_DIR=/app/models
-      - CUEMATE_LOG_DIR=/opt/cuemate/logs
-      - PYTHONPATH=/app:/app/funasr
+      - MODELSCOPE_CACHE=/app/models
+      - OMP_NUM_THREADS=1
       - TZ=Asia/Shanghai
     volumes:
-      - /opt/cuemate/logs:/opt/cuemate/logs
       - /opt/cuemate/models:/app/models
+      - /opt/cuemate/funasr-packages:/home/funasr/.local/lib/python3.11/site-packages
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
