@@ -34,7 +34,7 @@ export class VectorStore {
         this.client = new ChromaClient({
           host: url.hostname,
           port: parseInt(url.port) || 8000,
-          ssl: url.protocol === 'https:'
+          ssl: url.protocol === 'https:',
         });
 
         // 获取或创建默认集合
@@ -159,7 +159,7 @@ export class VectorStore {
     topK: number = 5,
     filter?: Record<string, any>,
     collectionName?: string,
-    query?: string,
+    _query?: string,
   ): Promise<SearchResult[]> {
     const collection = await this.getOrCreateCollection(
       collectionName || this.config.defaultCollection,
@@ -177,31 +177,34 @@ export class VectorStore {
       // 使用较小值作为n_results参数
       const n_results = Math.min(topK, count);
 
-      // 使用include_metadata=true确保返回元数据，使用include_distances=true确保返回相关度分数
-      const results: any = await (collection as any).query({
+      // Chroma v2：使用 include 数组声明需要的字段
+      const queryParams: any = {
         queryEmbeddings: [embedding],
         nResults: n_results,
-        where: filter,
-        include_metadata: true,
-        include_distances: true,
-      });
+        include: ['documents', 'metadatas', 'distances'],
+      };
 
-      if (!results.documents[0]) {
+      // ChromaDB 1.1.0+ 要求 where 参数有至少一个操作符，空对象会报错
+      if (filter && Object.keys(filter).length > 0) {
+        queryParams.where = filter;
+      }
+
+      const results: any = await (collection as any).query(queryParams);
+
+      if (!results.documents || !results.documents[0]) {
         // 未命中则返回空结果
         return [];
       }
 
-      const q = (query || '').toLowerCase();
+      // 融合字符覆盖率（任一字符命中即可）与向量分数
+      const q = (_query || '').toLowerCase();
       const queryChars = q.split('').filter((ch) => !/\s/.test(ch));
 
       const searchResults = (results.documents[0] as string[]).map((doc: string, i: number) => {
-        // ChromaDB的distances是L2距离，需要转换为相似度分数（0-1之间）
         const distance = results.distances ? results.distances[0][i] : 0;
-        // 使用指数衰减将距离转换为相似度分数
-        let score = Math.exp(-distance);
+        // 使用更直观的相似度映射，数值更易读
+        let score = 1 / (1 + distance);
 
-        // 基于字符的覆盖率得分：统计文本内字符频次，逐个匹配查询字符，可重复匹配
-        let overlapRatio = 0;
         if (queryChars.length > 0) {
           const text = (doc || '').toLowerCase();
           const charToCount: Record<string, number> = {};
@@ -216,16 +219,9 @@ export class VectorStore {
               charToCount[ch] = charToCount[ch] - 1;
             }
           }
-          overlapRatio = matchedChars / queryChars.length; // 0~1
-
-          // 无任何字符重叠则直接置0，避免瞎匹配
-          if (overlapRatio === 0) {
-            score = 0;
-          } else {
-            // 轻量融合：短查询时取重叠率与向量分数的最大值，使“3/33/333”等直觉更合理
-            if (queryChars.length <= 5) {
-              score = Math.max(score, overlapRatio);
-            }
+          const overlapRatio = matchedChars / queryChars.length; // 0~1
+          if (overlapRatio > 0) {
+            score = Math.max(score, overlapRatio);
           }
         }
 
@@ -237,11 +233,12 @@ export class VectorStore {
         };
       });
 
-      // 过滤掉相关度过低的结果并按相关度排序
-      // 只保留相关度大于0的结果，确保返回的都是真正相关的内容
-      return searchResults
-        .filter((result: SearchResult) => result.score > 0)
-        .sort((a, b) => b.score - a.score);
+      return (
+        searchResults
+          // 只过滤掉 0 分，任一字符命中或向量命中都会保留
+          .filter((result: SearchResult) => result.score > 0)
+          .sort((a, b) => b.score - a.score)
+      );
     } catch (error) {
       logger.error({ err: error as any }, 'Embedding search failed');
       // 出错时返回空结果，避免误导性的满分
@@ -273,10 +270,13 @@ export class VectorStore {
       if (filter.id) {
         await (collection as any).delete({ ids: [filter.id] });
         logger.info(`Deleted document with ID ${filter.id} from ${collectionName}`);
-      } else {
-        // 否则使用 where 条件删除
+      } else if (filter && Object.keys(filter).length > 0) {
+        // ChromaDB 1.1.0+ 要求 where 参数有至少一个操作符，空对象会报错
         await (collection as any).delete({ where: filter });
         logger.info(`Deleted documents by filter from ${collectionName}`);
+      } else {
+        // 空过滤器，不执行删除操作
+        logger.warn('Empty filter provided for deleteByFilter, no documents deleted');
       }
     } catch (error) {
       logger.error({ err: error as any }, 'Failed to delete by filter');
@@ -355,10 +355,19 @@ export class VectorStore {
           ids: [(filter as any).id],
         });
       } else {
-        results = await (collection as any).get({
-          limit: topK,
-          where: filter,
-        });
+        // Chroma v2 要求 limit 为数字，query 参数可能传入字符串，这里统一规范化
+        const normalizedLimit =
+          typeof topK === 'number' ? topK : parseInt(String(topK), 10) || 1000;
+
+        const getParams: any = {
+          limit: normalizedLimit,
+        };
+
+        if (filter && Object.keys(filter).length > 0) {
+          getParams.where = filter;
+        }
+
+        results = await (collection as any).get(getParams);
       }
 
       if (!results.documents || results.documents.length === 0) {
