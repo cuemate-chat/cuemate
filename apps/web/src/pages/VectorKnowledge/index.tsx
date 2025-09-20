@@ -25,6 +25,8 @@ export default function VectorKnowledge() {
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
+  // 相关度最低阈值（百分比）。0 表示 >0%，10 表示 >10% ... 100 表示 =100%
+  const [minScorePercent, setMinScorePercent] = useState<number>(0);
   const [filters, setFilters] = useState<SearchFilters>({
     type: 'all',
     query: '',
@@ -81,7 +83,10 @@ export default function VectorKnowledge() {
       }
 
       if (result.success) {
-        const list = result.results || [];
+        const list = (result.results || []).filter((doc: any) => {
+          const s = Number((doc as any).score) || 0;
+          return minScorePercent === 100 ? s >= 1 : s > minScorePercent / 100;
+        });
         // 为每个文档添加相关数量信息
         const enrichedList = await Promise.all(
           list.map(async (doc) => {
@@ -179,7 +184,10 @@ export default function VectorKnowledge() {
       }
 
       if (result.success) {
-        const list = result.results || [];
+        const list = (result.results || []).filter((doc: any) => {
+          const s = Number((doc as any).score) || 0;
+          return minScorePercent === 100 ? s >= 1 : s > minScorePercent / 100;
+        });
         // 为每个文档添加相关数量信息
         const enrichedList = await Promise.all(
           list.map(async (doc) => {
@@ -238,6 +246,8 @@ export default function VectorKnowledge() {
       createdTo: undefined,
     };
     setFilters(newFilters);
+    // 重置相关度为默认 >0%
+    setMinScorePercent(0);
     // 清除筛选后立即搜索
     searchDocuments(newFilters);
   };
@@ -508,7 +518,34 @@ export default function VectorKnowledge() {
             {/* 筛选条件 */}
             {showFilters && (
               <div className="mt-6 pt-6 border-t border-slate-200">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className={`grid grid-cols-1 ${currentTab === 'questions' ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
+                  {/* 相关度阈值 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">相关度</label>
+                    <Select
+                      value={minScorePercent}
+                      onChange={(value) => {
+                        const v = value === undefined || value === null ? 0 : (value as number);
+                        setMinScorePercent(v);
+                        // 选择或清除后立即应用到当前结果（清除视为重置为 >0%）
+                        searchDocuments({});
+                      }}
+                      allowClear
+                      style={{ height: '42px', width: '100%' }}
+                    >
+                      <Select.Option value={0}>{'>0%（默认）'}</Select.Option>
+                      <Select.Option value={10}>{'>10%'}</Select.Option>
+                      <Select.Option value={20}>{'>20%'}</Select.Option>
+                      <Select.Option value={30}>{'>30%'}</Select.Option>
+                      <Select.Option value={40}>{'>40%'}</Select.Option>
+                      <Select.Option value={50}>{'>50%'}</Select.Option>
+                      <Select.Option value={60}>{'>60%'}</Select.Option>
+                      <Select.Option value={70}>{'>70%'}</Select.Option>
+                      <Select.Option value={80}>{'>80%'}</Select.Option>
+                      <Select.Option value={90}>{'>90%'}</Select.Option>
+                      <Select.Option value={100}>{'=100%'}</Select.Option>
+                    </Select>
+                  </div>
                   {/* 根据当前标签页显示不同的筛选字段 */}
                   {currentTab === 'jobs' && (
                     <>
@@ -597,9 +634,7 @@ export default function VectorKnowledge() {
                   {currentTab === 'questions' && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          押题标签
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">押题标签</label>
                         <Select
                           value={filters.tagId}
                           onChange={(value) => searchDocuments({ tagId: value })}
@@ -614,42 +649,41 @@ export default function VectorKnowledge() {
                           ))}
                         </Select>
                       </div>
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          创建时间
-                        </label>
-                        <div className="flex gap-2">
-                          <Input
-                            type="date"
-                            value={
-                              filters.createdFrom
-                                ? new Date(filters.createdFrom).toISOString().slice(0, 10)
-                                : ''
-                            }
-                            onChange={(e) => {
-                              const ts = e.target.value
-                                ? new Date(e.target.value + 'T00:00:00').getTime()
-                                : undefined;
-                              searchDocuments({ createdFrom: ts });
-                            }}
-                            style={{ height: '42px' }}
-                          />
-                          <Input
-                            type="date"
-                            value={
-                              filters.createdTo
-                                ? new Date(filters.createdTo).toISOString().slice(0, 10)
-                                : ''
-                            }
-                            onChange={(e) => {
-                              const ts = e.target.value
-                                ? new Date(e.target.value + 'T23:59:59').getTime()
-                                : undefined;
-                              searchDocuments({ createdTo: ts });
-                            }}
-                            style={{ height: '42px' }}
-                          />
-                        </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">开始时间</label>
+                        <Input
+                          type="date"
+                          value={
+                            filters.createdFrom
+                              ? new Date(filters.createdFrom).toISOString().slice(0, 10)
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const ts = e.target.value
+                              ? new Date(e.target.value + 'T00:00:00').getTime()
+                              : undefined;
+                            searchDocuments({ createdFrom: ts });
+                          }}
+                          style={{ height: '42px' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">结束时间</label>
+                        <Input
+                          type="date"
+                          value={
+                            filters.createdTo
+                              ? new Date(filters.createdTo).toISOString().slice(0, 10)
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const ts = e.target.value
+                              ? new Date(e.target.value + 'T23:59:59').getTime()
+                              : undefined;
+                            searchDocuments({ createdTo: ts });
+                          }}
+                          style={{ height: '42px' }}
+                        />
                       </div>
                     </>
                   )}

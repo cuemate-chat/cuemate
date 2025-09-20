@@ -74,6 +74,39 @@ export class VectorStore {
     }
   }
 
+  /** 计算字符覆盖率：统计 query 中非空白字符在文本中能匹配到的比例（可重复匹配） */
+  private calcCharOverlap(query: string, text: string): number {
+    const q = (query || '').toLowerCase();
+    const t = (text || '').toLowerCase();
+    const queryChars = q.split('').filter((ch) => !/\s/.test(ch));
+    if (queryChars.length === 0) return 0;
+
+    const charToCount: Record<string, number> = {};
+    for (const ch of t) {
+      if (/\s/.test(ch)) continue;
+      charToCount[ch] = (charToCount[ch] || 0) + 1;
+    }
+
+    let matchedChars = 0;
+    for (const ch of queryChars) {
+      if (charToCount[ch] && charToCount[ch] > 0) {
+        matchedChars++;
+        charToCount[ch] = charToCount[ch] - 1;
+      }
+    }
+
+    return matchedChars / queryChars.length; // 0~1
+  }
+
+  /** 最终分数：字符门控 + 语义融合。无任一字符命中则置0；否则取 max(向量分数, 字符覆盖率) */
+  private calcFinalScore(query: string, text: string, distance: number): number {
+    // 向量距离映射到相似度（0~1）
+    const vectorSim = 1 / (1 + (typeof distance === 'number' ? distance : 0));
+    const overlap = this.calcCharOverlap(query, text);
+    if (overlap === 0) return 0;
+    return Math.max(vectorSim, overlap);
+  }
+
   async addDocuments(documents: Document[], collectionName?: string): Promise<string[]> {
     const collection = await this.getOrCreateCollection(
       collectionName || this.config.defaultCollection,
@@ -196,38 +229,15 @@ export class VectorStore {
         return [];
       }
 
-      // 融合字符覆盖率（任一字符命中即可）与向量分数
-      const q = (_query || '').toLowerCase();
-      const queryChars = q.split('').filter((ch) => !/\s/.test(ch));
-
+      const queryText = _query || '';
       const searchResults = (results.documents[0] as string[]).map((doc: string, i: number) => {
         const distance = results.distances ? results.distances[0][i] : 0;
-        // 使用更直观的相似度映射，数值更易读
-        let score = 1 / (1 + distance);
-
-        if (queryChars.length > 0) {
-          const text = (doc || '').toLowerCase();
-          const charToCount: Record<string, number> = {};
-          for (const ch of text) {
-            if (/\s/.test(ch)) continue;
-            charToCount[ch] = (charToCount[ch] || 0) + 1;
-          }
-          let matchedChars = 0;
-          for (const ch of queryChars) {
-            if (charToCount[ch] && charToCount[ch] > 0) {
-              matchedChars++;
-              charToCount[ch] = charToCount[ch] - 1;
-            }
-          }
-          const overlapRatio = matchedChars / queryChars.length; // 0~1
-          if (overlapRatio > 0) {
-            score = Math.max(score, overlapRatio);
-          }
-        }
+        const text = doc || '';
+        const score = this.calcFinalScore(queryText, text, distance);
 
         return {
           id: results.ids[0][i],
-          content: doc || '',
+          content: text,
           metadata: results.metadatas[0][i] || {},
           score,
         };
