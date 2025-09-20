@@ -29,7 +29,7 @@ export class CueMateWebSocketServer {
   public attachToServer(httpServer: any, port: number): void {
     this.wss = new WebSocketServer({ server: httpServer });
     this.setupServer();
-    logger.info(`WebSocket 服务器已附加到 HTTP 服务器，端口 ${port}`);
+    logger.debug(`WebSocket 服务器已附加到 HTTP 服务器，端口 ${port}`);
   }
 
   private setupServer(): void {
@@ -37,7 +37,7 @@ export class CueMateWebSocketServer {
 
     this.wss.on('connection', (ws: WebSocket, request) => {
       const clientId = this.generateClientId();
-      logger.info({ clientId, origin: request.headers.origin }, 'WebSocket 客户端连接');
+      logger.warn({ clientId, origin: request.headers.origin }, 'WebSocket 客户端连接');
 
       ws.on('message', (data: WebSocket.Data) => {
         try {
@@ -49,7 +49,7 @@ export class CueMateWebSocketServer {
       });
 
       ws.on('close', (code, reason) => {
-        logger.info({ clientId, code, reason: reason.toString() }, 'WebSocket 客户端断开连接');
+        logger.warn({ clientId, code, reason: reason.toString() }, 'WebSocket 客户端断开连接');
         this.clients.delete(clientId);
       });
 
@@ -73,7 +73,7 @@ export class CueMateWebSocketServer {
   }
 
   private handleMessage(clientId: string, ws: WebSocket, message: WebSocketMessage): void {
-    logger.info({ clientId, message }, '收到 WebSocket 消息');
+    logger.debug({ clientId, messageType: message?.type }, '收到 WebSocket 消息');
 
     switch (message.type) {
       case 'REGISTER':
@@ -137,7 +137,7 @@ export class CueMateWebSocketServer {
     };
 
     this.clients.set(clientId, client);
-    logger.info({ clientId, clientType: message.client }, 'WebSocket: 客户端注册成功');
+    logger.debug({ clientId, clientType: message.client }, 'WebSocket: 客户端注册成功');
 
     // 发送注册成功确认
     ws.send(
@@ -172,7 +172,7 @@ export class CueMateWebSocketServer {
             url: message.url,
           }),
         );
-        logger.info(
+        logger.debug(
           { url: message.url, clientId: client.id },
           'WebSocket: 已转发 OPEN_EXTERNAL 到 desktop',
         );
@@ -196,7 +196,7 @@ export class CueMateWebSocketServer {
             user: message.user,
           }),
         );
-        logger.info(
+        logger.debug(
           { user: message.user?.username, clientId: client.id },
           'WebSocket: 已转发 LOGIN_SUCCESS 到 desktop',
         );
@@ -219,7 +219,7 @@ export class CueMateWebSocketServer {
             type: 'LOGOUT',
           }),
         );
-        logger.info({ clientId: client.id }, 'WebSocket: 已转发 LOGOUT 到 desktop');
+        logger.debug({ clientId: client.id }, 'WebSocket: 已转发 LOGOUT 到 desktop');
       } catch (error) {
         logger.error({ error, clientId: client.id }, 'WebSocket: 转发 LOGOUT 失败');
       }
@@ -245,7 +245,7 @@ export class CueMateWebSocketServer {
             data: message.data,
           }),
         );
-        logger.info({ clientId: client.id }, 'WebSocket: 已转发 START_RECORDING 到 desktop');
+        logger.debug({ clientId: client.id }, 'WebSocket: 已转发 START_RECORDING 到 desktop');
       } catch (error) {
         logger.error({ error, clientId: client.id }, 'WebSocket: 转发 START_RECORDING 失败');
       }
@@ -264,7 +264,7 @@ export class CueMateWebSocketServer {
             data: message.data,
           }),
         );
-        logger.info({ clientId: client.id }, 'WebSocket: 已转发 RECORDING_RESULT 到 web');
+        logger.debug({ clientId: client.id }, 'WebSocket: 已转发 RECORDING_RESULT 到 web');
       } catch (error) {
         logger.error({ error, clientId: client.id }, 'WebSocket: 转发 RECORDING_RESULT 失败');
       }
@@ -313,7 +313,7 @@ export class CueMateWebSocketServer {
   public close(): void {
     if (this.wss) {
       this.wss.close();
-      logger.info('WebSocket 服务器已关闭');
+      logger.warn('WebSocket 服务器已关闭');
     }
   }
 
@@ -339,7 +339,7 @@ export class CueMateWebSocketServer {
             data: message.data,
           }),
         );
-        logger.info(
+        logger.debug(
           { clientId: client.id },
           'WebSocket: 已转发 START_SYSTEM_AUDIO_CAPTURE 到 desktop',
         );
@@ -368,7 +368,7 @@ export class CueMateWebSocketServer {
             type: 'STOP_SYSTEM_AUDIO_CAPTURE',
           }),
         );
-        logger.info(
+        logger.debug(
           { clientId: client.id },
           'WebSocket: 已转发 STOP_SYSTEM_AUDIO_CAPTURE 到 desktop',
         );
@@ -418,7 +418,7 @@ export class CueMateWebSocketServer {
             data: message.data,
           }),
         );
-        logger.info(
+        logger.debug(
           { clientId: client.id, messageType: message.type },
           'WebSocket: 已转发系统音频扬声器状态到 web',
         );

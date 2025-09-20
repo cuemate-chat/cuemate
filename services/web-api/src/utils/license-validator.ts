@@ -87,10 +87,10 @@ function validateLicenseKey(licenseKey: string): LicenseResponse {
 export async function validateLicenseAtStartup(db: any, logger: any): Promise<void> {
   try {
     const now = Date.now();
-    
+
     // 获取所有状态为active的License
     const licenses = db.prepare('SELECT * FROM licenses WHERE status = ?').all('active');
-    
+
     if (!licenses || licenses.length === 0) {
       logger.warn('当前没有激活状态的 License');
       return;
@@ -104,27 +104,29 @@ export async function validateLicenseAtStartup(db: any, logger: any): Promise<vo
       try {
         // 验证License key
         const validationResult = validateLicenseKey(license.license_key);
-        
+
         if (validationResult.status === LicenseStatus.Success) {
           // License验证成功，检查是否与数据库时间一致
           const dbExpireTime = license.expire_time;
           const currentTime = now;
-          
+
           if (currentTime > dbExpireTime) {
             // 数据库记录显示已过期，更新状态为expired
             db.prepare('UPDATE licenses SET status = ? WHERE id = ?').run('expired', license.id);
             expiredCount++;
-            logger.info(`License ${license.id} 已过期，状态已更新为 expired`);
+            // 降噪：改为 warn，仅保留必要信息
+            logger.warn(`License ${license.id} 已过期，状态已更新为 expired`);
           } else {
             // License有效
             validCount++;
-            logger.info(`License ${license.id} 验证成功，公司: ${validationResult.license?.corporation}`);
+            // 降噪：成功不再打 info，避免批量刷屏
+            logger.debug(`License ${license.id} 验证成功`);
           }
         } else if (validationResult.status === LicenseStatus.Expired) {
           // License key验证显示已过期，更新状态
           db.prepare('UPDATE licenses SET status = ? WHERE id = ?').run('expired', license.id);
           expiredCount++;
-          logger.info(`License ${license.id} key验证显示已过期，状态已更新为 expired`);
+          logger.warn(`License ${license.id} key验证显示已过期，状态已更新为 expired`);
         } else {
           // License验证失败，更新状态为invalid
           db.prepare('UPDATE licenses SET status = ? WHERE id = ?').run('invalid', license.id);
@@ -139,9 +141,11 @@ export async function validateLicenseAtStartup(db: any, logger: any): Promise<vo
       }
     }
 
-    // 汇总报告
-    logger.info(`License 验证完成: 有效 ${validCount} 个，过期 ${expiredCount} 个，无效 ${invalidCount} 个`);
-    
+    // 汇总报告（仅一条）
+    logger.info(
+      `License 验证完成: 有效 ${validCount} 个，过期 ${expiredCount} 个，无效 ${invalidCount} 个`,
+    );
+
     if (validCount === 0) {
       logger.warn('当前没有有效的 License，请上传有效的 License 文件');
     }

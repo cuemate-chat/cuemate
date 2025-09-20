@@ -39,10 +39,7 @@ export class ControlBarWindow {
    * 创建控制条窗口
    */
   public async create(): Promise<void> {
-    if (this.window) {
-      logger.info('control-bar 窗口已存在，跳过创建');
-      return;
-    }
+    if (this.window) return;
 
     try {
       // 获取主显示器信息来计算初始位置
@@ -286,7 +283,6 @@ export class ControlBarWindow {
    */
   public destroy(): void {
     if (this.window && !this.window.isDestroyed()) {
-      logger.info('销毁 control-bar 窗口');
       this.window.destroy();
       this.window = null;
     }

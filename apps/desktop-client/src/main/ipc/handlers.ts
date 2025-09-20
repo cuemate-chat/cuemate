@@ -10,8 +10,6 @@ import { WindowManager } from '../windows/WindowManager.js';
  * command 系统，处理前端和后端之间的通信
  */
 export function setupIPC(windowManager: WindowManager): void {
-  logger.info('设置 IPC 通信处理器');
-
   // 全局缓存用户数据和token
   let cachedUserData: any = null;
   let cachedToken: string | null = null;
@@ -35,7 +33,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('hide-floating-windows', async () => {
     try {
       windowManager.hideFloatingWindows();
-      logger.info('IPC: 隐藏浮动窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 隐藏浮动窗口失败');
@@ -512,7 +509,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('toggle-ai-question-history', async () => {
     try {
       windowManager.toggleAIQuestionHistoryNextToAI();
-      logger.info('IPC: 切换AI问答历史窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 切换AI问答历史窗口失败');
@@ -534,7 +530,6 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('hide-interviewer', async () => {
     try {
       windowManager.hideInterviewer();
-      logger.info('IPC: 隐藏Interviewer窗口命令已执行');
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 隐藏Interviewer窗口失败');
@@ -764,7 +759,7 @@ export function setupIPC(windowManager: WindowManager): void {
           break;
         case 'info':
         default:
-          logger.info(`${prefix} ${message}`);
+          logger.debug(`${prefix} ${message}`);
           break;
       }
 
@@ -782,7 +777,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('close-button-clicked', async () => {
     try {
-      logger.info('IPC: 关闭按钮被点击');
+      logger.debug('IPC: 关闭按钮被点击');
       // 隐藏所有浮动窗口
       windowManager.hideFloatingWindows();
       return { success: true };
@@ -803,11 +798,11 @@ export function setupIPC(windowManager: WindowManager): void {
     try {
       if (windowId) {
         // 为指定窗口打开开发者工具（功能暂未实现）
-        logger.info({ windowId }, 'IPC: 尝试为窗口打开开发者工具（功能待实现）');
+        logger.debug({ windowId }, 'IPC: 尝试为窗口打开开发者工具（功能待实现）');
       } else {
         // 为发送请求的窗口打开开发者工具
         event.sender.openDevTools();
-        logger.info('IPC: 为当前窗口打开开发者工具');
+        logger.debug('IPC: 为当前窗口打开开发者工具');
       }
       return { success: true };
     } catch (error) {
@@ -873,7 +868,7 @@ export function setupIPC(windowManager: WindowManager): void {
     'system-audio-capture-start',
     async (event, options?: { sampleRate?: number; channels?: number }) => {
       try {
-        logger.info('开始系统音频扬声器捕获，先同步ASR配置');
+        logger.debug('开始系统音频扬声器捕获，先同步ASR配置');
 
         // 1. 先同步ASR配置
         const configSynced = await syncASRConfig();
@@ -919,7 +914,7 @@ export function setupIPC(windowManager: WindowManager): void {
       if (systemAudioCapture) {
         systemAudioCapture.stopCapture();
         systemAudioCapture = null;
-        logger.info('系统音频扬声器捕获已停止');
+        logger.debug('系统音频扬声器捕获已停止');
         return { success: true };
       } else {
         return { success: false, error: '没有正在进行的系统音频扬声器捕获任务' };
@@ -952,7 +947,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   async function syncASRConfig(): Promise<boolean> {
     try {
-      logger.info('同步ASR配置到服务');
+      logger.debug('同步ASR配置到服务');
       const response = await fetch('http://localhost:3001/asr/sync-config', {
         method: 'POST',
         headers: {
@@ -963,7 +958,7 @@ export function setupIPC(windowManager: WindowManager): void {
 
       if (response.ok) {
         const result = await response.json();
-        logger.info('ASR配置同步成功:', result);
+        logger.debug('ASR配置同步成功:', result);
         return true;
       } else {
         const error = await response.text();
@@ -981,7 +976,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('mic-test-start', async (event, _options?: { deviceId?: string }) => {
     try {
-      logger.info('开始麦克风测试，先同步ASR配置');
+      logger.debug('开始麦克风测试，先同步ASR配置');
 
       // 1. 先同步ASR配置
       const configSynced = await syncASRConfig();
@@ -989,21 +984,21 @@ export function setupIPC(windowManager: WindowManager): void {
         logger.warn('ASR配置同步失败，但继续测试流程');
       }
 
-      logger.info('开始麦克风测试，连接 cuemate-asr 服务');
+      logger.debug('开始麦克风测试，连接 cuemate-asr 服务');
 
       // 创建到 ASR 服务的 WebSocket 连接
       const asrServiceUrl = 'ws://localhost:10095';
       micAsrWebSocket = new WebSocket(asrServiceUrl);
 
       micAsrWebSocket!.on('open', () => {
-        logger.info('麦克风 ASR 服务连接成功');
+        logger.debug('麦克风 ASR 服务连接成功');
         // 不发送状态消息，只记录日志
       });
 
       micAsrWebSocket!.on('message', (data: any) => {
         try {
           const result = JSON.parse(data.toString());
-          logger.info('麦克风 ASR 识别结果:', result);
+          logger.debug('麦克风 ASR 识别结果:', result);
 
           // 构建显示文本
           let displayText = '';
@@ -1040,7 +1035,7 @@ export function setupIPC(windowManager: WindowManager): void {
       });
 
       micAsrWebSocket!.on('close', () => {
-        logger.info('麦克风 ASR WebSocket 连接关闭');
+        logger.debug('麦克风 ASR WebSocket 连接关闭');
         micAsrWebSocket = null;
       });
 
@@ -1073,7 +1068,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('speaker-test-start', async (event, _options?: { deviceId?: string }) => {
     try {
-      logger.info('开始扬声器音频捕获systemAudioCapture：' + JSON.stringify(systemAudioCapture));
+      logger.debug('开始扬声器音频捕获');
 
       if (systemAudioCapture && systemAudioCapture.isCaptureActive()) {
         return { success: false, error: '系统音频捕获已在进行中' };
@@ -1091,7 +1086,7 @@ export function setupIPC(windowManager: WindowManager): void {
         );
       });
 
-      logger.info('代码走到这里！');
+      logger.debug('speaker-test pipeline ready');
       // 设置错误回调
       systemAudioCapture.onError((error: Error) => {
         logger.error('扬声器测试音频捕获错误:', error);
@@ -1101,7 +1096,7 @@ export function setupIPC(windowManager: WindowManager): void {
         });
       });
 
-      logger.info('代码走到这里2！');
+      logger.debug('speaker-test startCapture');
       // 启动捕获
       await systemAudioCapture.startCapture();
 
@@ -1120,7 +1115,7 @@ export function setupIPC(windowManager: WindowManager): void {
       if (systemAudioCapture) {
         systemAudioCapture.stopCapture();
         systemAudioCapture = null;
-        logger.info('音频测试已停止');
+        logger.debug('音频测试已停止');
       }
       return { success: true };
     } catch (error) {
@@ -1179,7 +1174,7 @@ export function setupIPC(windowManager: WindowManager): void {
       const filePath = path.join(dataDir, fileName);
       fs.writeFileSync(filePath, Buffer.from(audioData));
 
-      logger.info(`音频文件已保存: ${filePath}, ${audioData.length} 字节`);
+      logger.debug(`音频文件已保存: ${filePath}, ${audioData.length} 字节`);
       return { success: true, filePath, size: audioData.length };
     } catch (error) {
       logger.error({ error }, 'IPC: 保存音频文件失败');
@@ -1190,5 +1185,5 @@ export function setupIPC(windowManager: WindowManager): void {
     }
   });
 
-  logger.info('IPC 通信处理器设置完成');
+  logger.debug('IPC 通信处理器设置完成');
 }

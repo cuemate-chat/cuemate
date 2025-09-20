@@ -174,14 +174,12 @@ export function VoiceTestBody() {
       websocket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('FunASR 麦克风识别结果:', data);
 
           // FunASR 返回格式: { mode: "online", text: "识别结果", wav_name: "microphone", is_final: false }
           if (data.text && data.text.trim()) {
             hasRecognitionResult = true;
             // 在线模式直接显示当前识别结果
             currentRecognizedText = data.text.trim();
-            console.log('实时识别文本:', currentRecognizedText);
             setMicRecognitionResult({ text: currentRecognizedText, error: '', timestamp: Date.now() });
 
             if (shouldStopRecognition(currentRecognizedText, recognitionStartTime)) {
@@ -227,7 +225,6 @@ export function VoiceTestBody() {
     setSpeakerRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
 
     // 确保麦克风测试已停止，因为 FunASR 只支持一个客户端
-    console.log('确保麦克风测试已停止，准备开始扬声器测试');
 
     // 等待 1 秒确保之前的连接完全关闭
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -261,11 +258,9 @@ export function VoiceTestBody() {
         return;
       }
 
-      console.log('开始创建扬声器测试 WebSocket 连接到 ws://localhost:10095');
       websocket = new WebSocket('ws://localhost:10095');
 
       websocket.onopen = async () => {
-        console.log('扬声器测试 WebSocket 连接已建立');
         recognitionStartTime = Date.now();
         // 发送 FunASR 配置参数
         const config = {
@@ -275,12 +270,9 @@ export function VoiceTestBody() {
           is_speaking: true,
           mode: "online"
         };
-        console.log('发送扬声器测试配置到 FunASR:', config);
         if (websocket) websocket.send(JSON.stringify(config));
 
-        console.log('启动扬声器音频捕获，设备ID:', selectedSpeaker);
         const result = await electronAPI.audioTest.startSpeakerTest({ deviceId: selectedSpeaker });
-        console.log('扬声器测试启动结果:', result);
 
         if (!result.success) {
           setSpeakerStatus('failed');
@@ -289,7 +281,6 @@ export function VoiceTestBody() {
           return;
         }
         audioDataListener = (audioData: ArrayBuffer) => {
-          console.log('收到扬声器音频数据回调:', audioData.byteLength, 'bytes');
 
           if (websocket && websocket.readyState === WebSocket.OPEN && audioData.byteLength > 0) {
             // 缓冲音频数据
@@ -297,7 +288,6 @@ export function VoiceTestBody() {
 
             const now = Date.now();
             const bufferSize = audioBuffer.reduce((sum, buf) => sum + buf.byteLength, 0);
-            console.log(`当前音频缓冲区大小: ${bufferSize} bytes, 缓冲块数: ${audioBuffer.length}`);
 
             // 每隔200ms或缓冲区达到16KB时发送数据
             if (now - lastSendTime >= 200 || bufferSize >= 16384) {
@@ -312,8 +302,6 @@ export function VoiceTestBody() {
                   combinedView.set(new Uint8Array(buf), offset);
                   offset += buf.byteLength;
                 }
-
-                console.log(`发送扬声器音频数据到 FunASR: ${totalBytes} 字节`);
                 websocket.send(combinedBuffer);
 
                 // 清空缓冲区
@@ -322,10 +310,6 @@ export function VoiceTestBody() {
               }
             }
           } else {
-            console.log('WebSocket 未连接或数据为空:', {
-              websocketReady: websocket?.readyState === WebSocket.OPEN,
-              dataSize: audioData.byteLength
-            });
           }
         };
         electronAPI.on('speaker-audio-data', audioDataListener);
@@ -334,14 +318,12 @@ export function VoiceTestBody() {
       websocket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('FunASR 扬声器识别结果:', data);
 
           // FunASR 返回格式: { mode: "online", text: "识别结果", wav_name: "speaker", is_final: false }
           if (data.text && data.text.trim()) {
             hasRecognitionResult = true;
             // 在线模式直接显示当前识别结果
             currentRecognizedText = data.text.trim();
-            console.log('实时识别文本:', currentRecognizedText);
             setSpeakerRecognitionResult({ text: currentRecognizedText, error: '', timestamp: Date.now() });
 
             if (shouldStopRecognition(currentRecognizedText, recognitionStartTime)) {
@@ -361,9 +343,7 @@ export function VoiceTestBody() {
         cleanup();
       };
 
-      websocket.onclose = (event) => {
-        console.log('扬声器测试 WebSocket 连接关闭:', event.code, event.reason);
-      };
+      websocket.onclose = (_event) => {};
 
       testTimer = setTimeout(async () => {
         await cleanup();

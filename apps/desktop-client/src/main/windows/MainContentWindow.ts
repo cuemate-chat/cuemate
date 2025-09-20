@@ -40,10 +40,7 @@ export class MainContentWindow {
    * 创建主内容窗口
    */
   public async create(): Promise<void> {
-    if (this.window) {
-      logger.info('main-content 窗口已存在，跳过创建');
-      return;
-    }
+    if (this.window) return;
 
     try {
       // 获取主显示器信息来计算初始位置
@@ -96,10 +93,8 @@ export class MainContentWindow {
       // 设置窗口事件监听
       this.setupEvents();
 
-      // 页面加载完成，默认显示大窗口
-      this.window.webContents.once('did-finish-load', () => {
-        logger.info('main-content 页面加载完成，默认显示大窗口');
-      });
+      // 页面加载完成事件，无需记录info
+      this.window.webContents.once('did-finish-load', () => {});
     } catch (error) {
       logger.error({ error }, '创建 main-content 窗口失败');
       throw error;
@@ -154,45 +149,35 @@ export class MainContentWindow {
     });
 
     // 窗口最小化
-    this.window.on('minimize', () => {
-      logger.info('main-content 窗口已最小化');
-    });
+    this.window.on('minimize', () => {});
 
     // 窗口从最小化恢复
-    this.window.on('restore', () => {
-      logger.info('main-content 窗口已恢复');
-    });
+    this.window.on('restore', () => {});
 
     // 窗口最大化
     this.window.on('maximize', () => {
-      logger.info('main-content 窗口已最大化');
       this.window!.webContents.send('window-maximized', true);
     });
 
     // 窗口取消最大化
     this.window.on('unmaximize', () => {
-      logger.info('main-content 窗口取消最大化');
       this.window!.webContents.send('window-maximized', false);
     });
 
     // 阻止窗口关闭，改为隐藏
     this.window.on('close', (event) => {
-      logger.info('main-content 窗口尝试关闭，改为隐藏');
       event.preventDefault();
       this.hide();
     });
 
     // 窗口已关闭（实际销毁时）
     this.window.on('closed', () => {
-      logger.info('main-content 窗口已关闭');
       this.window = null;
       this.lastBounds = null;
     });
 
     // 页面加载完成
-    this.window.webContents.on('did-finish-load', () => {
-      logger.info('main-content 页面加载完成');
-    });
+    this.window.webContents.on('did-finish-load', () => {});
 
     // 处理页面崩溃
     this.window.webContents.on('crashed', () => {
@@ -206,9 +191,7 @@ export class MainContentWindow {
     });
 
     // 恢复响应
-    this.window.on('responsive', () => {
-      logger.info('main-content 窗口恢复响应');
-    });
+    this.window.on('responsive', () => {});
   }
 
   /**
@@ -352,13 +335,11 @@ export class MainContentWindow {
     }
   }
 
-
   /**
    * 销毁窗口
    */
   public destroy(): void {
     if (this.window && !this.window.isDestroyed()) {
-      logger.info('销毁 main-content 窗口');
       this.window.destroy();
       this.window = null;
       this.lastBounds = null;

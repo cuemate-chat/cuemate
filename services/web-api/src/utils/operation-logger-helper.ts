@@ -116,7 +116,7 @@ export const OPERATION_MAPPING = {
   },
   // AI对话
   AI_CONVERSATION: {
-    menu: '智能AI',
+    menu: 'AI对话',
     type: 'ai_conversation',
   },
 } as const;

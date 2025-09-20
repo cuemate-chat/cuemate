@@ -32,10 +32,7 @@ export class InterviewerWindow {
   }
 
   public async create(): Promise<void> {
-    if (this.window) {
-      logger.info('interviewer 窗口已存在，跳过创建');
-      return;
-    }
+    if (this.window) return;
     try {
       const primaryDisplay = screen.getPrimaryDisplay();
       const { x: displayX, y: displayY } = primaryDisplay.workArea;
@@ -127,7 +124,6 @@ export class InterviewerWindow {
     if (this.window) {
       this.window.destroy();
       this.window = null;
-      logger.info('interviewer 窗口已销毁');
     }
   }
 }

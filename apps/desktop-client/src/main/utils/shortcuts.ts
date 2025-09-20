@@ -8,28 +8,25 @@ import { WindowManager } from '../windows/WindowManager.js';
  * 替代 Tauri 的全局快捷键功能
  */
 export function setupGlobalShortcuts(windowManager: WindowManager): void {
-  logger.info('设置全局快捷键');
+  // 简化日志：不输出批量注册信息
 
   // 快捷键配置列表
   const shortcuts: ShortcutConfig[] = [
     {
       accelerator: 'CommandOrControl+\\',
       callback: () => {
-        logger.info('全局快捷键触发: CommandOrControl+\\');
         windowManager.toggleFloatingWindows();
       },
     },
     {
       accelerator: 'CommandOrControl+J',
       callback: () => {
-        logger.info('全局快捷键触发: CommandOrControl+J - 切换主应用窗口');
         windowManager.toggleMainContent();
       },
     },
     {
       accelerator: 'CommandOrControl+Return',
       callback: () => {
-        logger.info('全局快捷键触发: CommandOrControl+Return - 隐藏浮动窗口');
         // 只隐藏浮动窗口，不影响AI问答窗口的独立状态
         windowManager.hideFloatingWindows();
       },
@@ -37,21 +34,18 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
     {
       accelerator: 'CommandOrControl+Alt+Q',
       callback: () => {
-        logger.info('全局快捷键触发: CommandOrControl+Alt+Q');
         windowManager.hideFloatingWindows();
       },
     },
     {
       accelerator: 'CommandOrControl+Alt+S',
       callback: () => {
-        logger.info('全局快捷键触发: CommandOrControl+Alt+S');
         windowManager.showFloatingWindows();
       },
     },
     {
       accelerator: 'CommandOrControl+Shift+H',
       callback: () => {
-        logger.info('全局快捷键触发: CommandOrControl+Shift+H');
         // 隐藏浮动窗口和主内容窗口，但不影响AI问答窗口的独立状态
         windowManager.hideFloatingWindows();
         windowManager.hideMainContent();
@@ -60,7 +54,6 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
     {
       accelerator: 'CommandOrControl+Shift+A',
       callback: () => {
-        logger.info('全局快捷键触发: CommandOrControl+Shift+A - 切换AI问答窗口');
         windowManager.toggleAIQuestion();
       },
     },
@@ -86,7 +79,7 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
     }
   });
 
-  logger.info(`快捷键注册完成: 成功 ${registeredCount} 个, 失败 ${failedCount} 个`);
+  // 不输出“注册完成”统计，避免 info 刷屏
 }
 
 /**
@@ -95,11 +88,7 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
 export function registerShortcut(accelerator: string, callback: () => void): boolean {
   try {
     const success = globalShortcut.register(accelerator, callback);
-    if (success) {
-      logger.info(`动态注册快捷键成功: ${accelerator}`);
-    } else {
-      logger.error(`动态注册快捷键失败: ${accelerator}`);
-    }
+    if (!success) logger.error(`动态注册快捷键失败: ${accelerator}`);
     return success;
   } catch (error) {
     logger.error({ error }, `动态注册快捷键异常: ${accelerator}`);
@@ -113,7 +102,6 @@ export function registerShortcut(accelerator: string, callback: () => void): boo
 export function unregisterShortcut(accelerator: string): void {
   try {
     globalShortcut.unregister(accelerator);
-    logger.info(`快捷键已注销: ${accelerator}`);
   } catch (error) {
     logger.error({ error }, `注销快捷键失败: ${accelerator}`);
   }
@@ -125,7 +113,6 @@ export function unregisterShortcut(accelerator: string): void {
 export function unregisterAllShortcuts(): void {
   try {
     globalShortcut.unregisterAll();
-    logger.info('所有快捷键已注销');
   } catch (error) {
     logger.error({ error }, '注销所有快捷键失败');
   }
