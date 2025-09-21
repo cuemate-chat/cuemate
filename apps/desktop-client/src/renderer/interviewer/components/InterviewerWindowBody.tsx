@@ -27,6 +27,22 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
     }
   }, [selectedCard]);
 
+  // 选择“语音提问”时自动切换模式并显示 AI 提问窗口
+  useEffect(() => {
+    if (selectedCard === '语音提问') {
+      (async () => {
+        try {
+          if ((window as any).electronAPI) {
+            await (window as any).electronAPI.switchToMode('voice-qa');
+            await (window as any).electronAPI.showAIQuestion();
+          }
+        } catch (error) {
+          console.error('切换到语音提问模式失败:', error);
+        }
+      })();
+    }
+  }, [selectedCard]);
+
   const insightCards = [
     {
       icon: Mic,
@@ -86,14 +102,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
     <Tooltip.Provider>
       <div className="interviewer-window-body" key={selectedCard || 'page'}>
         {selectedCard === '语音测试' && <VoiceTestBody />}
-        {selectedCard === '语音提问' && (
-          <VoiceQAEntryBody onStart={async () => {
-            if ((window as any).electronAPI) {
-              await (window as any).electronAPI.switchToMode('voice-qa');
-              await (window as any).electronAPI.showAIQuestion();
-            }
-          }} />
-        )}
+        {selectedCard === '语音提问' && <VoiceQAEntryBody />}
         {selectedCard === '模拟面试' && (
           <MockInterviewEntryBody onStart={async () => {
             if ((window as any).electronAPI) {

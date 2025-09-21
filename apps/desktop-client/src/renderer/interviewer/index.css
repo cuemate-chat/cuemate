@@ -398,6 +398,11 @@ html, body, #root {
 }
 
 /* 语音测试面板 */
+/* 语音提问入口的说明文案样式 */
+.interviewer-mode-desc {
+  font-size: 14px;
+  color: #fff;
+}
 .voice-test-panel {
   margin-top: 16px;
   padding: 16px 12px;
