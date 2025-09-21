@@ -91,7 +91,6 @@ export function VoiceTestBody() {
   const testMicrophone = async () => {
     setMicStatus('testing');
     setShowingMicResult(true);
-    setShowingSpeakerResult(false);
     setMicRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
 
     let stream: MediaStream | null = null;
@@ -221,13 +220,7 @@ export function VoiceTestBody() {
   const testSpeaker = async () => {
     setSpeakerStatus('testing');
     setShowingSpeakerResult(true);
-    setShowingMicResult(false);
     setSpeakerRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
-
-    // 确保麦克风测试已停止，因为 FunASR 只支持一个客户端
-
-    // 等待 1 秒确保之前的连接完全关闭
-    await new Promise(resolve => setTimeout(resolve, 1000));
 
     let websocket: WebSocket | null = null;
     let testTimer: NodeJS.Timeout | null = null;
@@ -261,6 +254,7 @@ export function VoiceTestBody() {
       websocket = new WebSocket('ws://localhost:10095');
 
       websocket.onopen = async () => {
+        console.log('扬声器测试 WebSocket 连接已建立');
         recognitionStartTime = Date.now();
         // 发送 FunASR 配置参数
         const config = {
@@ -270,6 +264,7 @@ export function VoiceTestBody() {
           is_speaking: true,
           mode: "online"
         };
+        console.log('扬声器测试发送配置:', JSON.stringify(config));
         if (websocket) websocket.send(JSON.stringify(config));
 
         const result = await electronAPI.audioTest.startSpeakerTest({ deviceId: selectedSpeaker });
@@ -281,7 +276,6 @@ export function VoiceTestBody() {
           return;
         }
         audioDataListener = (audioData: ArrayBuffer) => {
-
           if (websocket && websocket.readyState === WebSocket.OPEN && audioData.byteLength > 0) {
             // 缓冲音频数据
             audioBuffer.push(audioData);
@@ -302,6 +296,8 @@ export function VoiceTestBody() {
                   combinedView.set(new Uint8Array(buf), offset);
                   offset += buf.byteLength;
                 }
+
+                console.log('扬声器测试发送音频数据到 WebSocket:', totalBytes, 'bytes');
                 websocket.send(combinedBuffer);
 
                 // 清空缓冲区
@@ -310,12 +306,14 @@ export function VoiceTestBody() {
               }
             }
           } else {
+            console.warn('扬声器测试 WebSocket 状态:', websocket?.readyState, '数据大小:', audioData.byteLength);
           }
         };
         electronAPI.on('speaker-audio-data', audioDataListener);
       };
 
       websocket.onmessage = (event) => {
+        console.log('扬声器测试收到 WebSocket 消息:', event.data);
         try {
           const data = JSON.parse(event.data);
 
@@ -324,6 +322,7 @@ export function VoiceTestBody() {
             hasRecognitionResult = true;
             // 在线模式直接显示当前识别结果
             currentRecognizedText = data.text.trim();
+            console.log('扬声器测试识别结果:', currentRecognizedText);
             setSpeakerRecognitionResult({ text: currentRecognizedText, error: '', timestamp: Date.now() });
 
             if (shouldStopRecognition(currentRecognizedText, recognitionStartTime)) {
@@ -380,7 +379,7 @@ export function VoiceTestBody() {
           </div>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <button className="test-button" onClick={testMicrophone} disabled={micStatus === 'testing' || speakerStatus === 'testing'}>
+              <button className="test-button" onClick={testMicrophone} disabled={micStatus === 'testing'}>
                 测试
               </button>
             </Tooltip.Trigger>
@@ -411,7 +410,7 @@ export function VoiceTestBody() {
           </div>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <button className="test-button" onClick={testSpeaker} disabled={speakerStatus === 'testing' || micStatus === 'testing'}>
+              <button className="test-button" onClick={testSpeaker} disabled={speakerStatus === 'testing'}>
                 测试
               </button>
             </Tooltip.Trigger>

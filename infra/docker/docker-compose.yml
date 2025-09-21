@@ -22,18 +22,20 @@ services:
     container_name: cuemate-asr
     ports:
       - "10095:10095"
+    privileged: true
     environment:
-      - MODELSCOPE_CACHE=/app/models
-      - OMP_NUM_THREADS=1
       - TZ=Asia/Shanghai
     volumes:
-      - /opt/cuemate/models:/app/models
-      - /opt/cuemate/funasr-packages:/home/funasr/.local/lib/python3.11/site-packages
+      - /opt/cuemate/funasr-runtime-resources/models:/workspace/models
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
       - cuemate-network
     restart: unless-stopped
+    command: [
+      "bash", "-c",
+      "cd /workspace/FunASR/runtime/websocket/build/bin && ./funasr-wss-server-2pass --download-model-dir /workspace/models --model-dir damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-onnx --online-model-dir damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online-onnx --vad-dir damo/speech_fsmn_vad_zh-cn-16k-common-onnx --punc-dir damo/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727-onnx --itn-dir thuduj12/fst_itn_zh --lm-dir damo/speech_ngram_lm_zh-cn-ai-wesp-fst --decoder-thread-num 4 --model-thread-num 1 --io-thread-num 2 --port 10095 --certfile \"\""
+    ]
 
   # Web API (SQLite) - 端口改为3001
   web-api:

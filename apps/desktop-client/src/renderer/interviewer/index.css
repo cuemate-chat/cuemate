@@ -102,6 +102,7 @@ html, body, #root {
   transition: all 0.2s ease;
   padding: 2px 4px;
   gap: 4px;
+  font-size: 12px;
 }
 
 .interviewer-header-btn:hover {
@@ -110,56 +111,6 @@ html, body, #root {
 
 .interviewer-header-btn-text {
   font-size: 12px;
-}
-
-/* Select 下拉框样式 */
-.interviewer-select-wrapper {
-  position: relative;
-  display: flex;
-  align-items: left;
-  width: 55%;
-}
-
-.interviewer-select-trigger {
-  height: 20px;
-  background: transparent;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 20px;
-  padding: 2px 24px 2px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-}
-
-.interviewer-select-trigger:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.8);
-}
-
-.interviewer-select-trigger:focus {
-  outline: none;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.8);
-}
-
-.interviewer-select-trigger option {
-  background: rgba(30, 30, 30, 0.95);
-  color: white;
-  padding: 8px 12px;
-}
-
-.interviewer-select-icon {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Transcript 按钮样式 - 默认无背景，悬浮时显示 */
@@ -195,6 +146,38 @@ html, body, #root {
   position: relative;
   width: 100%;
   box-sizing: border-box;
+}
+
+/* 返回上一页按钮 */
+.interviewer-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s ease;
+}
+
+.interviewer-back-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.interviewer-back-btn:active {
+  transform: scale(0.98);
+}
+
+.interviewer-back-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
 }
 
 /* Ripple avatar and voice controls for interviewer entry bodies */

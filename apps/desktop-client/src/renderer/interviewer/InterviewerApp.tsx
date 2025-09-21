@@ -5,8 +5,8 @@ import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
 
 export function InterviewerApp() {
   const [isRecording, setIsRecording] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('Default');
   const [isRecognizing] = useState(false);
+  const [currentSectionTitle, setCurrentSectionTitle] = useState<string | null>(null);
 
   const handleStartRecording = () => {
     setIsRecording(true);
@@ -16,25 +16,58 @@ export function InterviewerApp() {
     setIsRecording(false);
   };
 
-  const handleModelChange = (model: string) => {
-    setSelectedModel(model);
-    console.log('Model changed to:', model);
+  const handleClose = async () => {
+    try {
+      await (window as any).electronAPI?.hideInterviewer?.();
+    } catch {}
   };
 
-  const handleTranscriptToggle = () => {
-    console.log('Toggle transcript');
+  const handleSelectCard = async (title: string) => {
+    setCurrentSectionTitle(title);
+    try {
+      if ((window as any).electronAPI) {
+        if (title === '语音提问') {
+          await (window as any).electronAPI.switchToMode('voice-qa');
+          await (window as any).electronAPI.showAIQuestion();
+        } else if (title === '模拟面试') {
+          await (window as any).electronAPI.switchToMode('mock-interview');
+          await (window as any).electronAPI.showAIQuestion();
+        } else if (title === '面试训练') {
+          await (window as any).electronAPI.switchToMode('interview-training');
+          await (window as any).electronAPI.showAIQuestion();
+        }
+      }
+    } catch (error) {
+      console.error('进入模式失败:', error);
+    }
+  };
+
+  const handleBack = async () => {
+    try {
+      if ((window as any).electronAPI) {
+        if (currentSectionTitle === '语音提问' || currentSectionTitle === '模拟面试' || currentSectionTitle === '面试训练') {
+          await (window as any).electronAPI.hideAIQuestion();
+        }
+      }
+    } catch (error) {
+      console.error('返回上一页时隐藏AI问题窗口失败:', error);
+    }
+    setCurrentSectionTitle(null);
   };
 
   return (
     <div className="interviewer-app">
-      <div className="interviewer-window">
+      <div className="interviewer-window" key={currentSectionTitle || 'home'}>
         <InterviewerWindowHeader 
-          selectedModel={selectedModel}
-          onModelChange={handleModelChange}
-          onTranscriptToggle={handleTranscriptToggle}
           isRecognizing={isRecognizing}
+          currentSectionTitle={currentSectionTitle}
+          onClose={handleClose}
+          onBack={currentSectionTitle ? handleBack : undefined}
         />
-        <InterviewerWindowBody />
+        <InterviewerWindowBody 
+          selectedCard={currentSectionTitle}
+          onSelectCard={handleSelectCard}
+        />
         <InterviewerWindowFooter
           isRecording={isRecording}
           onStartRecording={handleStartRecording}
