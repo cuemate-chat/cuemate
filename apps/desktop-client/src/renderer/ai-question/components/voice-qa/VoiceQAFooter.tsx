@@ -2,6 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { Copy, CornerDownLeft, Eraser, Mic, Square } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { MicrophoneRecognitionController, startMicrophoneRecognition } from '../../../../utils/audioRecognition';
+import { setVoiceState } from '../../../../utils/voiceState';
 
 interface WindowFooterProps {
   question: string;
@@ -72,6 +73,7 @@ export function VoiceQAFooter({
         });
         recognitionControllerRef.current = controller;
         setIsRecording(true);
+        setVoiceState({ mode: 'voice-qa', subState: 'recording' });
       } catch {
         setIsRecording(false);
       }
@@ -81,6 +83,7 @@ export function VoiceQAFooter({
       } finally {
         recognitionControllerRef.current = null;
         setIsRecording(false);
+        setVoiceState({ mode: 'voice-qa', subState: 'stopped' });
       }
     }
   };

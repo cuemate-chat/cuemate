@@ -2,6 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { Mic, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
+import { useVoiceState } from '../../../utils/voiceState';
 
 interface InterviewerWindowHeaderProps {
   isRecognizing?: boolean; // 新增状态字段
@@ -16,6 +17,7 @@ export function InterviewerWindowHeader({
   onClose,
   onBack
 }: InterviewerWindowHeaderProps) {
+  const globalState = useVoiceState();
   // 计时器状态
   const [duration, setDuration] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
@@ -55,7 +57,7 @@ export function InterviewerWindowHeader({
     <div className="interviewer-window-header" key={currentSectionTitle || 'home'}>
       <div className="interviewer-header-left">
         <div className="interviewer-title">
-          {isRecognizing ? (
+          {(globalState.mode !== 'none' && globalState.subState === 'recording') ? (
             <LottieAudioLines 
               size={16} 
               alt="Recording"

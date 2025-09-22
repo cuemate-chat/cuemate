@@ -5,6 +5,7 @@ import { InterviewTrainingEntryBody } from './InterviewTrainingEntryBody';
 import { MockInterviewEntryBody } from './MockInterviewEntryBody';
 import { VoiceQAEntryBody } from './VoiceQAEntryBody';
 import { VoiceTestBody } from './VoiceTestBody';
+import { setVoiceState } from '../../../utils/voiceState';
 
 interface InterviewerWindowBodyProps {
   selectedCard: string | null;
@@ -105,6 +106,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
         {selectedCard === '语音提问' && <VoiceQAEntryBody />}
         {selectedCard === '模拟面试' && (
           <MockInterviewEntryBody onStart={async () => {
+            setVoiceState({ mode: 'mock-interview', subState: 'recording' });
             if ((window as any).electronAPI) {
               await (window as any).electronAPI.switchToMode('mock-interview');
               await (window as any).electronAPI.showAIQuestion();
@@ -113,6 +115,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
         )}
         {selectedCard === '面试训练' && (
           <InterviewTrainingEntryBody onStart={async () => {
+            setVoiceState({ mode: 'interview-training', subState: 'recording' });
             if ((window as any).electronAPI) {
               await (window as any).electronAPI.switchToMode('interview-training');
               await (window as any).electronAPI.showAIQuestion();

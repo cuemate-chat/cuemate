@@ -1,25 +1,18 @@
 import { useState } from 'react';
+import { clearVoiceState, useVoiceState } from '../../utils/voiceState';
 import { InterviewerWindowBody } from './components/InterviewerWindowBody';
 import { InterviewerWindowFooter } from './components/InterviewerWindowFooter';
 import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
 
 export function InterviewerApp() {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isRecognizing] = useState(false);
+  const voiceState = useVoiceState();
   const [currentSectionTitle, setCurrentSectionTitle] = useState<string | null>(null);
-
-  const handleStartRecording = () => {
-    setIsRecording(true);
-  };
-
-  const handleStopRecording = () => {
-    setIsRecording(false);
-  };
 
   const handleClose = async () => {
     try {
       await (window as any).electronAPI?.hideInterviewer?.();
     } catch {}
+    clearVoiceState();
   };
 
   const handleSelectCard = async (title: string) => {
@@ -53,13 +46,14 @@ export function InterviewerApp() {
       console.error('返回上一页时隐藏AI问题窗口失败:', error);
     }
     setCurrentSectionTitle(null);
+    clearVoiceState();
   };
 
   return (
     <div className="interviewer-app">
       <div className="interviewer-window" key={currentSectionTitle || 'home'}>
         <InterviewerWindowHeader 
-          isRecognizing={isRecognizing}
+          isRecognizing={voiceState.mode !== 'none' && voiceState.subState === 'recording'}
           currentSectionTitle={currentSectionTitle}
           onClose={handleClose}
           onBack={currentSectionTitle ? handleBack : undefined}
@@ -69,10 +63,7 @@ export function InterviewerApp() {
           onSelectCard={handleSelectCard}
         />
         <InterviewerWindowFooter
-          isRecording={isRecording}
-          onStartRecording={handleStartRecording}
-          onStopRecording={handleStopRecording}
-          isRecognizing={isRecognizing}
+          isRecording={voiceState.mode !== 'none' && voiceState.subState === 'recording'}
         />
       </div>
     </div>

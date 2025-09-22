@@ -2,22 +2,21 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { Mic } from 'lucide-react';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
+import { useVoiceState } from '../../../utils/voiceState';
 
 interface InterviewerWindowFooterProps {
   // 保留接口定义以避免破坏现有调用
   isRecording?: boolean;
   onStartRecording?: () => void;
   onStopRecording?: () => void;
-  isRecognizing?: boolean; // 新增状态字段
 }
 
-export function InterviewerWindowFooter({ 
-  isRecognizing = false 
-}: InterviewerWindowFooterProps) {
+export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
+  const globalState = useVoiceState();
   return (
     <div className="interviewer-window-footer">
       <div className="interviewer-controls">
-        {isRecognizing ? (
+        {(globalState.mode !== 'none' && globalState.subState === 'recording') ? (
           <div className="interviewer-equalizer-container" style={{ color: 'white' }}>
             <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
               <Tooltip.Root>

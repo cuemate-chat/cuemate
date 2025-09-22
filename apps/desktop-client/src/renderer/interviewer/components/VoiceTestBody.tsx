@@ -2,6 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { CheckCircle, ChevronDown, Clock, Loader2, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { MicrophoneRecognitionController, startMicrophoneRecognition } from '../../../utils/audioRecognition';
+import { setVoiceState } from '../../../utils/voiceState';
 
 interface RecognitionResult {
   text: string;
@@ -94,6 +95,7 @@ export function VoiceTestBody() {
     setMicStatus('testing');
     setShowingMicResult(true);
     setMicRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
+    setVoiceState({ mode: 'voice-test', subState: 'recording' });
 
     let testTimer: NodeJS.Timeout | null = null;
     let hasRecognitionResult = false;
@@ -104,6 +106,7 @@ export function VoiceTestBody() {
       if (testTimer) { clearTimeout(testTimer); testTimer = null; }
       try { await micControllerRef.current?.stop(); } catch {}
       micControllerRef.current = null;
+      setVoiceState({ mode: 'none', subState: 'idle' });
     };
 
     try {
@@ -150,6 +153,7 @@ export function VoiceTestBody() {
     setSpeakerStatus('testing');
     setShowingSpeakerResult(true);
     setSpeakerRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
+    setVoiceState({ mode: 'voice-test', subState: 'recording' });
 
     let websocket: WebSocket | null = null;
     let testTimer: NodeJS.Timeout | null = null;
@@ -173,6 +177,7 @@ export function VoiceTestBody() {
       const electronAPI = (window as any).electronInterviewerAPI;
       if (audioDataListener) electronAPI?.off('speaker-audio-data', audioDataListener);
       electronAPI?.audioTest?.stopTest();
+      setVoiceState({ mode: 'none', subState: 'idle' });
     };
 
     try {
