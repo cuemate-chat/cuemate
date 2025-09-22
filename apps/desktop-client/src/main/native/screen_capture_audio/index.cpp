@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <sstream>
 #include "ScreenCaptureAudio.h"
+#include "CoreAudioCapture.h"
 
 // C++ 日志函数 - 写入与 Node.js 相同的日志文件
 void cppLog(const std::string& level, const std::string& message) {
@@ -55,7 +56,8 @@ public:
             InstanceMethod("startCapture", &ScreenCaptureAudioNode::StartCapture),
             InstanceMethod("stopCapture", &ScreenCaptureAudioNode::StopCapture),
             InstanceMethod("isCapturing", &ScreenCaptureAudioNode::IsCapturing),
-            StaticMethod("getAudioDevices", &ScreenCaptureAudioNode::GetAudioDevices)
+            StaticMethod("getAudioDevices", &ScreenCaptureAudioNode::GetAudioDevices),
+            StaticMethod("isCoreAudioTapsAvailable", &ScreenCaptureAudioNode::IsCoreAudioTapsAvailable)
         });
 
         Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -199,7 +201,7 @@ public:
     static Napi::Value GetAudioDevices(const Napi::CallbackInfo& info) {
         Napi::Env env = info.Env();
         auto devices = ScreenCaptureAudioWrapper::getAudioDevices();
-        
+
         Napi::Array result = Napi::Array::New(env, devices.size());
         for (size_t i = 0; i < devices.size(); i++) {
             Napi::Object device = Napi::Object::New(env);
@@ -207,14 +209,27 @@ public:
             device.Set("name", Napi::String::New(env, devices[i].second));
             result.Set(i, device);
         }
-        
+
         return result;
+    }
+
+
+    // 检查 Core Audio Taps 是否可用 (静态方法)
+    static Napi::Value IsCoreAudioTapsAvailable(const Napi::CallbackInfo& info) {
+        Napi::Env env = info.Env();
+        bool isAvailable = CoreAudioTapsWrapper::isAvailable();
+        cppLogInfo("INDEX_CPP 检查 Core Audio Taps 可用性: " + std::string(isAvailable ? "true" : "false"));
+        return Napi::Boolean::New(env, isAvailable);
     }
 };
 
+
 // 模块初始化
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
-    return ScreenCaptureAudioNode::Init(env, exports);
+    // 导出 ScreenCaptureAudio 类
+    ScreenCaptureAudioNode::Init(env, exports);
+
+    return exports;
 }
 
 NODE_API_MODULE(screen_capture_audio, Init)

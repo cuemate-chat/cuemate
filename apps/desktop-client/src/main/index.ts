@@ -171,7 +171,6 @@ class CueMateApp {
       const iconPath = getAppIconPath();
 
       const image = nativeImage.createFromPath(iconPath);
-      logger.info({ isEmpty: image.isEmpty(), size: image.getSize() }, '图标加载结果');
 
       if (image.isEmpty()) {
         logger.error('图标为空，无法创建菜单栏图标');

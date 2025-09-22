@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import { logger } from '../../utils/logger.js';
 
@@ -42,12 +43,15 @@ interface SystemAudioCaptureOptions {
   device?: string; // 音频设备ID
 }
 
+
 export class SystemAudioCapture {
   private nativeCapture: any = null;
   private isCapturing = false;
   private onDataCallback: ((audioData: Buffer) => void) | null = null;
   private onErrorCallback: ((error: Error) => void) | null = null;
   private options: Required<SystemAudioCaptureOptions>;
+  private audioChunks: Buffer[] = []; // 用于调试保存音频数据
+  private chunkCount = 0;
 
   constructor(options: SystemAudioCaptureOptions = {}) {
     this.options = {
@@ -58,8 +62,10 @@ export class SystemAudioCapture {
     };
   }
 
+
+
   /**
-   * 开始捕获系统音频扬声器输出 (使用 Core Audio HAL)
+   * 开始捕获系统音频扬声器输出
    */
   public async startCapture(): Promise<void> {
     if (this.isCapturing) {
@@ -67,9 +73,18 @@ export class SystemAudioCapture {
       return;
     }
 
+    await this.startCaptureWithCoreAudioTaps();
+  }
+
+  /**
+   * 使用 Core Audio Taps API 开始捕获
+   */
+  private async startCaptureWithCoreAudioTaps(): Promise<void> {
+    logger.info('开始启动 Core Audio Taps 系统音频捕获...');
+
     // 设置错误回调
     this.onErrorCallback = (error: Error) => {
-      logger.error('系统音频扬声器捕获错误回调:', error);
+      logger.error('Core Audio Taps 系统音频捕获错误回调:', error);
       throw error;
     };
 
@@ -80,36 +95,75 @@ export class SystemAudioCapture {
     if (!ScreenCaptureAudio) {
       throw new Error('原生音频捕获模块未可用，请确保编译成功');
     }
+
+    // 检查 Core Audio Taps 是否可用
+    if (!ScreenCaptureAudio.isCoreAudioTapsAvailable()) {
+      throw new Error('Core Audio Taps API 在当前系统上不可用，需要 macOS 14.2+');
+    }
+
     if (!this.nativeCapture) {
       this.nativeCapture = new ScreenCaptureAudio();
     }
 
     try {
-      logger.info('开始启动系统音频扬声器捕获 (使用 Core Audio HAL)...');
 
-      // 使用原生模块配置
+      // 使用原生模块配置 (与 HAL 方式相同的配置)
       const config = {
         sampleRate: this.options.sampleRate,
         channels: this.options.channels,
         onData: (audioData: Buffer) => {
-          logger.info(`收到原生音频数据，大小: ${audioData.length} bytes`);
-          if (this.onDataCallback) {
-            this.onDataCallback(audioData);
+          // 检查音频数据是否包含实际声音（静音检测）
+          if (audioData.length > 0) {
+            const int16Data = new Int16Array(
+              audioData.buffer,
+              audioData.byteOffset,
+              audioData.length / 2,
+            );
+            let hasSound = false;
+            let maxAmplitude = 0;
+            const threshold = 10; // 音频阈值 - 临时降低用于调试
+
+            for (let i = 0; i < int16Data.length; i++) {
+              const amplitude = Math.abs(int16Data[i]);
+              if (amplitude > maxAmplitude) {
+                maxAmplitude = amplitude;
+              }
+              if (amplitude > threshold) {
+                hasSound = true;
+                break;
+              }
+            }
+
+            logger.info(
+              `Core Audio Taps 音频数据分析: 长度=${audioData.length}bytes, 最大振幅=${maxAmplitude}, 阈值=${threshold}, 有声音=${hasSound}`,
+            );
+
+            // 收集音频数据用于调试保存（不管是否有声音都保存）
+            this.audioChunks.push(Buffer.from(audioData));
+            this.chunkCount++;
+
+            // 只有包含实际声音时才发送回调
+            if (hasSound && this.onDataCallback) {
+              logger.info('Core Audio Taps 发送音频数据到回调');
+              this.onDataCallback(audioData);
+            } else {
+              logger.debug(
+                `Core Audio Taps 跳过静音数据: 最大振幅=${maxAmplitude} < 阈值=${threshold}`,
+              );
+            }
           }
         },
         onError: (error: Error) => {
-          logger.error('系统音频扬声器捕获错误:', error);
+          logger.error('Core Audio Taps 系统音频捕获错误:', error);
           this.isCapturing = false;
 
-          // 检查是否是权限错误 - Core Audio HAL 通常不需要特殊权限
+          // 检查是否是权限错误
           if (
             error.message.includes('Permission') ||
             error.message.includes('Access') ||
             error.message.includes('权限')
           ) {
-            const permissionError = new Error(
-              'Core Audio 访问失败，请检查音频设备权限设置',
-            );
+            const permissionError = new Error('Core Audio Taps 访问失败，请检查音频设备权限设置');
             if (this.onErrorCallback) {
               this.onErrorCallback(permissionError);
             }
@@ -120,7 +174,7 @@ export class SystemAudioCapture {
       };
 
       logger.info(
-        '调用原生模块 startCapture，配置:',
+        '调用原生模块 startCapture (Core Audio Taps)，配置:',
         JSON.stringify({
           sampleRate: config.sampleRate,
           channels: config.channels,
@@ -129,27 +183,20 @@ export class SystemAudioCapture {
         }),
       );
 
-      logger.info(
-        '准备调用 this.nativeCapture.startCapture，nativeCapture类型:',
-        typeof this.nativeCapture,
-      );
-      logger.info('startCapture方法类型:', typeof this.nativeCapture.startCapture);
-
       // 启动原生音频捕获
-      logger.info('即将调用 this.nativeCapture.startCapture，参数已准备');
+      logger.info('即将调用 this.nativeCapture.startCapture (Core Audio Taps)');
       this.nativeCapture.startCapture(config);
-      logger.info('this.nativeCapture.startCapture 调用完成');
+      logger.info('this.nativeCapture.startCapture (Core Audio Taps) 调用完成');
 
-      logger.info('已调用 this.nativeCapture.startCapture');
       this.isCapturing = true;
-
-      logger.info('系统音频扬声器捕获已启动 (使用 Core Audio HAL)');
+      logger.info('Core Audio Taps 系统音频捕获已启动');
     } catch (error) {
-      logger.error('启动系统音频扬声器捕获失败:', error);
+      logger.error('启动 Core Audio Taps 系统音频捕获失败:', error);
       this.isCapturing = false;
       throw error;
     }
   }
+
 
   /**
    * 停止捕获
@@ -161,6 +208,14 @@ export class SystemAudioCapture {
     }
 
     logger.info('停止系统音频扬声器捕获...');
+
+    // 保存剩余的音频数据
+    if (this.audioChunks.length > 0) {
+      logger.info(`保存剩余的扬声器音频调试文件，块数: ${this.audioChunks.length}`);
+      this.saveAudioToFile(this.audioChunks.slice());
+      this.audioChunks = [];
+      this.chunkCount = 0;
+    }
 
     if (this.nativeCapture) {
       this.nativeCapture.stopCapture();
@@ -190,6 +245,47 @@ export class SystemAudioCapture {
   public isCaptureActive(): boolean {
     return this.isCapturing && this.nativeCapture?.isCapturing();
   }
+
+  /**
+   * 保存音频数据到文件用于调试
+   */
+  private saveAudioToFile(chunks: Buffer[]): void {
+    try {
+      if (chunks.length === 0) return;
+
+      // 使用相对于项目根目录的路径
+      const projectRoot = path.resolve(__dirname, '../../../..');
+      const saveDir = path.join(projectRoot, 'private', 'test', 'audio-debug');
+
+      if (!fs.existsSync(saveDir)) {
+        fs.mkdirSync(saveDir, { recursive: true });
+      }
+
+      // 合并所有音频块
+      const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+      const combinedBuffer = Buffer.alloc(totalLength);
+      let offset = 0;
+      for (const chunk of chunks) {
+        chunk.copy(combinedBuffer, offset);
+        offset += chunk.length;
+      }
+
+      // 生成文件名（带时间戳）
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `speaker-audio-${timestamp}.pcm`;
+      const filepath = path.join(saveDir, filename);
+
+      // 保存 PCM 原始数据
+      fs.writeFileSync(filepath, combinedBuffer);
+
+      logger.info(
+        `扬声器音频数据已保存: ${filename}, 大小: ${combinedBuffer.length} bytes, 块数: ${chunks.length}`,
+      );
+    } catch (error) {
+      logger.error('保存音频文件失败:', error);
+    }
+  }
+
 
   /**
    * 获取可用的音频设备列表 (macOS - Core Audio HAL)

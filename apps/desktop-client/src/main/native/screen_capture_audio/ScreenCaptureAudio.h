@@ -7,13 +7,7 @@
 #include <utility>
 
 // 前向声明
-class CoreAudioCaptureWrapper;
-
-// 音频捕获实现方式枚举
-enum class AudioCaptureMethod {
-    CORE_AUDIO,        // 使用 Core Audio HAL (推荐)
-    SCREEN_CAPTURE_KIT // 使用 ScreenCaptureKit (已注释，保留作为备用)
-};
+class CoreAudioTapsWrapper;
 
 // C++ 包装器类的声明
 class ScreenCaptureAudioWrapper {
@@ -30,14 +24,8 @@ public:
 
     static std::vector<std::pair<std::string, std::string>> getAudioDevices();
 
-    // 设置音频捕获方式
-    void setCaptureMethod(AudioCaptureMethod method);
-    AudioCaptureMethod getCaptureMethod() const;
-
 private:
-    void* handler; // ScreenCaptureKit 处理器 (已注释)
-    CoreAudioCaptureWrapper* coreAudioHandler; // Core Audio 处理器
-    AudioCaptureMethod captureMethod; // 当前使用的捕获方式
+    CoreAudioTapsWrapper* coreAudioTapsHandler; // Core Audio Taps 处理器
 };
 
 #endif // SCREEN_CAPTURE_AUDIO_H

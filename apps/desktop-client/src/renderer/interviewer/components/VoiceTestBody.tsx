@@ -137,20 +137,19 @@ export function VoiceTestBody() {
           try {
             await audioContext.audioWorklet.addModule('/pcm-processor.js');
             const workletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
-            const audioChunks: ArrayBuffer[] = [];
+            // const audioChunks: ArrayBuffer[] = [];
             workletNode.port.onmessage = (event) => {
               if (event.data.type === 'audiodata' && websocket && websocket.readyState === WebSocket.OPEN) {
                 websocket.send(event.data.data);
-              } else if (event.data.type === 'saveaudio') {
-                // 保存音频块用于调试
-                audioChunks.push(event.data.data.slice());
-
-                // 保存为文件（每10个块或测试结束时）
-                if (audioChunks.length >= 10) {
-                  // saveAudioToFile(audioChunks.slice());
-                  audioChunks.length = 0; // 清空数组
-                }
-              }
+              } 
+              // else if (event.data.type === 'saveaudio') {
+              //   // 保存音频块用于调试（已禁用以提升实时识别性能）
+              //   audioChunks.push(event.data.data.slice());
+              //   if (audioChunks.length >= 10) {
+              //     saveAudioToFile(audioChunks.slice());
+              //     audioChunks.length = 0; // 清空数组
+              //   }
+              // }
             };
             source.connect(workletNode);
           } catch (err) {
@@ -228,8 +227,8 @@ export function VoiceTestBody() {
     let recognitionStartTime = 0;
     let currentRecognizedText = '';
     let audioDataListener: any = null;
-    let audioBuffer: ArrayBuffer[] = [];
-    let lastSendTime = 0;
+    let audioContext: AudioContext | null = null;
+    let speakerWorkletNode: AudioWorkletNode | null = null;
 
     const cleanup = async () => {
       if (testTimer) { clearTimeout(testTimer); testTimer = null; }
@@ -237,6 +236,9 @@ export function VoiceTestBody() {
         // 发送结束信号
         websocket.send(JSON.stringify({ is_speaking: false }));
         setTimeout(() => websocket?.close(), 500);
+      }
+      if (audioContext && audioContext.state !== 'closed') {
+        audioContext.close().catch(() => {});
       }
       const electronAPI = (window as any).electronInterviewerAPI;
       if (audioDataListener) electronAPI?.off('speaker-audio-data', audioDataListener);
@@ -267,6 +269,26 @@ export function VoiceTestBody() {
         console.log('扬声器测试发送配置:', JSON.stringify(config));
         if (websocket) websocket.send(JSON.stringify(config));
 
+        // 初始化 AudioContext 和 WorkletNode
+        audioContext = new AudioContext({ sampleRate: 16000 });
+        try {
+          await audioContext.audioWorklet.addModule('/speaker-pcm-processor.js');
+          speakerWorkletNode = new AudioWorkletNode(audioContext, 'speaker-pcm-processor');
+
+          // 监听来自 WorkletNode 的处理后音频数据
+          speakerWorkletNode.port.onmessage = (event) => {
+            if (event.data.type === 'audiodata' && websocket && websocket.readyState === WebSocket.OPEN) {
+              websocket.send(event.data.data);
+            }
+          };
+        } catch (err) {
+          console.error('扬声器 AudioWorklet 初始化失败:', err);
+          setSpeakerStatus('failed');
+          setSpeakerRecognitionResult(prev => ({ ...prev, error: 'AudioWorklet 初始化失败', timestamp: Date.now() }));
+          cleanup();
+          return;
+        }
+
         const result = await electronAPI.audioTest.startSpeakerTest({ deviceId: selectedSpeaker });
 
         if (!result.success) {
@@ -275,38 +297,14 @@ export function VoiceTestBody() {
           cleanup();
           return;
         }
+
+        // 接收原生音频数据并转发给 WorkletNode 处理
         audioDataListener = (audioData: ArrayBuffer) => {
-          if (websocket && websocket.readyState === WebSocket.OPEN && audioData.byteLength > 0) {
-            // 缓冲音频数据
-            audioBuffer.push(audioData);
-
-            const now = Date.now();
-            const bufferSize = audioBuffer.reduce((sum, buf) => sum + buf.byteLength, 0);
-
-            // 每隔200ms或缓冲区达到16KB时发送数据
-            if (now - lastSendTime >= 200 || bufferSize >= 16384) {
-              if (audioBuffer.length > 0) {
-                // 合并缓冲区数据
-                const totalBytes = audioBuffer.reduce((sum, buf) => sum + buf.byteLength, 0);
-                const combinedBuffer = new ArrayBuffer(totalBytes);
-                const combinedView = new Uint8Array(combinedBuffer);
-
-                let offset = 0;
-                for (const buf of audioBuffer) {
-                  combinedView.set(new Uint8Array(buf), offset);
-                  offset += buf.byteLength;
-                }
-
-                console.log('扬声器测试发送音频数据到 WebSocket:', totalBytes, 'bytes');
-                websocket.send(combinedBuffer);
-
-                // 清空缓冲区
-                audioBuffer = [];
-                lastSendTime = now;
-              }
-            }
-          } else {
-            console.warn('扬声器测试 WebSocket 状态:', websocket?.readyState, '数据大小:', audioData.byteLength);
+          if (speakerWorkletNode && audioData.byteLength > 0) {
+            speakerWorkletNode.port.postMessage({
+              type: 'nativeAudioData',
+              audioData: audioData
+            });
           }
         };
         electronAPI.on('speaker-audio-data', audioDataListener);
@@ -335,8 +333,7 @@ export function VoiceTestBody() {
         }
       };
 
-      websocket.onerror = (error) => {
-        console.error('扬声器测试 WebSocket 连接错误:', error);
+      websocket.onerror = () => {
         setSpeakerStatus('failed');
         setSpeakerRecognitionResult(prev => ({ ...prev, error: '连接扬声器识别服务失败', timestamp: Date.now() }));
         cleanup();
