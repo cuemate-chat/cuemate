@@ -1,7 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { History, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CueMateLogo from '../../../../assets/CueMate.png';
 
 // 头部内的加载动画
@@ -37,6 +37,26 @@ interface WindowHeaderProps {
 
 export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercentage, onHeightChange }: WindowHeaderProps) {
   const [showControls, setShowControls] = useState(false);
+  const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedMic, setSelectedMic] = useState<string>('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const mics = devices.filter(d => d.kind === 'audioinput');
+        setMicDevices(mics);
+        const stored = localStorage.getItem('cuemate.selectedMicDeviceId');
+        if (stored && mics.find(m => m.deviceId === stored)) {
+          setSelectedMic(stored);
+        } else if (mics.length > 0 && !selectedMic) {
+          setSelectedMic(mics[0].deviceId);
+        }
+      } catch (e) {
+        console.error('获取麦克风设备失败:', e);
+      }
+    })();
+  }, []);
 
   return (
     <div 
@@ -48,6 +68,23 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
         <img src={CueMateLogo} alt="CueMate" className="ai-logo" />
         <div className="ai-title">{isLoading ? 'Think' : 'AI Response'}</div>
         {isLoading && <LoadingDots />}
+        {micDevices.length > 0 && (
+          <div style={{ marginLeft: 8 }}>
+            <select 
+              className="ai-height-selector" 
+              value={selectedMic} 
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedMic(value);
+                try { localStorage.setItem('cuemate.selectedMicDeviceId', value); } catch {}
+              }}
+            >
+              {micDevices.map(device => (
+                <option key={device.deviceId} value={device.deviceId}>{device.label || '默认麦克风'}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
       <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
         <div className={`ai-header-right ${showControls ? 'show' : 'hide'}`}>

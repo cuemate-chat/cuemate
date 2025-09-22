@@ -1,6 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { Copy, CornerDownLeft, Eraser, Mic, Square } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { MicrophoneRecognitionController, startMicrophoneRecognition } from '../../../../utils/audioRecognition';
 
 interface WindowFooterProps {
   question: string;
@@ -27,6 +28,7 @@ export function VoiceQAFooter({
 }: WindowFooterProps) {
   const isConversationCompleted = currentConversationStatus === 'completed';
   const [isRecording, setIsRecording] = useState(false);
+  const recognitionControllerRef = useRef<MicrophoneRecognitionController | null>(null);
   
   const handleSubmit = () => {
     if (isConversationCompleted) {
@@ -45,8 +47,42 @@ export function VoiceQAFooter({
     onKeyDown(e);
   };
 
-  const handleVoiceToggle = () => {
-    setIsRecording(!isRecording);
+  const handleVoiceToggle = async () => {
+    if (isConversationCompleted) return;
+    if (!isRecording) {
+      try {
+        const storedDeviceId = localStorage.getItem('cuemate.selectedMicDeviceId') || undefined;
+        const controller = await startMicrophoneRecognition({
+          deviceId: storedDeviceId,
+          onText: (text) => {
+            const prev = question || '';
+            const curr = text || '';
+            // 计算公共前缀，避免每次整句回传造成重复覆盖
+            let i = 0;
+            const limit = Math.min(prev.length, curr.length);
+            while (i < limit && prev.charCodeAt(i) === curr.charCodeAt(i)) i++;
+            const appendPart = curr.slice(i);
+            if (appendPart.length === 0) return;
+            const needSpace = prev.length > 0 && !/\s$/.test(prev) && !/^\s/.test(appendPart);
+            onQuestionChange(needSpace ? prev + ' ' + appendPart : prev + appendPart);
+          },
+          onError: () => {
+            setIsRecording(false);
+          }
+        });
+        recognitionControllerRef.current = controller;
+        setIsRecording(true);
+      } catch {
+        setIsRecording(false);
+      }
+    } else {
+      try {
+        await recognitionControllerRef.current?.stop();
+      } finally {
+        recognitionControllerRef.current = null;
+        setIsRecording(false);
+      }
+    }
   };
 
   return (

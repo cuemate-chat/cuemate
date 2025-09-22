@@ -1,6 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { CheckCircle, ChevronDown, Clock, Loader2, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { MicrophoneRecognitionController, startMicrophoneRecognition } from '../../../utils/audioRecognition';
 
 interface RecognitionResult {
   text: string;
@@ -20,6 +21,7 @@ export function VoiceTestBody() {
   const [showingSpeakerResult, setShowingSpeakerResult] = useState(false);
   const [micRecognitionResult, setMicRecognitionResult] = useState<RecognitionResult>({ text: '', error: '', timestamp: 0 });
   const [speakerRecognitionResult, setSpeakerRecognitionResult] = useState<RecognitionResult>({ text: '', error: '', timestamp: 0 });
+  const micControllerRef = useRef<MicrophoneRecognitionController | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -93,109 +95,45 @@ export function VoiceTestBody() {
     setShowingMicResult(true);
     setMicRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
 
-    let stream: MediaStream | null = null;
-    let audioContext: AudioContext | null = null;
-    let websocket: WebSocket | null = null;
     let testTimer: NodeJS.Timeout | null = null;
     let hasRecognitionResult = false;
     let recognitionStartTime = 0;
     let currentRecognizedText = '';
 
-    const cleanup = () => {
+    const cleanup = async () => {
       if (testTimer) { clearTimeout(testTimer); testTimer = null; }
-      if (audioContext && audioContext.state !== 'closed') {
-        audioContext.close().catch(() => {});
-      }
-      if (stream) { stream.getTracks().forEach(t => t.stop()); }
-      if (websocket && websocket.readyState === WebSocket.OPEN) {
-        // 发送结束信号
-        websocket.send(JSON.stringify({ is_speaking: false }));
-        setTimeout(() => websocket?.close(), 500);
-      }
+      try { await micControllerRef.current?.stop(); } catch {}
+      micControllerRef.current = null;
     };
 
     try {
-      const constraints: MediaStreamConstraints = { audio: selectedMic ? { deviceId: { exact: selectedMic } } : true };
-      stream = await navigator.mediaDevices.getUserMedia(constraints);
-      websocket = new WebSocket('ws://localhost:10095');
-
-      websocket.onopen = async () => {
-        recognitionStartTime = Date.now();
-        // 发送 FunASR 配置参数
-        const config = {
-          chunk_size: [5, 10, 5],
-          chunk_interval: 5,
-          wav_name: "microphone",
-          is_speaking: true,
-          mode: "online"
-        };
-        if (websocket) websocket.send(JSON.stringify(config));
-
-        if (stream) {
-          audioContext = new AudioContext({ sampleRate: 16000 });
-          const source = audioContext.createMediaStreamSource(stream);
-          try {
-            await audioContext.audioWorklet.addModule('/pcm-processor.js');
-            const workletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
-            workletNode.port.onmessage = (event) => {
-              if (event.data.type === 'audiodata' && websocket && websocket.readyState === WebSocket.OPEN) {
-                websocket.send(event.data.data);
-              }
-            };
-            source.connect(workletNode);
-          } catch (err) {
-            const processor = audioContext.createScriptProcessor(4096, 1, 1);
-            processor.onaudioprocess = (event) => {
-              if (websocket && websocket.readyState === WebSocket.OPEN) {
-                const inputData = event.inputBuffer.getChannelData(0);
-                const pcmData = new Int16Array(inputData.length);
-                for (let i = 0; i < inputData.length; i++) {
-                  pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
-                }
-                websocket.send(pcmData.buffer);
-              }
-            };
-            source.connect(processor);
+      const controller = await startMicrophoneRecognition({
+        deviceId: selectedMic || undefined,
+        onOpen: () => { recognitionStartTime = Date.now(); },
+        onText: (text) => {
+          hasRecognitionResult = true;
+          currentRecognizedText = text.trim();
+          setMicRecognitionResult({ text: currentRecognizedText, error: '', timestamp: Date.now() });
+          if (shouldStopRecognition(currentRecognizedText, recognitionStartTime)) {
+            cleanup().finally(() => setMicStatus('success'));
           }
-        }
-      };
-
-      websocket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-
-          // FunASR 返回格式: { mode: "online", text: "识别结果", wav_name: "microphone", is_final: false }
-          if (data.text && data.text.trim()) {
-            hasRecognitionResult = true;
-            // 在线模式直接显示当前识别结果
-            currentRecognizedText = data.text.trim();
-            setMicRecognitionResult({ text: currentRecognizedText, error: '', timestamp: Date.now() });
-
-            if (shouldStopRecognition(currentRecognizedText, recognitionStartTime)) {
-              cleanup();
-              setMicStatus('success');
-            }
-          }
-        } catch (err) {
-          console.error('解析 FunASR 消息失败:', err, event.data);
-        }
-      };
-
-      websocket.onerror = () => {
-        setMicStatus('failed');
-        setMicRecognitionResult(prev => ({ ...prev, error: '连接麦克风识别服务失败', timestamp: Date.now() }));
-        cleanup();
-      };
-
-      websocket.onclose = () => {};
+        },
+        onError: () => {
+          setMicStatus('failed');
+          setMicRecognitionResult(prev => ({ ...prev, error: '连接麦克风识别服务失败', timestamp: Date.now() }));
+          void cleanup();
+        },
+      });
+      micControllerRef.current = controller;
 
       testTimer = setTimeout(() => {
-        cleanup();
-        if (hasRecognitionResult) setMicStatus('success');
-        else {
-          setMicStatus('failed');
-          setMicRecognitionResult(prev => ({ ...prev, error: '连接或识别超时，请检查麦克风和 ASR 服务', timestamp: Date.now() }));
-        }
+        cleanup().finally(() => {
+          if (hasRecognitionResult) setMicStatus('success');
+          else {
+            setMicStatus('failed');
+            setMicRecognitionResult(prev => ({ ...prev, error: '连接或识别超时，请检查麦克风和 ASR 服务', timestamp: Date.now() }));
+          }
+        });
       }, 60000);
     } catch (error: any) {
       setMicStatus('failed');
@@ -204,6 +142,7 @@ export function VoiceTestBody() {
       else if (error?.name === 'NotFoundError') errorMsg = '未找到麦克风设备，请检查设备连接';
       else errorMsg = `麦克风测试失败：${error?.message}`;
       setMicRecognitionResult(prev => ({ ...prev, error: errorMsg, timestamp: Date.now() }));
+      await cleanup();
     }
   };
 
