@@ -158,7 +158,7 @@ async function buildPreloadScripts(watchMode = false) {
 // 复制原生模块
 function copyNativeModule() {
   try {
-    // 复制音频捕获模块 (Core Audio HAL)
+    // 复制音频设备列表模块
     const sourceAudioCapture = resolve(__dirname, 'src/main/native/screen_capture_audio/build/Release/screen_capture_audio.node');
     const destAudioCaptureDir = resolve(__dirname, 'dist/native/screen_capture_audio');
     const destAudioCaptureFile = resolve(destAudioCaptureDir, 'index.node');
@@ -215,8 +215,7 @@ async function buildAll(watchMode = false) {
     
     // 复制原生模块
     copyNativeModule();
-    
-    console.log('Electron 主进程构建完成 (包含 Core Audio HAL 音频捕获)');
+
   }
 }
 
