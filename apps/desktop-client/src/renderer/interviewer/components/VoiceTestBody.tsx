@@ -137,19 +137,10 @@ export function VoiceTestBody() {
           try {
             await audioContext.audioWorklet.addModule('/pcm-processor.js');
             const workletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
-            // const audioChunks: ArrayBuffer[] = [];
             workletNode.port.onmessage = (event) => {
               if (event.data.type === 'audiodata' && websocket && websocket.readyState === WebSocket.OPEN) {
                 websocket.send(event.data.data);
-              } 
-              // else if (event.data.type === 'saveaudio') {
-              //   // 保存音频块用于调试（已禁用以提升实时识别性能）
-              //   audioChunks.push(event.data.data.slice());
-              //   if (audioChunks.length >= 10) {
-              //     saveAudioToFile(audioChunks.slice());
-              //     audioChunks.length = 0; // 清空数组
-              //   }
-              // }
+              }
             };
             source.connect(workletNode);
           } catch (err) {
@@ -318,8 +309,11 @@ export function VoiceTestBody() {
           // FunASR 返回格式: { mode: "online", text: "识别结果", wav_name: "speaker", is_final: false }
           if (data.text && data.text.trim()) {
             hasRecognitionResult = true;
-            // 在线模式直接显示当前识别结果
-            currentRecognizedText = data.text.trim();
+            // 扬声器测试累积显示识别结果
+            const newText = data.text.trim();
+            if (!currentRecognizedText.includes(newText)) {
+              currentRecognizedText += (currentRecognizedText ? ' ' : '') + newText;
+            }
             console.log('扬声器测试识别结果:', currentRecognizedText);
             setSpeakerRecognitionResult({ text: currentRecognizedText, error: '', timestamp: Date.now() });
 

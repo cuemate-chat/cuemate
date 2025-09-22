@@ -17,11 +17,11 @@ class SpeakerPCMProcessor extends AudioWorkletProcessor {
   }
 
   process() {
-    // 扬声器测试从主线程接收原生音频数据，不需要处理 inputs/outputs
+    // 扬声器测试从主线程接收 AudioTee 音频数据，不需要处理 inputs/outputs
     return true;
   }
 
-  // 接收从主线程发送的原生音频数据
+  // 接收从主线程发送的 AudioTee 音频数据
   handleNativeAudioData(audioData) {
     const int16Data = new Int16Array(audioData);
 
