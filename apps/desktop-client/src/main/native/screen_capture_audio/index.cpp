@@ -53,11 +53,7 @@ private:
 public:
     static Napi::Object Init(Napi::Env env, Napi::Object exports) {
         Napi::Function func = DefineClass(env, "ScreenCaptureAudio", {
-            InstanceMethod("startCapture", &ScreenCaptureAudioNode::StartCapture),
-            InstanceMethod("stopCapture", &ScreenCaptureAudioNode::StopCapture),
-            InstanceMethod("isCapturing", &ScreenCaptureAudioNode::IsCapturing),
-            StaticMethod("getAudioDevices", &ScreenCaptureAudioNode::GetAudioDevices),
-            StaticMethod("isCoreAudioTapsAvailable", &ScreenCaptureAudioNode::IsCoreAudioTapsAvailable)
+            StaticMethod("getAudioDevices", &ScreenCaptureAudioNode::GetAudioDevices)
         });
 
         Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -81,122 +77,6 @@ public:
         }
     }
 
-    // 开始音频捕获
-    Napi::Value StartCapture(const Napi::CallbackInfo& info) {
-        Napi::Env env = info.Env();
-
-        // 检查参数
-        if (info.Length() < 1 || !info[0].IsObject()) {
-            Napi::TypeError::New(env, "期望参数为配置对象").ThrowAsJavaScriptException();
-            return env.Null();
-        }
-
-        Napi::Object config = info[0].As<Napi::Object>();
-
-        // 解析配置参数
-        int sampleRate = 16000;
-        int channels = 1;
-        
-        if (config.Has("sampleRate")) {
-            sampleRate = config.Get("sampleRate").As<Napi::Number>().Int32Value();
-        }
-        
-        if (config.Has("channels")) {
-            channels = config.Get("channels").As<Napi::Number>().Int32Value();
-        }
-
-        // 设置音频数据回调
-        cppLogInfo("INDEX_CPP StartCapture 函数开始执行");
-        printf("[INDEX_CPP] 检查 onData 回调\n");
-        fflush(stdout);
-
-        cppLogInfo("INDEX_CPP 检查 config.Has(\"onData\"): " + std::string(config.Has("onData") ? "true" : "false"));
-        if (config.Has("onData")) {
-            cppLogInfo("INDEX_CPP 检查 config.Get(\"onData\").IsFunction(): " + std::string(config.Get("onData").IsFunction() ? "true" : "false"));
-        }
-
-        if (config.Has("onData") && config.Get("onData").IsFunction()) {
-            cppLogInfo("INDEX_CPP onData 回调存在，开始设置 audioDataCallback");
-            audioDataCallback = Napi::ThreadSafeFunction::New(
-                env,
-                config.Get("onData").As<Napi::Function>(),
-                "AudioDataCallback",
-                0,
-                1
-            );
-            cppLogInfo("INDEX_CPP audioDataCallback 设置成功");
-            printf("[INDEX_CPP] audioDataCallback 设置成功\n");
-        } else {
-            cppLogError("INDEX_CPP onData 回调不存在或不是函数");
-            printf("[INDEX_CPP] audioDataCallback 设置失败\n");
-        }
-
-        // 设置错误回调
-        printf("[INDEX_CPP] 检查 onError 回调\n");
-               
-        if (config.Has("onError") && config.Get("onError").IsFunction()) {
-            errorCallback = Napi::ThreadSafeFunction::New(
-                env,
-                config.Get("onError").As<Napi::Function>(),
-                "ErrorCallback",
-                0,
-                1
-            );
-            printf("[INDEX_CPP] errorCallback 设置成功\n");
-        } else {
-            printf("[INDEX_CPP] errorCallback 设置失败\n");
-        }
-
-        // 启动音频捕获
-        cppLogInfo("INDEX_CPP 准备调用 wrapper->startCapture");
-        wrapper->startCapture(
-            sampleRate,
-            channels,
-            [this](const char* data, size_t length) {
-                // 音频数据回调
-                cppLogInfo("INDEX_CPP 收到音频数据回调，大小: " + std::to_string(length) + " bytes");
-                if (audioDataCallback) {
-                    audioDataCallback.NonBlockingCall([data, length](Napi::Env env, Napi::Function jsCallback) {
-                        Napi::Buffer<char> buffer = Napi::Buffer<char>::Copy(env, data, length);
-                        jsCallback.Call({buffer});
-                    });
-                }
-            },
-            [this](const std::string& errorMessage) {
-                // 错误回调
-                cppLogError("INDEX_CPP 收到错误回调: " + errorMessage);
-                if (errorCallback) {
-                    errorCallback.NonBlockingCall([errorMessage](Napi::Env env, Napi::Function jsCallback) {
-                        Napi::Error error = Napi::Error::New(env, errorMessage);
-                        jsCallback.Call({error.Value()});
-                    });
-                }
-            }
-        );
-
-        return env.Undefined();
-    }
-
-    // 停止音频捕获
-    Napi::Value StopCapture(const Napi::CallbackInfo& info) {
-        wrapper->stopCapture();
-        
-        // 释放回调函数
-        if (audioDataCallback) {
-            audioDataCallback.Release();
-        }
-        if (errorCallback) {
-            errorCallback.Release();
-        }
-
-        return info.Env().Undefined();
-    }
-
-    // 检查是否正在捕获
-    Napi::Value IsCapturing(const Napi::CallbackInfo& info) {
-        return Napi::Boolean::New(info.Env(), wrapper->isCapturing());
-    }
-
     // 获取可用音频设备列表 (静态方法)
     static Napi::Value GetAudioDevices(const Napi::CallbackInfo& info) {
         Napi::Env env = info.Env();
@@ -214,13 +94,6 @@ public:
     }
 
 
-    // 检查 Core Audio Taps 是否可用 (静态方法)
-    static Napi::Value IsCoreAudioTapsAvailable(const Napi::CallbackInfo& info) {
-        Napi::Env env = info.Env();
-        bool isAvailable = CoreAudioTapsWrapper::isAvailable();
-        cppLogInfo("INDEX_CPP 检查 Core Audio Taps 可用性: " + std::string(isAvailable ? "true" : "false"));
-        return Napi::Boolean::New(env, isAvailable);
-    }
 };
 
 

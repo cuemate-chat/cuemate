@@ -44,35 +44,20 @@ void objcLogWarn(const std::string& message) { objcLog("warn", message); }
 
 #include "ScreenCaptureAudio.h"
 
-// C++ 包装器类实现
+// C++ 包装器类实现（仅用于获取设备列表）
 ScreenCaptureAudioWrapper::ScreenCaptureAudioWrapper() {
-    objcLogInfo("ScreenCaptureAudioWrapper 构造，使用 Core Audio Taps");
-    coreAudioTapsHandler = new CoreAudioTapsWrapper();
+    objcLogInfo("ScreenCaptureAudioWrapper 构造（仅设备列表功能）");
 }
 
 ScreenCaptureAudioWrapper::~ScreenCaptureAudioWrapper() {
     objcLogInfo("ScreenCaptureAudioWrapper 析构");
-    delete coreAudioTapsHandler;
-}
-
-void ScreenCaptureAudioWrapper::startCapture(int sampleRate, int channels,
-                                           std::function<void(const char*, size_t)> audioCallback,
-                                           std::function<void(const std::string&)> errorCallback) {
-    objcLogInfo("使用 Core Audio Taps 方案进行音频捕获");
-    coreAudioTapsHandler->startCapture(sampleRate, channels, audioCallback, errorCallback);
-}
-
-void ScreenCaptureAudioWrapper::stopCapture() {
-    coreAudioTapsHandler->stopCapture();
-}
-
-bool ScreenCaptureAudioWrapper::isCapturing() const {
-    return coreAudioTapsHandler->isCapturing();
 }
 
 std::vector<std::pair<std::string, std::string>> ScreenCaptureAudioWrapper::getAudioDevices() {
-    // 简单返回默认设备，因为 Core Audio Taps 不需要设备选择
+    // 返回模拟设备列表供用户界面显示
     std::vector<std::pair<std::string, std::string>> devices;
-    devices.emplace_back("default", "默认音频设备");
+    devices.emplace_back("default", "默认音频输出设备");
+    devices.emplace_back("builtin-speaker", "内建扬声器");
+    devices.emplace_back("builtin-headphones", "内建耳机");
     return devices;
 }
