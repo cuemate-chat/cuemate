@@ -2,7 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { Copy, CornerDownLeft, Eraser, Mic, Square } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { MicrophoneRecognitionController, startMicrophoneRecognition } from '../../../../utils/audioRecognition';
-import { setVoiceState } from '../../../../utils/voiceState';
+import { setVoiceState, useVoiceState } from '../../../../utils/voiceState';
 
 interface WindowFooterProps {
   question: string;
@@ -16,20 +16,26 @@ interface WindowFooterProps {
   className?: string;
 }
 
-export function VoiceQAFooter({ 
-  question, 
+export function VoiceQAFooter({
+  question,
   isLoading,
-  onQuestionChange, 
-  onSubmit, 
+  onQuestionChange,
+  onSubmit,
   onKeyDown,
   onNewChat,
   onCopyLastAIResponse,
   currentConversationStatus,
-  className 
+  className
 }: WindowFooterProps) {
   const isConversationCompleted = currentConversationStatus === 'completed';
-  const [isRecording, setIsRecording] = useState(false);
+  const voiceState = useVoiceState();
+  const isRecording = voiceState.mode === 'voice-qa' && voiceState.subState === 'voice-speaking';
   const recognitionControllerRef = useRef<MicrophoneRecognitionController | null>(null);
+
+  // 累积模式：保存已确认的文本（固定不变）
+  const confirmedTextRef = useRef<string>('');
+  // 当前正在识别的临时文本（实时更新）
+  const [currentTempText, setCurrentTempText] = useState<string>('');
   
   const handleSubmit = () => {
     if (isConversationCompleted) {
@@ -52,38 +58,48 @@ export function VoiceQAFooter({
     if (isConversationCompleted) return;
     if (!isRecording) {
       try {
+        // 开始录制时，保存当前input中的文本作为已确认文本
+        confirmedTextRef.current = question || '';
+        setCurrentTempText('');
+
         const storedDeviceId = localStorage.getItem('cuemate.selectedMicDeviceId') || undefined;
         const controller = await startMicrophoneRecognition({
           deviceId: storedDeviceId,
-          onText: (text) => {
-            const prev = question || '';
-            const curr = text || '';
-            // 计算公共前缀，避免每次整句回传造成重复覆盖
-            let i = 0;
-            const limit = Math.min(prev.length, curr.length);
-            while (i < limit && prev.charCodeAt(i) === curr.charCodeAt(i)) i++;
-            const appendPart = curr.slice(i);
-            if (appendPart.length === 0) return;
-            const needSpace = prev.length > 0 && !/\s$/.test(prev) && !/^\s/.test(appendPart);
-            onQuestionChange(needSpace ? prev + ' ' + appendPart : prev + appendPart);
+          onText: (text, isFinal) => {
+            const newText = text || '';
+            if (!newText.trim()) return;
+
+            if (isFinal) {
+              // 最终识别结果：添加到已确认文本中，清空临时文本
+              const needSpace = confirmedTextRef.current.length > 0 &&
+                                !/\s$/.test(confirmedTextRef.current) &&
+                                !/^\s/.test(newText);
+              confirmedTextRef.current += needSpace ? ' ' + newText : newText;
+              setCurrentTempText(''); // 清空临时文本，等待下一句话
+            } else {
+              // 临时识别结果：只更新当前临时文本，不影响已确认文本
+              setCurrentTempText(newText);
+            }
           },
           onError: () => {
-            setIsRecording(false);
+            setVoiceState({ mode: 'voice-qa', subState: 'idle' });
           }
         });
         recognitionControllerRef.current = controller;
-        setIsRecording(true);
-        setVoiceState({ mode: 'voice-qa', subState: 'recording' });
+        setVoiceState({ mode: 'voice-qa', subState: 'voice-speaking' });
       } catch {
-        setIsRecording(false);
+        setVoiceState({ mode: 'voice-qa', subState: 'idle' });
       }
     } else {
       try {
         await recognitionControllerRef.current?.stop();
       } finally {
         recognitionControllerRef.current = null;
-        setIsRecording(false);
-        setVoiceState({ mode: 'voice-qa', subState: 'stopped' });
+
+        // 停止录制时，将最终的已确认文本赋值给input
+        onQuestionChange(confirmedTextRef.current);
+        setCurrentTempText('');
+        setVoiceState({ mode: 'voice-qa', subState: 'completed' });
       }
     }
   };
@@ -91,15 +107,49 @@ export function VoiceQAFooter({
   return (
     <div className={`ai-window-footer${className ? ` ${className}` : ''}`}>
       <div className="ai-input-container">
-        <input
-          type="search"
-          value={question}
-          onChange={(e) => onQuestionChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={isConversationCompleted ? "对话已完成，请新建提问" : "询问 AI 任意问题"}
-          className="ai-input-field"
-          disabled={isConversationCompleted}
-        />
+        {isRecording ? (
+          // 录制时显示span元素进行流式输出
+          <span
+            className="ai-input-field"
+            style={{
+              display: 'block',
+              minHeight: 'auto',
+              height: 'auto',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              backgroundColor: 'transparent',
+              cursor: 'text'
+            }}
+          >
+            {(() => {
+              const confirmedText = confirmedTextRef.current;
+              const tempText = currentTempText;
+
+              if (!confirmedText && !tempText) {
+                return '正在识别语音...';
+              }
+
+              // 组合已确认文本 + 当前临时文本
+              const needSpace = confirmedText.length > 0 &&
+                                tempText.length > 0 &&
+                                !/\s$/.test(confirmedText) &&
+                                !/^\s/.test(tempText);
+
+              return confirmedText + (needSpace ? ' ' + tempText : tempText);
+            })()}
+          </span>
+        ) : (
+          // 非录制时显示正常的input输入框
+          <input
+            type="search"
+            value={question}
+            onChange={(e) => onQuestionChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={isConversationCompleted ? "对话已完成，请新建提问" : "询问 AI 任意问题"}
+            className="ai-input-field"
+            disabled={isConversationCompleted}
+          />
+        )}
       </div>
       
       {/* 语音录制按钮 */}

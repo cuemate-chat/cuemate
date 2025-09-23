@@ -95,7 +95,7 @@ export function VoiceTestBody() {
     setMicStatus('testing');
     setShowingMicResult(true);
     setMicRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
-    setVoiceState({ mode: 'voice-test', subState: 'recording' });
+    setVoiceState({ mode: 'voice-test', subState: 'voice-testing' });
 
     let testTimer: NodeJS.Timeout | null = null;
     let hasRecognitionResult = false;
@@ -153,7 +153,7 @@ export function VoiceTestBody() {
     setSpeakerStatus('testing');
     setShowingSpeakerResult(true);
     setSpeakerRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
-    setVoiceState({ mode: 'voice-test', subState: 'recording' });
+    setVoiceState({ mode: 'voice-test', subState: 'voice-testing' });
 
     let websocket: WebSocket | null = null;
     let testTimer: NodeJS.Timeout | null = null;

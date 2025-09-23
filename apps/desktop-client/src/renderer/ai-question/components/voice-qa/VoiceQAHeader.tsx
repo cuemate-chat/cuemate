@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { History, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import CueMateLogo from '../../../../assets/CueMate.png';
+import { useVoiceState } from '../../../../utils/voiceState';
+import { LottieAudioLines } from '../../../shared/components/LottieAudioLines';
 
 // 头部内的加载动画
 const LoadingDots = () => {
@@ -39,6 +41,7 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
   const [showControls, setShowControls] = useState(false);
   const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedMic, setSelectedMic] = useState<string>('');
+  const vState = useVoiceState();
 
   useEffect(() => {
     (async () => {
@@ -69,10 +72,10 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
         <div className="ai-title">{isLoading ? 'Think' : 'AI Response'}</div>
         {isLoading && <LoadingDots />}
         {micDevices.length > 0 && (
-          <div style={{ marginLeft: 8 }}>
-            <select 
-              className="ai-height-selector" 
-              value={selectedMic} 
+          <div style={{ marginLeft: 8, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <select
+              className="ai-height-selector"
+              value={selectedMic}
               onChange={(e) => {
                 const value = e.target.value;
                 setSelectedMic(value);
@@ -83,6 +86,33 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
                 <option key={device.deviceId} value={device.deviceId}>{device.label || '默认麦克风'}</option>
               ))}
             </select>
+
+            {/* 语音识别状态指示器 */}
+            {vState.mode === 'voice-qa' && vState.subState === 'voice-speaking' && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '4px 8px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  color: '#ffffff'
+                }}
+              >
+                <LottieAudioLines
+                  size={16}
+                  alt="Recording"
+                />
+                <span style={{ fontSize: '12px', fontWeight: '500' }}>说话中</span>
+              </motion.div>
+            )}
           </div>
         )}
       </div>
