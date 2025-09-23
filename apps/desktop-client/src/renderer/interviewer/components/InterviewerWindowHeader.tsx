@@ -5,14 +5,12 @@ import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 import { useVoiceState } from '../../../utils/voiceState';
 
 interface InterviewerWindowHeaderProps {
-  isRecognizing?: boolean; // 新增状态字段
   currentSectionTitle?: string | null; // 例如 "语音测试"/"语音提问"
   onClose?: () => void; // 关闭语音识别窗口
   onBack?: () => void; // 返回上一页
 }
 
-export function InterviewerWindowHeader({ 
-  isRecognizing = false,
+export function InterviewerWindowHeader({
   currentSectionTitle = null,
   onClose,
   onBack
@@ -22,18 +20,28 @@ export function InterviewerWindowHeader({
   const [duration, setDuration] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // 计时器逻辑
+  // 计时器逻辑 - 只在mock-interview和interview-training模式下工作
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
-    if (isRecognizing) {
+    const isInterviewMode = globalState.mode === 'mock-interview' || globalState.mode === 'interview-training';
+    const shouldShowTimer = isInterviewMode && (globalState.subState === 'recording' || globalState.subState === 'paused' || globalState.subState === 'playing' || globalState.subState === 'completed');
+    const shouldRunTimer = isInterviewMode && (globalState.subState === 'recording' || globalState.subState === 'playing');
+
+    if (shouldShowTimer) {
       if (!hasStarted) {
         setHasStarted(true);
         setDuration(0); // 重新开始时重置时间为0
       }
-      interval = setInterval(() => {
-        setDuration(prev => prev + 1);
-      }, 1000);
+
+      if (shouldRunTimer) {
+        interval = setInterval(() => {
+          setDuration(prev => prev + 1);
+        }, 1000);
+      }
+    } else if (globalState.subState === 'idle' || !isInterviewMode) {
+      // idle状态或非面试模式时重置计时器
+      setHasStarted(false);
+      setDuration(0);
     }
 
     return () => {
@@ -41,7 +49,7 @@ export function InterviewerWindowHeader({
         clearInterval(interval);
       }
     };
-  }, [isRecognizing, hasStarted]);
+  }, [globalState.mode, globalState.subState, hasStarted]);
 
   // 格式化时间显示 (时:分:秒)
   const formatDuration = (seconds: number) => {
@@ -57,16 +65,24 @@ export function InterviewerWindowHeader({
     <div className="interviewer-window-header" key={currentSectionTitle || 'home'}>
       <div className="interviewer-header-left">
         <div className="interviewer-title">
-          {(globalState.mode !== 'none' && globalState.subState === 'recording') ? (
-            <LottieAudioLines 
-              size={16} 
-              alt="Recording"
-            />
-          ) : (
-            <Mic size={16} className="interviewer-title-icon" />
-          )}
+          {(() => {
+            // LottieAudioLines显示条件：voice-test模式 或 voice-qa+recording/voice-speaking 或 任何模式+recording/playing 或 voice-testing/voice-speaking状态
+            const shouldShowLottie =
+              globalState.mode === 'voice-test' ||
+              (globalState.mode === 'voice-qa' && (globalState.subState === 'recording' || globalState.subState === 'voice-speaking')) ||
+              (globalState.subState === 'recording' || globalState.subState === 'playing' || globalState.subState === 'voice-testing' || globalState.subState === 'voice-speaking');
+
+            return shouldShowLottie ? (
+              <LottieAudioLines
+                size={16}
+                alt="Recording"
+              />
+            ) : (
+              <Mic size={16} className="interviewer-title-icon" />
+            );
+          })()}
           <span>语音识别{currentSectionTitle ? ` - ${currentSectionTitle}` : ''}</span>
-          {hasStarted && (
+          {(hasStarted && globalState.subState !== 'idle' && (globalState.mode === 'mock-interview' || globalState.mode === 'interview-training')) && (
             <div className="interviewer-timer">
               <span className="timer-display">{formatDuration(duration)}</span>
             </div>

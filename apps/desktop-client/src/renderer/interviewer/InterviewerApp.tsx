@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { clearVoiceState, useVoiceState } from '../../utils/voiceState';
+import { clearVoiceState } from '../../utils/voiceState';
 import { InterviewerWindowBody } from './components/InterviewerWindowBody';
 import { InterviewerWindowFooter } from './components/InterviewerWindowFooter';
 import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
 
 export function InterviewerApp() {
-  const voiceState = useVoiceState();
   const [currentSectionTitle, setCurrentSectionTitle] = useState<string | null>(null);
 
   const handleClose = async () => {
@@ -52,8 +51,7 @@ export function InterviewerApp() {
   return (
     <div className="interviewer-app">
       <div className="interviewer-window" key={currentSectionTitle || 'home'}>
-        <InterviewerWindowHeader 
-          isRecognizing={voiceState.mode !== 'none' && voiceState.subState === 'recording'}
+        <InterviewerWindowHeader
           currentSectionTitle={currentSectionTitle}
           onClose={handleClose}
           onBack={currentSectionTitle ? handleBack : undefined}
@@ -62,9 +60,7 @@ export function InterviewerApp() {
           selectedCard={currentSectionTitle}
           onSelectCard={handleSelectCard}
         />
-        <InterviewerWindowFooter
-          isRecording={voiceState.mode !== 'none' && voiceState.subState === 'recording'}
-        />
+        <InterviewerWindowFooter />
       </div>
     </div>
   );
