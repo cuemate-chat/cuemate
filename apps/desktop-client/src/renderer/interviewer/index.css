@@ -47,7 +47,7 @@ html, body, #root {
 .interviewer-header-left {
   display: flex;
   align-items: center;
-  width: 40%;
+  width: 70%;
 }
 
 .interviewer-title {
@@ -85,7 +85,7 @@ html, body, #root {
 .interviewer-header-right {
   display: flex;
   align-items: right;
-  width: 60%;
+  width: 30%;
   justify-content: flex-end;
 }
 
