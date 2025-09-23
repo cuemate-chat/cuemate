@@ -96,8 +96,20 @@ export function VoiceQAFooter({
       } finally {
         recognitionControllerRef.current = null;
 
-        // 停止录制时，将最终的已确认文本赋值给input
-        onQuestionChange(confirmedTextRef.current);
+        // 停止录制时，将完整的文本（已确认 + 当前临时）赋值给input
+        const finalText = (() => {
+          const confirmedText = confirmedTextRef.current;
+          const tempText = currentTempText;
+
+          if (!confirmedText && !tempText) return '';
+          if (!tempText) return confirmedText;
+          if (!confirmedText) return tempText;
+
+          const needSpace = !/\s$/.test(confirmedText) && !/^\s/.test(tempText);
+          return confirmedText + (needSpace ? ' ' + tempText : tempText);
+        })();
+
+        onQuestionChange(finalText);
         setCurrentTempText('');
         setVoiceState({ mode: 'voice-qa', subState: 'completed' });
       }

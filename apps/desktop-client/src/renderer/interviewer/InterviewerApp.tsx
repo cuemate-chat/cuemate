@@ -35,15 +35,7 @@ export function InterviewerApp() {
   };
 
   const handleBack = async () => {
-    try {
-      if ((window as any).electronAPI) {
-        if (currentSectionTitle === '语音提问' || currentSectionTitle === '模拟面试' || currentSectionTitle === '面试训练') {
-          await (window as any).electronAPI.hideAIQuestion();
-        }
-      }
-    } catch (error) {
-      console.error('返回上一页时隐藏AI问题窗口失败:', error);
-    }
+    // 返回上一页时不关闭右侧窗口，只是重置当前选择的section
     setCurrentSectionTitle(null);
     clearVoiceState();
   };
