@@ -25,15 +25,27 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
     try {
       const isMI = vState.mode === 'mock-interview';
       const isIT = vState.mode === 'interview-training';
-      if (isMI || isIT) {
-        if (vState.subState === 'recording') setVoiceState({ subState: 'stopped' });
-        else setVoiceState({ subState: 'recording' });
-        return;
-      }
-      // 其它模式仅控制窗口显示
+
+      // 打开语音识别窗口（所有模式都需要）
       if ((window as any).electronAPI) {
         await (window as any).electronAPI.showInterviewer();
         setIsInterviewerWindowOpen(true);
+      }
+
+      // 如果是 mock-interview 或 interview-training 模式，还需要处理录制状态
+      if (isMI || isIT) {
+        // 从 idle 或 completed 状态开始录制
+        if (vState.subState === 'idle' || vState.subState === 'completed') {
+          setVoiceState({ subState: 'recording' });
+        }
+        // 从 recording 状态暂停录制
+        else if (vState.subState === 'recording') {
+          setVoiceState({ subState: 'paused' });
+        }
+        // 从 paused 状态恢复录制
+        else if (vState.subState === 'paused') {
+          setVoiceState({ subState: 'recording' });
+        }
       }
     } catch (error) {
       console.error('语音识别操作失败:', error);
@@ -55,15 +67,37 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
     }
   };
 
-  const handleDoneClick = () => {
-    setVoiceState({ subState: 'idle' });
-    setIsInterviewerWindowOpen(false);
-    // 可以在这里添加保存录制结果的逻辑
+  const handlePauseClick = () => {
+    // 暂停录制
+    if (vState.subState === 'recording') {
+      setVoiceState({ subState: 'paused' });
+    }
+  };
+
+  const handleStopClick = () => {
+    // 停止录制，进入completed状态
+    if (vState.subState === 'recording' || vState.subState === 'paused') {
+      setVoiceState({ subState: 'completed' });
+    }
   };
 
   const handlePlayClick = () => {
-    // 播放录制内容的逻辑
-    console.log('播放录制内容');
+    // 播放录制内容
+    if (vState.subState === 'completed') {
+      setVoiceState({ subState: 'playing' });
+      // 可以在这里添加播放录制内容的逻辑
+      console.log('播放录制内容');
+    }
+  };
+
+  const handleDoneClick = () => {
+    // 完成并保存，回到idle状态
+    setIsInterviewerWindowOpen(false);
+    // 可以在这里添加保存录制结果的逻辑
+    console.log('录制已完成并保存');
+
+    // 直接回到语音识别状态
+    setVoiceState({ subState: 'idle' });
   };
 
   const handleAskQuestionClick = async () => {
@@ -116,9 +150,8 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         {(() => {
           const isMI = vState.mode === 'mock-interview';
           const isIT = vState.mode === 'interview-training';
-          const showRecording = (isMI || isIT) && vState.subState === 'recording';
-          const showStopped = (isMI || isIT) && vState.subState === 'stopped';
-          return !showRecording && !showStopped;
+          const isActiveState = vState.subState === 'recording' || vState.subState === 'paused' || vState.subState === 'completed' || vState.subState === 'playing';
+          return !(isMI || isIT) || !isActiveState;
         })() && (
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
@@ -152,15 +185,15 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         {(() => {
           const isMI = vState.mode === 'mock-interview';
           const isIT = vState.mode === 'interview-training';
-          return (isMI || isIT) && vState.subState === 'recording';
+          return (isMI || isIT) && (vState.subState === 'recording' || vState.subState === 'paused');
         })() && (
           <div className="voice-recording-group">
-            {/* Pause 按钮 */}
+            {/* Pause/Resume 按钮 */}
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
                 <motion.button
-                  className="voice-icon-btn pause-btn"
-                  onClick={handleListenClick}
+                  className={`voice-icon-btn ${vState.subState === 'recording' ? 'pause-btn' : 'resume-btn'}`}
+                  onClick={vState.subState === 'recording' ? handlePauseClick : handleListenClick}
                   whileTap={{ scale: 0.95 }}
                   transition={{ duration: 0.2 }}
                 >
@@ -168,13 +201,38 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
                     whileHover={{ scale: 1.2 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Pause size={16} />
+                    {vState.subState === 'recording' ? <Pause size={16} /> : <Play size={16} />}
                   </motion.div>
                 </motion.button>
               </Tooltip.Trigger>
               <Tooltip.Portal>
                 <Tooltip.Content className="radix-tooltip-content">
-                  暂停录制
+                  {vState.subState === 'recording' ? '暂停录制' : '继续录制'}
+                  <Tooltip.Arrow className="radix-tooltip-arrow" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+
+            {/* Stop 按钮 */}
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <motion.button
+                  className="voice-icon-btn stop-btn"
+                  onClick={handleStopClick}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.2 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Square size={16} />
+                  </motion.div>
+                </motion.button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content className="radix-tooltip-content">
+                  停止录制
                   <Tooltip.Arrow className="radix-tooltip-arrow" />
                 </Tooltip.Content>
               </Tooltip.Portal>
@@ -225,7 +283,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         {(() => {
           const isMI = vState.mode === 'mock-interview';
           const isIT = vState.mode === 'interview-training';
-          return (isMI || isIT) && vState.subState === 'stopped';
+          return (isMI || isIT) && (vState.subState === 'completed' || vState.subState === 'playing');
         })() && (
           <div className="voice-stopped-group">
             {/* Play 按钮 */}
