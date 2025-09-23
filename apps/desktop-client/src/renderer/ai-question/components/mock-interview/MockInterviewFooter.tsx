@@ -1,6 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { Copy, CornerDownLeft, Eraser, Mic, Square } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
+import { setVoiceState, useVoiceState } from '../../../../utils/voiceState';
 
 interface WindowFooterProps {
   question: string;
@@ -26,7 +27,8 @@ export function MockInterviewFooter({
   className 
 }: WindowFooterProps) {
   const isConversationCompleted = currentConversationStatus === 'completed';
-  const [isRecording, setIsRecording] = useState(false);
+  const voiceState = useVoiceState();
+  const isRecording = voiceState.mode === 'mock-interview' && voiceState.subState === 'recording';
   
   const handleSubmit = () => {
     if (isConversationCompleted) {
@@ -46,7 +48,13 @@ export function MockInterviewFooter({
   };
 
   const handleVoiceToggle = () => {
-    setIsRecording(!isRecording);
+    if (isConversationCompleted) return;
+
+    if (isRecording) {
+      setVoiceState({ mode: 'mock-interview', subState: 'paused' });
+    } else {
+      setVoiceState({ mode: 'mock-interview', subState: 'recording' });
+    }
   };
 
   return (
