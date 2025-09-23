@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
+
+// 同窗口内的状态监听器
+const listeners = new Set<(state: VoiceState) => void>();
 export type VoiceMode =
   | 'none'
   | 'voice-test'
   | 'voice-qa'
   | 'mock-interview'
   | 'interview-training';
-export type VoiceSubState = 'idle' | 'recording' | 'stopped';
+export type VoiceSubState = 'idle' | 'recording' | 'paused' | 'completed' | 'playing' | 'voice-testing' | 'voice-speaking';
 
 export interface VoiceState {
   mode: VoiceMode;
@@ -43,6 +46,14 @@ export function setVoiceState(next: Partial<VoiceState> | VoiceState): VoiceStat
   try {
     channel?.postMessage(merged);
   } catch {}
+
+  // 立即通知同窗口内的监听器
+  listeners.forEach(listener => {
+    try {
+      listener(merged);
+    } catch {}
+  });
+
   return merged;
 }
 
@@ -54,6 +65,14 @@ export function clearVoiceState(): VoiceState {
   try {
     channel?.postMessage(cleared);
   } catch {}
+
+  // 立即通知同窗口内的监听器
+  listeners.forEach(listener => {
+    try {
+      listener(cleared);
+    } catch {}
+  });
+
   return cleared;
 }
 
@@ -61,6 +80,11 @@ export function useVoiceState(): VoiceState {
   const [state, setState] = useState<VoiceState>(getVoiceState());
 
   useEffect(() => {
+    // 同窗口内的立即监听器
+    const immediateListener = (newState: VoiceState) => setState(newState);
+    listeners.add(immediateListener);
+
+    // 跨窗口的事件监听器
     const onMessage = (e: MessageEvent<VoiceState>) => setState(e.data);
     const onStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
@@ -71,7 +95,9 @@ export function useVoiceState(): VoiceState {
     };
     channel?.addEventListener('message', onMessage as any);
     window.addEventListener('storage', onStorage);
+
     return () => {
+      listeners.delete(immediateListener);
       try {
         channel?.removeEventListener('message', onMessage as any);
       } catch {}
