@@ -47,7 +47,9 @@ export function setupIPC(windowManager: WindowManager): void {
     try {
       const windows = BrowserWindow.getAllWindows();
       for (const win of windows) {
-        try { win.setContentProtection(enabled); } catch {}
+        try {
+          win.setContentProtection(enabled);
+        } catch {}
       }
     } catch {}
   }
@@ -55,13 +57,18 @@ export function setupIPC(windowManager: WindowManager): void {
     try {
       const windows = BrowserWindow.getAllWindows();
       for (const win of windows) {
-        try { win.webContents.send('stealth-mode-changed', enabled); } catch {}
+        try {
+          win.webContents.send('stealth-mode-changed', enabled);
+        } catch {}
       }
     } catch {}
   }
 
   // 初始化加载并应用一次（若已开启）
   loadSettings();
+  try {
+    (global as any).stealthModeEnabled = stealthModeEnabled;
+  } catch {}
   if (stealthModeEnabled) {
     applyStealthModeToAllWindows(true);
   }
@@ -176,6 +183,9 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('visibility-set', async (_event, enabled: boolean) => {
     try {
       stealthModeEnabled = !!enabled;
+      try {
+        (global as any).stealthModeEnabled = stealthModeEnabled;
+      } catch {}
       applyStealthModeToAllWindows(stealthModeEnabled);
       saveSettings();
       broadcastStealthChanged(stealthModeEnabled);

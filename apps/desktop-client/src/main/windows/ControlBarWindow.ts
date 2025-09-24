@@ -74,6 +74,12 @@ export class ControlBarWindow {
         },
       });
 
+      // 根据全局隐身状态应用内容保护
+      try {
+        const enabled = !!(global as any).stealthModeEnabled;
+        this.window.setContentProtection(enabled);
+      } catch {}
+
       // 设置最高层级，确保显示在所有应用之上（包括全屏应用）
       this.window.setAlwaysOnTop(true, 'screen-saver');
       this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });

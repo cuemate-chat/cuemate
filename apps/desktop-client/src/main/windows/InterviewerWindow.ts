@@ -64,6 +64,12 @@ export class InterviewerWindow {
         },
       });
 
+      // 根据全局隐身状态应用内容保护
+      try {
+        const enabled = !!(global as any).stealthModeEnabled;
+        this.window.setContentProtection(enabled);
+      } catch {}
+
       this.window.setAlwaysOnTop(true, 'screen-saver');
       this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       this.window.setFullScreenable(false);
