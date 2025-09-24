@@ -2,6 +2,7 @@ import type { BrowserWindow } from 'electron';
 import { screen } from 'electron';
 import type { AppState } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
+import { ScreenshotWatcher } from '../utils/screenshotWatcher.js';
 import { WebSocketClient } from '../websocket/WebSocketClient.js';
 import { AIQuestionHistoryWindow } from './AIQuestionHistoryWindow.js';
 import { AIQuestionWindow } from './AIQuestionWindow.js';
@@ -32,6 +33,7 @@ export class WindowManager {
   private hasEverBeenHidden: boolean = false;
 
   private aiWindowHeightPercentage: number = 75; // 默认75%
+  private screenshotWatcher: ScreenshotWatcher | null = null;
 
   constructor(isDevelopment: boolean = false) {
     this.isDevelopment = isDevelopment;
@@ -98,6 +100,21 @@ export class WindowManager {
 
       // 11. 监听屏幕分辨率变化
       this.setupScreenEvents();
+
+      // 12. 启动截图/录屏监控：检测到立即隐藏子窗口；结束后恢复
+      this.screenshotWatcher = new ScreenshotWatcher();
+      this.screenshotWatcher.onChange((capturing) => {
+        try {
+          if (capturing) {
+            // 统一走已有的保存+隐藏逻辑：包含 control-bar、main-content 以及所有子窗口
+            this.hideFloatingWindows();
+          } else {
+            // 截图结束，按保存的状态一次性恢复
+            this.showFloatingWindows();
+          }
+        } catch {}
+      });
+      this.screenshotWatcher.start();
     } catch (error) {
       logger.error({ error }, '窗口管理器初始化失败');
       throw error;
