@@ -2,7 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { CheckCircle, ChevronDown, Clock, Loader2, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { MicrophoneRecognitionController, startMicrophoneRecognition } from '../../../utils/audioRecognition';
-import { setVoiceState } from '../../../utils/voiceState';
+import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 
 interface RecognitionResult {
   text: string;
@@ -23,6 +23,9 @@ export function VoiceTestBody() {
   const [micRecognitionResult, setMicRecognitionResult] = useState<RecognitionResult>({ text: '', error: '', timestamp: 0 });
   const [speakerRecognitionResult, setSpeakerRecognitionResult] = useState<RecognitionResult>({ text: '', error: '', timestamp: 0 });
   const micControllerRef = useRef<MicrophoneRecognitionController | null>(null);
+
+  // 使用VoiceState来控制下拉列表状态
+  const voiceState = useVoiceState();
 
   useEffect(() => {
     (async () => {
@@ -301,7 +304,7 @@ export function VoiceTestBody() {
         <h4 className="test-section-title">麦克风测试</h4>
         <div className="test-row">
           <div className="device-select-wrapper">
-            <select className="device-select" value={selectedMic} onChange={(e) => setSelectedMic(e.target.value)}>
+            <select className="device-select" value={selectedMic} onChange={(e) => setSelectedMic(e.target.value)} disabled={voiceState.subState !== 'idle'}>
               {micDevices.map(device => (
                 <option key={device.deviceId} value={device.deviceId}>{device.label || '默认麦克风'}</option>
               ))}
@@ -332,7 +335,7 @@ export function VoiceTestBody() {
         <h4 className="test-section-title">扬声器测试</h4>
         <div className="test-row">
           <div className="device-select-wrapper">
-            <select className="device-select" value={selectedSpeaker} onChange={(e) => setSelectedSpeaker(e.target.value)}>
+            <select className="device-select" value={selectedSpeaker} onChange={(e) => setSelectedSpeaker(e.target.value)} disabled={voiceState.subState !== 'idle'}>
               {speakerDevices.map(device => (
                 <option key={device.deviceId} value={device.deviceId}>{device.label || '默认扬声器'}</option>
               ))}

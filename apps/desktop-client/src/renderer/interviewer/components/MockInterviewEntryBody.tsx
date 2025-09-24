@@ -1,11 +1,10 @@
 import { ChevronDown } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useVoiceState } from '../../../utils/voiceState';
 
-interface Voice {
-  commandName: string;
-  displayName: string;
-  locale: string;
-  description: string;
+interface AudioDevice {
+  deviceId: string;
+  label: string;
 }
 
 interface MockInterviewEntryBodyProps {
@@ -13,60 +12,94 @@ interface MockInterviewEntryBodyProps {
 }
 
 export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps) {
-  const [voiceCategories, setVoiceCategories] = useState<Array<[string, Array<[string, Voice[]]>]>>([]);
-  const [voice, setVoice] = useState('Tingting');
   const [testing, setTesting] = useState(false);
   const [lines, setLines] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 获取系统可用的声音列表
+  // 使用VoiceState来控制下拉列表状态
+  const voiceState = useVoiceState();
+
+  // 音频设备状态
+  const [micDevices, setMicDevices] = useState<AudioDevice[]>([]);
+  const [speakerDevices, setSpeakerDevices] = useState<AudioDevice[]>([]);
+  const [selectedMic, setSelectedMic] = useState<string>('');
+  const [selectedSpeaker, setSelectedSpeaker] = useState<string>('');
+  const [piperAvailable, setPiperAvailable] = useState(false);
+
+  // 初始化音频设备和TTS
   useEffect(() => {
-    const loadVoices = async () => {
+    const loadAudioSettings = async () => {
       try {
-        const result = await (window as any).electronInterviewerAPI?.getAvailableVoices?.();
-        if (result?.success && result?.voiceCategories) {
-          setVoiceCategories(result.voiceCategories);
-          
-          // 直接选择第一个声音（因为普通话（中国大陆）现在排在第一位，婷婷就是第一个）
-          if (result.voiceCategories.length > 0) {
-            const firstCategory = result.voiceCategories[0];
-            const firstSubCategory = firstCategory[1][0];
-            const firstVoice = firstSubCategory[1][0];
-            if (firstVoice) {
-              setVoice(firstVoice.commandName);
-            }
-          }
-        }
+        // 检查 Piper TTS 可用性
+        const piperAvailableResult = await (window as any).electronInterviewerAPI?.piperTTS?.isAvailable?.();
+        setPiperAvailable(piperAvailableResult?.success && piperAvailableResult?.available);
+
+        // 获取音频设备列表
+        const devices = await navigator.mediaDevices.enumerateDevices();
+
+        const mics = devices
+          .filter(device => device.kind === 'audioinput')
+          .map(device => ({
+            deviceId: device.deviceId,
+            label: device.label || `麦克风 ${device.deviceId.slice(0, 4)}`
+          }));
+
+        const speakers = devices
+          .filter(device => device.kind === 'audiooutput')
+          .map(device => ({
+            deviceId: device.deviceId,
+            label: device.label || `扬声器 ${device.deviceId.slice(0, 4)}`
+          }));
+
+        setMicDevices(mics);
+        setSpeakerDevices(speakers);
+
+        // 设置默认设备
+        if (mics.length > 0) setSelectedMic(mics[0].deviceId);
+        if (speakers.length > 0) setSelectedSpeaker(speakers[0].deviceId);
+
       } catch (error) {
-        console.error('Failed to load voices:', error);
-        // 如果获取失败，使用默认声音
-        setVoiceCategories([['中文', [['普通话(中国大陆)', [{ commandName: 'Tingting', displayName: 'Tingting (普通话（中国大陆）)', locale: 'zh_CN', description: 'Default voice' }]]]]]);
+        console.error('Failed to load audio settings:', error);
+        setPiperAvailable(false);
       } finally {
         setLoading(false);
       }
     };
 
-    loadVoices();
+    loadAudioSettings();
   }, []);
 
-  const speak = async (v: string, text: string) => {
+  const speak = async (text: string) => {
     try {
       setTesting(true);
-      await (window as any).electronInterviewerAPI?.speakText?.(v, text);
+
+      if (piperAvailable) {
+        // 使用混合语言TTS，无需指定语音模型
+        const options = { outputDevice: selectedSpeaker };
+        await (window as any).electronInterviewerAPI?.piperTTS?.speak?.(text, options);
+      } else {
+        throw new Error('Piper TTS 不可用');
+      }
+
       setLines(prev => [...prev, `面试官：${text}`]);
+    } catch (error) {
+      console.error('语音播放失败:', error);
+      setLines(prev => [...prev, `面试官：${text} [播放失败]`]);
     } finally {
       setTesting(false);
     }
   };
 
-  // 根据声音名称判断语言
-  const isEnglishVoice = (voiceName: string) => {
-    const voice = voiceCategories
-      .flatMap(([, subCategories]) => subCategories)
-      .flatMap(([, voices]) => voices)
-      .find(v => v.commandName === voiceName);
-    return voice?.locale.startsWith('en_') || false;
+  const handleStartInterview = () => {
+    // 开始面试时播放混合语言欢迎词
+    speak('你好，我是你今天的 Java 面试官，welcome to the interview!');
+
+    // 调用原始的开始函数
+    if (onStart) {
+      onStart();
+    }
   };
+
 
   return (
     <div className="interviewer-mode-panel">
@@ -85,51 +118,64 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
           <div className="avatar-label">面试官</div>
         </div>
         <div className="interviewer-right interviewer-controls-column">
-          <div className="voice-select">
-          <select 
-            className="device-select" 
-            value={voice} 
-            onChange={(e) => setVoice(e.target.value)}
-            disabled={loading}
-          >
-              {loading ? (
-                <option>加载声音列表...</option>
-              ) : (
-                voiceCategories.map(([categoryName, subCategories]) => (
-                  <React.Fragment key={categoryName}>
-                    <option disabled style={{ fontWeight: 'bold', backgroundColor: '#333' }}>
-                      ── {categoryName} ──
+          {/* 麦克风选择 */}
+          <div className="device-select-group">
+            <div className="voice-select">
+              <select
+                className="device-select"
+                value={selectedMic}
+                onChange={(e) => setSelectedMic(e.target.value)}
+                disabled={loading || voiceState.subState !== 'idle'}
+              >
+                {loading ? (
+                  <option>加载设备...</option>
+                ) : micDevices.length === 0 ? (
+                  <option>未检测到麦克风</option>
+                ) : (
+                  micDevices.map(device => (
+                    <option key={device.deviceId} value={device.deviceId}>
+                      {device.label}
                     </option>
-                    {subCategories.map(([subCategoryName, voices]) => (
-                      <React.Fragment key={subCategoryName}>
-                        <option disabled style={{ paddingLeft: '20px', backgroundColor: '#444' }}>
-                          {subCategoryName}
-                        </option>
-                        {voices.map(v => (
-                          <option key={v.commandName} value={v.commandName} style={{ paddingLeft: '40px' }}>
-                            {v.displayName}
-                          </option>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </React.Fragment>
-            ))
-          )}
-          </select>
-          <ChevronDown size={14} className="select-icon" />
-        </div>
-          <button 
-            className="test-button voice-test-button" 
-            disabled={testing || loading}
-            onClick={() => speak(voice, isEnglishVoice(voice) 
-              ? 'Hello, I am your interviewer'
-              : '你好，我是你的面试官'
-            )}
-          >
-            测试声音
-          </button>
+                  ))
+                )}
+              </select>
+              <ChevronDown size={14} className="select-icon" />
+            </div>
+          </div>
+
+          {/* 扬声器选择 */}
+          <div className="device-select-group">
+            <div className="voice-select">
+              <select
+                className="device-select"
+                value={selectedSpeaker}
+                onChange={(e) => setSelectedSpeaker(e.target.value)}
+                disabled={loading || voiceState.subState !== 'idle'}
+              >
+                {loading ? (
+                  <option>加载设备...</option>
+                ) : speakerDevices.length === 0 ? (
+                  <option>未检测到扬声器</option>
+                ) : (
+                  speakerDevices.map(device => (
+                    <option key={device.deviceId} value={device.deviceId}>
+                      {device.label}
+                    </option>
+                  ))
+                )}
+              </select>
+              <ChevronDown size={14} className="select-icon" />
+            </div>
+          </div>
+
           {onStart && (
-            <button className="test-button" onClick={onStart}>开始模拟面试</button>
+            <button
+              className="test-button"
+              onClick={handleStartInterview}
+              disabled={testing || loading || !piperAvailable}
+            >
+              {testing ? '正在测试...' : '开始模拟面试'}
+            </button>
           )}
         </div>
       </div>

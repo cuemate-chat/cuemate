@@ -33,9 +33,16 @@ const interviewerAPI = {
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 
-  // === 语音合成（macOS say） ===
-  speakText: (voice: string, text: string) => ipcRenderer.invoke('speak-text', { voice, text }),
-  getAvailableVoices: () => ipcRenderer.invoke('get-available-voices'),
+
+  // === Piper TTS API ===
+  piperTTS: {
+    getVoices: () => ipcRenderer.invoke('piper-get-voices'),
+    isAvailable: () => ipcRenderer.invoke('piper-is-available'),
+    synthesize: (text: string, options?: any) => ipcRenderer.invoke('piper-synthesize', text, options),
+    speak: (text: string, options?: any) => ipcRenderer.invoke('piper-speak', text, options),
+    playToDevice: (audioDataBase64: string, deviceId?: string) =>
+      ipcRenderer.invoke('piper-play-to-device', audioDataBase64, deviceId),
+  },
 
   // === 系统音频扬声器捕获 API ===
   systemAudioCapture: {
