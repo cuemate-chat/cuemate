@@ -18,13 +18,49 @@ export interface VoiceState {
 
 const STORAGE_KEY = 'cuemate.voiceState';
 const CHANNEL_NAME = 'cuemate.voiceState.channel';
+const SESSION_KEY = 'cuemate.session.startTime';
 
 let channel: BroadcastChannel | null = null;
 try {
   channel = new BroadcastChannel(CHANNEL_NAME);
 } catch {}
 
+function shouldResetState(): boolean {
+  try {
+    const currentSession = Date.now();
+    const lastSession = localStorage.getItem(SESSION_KEY);
+
+    if (!lastSession) {
+      // 首次启动，记录会话时间
+      localStorage.setItem(SESSION_KEY, currentSession.toString());
+      return true;
+    }
+
+    const lastSessionTime = parseInt(lastSession);
+    const timeDiff = currentSession - lastSessionTime;
+
+    // 如果距离上次会话超过5分钟，认为是新的应用会话，需要重置状态
+    if (timeDiff > 5 * 60 * 1000) {
+      localStorage.setItem(SESSION_KEY, currentSession.toString());
+      return true;
+    }
+
+    return false;
+  } catch {
+    return true; // 出错时默认重置状态
+  }
+}
+
 export function getVoiceState(): VoiceState {
+  // 检查是否需要重置状态
+  if (shouldResetState()) {
+    const defaultState: VoiceState = { mode: 'none', subState: 'idle', updatedAt: Date.now() };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultState));
+    } catch {}
+    return defaultState;
+  }
+
   try {
     const cached = localStorage.getItem(STORAGE_KEY);
     if (cached) return JSON.parse(cached) as VoiceState;
