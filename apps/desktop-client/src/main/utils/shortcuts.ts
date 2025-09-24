@@ -18,17 +18,9 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
         windowManager.toggleFloatingWindows();
       },
     },
-    // 微信常用截图：Cmd+Ctrl+A（部分机器为 Cmd+A） → 立即隐藏所有窗口；结束后恢复由 watcher 处理
+    // 微信常用截图：Cmd+Ctrl+A → 立即隐藏所有窗口；结束后恢复由 watcher 处理
     {
       accelerator: 'Cmd+Ctrl+A',
-      callback: () => {
-        try {
-          windowManager.hideFloatingWindows();
-        } catch {}
-      },
-    },
-    {
-      accelerator: 'Cmd+A',
       callback: () => {
         try {
           windowManager.hideFloatingWindows();

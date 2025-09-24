@@ -80,17 +80,8 @@ export function VoiceQAFooter({
       } finally {
         recognitionControllerRef.current = null;
 
-        // 停止说话时，将完整的文本（已确认 + 当前临时）赋值给输入框
-        const finalText = (() => {
-          const confirmedText = qa.confirmedText;
-          const tempText = qa.tempText;
-          if (!confirmedText && !tempText) return '';
-          if (!tempText) return confirmedText;
-          if (!confirmedText) return tempText;
-          const needSpace = !/\s$/.test(confirmedText) && !/^\s/.test(tempText);
-          return confirmedText + (needSpace ? ' ' + tempText : tempText);
-        })();
-
+        // 停止说话时，将完整的文本赋值给输入框
+        const finalText = qa.confirmedText || '';
         onQuestionChange(finalText);
         setVoiceState({ mode: 'voice-qa', subState: 'voice-end' });
       }
@@ -115,20 +106,12 @@ export function VoiceQAFooter({
             }}
           >
             {(() => {
-              const confirmedText = qa.confirmedText;
-              const tempText = qa.tempText;
+              // audioRecognition.ts 已经处理了文本叠加，直接显示确认的文本和临时文本
+              const confirmedText = qa.confirmedText || '';
+              const tempText = qa.tempText || '';
+              const displayText = confirmedText + (tempText ? (confirmedText ? ' ' : '') + tempText : '');
 
-              if (!confirmedText && !tempText) {
-                return '正在识别语音...';
-              }
-
-              // 组合已确认文本 + 当前临时文本
-              const needSpace = confirmedText.length > 0 &&
-                                tempText.length > 0 &&
-                                !/\s$/.test(confirmedText) &&
-                                !/^\s/.test(tempText);
-
-              return confirmedText + (needSpace ? ' ' + tempText : tempText);
+              return displayText || '正在识别语音...';
             })()}
           </span>
         ) : (

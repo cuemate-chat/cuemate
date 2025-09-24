@@ -63,6 +63,7 @@ export function VoiceQAEntryBody({}: VoiceQAEntryBodyProps) {
         {(qa.confirmedText || qa.tempText) && (
           <div className="recognition-result" style={{ marginTop: 10 }}>
             <div className="recognized-text">
+              {/* audioRecognition.ts 已经处理了文本叠加，直接显示确认的文本和临时文本 */}
               {qa.confirmedText}
               {qa.tempText && (qa.confirmedText ? ' ' : '')}
               {qa.tempText}

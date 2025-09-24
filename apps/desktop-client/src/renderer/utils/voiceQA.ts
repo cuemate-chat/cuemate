@@ -123,20 +123,21 @@ try {
 export async function startVoiceQA(deviceId?: string, initialConfirmed?: string): Promise<void> {
   if (getVoiceQAState().isRecording) return; // 已在录制
   confirmedTextRef = initialConfirmed || '';
-  setVoiceQAState({ isRecording: true, confirmedText: confirmedTextRef, tempText: '' });
+  setVoiceQAState({ isRecording: true, confirmedText: initialConfirmed || '', tempText: '' });
 
   const controller = await startMicrophoneRecognition({
     deviceId,
+    initialText: confirmedTextRef, // 传递初始文本给audioRecognition处理叠加
     onText: (text, isFinal) => {
       const t = (text || '').trim();
       if (!t) return;
+      // audioRecognition.ts 已经处理了文本叠加，直接使用传来的文本
       if (isFinal) {
-        const needSpace =
-          confirmedTextRef.length > 0 && !/\s$/.test(confirmedTextRef) && !/^\s/.test(t);
-        confirmedTextRef += needSpace ? ' ' + t : t;
-        setVoiceQAState({ confirmedText: confirmedTextRef, tempText: '' });
+        setVoiceQAState({ confirmedText: t, tempText: '' });
       } else {
-        setVoiceQAState({ tempText: t });
+        // 对于临时文本，需要去掉初始文本部分，只显示新识别的部分
+        const newText = confirmedTextRef ? t.replace(confirmedTextRef, '').trim() : t;
+        setVoiceQAState({ confirmedText: confirmedTextRef, tempText: newText });
       }
     },
     onError: () => {

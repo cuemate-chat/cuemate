@@ -3,10 +3,13 @@ export interface MicrophoneRecognitionOptions {
   url?: string;
   sampleRate?: number;
   sessionId?: string; // 用于区分不同的识别会话
+  initialText?: string; // 初始文本，新识别的内容会叠加到这个文本后面
   onText?: (text: string, isFinal?: boolean) => void;
   onError?: (errorMessage: string) => void;
   onOpen?: () => void;
   onClose?: () => void;
+  echoCancellation?: boolean; // 启用回声消除，默认为true
+  noiseSuppression?: boolean; // 启用噪音抑制，默认为true
 }
 
 export interface MicrophoneRecognitionController {
@@ -37,15 +40,20 @@ export async function startMicrophoneRecognition(
     url = 'ws://localhost:10095',
     sampleRate = 16000,
     sessionId = 'microphone',
+    initialText = '',
     onText,
     onError,
     onOpen,
     onClose,
+    echoCancellation = true,
+    noiseSuppression = true,
   } = options;
 
   let stream: MediaStream | null = null;
   let audioContext: AudioContext | null = null;
   let websocket: WebSocket | null = null;
+  let finalizedText = initialText; // 累积已确认的文本，从初始文本开始
+  let currentSessionText = ''; // 当前识别会话的临时文本
 
   const cleanup = async () => {
     try {
@@ -82,8 +90,15 @@ export async function startMicrophoneRecognition(
       } catch {}
     }
     const constraints: MediaStreamConstraints = {
-      audio: resolvedDeviceId ? { deviceId: { exact: resolvedDeviceId } } : true,
-    } as any;
+      audio: {
+        ...(resolvedDeviceId ? { deviceId: { exact: resolvedDeviceId } } : {}),
+        echoCancellation,
+        noiseSuppression,
+        autoGainControl: true, // 自动增益控制
+        sampleRate: { ideal: sampleRate },
+        channelCount: { ideal: 1 }, // 单声道
+      },
+    };
     stream = await navigator.mediaDevices.getUserMedia(constraints);
 
     websocket = new WebSocket(url);
@@ -138,7 +153,20 @@ export async function startMicrophoneRecognition(
         const data = JSON.parse(event.data);
         if (data.text && data.text.trim()) {
           const currentRecognizedText = data.text.trim();
-          onText?.(currentRecognizedText, Boolean(data.is_final));
+
+          if (data.is_final) {
+            // 识别结果已确认，累加到finalizedText
+            if (currentRecognizedText && !finalizedText.includes(currentRecognizedText)) {
+              finalizedText = finalizedText ? `${finalizedText} ${currentRecognizedText}` : currentRecognizedText;
+              currentSessionText = '';
+            }
+            onText?.(finalizedText, true);
+          } else {
+            // 临时识别结果，更新currentSessionText
+            currentSessionText = currentRecognizedText;
+            const combinedText = finalizedText ? `${finalizedText} ${currentSessionText}` : currentSessionText;
+            onText?.(combinedText, false);
+          }
         }
       } catch {}
     };
@@ -185,6 +213,8 @@ export async function startSpeakerRecognition(
   let audioDataListener: any = null;
   let audioContext: AudioContext | null = null;
   let speakerWorkletNode: AudioWorkletNode | null = null;
+  let finalizedText = ''; // 累积已确认的文本
+  let currentSessionText = ''; // 当前识别会话的临时文本
 
   const cleanup = async () => {
     try {
@@ -289,7 +319,20 @@ export async function startSpeakerRecognition(
         // FunASR 返回格式: { mode: "online", text: "识别结果", wav_name: "speaker", is_final: false }
         if (data.text && data.text.trim()) {
           const currentRecognizedText = data.text.trim();
-          onText?.(currentRecognizedText, Boolean(data.is_final));
+
+          if (data.is_final) {
+            // 识别结果已确认，累加到finalizedText
+            if (currentRecognizedText && !finalizedText.includes(currentRecognizedText)) {
+              finalizedText = finalizedText ? `${finalizedText} ${currentRecognizedText}` : currentRecognizedText;
+              currentSessionText = '';
+            }
+            onText?.(finalizedText, true);
+          } else {
+            // 临时识别结果，更新currentSessionText
+            currentSessionText = currentRecognizedText;
+            const combinedText = finalizedText ? `${finalizedText} ${currentSessionText}` : currentSessionText;
+            onText?.(combinedText, false);
+          }
         }
       } catch (err) {
         console.error('解析 FunASR 消息失败:', err, event.data);
