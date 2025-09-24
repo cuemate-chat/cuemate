@@ -107,9 +107,18 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
   };
 
   const handleVisibilityToggle = () => {
-    setIsVisible(!isVisible);
-    // TODO: 实现可见性切换功能
-    console.log('Visibility toggled:', !isVisible);
+    try {
+      const api: any = (window as any).electronAPI;
+      const next = !isVisible;
+      if (api?.visibility?.set) {
+        api.visibility.set(next).then(() => setIsVisible(next)).catch(() => setIsVisible(next));
+      } else {
+        setIsVisible(next);
+      }
+      console.log('Visibility toggled:', next);
+    } catch {
+      setIsVisible(!isVisible);
+    }
   };
 
   // 监听"提问 AI"按钮禁用状态变化
@@ -127,6 +136,20 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         (window as any).electronAPI.off('ask-ai-button-disabled', handleAskAIButtonDisabled);
       }
     };
+  }, []);
+
+  // 初始化与订阅隐身模式
+  useEffect(() => {
+    try {
+      const api: any = (window as any).electronAPI;
+      api?.visibility?.get?.().then((res: any) => {
+        if (typeof res?.enabled === 'boolean') setIsVisible(!res.enabled);
+      });
+      const off = api?.visibility?.onChanged?.((enabled: boolean) => {
+        setIsVisible(!enabled);
+      });
+      return () => { try { off?.(); } catch {} };
+    } catch {}
   }, []);
 
   return (

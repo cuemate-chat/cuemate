@@ -17,6 +17,55 @@ export function setupIPC(windowManager: WindowManager): void {
   // 全局缓存 ASR 配置
   let asrConfigCache: any | null = null;
 
+  // === 隐身模式（内容保护）全局状态与持久化 ===
+  let stealthModeEnabled = false;
+  function getSettingsFilePath(): string {
+    const path = require('path');
+    return path.join(app.getPath('userData'), 'settings.json');
+  }
+  function loadSettings(): void {
+    try {
+      const fs = require('fs');
+      const file = getSettingsFilePath();
+      if (fs.existsSync(file)) {
+        const raw = fs.readFileSync(file, 'utf-8');
+        const json = JSON.parse(raw || '{}');
+        stealthModeEnabled = !!json.stealthModeEnabled;
+      }
+    } catch {}
+  }
+  function saveSettings(): void {
+    try {
+      const fs = require('fs');
+      const file = getSettingsFilePath();
+      const dir = require('path').dirname(file);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(file, JSON.stringify({ stealthModeEnabled }, null, 2));
+    } catch {}
+  }
+  function applyStealthModeToAllWindows(enabled: boolean): void {
+    try {
+      const windows = BrowserWindow.getAllWindows();
+      for (const win of windows) {
+        try { win.setContentProtection(enabled); } catch {}
+      }
+    } catch {}
+  }
+  function broadcastStealthChanged(enabled: boolean): void {
+    try {
+      const windows = BrowserWindow.getAllWindows();
+      for (const win of windows) {
+        try { win.webContents.send('stealth-mode-changed', enabled); } catch {}
+      }
+    } catch {}
+  }
+
+  // 初始化加载并应用一次（若已开启）
+  loadSettings();
+  if (stealthModeEnabled) {
+    applyStealthModeToAllWindows(true);
+  }
+
   async function fetchAsrConfigFromServer(): Promise<any | null> {
     try {
       const response = await fetch('http://127.0.0.1:3001/asr/config', {
@@ -116,6 +165,23 @@ export function setupIPC(windowManager: WindowManager): void {
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: 设置AI窗口高度失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  // === 隐身模式（内容保护）相关 IPC ===
+  ipcMain.handle('visibility-get', async () => {
+    return { success: true, enabled: stealthModeEnabled };
+  });
+  ipcMain.handle('visibility-set', async (_event, enabled: boolean) => {
+    try {
+      stealthModeEnabled = !!enabled;
+      applyStealthModeToAllWindows(stealthModeEnabled);
+      saveSettings();
+      broadcastStealthChanged(stealthModeEnabled);
+      return { success: true, enabled: stealthModeEnabled };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 切换隐身模式失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });

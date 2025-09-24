@@ -50,6 +50,16 @@ const controlBarAPI = {
   // === 登录状态检查 API ===
   checkLoginStatus: () => ipcRenderer.invoke('check-login-status'),
 
+  // === 隐身模式（内容保护）API ===
+  visibility: {
+    get: () => ipcRenderer.invoke('visibility-get'),
+    set: (enabled: boolean) => ipcRenderer.invoke('visibility-set', enabled),
+    onChanged: (callback: (enabled: boolean) => void) => {
+      ipcRenderer.on('stealth-mode-changed', (_e, enabled) => callback(enabled));
+      return () => ipcRenderer.removeAllListeners('stealth-mode-changed');
+    },
+  },
+
   // === 事件处理 API ===
   onMouseEnter: () => ipcRenderer.invoke('control-bar-mouse-enter'),
   onMouseLeave: () => ipcRenderer.invoke('control-bar-mouse-leave'),
