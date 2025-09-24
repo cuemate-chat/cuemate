@@ -135,7 +135,7 @@ export function VoiceTestBody() {
     setMicStatus('testing');
     setShowingMicResult(true);
     setMicRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
-    setVoiceState({ mode: 'voice-test', subState: 'voice-testing' });
+    setVoiceState({ mode: 'voice-test', subState: 'voice-mic-testing' });
 
     let testTimer: NodeJS.Timeout | null = null;
     let hasRecognitionResult = false;
@@ -146,7 +146,7 @@ export function VoiceTestBody() {
       if (testTimer) { clearTimeout(testTimer); testTimer = null; }
       try { await micControllerRef.current?.stop(); } catch {}
       micControllerRef.current = null;
-      setVoiceState({ mode: 'none', subState: 'idle' });
+      setVoiceState({ mode: 'voice-test', subState: 'voice-mic-end' });
     };
 
     try {
@@ -185,7 +185,11 @@ export function VoiceTestBody() {
       else if (error?.name === 'NotFoundError') errorMsg = '未找到麦克风设备，请检查设备连接';
       else errorMsg = `麦克风测试失败：${error?.message}`;
       setMicRecognitionResult(prev => ({ ...prev, error: errorMsg, timestamp: Date.now() }));
-      await cleanup();
+      try {
+        await micControllerRef.current?.stop();
+      } catch {}
+      micControllerRef.current = null;
+      setVoiceState({ mode: 'none', subState: 'idle' });
     }
   };
 
@@ -193,7 +197,7 @@ export function VoiceTestBody() {
     setSpeakerStatus('testing');
     setShowingSpeakerResult(true);
     setSpeakerRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
-    setVoiceState({ mode: 'voice-test', subState: 'voice-testing' });
+    setVoiceState({ mode: 'voice-test', subState: 'voice-speak-testing' });
 
     let testTimer: NodeJS.Timeout | null = null;
     let hasRecognitionResult = false;
@@ -204,7 +208,7 @@ export function VoiceTestBody() {
       if (testTimer) { clearTimeout(testTimer); testTimer = null; }
       try { await speakerControllerRef.current?.stop(); } catch {}
       speakerControllerRef.current = null;
-      setVoiceState({ mode: 'none', subState: 'idle' });
+      setVoiceState({ mode: 'voice-test', subState: 'voice-speak-end' });
     };
 
     try {
@@ -243,7 +247,11 @@ export function VoiceTestBody() {
     } catch (error: any) {
       setSpeakerStatus('failed');
       setSpeakerRecognitionResult(prev => ({ ...prev, error: `扬声器测试失败：${error?.message}`, timestamp: Date.now() }));
-      await cleanup();
+      try {
+        await speakerControllerRef.current?.stop();
+      } catch {}
+      speakerControllerRef.current = null;
+      setVoiceState({ mode: 'none', subState: 'idle' });
     }
   };
 

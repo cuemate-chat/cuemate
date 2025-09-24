@@ -28,7 +28,7 @@ export function InterviewTrainingFooter({
 }: WindowFooterProps) {
   const isConversationCompleted = currentConversationStatus === 'completed';
   const voiceState = useVoiceState();
-  const isRecording = voiceState.mode === 'interview-training' && voiceState.subState === 'recording';
+  const isRecording = voiceState.mode === 'interview-training' && voiceState.subState === 'interview-training-recording';
   
   const handleSubmit = () => {
     if (isConversationCompleted) {
@@ -51,9 +51,9 @@ export function InterviewTrainingFooter({
     if (isConversationCompleted) return;
 
     if (isRecording) {
-      setVoiceState({ mode: 'interview-training', subState: 'paused' });
+      setVoiceState({ mode: 'interview-training', subState: 'interview-training-paused' });
     } else {
-      setVoiceState({ mode: 'interview-training', subState: 'recording' });
+      setVoiceState({ mode: 'interview-training', subState: 'interview-training-recording' });
     }
   };
 

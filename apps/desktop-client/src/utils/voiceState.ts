@@ -8,7 +8,26 @@ export type VoiceMode =
   | 'voice-qa'
   | 'mock-interview'
   | 'interview-training';
-export type VoiceSubState = 'idle' | 'recording' | 'paused' | 'completed' | 'playing' | 'voice-testing' | 'voice-speaking';
+export type VoiceSubState =
+  | 'idle'
+  // 语音测试（voice-test）
+  | 'voice-mic-testing'
+  | 'voice-mic-end'
+  | 'voice-speak-testing'
+  | 'voice-speak-end'
+  // 语音提问（voice-qa）
+  | 'voice-speaking'
+  | 'voice-end'
+  // 模拟面试（mock-interview）
+  | 'mock-interview-recording'
+  | 'mock-interview-paused'
+  | 'mock-interview-completed'
+  | 'mock-interview-playing'
+  // 面试训练（interview-training）
+  | 'interview-training-recording'
+  | 'interview-training-paused'
+  | 'interview-training-completed'
+  | 'interview-training-playing';
 
 export interface VoiceState {
   mode: VoiceMode;
@@ -84,7 +103,7 @@ export function setVoiceState(next: Partial<VoiceState> | VoiceState): VoiceStat
   } catch {}
 
   // 立即通知同窗口内的监听器
-  listeners.forEach(listener => {
+  listeners.forEach((listener) => {
     try {
       listener(merged);
     } catch {}
@@ -103,7 +122,7 @@ export function clearVoiceState(): VoiceState {
   } catch {}
 
   // 立即通知同窗口内的监听器
-  listeners.forEach(listener => {
+  listeners.forEach((listener) => {
     try {
       listener(cleared);
     } catch {}

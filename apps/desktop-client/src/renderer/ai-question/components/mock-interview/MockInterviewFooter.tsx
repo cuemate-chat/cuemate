@@ -28,7 +28,7 @@ export function MockInterviewFooter({
 }: WindowFooterProps) {
   const isConversationCompleted = currentConversationStatus === 'completed';
   const voiceState = useVoiceState();
-  const isRecording = voiceState.mode === 'mock-interview' && voiceState.subState === 'recording';
+  const isRecording = voiceState.mode === 'mock-interview' && voiceState.subState === 'mock-interview-recording';
   
   const handleSubmit = () => {
     if (isConversationCompleted) {
@@ -51,9 +51,9 @@ export function MockInterviewFooter({
     if (isConversationCompleted) return;
 
     if (isRecording) {
-      setVoiceState({ mode: 'mock-interview', subState: 'paused' });
+      setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-paused' });
     } else {
-      setVoiceState({ mode: 'mock-interview', subState: 'recording' });
+      setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-recording' });
     }
   };
 

@@ -111,7 +111,7 @@ export function VoiceQAFooter({
 
         onQuestionChange(finalText);
         setCurrentTempText('');
-        setVoiceState({ mode: 'voice-qa', subState: 'completed' });
+        setVoiceState({ mode: 'voice-qa', subState: 'voice-end' });
       }
     }
   };

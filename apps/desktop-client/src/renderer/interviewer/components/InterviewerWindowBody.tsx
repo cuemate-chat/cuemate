@@ -106,7 +106,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
         {selectedCard === '语音提问' && <VoiceQAEntryBody />}
         {selectedCard === '模拟面试' && (
           <MockInterviewEntryBody onStart={async () => {
-            setVoiceState({ mode: 'mock-interview', subState: 'recording' });
+            setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-recording' });
             if ((window as any).electronAPI) {
               await (window as any).electronAPI.switchToMode('mock-interview');
               await (window as any).electronAPI.showAIQuestion();
@@ -115,7 +115,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
         )}
         {selectedCard === '面试训练' && (
           <InterviewTrainingEntryBody onStart={async () => {
-            setVoiceState({ mode: 'interview-training', subState: 'recording' });
+            setVoiceState({ mode: 'interview-training', subState: 'interview-training-recording' });
             if ((window as any).electronAPI) {
               await (window as any).electronAPI.switchToMode('interview-training');
               await (window as any).electronAPI.showAIQuestion();

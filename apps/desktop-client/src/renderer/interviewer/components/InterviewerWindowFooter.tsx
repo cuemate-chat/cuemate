@@ -17,12 +17,15 @@ export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
       <div className="interviewer-controls">
         {(() => {
           // 分类显示逻辑：
-          // idle/paused/completed 显示文字+图标
-          // 其他所有状态 (recording/playing/voice-testing/voice-speaking) 显示 LottieAudioLines
+          // idle 以及 *_end / *_completed 等结束态显示文字+图标
+          // 其他进行中状态显示 LottieAudioLines
           const shouldShowLottie =
             globalState.subState !== 'idle' &&
-            globalState.subState !== 'paused' &&
-            globalState.subState !== 'completed';
+            globalState.subState !== 'voice-mic-end' &&
+            globalState.subState !== 'voice-speak-end' &&
+            globalState.subState !== 'voice-end' &&
+            globalState.subState !== 'mock-interview-completed' &&
+            globalState.subState !== 'interview-training-completed';
 
           if (shouldShowLottie) {
             return (
@@ -43,13 +46,21 @@ export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
                     </Tooltip.Trigger>
                     <Tooltip.Portal>
                       <Tooltip.Content className="radix-tooltip-content">
-                        {
-                          globalState.subState === 'voice-testing' ? '语音测试中...' :
-                          globalState.subState === 'voice-speaking' ? '按住说话中...' :
-                          globalState.subState === 'recording' ? '录制中...' :
-                          globalState.subState === 'playing' ? '播放中...' :
-                          '语音处理中...'
-                        }
+                        {(() => {
+                          switch (globalState.subState) {
+                            case 'voice-mic-testing': return '麦克风测试中...';
+                            case 'voice-speak-testing': return '扬声器测试中...';
+                            case 'voice-speaking': return '按住说话中...';
+                            case 'mock-interview-recording':
+                            case 'interview-training-recording':
+                              return '录制中...';
+                            case 'mock-interview-playing':
+                            case 'interview-training-playing':
+                              return '播放中...';
+                            default:
+                              return '语音处理中...';
+                          }
+                        })()}
                         <Tooltip.Arrow className="radix-tooltip-arrow" />
                       </Tooltip.Content>
                     </Tooltip.Portal>
@@ -59,20 +70,41 @@ export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
             );
           }
 
-          // idle/paused/completed 显示文字+图标
+          // idle 以及 *_end / *_completed 显示文字+图标
           let statusText = '暂未开始';
           let tooltipText = '点击按钮开始语音识别';
           let IconComponent = Mic;
 
           switch (globalState.subState) {
-            case 'paused':
+            case 'voice-mic-end':
+              statusText = '麦克风测试完成';
+              tooltipText = '麦克风语音测试完成';
+              IconComponent = CheckCircle;
+              break;
+            case 'voice-speak-end':
+              statusText = '扬声器测试完成';
+              tooltipText = '扬声器语音测试完成';
+              IconComponent = CheckCircle;
+              break;
+            case 'voice-end':
+              statusText = 'AI 语音提问完成';
+              tooltipText = '语音提问已完成';
+              IconComponent = CheckCircle;
+              break;
+            case 'mock-interview-paused':
+            case 'interview-training-paused':
               statusText = '暂停中';
               tooltipText = '录制已暂停';
               IconComponent = Pause;
               break;
-            case 'completed':
-              statusText = '已完成';
-              tooltipText = '录制已完成';
+            case 'mock-interview-completed':
+              statusText = '模拟面试录制完成';
+              tooltipText = '模拟面试录制已完成';
+              IconComponent = CheckCircle;
+              break;
+            case 'interview-training-completed':
+              statusText = '面试训练录制完成';
+              tooltipText = '面试训练录制已完成';
               IconComponent = CheckCircle;
               break;
             case 'idle':
