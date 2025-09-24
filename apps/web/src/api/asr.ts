@@ -5,30 +5,41 @@ import { http } from './http';
 export interface AsrConfig {
   id: number;
   name: string;
-  language: string;
-  model: string;
-  backend: string;
-  task: string;
-  min_chunk_size: number;
-  no_vad: boolean;
-  no_vac: boolean;
-  vac_chunk_size: number | null;
-  confidence_validation: boolean;
-  diarization: boolean;
-  punctuation_split: boolean;
-  diarization_backend: string;
-  buffer_trimming: string | null;
-  buffer_trimming_sec: number | null;
-  log_level: string;
-  frame_threshold: number | null;
-  beams: number | null;
-  decoder: string | null;
-  audio_max_len: number | null;
-  audio_min_len: number | null;
-  never_fire: boolean;
-  init_prompt: string | null;
-  static_init_prompt: string | null;
-  max_context_tokens: number | null;
+
+  // FunASR WebSocket配置
+  funasr_host: string;
+  funasr_port: number;
+  funasr_chunk_interval: number;
+  funasr_chunk_size_start: number;
+  funasr_chunk_size_middle: number;
+  funasr_chunk_size_end: number;
+  funasr_mode: 'online' | 'offline' | '2pass';
+  funasr_sample_rate: number;
+
+  // AudioTee配置
+  audiotee_sample_rate: 8000 | 16000 | 22050 | 24000 | 32000 | 44100 | 48000;
+  audiotee_chunk_duration: number;
+  audiotee_include_processes: string;
+  audiotee_exclude_processes: string;
+  audiotee_mute_processes: boolean;
+
+  // PiperTTS配置
+  piper_default_language: 'zh-CN' | 'en-US';
+  piper_speech_speed: number;
+  piper_python_path: string;
+
+  // 设备持久化配置
+  microphone_device_id: string;
+  microphone_device_name: string;
+  speaker_device_id: string;
+  speaker_device_name: string;
+
+  // 测试配置
+  test_duration_seconds: number;
+  recognition_timeout_seconds: number;
+  min_recognition_length: number;
+  max_recognition_length: number;
+
   created_at: number;
   updated_at: number;
 }

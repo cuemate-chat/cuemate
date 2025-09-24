@@ -3,46 +3,43 @@ import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
-import { syncASRConfig, syncASRConfigWithRetry } from '../utils/asr-config-sync.js';
 
 const configSchema = z.object({
   name: z.string().min(1).max(50).default('ASR-Gateway'),
-  language: z.string().min(1).max(10).default('zh'),
-  model: z.string().min(1).default('small'),
-  backend: z
-    .enum(['faster-whisper', 'whisper_timestamped', 'mlx-whisper', 'openai-api', 'simulstreaming'])
-    .default('simulstreaming'),
-  task: z.enum(['transcribe', 'translate']).default('transcribe'),
-  min_chunk_size: z.number().min(0.1).max(10).default(1.0),
-  no_vad: z.boolean().default(false),
-  no_vac: z.boolean().default(false),
-  vac_chunk_size: z.number().nullable().default(1.0),
-  confidence_validation: z.boolean().default(false),
-  diarization: z.boolean().default(false),
-  punctuation_split: z.boolean().default(true),
-  diarization_backend: z.enum(['sortformer', 'diart']).default('sortformer'),
-  buffer_trimming: z.enum(['sentence', 'segment']).default('segment'),
-  buffer_trimming_sec: z.number().nullable().default(5.0),
-  log_level: z.enum(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']).default('INFO'),
-  frame_threshold: z.number().default(25),
-  beams: z.number().default(1),
-  decoder: z.enum(['beam', 'greedy', 'auto']).default('auto'),
-  audio_max_len: z.number().default(30.0),
-  audio_min_len: z.number().default(0.5),
-  never_fire: z.boolean().default(false),
-  init_prompt: z
-    .string()
-    .nullable()
-    .default(
-      '技术面试常用词汇：算法、数据结构、架构设计、性能优化、代码重构、系统设计、API接口、数据库、缓存、消息队列、微服务、容器化、云计算、人工智能、机器学习、前端开发、后端开发、全栈开发。',
-    ),
-  static_init_prompt: z
-    .string()
-    .nullable()
-    .default(
-      '请准确识别并转录音频内容，保持语言的自然流畅性，注意专业术语的准确性。对于技术讨论，请特别关注代码逻辑、系统架构和性能分析等内容的准确转录。',
-    ),
-  max_context_tokens: z.number().nullable().default(10000),
+
+  // FunASR WebSocket配置
+  funasr_host: z.string().min(1).default('localhost'),
+  funasr_port: z.number().min(1).max(65535).default(10095),
+  funasr_chunk_interval: z.number().min(1).max(20).default(5),
+  funasr_chunk_size_start: z.number().min(1).max(20).default(5),
+  funasr_chunk_size_middle: z.number().min(1).max(20).default(10),
+  funasr_chunk_size_end: z.number().min(1).max(20).default(5),
+  funasr_mode: z.enum(['online', 'offline', '2pass']).default('online'),
+  funasr_sample_rate: z.number().min(8000).max(48000).default(16000),
+
+  // AudioTee配置
+  audiotee_sample_rate: z.union([z.literal(8000), z.literal(16000), z.literal(22050), z.literal(24000), z.literal(32000), z.literal(44100), z.literal(48000)]).default(16000),
+  audiotee_chunk_duration: z.number().min(0.1).max(2.0).default(0.2),
+  audiotee_include_processes: z.string().default('[]'),
+  audiotee_exclude_processes: z.string().default('[]'),
+  audiotee_mute_processes: z.boolean().default(false),
+
+  // PiperTTS配置
+  piper_default_language: z.enum(['zh-CN', 'en-US']).default('zh-CN'),
+  piper_speech_speed: z.number().min(0.5).max(2.0).default(1.0),
+  piper_python_path: z.string().default('python3'),
+
+  // 设备持久化配置
+  microphone_device_id: z.string().default(''),
+  microphone_device_name: z.string().default('默认麦克风'),
+  speaker_device_id: z.string().default(''),
+  speaker_device_name: z.string().default('默认扬声器'),
+
+  // 测试配置
+  test_duration_seconds: z.number().min(10).max(300).default(60),
+  recognition_timeout_seconds: z.number().min(5).max(60).default(15),
+  min_recognition_length: z.number().min(1).max(50).default(5),
+  max_recognition_length: z.number().min(10).max(200).default(30),
 });
 
 export function registerAsrRoutes(app: FastifyInstance) {
@@ -55,12 +52,7 @@ export function registerAsrRoutes(app: FastifyInstance) {
     const config = rawConfig
       ? {
           ...rawConfig,
-          no_vad: Boolean(rawConfig.no_vad),
-          no_vac: Boolean(rawConfig.no_vac),
-          confidence_validation: Boolean(rawConfig.confidence_validation),
-          diarization: Boolean(rawConfig.diarization),
-          punctuation_split: Boolean(rawConfig.punctuation_split),
-          never_fire: Boolean(rawConfig.never_fire),
+          audiotee_mute_processes: Boolean(rawConfig.audiotee_mute_processes),
         }
       : null;
 
@@ -95,31 +87,6 @@ export function registerAsrRoutes(app: FastifyInstance) {
     };
   });
 
-  // ASR 配置同步接口（独立调用）
-  app.post('/asr/sync-config', async (_req, reply) => {
-    try {
-      app.log.info('执行ASR配置同步');
-
-      const result = await syncASRConfigWithRetry(app);
-
-      if (result.success) {
-        return {
-          success: true,
-          message: result.message,
-          syncResults: result.syncResults,
-        };
-      } else {
-        return reply.code(500).send({
-          success: false,
-          message: result.message,
-          syncResults: result.syncResults,
-        });
-      }
-    } catch (error: any) {
-      app.log.error('ASR配置同步接口调用失败:', error);
-      return reply.code(500).send(buildPrefixedError('ASR配置同步失败', error, 500));
-    }
-  });
 
   // 更新 ASR 配置
   app.post('/asr/config', async (req, reply) => {
@@ -130,48 +97,47 @@ export function registerAsrRoutes(app: FastifyInstance) {
 
       // 更新数据库配置
       const updateStmt = (app as any).db.prepare(`
-        UPDATE asr_config SET 
-          name = ?, language = ?, model = ?, backend = ?, task = ?,
-          min_chunk_size = ?, no_vad = ?, no_vac = ?, vac_chunk_size = ?,
-          confidence_validation = ?, diarization = ?, punctuation_split = ?,
-          diarization_backend = ?, buffer_trimming = ?, buffer_trimming_sec = ?,
-          log_level = ?, frame_threshold = ?, beams = ?, decoder = ?,
-          audio_max_len = ?, audio_min_len = ?, never_fire = ?,
-          init_prompt = ?, static_init_prompt = ?, max_context_tokens = ?,
+        UPDATE asr_config SET
+          name = ?, funasr_host = ?, funasr_port = ?, funasr_chunk_interval = ?,
+          funasr_chunk_size_start = ?, funasr_chunk_size_middle = ?, funasr_chunk_size_end = ?,
+          funasr_mode = ?, funasr_sample_rate = ?, audiotee_sample_rate = ?,
+          audiotee_chunk_duration = ?, audiotee_include_processes = ?, audiotee_exclude_processes = ?,
+          audiotee_mute_processes = ?, piper_default_language = ?, piper_speech_speed = ?,
+          piper_python_path = ?, microphone_device_id = ?, microphone_device_name = ?,
+          speaker_device_id = ?, speaker_device_name = ?, test_duration_seconds = ?,
+          recognition_timeout_seconds = ?, min_recognition_length = ?, max_recognition_length = ?,
           updated_at = strftime('%s', 'now')
         WHERE id = 1
       `);
 
       updateStmt.run(
         newConfig.name,
-        newConfig.language,
-        newConfig.model,
-        newConfig.backend,
-        newConfig.task,
-        newConfig.min_chunk_size,
-        newConfig.no_vad ? 1 : 0,
-        newConfig.no_vac ? 1 : 0,
-        newConfig.vac_chunk_size,
-        newConfig.confidence_validation ? 1 : 0,
-        newConfig.diarization ? 1 : 0,
-        newConfig.punctuation_split ? 1 : 0,
-        newConfig.diarization_backend,
-        newConfig.buffer_trimming,
-        newConfig.buffer_trimming_sec,
-        newConfig.log_level,
-        newConfig.frame_threshold,
-        newConfig.beams,
-        newConfig.decoder,
-        newConfig.audio_max_len,
-        newConfig.audio_min_len,
-        newConfig.never_fire ? 1 : 0,
-        newConfig.init_prompt,
-        newConfig.static_init_prompt,
-        newConfig.max_context_tokens,
+        newConfig.funasr_host,
+        newConfig.funasr_port,
+        newConfig.funasr_chunk_interval,
+        newConfig.funasr_chunk_size_start,
+        newConfig.funasr_chunk_size_middle,
+        newConfig.funasr_chunk_size_end,
+        newConfig.funasr_mode,
+        newConfig.funasr_sample_rate,
+        newConfig.audiotee_sample_rate,
+        newConfig.audiotee_chunk_duration,
+        newConfig.audiotee_include_processes,
+        newConfig.audiotee_exclude_processes,
+        newConfig.audiotee_mute_processes ? 1 : 0,
+        newConfig.piper_default_language,
+        newConfig.piper_speech_speed,
+        newConfig.piper_python_path,
+        newConfig.microphone_device_id,
+        newConfig.microphone_device_name,
+        newConfig.speaker_device_id,
+        newConfig.speaker_device_name,
+        newConfig.test_duration_seconds,
+        newConfig.recognition_timeout_seconds,
+        newConfig.min_recognition_length,
+        newConfig.max_recognition_length,
       );
 
-      // 使用新的配置同步方法
-      const syncResult = await syncASRConfig(app);
 
       // 记录操作日志
       try {
@@ -194,8 +160,7 @@ export function registerAsrRoutes(app: FastifyInstance) {
       return {
         success: true,
         config: newConfig,
-        message: syncResult.message,
-        syncResults: syncResult.syncResults,
+        message: '配置已保存',
       };
     } catch (error: any) {
       app.log.error({ err: error }, 'Failed to update ASR config');
