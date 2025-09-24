@@ -2,6 +2,7 @@ import { app, dialog, ipcMain, shell } from 'electron';
 import WebSocket from 'ws';
 import type { FrontendLogMessage } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
+import { PiperTTS } from '../audio/PiperTTS.js';
 import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
 import { WindowManager } from '../windows/WindowManager.js';
 
@@ -94,279 +95,6 @@ export function setupIPC(windowManager: WindowManager): void {
       }
     },
   );
-
-  /**
-   * 获取 macOS 系统可用的声音列表
-   */
-  ipcMain.handle('get-available-voices', async () => {
-    try {
-      if (process.platform !== 'darwin') {
-        return { success: false, error: 'get-available-voices only supported on macOS' };
-      }
-      const { exec } = await import('node:child_process');
-      const voices = await new Promise<string>((resolve, reject) => {
-        exec('say -v ?', (error, stdout) => {
-          if (error) return reject(error);
-          resolve(stdout);
-        });
-      });
-
-      // 解析声音列表
-      const voiceLines = voices.split('\n').filter((line) => line.trim());
-      const voiceList = voiceLines
-        .map((line) => {
-          // 解析格式: "VoiceName              locale    # Description"
-          const match = line.match(/^([^#]+?)\s+([a-z]{2}_[A-Z]{2})\s+#\s*(.+)$/);
-          if (match) {
-            const [, name, locale, description] = match;
-            const cleanName = name.trim();
-            const [lang, region] = locale.trim().split('_');
-            const language = getLanguageName(lang);
-            const regionName = getRegionName(region);
-
-            // 生成显示名称
-            let displayName = cleanName;
-
-            // 特殊处理：Tingting 显示为婷婷
-            if (cleanName.toLowerCase() === 'tingting') {
-              displayName = '婷婷';
-            }
-
-            // 给所有声音加上语言和地区信息
-            displayName = `${displayName} (${language}（${regionName}）)`;
-
-            return {
-              commandName: cleanName, // 用于执行命令的纯英文名称
-              displayName: displayName, // 用于显示的带语言信息名称
-              locale: locale.trim(),
-              description: description.trim(),
-            };
-          }
-          return null;
-        })
-        .filter(Boolean);
-
-      // 按照自定义的四级分类方式分组
-      const categorizedVoices = voiceList.reduce(
-        (categories, voice) => {
-          if (!voice) return categories;
-
-          const [lang, region] = voice.locale.split('_');
-          const language = getLanguageName(lang);
-          const regionName = getRegionName(region);
-
-          // 判断声音类型
-          let category: string;
-          if (voice.commandName.toLowerCase().includes('siri')) {
-            category = 'Siri';
-          } else if (lang === 'zh') {
-            category = '中文';
-          } else if (lang === 'en') {
-            category = '英文';
-          } else {
-            category = '其他';
-          }
-
-          const subCategory = `${language}(${regionName})`;
-
-          if (!categories[category]) {
-            categories[category] = {};
-          }
-          if (!categories[category][subCategory]) {
-            categories[category][subCategory] = [];
-          }
-          categories[category][subCategory].push(voice);
-
-          return categories;
-        },
-        {} as Record<string, Record<string, any[]>>,
-      );
-
-      // 按优先级排序：中文 > 英文 > Siri > 其他
-      const sortedCategories = Object.entries(categorizedVoices).sort(([a], [b]) => {
-        const order = ['中文', '英文', 'Siri', '其他'];
-        return order.indexOf(a) - order.indexOf(b);
-      });
-
-      // 在每个分类内，按语言排序子分类，并让 Tingting 排在第一位
-      const finalCategories = sortedCategories.map(([category, subCategories]) => [
-        category,
-        Object.entries(subCategories)
-          .map(([subCategoryName, voices]) => [
-            subCategoryName,
-            voices.sort((a, b) => {
-              // Tingting 始终排在第一位
-              if (
-                a.commandName.toLowerCase().includes('tingting') &&
-                !b.commandName.toLowerCase().includes('tingting')
-              )
-                return -1;
-              if (
-                !a.commandName.toLowerCase().includes('tingting') &&
-                b.commandName.toLowerCase().includes('tingting')
-              )
-                return 1;
-              // 其他按字母顺序
-              return a.commandName.localeCompare(b.commandName);
-            }),
-          ])
-          .sort((a, b) => {
-            const aName = a[0] as string;
-            const bName = b[0] as string;
-
-            // 普通话（中国大陆）必须排在第一位
-            if (aName.includes('普通话(中国大陆)') && !bName.includes('普通话(中国大陆)'))
-              return -1;
-            if (!aName.includes('普通话(中国大陆)') && bName.includes('普通话(中国大陆)')) return 1;
-
-            // 其他中文子分类优先
-            if (aName.includes('中文') && !bName.includes('中文')) return -1;
-            if (!aName.includes('中文') && bName.includes('中文')) return 1;
-
-            return aName.localeCompare(bName);
-          }),
-      ]);
-
-      return { success: true, voiceCategories: finalCategories };
-    } catch (error) {
-      logger.error({ error }, 'IPC: get-available-voices failed');
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  });
-
-  // 语言代码到语言名称的映射
-  function getLanguageName(langCode: string): string {
-    const languageMap: Record<string, string> = {
-      en: '英语',
-      zh: '普通话',
-      ja: '日语',
-      ko: '韩语',
-      fr: '法语',
-      de: '德语',
-      es: '西班牙语',
-      it: '意大利语',
-      pt: '葡萄牙语',
-      ru: '俄语',
-      ar: '阿拉伯语',
-      hi: '印地语',
-      th: '泰语',
-      vi: '越南语',
-      nl: '荷兰语',
-      sv: '瑞典语',
-      da: '丹麦语',
-      no: '挪威语',
-      fi: '芬兰语',
-      pl: '波兰语',
-      tr: '土耳其语',
-      he: '希伯来语',
-      el: '希腊语',
-      cs: '捷克语',
-      sk: '斯洛伐克语',
-      hu: '匈牙利语',
-      ro: '罗马尼亚语',
-      bg: '保加利亚语',
-      hr: '克罗地亚语',
-      sl: '斯洛文尼亚语',
-      et: '爱沙尼亚语',
-      lv: '拉脱维亚语',
-      lt: '立陶宛语',
-      uk: '乌克兰语',
-      ca: '加泰罗尼亚语',
-      ms: '马来语',
-      id: '印尼语',
-      ta: '泰米尔语',
-      te: '泰卢固语',
-      kn: '卡纳达语',
-      ml: '马拉雅拉姆语',
-      gu: '古吉拉特语',
-      pa: '旁遮普语',
-      bn: '孟加拉语',
-      ur: '乌尔都语',
-    };
-
-    return languageMap[langCode] || langCode.toUpperCase();
-  }
-
-  // 地区代码到地区名称的映射
-  function getRegionName(regionCode: string): string {
-    const regionMap: Record<string, string> = {
-      CN: '中国大陆',
-      TW: '台湾',
-      HK: '香港',
-      US: '美国',
-      GB: '英国',
-      AU: '澳大利亚',
-      CA: '加拿大',
-      FR: '法国',
-      DE: '德国',
-      ES: '西班牙',
-      IT: '意大利',
-      JP: '日本',
-      KR: '韩国',
-      RU: '俄罗斯',
-      BR: '巴西',
-      MX: '墨西哥',
-      IN: '印度',
-      TH: '泰国',
-      VN: '越南',
-      NL: '荷兰',
-      SE: '瑞典',
-      DK: '丹麦',
-      NO: '挪威',
-      FI: '芬兰',
-      PL: '波兰',
-      TR: '土耳其',
-      IL: '以色列',
-      GR: '希腊',
-      CZ: '捷克',
-      SK: '斯洛伐克',
-      HU: '匈牙利',
-      RO: '罗马尼亚',
-      BG: '保加利亚',
-      HR: '克罗地亚',
-      SI: '斯洛文尼亚',
-      EE: '爱沙尼亚',
-      LV: '拉脱维亚',
-      LT: '立陶宛',
-      UA: '乌克兰',
-      SA: '沙特阿拉伯',
-      AE: '阿联酋',
-      EG: '埃及',
-      ZA: '南非',
-      NZ: '新西兰',
-      SG: '新加坡',
-      MY: '马来西亚',
-      ID: '印尼',
-      PH: '菲律宾',
-    };
-
-    return regionMap[regionCode] || regionCode;
-  }
-
-  /**
-   * 使用 macOS 本地 say 命令发声
-   */
-  ipcMain.handle('speak-text', async (_event, args: { voice: string; text: string }) => {
-    try {
-      const { voice, text } = args || { voice: '', text: '' };
-      if (process.platform !== 'darwin') {
-        return { success: false, error: 'speak-text only supported on macOS' };
-      }
-      const { exec } = await import('node:child_process');
-      const safeVoice = voice?.replace(/[^\w\- ]/g, '') || 'Alex';
-      const safeText = text?.replace(/"/g, '\\"') || '';
-      await new Promise<void>((resolve, reject) => {
-        exec(`say -v ${safeVoice} "${safeText}"`, (error) => {
-          if (error) return reject(error);
-          resolve();
-        });
-      });
-      return { success: true };
-    } catch (error) {
-      logger.error({ error }, 'IPC: speak-text failed');
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  });
 
   /**
    * 设置"提问 AI"按钮的禁用状态
@@ -1184,6 +912,93 @@ export function setupIPC(windowManager: WindowManager): void {
       };
     }
   });
+
+  // === Piper TTS 相关 IPC 处理器 ===
+  let piperTTS: PiperTTS | null = null;
+
+  /**
+   * 获取可用的 Piper TTS 语音模型
+   */
+  ipcMain.handle('piper-get-voices', async () => {
+    try {
+      if (!piperTTS) {
+        piperTTS = new PiperTTS();
+      }
+      const voices = piperTTS.getAvailableVoices();
+      return { success: true, voices };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 获取 Piper TTS 语音模型失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 检查 Piper TTS 是否可用
+   */
+  ipcMain.handle('piper-is-available', async () => {
+    try {
+      if (!piperTTS) {
+        piperTTS = new PiperTTS();
+      }
+      const available = await piperTTS.isAvailable();
+      return { success: true, available };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 检查 Piper TTS 可用性失败');
+      return { success: false, available: false };
+    }
+  });
+
+  /**
+   * 使用 Piper TTS 语音合成
+   */
+  ipcMain.handle('piper-synthesize', async (_event, text: string, options?: any) => {
+    try {
+      if (!piperTTS) {
+        piperTTS = new PiperTTS();
+      }
+      const audioData = await piperTTS.synthesize(text, options);
+      return { success: true, audioData: audioData.toString('base64') };
+    } catch (error) {
+      logger.error({ error }, 'IPC: Piper TTS 语音合成失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 使用 Piper TTS 语音播放
+   */
+  ipcMain.handle('piper-speak', async (_event, text: string, options?: any) => {
+    try {
+      if (!piperTTS) {
+        piperTTS = new PiperTTS();
+      }
+      await piperTTS.speak(text, options);
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: Piper TTS 语音播放失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 使用 Piper TTS 播放音频到指定设备
+   */
+  ipcMain.handle(
+    'piper-play-to-device',
+    async (_event, audioDataBase64: string, deviceId?: string) => {
+      try {
+        if (!piperTTS) {
+          piperTTS = new PiperTTS();
+        }
+        const audioData = Buffer.from(audioDataBase64, 'base64');
+        await piperTTS.playToDevice(audioData, deviceId);
+        return { success: true };
+      } catch (error) {
+        logger.error({ error }, 'IPC: Piper TTS 播放音频失败');
+        return { success: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  );
 
   logger.debug('IPC 通信处理器设置完成');
 }

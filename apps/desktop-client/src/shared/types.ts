@@ -143,6 +143,13 @@ export interface ElectronAPI {
     chrome: string;
     electron: string;
   };
+
+  // Piper TTS API
+  piperGetVoices?: () => Promise<{ success: boolean; voices?: any[]; error?: string; }>;
+  piperIsAvailable?: () => Promise<{ success: boolean; available?: boolean; }>;
+  piperSynthesize?: (text: string, options?: any) => Promise<{ success: boolean; audioData?: string; error?: string; }>;
+  piperSpeak?: (text: string, options?: any) => Promise<{ success: boolean; error?: string; }>;
+  piperPlayToDevice?: (audioDataBase64: string, deviceId?: string) => Promise<{ success: boolean; error?: string; }>;
 }
 
 // 已在各个预加载脚本中声明，这里不需要重复声明

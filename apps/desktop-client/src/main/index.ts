@@ -54,9 +54,6 @@ class CueMateApp {
     app.whenReady().then(() => {
       // 设置应用图标 & 确保 Dock 常驻
       try {
-        const iconPath = getAppIconPath();
-        logger.info({ iconPath }, '应用图标路径');
-
         // 在 macOS 上隐藏 Dock 图标但保留菜单栏
         if (process.platform === 'darwin') {
           // 保持regular模式以确保菜单栏显示，只隐藏dock图标
@@ -75,9 +72,7 @@ class CueMateApp {
       // 初始化窗口管理器
       this.windowManager
         .initialize()
-        .then(() => {
-          logger.info('窗口管理器初始化完成');
-        })
+        .then(() => {})
         .catch((error) => {
           logger.error('窗口管理器初始化失败:', error);
         });
@@ -94,12 +89,9 @@ class CueMateApp {
       // macOS: 监听 Dock 图标右键菜单的退出选项
       if (process.platform === 'darwin') {
         app.on('will-quit', () => {
-          logger.info('应用将要退出 (用户主动退出)');
-
           // 在开发模式下，立即停止开发服务
           if (this.isDevelopment) {
             try {
-              logger.info('正在停止开发服务...');
               // 同步执行停止命令
               const commands = [
                 "pkill -f 'pnpm.*dev' || true",
@@ -110,7 +102,6 @@ class CueMateApp {
               commands.forEach((cmd) => {
                 try {
                   execSync(cmd);
-                  logger.info(`执行停止命令: ${cmd}`);
                 } catch (error) {
                   // pkill 找不到进程时会报错，这是正常的
                   logger.debug(`停止命令结果: ${cmd} - ${(error as Error).message}`);
@@ -128,28 +119,23 @@ class CueMateApp {
 
     // 当所有窗口关闭时
     app.on('window-all-closed', () => {
-      logger.info('所有窗口已关闭');
       // 在所有平台上都退出应用，包括 macOS
       app.quit();
     });
 
     // 当应用即将退出时
     app.on('before-quit', () => {
-      logger.info('应用准备退出');
-
       // 清理资源
       this.cleanup();
     });
 
     // 处理第二个实例启动
     app.on('second-instance', () => {
-      logger.info('检测到第二个实例，激活现有应用');
       this.windowManager.showFloatingWindows();
     });
 
     // macOS: 处理重新打开事件
-    app.on('open-url', (event, url) => {
-      logger.info({ url }, '处理 URL');
+    app.on('open-url', (event) => {
       event.preventDefault();
       // 处理自定义 URL scheme
     });
@@ -217,8 +203,6 @@ class CueMateApp {
   }
 
   private cleanup(): void {
-    logger.info('清理应用资源');
-
     // 清理菜单栏图标
     if (this.tray) {
       this.tray.destroy();
@@ -256,7 +240,6 @@ class CueMateApp {
 
 // 确保只有一个应用实例运行
 if (!app.requestSingleInstanceLock()) {
-  logger.info('应用已在运行，退出当前实例');
   app.quit();
 } else {
   // 创建应用实例
