@@ -2,7 +2,6 @@ import { shell } from 'electron';
 import WebSocket from 'ws';
 import { logger } from '../../utils/logger.js';
 import { PiperTTS } from '../audio/PiperTTS.js';
-import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
 import type { WindowManager } from '../windows/WindowManager.js';
 
 interface WebSocketMessage {
@@ -22,7 +21,6 @@ export class WebSocketClient {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000;
   private wsUrl = 'ws://127.0.0.1:3001';
-  private systemAudioCapture: SystemAudioCapture | null = null;
 
   constructor(windowManager: WindowManager) {
     this.windowManager = windowManager;
@@ -120,17 +118,6 @@ export class WebSocketClient {
         // TODO: 实现录音功能
         break;
 
-      case 'START_SYSTEM_AUDIO_CAPTURE':
-        this.handleStartSystemAudioCapture(message);
-        break;
-
-      case 'STOP_SYSTEM_AUDIO_CAPTURE':
-        this.handleStopSystemAudioCapture();
-        break;
-
-      case 'GET_AUDIO_DEVICES':
-        this.handleGetAudioDevices(message);
-        break;
 
       default:
         logger.warn({ messageType: message.type }, 'WebSocket: 未知消息类型');
@@ -194,138 +181,6 @@ export class WebSocketClient {
     return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
   }
 
-  /**
-   * 处理开始系统音频扬声器捕获请求
-   */
-  private async handleStartSystemAudioCapture(message: WebSocketMessage): Promise<void> {
-    try {
 
-      // 如果已经在捕获，先停止
-      if (this.systemAudioCapture?.isCaptureActive()) {
-        this.systemAudioCapture.stopCapture();
-      }
 
-      // 创建新的音频捕获实例
-      this.systemAudioCapture = new SystemAudioCapture({
-        sampleRate: message.data?.sampleRate || 16000,
-        channels: message.data?.channels || 1,
-        bitDepth: 16,
-        device: message.data?.device || 'default',
-      });
-
-      // 设置音频数据回调
-      this.systemAudioCapture.onData((audioData: Buffer) => {
-        // 将音频数据发送给Web端
-        this.send({
-          type: 'SYSTEM_AUDIO_DATA',
-          data: {
-            audioData: audioData.toString('base64'),
-            timestamp: Date.now(),
-          },
-        });
-      });
-
-      // 设置错误回调
-      this.systemAudioCapture.onError((error: Error) => {
-        logger.error('系统音频扬声器捕获错误:', error);
-        this.send({
-          type: 'SYSTEM_AUDIO_ERROR',
-          data: {
-            error: error.message,
-            timestamp: Date.now(),
-          },
-        });
-      });
-
-      // 开始捕获
-      await this.systemAudioCapture.startCapture();
-
-      // 发送成功响应
-      this.send({
-        type: 'SYSTEM_AUDIO_CAPTURE_STARTED',
-        data: {
-          success: true,
-          timestamp: Date.now(),
-        },
-      });
-    } catch (error) {
-      logger.error('启动系统音频扬声器捕获失败:', error);
-
-      // 发送错误响应
-      this.send({
-        type: 'SYSTEM_AUDIO_CAPTURE_FAILED',
-        data: {
-          error: error instanceof Error ? error.message : String(error),
-          timestamp: Date.now(),
-        },
-      });
-    }
-  }
-
-  /**
-   * 处理获取音频设备请求
-   */
-  private async handleGetAudioDevices(message: WebSocketMessage): Promise<void> {
-    try {
-
-      // 使用SystemAudioCapture的静态方法获取设备列表
-      const devices = await SystemAudioCapture.getAudioDevices();
-
-      // 发送设备列表响应
-      this.send({
-        type: `GET_AUDIO_DEVICES_RESPONSE_${message.data?.requestId}`,
-        data: {
-          success: true,
-          devices,
-          timestamp: Date.now(),
-        },
-      });
-    } catch (error) {
-      logger.error('获取音频设备列表失败:', error);
-
-      // 发送错误响应
-      this.send({
-        type: `GET_AUDIO_DEVICES_RESPONSE_${message.data?.requestId}`,
-        data: {
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-          devices: [{ id: 'default', name: '默认音频输出设备' }],
-          timestamp: Date.now(),
-        },
-      });
-    }
-  }
-
-  /**
-   * 处理停止系统音频扬声器捕获请求
-   */
-  private handleStopSystemAudioCapture(): void {
-    try {
-
-      if (this.systemAudioCapture) {
-        this.systemAudioCapture.stopCapture();
-        this.systemAudioCapture = null;
-      }
-
-      // 发送停止响应
-      this.send({
-        type: 'SYSTEM_AUDIO_CAPTURE_STOPPED',
-        data: {
-          success: true,
-          timestamp: Date.now(),
-        },
-      });
-    } catch (error) {
-      logger.error('停止系统音频扬声器捕获失败:', error);
-
-      // 发送错误响应
-      this.send({
-        type: 'SYSTEM_AUDIO_CAPTURE_FAILED',
-        data: {
-          error: error instanceof Error ? error.message : String(error),
-          timestamp: Date.now(),
-        },
-      });
-    }
-  }
 }
