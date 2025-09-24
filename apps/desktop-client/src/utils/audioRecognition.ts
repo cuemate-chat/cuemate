@@ -69,8 +69,20 @@ export async function startMicrophoneRecognition(
   };
 
   try {
+    let resolvedDeviceId: string | undefined = deviceId;
+    if (!resolvedDeviceId) {
+      try {
+        const electronAPI: any =
+          (window as any).electronInterviewerAPI || (window as any).electronAPI;
+        const res = await electronAPI?.asrConfig?.get?.();
+        const cfg = res?.config;
+        if (cfg?.microphone_device_id) {
+          resolvedDeviceId = cfg.microphone_device_id;
+        }
+      } catch {}
+    }
     const constraints: MediaStreamConstraints = {
-      audio: deviceId ? { deviceId: { exact: deviceId } } : true,
+      audio: resolvedDeviceId ? { deviceId: { exact: resolvedDeviceId } } : true,
     } as any;
     stream = await navigator.mediaDevices.getUserMedia(constraints);
 
@@ -196,6 +208,18 @@ export async function startSpeakerRecognition(
   };
 
   try {
+    let resolvedDeviceId: string | undefined = deviceId;
+    if (!resolvedDeviceId) {
+      try {
+        const electronAPI: any =
+          (window as any).electronInterviewerAPI || (window as any).electronAPI;
+        const res = await electronAPI?.asrConfig?.get?.();
+        const cfg = res?.config;
+        if (cfg?.speaker_device_id) {
+          resolvedDeviceId = cfg.speaker_device_id;
+        }
+      } catch {}
+    }
     const electronAPI = (window as any).electronInterviewerAPI;
     if (!electronAPI || !electronAPI.audioTest) {
       onError?.('音频测试服务不可用');
@@ -213,7 +237,7 @@ export async function startSpeakerRecognition(
         chunk_interval: 5,
         wav_name: `${sessionId}_${Date.now()}`, // 使用sessionId和时间戳确保唯一性
         is_speaking: true,
-        mode: "online"
+        mode: 'online',
       };
       websocket?.send(JSON.stringify(config));
 
@@ -225,7 +249,11 @@ export async function startSpeakerRecognition(
 
         // 监听来自 WorkletNode 的处理后音频数据
         speakerWorkletNode.port.onmessage = (event) => {
-          if (event.data.type === 'audiodata' && websocket && websocket.readyState === WebSocket.OPEN) {
+          if (
+            event.data.type === 'audiodata' &&
+            websocket &&
+            websocket.readyState === WebSocket.OPEN
+          ) {
             websocket.send(event.data.data);
           }
         };
@@ -235,7 +263,7 @@ export async function startSpeakerRecognition(
         return { stop: async () => {} };
       }
 
-      const result = await electronAPI.audioTest.startSpeakerTest({ deviceId });
+      const result = await electronAPI.audioTest.startSpeakerTest({ deviceId: resolvedDeviceId });
 
       if (!result.success) {
         onError?.(result.error || '启动扬声器捕获失败');
@@ -248,7 +276,7 @@ export async function startSpeakerRecognition(
         if (speakerWorkletNode && audioData.byteLength > 0) {
           speakerWorkletNode.port.postMessage({
             type: 'nativeAudioData',
-            audioData: audioData
+            audioData: audioData,
           });
         }
       };
@@ -277,7 +305,10 @@ export async function startSpeakerRecognition(
       onClose?.();
     };
   } catch (error: any) {
-    const errorMsg = error?.name === 'SecurityError' ? '安全权限错误，请确保已授予屏幕录制权限' : `扬声器识别启动失败：${error?.message}`;
+    const errorMsg =
+      error?.name === 'SecurityError'
+        ? '安全权限错误，请确保已授予屏幕录制权限'
+        : `扬声器识别启动失败：${error?.message}`;
     onError?.(errorMsg);
     await cleanup();
   }

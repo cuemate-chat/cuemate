@@ -57,6 +57,21 @@ const controlBarAPI = {
   // === 日志 API ===
   log: (logMessage: FrontendLogMessage) => ipcRenderer.invoke('frontend-log', logMessage),
 
+  // === ASR 配置 API ===
+  asrConfig: {
+    get: () => ipcRenderer.invoke('asr-config-get'),
+    updateDevices: (partial: {
+      microphone_device_id?: string;
+      microphone_device_name?: string;
+      speaker_device_id?: string;
+      speaker_device_name?: string;
+    }) => ipcRenderer.invoke('asr-config-update-devices', partial),
+    onChanged: (callback: (config: any) => void) => {
+      ipcRenderer.on('asr-config-changed', (_event, config) => callback(config));
+      return () => ipcRenderer.removeAllListeners('asr-config-changed');
+    },
+  },
+
   // === 音频文件保存 API ===
   saveAudioFile: (audioData: Uint8Array, fileName: string) =>
     ipcRenderer.invoke('save-audio-file', audioData, fileName),

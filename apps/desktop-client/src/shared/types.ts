@@ -150,6 +150,18 @@ export interface ElectronAPI {
   piperSynthesize?: (text: string, options?: any) => Promise<{ success: boolean; audioData?: string; error?: string; }>;
   piperSpeak?: (text: string, options?: any) => Promise<{ success: boolean; error?: string; }>;
   piperPlayToDevice?: (audioDataBase64: string, deviceId?: string) => Promise<{ success: boolean; error?: string; }>;
+
+  // ASR 配置 API
+  asrConfig?: {
+    get: () => Promise<{ success: boolean; config?: any; error?: string }>;
+    updateDevices: (partial: {
+      microphone_device_id?: string;
+      microphone_device_name?: string;
+      speaker_device_id?: string;
+      speaker_device_name?: string;
+    }) => Promise<{ success: boolean; config?: any; error?: string }>;
+    onChanged: (callback: (config: any) => void) => () => void;
+  };
 }
 
 // 已在各个预加载脚本中声明，这里不需要重复声明

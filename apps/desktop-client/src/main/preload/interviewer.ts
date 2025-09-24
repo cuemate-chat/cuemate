@@ -64,6 +64,21 @@ const interviewerAPI = {
     sendMicAudio: (audioData: ArrayBuffer) => ipcRenderer.invoke('mic-send-audio', audioData),
   },
 
+  // === ASR 配置 API ===
+  asrConfig: {
+    get: () => ipcRenderer.invoke('asr-config-get'),
+    updateDevices: (partial: {
+      microphone_device_id?: string;
+      microphone_device_name?: string;
+      speaker_device_id?: string;
+      speaker_device_name?: string;
+    }) => ipcRenderer.invoke('asr-config-update-devices', partial),
+    onChanged: (callback: (config: any) => void) => {
+      ipcRenderer.on('asr-config-changed', (_event, config) => callback(config));
+      return () => ipcRenderer.removeAllListeners('asr-config-changed');
+    },
+  },
+
   // === 事件监听 API ===
   on: (channel: string, callback: (...args: any[]) => void) => {
     // 只允许特定的事件频道

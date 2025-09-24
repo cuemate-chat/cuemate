@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import WebSocket from 'ws';
 import type { FrontendLogMessage } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
@@ -14,6 +14,59 @@ export function setupIPC(windowManager: WindowManager): void {
   // 全局缓存用户数据和token
   let cachedUserData: any = null;
   let cachedToken: string | null = null;
+  // 全局缓存 ASR 配置
+  let asrConfigCache: any | null = null;
+
+  async function fetchAsrConfigFromServer(): Promise<any | null> {
+    try {
+      const response = await fetch('http://127.0.0.1:3001/asr/config', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!response.ok) {
+        logger.warn({ status: response.status }, 'IPC: 获取 ASR 配置失败');
+        return null;
+      }
+      const data = await response.json();
+      return data?.config ?? null;
+    } catch (error) {
+      logger.error({ error }, 'IPC: 拉取 ASR 配置异常');
+      return null;
+    }
+  }
+
+  async function postAsrConfigToServer(
+    config: any,
+  ): Promise<{ success: boolean; config?: any; message?: string; error?: string }> {
+    try {
+      const response = await fetch('http://127.0.0.1:3001/asr/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        return { success: false, error: text };
+      }
+      const data = await response.json();
+      return data as any;
+    } catch (error: any) {
+      return { success: false, error: error?.message || '更新 ASR 配置异常' };
+    }
+  }
+
+  function broadcastAsrConfigChanged(config: any): void {
+    try {
+      const windows = BrowserWindow.getAllWindows();
+      for (const win of windows) {
+        try {
+          win.webContents.send('asr-config-changed', config);
+        } catch {}
+      }
+    } catch {}
+  }
 
   /**
    * 显示浮动窗口
@@ -538,6 +591,59 @@ export function setupIPC(windowManager: WindowManager): void {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
+
+  // === ASR 配置相关 IPC 处理器 ===
+  ipcMain.handle('asr-config-get', async () => {
+    try {
+      if (!asrConfigCache) {
+        asrConfigCache = await fetchAsrConfigFromServer();
+        try {
+          (global as any).asrConfigCache = asrConfigCache;
+        } catch {}
+      }
+      return { success: true, config: asrConfigCache };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 获取 ASR 配置失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle(
+    'asr-config-update-devices',
+    async (
+      _event,
+      partial: {
+        microphone_device_id?: string;
+        microphone_device_name?: string;
+        speaker_device_id?: string;
+        speaker_device_name?: string;
+      },
+    ) => {
+      try {
+        // 读取现有配置
+        const current = asrConfigCache ?? (await fetchAsrConfigFromServer()) ?? {};
+        const merged = {
+          ...current,
+          ...partial,
+        };
+
+        const result = await postAsrConfigToServer(merged);
+        if (result.success && result.config) {
+          asrConfigCache = result.config;
+          try {
+            (global as any).asrConfigCache = asrConfigCache;
+          } catch {}
+          broadcastAsrConfigChanged(asrConfigCache);
+          return { success: true, config: asrConfigCache };
+        }
+
+        return { success: false, error: result.error || '更新 ASR 配置失败' };
+      } catch (error) {
+        logger.error({ error }, 'IPC: 更新 ASR 设备配置失败');
+        return { success: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  );
 
   /**
    * 加载对话到AI问答窗口

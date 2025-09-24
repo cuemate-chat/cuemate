@@ -49,16 +49,30 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
         const devices = await navigator.mediaDevices.enumerateDevices();
         const mics = devices.filter(d => d.kind === 'audioinput');
         setMicDevices(mics);
-        const stored = localStorage.getItem('cuemate.selectedMicDeviceId');
-        if (stored && mics.find(m => m.deviceId === stored)) {
-          setSelectedMic(stored);
-        } else if (mics.length > 0 && !selectedMic) {
-          setSelectedMic(mics[0].deviceId);
-        }
+        try {
+          const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+          const res = await electronAPI?.asrConfig?.get?.();
+          const cfg = res?.config;
+          const defaultMic = cfg?.microphone_device_id;
+          if (defaultMic && mics.find(m => m.deviceId === defaultMic)) {
+            setSelectedMic(defaultMic);
+          } else if (mics.length > 0 && !selectedMic) {
+            setSelectedMic(mics[0].deviceId);
+          }
+        } catch {}
       } catch (e) {
         console.error('获取麦克风设备失败:', e);
       }
     })();
+    try {
+      const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const off = electronAPI?.asrConfig?.onChanged?.((cfg: any) => {
+        if (cfg?.microphone_device_id && micDevices.some(d => d.deviceId === cfg.microphone_device_id)) {
+          setSelectedMic(cfg.microphone_device_id);
+        }
+      });
+      return () => { try { off?.(); } catch {} };
+    } catch {}
   }, []);
 
   return (
@@ -76,10 +90,18 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
             <select
               className="ai-height-selector"
               value={selectedMic}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const value = e.target.value;
                 setSelectedMic(value);
-                try { localStorage.setItem('cuemate.selectedMicDeviceId', value); } catch {}
+                try {
+                  const selected = micDevices.find(d => d.deviceId === value);
+                  const name = selected?.label || '默认麦克风';
+                  const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+                  await electronAPI?.asrConfig?.updateDevices?.({
+                    microphone_device_id: value,
+                    microphone_device_name: name,
+                  });
+                } catch {}
               }}
             >
               {micDevices.map(device => (

@@ -1,7 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { CheckCircle, ChevronDown, Clock, Loader2, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { MicrophoneRecognitionController, startMicrophoneRecognition, SpeakerRecognitionController, startSpeakerRecognition } from '../../../utils/audioRecognition';
+import { MicrophoneRecognitionController, SpeakerRecognitionController, startMicrophoneRecognition, startSpeakerRecognition } from '../../../utils/audioRecognition';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 
 interface RecognitionResult {
@@ -36,12 +36,48 @@ export function VoiceTestBody() {
         const speakers = devices.filter(d => d.kind === 'audiooutput');
         setMicDevices(mics);
         setSpeakerDevices(speakers);
-        if (mics.length > 0) setSelectedMic(mics[0].deviceId);
-        if (speakers.length > 0) setSelectedSpeaker(speakers[0].deviceId);
+
+        // 读取全局 asr 配置，尝试回填默认设备
+        const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+        let defaultMic: string | undefined;
+        let defaultSpeaker: string | undefined;
+        try {
+          const res = await electronAPI?.asrConfig?.get?.();
+          const cfg = res?.config;
+          if (cfg) {
+            defaultMic = cfg.microphone_device_id;
+            defaultSpeaker = cfg.speaker_device_id;
+          }
+        } catch {}
+
+        if (mics.length > 0) {
+          const exists = defaultMic && mics.some(d => d.deviceId === defaultMic);
+          setSelectedMic(exists ? (defaultMic as string) : mics[0].deviceId);
+        }
+        if (speakers.length > 0) {
+          const exists = defaultSpeaker && speakers.some(d => d.deviceId === defaultSpeaker);
+          setSelectedSpeaker(exists ? (defaultSpeaker as string) : speakers[0].deviceId);
+        }
       } catch (e) {
         console.error('获取设备失败:', e);
       }
     })();
+
+    // 订阅配置变更，保持与全局一致
+    try {
+      const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const off = electronAPI?.asrConfig?.onChanged?.((cfg: any) => {
+        if (cfg?.microphone_device_id && micDevices.some(d => d.deviceId === cfg.microphone_device_id)) {
+          setSelectedMic(cfg.microphone_device_id);
+        }
+        if (cfg?.speaker_device_id && speakerDevices.some(d => d.deviceId === cfg.speaker_device_id)) {
+          setSelectedSpeaker(cfg.speaker_device_id);
+        }
+      });
+      return () => {
+        try { off?.(); } catch {}
+      };
+    } catch {}
   }, []);
 
   const shouldStopRecognition = (text: string, startTime: number): boolean => {
@@ -217,7 +253,19 @@ export function VoiceTestBody() {
         <h4 className="test-section-title">麦克风测试</h4>
         <div className="test-row">
           <div className="device-select-wrapper">
-            <select className="device-select" value={selectedMic} onChange={(e) => setSelectedMic(e.target.value)} disabled={voiceState.subState !== 'idle'}>
+            <select className="device-select" value={selectedMic} onChange={async (e) => {
+              const value = e.target.value;
+              setSelectedMic(value);
+              try {
+                const selected = micDevices.find(d => d.deviceId === value);
+                const name = selected?.label || '默认麦克风';
+                const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+                await electronAPI?.asrConfig?.updateDevices?.({
+                  microphone_device_id: value,
+                  microphone_device_name: name,
+                });
+              } catch {}
+            }} disabled={voiceState.subState !== 'idle'}>
               {micDevices.map(device => (
                 <option key={device.deviceId} value={device.deviceId}>{device.label || '默认麦克风'}</option>
               ))}
@@ -248,7 +296,19 @@ export function VoiceTestBody() {
         <h4 className="test-section-title">扬声器测试</h4>
         <div className="test-row">
           <div className="device-select-wrapper">
-            <select className="device-select" value={selectedSpeaker} onChange={(e) => setSelectedSpeaker(e.target.value)} disabled={voiceState.subState !== 'idle'}>
+            <select className="device-select" value={selectedSpeaker} onChange={async (e) => {
+              const value = e.target.value;
+              setSelectedSpeaker(value);
+              try {
+                const selected = speakerDevices.find(d => d.deviceId === value);
+                const name = selected?.label || '默认扬声器';
+                const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+                await electronAPI?.asrConfig?.updateDevices?.({
+                  speaker_device_id: value,
+                  speaker_device_name: name,
+                });
+              } catch {}
+            }} disabled={voiceState.subState !== 'idle'}>
               {speakerDevices.map(device => (
                 <option key={device.deviceId} value={device.deviceId}>{device.label || '默认扬声器'}</option>
               ))}
