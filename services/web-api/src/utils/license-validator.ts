@@ -141,11 +141,6 @@ export async function validateLicenseAtStartup(db: any, logger: any): Promise<vo
       }
     }
 
-    // 汇总报告（仅一条）
-    logger.info(
-      `License 验证完成: 有效 ${validCount} 个，过期 ${expiredCount} 个，无效 ${invalidCount} 个`,
-    );
-
     if (validCount === 0) {
       logger.warn('当前没有有效的 License，请上传有效的 License 文件');
     }
