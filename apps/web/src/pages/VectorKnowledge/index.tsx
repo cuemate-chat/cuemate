@@ -1,4 +1,5 @@
 import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { Input, Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import { listTags } from '../../api/questions';
@@ -388,9 +389,21 @@ export default function VectorKnowledge() {
         style={{ position: 'relative', zIndex: 1 }}
       >
         {/* 页面标题 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">向量知识库</h1>
-          <p className="mt-2 text-slate-600">查询和检索存储在向量数据库中的知识内容</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">向量知识库</h1>
+            <p className="mt-2 text-slate-600">查询和检索存储在向量数据库中的知识内容</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={loadDocumentsByTab}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              刷新
+            </button>
+          </div>
         </div>
 
         {/* 主标签页 */}

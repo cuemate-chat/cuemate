@@ -1,4 +1,4 @@
-import { CloudArrowUpIcon, DocumentTextIcon, FolderArrowDownIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, CloudArrowUpIcon, DocumentTextIcon, FolderArrowDownIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 import { storage } from '../../api/http';
 import { getLicenseInfo, uploadLicenseFile, uploadQuestions, type LicenseInfo } from '../../api/license';
@@ -127,6 +127,16 @@ export default function License() {
           <p className="text-sm text-slate-600 mt-1">
             管理系统授权许可，确保合规使用
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={fetchLicenseInfo}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            刷新
+          </button>
         </div>
       </div>
 

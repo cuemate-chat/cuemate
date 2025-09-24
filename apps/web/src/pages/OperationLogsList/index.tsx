@@ -450,6 +450,7 @@ export default function OperationLogsList() {
           <div className="col-span-2 flex items-end gap-2">
             <Button type="primary" onClick={handleSearch} className="h-[42px]">搜索</Button>
             <Button onClick={handleReset} className="h-[42px]">重置</Button>
+            <Button onClick={loadOperationLogs} disabled={loading} className="h-[42px]">刷新</Button>
             <Button icon={<ArrowDownTrayIcon className="w-4 h-4" />} onClick={handleExport} className="h-[42px]">导出</Button>
             <Space.Compact>
               <Popconfirm title="确定要删除7天前的记录吗？" onConfirm={() => handleDeleteBefore(7)}>

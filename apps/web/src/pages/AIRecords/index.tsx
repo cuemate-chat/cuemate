@@ -494,7 +494,8 @@ export default function AIRecordsList() {
           </div>
           <div className="flex items-end">
             <Button type="primary" onClick={handleSearch} className="h-[42px] mr-2">搜索</Button>
-            <Button onClick={handleReset} className="h-[42px]">重置</Button>
+            <Button onClick={handleReset} className="h-[42px] mr-2">重置</Button>
+            <Button onClick={loadAIConversations} disabled={loading} className="h-[42px]">刷新</Button>
           </div>
         </div>
       </div>

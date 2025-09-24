@@ -10,7 +10,7 @@ import {
   PaintBrushIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Select as AntSelect } from 'antd';
+import { Select as AntSelect, Button } from 'antd';
 import 'antd/dist/reset.css';
 import { useEffect, useState } from 'react';
 import { changePassword, defaultUserForm, fetchMe, updateMe, userToFormData } from '../../api/auth';
@@ -21,6 +21,7 @@ import { message } from '../../components/Message';
 export default function Settings() {
   const [form, setForm] = useState(defaultUserForm);
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [modelOptions, setModelOptions] = useState<{ label: string; value: string }[]>([]);
 
   useEffect(() => {
@@ -279,7 +280,40 @@ export default function Settings() {
             </div>
           </div>
         </div>
-        <div className="px-6 py-6 border-t border-slate-200 flex justify-center bg-slate-50">
+        <div className="px-6 py-6 border-t border-slate-200 flex justify-center bg-slate-50 gap-3">
+          <Button
+            disabled={refreshing}
+            onClick={() => {
+              (async () => {
+                setRefreshing(true);
+                try {
+                  // 重新拉取用户信息
+                  const user = await fetchMe();
+                  if (user) {
+                    setForm(userToFormData(user));
+                    storage.setUser(user);
+                  }
+                  // 重新拉取模型列表
+                  try {
+                    const res: any = await listModels({ type: 'llm' });
+                    const opts = (res.list || []).map((m: any) => ({
+                      label: `${m.name} (${m.model_name})`,
+                      value: m.id,
+                    }));
+                    setModelOptions(opts);
+                  } catch {}
+                  message.success('已刷新设置');
+                } catch (e: any) {
+                  console.error('刷新失败:', e);
+                } finally {
+                  setRefreshing(false);
+                }
+              })();
+            }}
+            className="h-[40px]"
+          >
+            {refreshing ? '刷新中…' : '刷新'}
+          </Button>
           <button
             disabled={saving}
             onClick={() => {

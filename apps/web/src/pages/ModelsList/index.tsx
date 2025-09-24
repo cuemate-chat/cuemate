@@ -3,7 +3,7 @@ import {
   EditOutlined,
   LinkOutlined,
 } from '@ant-design/icons';
-import { Input, Modal, Tree } from 'antd';
+import { Button, Input, Modal, Tree } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { storage } from '../../api/http';
 import {
@@ -350,13 +350,13 @@ export default function ModelsList() {
                 setPage(1);
               }}
             />
-            <button
-              className="h-8 px-4 rounded-lg bg-blue-600 text-white shadow-sm whitespace-nowrap"
-              onClick={handleAddModel}
-            >
+            <Button onClick={() => fetchList()} disabled={loading} className="h-[32px]">
+              刷新
+            </Button>
+            <Button type="primary" onClick={handleAddModel} className="h-[32px]">
               <span className="hidden sm:inline">添加模型</span>
               <span className="sm:hidden">添加</span>
-            </button>
+            </Button>
           </div>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-4 h-[calc(100%-56px)] overflow-y-auto">

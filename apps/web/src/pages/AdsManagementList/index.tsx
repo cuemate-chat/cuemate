@@ -1,18 +1,19 @@
 import {
-    EyeIcon,
-    MagnifyingGlassIcon,
-    PencilIcon,
-    PlusIcon,
-    TrashIcon,
+  ArrowPathIcon,
+  EyeIcon,
+  MagnifyingGlassIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import { Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {
-    deletePixelAd,
-    getBlockConfigs,
-    listAdsPixel,
-    type BlockConfig,
-    type PixelAd
+  deletePixelAd,
+  getBlockConfigs,
+  listAdsPixel,
+  type BlockConfig,
+  type PixelAd
 } from '../../api/ads';
 import LicenseGuard from '../../components/LicenseGuard';
 import { message } from '../../components/Message';
@@ -278,13 +279,23 @@ export default function AdsManagementList() {
           <div className="text-sm text-slate-600">
             共 {ads.length} 条广告
           </div>
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-          >
-            <PlusIcon className="w-4 h-4" />
-            新建广告
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchAds(currentPage, pageSize, searchTerm, statusFilter, blockFilter)}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              刷新
+            </button>
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            >
+              <PlusIcon className="w-4 h-4" />
+              新建广告
+            </button>
+          </div>
         </div>
 
         {/* 广告列表 */}
