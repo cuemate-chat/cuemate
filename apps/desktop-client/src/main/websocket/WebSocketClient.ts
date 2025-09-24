@@ -1,6 +1,7 @@
 import { shell } from 'electron';
 import WebSocket from 'ws';
 import { logger } from '../../utils/logger.js';
+import { PiperTTS } from '../audio/PiperTTS.js';
 import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
 import type { WindowManager } from '../windows/WindowManager.js';
 
@@ -32,11 +33,9 @@ export class WebSocketClient {
    */
   public connect(): void {
     try {
-      logger.info(`尝试连接到 WebSocket 服务器: ${this.wsUrl}`);
       this.ws = new WebSocket(this.wsUrl);
 
       this.ws.on('open', () => {
-        logger.info('WebSocket 连接成功');
         this.reconnectAttempts = 0;
 
         // 注册为 desktop 客户端
@@ -73,25 +72,29 @@ export class WebSocketClient {
    * 处理收到的 WebSocket 消息
    */
   private handleMessage(message: WebSocketMessage): void {
-    logger.info({ message }, '收到 WebSocket 消息');
 
     switch (message.type) {
       case 'CONNECTION_ACK':
-        logger.info({ clientId: message.clientId }, 'WebSocket: 连接确认');
         break;
 
       case 'REGISTER_ACK':
-        logger.info({ clientType: message.clientType }, 'WebSocket: 注册确认');
         break;
 
       case 'OPEN_EXTERNAL':
         if (message.url) {
           shell.openExternal(message.url);
-          logger.info({ url: message.url }, 'WebSocket: 打开外部链接');
         }
         break;
 
       case 'LOGIN_SUCCESS':
+        // 设置用户语言偏好
+        if (message.user && message.user.locale) {
+          const userLocale = message.user.locale;
+          if (userLocale === 'zh-CN' || userLocale === 'zh-TW' || userLocale === 'en-US') {
+            PiperTTS.setUserLanguage(userLocale);
+          }
+        }
+
         // 通知 control-bar 登录成功
         const controlBarWindow = this.windowManager.getControlBarWindow();
         if (controlBarWindow && !controlBarWindow.isDestroyed()) {
@@ -100,7 +103,6 @@ export class WebSocketClient {
             user: message.user,
           });
         }
-        logger.info('WebSocket: 用户登录成功，已通知 control-bar');
         break;
 
       case 'LOGOUT':
@@ -111,12 +113,10 @@ export class WebSocketClient {
             isLoggedIn: false,
           });
         }
-        logger.info('WebSocket: 用户登出，已通知 control-bar');
         break;
 
       case 'START_RECORDING':
         // 处理录音请求 (将来实现)
-        logger.info('WebSocket: 收到录音请求');
         // TODO: 实现录音功能
         break;
 
@@ -163,7 +163,6 @@ export class WebSocketClient {
 
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      logger.info(`${this.reconnectDelay / 1000}秒后尝试重连 (第 ${this.reconnectAttempts} 次)`);
 
       this.reconnectInterval = setTimeout(() => {
         this.connect();
@@ -185,7 +184,6 @@ export class WebSocketClient {
     if (this.ws) {
       this.ws.close();
       this.ws = null;
-      logger.info('WebSocket 连接已断开');
     }
   }
 
@@ -201,7 +199,6 @@ export class WebSocketClient {
    */
   private async handleStartSystemAudioCapture(message: WebSocketMessage): Promise<void> {
     try {
-      logger.info('WebSocket: 开始系统音频扬声器捕获');
 
       // 如果已经在捕获，先停止
       if (this.systemAudioCapture?.isCaptureActive()) {
@@ -270,7 +267,6 @@ export class WebSocketClient {
    */
   private async handleGetAudioDevices(message: WebSocketMessage): Promise<void> {
     try {
-      logger.info('WebSocket: 获取系统音频扬声器设备列表');
 
       // 使用SystemAudioCapture的静态方法获取设备列表
       const devices = await SystemAudioCapture.getAudioDevices();
@@ -305,7 +301,6 @@ export class WebSocketClient {
    */
   private handleStopSystemAudioCapture(): void {
     try {
-      logger.info('WebSocket: 停止系统音频扬声器捕获');
 
       if (this.systemAudioCapture) {
         this.systemAudioCapture.stopCapture();
