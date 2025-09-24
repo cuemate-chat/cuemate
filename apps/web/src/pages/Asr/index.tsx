@@ -2,6 +2,7 @@ import { Button, Card, Form, Input, InputNumber, Select, Spin, Switch, Tabs } fr
 import { useEffect, useState } from 'react';
 import { getAsrConfig, saveAsrConfig, type AsrConfig } from '../../api/asr';
 import { message } from '../../components/Message';
+import { webSocketService } from '../../services/webSocketService';
 
 // 默认配置值
 const DEFAULT_CONFIG = {
@@ -41,6 +42,36 @@ export default function AsrSettings() {
   // 音频设备相关状态
   const [availableMicDevices, setAvailableMicDevices] = useState<Array<{ deviceId: string; label: string }>>([]);
   const [availableSpeakerDevices, setAvailableSpeakerDevices] = useState<Array<{ deviceId: string; label: string }>>([]);
+
+  // 通过 WebSocket 拉取 desktop 的设备列表
+  useEffect(() => {
+    let unsub: (() => void) | null = null;
+    (async () => {
+      try {
+        if (!webSocketService.getConnectionState()) {
+          await webSocketService.connect();
+        }
+        const handler = (msg: any) => {
+          const data = msg.data || {};
+          if (Array.isArray(data.microphones)) {
+            setAvailableMicDevices(
+              data.microphones.map((m: any) => ({ deviceId: m.id, label: m.name || '麦克风' })),
+            );
+          }
+          if (Array.isArray(data.speakers)) {
+            setAvailableSpeakerDevices(
+              data.speakers.map((s: any) => ({ deviceId: s.id, label: s.name || '扬声器' })),
+            );
+          }
+        };
+        webSocketService.onMessage('ASR_DEVICES', handler);
+        unsub = () => webSocketService.offMessage('ASR_DEVICES', handler);
+        // 请求 desktop 上报
+        webSocketService.send({ type: 'REQUEST_ASR_DEVICES' } as any);
+      } catch {}
+    })();
+    return () => { try { unsub?.(); } catch {} };
+  }, []);
 
   // 获取麦克风设备
   const loadMicDevices = async () => {
@@ -177,7 +208,7 @@ export default function AsrSettings() {
                         name="microphone_device_name"
                         label="麦克风设备名称"
                       >
-                        <Input placeholder="默认麦克风" />
+                        <Input placeholder="默认麦克风" disabled />
                       </Form.Item>
                     </div>
 
@@ -206,7 +237,7 @@ export default function AsrSettings() {
                         name="speaker_device_name"
                         label="扬声器设备名称"
                       >
-                        <Input placeholder="默认扬声器" />
+                        <Input placeholder="默认扬声器" disabled />
                       </Form.Item>
                     </div>
                   </div>
@@ -505,6 +536,15 @@ export default function AsrSettings() {
           />
 
           <div className="flex justify-end gap-2 mt-6 pt-6 border-t">
+            <Button
+              onClick={() => {
+                try {
+                  webSocketService.send({ type: 'REQUEST_ASR_DEVICES' } as any);
+                } catch {}
+              }}
+            >
+              刷新
+            </Button>
             <Button
               onClick={() => {
                 form.resetFields();

@@ -21,11 +21,9 @@ export class WebSocketService {
   public connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        console.log(`WebSocket: 连接到 ${this.wsUrl}`);
         this.ws = new WebSocket(this.wsUrl);
 
         this.ws.onopen = () => {
-          console.log('WebSocket: 连接成功');
           this.isConnected = true;
           this.reconnectAttempts = 0;
 
@@ -48,7 +46,6 @@ export class WebSocketService {
         };
 
         this.ws.onclose = (event) => {
-          console.log('WebSocket: 连接关闭', { code: event.code, reason: event.reason });
           this.isConnected = false;
 
           if (!event.wasClean && this.reconnectAttempts < this.maxReconnectAttempts) {
@@ -72,8 +69,6 @@ export class WebSocketService {
    * 处理收到的消息
    */
   private handleMessage(message: WebSocketMessage): void {
-    console.log('WebSocket: 收到消息', message);
-
     const handlers = this.messageHandlers.get(message.type);
     if (handlers) {
       handlers.forEach((handler) => {
@@ -130,10 +125,6 @@ export class WebSocketService {
    */
   private handleReconnect(): void {
     this.reconnectAttempts++;
-    console.log(
-      `WebSocket: ${this.reconnectDelay / 1000}秒后尝试重连 (第 ${this.reconnectAttempts} 次)`,
-    );
-
     setTimeout(() => {
       this.connect().catch((error) => {
         console.error('WebSocket: 重连失败', error);
@@ -159,7 +150,6 @@ export class WebSocketService {
   public getConnectionState(): boolean {
     return this.isConnected && this.ws?.readyState === WebSocket.OPEN;
   }
-
 }
 
 // 创建单例实例
