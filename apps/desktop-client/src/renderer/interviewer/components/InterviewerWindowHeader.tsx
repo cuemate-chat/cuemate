@@ -1,8 +1,8 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { Mic, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 import { useVoiceState } from '../../../utils/voiceState';
+import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 
 interface InterviewerWindowHeaderProps {
   currentSectionTitle?: string | null; // 例如 "语音测试"/"语音提问"
@@ -24,8 +24,22 @@ export function InterviewerWindowHeader({
   useEffect(() => {
     let interval: NodeJS.Timeout;
     const isInterviewMode = globalState.mode === 'mock-interview' || globalState.mode === 'interview-training';
-    const shouldShowTimer = isInterviewMode && (globalState.subState === 'recording' || globalState.subState === 'paused' || globalState.subState === 'playing' || globalState.subState === 'completed');
-    const shouldRunTimer = isInterviewMode && (globalState.subState === 'recording' || globalState.subState === 'playing');
+    const shouldShowTimer = isInterviewMode && (
+      globalState.subState === 'mock-interview-recording' ||
+      globalState.subState === 'mock-interview-paused' ||
+      globalState.subState === 'mock-interview-playing' ||
+      globalState.subState === 'mock-interview-completed' ||
+      globalState.subState === 'interview-training-recording' ||
+      globalState.subState === 'interview-training-paused' ||
+      globalState.subState === 'interview-training-playing' ||
+      globalState.subState === 'interview-training-completed'
+    );
+    const shouldRunTimer = isInterviewMode && (
+      globalState.subState === 'mock-interview-recording' ||
+      globalState.subState === 'mock-interview-playing' ||
+      globalState.subState === 'interview-training-recording' ||
+      globalState.subState === 'interview-training-playing'
+    );
 
     if (shouldShowTimer) {
       if (!hasStarted) {
@@ -66,11 +80,8 @@ export function InterviewerWindowHeader({
       <div className="interviewer-header-left">
         <div className="interviewer-title">
           {(() => {
-            // LottieAudioLines显示条件：voice-test模式 或 voice-qa+recording/voice-speaking 或 任何模式+recording/playing 或 voice-testing/voice-speaking状态
-            const shouldShowLottie =
-              globalState.mode === 'voice-test' ||
-              (globalState.mode === 'voice-qa' && (globalState.subState === 'recording' || globalState.subState === 'voice-speaking')) ||
-              (globalState.subState === 'recording' || globalState.subState === 'playing' || globalState.subState === 'voice-testing' || globalState.subState === 'voice-speaking');
+            // 仅依据 subState：所有以 ing 结尾的状态显示 Lottie
+            const shouldShowLottie = typeof globalState.subState === 'string' && globalState.subState.endsWith('ing');
 
             return shouldShowLottie ? (
               <LottieAudioLines

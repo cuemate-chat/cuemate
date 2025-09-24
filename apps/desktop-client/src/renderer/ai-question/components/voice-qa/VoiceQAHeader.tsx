@@ -110,7 +110,7 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
             </select>
 
             {/* 语音识别状态指示器 */}
-            {vState.mode === 'voice-qa' && vState.subState === 'voice-speaking' && (
+            {typeof vState.subState === 'string' && vState.subState.endsWith('ing') && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}

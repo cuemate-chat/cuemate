@@ -1,8 +1,8 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { CheckCircle, Mic, Pause } from 'lucide-react';
-import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 import { useVoiceState } from '../../../utils/voiceState';
+import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 
 interface InterviewerWindowFooterProps {
   // 保留接口定义以避免破坏现有调用
@@ -19,13 +19,8 @@ export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
           // 分类显示逻辑：
           // idle 以及 *_end / *_completed 等结束态显示文字+图标
           // 其他进行中状态显示 LottieAudioLines
-          const shouldShowLottie =
-            globalState.subState !== 'idle' &&
-            globalState.subState !== 'voice-mic-end' &&
-            globalState.subState !== 'voice-speak-end' &&
-            globalState.subState !== 'voice-end' &&
-            globalState.subState !== 'mock-interview-completed' &&
-            globalState.subState !== 'interview-training-completed';
+          // 仅依据 subState：所有以 ing 结尾的状态显示 Lottie
+          const shouldShowLottie = typeof globalState.subState === 'string' && globalState.subState.endsWith('ing');
 
           if (shouldShowLottie) {
             return (
@@ -47,19 +42,12 @@ export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
                     <Tooltip.Portal>
                       <Tooltip.Content className="radix-tooltip-content">
                         {(() => {
-                          switch (globalState.subState) {
-                            case 'voice-mic-testing': return '麦克风测试中...';
-                            case 'voice-speak-testing': return '扬声器测试中...';
-                            case 'voice-speaking': return '按住说话中...';
-                            case 'mock-interview-recording':
-                            case 'interview-training-recording':
-                              return '录制中...';
-                            case 'mock-interview-playing':
-                            case 'interview-training-playing':
-                              return '播放中...';
-                            default:
-                              return '语音处理中...';
-                          }
+                          if (globalState.subState === 'voice-mic-testing') return '麦克风测试中...';
+                          if (globalState.subState === 'voice-speak-testing') return '扬声器测试中...';
+                          if (globalState.subState === 'voice-speaking') return '按住说话中...';
+                          if (globalState.subState === 'mock-interview-recording' || globalState.subState === 'interview-training-recording') return 'AI 面试官说话中...';
+                          if (globalState.subState === 'mock-interview-playing' || globalState.subState === 'interview-training-playing') return 'AI 面试官继续说话中...';
+                          return '语音处理中...';
                         })()}
                         <Tooltip.Arrow className="radix-tooltip-arrow" />
                       </Tooltip.Content>
