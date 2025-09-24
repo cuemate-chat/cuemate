@@ -32,7 +32,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         setIsInterviewerWindowOpen(true);
       }
 
-      // 如果是 mock-interview 或 interview-training 模式，还需要处理录制状态
+      // 如果是 mock-interview 或 interview-training 模式，还需要处理语音状态
       if (isMI || isIT) {
         // 从 idle 或 completed 状态开始录制
         if (vState.subState === 'idle' || vState.subState === 'mock-interview-completed' || vState.subState === 'interview-training-completed') {

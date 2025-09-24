@@ -1,11 +1,11 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { GraduationCap, MessageSquare, Mic, Users } from 'lucide-react';
 import { useEffect } from 'react';
+import { setVoiceState } from '../../../utils/voiceState';
 import { InterviewTrainingEntryBody } from './InterviewTrainingEntryBody';
 import { MockInterviewEntryBody } from './MockInterviewEntryBody';
 import { VoiceQAEntryBody } from './VoiceQAEntryBody';
 import { VoiceTestBody } from './VoiceTestBody';
-import { setVoiceState } from '../../../utils/voiceState';
 
 interface InterviewerWindowBodyProps {
   selectedCard: string | null;

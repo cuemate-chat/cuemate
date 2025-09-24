@@ -221,7 +221,7 @@ html.circle-mode .app-container {
   gap: 6px;
 }
 
-/* 录制中控制组 */
+/* 语音中控制组 */
 .voice-recording-group {
   display: flex;
   align-items: center;

@@ -80,19 +80,23 @@ export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
               IconComponent = CheckCircle;
               break;
             case 'mock-interview-paused':
+              statusText = '模拟面试暂停中';
+              tooltipText = '模拟面试已暂停';
+              IconComponent = Pause;
+              break;
             case 'interview-training-paused':
-              statusText = '暂停中';
-              tooltipText = '录制已暂停';
+              statusText = '面试训练暂停中';
+              tooltipText = '面试训练已暂停';
               IconComponent = Pause;
               break;
             case 'mock-interview-completed':
-              statusText = '模拟面试录制完成';
-              tooltipText = '模拟面试录制已完成';
+              statusText = '模拟面试完成';
+              tooltipText = '模拟面试已完成';
               IconComponent = CheckCircle;
               break;
             case 'interview-training-completed':
-              statusText = '面试训练录制完成';
-              tooltipText = '面试训练录制已完成';
+              statusText = '面试训练完成';
+              tooltipText = '面试训练已完成';
               IconComponent = CheckCircle;
               break;
             case 'idle':

@@ -166,7 +166,7 @@ export class SystemAudioCapture {
       // 监听开始事件
       this.audioTeeCapture.on('start', () => {
         this.isCapturing = true;
-        logger.info('AudioTee 开始录制');
+        logger.info('AudioTee 开始语音');
       });
 
       // 监听停止事件
