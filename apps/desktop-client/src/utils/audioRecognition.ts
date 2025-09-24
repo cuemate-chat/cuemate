@@ -2,6 +2,7 @@ export interface MicrophoneRecognitionOptions {
   deviceId?: string;
   url?: string;
   sampleRate?: number;
+  sessionId?: string; // 用于区分不同的识别会话
   onText?: (text: string, isFinal?: boolean) => void;
   onError?: (errorMessage: string) => void;
   onOpen?: () => void;
@@ -16,6 +17,7 @@ export interface SpeakerRecognitionOptions {
   deviceId?: string;
   url?: string;
   sampleRate?: number;
+  sessionId?: string; // 用于区分不同的识别会话
   onText?: (text: string, isFinal?: boolean) => void;
   onError?: (errorMessage: string) => void;
   onOpen?: () => void;
@@ -34,6 +36,7 @@ export async function startMicrophoneRecognition(
     deviceId,
     url = 'ws://localhost:10095',
     sampleRate = 16000,
+    sessionId = 'microphone',
     onText,
     onError,
     onOpen,
@@ -79,7 +82,7 @@ export async function startMicrophoneRecognition(
       const config = {
         chunk_size: [5, 10, 5],
         chunk_interval: 5,
-        wav_name: 'microphone',
+        wav_name: `${sessionId}_${Date.now()}`, // 使用sessionId和时间戳确保唯一性
         is_speaking: true,
         mode: 'online',
       };
@@ -159,6 +162,7 @@ export async function startSpeakerRecognition(
     deviceId,
     url = 'ws://localhost:10095',
     sampleRate = 16000,
+    sessionId = 'speaker',
     onText,
     onError,
     onOpen,
@@ -207,7 +211,7 @@ export async function startSpeakerRecognition(
       const config = {
         chunk_size: [5, 10, 5],
         chunk_interval: 5,
-        wav_name: "speaker",
+        wav_name: `${sessionId}_${Date.now()}`, // 使用sessionId和时间戳确保唯一性
         is_speaking: true,
         mode: "online"
       };
