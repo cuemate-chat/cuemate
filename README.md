@@ -12,16 +12,16 @@
 
 </div>
 
-## ✨ 核心功能
+## 核心功能
 
-- 🎙️ **实时语音识别** - 基于 WhisperLiveKit 的本地语音识别，支持用户和面试官双声道
-- 🤖 **智能答案生成** - 多 LLM 路由，支持 GPT-4、Moonshot、GLM、Qwen
-- 📚 **RAG 知识库** - 私有知识库检索增强，提供精准上下文
-- 🖥️ **跨平台支持** - 桌面端 (Mac/Win/Linux) + 移动端 (iOS/Android)
-- 🔒 **隐私优先** - 支持完全离线模式，数据本地化处理
-- ⚡ **极低延迟** - 优化的流式处理，毫秒级响应
+- **实时语音识别** - 基于 WhisperLiveKit 的本地语音识别，支持用户和面试官双声道
+- **智能答案生成** - 多 LLM 路由，支持 GPT-4、Moonshot、GLM、Qwen
+- **RAG 知识库** - 私有知识库检索增强，提供精准上下文
+- **跨平台支持** - 桌面端 (Mac/Win/Linux) + 移动端 (iOS/Android)
+- **隐私优先** - 支持完全离线模式，数据本地化处理
+- **极低延迟** - 优化的流式处理，毫秒级响应
 
-## 🏗️ 技术架构
+## 技术架构
 
 ```
 CueMate/
@@ -92,7 +92,7 @@ make dev-desktop
 cd apps/desktop-tauri && pnpm tauri:dev
 ```
 
-## 📝 配置说明
+## 配置说明
 
 ### API Keys 配置
 
@@ -122,7 +122,7 @@ QWEN_API_KEY=your_qwen_api_key          # 可选
 - 使用 PulseAudio 或 PipeWire
 - 通过配置文件设置虚拟音频设备
 
-## 🔧 开发指南
+## 开发指南
 
 ### 项目命令
 
@@ -155,7 +155,7 @@ make docker-logs    # 查看日志
 - RAG Service: `http://localhost:3003`
 - Main Gateway: `http://localhost:80`
 
-## 📦 部署
+## 部署
 
 ### Docker 部署
 
@@ -180,28 +180,28 @@ kubectl apply -f infra/k8s/
 kubectl get pods -n cuemate
 ```
 
-## 🔐 安全与隐私
+## 安全与隐私
 
-- ✅ 支持完全离线模式
-- ✅ 数据本地加密存储
-- ✅ PII 信息自动脱敏
-- ✅ 审计日志记录
-- ✅ 细粒度权限控制
+- 支持完全离线模式
+- 数据本地加密存储
+- PII 信息自动脱敏
+- 审计日志记录
+- 细粒度权限控制
 
-## 📄 许可证
+## 许可证
 
 本项目采用 GNU GPL v3 许可证 - 详见 [LICENSE](LICENSE) 文件
 
-## 🤝 贡献指南
+## 贡献指南
 
 欢迎贡献代码！请查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解详情。
 
-## 📮 联系我们
+## 联系我们
 
 - Issue: [GitHub Issues](https://github.com/yourusername/cuemate/issues)
 - Email: contact@cuemate.ai
 
-## 🙏 致谢
+## 致谢
 
 感谢以下开源项目：
 
@@ -211,7 +211,3 @@ kubectl get pods -n cuemate
 - [ChromaDB](https://www.trychroma.com/)
 
 ---
-
-<div align="center">
-Made with ❤️ by CueMate Team
-</div>
