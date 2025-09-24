@@ -85,7 +85,8 @@
     "files": [
       "dist/**/*",
       "node_modules/audiotee/bin/**/*",
-      "node_modules/audiotee/dist/**/*"
+      "node_modules/audiotee/dist/**/*",
+      "resources/**/*"
     ],
     "mac": {
       "icon": "assets/icon.icns",

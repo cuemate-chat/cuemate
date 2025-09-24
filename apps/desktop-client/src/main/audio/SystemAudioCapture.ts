@@ -14,7 +14,6 @@ function ensureNativeLoaded(): void {
       nativeModulePath = path.join(__dirname, '../native/screen_capture_audio/index.node');
     }
 
-    logger.info(`加载音频设备列表模块：${nativeModulePath}`);
     const fs = require('fs');
     if (!fs.existsSync(nativeModulePath)) {
       throw new Error(`原生模块文件不存在: ${nativeModulePath}`);
@@ -22,7 +21,6 @@ function ensureNativeLoaded(): void {
 
     const nativeModule = require(nativeModulePath);
     ScreenCaptureAudio = nativeModule.ScreenCaptureAudio || nativeModule;
-    logger.info('音频设备列表模块加载成功');
   } catch (error) {
     logger.error('加载音频设备列表模块失败:', error);
   }
@@ -75,7 +73,6 @@ export class SystemAudioCapture {
     try {
       const audioTeeModule = await this.loadAudioTeeModule();
       if (audioTeeModule && audioTeeModule.AudioTee) {
-        logger.info('AudioTee 可用，将使用 AudioTee 进行音频捕获');
         return true;
       }
       return false;
@@ -97,7 +94,6 @@ export class SystemAudioCapture {
     // 使用 AudioTee 进行系统音频捕获
     const canUseAudioTee = await this.shouldUseAudioTee();
     if (canUseAudioTee) {
-      logger.info(`开始捕获音频设备: ${this.options.device} (使用 AudioTee 系统音频捕获)`);
       await this.startCaptureWithAudioTee();
     } else {
       throw new Error('AudioTee 不可用，无法进行系统音频捕获');

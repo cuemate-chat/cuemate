@@ -74,13 +74,6 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
     }
   };
 
-  const handleStopClick = () => {
-    // 停止录制，进入completed状态
-    if (vState.subState === 'recording' || vState.subState === 'paused') {
-      setVoiceState({ subState: 'completed' });
-    }
-  };
-
   const handlePlayClick = () => {
     // 播放录制内容
     if (vState.subState === 'completed') {
@@ -208,31 +201,6 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
               <Tooltip.Portal>
                 <Tooltip.Content className="radix-tooltip-content">
                   {vState.subState === 'recording' ? '暂停录制' : '继续录制'}
-                  <Tooltip.Arrow className="radix-tooltip-arrow" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-
-            {/* Stop 按钮 */}
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <motion.button
-                  className="voice-icon-btn stop-btn"
-                  onClick={handleStopClick}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <motion.div
-                    whileHover={{ scale: 1.2 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Square size={16} />
-                  </motion.div>
-                </motion.button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content className="radix-tooltip-content">
-                  停止录制
                   <Tooltip.Arrow className="radix-tooltip-arrow" />
                 </Tooltip.Content>
               </Tooltip.Portal>

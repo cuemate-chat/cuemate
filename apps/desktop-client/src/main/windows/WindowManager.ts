@@ -92,7 +92,6 @@ export class WindowManager {
 
       // 9. 连接 WebSocket 客户端
       this.webSocketClient.connect();
-      logger.info('WebSocket 客户端连接已启动');
 
       // 10. 显示浮动窗口（control-bar）
       this.showFloatingWindows();
