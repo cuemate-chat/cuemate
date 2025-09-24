@@ -70,7 +70,6 @@ export class WebSocketClient {
    * 处理收到的 WebSocket 消息
    */
   private handleMessage(message: WebSocketMessage): void {
-
     switch (message.type) {
       case 'CONNECTION_ACK':
         break;
@@ -118,6 +117,39 @@ export class WebSocketClient {
         // TODO: 实现录音功能
         break;
 
+      case 'REQUEST_ASR_DEVICES': {
+        // 枚举麦克风与扬声器设备并上报
+        try {
+          const enumerate = async (): Promise<{ microphones: any[]; speakers: any[] }> => {
+            const microphones: any[] = [];
+            try {
+              const devices = await (global as any).navigator?.mediaDevices?.enumerateDevices?.();
+              if (devices) {
+                devices
+                  .filter((d: any) => d.kind === 'audioinput')
+                  .forEach((d: any) =>
+                    microphones.push({ id: d.deviceId, name: d.label || '麦克风' }),
+                  );
+              }
+            } catch {}
+
+            let speakers: any[] = [];
+            try {
+              const { SystemAudioCapture } = await import('../audio/SystemAudioCapture.js');
+              speakers = await (SystemAudioCapture as any).getAudioDevices();
+            } catch {}
+
+            return { microphones, speakers };
+          };
+
+          enumerate().then((data) => {
+            this.send({ type: 'ASR_DEVICES', data });
+          });
+        } catch (error) {
+          logger.error({ error }, '上报 ASR 设备失败');
+        }
+        break;
+      }
 
       default:
         logger.warn({ messageType: message.type }, 'WebSocket: 未知消息类型');
@@ -180,7 +212,4 @@ export class WebSocketClient {
   public isConnected(): boolean {
     return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
   }
-
-
-
 }

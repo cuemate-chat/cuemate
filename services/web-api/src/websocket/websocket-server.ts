@@ -100,6 +100,13 @@ export class CueMateWebSocketServer {
         this.handleRecordingResult(message);
         break;
 
+      case 'REQUEST_ASR_DEVICES':
+        this.handleRequestAsrDevices(message);
+        break;
+
+      case 'ASR_DEVICES':
+        this.handleAsrDevices(message);
+        break;
 
       default:
         logger.warn({ messageType: message.type, clientId }, 'WebSocket: 未知消息类型');
@@ -253,6 +260,45 @@ export class CueMateWebSocketServer {
     });
   }
 
+  private handleRequestAsrDevices(_message: WebSocketMessage): void {
+    // 转发给 desktop 客户端，请求其上报设备列表
+    const desktopClients = Array.from(this.clients.values()).filter(
+      (client) => client.type === 'desktop',
+    );
+
+    desktopClients.forEach((client) => {
+      try {
+        client.ws.send(
+          JSON.stringify({
+            type: 'REQUEST_ASR_DEVICES',
+          }),
+        );
+        logger.debug({ clientId: client.id }, 'WebSocket: 已转发 REQUEST_ASR_DEVICES 到 desktop');
+      } catch (error) {
+        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 REQUEST_ASR_DEVICES 失败');
+      }
+    });
+  }
+
+  private handleAsrDevices(message: WebSocketMessage): void {
+    // desktop 上报设备列表，广播给所有 web 客户端
+    const webClients = Array.from(this.clients.values()).filter((client) => client.type === 'web');
+
+    webClients.forEach((client) => {
+      try {
+        client.ws.send(
+          JSON.stringify({
+            type: 'ASR_DEVICES',
+            data: message.data,
+          }),
+        );
+        logger.debug({ clientId: client.id }, 'WebSocket: 已广播 ASR_DEVICES 给 web');
+      } catch (error) {
+        logger.error({ error, clientId: client.id }, 'WebSocket: 广播 ASR_DEVICES 失败');
+      }
+    });
+  }
+
   private generateClientId(): string {
     return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
@@ -298,8 +344,4 @@ export class CueMateWebSocketServer {
       logger.warn('WebSocket 服务器已关闭');
     }
   }
-
-
-
-
 }

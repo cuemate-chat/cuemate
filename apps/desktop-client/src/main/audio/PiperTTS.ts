@@ -163,25 +163,23 @@ export class PiperTTS {
   }
 
   /**
-   * 获取用户的语言偏好
+   * 获取用户的语言偏好（优先 ASR 配置中的 piper_default_language）
    */
   private getUserLanguage(): 'zh-CN' | 'en-US' {
     // 默认使用中文
     let userLanguage: 'zh-CN' | 'en-US' = 'zh-CN';
 
     try {
-      // 尝试从全局变量获取用户语言偏好
+      // 优先从全局缓存读取（由 IPC 首次获取时设置）
+      const cfg = (global as any).asrConfigCache;
+      if (cfg?.piper_default_language === 'en-US') return 'en-US';
+      if (cfg?.piper_default_language === 'zh-CN') return 'zh-CN';
+    } catch {}
+
+    try {
       const savedLanguage = (global as any).userLocale;
-      if (savedLanguage === 'en-US') {
-        userLanguage = 'en-US';
-      } else if (savedLanguage === 'zh-TW') {
-        // zh-TW (繁体中文) 回退到使用 zh-CN 语音模型
-        userLanguage = 'zh-CN';
-      }
-    } catch (error) {
-      // 如果无法获取，保持默认中文
-      logger.error('无法获取用户语言偏好，使用默认中文');
-    }
+      if (savedLanguage === 'en-US') return 'en-US';
+    } catch {}
 
     return userLanguage;
   }
@@ -220,7 +218,6 @@ export class PiperTTS {
     if (!voice) {
       throw new Error(`语音模型不存在: ${voiceId}`);
     }
-
 
     return new Promise((resolve, reject) => {
       const args = [
@@ -368,7 +365,6 @@ export class PiperTTS {
       throw new Error('文本不能为空');
     }
 
-
     // 根据用户语言偏好选择语音模型
     const userLanguage = this.getUserLanguage();
 
@@ -397,7 +393,6 @@ export class PiperTTS {
     if (!voice) {
       throw new Error(`语音模型不存在: ${voiceId}`);
     }
-
 
     return new Promise((resolve, reject) => {
       const args = [
