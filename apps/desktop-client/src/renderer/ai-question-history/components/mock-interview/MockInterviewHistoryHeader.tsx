@@ -40,7 +40,7 @@ export function MockInterviewHistoryHeader({ onClose, onRefresh, searchValue, on
       </div>
 
       <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-        <div className="ai-header-right">
+        <div className="ai-header-right show">
           {onRefresh && (
             <Tooltip.Root>
               <Tooltip.Trigger asChild>

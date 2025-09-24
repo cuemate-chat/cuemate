@@ -142,8 +142,8 @@ html, body, #root {
   transition: all 0.2s ease;
   padding: 2px 8px;
   gap: 6px;
-  opacity: 0;
-  visibility: hidden;
+  opacity: 1;
+  visibility: visible;
 }
 
 .ai-window-header:hover .ai-header-btn {

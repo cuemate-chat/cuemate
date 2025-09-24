@@ -380,7 +380,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content className="radix-tooltip-content">
-            {isVisible ? '当前可见，点击隐藏程序坞 Dock 图标，以及截图、共享屏幕不可见' : '当前隐藏，点击显示程序坞 Dock 图标，以及截图、共享屏幕可见'}
+            {isVisible ? '当前可见，点击隐藏应用，截图、录屏、共享屏幕不可见' : '当前隐藏，点击显示应用，截图、录屏、共享屏幕可见'}
             <Tooltip.Arrow className="radix-tooltip-arrow" />
           </Tooltip.Content>
         </Tooltip.Portal>
