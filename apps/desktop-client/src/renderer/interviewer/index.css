@@ -898,3 +898,43 @@ html, body, #root {
   background: rgba(255, 255, 255, 0.5);
 }
 
+/* === 复制自 ai-question/index.css 的“按住说话”按钮样式 === */
+.ai-voice-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ai-voice-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ai-voice-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ai-voice-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-voice-btn.recording {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.ai-voice-btn.recording:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
