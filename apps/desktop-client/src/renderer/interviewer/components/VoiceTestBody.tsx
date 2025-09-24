@@ -1,7 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { CheckCircle, ChevronDown, Clock, Loader2, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { MicrophoneRecognitionController, startMicrophoneRecognition } from '../../../utils/audioRecognition';
+import { MicrophoneRecognitionController, startMicrophoneRecognition, SpeakerRecognitionController, startSpeakerRecognition } from '../../../utils/audioRecognition';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 
 interface RecognitionResult {
@@ -23,6 +23,7 @@ export function VoiceTestBody() {
   const [micRecognitionResult, setMicRecognitionResult] = useState<RecognitionResult>({ text: '', error: '', timestamp: 0 });
   const [speakerRecognitionResult, setSpeakerRecognitionResult] = useState<RecognitionResult>({ text: '', error: '', timestamp: 0 });
   const micControllerRef = useRef<MicrophoneRecognitionController | null>(null);
+  const speakerControllerRef = useRef<SpeakerRecognitionController | null>(null);
 
   // 使用VoiceState来控制下拉列表状态
   const voiceState = useVoiceState();
@@ -158,142 +159,54 @@ export function VoiceTestBody() {
     setSpeakerRecognitionResult(prev => ({ text: '', error: prev.error, timestamp: Date.now() }));
     setVoiceState({ mode: 'voice-test', subState: 'voice-testing' });
 
-    let websocket: WebSocket | null = null;
     let testTimer: NodeJS.Timeout | null = null;
     let hasRecognitionResult = false;
     let recognitionStartTime = 0;
     let currentRecognizedText = '';
-    let audioDataListener: any = null;
-    let audioContext: AudioContext | null = null;
-    let speakerWorkletNode: AudioWorkletNode | null = null;
 
     const cleanup = async () => {
       if (testTimer) { clearTimeout(testTimer); testTimer = null; }
-      if (websocket && websocket.readyState === WebSocket.OPEN) {
-        // 发送结束信号
-        websocket.send(JSON.stringify({ is_speaking: false }));
-        setTimeout(() => websocket?.close(), 500);
-      }
-      if (audioContext && audioContext.state !== 'closed') {
-        audioContext.close().catch(() => {});
-      }
-      const electronAPI = (window as any).electronInterviewerAPI;
-      if (audioDataListener) electronAPI?.off('speaker-audio-data', audioDataListener);
-      electronAPI?.audioTest?.stopTest();
+      try { await speakerControllerRef.current?.stop(); } catch {}
+      speakerControllerRef.current = null;
       setVoiceState({ mode: 'none', subState: 'idle' });
     };
 
     try {
-      const electronAPI = (window as any).electronInterviewerAPI;
-      if (!electronAPI || !electronAPI.audioTest) {
-        setSpeakerStatus('failed');
-        setSpeakerRecognitionResult(prev => ({ ...prev, error: '音频测试服务不可用', timestamp: Date.now() }));
-        return;
-      }
-
-      websocket = new WebSocket('ws://localhost:10095');
-
-      websocket.onopen = async () => {
-        console.log('扬声器测试 WebSocket 连接已建立');
-        recognitionStartTime = Date.now();
-        // 发送 FunASR 配置参数
-        const config = {
-          chunk_size: [5, 10, 5],
-          chunk_interval: 5,
-          wav_name: "speaker",
-          is_speaking: true,
-          mode: "online"
-        };
-        console.log('扬声器测试发送配置:', JSON.stringify(config));
-        if (websocket) websocket.send(JSON.stringify(config));
-
-        // 初始化 AudioContext 和 WorkletNode
-        audioContext = new AudioContext({ sampleRate: 16000 });
-        try {
-          await audioContext.audioWorklet.addModule('/speaker-pcm-processor.js');
-          speakerWorkletNode = new AudioWorkletNode(audioContext, 'speaker-pcm-processor');
-
-          // 监听来自 WorkletNode 的处理后音频数据
-          speakerWorkletNode.port.onmessage = (event) => {
-            if (event.data.type === 'audiodata' && websocket && websocket.readyState === WebSocket.OPEN) {
-              websocket.send(event.data.data);
-            }
-          };
-        } catch (err) {
-          console.error('扬声器 AudioWorklet 初始化失败:', err);
-          setSpeakerStatus('failed');
-          setSpeakerRecognitionResult(prev => ({ ...prev, error: 'AudioWorklet 初始化失败', timestamp: Date.now() }));
-          cleanup();
-          return;
-        }
-
-        const result = await electronAPI.audioTest.startSpeakerTest({ deviceId: selectedSpeaker });
-
-        if (!result.success) {
-          setSpeakerStatus('failed');
-          setSpeakerRecognitionResult(prev => ({ ...prev, error: result.error || '启动扬声器捕获失败', timestamp: Date.now() }));
-          cleanup();
-          return;
-        }
-
-        // 接收原生音频数据并转发给 WorkletNode 处理
-        audioDataListener = (audioData: ArrayBuffer) => {
-          if (speakerWorkletNode && audioData.byteLength > 0) {
-            speakerWorkletNode.port.postMessage({
-              type: 'nativeAudioData',
-              audioData: audioData
-            });
+      const controller = await startSpeakerRecognition({
+        deviceId: selectedSpeaker || undefined,
+        onOpen: () => { recognitionStartTime = Date.now(); },
+        onText: (text) => {
+          hasRecognitionResult = true;
+          // 扬声器测试累积显示识别结果
+          const newText = text.trim();
+          if (!currentRecognizedText.includes(newText)) {
+            currentRecognizedText += (currentRecognizedText ? ' ' : '') + newText;
           }
-        };
-        electronAPI.on('speaker-audio-data', audioDataListener);
-      };
-
-      websocket.onmessage = (event) => {
-        console.log('扬声器测试收到 WebSocket 消息:', event.data);
-        try {
-          const data = JSON.parse(event.data);
-
-          // FunASR 返回格式: { mode: "online", text: "识别结果", wav_name: "speaker", is_final: false }
-          if (data.text && data.text.trim()) {
-            hasRecognitionResult = true;
-            // 扬声器测试累积显示识别结果
-            const newText = data.text.trim();
-            if (!currentRecognizedText.includes(newText)) {
-              currentRecognizedText += (currentRecognizedText ? ' ' : '') + newText;
-            }
-            console.log('扬声器测试识别结果:', currentRecognizedText);
-            setSpeakerRecognitionResult({ text: currentRecognizedText, error: '', timestamp: Date.now() });
-
-            if (shouldStopRecognition(currentRecognizedText, recognitionStartTime)) {
-              cleanup();
-              setSpeakerStatus('success');
-            }
+          setSpeakerRecognitionResult({ text: currentRecognizedText, error: '', timestamp: Date.now() });
+          if (shouldStopRecognition(currentRecognizedText, recognitionStartTime)) {
+            cleanup().finally(() => setSpeakerStatus('success'));
           }
-        } catch (err) {
-          console.error('解析 FunASR 消息失败:', err, event.data);
-        }
-      };
-
-      websocket.onerror = () => {
-        setSpeakerStatus('failed');
-        setSpeakerRecognitionResult(prev => ({ ...prev, error: '连接扬声器识别服务失败', timestamp: Date.now() }));
-        cleanup();
-      };
-
-      websocket.onclose = (_event) => {};
-
-      testTimer = setTimeout(async () => {
-        await cleanup();
-        if (hasRecognitionResult) setSpeakerStatus('success');
-        else {
+        },
+        onError: (errorMessage) => {
           setSpeakerStatus('failed');
-          setSpeakerRecognitionResult(prev => ({ ...prev, error: '60秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务', timestamp: Date.now() }));
-        }
+          setSpeakerRecognitionResult(prev => ({ ...prev, error: errorMessage, timestamp: Date.now() }));
+          void cleanup();
+        },
+      });
+      speakerControllerRef.current = controller;
+
+      testTimer = setTimeout(() => {
+        cleanup().finally(() => {
+          if (hasRecognitionResult) setSpeakerStatus('success');
+          else {
+            setSpeakerStatus('failed');
+            setSpeakerRecognitionResult(prev => ({ ...prev, error: '60秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务', timestamp: Date.now() }));
+          }
+        });
       }, 60000);
     } catch (error: any) {
       setSpeakerStatus('failed');
-      const errorMsg = error?.name === 'SecurityError' ? '安全权限错误，请确保已授予屏幕录制权限' : `扬声器测试失败：${error?.message}`;
-      setSpeakerRecognitionResult(prev => ({ ...prev, error: errorMsg, timestamp: Date.now() }));
+      setSpeakerRecognitionResult(prev => ({ ...prev, error: `扬声器测试失败：${error?.message}`, timestamp: Date.now() }));
       await cleanup();
     }
   };
