@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import CueMateLogo from '../../../../assets/CueMate.png';
 import { useVoiceState } from '../../../../utils/voiceState';
 import { LottieAudioLines } from '../../../shared/components/LottieAudioLines';
+import { userSettingsService } from '../../../services/userSettingsService';
 
 // 头部内的加载动画
 const LoadingDots = () => {
@@ -143,10 +144,24 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
           {/* 高度选择下拉框 */}
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <select 
+              <select
                 className="ai-height-selector"
                 value={heightPercentage}
-                onChange={(e) => onHeightChange(Number(e.target.value))}
+                onChange={async (e) => {
+                  const newHeight = Number(e.target.value);
+
+                  // 更新本地状态
+                  onHeightChange(newHeight);
+
+                  // 同步更新数据库中的用户设置
+                  try {
+                    await userSettingsService.updateSettings({
+                      floating_window_height: newHeight
+                    });
+                  } catch (error) {
+                    console.error('更新窗口高度设置失败:', error);
+                  }
+                }}
               >
                 <option value={50}>50%</option>
                 <option value={75}>75%</option>

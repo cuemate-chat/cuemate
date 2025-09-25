@@ -49,6 +49,7 @@ const controlBarAPI = {
 
   // === 登录状态检查 API ===
   checkLoginStatus: () => ipcRenderer.invoke('check-login-status'),
+  getUserData: () => ipcRenderer.invoke('get-user-data'),
 
   // === 隐身模式（内容保护）API ===
   visibility: {

@@ -94,6 +94,11 @@ export class ControlBarWindow {
 
       // 设置窗口事件监听
       this.setupEvents();
+
+      // 开发环境下自动打开独立的 DevTools
+      if (this.isDevelopment) {
+        this.window.webContents.openDevTools({ mode: 'detach' });
+      }
     } catch (error) {
       logger.error({ error }, '创建 control-bar 窗口失败');
       throw error;

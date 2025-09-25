@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, CornerDownLeft, Eye, EyeOff, Pause, Play, Squar
 import { useEffect, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
+import { userSettingsService } from '../../services/userSettingsService';
 
 interface LoggedInControlBarProps {
   // 暂时不添加任何 props
@@ -102,17 +103,30 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
     }
   };
 
-  const handleVisibilityToggle = () => {
+  const handleVisibilityToggle = async () => {
     try {
       const api: any = (window as any).electronAPI;
       const next = !isVisible;
+
+      // 先更新系统状态，成功后再更新本地状态和数据库
       if (api?.visibility?.set) {
-        api.visibility.set(next).then(() => setIsVisible(next)).catch(() => setIsVisible(next));
+        // visibility.set 期望隐身模式的启用状态，与 isVisible 相反
+        await api.visibility.set(!next);
+        setIsVisible(next);
       } else {
         setIsVisible(next);
       }
-    } catch {
-      setIsVisible(!isVisible);
+
+      // 系统状态更新成功后，同步更新数据库中的用户设置
+      try {
+        await userSettingsService.updateSettings({
+          floating_window_visible: next ? 1 : 0
+        });
+      } catch (error) {
+        console.error('更新可见性设置失败:', error);
+      }
+    } catch (error) {
+      console.error('可见性切换失败:', error);
     }
   };
 
@@ -133,13 +147,48 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
     };
   }, []);
 
-  // 初始化与订阅隐身模式
+  // 初始化可见性状态：从数据库和系统状态中读取
   useEffect(() => {
+    const initializeVisibility = async () => {
+      try {
+        // 优先从数据库读取用户设置
+        const user = await userSettingsService.getCurrentUser();
+        if (user && typeof user.floating_window_visible === 'number') {
+          const dbVisibility = user.floating_window_visible === 1;
+          setIsVisible(dbVisibility);
+
+          // 同步系统状态与数据库状态
+          const api: any = (window as any).electronAPI;
+          if (api?.visibility?.set) {
+            // visibility.set 期望隐身模式的启用状态，与 dbVisibility 相反
+            api.visibility.set(!dbVisibility);
+          }
+        } else {
+          // 如果数据库没有设置，从系统状态读取
+          const api: any = (window as any).electronAPI;
+          const res = await api?.visibility?.get?.();
+          if (typeof res?.enabled === 'boolean') {
+            setIsVisible(!res.enabled);
+          }
+        }
+      } catch (error) {
+        console.error('初始化可见性状态失败:', error);
+        // 回退到系统状态
+        try {
+          const api: any = (window as any).electronAPI;
+          const res = await api?.visibility?.get?.();
+          if (typeof res?.enabled === 'boolean') {
+            setIsVisible(!res.enabled);
+          }
+        } catch {}
+      }
+    };
+
+    initializeVisibility();
+
+    // 订阅系统状态变化
     try {
       const api: any = (window as any).electronAPI;
-      api?.visibility?.get?.().then((res: any) => {
-        if (typeof res?.enabled === 'boolean') setIsVisible(!res.enabled);
-      });
       const off = api?.visibility?.onChanged?.((enabled: boolean) => {
         setIsVisible(!enabled);
       });

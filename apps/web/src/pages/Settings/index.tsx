@@ -251,7 +251,7 @@ export default function Settings() {
                   隐藏
                 </button>
               </div>
-              <p className="text-xs text-slate-600 mt-2">控制桌面应用悬浮窗口是否显示</p>
+              <p className="text-xs text-slate-600 mt-2">控制桌面应用悬浮窗口是否允许被截图、录屏、共享桌面</p>
             </div>
           </div>
 
