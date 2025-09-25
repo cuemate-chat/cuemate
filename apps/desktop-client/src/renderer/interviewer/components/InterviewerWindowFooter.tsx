@@ -31,6 +31,7 @@ export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
                       <motion.div
                         animate={{ scale: [1, 1.1, 1] }}
                         transition={{ duration: 2, repeat: Infinity }}
+                        style={{ zIndex: 1 }}
                       >
                         <LottieAudioLines
                           size={196}
