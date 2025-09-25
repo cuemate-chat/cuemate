@@ -1,7 +1,8 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { GraduationCap, MessageSquare, Mic, Users } from 'lucide-react';
-import { useEffect } from 'react';
-import { setVoiceState } from '../../../utils/voiceState';
+import { useEffect, useState } from 'react';
+import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
+import { startVoiceQA, stopVoiceQA, useVoiceQAState } from '../../utils/voiceQA';
 import { InterviewTrainingEntryBody } from './InterviewTrainingEntryBody';
 import { MockInterviewEntryBody } from './MockInterviewEntryBody';
 import { VoiceQAEntryBody } from './VoiceQAEntryBody';
@@ -13,6 +14,32 @@ interface InterviewerWindowBodyProps {
 }
 
 export function InterviewerWindowBody({ selectedCard, onSelectCard }: InterviewerWindowBodyProps) {
+  const [question, setQuestion] = useState('');
+  const qa = useVoiceQAState();
+  const vState = useVoiceState();
+  const isRecording = vState.mode === 'voice-qa' && vState.subState === 'voice-speaking';
+
+  // 同步语音识别结果到本地状态
+  useEffect(() => {
+    setQuestion(qa.confirmedText);
+  }, [qa.confirmedText]);
+
+  // 处理语音按钮点击
+  const handleVoiceToggle = async () => {
+    if (!isRecording) {
+      let micDeviceId: string | undefined = undefined;
+      try {
+        const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+        const res = await electronAPI?.asrConfig?.get?.();
+        micDeviceId = res?.config?.microphone_device_id || undefined;
+      } catch {}
+      await startVoiceQA(micDeviceId, question);
+      setVoiceState({ mode: 'voice-qa', subState: 'voice-speaking' });
+    } else {
+      await stopVoiceQA();
+      setVoiceState({ mode: 'voice-qa', subState: 'voice-end' });
+    }
+  };
 
   // 监听选中状态变化，通知 control-bar 更新"提问 AI"按钮状态
   useEffect(() => {
@@ -103,7 +130,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
     <Tooltip.Provider>
       <div className="interviewer-window-body" key={selectedCard || 'page'}>
         {selectedCard === '语音测试' && <VoiceTestBody />}
-        {selectedCard === '语音提问' && <VoiceQAEntryBody />}
+        {selectedCard === '语音提问' && <VoiceQAEntryBody question={question} onVoiceToggle={handleVoiceToggle} />}
         {selectedCard === '模拟面试' && (
           <MockInterviewEntryBody onStart={async () => {
             setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-recording' });

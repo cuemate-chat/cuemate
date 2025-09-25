@@ -91,41 +91,16 @@ export function VoiceQAFooter({
   return (
     <div className={`ai-window-footer${className ? ` ${className}` : ''}`}>
       <div className="ai-input-container">
-        {isRecording ? (
-          // 说话中显示span元素进行流式输出
-          <span
-            className="ai-input-field"
-            style={{
-              display: 'block',
-              minHeight: 'auto',
-              height: 'auto',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              backgroundColor: 'transparent',
-              cursor: 'text'
-            }}
-          >
-            {(() => {
-              // audioRecognition.ts 已经处理了文本叠加，直接显示确认的文本和临时文本
-              const confirmedText = qa.confirmedText || '';
-              const tempText = qa.tempText || '';
-              const displayText = confirmedText + (tempText ? (confirmedText ? ' ' : '') + tempText : '');
-
-              return displayText || '正在识别语音...';
-            })()}
-          </span>
-        ) : (
-          // 非说话中显示正常的 input 输入框
-          <input
-            type="search"
-            value={question}
-            onChange={(e) => onQuestionChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={isConversationCompleted ? "对话已完成，请新建提问" : "询问 AI 任意问题"}
-            className="ai-input-field"
-            disabled={isConversationCompleted}
-          />
-        )}
+        <input
+          type="search"
+          value={isRecording ? (qa.confirmedText || '正在识别语音...') : question}
+          onChange={isRecording ? undefined : (e) => onQuestionChange(e.target.value)}
+          onKeyDown={isRecording ? undefined : handleKeyDown}
+          placeholder={isConversationCompleted ? "对话已完成，请新建提问" : "询问 AI 任意问题"}
+          className="ai-input-field"
+          disabled={isConversationCompleted || isRecording}
+          readOnly={isRecording}
+        />
       </div>
       
       {/* 语音按钮 */}

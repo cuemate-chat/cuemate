@@ -1,31 +1,23 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { Mic, Square } from 'lucide-react';
-import { useEffect } from 'react';
-import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
-import { startVoiceQA, stopVoiceQA, useVoiceQAState, clearVoiceQAState } from '../../utils/voiceQA';
+import { useVoiceState } from '../../../utils/voiceState';
 
-interface VoiceQAEntryBodyProps {}
+interface VoiceQAEntryBodyProps {
+  question: string;
+  onVoiceToggle: () => void;
+}
 
-export function VoiceQAEntryBody({}: VoiceQAEntryBodyProps) {
-  const qa = useVoiceQAState();
+export function VoiceQAEntryBody({ question, onVoiceToggle }: VoiceQAEntryBodyProps) {
   const vState = useVoiceState();
   const isRecording = vState.mode === 'voice-qa' && vState.subState === 'voice-speaking';
-
-  useEffect(() => {
-    // 组件初始化时清除缓存的语音文本，保持与 VoiceQAFooter 一致
-    clearVoiceQAState();
-  }, []);
 
   return (
     <div className="interviewer-mode-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="interviewer-mode-content" style={{ flex: 1, padding: '16px' }}>
-        {(qa.confirmedText || qa.tempText) && (
+        {question && (
           <div className="recognition-result">
             <div className="recognized-text">
-              {/* audioRecognition.ts 已经处理了文本叠加，直接显示确认的文本和临时文本 */}
-              {qa.confirmedText}
-              {qa.tempText && (qa.confirmedText ? ' ' : '')}
-              {qa.tempText}
+              {question}
             </div>
           </div>
         )}
@@ -54,21 +46,7 @@ export function VoiceQAEntryBody({}: VoiceQAEntryBodyProps) {
                   transition: 'all 0.2s ease',
                   cursor: 'pointer'
                 }}
-                onClick={async () => {
-                  if (!isRecording) {
-                    let micDeviceId: string | undefined = undefined;
-                    try {
-                      const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-                      const res = await electronAPI?.asrConfig?.get?.();
-                      micDeviceId = res?.config?.microphone_device_id || undefined;
-                    } catch {}
-                    await startVoiceQA(micDeviceId, qa.confirmedText);
-                    setVoiceState({ mode: 'voice-qa', subState: 'voice-speaking' });
-                  } else {
-                    await stopVoiceQA();
-                    setVoiceState({ mode: 'voice-qa', subState: 'voice-end' });
-                  }
-                }}
+                onClick={onVoiceToggle}
               >
                 {isRecording ? (
                   <>

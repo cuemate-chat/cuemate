@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import React, { useEffect, useRef, useState } from 'react';
+import { clearVoiceQAState, setVoiceQAState, useVoiceQAState } from '../../../utils/voiceQA';
 import { aiService } from '../../api/aiService.ts';
 import { conversationService } from '../../api/conversationService.ts';
 import { VoiceQABody } from './VoiceQABody.tsx';
@@ -8,6 +9,20 @@ import { VoiceQAHeader } from './VoiceQAHeader.tsx';
 
 export function VoiceQAApp() {
   const [question, setQuestion] = useState('');
+  const qa = useVoiceQAState();
+
+  // 同步 voiceQA 状态到本地 question
+  useEffect(() => {
+    if (qa.confirmedText !== question) {
+      setQuestion(qa.confirmedText);
+    }
+  }, [qa.confirmedText]);
+
+  // 统一的 setQuestion 方法，同时更新两个状态
+  const updateQuestion = (newQuestion: string) => {
+    setQuestion(newQuestion);
+    setVoiceQAState({ confirmedText: newQuestion, tempText: '' });
+  };
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Array<{id: string, type: 'user' | 'ai', content: string}>>([]);
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
@@ -50,7 +65,6 @@ export function VoiceQAApp() {
   // 监听历史对话加载事件
   useEffect(() => {
     const handleLoadConversation = (conversationData: any) => {
-      console.log('接收到历史对话加载事件:', conversationData);
       
       if (conversationData && conversationData.messages) {
         // 清空当前消息
@@ -68,7 +82,6 @@ export function VoiceQAApp() {
         setCurrentConversationStatus(conversationData.status || 'active');
         setSequenceNumber(loadedMessages.length + 1);
         
-        console.log('历史对话加载完成，消息数量:', loadedMessages.length);
       }
     };
 
@@ -112,7 +125,6 @@ export function VoiceQAApp() {
       const latestConversation = await conversationService.getLatestActiveConversation();
       
       if (latestConversation) {
-        console.log('恢复现有对话:', latestConversation.conversation.title);
         setCurrentConversationId(latestConversation.conversation.id);
         setCurrentConversationStatus(latestConversation.conversation.status);
         
@@ -127,7 +139,6 @@ export function VoiceQAApp() {
         // 设置下一个消息的序列号
         setSequenceNumber(latestConversation.messages.length + 1);
       } else {
-        console.log('没有现有对话，准备创建新对话');
         setCurrentConversationId(null);
         setCurrentConversationStatus(null);
         setSequenceNumber(1);
@@ -155,7 +166,7 @@ export function VoiceQAApp() {
     
     setIsLoading(true);
     const currentQuestion = question;
-    setQuestion('');
+    updateQuestion('');
     
     let conversationId = currentConversationId;
     let currentSeq = sequenceNumber;
@@ -168,7 +179,7 @@ export function VoiceQAApp() {
       if (!conversationId) {
         console.error('创建对话失败');
         setIsLoading(false);
-        setQuestion(currentQuestion); // 恢复输入
+        updateQuestion(currentQuestion); // 恢复输入
         return;
       }
       
@@ -231,7 +242,6 @@ export function VoiceQAApp() {
           }
 
           if (chunk.finished) {
-            console.log('AI流式输出完成，内容:', aiResponseContent);
             
             // 保存完整AI回答到数据库
             if (aiResponseContent && conversationId) {
@@ -323,17 +333,19 @@ export function VoiceQAApp() {
   // 新建提问：开始新对话
   const handleNewChat = async () => {
     if (isLoading) return;
-    
-    console.log('开始新对话');
+
     setCurrentConversationId(null);
     setCurrentConversationStatus(null);
     setSequenceNumber(1);
     setMessages([]);
+    updateQuestion('');
+    // 同步清空 voiceQA 状态
+    clearVoiceQAState();
   };
 
   const handleAskMore = (questionText: string) => {
     // 先设置问题，然后立即提交
-    setQuestion(questionText);
+    updateQuestion(questionText);
     // 使用 setTimeout 确保状态更新后再提交
     setTimeout(() => {
       if (questionText.trim() && !isLoading) {
@@ -371,7 +383,7 @@ export function VoiceQAApp() {
         <VoiceQAFooter
           question={question}
           isLoading={isLoading || isInitializing}
-          onQuestionChange={setQuestion}
+          onQuestionChange={updateQuestion}
           onSubmit={handleSubmit}
           onKeyDown={handleKeyDown}
           onNewChat={handleNewChat}
