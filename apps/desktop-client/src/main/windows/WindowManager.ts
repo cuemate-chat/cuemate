@@ -567,7 +567,13 @@ export class WindowManager {
   /**
    * 销毁窗口管理器
    */
+
   public destroy(): void {
+    // 停止截图监听器
+    if (this.screenshotWatcher) {
+      this.screenshotWatcher.stop();
+    }
+
     // 断开 WebSocket 连接
     this.webSocketClient.disconnect();
 

@@ -18,15 +18,6 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
         windowManager.toggleFloatingWindows();
       },
     },
-    // 微信常用截图：Cmd+Ctrl+A → 立即隐藏所有窗口；结束后恢复由 watcher 处理
-    {
-      accelerator: 'Cmd+Ctrl+A',
-      callback: () => {
-        try {
-          windowManager.hideFloatingWindows();
-        } catch {}
-      },
-    },
     {
       accelerator: 'CommandOrControl+J',
       callback: () => {
@@ -36,8 +27,7 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
     {
       accelerator: 'CommandOrControl+Return',
       callback: () => {
-        // 只隐藏浮动窗口，不影响AI问答窗口的独立状态
-        windowManager.hideFloatingWindows();
+        windowManager.toggleAIQuestion();
       },
     },
     {
@@ -58,12 +48,6 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
         // 隐藏浮动窗口和主内容窗口，但不影响AI问答窗口的独立状态
         windowManager.hideFloatingWindows();
         windowManager.hideMainContent();
-      },
-    },
-    {
-      accelerator: 'CommandOrControl+Shift+A',
-      callback: () => {
-        windowManager.toggleAIQuestion();
       },
     },
   ];
