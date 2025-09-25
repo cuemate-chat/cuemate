@@ -23,13 +23,11 @@ class WebSocketBridge {
     if (this.isConnecting) return;
 
     this.isConnecting = true;
-    console.log('尝试连接到 WebSocket 服务器:', this.wsUrl);
 
     try {
       this.ws = new WebSocket(this.wsUrl);
 
       this.ws.onopen = () => {
-        console.log('WebSocket 连接成功');
         this.isConnecting = false;
         this.reconnectAttempts = 0;
 
@@ -46,7 +44,6 @@ class WebSocketBridge {
       this.ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          console.log('收到 WebSocket 消息:', message);
         } catch (error) {
           console.error('WebSocket 消息解析失败:', error);
         }

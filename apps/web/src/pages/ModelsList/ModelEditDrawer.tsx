@@ -78,7 +78,7 @@ export default function ModelEditDrawer({
     setTesting(true);
     try {
       const result = await testModelConnectivity(form.id);
-      console.log('测试连接结果:', result);
+      console.debug('测试连接结果:', result);
       message.success('连接测试成功！模型可以正常使用');
     } catch (error: any) {
       console.error('测试连接失败:', error);
