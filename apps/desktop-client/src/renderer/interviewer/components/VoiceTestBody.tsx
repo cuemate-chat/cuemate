@@ -217,11 +217,7 @@ export function VoiceTestBody() {
         onOpen: () => { recognitionStartTime = Date.now(); },
         onText: (text) => {
           hasRecognitionResult = true;
-          // 扬声器测试累积显示识别结果
-          const newText = text.trim();
-          if (!currentRecognizedText.includes(newText)) {
-            currentRecognizedText += (currentRecognizedText ? ' ' : '') + newText;
-          }
+          currentRecognizedText = text.trim();
           setSpeakerRecognitionResult({ text: currentRecognizedText, error: '', timestamp: Date.now() });
           if (shouldStopRecognition(currentRecognizedText, recognitionStartTime)) {
             cleanup().finally(() => setSpeakerStatus('success'));
