@@ -50,7 +50,6 @@ export function MockInterviewApp() {
   // 监听历史对话加载事件
   useEffect(() => {
     const handleLoadConversation = (conversationData: any) => {
-      console.log('接收到历史对话加载事件:', conversationData);
       
       if (conversationData && conversationData.messages) {
         // 清空当前消息
@@ -68,7 +67,6 @@ export function MockInterviewApp() {
         setCurrentConversationStatus(conversationData.status || 'active');
         setSequenceNumber(loadedMessages.length + 1);
         
-        console.log('历史对话加载完成，消息数量:', loadedMessages.length);
       }
     };
 
@@ -112,7 +110,6 @@ export function MockInterviewApp() {
       const latestConversation = await conversationService.getLatestActiveConversation();
       
       if (latestConversation) {
-        console.log('恢复现有对话:', latestConversation.conversation.title);
         setCurrentConversationId(latestConversation.conversation.id);
         setCurrentConversationStatus(latestConversation.conversation.status);
         
@@ -127,7 +124,6 @@ export function MockInterviewApp() {
         // 设置下一个消息的序列号
         setSequenceNumber(latestConversation.messages.length + 1);
       } else {
-        console.log('没有现有对话，准备创建新对话');
         setCurrentConversationId(null);
         setCurrentConversationStatus(null);
         setSequenceNumber(1);
@@ -231,7 +227,6 @@ export function MockInterviewApp() {
           }
 
           if (chunk.finished) {
-            console.log('AI流式输出完成，内容:', aiResponseContent);
             
             // 保存完整AI回答到数据库
             if (aiResponseContent && conversationId) {
@@ -324,7 +319,6 @@ export function MockInterviewApp() {
   const handleNewChat = async () => {
     if (isLoading) return;
     
-    console.log('开始新对话');
     setCurrentConversationId(null);
     setCurrentConversationStatus(null);
     setSequenceNumber(1);

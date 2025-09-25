@@ -40,7 +40,7 @@ class PCMProcessor extends AudioWorkletProcessor {
           }
 
           // 调试：检查音频数据质量
-          console.log(`PCM数据质量检查: 最大值=${maxValue}, 非零样本=${nonZeroCount}/${this.bufferSize}, 比例=${(nonZeroCount/this.bufferSize*100).toFixed(1)}%`);
+          // console.log(`PCM数据质量检查: 最大值=${maxValue}, 非零样本=${nonZeroCount}/${this.bufferSize}, 比例=${(nonZeroCount/this.bufferSize*100).toFixed(1)}%`);
 
           // 发送PCM数据到主线程
           this.port.postMessage({

@@ -78,16 +78,12 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
     // 播放录制内容
     if (vState.subState === 'mock-interview-completed' || vState.subState === 'interview-training-completed') {
       setVoiceState({ subState: vState.mode === 'mock-interview' ? 'mock-interview-playing' : 'interview-training-playing' });
-      // 可以在这里添加播放录制内容的逻辑
-      console.log('播放录制内容');
     }
   };
 
   const handleDoneClick = () => {
     // 完成并保存，回到idle状态
     setIsInterviewerWindowOpen(false);
-    // 可以在这里添加保存录制结果的逻辑
-    console.log('录制已完成并保存');
 
     // 直接回到语音识别状态
     setVoiceState({ subState: 'idle' });
@@ -115,7 +111,6 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
       } else {
         setIsVisible(next);
       }
-      console.log('Visibility toggled:', next);
     } catch {
       setIsVisible(!isVisible);
     }
