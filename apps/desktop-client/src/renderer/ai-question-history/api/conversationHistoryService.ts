@@ -59,7 +59,6 @@ export class ConversationHistoryService {
       if (result.success) {
         this.userData = result.userData;
         this.token = result.userData.token;
-        console.log('ConversationHistoryService 初始化用户数据:', this.userData);
       }
     } catch (error) {
       console.error('初始化用户数据失败:', error);
@@ -78,7 +77,7 @@ export class ConversationHistoryService {
   private getHeaders() {
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.token}`,
+      Authorization: `Bearer ${this.token}`,
     };
   }
 
@@ -89,7 +88,7 @@ export class ConversationHistoryService {
     page: number = 1,
     limit: number = 5,
     status: string = 'all',
-    searchKeyword?: string
+    searchKeyword?: string,
   ): Promise<ConversationHistoryResponse> {
     await this.ensureAuth();
 
@@ -98,7 +97,7 @@ export class ConversationHistoryService {
         page: page.toString(),
         limit: limit.toString(),
       });
-      
+
       // 只有当status不是'all'时才添加status参数
       if (status && status !== 'all') {
         params.append('status', status);
@@ -121,11 +120,10 @@ export class ConversationHistoryService {
       }
 
       const data = await response.json();
-      console.log('获取对话历史成功:', data);
-      
+
       return {
         items: data.items || [],
-        total: data.total || 0
+        total: data.total || 0,
       };
     } catch (error) {
       console.error('获取对话历史失败:', error);
@@ -152,8 +150,7 @@ export class ConversationHistoryService {
       }
 
       const data = await response.json();
-      console.log('获取对话详情成功:', data);
-      
+
       return data as ConversationDetailResponse;
     } catch (error) {
       console.error('获取对话详情失败:', error);
@@ -179,7 +176,6 @@ export class ConversationHistoryService {
         throw new Error(`删除对话失败: ${response.status} - ${errorText}`);
       }
 
-      console.log('删除对话成功');
       return true;
     } catch (error) {
       console.error('删除对话失败:', error);
@@ -197,7 +193,7 @@ export class ConversationHistoryService {
       const response = await fetch(`${this.baseURL}/ai/conversations/${conversationId}/stop`, {
         method: 'PATCH',
         headers: this.getHeaders(),
-        body: JSON.stringify({ status: 'completed' })
+        body: JSON.stringify({ status: 'completed' }),
       });
 
       if (!response.ok) {
@@ -206,7 +202,6 @@ export class ConversationHistoryService {
         throw new Error(`停止对话失败: ${response.status} - ${errorText}`);
       }
 
-      console.log('停止对话成功');
       return true;
     } catch (error) {
       console.error('停止对话失败:', error);
@@ -219,7 +214,7 @@ export class ConversationHistoryService {
    */
   formatTime(timestamp: number): string {
     const date = new Date(timestamp * 1000); // 假设timestamp是秒级时间戳
-    
+
     // 显示完整的年月日时分秒
     return date.toLocaleString('zh-CN', {
       year: 'numeric',
@@ -228,7 +223,7 @@ export class ConversationHistoryService {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false
+      hour12: false,
     });
   }
 }

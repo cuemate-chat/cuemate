@@ -55,7 +55,6 @@ export class ConversationService {
       if (result.success) {
         this.userData = result.userData;
         this.token = result.userData.token;
-        console.log('ConversationService 初始化用户数据:', this.userData);
       }
     } catch (error) {
       console.error('初始化用户数据失败:', error);
@@ -137,13 +136,6 @@ export class ConversationService {
   async createConversation(title: string): Promise<number | null> {
     await this.ensureAuth();
 
-    console.log('创建对话 - 用户数据检查:', {
-      hasUserData: !!this.userData,
-      hasUser: !!this.userData?.user,
-      hasModel: !!this.userData?.user?.model,
-      model: this.userData?.user?.model,
-    });
-
     if (!this.userData?.user?.model) {
       console.error('用户模型配置缺失');
       return null;
@@ -190,7 +182,6 @@ export class ConversationService {
       }
 
       const data = await response.json();
-      console.log('创建对话成功，返回数据:', data);
       return data.id;
     } catch (error) {
       console.error('创建对话失败:', error);
@@ -234,7 +225,6 @@ export class ConversationService {
         throw new Error(`保存消息失败: ${response.status} - ${errorText}`);
       }
 
-      console.log('保存消息成功');
       return true;
     } catch (error) {
       console.error('保存消息失败:', error);
