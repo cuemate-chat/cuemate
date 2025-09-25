@@ -53,7 +53,7 @@ export async function startMicrophoneRecognition(
   let audioContext: AudioContext | null = null;
   let websocket: WebSocket | null = null;
   let finalizedText = initialText; // 累积已确认的文本，从初始文本开始
-  let currentSessionText = ''; // 当前识别会话的临时文本
+
 
   const cleanup = async () => {
     try {
@@ -151,24 +151,19 @@ export async function startMicrophoneRecognition(
     websocket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+
         if (data.text && data.text.trim()) {
           const currentRecognizedText = data.text.trim();
 
-          if (data.is_final) {
-            // 识别结果已确认，累加到finalizedText
-            if (currentRecognizedText && !finalizedText.includes(currentRecognizedText)) {
-              finalizedText = finalizedText ? `${finalizedText} ${currentRecognizedText}` : currentRecognizedText;
-              currentSessionText = '';
-            }
-            onText?.(finalizedText, true);
-          } else {
-            // 临时识别结果，更新currentSessionText
-            currentSessionText = currentRecognizedText;
-            const combinedText = finalizedText ? `${finalizedText} ${currentSessionText}` : currentSessionText;
-            onText?.(combinedText, false);
+          // 累积所有识别结果，避免重复添加
+          if (currentRecognizedText && !finalizedText.includes(currentRecognizedText)) {
+            finalizedText = finalizedText ? `${finalizedText} ${currentRecognizedText}` : currentRecognizedText;
+            onText?.(finalizedText, data.is_final);
           }
         }
-      } catch {}
+      } catch (err) {
+        console.error('AudioRecognition WebSocket解析出错:', err);
+      }
     };
 
     websocket.onerror = () => {
@@ -323,14 +318,18 @@ export async function startSpeakerRecognition(
           if (data.is_final) {
             // 识别结果已确认，累加到finalizedText
             if (currentRecognizedText && !finalizedText.includes(currentRecognizedText)) {
-              finalizedText = finalizedText ? `${finalizedText} ${currentRecognizedText}` : currentRecognizedText;
+              finalizedText = finalizedText
+                ? `${finalizedText} ${currentRecognizedText}`
+                : currentRecognizedText;
               currentSessionText = '';
             }
             onText?.(finalizedText, true);
           } else {
             // 临时识别结果，更新currentSessionText
             currentSessionText = currentRecognizedText;
-            const combinedText = finalizedText ? `${finalizedText} ${currentSessionText}` : currentSessionText;
+            const combinedText = finalizedText
+              ? `${finalizedText} ${currentSessionText}`
+              : currentSessionText;
             onText?.(combinedText, false);
           }
         }

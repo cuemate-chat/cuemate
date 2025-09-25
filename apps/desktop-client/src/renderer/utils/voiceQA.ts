@@ -37,7 +37,7 @@ export function getVoiceQAState(): VoiceQAState {
   return getDefaultState();
 }
 
-function setVoiceQAState(next: Partial<VoiceQAState> | VoiceQAState): VoiceQAState {
+export function setVoiceQAState(next: Partial<VoiceQAState> | VoiceQAState): VoiceQAState {
   const current = getVoiceQAState();
   const merged: VoiceQAState = {
     isRecording: next.hasOwnProperty('isRecording')
@@ -128,17 +128,11 @@ export async function startVoiceQA(deviceId?: string, initialConfirmed?: string)
   const controller = await startMicrophoneRecognition({
     deviceId,
     initialText: confirmedTextRef, // 传递初始文本给audioRecognition处理叠加
-    onText: (text, isFinal) => {
+    onText: (text) => {
       const t = (text || '').trim();
       if (!t) return;
-      // audioRecognition.ts 已经处理了文本叠加，直接使用传来的文本
-      if (isFinal) {
-        setVoiceQAState({ confirmedText: t, tempText: '' });
-      } else {
-        // 对于临时文本，需要去掉初始文本部分，只显示新识别的部分
-        const newText = confirmedTextRef ? t.replace(confirmedTextRef, '').trim() : t;
-        setVoiceQAState({ confirmedText: confirmedTextRef, tempText: newText });
-      }
+      // audioRecognition.ts 已经处理了文本累积，直接使用累积结果
+      setVoiceQAState({ confirmedText: t, tempText: '' });
     },
     onError: () => {
       clearVoiceQAState();
