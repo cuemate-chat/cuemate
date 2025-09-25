@@ -25,5 +25,3 @@ const api = {
 };
 
 contextBridge.exposeInMainWorld('electronHistoryAPI', api);
-
-console.log('AI 问答历史窗口预加载脚本已加载');

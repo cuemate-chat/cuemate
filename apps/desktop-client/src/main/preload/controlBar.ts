@@ -154,8 +154,3 @@ contextBridge.exposeInMainWorld('logger', logger);
 // 类型定义（供 TypeScript 使用）
 export type ControlBarAPI = typeof controlBarAPI;
 export type Logger = typeof logger;
-
-// 类型声明已移除，使用动态类型
-
-// 预加载脚本中不使用 logger，保持 console.log
-console.log('控制条窗口预加载脚本已加载');

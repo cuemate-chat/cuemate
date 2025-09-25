@@ -33,12 +33,12 @@ const interviewerAPI = {
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 
-
   // === Piper TTS API ===
   piperTTS: {
     getVoices: () => ipcRenderer.invoke('piper-get-voices'),
     isAvailable: () => ipcRenderer.invoke('piper-is-available'),
-    synthesize: (text: string, options?: any) => ipcRenderer.invoke('piper-synthesize', text, options),
+    synthesize: (text: string, options?: any) =>
+      ipcRenderer.invoke('piper-synthesize', text, options),
     speak: (text: string, options?: any) => ipcRenderer.invoke('piper-speak', text, options),
     playToDevice: (audioDataBase64: string, deviceId?: string) =>
       ipcRenderer.invoke('piper-play-to-device', audioDataBase64, deviceId),
@@ -138,5 +138,3 @@ contextBridge.exposeInMainWorld('logger', logger);
 // 类型定义（供 TypeScript 使用）
 export type InterviewerAPI = typeof interviewerAPI;
 export type Logger = typeof logger;
-
-console.log('Interviewer窗口预加载脚本已加载');
