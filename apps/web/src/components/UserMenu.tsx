@@ -194,7 +194,7 @@ export default function UserMenu() {
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
             onClick={onSettings}
           >
-            <Cog6ToothIcon className="w-4 h-4" /> 账户设置
+            <Cog6ToothIcon className="w-4 h-4" /> 系统设置
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
