@@ -43,7 +43,7 @@ class WebSocketBridge {
 
       this.ws.onmessage = (event) => {
         try {
-          const message = JSON.parse(event.data);
+          JSON.parse(event.data);
         } catch (error) {
           console.error('WebSocket 消息解析失败:', error);
         }

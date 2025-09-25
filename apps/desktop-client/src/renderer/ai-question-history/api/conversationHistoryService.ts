@@ -46,7 +46,6 @@ export interface ConversationDetailResponse {
 
 export class ConversationHistoryService {
   private baseURL = 'http://localhost:3001';
-  private userData: any = null;
   private token: string | null = null;
 
   constructor() {
@@ -57,7 +56,6 @@ export class ConversationHistoryService {
     try {
       const result = await (window as any).electronHistoryAPI.getUserData();
       if (result.success) {
-        this.userData = result.userData;
         this.token = result.userData.token;
       }
     } catch (error) {

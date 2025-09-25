@@ -19,6 +19,8 @@ export const defaultUserForm = {
   version: 'v0.1.0',
   timezone: 'Asia/Shanghai',
   selected_model_id: '',
+  floating_window_visible: 1,
+  floating_window_height: 75,
 };
 
 // 将用户数据转换为表单数据
@@ -33,6 +35,8 @@ export function userToFormData(user: any) {
     version: 'v0.1.0',
     timezone: user.timezone || 'Asia/Shanghai',
     selected_model_id: user.selected_model_id || '',
+    floating_window_visible: user.floating_window_visible ?? 1,
+    floating_window_height: user.floating_window_height ?? 75,
   };
 }
 

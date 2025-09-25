@@ -70,5 +70,9 @@ export function up(db: any): void {
       16000, 0.2, '[]', '[]', false, 'zh-CN', 1.0, 'python3',
       '', '默认麦克风', '', '默认扬声器', 60, 15, 5, 30
     );
+
+    -- 为users表添加悬浮窗口相关字段
+    ALTER TABLE users ADD COLUMN floating_window_visible INTEGER DEFAULT 1 CHECK(floating_window_visible IN (0, 1));
+    ALTER TABLE users ADD COLUMN floating_window_height INTEGER DEFAULT 75 CHECK(floating_window_height IN (50, 75, 100));
   `);
 }

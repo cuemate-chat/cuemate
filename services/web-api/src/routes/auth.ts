@@ -62,7 +62,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
       selectedModel = app.db
         .prepare('SELECT * FROM models WHERE id = ? AND is_enabled = 1')
         .get(row.selected_model_id);
-      
+
       if (selectedModel) {
         modelParams = app.db
           .prepare('SELECT * FROM model_params WHERE model_id = ?')
@@ -79,6 +79,8 @@ export function registerAuthRoutes(app: FastifyInstance) {
       locale: row.locale ?? 'zh-CN',
       timezone: row.timezone ?? 'Asia/Shanghai',
       selected_model_id: row.selected_model_id ?? null,
+      floating_window_visible: row.floating_window_visible ?? 1,
+      floating_window_height: row.floating_window_height ?? 75,
       model: selectedModel,
       model_params: modelParams,
     };
@@ -98,10 +100,13 @@ export function registerAuthRoutes(app: FastifyInstance) {
 
     // 通过 WebSocket 推送登录成功事件给 desktop 端
     try {
-      (app as any).wsServer?.broadcast({
-        type: 'LOGIN_SUCCESS',
-        user: user
-      }, 'desktop');
+      (app as any).wsServer?.broadcast(
+        {
+          type: 'LOGIN_SUCCESS',
+          user: user,
+        },
+        'desktop',
+      );
     } catch (error) {
       app.log.warn({ error }, 'WebSocket 推送登录成功事件失败');
     }
@@ -117,11 +122,11 @@ export function registerAuthRoutes(app: FastifyInstance) {
         const payload = await (req as any).jwtVerify();
         const row = (app as any).db
           .prepare(
-            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id FROM users WHERE id = ?',
+            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id, floating_window_visible, floating_window_height FROM users WHERE id = ?',
           )
           .get(payload.uid);
         if (!row) return reply.code(404).send({ error: '用户不存在' });
-        
+
         // 获取用户选中模型的完整信息
         let selectedModel = null;
         let modelParams = [];
@@ -129,7 +134,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
           selectedModel = (app as any).db
             .prepare('SELECT * FROM models WHERE id = ? AND is_enabled = 1')
             .get(row.selected_model_id);
-          
+
           if (selectedModel) {
             modelParams = (app as any).db
               .prepare('SELECT * FROM model_params WHERE model_id = ?')
@@ -158,14 +163,18 @@ export function registerAuthRoutes(app: FastifyInstance) {
         // 查询是否有已登录的用户（is_logged_in = 1）
         const loggedInUser = app.db
           .prepare(
-            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id FROM users WHERE is_logged_in = 1 LIMIT 1',
+            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id, floating_window_visible, floating_window_height FROM users WHERE is_logged_in = 1 LIMIT 1',
           )
           .get();
 
         if (loggedInUser) {
           // 为已登录用户生成JWT token
-          const token = app.jwt.sign({ uid: loggedInUser.id, email: loggedInUser.email, username: loggedInUser.name });
-          
+          const token = app.jwt.sign({
+            uid: loggedInUser.id,
+            email: loggedInUser.email,
+            username: loggedInUser.name,
+          });
+
           // 获取用户选中模型的完整信息
           let selectedModel = null;
           let modelParams = [];
@@ -173,7 +182,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
             selectedModel = app.db
               .prepare('SELECT * FROM models WHERE id = ? AND is_enabled = 1')
               .get(loggedInUser.selected_model_id);
-            
+
             if (selectedModel) {
               modelParams = app.db
                 .prepare('SELECT * FROM model_params WHERE model_id = ?')
@@ -243,12 +252,20 @@ export function registerAuthRoutes(app: FastifyInstance) {
           fields.push('selected_model_id=?');
           args.push(body.selected_model_id);
         }
+        if (typeof body.floating_window_visible === 'number') {
+          fields.push('floating_window_visible=?');
+          args.push(body.floating_window_visible);
+        }
+        if (typeof body.floating_window_height === 'number') {
+          fields.push('floating_window_height=?');
+          args.push(body.floating_window_height);
+        }
         if (fields.length === 0) return { success: true };
         args.push(payload.uid);
         (app as any).db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).run(...args);
         const row = (app as any).db
           .prepare(
-            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id FROM users WHERE id = ?',
+            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id, floating_window_visible, floating_window_height FROM users WHERE id = ?',
           )
           .get(payload.uid);
         if (row?.timezone) setLoggerTimeZone(row.timezone);
@@ -260,7 +277,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
           selectedModel = (app as any).db
             .prepare('SELECT * FROM models WHERE id = ? AND is_enabled = 1')
             .get(row.selected_model_id);
-          
+
           if (selectedModel) {
             modelParams = (app as any).db
               .prepare('SELECT * FROM model_params WHERE model_id = ?')
@@ -286,6 +303,16 @@ export function registerAuthRoutes(app: FastifyInstance) {
           userName: row?.name,
           autoGetUser: false,
         });
+
+        // 通过 WebSocket 通知 desktop 客户端用户设置已更新
+        try {
+          (app as any).wsServer?.broadcast({
+            type: 'USER_SETTINGS_UPDATE',
+            user: user
+          }, 'desktop');
+        } catch (error) {
+          app.log.warn({ error }, 'WebSocket 推送用户设置更新事件失败');
+        }
 
         return { success: true, user };
       } catch (err) {
@@ -366,9 +393,12 @@ export function registerAuthRoutes(app: FastifyInstance) {
 
         // 通过 WebSocket 推送登出事件给 desktop 端
         try {
-          (app as any).wsServer?.broadcast({
-            type: 'LOGOUT'
-          }, 'desktop');
+          (app as any).wsServer?.broadcast(
+            {
+              type: 'LOGOUT',
+            },
+            'desktop',
+          );
         } catch (error) {
           app.log.warn({ error }, 'WebSocket 推送登出事件失败');
         }

@@ -1,4 +1,5 @@
 import {
+  ArrowsPointingOutIcon,
   ClockIcon,
   Cog6ToothIcon,
   CubeIcon,
@@ -9,6 +10,7 @@ import {
   InformationCircleIcon,
   PaintBrushIcon,
   UserCircleIcon,
+  WindowIcon,
 } from '@heroicons/react/24/outline';
 import { Select as AntSelect, Button } from 'antd';
 import 'antd/dist/reset.css';
@@ -221,6 +223,65 @@ export default function Settings() {
         </div>
       </section>
 
+      {/* 悬浮窗设置 */}
+      <section className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <header className="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
+          <WindowIcon className="w-5 h-5 text-slate-700" />
+          <h2 className="text-slate-900 font-semibold">悬浮窗设置</h2>
+        </header>
+        <div className="divide-y divide-slate-200">
+          {/* 悬浮窗口可见性 */}
+          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            <div className="flex items-center gap-2 text-slate-800 font-medium">
+              <EyeIcon className="w-5 h-5 text-slate-600" />
+              <span>窗口显示</span>
+            </div>
+            <div className="md:col-span-2">
+              <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden bg-white shadow-sm">
+                <button
+                  className={`px-4 py-2 text-sm ${form.floating_window_visible === 1 ? 'bg-blue-50 text-blue-700' : 'text-slate-800 hover:bg-slate-50'}`}
+                  onClick={() => setForm((f) => ({ ...f, floating_window_visible: 1 }))}
+                >
+                  显示
+                </button>
+                <button
+                  className={`px-4 py-2 text-sm border-l border-slate-300 ${form.floating_window_visible === 0 ? 'bg-blue-50 text-blue-700' : 'text-slate-800 hover:bg-slate-50'}`}
+                  onClick={() => setForm((f) => ({ ...f, floating_window_visible: 0 }))}
+                >
+                  隐藏
+                </button>
+              </div>
+              <p className="text-xs text-slate-600 mt-2">控制桌面应用悬浮窗口是否显示</p>
+            </div>
+          </div>
+
+          {/* 悬浮窗口高度 */}
+          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            <div className="flex items-center gap-2 text-slate-800 font-medium">
+              <ArrowsPointingOutIcon className="w-5 h-5 text-slate-600" />
+              <span>窗口高度</span>
+            </div>
+            <div className="md:col-span-2">
+              <div className="w-full">
+                <AntSelect
+                  value={form.floating_window_height}
+                  onChange={(v) => setForm((f) => ({ ...f, floating_window_height: v }))}
+                  options={[
+                    { value: 50, label: '50%' },
+                    { value: 75, label: '75%' },
+                    { value: 100, label: '100%' },
+                  ]}
+                  className="w-full"
+                  popupMatchSelectWidth
+                  style={{ height: 40 }}
+                />
+              </div>
+              <p className="text-xs text-slate-600 mt-2">设置桌面应用悬浮窗口的屏幕高度占比</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 账户信息 */}
       <section className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         <header className="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
@@ -324,6 +385,8 @@ export default function Settings() {
                 locale: form.locale,
                 timezone: form.timezone,
                 selected_model_id: form.selected_model_id,
+                floating_window_visible: form.floating_window_visible,
+                floating_window_height: form.floating_window_height,
               };
               
               // 直接复用 onSave 逻辑
