@@ -196,6 +196,14 @@ html, body, #root {
   min-height: 120px;
 }
 
+/* Job Position Card 特殊布局 */
+.interviewer-top-card.job-position-card {
+  display: flex;
+  flex-direction: column;
+  min-height: auto;
+  padding: 8px 12px;
+}
+
 .interviewer-avatar { position: relative; width: 64px; height: 64px; }
 .interviewer-left {
   flex: 1 1 30%;
@@ -645,6 +653,13 @@ html, body, #root {
   margin: 0 0 6px 0;
 }
 
+.ai-utterance h5 {
+  color: #22c55e;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0 0 6px 0;
+}
+
 .recognized-text {
   color: white;
   font-size: 14px;
@@ -936,5 +951,185 @@ html, body, #root {
 
 .ai-voice-btn.recording:hover {
   background: rgba(239, 68, 68, 0.3);
+}
+
+/* === 岗位选择卡片样式 === */
+.job-position-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 4px 0;
+  user-select: none;
+}
+
+.job-position-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.expand-icon {
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.2s ease;
+}
+
+.job-position-header:hover .expand-icon {
+  color: white;
+}
+
+.job-position-select {
+  position: relative;
+  min-width: 200px;
+  width: 100%;
+  margin-bottom: 0px;
+}
+
+.job-position-select:last-of-type {
+  margin-bottom: 0px;
+}
+
+/* 展开按钮样式 */
+.job-position-expand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  margin-top: -2px;
+  margin-bottom: -4px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.job-position-expand:hover {
+  opacity: 0.7;
+}
+
+.expand-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.job-position-details {
+  margin-top: 0px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.job-position-details::-webkit-scrollbar {
+  width: 4px;
+}
+
+.job-position-details::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.job-position-details::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.detail-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: white;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.detail-description,
+.detail-requirements {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.info-icon {
+  color: rgba(255, 255, 255, 0.5);
+  cursor: help;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: color 0.2s ease;
+}
+
+.info-icon:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.skill-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.skill-tag.more-skills {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: help;
+}
+
+/* Tooltip 样式 */
+.job-tooltip-content {
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  max-width: 300px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  z-index: 1000;
+}
+
+.tooltip-header {
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.tooltip-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.tooltip-arrow {
+  fill: rgba(0, 0, 0, 0.9);
 }
 

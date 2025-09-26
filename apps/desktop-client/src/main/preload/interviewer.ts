@@ -30,6 +30,9 @@ const interviewerAPI = {
   // === 日志 API ===
   log: (logMessage: FrontendLogMessage) => ipcRenderer.invoke('frontend-log', logMessage),
 
+  // === 用户数据 API ===
+  getUserData: () => ipcRenderer.invoke('get-user-data'),
+
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 

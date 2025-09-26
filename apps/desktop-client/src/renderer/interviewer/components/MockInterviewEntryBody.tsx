@@ -1,6 +1,9 @@
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useVoiceState } from '../../../utils/voiceState';
+import { JobPosition } from '../../services/jobPositionService';
+import { Model } from '../../services/modelService';
+import { JobPositionCard } from './JobPositionCard';
 
 interface AudioDevice {
   deviceId: string;
@@ -13,8 +16,12 @@ interface MockInterviewEntryBodyProps {
 
 export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps) {
   const [testing, setTesting] = useState(false);
-  const [lines, setLines] = useState<string[]>([]);
+  const [currentLine, setCurrentLine] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [timestamp, setTimestamp] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [selectedPosition, setSelectedPosition] = useState<JobPosition | null>(null);
+  const [selectedModel, setSelectedModel] = useState<Model | null>(null);
 
   // 使用VoiceState来控制下拉列表状态
   const voiceState = useVoiceState();
@@ -81,18 +88,26 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
         throw new Error('Piper TTS 不可用');
       }
 
-      setLines(prev => [...prev, `面试官：${text}`]);
+      setCurrentLine(`${text}`);
+      setErrorMessage('');
+      setTimestamp(Date.now());
     } catch (error) {
-      console.error('语音播放失败:', error);
-      setLines(prev => [...prev, `面试官：${text} [播放失败]`]);
+      console.error('语音识别失败:', error);
+      setCurrentLine('');
+      setErrorMessage(`语音识别失败: ${text}`);
+      setTimestamp(Date.now());
     } finally {
       setTesting(false);
     }
   };
 
   const handleStartInterview = () => {
-    // 开始面试时播放混合语言欢迎词
-    speak('你好，我是你今天的 Java 面试官，welcome to the interview!');
+    // 根据选中的岗位生成个性化欢迎词
+    const positionName = selectedPosition?.title || '暂未配置岗位';
+    const modelName = selectedModel?.name || '暂未配置大模型';
+    const welcomeText = `你好，我是你今天的 ${positionName} 面试官，使用${modelName}为你提供面试服务，welcome to the interview!`;
+
+    speak(welcomeText);
 
     // 调用原始的开始函数
     if (onStart) {
@@ -100,9 +115,27 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
     }
   };
 
+  const handlePositionSelect = (position: JobPosition | null) => {
+    setSelectedPosition(position);
+  };
+
+  const handleModelSelect = (model: Model | null) => {
+    setSelectedModel(model);
+  };
+
 
   return (
     <div className="interviewer-mode-panel">
+      {/* 岗位选择卡片 */}
+      <JobPositionCard
+        onPositionSelect={handlePositionSelect}
+        onModelSelect={handleModelSelect}
+        disabled={voiceState.mode === 'mock-interview' &&
+                  (voiceState.subState === 'mock-interview-recording' ||
+                   voiceState.subState === 'mock-interview-paused' ||
+                   voiceState.subState === 'mock-interview-playing')}
+      />
+
       <div className="interviewer-top interviewer-top-card">
         <div className="interviewer-left interviewer-avatar-block">
           <div className="interviewer-avatar">
@@ -180,11 +213,24 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
         </div>
       </div>
 
-      <div className="interviewer-transcript">
-        {lines.map((t, i) => (
-          <div className="ai-utterance" key={i}>{t}</div>
-        ))}
-      </div>
+      {(currentLine || errorMessage) && (
+        <div className="">
+          {currentLine && (
+            <div className="ai-utterance recognized-text">
+              <h5>面试官：</h5>
+              {currentLine}
+              {timestamp > 0 && <div className="timestamp" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{new Date(timestamp).toLocaleTimeString()}</div>}
+            </div>
+          )}
+          {errorMessage && (
+            <div className="ai-utterance error-text" style={{ color: '#ff6b6b' }}>
+              <h5>面试官：</h5>
+              {errorMessage}
+              {timestamp > 0 && <div className="timestamp" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{new Date(timestamp).toLocaleTimeString()}</div>}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

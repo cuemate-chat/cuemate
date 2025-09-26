@@ -90,14 +90,6 @@ const controlBarAPI = {
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 
-  // === 圆形模式事件监听 ===
-  onSwitchToCircleMode: (callback: (data: { circleSize: number }) => void) => {
-    ipcRenderer.on('switch-to-circle-mode', (_event, data) => callback(data));
-  },
-
-  onSwitchToNormalMode: (callback: () => void) => {
-    ipcRenderer.on('switch-to-normal-mode', (_event) => callback());
-  },
 
   // === 事件监听 API ===
   on: (channel: string, callback: (...args: any[]) => void) => {
@@ -110,9 +102,9 @@ const controlBarAPI = {
       'shortcut-triggered',
       'websocket-login-success', // WebSocket 登录成功事件
       'websocket-logout', // WebSocket 登出事件
-      'switch-to-circle-mode', // 圆形模式切换
-      'switch-to-normal-mode', // 正常模式切换
       'ask-ai-button-disabled', // 提问AI按钮禁用状态
+      'main-app-show', // 主应用显示事件
+      'main-app-hide', // 主应用隐藏事件
     ];
 
     if (allowedChannels.includes(channel)) {
