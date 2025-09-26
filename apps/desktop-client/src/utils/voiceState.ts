@@ -33,6 +33,9 @@ export interface VoiceState {
   mode: VoiceMode;
   subState: VoiceSubState;
   updatedAt: number;
+  // 计时器相关状态
+  timerDuration?: number; // 计时器时长（秒）
+  timerStarted?: boolean; // 计时器是否已开始
 }
 
 const STORAGE_KEY = 'cuemate.voiceState';
@@ -92,6 +95,8 @@ export function setVoiceState(next: Partial<VoiceState> | VoiceState): VoiceStat
   const merged: VoiceState = {
     mode: next.mode ?? current.mode,
     subState: next.subState ?? current.subState,
+    timerDuration: next.timerDuration ?? current.timerDuration,
+    timerStarted: next.timerStarted ?? current.timerStarted,
     updatedAt: Date.now(),
   } as VoiceState;
 

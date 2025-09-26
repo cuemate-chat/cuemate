@@ -2,6 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { History, X } from 'lucide-react';
 import { useState } from 'react';
+import { useVoiceState } from '../../../../utils/voiceState';
 import CueMateLogo from '../../../../assets/CueMate.png';
 
 // 头部内的加载动画
@@ -37,6 +38,19 @@ interface WindowHeaderProps {
 
 export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightPercentage, onHeightChange }: WindowHeaderProps) {
   const [showControls, setShowControls] = useState(false);
+  const globalState = useVoiceState();
+
+  // 从全局状态获取计时器数据 - 只用于显示，不做计时逻辑
+  const timerDuration = globalState.timerDuration || 0;
+  const timerStarted = globalState.timerStarted || false;
+
+  // 格式化时间显示 (时:分:秒) - 复制自InterviewerWindowHeader
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div 
@@ -46,8 +60,13 @@ export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightP
     >
       <div className="ai-header-left">
         <img src={CueMateLogo} alt="CueMate" className="ai-logo" />
-        <div className="ai-title">{isLoading ? 'Think' : 'AI Response2'}</div>
+        <div className="ai-title">{isLoading ? '模拟面试 - Think' : '模拟面试 - AI Response'}</div>
         {isLoading && <LoadingDots />}
+        {(timerStarted && globalState.subState !== 'idle' && (globalState.mode === 'mock-interview' || globalState.mode === 'interview-training')) && (
+          <div className="interviewer-timer">
+            <span className="timer-display">{formatDuration(timerDuration)}</span>
+          </div>
+        )}
       </div>
       <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
         <div className={`ai-header-right ${showControls ? 'show' : 'hide'}`}>
