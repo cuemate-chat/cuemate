@@ -325,16 +325,6 @@ export function MockInterviewApp() {
     setMessages([]);
   };
 
-  const handleAskMore = (questionText: string) => {
-    // 先设置问题，然后立即提交
-    setQuestion(questionText);
-    // 使用 setTimeout 确保状态更新后再提交
-    setTimeout(() => {
-      if (questionText.trim() && !isLoading) {
-        handleSubmit();
-      }
-    }, 0);
-  };
 
   return (
     <div className="ai-question-app">
@@ -353,12 +343,9 @@ export function MockInterviewApp() {
         />
 
         {/* Body - 对话区域 */}
-        <MockInterviewBody 
-          messages={messages} 
-          isLoading={isLoading || isInitializing} 
-          onNewChat={handleNewChat}
-          onAskMore={handleAskMore}
-          onCopyLastAIResponse={copyLastAIResponseRef}
+        <MockInterviewBody
+          aiMessage={messages.filter(m => m.type === 'ai').pop()?.content}
+          isLoading={isLoading || isInitializing}
         />
 
         {/* Footer - 输入区域 */}

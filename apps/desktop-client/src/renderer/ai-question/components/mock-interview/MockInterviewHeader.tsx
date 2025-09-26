@@ -2,8 +2,8 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { History, X } from 'lucide-react';
 import { useState } from 'react';
-import { useVoiceState } from '../../../../utils/voiceState';
 import CueMateLogo from '../../../../assets/CueMate.png';
+import { useVoiceState } from '../../../../utils/voiceState';
 
 // 头部内的加载动画
 const LoadingDots = () => {
@@ -101,11 +101,11 @@ export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightP
                 }}
               >
                 <History size={16} />
-                <span className="ai-header-btn-text">历史记录</span>
+                <span className="ai-header-btn-text">面试记录</span>
               </button>
             </Tooltip.Trigger>
             <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-              点击切换历史记录窗口
+              点击切换面试记录窗口
               <Tooltip.Arrow className="radix-tooltip-arrow" />
             </Tooltip.Content>
           </Tooltip.Root>
