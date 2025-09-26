@@ -15,6 +15,7 @@ import { up as up14, version as v14 } from './014_create_asr_settings.js';
 import { up as up15, version as v15 } from './015_create_operation_logs.js';
 import { up as up16, version as v16 } from './016_create_ai_conversations.js';
 import { up as up17, version as v17 } from './017_alter_asr_config.js';
+import { up as up18, version as v18 } from './018_alter_interviews.js';
 
 export interface Migration {
   version: number;
@@ -40,4 +41,5 @@ export const migrations: Migration[] = [
   { version: v15, name: '015_create_operation_logs', up: up15 },
   { version: v16, name: '016_create_ai_conversations', up: up16 },
   { version: v17, name: '017_alter_asr_config', up: up17 },
+  { version: v18, name: '018_alter_interviews', up: up18 },
 ];
