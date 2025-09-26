@@ -140,8 +140,7 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
       <JobPositionCard
         onPositionSelect={handlePositionSelect}
         onModelSelect={handleModelSelect}
-        disabled={voiceState.mode === 'mock-interview' &&
-                  (voiceState.subState === 'mock-interview-recording' ||
+        disabled={(voiceState.subState === 'mock-interview-recording' ||
                    voiceState.subState === 'mock-interview-paused' ||
                    voiceState.subState === 'mock-interview-playing')}
       />
