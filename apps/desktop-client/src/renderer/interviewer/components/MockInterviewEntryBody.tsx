@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { JobPosition } from '../../services/jobPositionService';
 import { Model } from '../../services/modelService';
+import { interviewService } from '../../services/interviewService';
 import { JobPositionCard } from './JobPositionCard';
 
 interface AudioDevice {
@@ -31,6 +32,7 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
   const [selectedMic, setSelectedMic] = useState<string>('');
   const [selectedSpeaker, setSelectedSpeaker] = useState<string>('');
   const [piperAvailable, setPiperAvailable] = useState(false);
+  const [currentInterviewId, setCurrentInterviewId] = useState<string | null>(null);
 
   // 初始化音频设备和TTS
   useEffect(() => {
@@ -96,20 +98,45 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
     }
   };
 
-  const handleStartInterview = () => {
-    // 根据选中的岗位生成个性化欢迎词
-    const positionName = selectedPosition?.title || '暂未配置岗位';
-    const modelName = selectedModel?.name || '暂未配置大模型';
-    const welcomeText = `你好，我是你今天的 ${positionName} 面试官，使用${modelName}为你提供面试服务，welcome to the interview!`;
+  const handleStartInterview = async () => {
+    if (!selectedPosition) {
+      setErrorMessage('请先选择面试岗位');
+      return;
+    }
 
-    speak(welcomeText);
+    try {
+      // 创建面试记录
+      const interviewData = {
+        jobId: selectedPosition.id,
+        jobTitle: selectedPosition.title,
+        jobContent: selectedPosition.description,
+        questionCount: selectedPosition.question_count || 0,
+        resumesId: selectedPosition.resumeId,
+        resumesTitle: selectedPosition.resumeTitle,
+        resumesContent: selectedPosition.resumeContent,
+        interviewType: 'mock' as const
+      };
 
-    // 设置状态为recording
-    setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-recording' });
+      const response = await interviewService.createInterview(interviewData);
+      setCurrentInterviewId(response.id);
 
-    // 调用原始的开始函数
-    if (onStart) {
-      onStart();
+      // 根据选中的岗位生成个性化欢迎词
+      const positionName = selectedPosition?.title || '暂未配置岗位';
+      const modelName = selectedModel?.name || '暂未配置大模型';
+      const welcomeText = `你好，我是你今天的 ${positionName} 面试官，使用${modelName}为你提供面试服务，welcome to the interview!`;
+
+      speak(welcomeText);
+
+      // 设置状态为recording
+      setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-recording' });
+
+      // 调用原始的开始函数
+      if (onStart) {
+        onStart();
+      }
+    } catch (error) {
+      console.error('开始面试失败:', error);
+      setErrorMessage(`开始面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
 
@@ -121,8 +148,21 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
     setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-playing' });
   };
 
-  const handleStopInterview = () => {
-    setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-completed' });
+  const handleStopInterview = async () => {
+    try {
+      // 如果有当前面试ID，调用结束面试API
+      if (currentInterviewId) {
+        await interviewService.endInterview(currentInterviewId);
+        setCurrentInterviewId(null);
+      }
+
+      setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-completed' });
+    } catch (error) {
+      console.error('结束面试失败:', error);
+      setErrorMessage(`结束面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      // 即使API调用失败，也要设置状态为完成
+      setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-completed' });
+    }
   };
 
   const handlePositionSelect = (position: JobPosition | null) => {
