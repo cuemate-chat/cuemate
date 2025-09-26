@@ -24,9 +24,11 @@ export function InterviewerApp() {
         } else if (title === '模拟面试') {
           await (window as any).electronAPI.switchToMode('mock-interview');
           await (window as any).electronAPI.showAIQuestion();
+          await (window as any).electronAPI.showAIQuestionHistory();
         } else if (title === '面试训练') {
           await (window as any).electronAPI.switchToMode('interview-training');
           await (window as any).electronAPI.showAIQuestion();
+          await (window as any).electronAPI.showAIQuestionHistory();
         }
       }
     } catch (error) {

@@ -137,6 +137,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
             if ((window as any).electronAPI) {
               await (window as any).electronAPI.switchToMode('mock-interview');
               await (window as any).electronAPI.showAIQuestion();
+              await (window as any).electronAPI.showAIQuestionHistory();
             }
           }} />
         )}
@@ -146,6 +147,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
             if ((window as any).electronAPI) {
               await (window as any).electronAPI.switchToMode('interview-training');
               await (window as any).electronAPI.showAIQuestion();
+              await (window as any).electronAPI.showAIQuestionHistory();
             }
           }} />
         )}
