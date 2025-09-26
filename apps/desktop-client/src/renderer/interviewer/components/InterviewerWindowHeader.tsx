@@ -106,9 +106,13 @@ export function InterviewerWindowHeader({
           {showBack && (
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
-                <button 
+                <button
                   className="interviewer-header-btn"
                   onClick={() => onBack?.()}
+                  disabled={globalState.mode === 'mock-interview' &&
+                           (globalState.subState === 'mock-interview-recording' ||
+                            globalState.subState === 'mock-interview-paused' ||
+                            globalState.subState === 'mock-interview-playing')}
                 >
                   返回上一页
                 </button>

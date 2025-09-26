@@ -509,19 +509,19 @@ html, body, #root {
 }
 
 .test-status.untested {
-  color: #ef4444;
+  color: rgba(239, 68, 68, 0.8);
 }
 
 .test-status.testing {
-  color: #eab308;
+  color: rgba(234, 179, 8, 0.8);
 }
 
 .test-status.success {
-  color: #22c55e;
+  color: rgba(34, 197, 94, 0.8);
 }
 
 .test-status.failed {
-  color: #ef4444;
+  color: rgba(239, 68, 68, 0.8);
 }
 
 @keyframes spin {
@@ -647,14 +647,14 @@ html, body, #root {
 }
 
 .recognition-result h5 {
-  color: #22c55e;
+  color: rgba(34, 197, 94, 0.8);
   font-size: 12px;
   font-weight: 500;
   margin: 0 0 6px 0;
 }
 
 .ai-utterance h5 {
-  color: #22c55e;
+  color: rgba(34, 197, 94, 0.8);
   font-size: 12px;
   font-weight: 500;
   margin: 0 0 6px 0;
@@ -685,14 +685,14 @@ html, body, #root {
 }
 
 .error-message h5 {
-  color: #ef4444;
+  color: rgba(239, 68, 68, 0.8);
   font-size: 12px;
   font-weight: 500;
   margin: 0 0 6px 0;
 }
 
 .error-text {
-  color: #fca5a5;
+  color: rgba(252, 165, 165, 0.8);
   font-size: 12px;
   line-height: 1.4;
   word-wrap: break-word;
@@ -755,7 +755,7 @@ html, body, #root {
 
 .interviewer-recording-icon {
   margin-bottom: 20px;
-  color: #ef4444;
+  color: rgba(239, 68, 68, 0.8);
   animation: pulse 2s infinite;
 }
 
@@ -945,8 +945,8 @@ html, body, #root {
 }
 
 .ai-voice-btn.recording {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+  color: rgba(248, 113, 113, 0.8);
 }
 
 .ai-voice-btn.recording:hover {
@@ -1015,6 +1015,58 @@ html, body, #root {
   justify-content: center;
   align-items: center;
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* 面试控制分段按钮样式 */
+.interview-segmented {
+  display: flex;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.interview-segmented-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.2s ease;
+}
+
+.interview-segmented:hover .interview-segmented-btn {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.interview-segmented-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.interview-segmented-btn-left {
+  color: rgba(251, 191, 36, 0.7); /* 暂停 - 暗黄色 */
+}
+
+.interview-segmented-btn-left.continue {
+  color: rgba(34, 197, 94, 0.7); /* 继续 - 暗绿色 */
+}
+
+.interview-segmented-btn-right {
+  color: rgba(248, 113, 113, 0.7); /* 停止 - 暗红色 */
+}
+
+.interview-separator {
+  width: 1px;
+  background: rgba(59, 130, 246, 0.4);
 }
 
 .job-position-details {
@@ -1090,8 +1142,8 @@ html, body, #root {
 .skill-tag {
   display: inline-block;
   padding: 2px 6px;
-  background: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.15);
+  color: rgba(147, 197, 253, 0.8);
   border-radius: 4px;
   font-size: 11px;
   font-weight: 500;

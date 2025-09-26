@@ -1,6 +1,6 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useVoiceState } from '../../../utils/voiceState';
+import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { JobPosition } from '../../services/jobPositionService';
 import { Model } from '../../services/modelService';
 import { JobPositionCard } from './JobPositionCard';
@@ -15,7 +15,6 @@ interface MockInterviewEntryBodyProps {
 }
 
 export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps) {
-  const [testing, setTesting] = useState(false);
   const [currentLine, setCurrentLine] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [timestamp, setTimestamp] = useState<number>(0);
@@ -78,8 +77,6 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
 
   const speak = async (text: string) => {
     try {
-      setTesting(true);
-
       if (piperAvailable) {
         // 使用混合语言TTS，无需指定语音模型
         const options = { outputDevice: selectedSpeaker };
@@ -96,8 +93,6 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
       setCurrentLine('');
       setErrorMessage(`语音识别失败: ${text}`);
       setTimestamp(Date.now());
-    } finally {
-      setTesting(false);
     }
   };
 
@@ -109,10 +104,25 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
 
     speak(welcomeText);
 
+    // 设置状态为recording
+    setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-recording' });
+
     // 调用原始的开始函数
     if (onStart) {
       onStart();
     }
+  };
+
+  const handlePauseInterview = () => {
+    setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-paused' });
+  };
+
+  const handleResumeInterview = () => {
+    setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-playing' });
+  };
+
+  const handleStopInterview = () => {
+    setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-completed' });
   };
 
   const handlePositionSelect = (position: JobPosition | null) => {
@@ -158,7 +168,9 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
                 className="device-select"
                 value={selectedMic}
                 onChange={(e) => setSelectedMic(e.target.value)}
-                disabled={loading || voiceState.subState !== 'idle'}
+                disabled={loading || (voiceState.subState === 'mock-interview-recording' ||
+                         voiceState.subState === 'mock-interview-paused' ||
+                         voiceState.subState === 'mock-interview-playing')}
               >
                 {loading ? (
                   <option>加载设备...</option>
@@ -183,7 +195,9 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
                 className="device-select"
                 value={selectedSpeaker}
                 onChange={(e) => setSelectedSpeaker(e.target.value)}
-                disabled={loading || voiceState.subState !== 'idle'}
+                disabled={loading || (voiceState.subState === 'mock-interview-recording' ||
+                         voiceState.subState === 'mock-interview-paused' ||
+                         voiceState.subState === 'mock-interview-playing')}
               >
                 {loading ? (
                   <option>加载设备...</option>
@@ -201,14 +215,48 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
             </div>
           </div>
 
-          {onStart && (
+          {onStart && (voiceState.subState !== 'mock-interview-recording' &&
+            voiceState.subState !== 'mock-interview-paused' &&
+            voiceState.subState !== 'mock-interview-playing') && (
             <button
               className="test-button"
               onClick={handleStartInterview}
-              disabled={testing || loading || !piperAvailable}
+              disabled={loading || !piperAvailable}
             >
-              {testing ? '正在测试...' : '开始模拟面试'}
+              开始模拟面试
             </button>
+          )}
+
+          {(voiceState.subState === 'mock-interview-recording' ||
+            voiceState.subState === 'mock-interview-paused' ||
+            voiceState.subState === 'mock-interview-playing') && (
+            <div className="interview-segmented">
+              {voiceState.subState === 'mock-interview-paused' ? (
+                <button
+                  className="interview-segmented-btn interview-segmented-btn-left continue"
+                  onClick={handleResumeInterview}
+                >
+                  <Play size={14} />
+                  继续
+                </button>
+              ) : (
+                <button
+                  className="interview-segmented-btn interview-segmented-btn-left"
+                  onClick={handlePauseInterview}
+                >
+                  <Pause size={14} />
+                  暂停
+                </button>
+              )}
+              <div className="interview-separator" />
+              <button
+                className="interview-segmented-btn interview-segmented-btn-right"
+                onClick={handleStopInterview}
+              >
+                <Square size={14} />
+                停止
+              </button>
+            </div>
           )}
         </div>
       </div>
