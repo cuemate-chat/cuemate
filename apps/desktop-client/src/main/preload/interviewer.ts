@@ -18,6 +18,9 @@ const interviewerAPI = {
   showAIQuestion: () => ipcRenderer.invoke('show-ai-question'),
   hideAIQuestion: () => ipcRenderer.invoke('hide-ai-question'),
   toggleAIQuestion: () => ipcRenderer.invoke('toggle-ai-question'),
+  showAIQuestionHistory: () => ipcRenderer.invoke('show-ai-question-history'),
+  hideAIQuestionHistory: () => ipcRenderer.invoke('hide-ai-question-history'),
+  toggleAIQuestionHistory: () => ipcRenderer.invoke('toggle-ai-question-history'),
 
   // === 模式切换 API ===
   switchToMode: (mode: 'voice-qa' | 'mock-interview' | 'interview-training') =>
