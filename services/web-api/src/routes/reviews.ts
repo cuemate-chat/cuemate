@@ -23,8 +23,16 @@ export function registerReviewRoutes(app: FastifyInstance) {
             `SELECT i.id,
                   i.started_at,
                   i.ended_at,
-                   i.selected_model_id,
-                  j.title AS job_title,
+                  i.selected_model_id,
+                  i.job_title,
+                  i.job_content,
+                  i.question_count,
+                  i.resumes_id,
+                  i.resumes_title,
+                  i.resumes_content,
+                  i.duration,
+                  i.interview_type,
+                  j.title AS original_job_title,
                   s.total_score,
                   s.overall_summary,
                   s.pros AS overall_pros,
@@ -59,7 +67,10 @@ export function registerReviewRoutes(app: FastifyInstance) {
         const id = (req as any).params?.id as string;
         const own = (app as any).db
           .prepare(
-            'SELECT id, job_id, started_at, ended_at, selected_model_id FROM interviews WHERE id=? AND user_id=?',
+            `SELECT id, job_id, started_at, ended_at, selected_model_id,
+                    job_title, job_content, question_count, resumes_id,
+                    resumes_title, resumes_content, duration, interview_type
+             FROM interviews WHERE id=? AND user_id=?`,
           )
           .get(id, payload.uid);
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
@@ -99,8 +110,8 @@ export function registerReviewRoutes(app: FastifyInstance) {
                   r.suggestions,
                   r.created_at
              FROM interview_reviews r
-        LEFT JOIN interview_scores s ON r.score_id = s.id
-            WHERE s.interview_id=? AND r.note_type='question'
+        LEFT JOIN interviews i2 ON r.interview_id = i2.id
+            WHERE r.interview_id=? AND r.note_type='question'
             ORDER BY r.created_at ASC`,
           )
           .all(id);
@@ -118,7 +129,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
           .prepare('SELECT * FROM interview_insights WHERE interview_id=?')
           .get(id);
 
-        return { summary, questions, insights, advantages };
+        return { interview: own, summary, questions, insights, advantages };
       } catch (err) {
         return reply.code(401).send(buildPrefixedError('获取面试复盘详情失败', err, 401));
       }
@@ -131,7 +142,17 @@ export function registerReviewRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'interviews.create', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
-        const body = z.object({ jobId: z.string().min(1) }).parse((req as any).body || {});
+        const body = z.object({
+          jobId: z.string().min(1),
+          jobTitle: z.string().optional(),
+          jobContent: z.string().optional(),
+          questionCount: z.number().optional(),
+          resumesId: z.string().optional(),
+          resumesTitle: z.string().optional(),
+          resumesContent: z.string().optional(),
+          interviewType: z.enum(['mock', 'training']).default('mock')
+        }).parse((req as any).body || {});
+
         const userRow = (app as any).db
           .prepare('SELECT selected_model_id, locale, theme, timezone FROM users WHERE id=?')
           .get(payload.uid);
@@ -140,12 +161,15 @@ export function registerReviewRoutes(app: FastifyInstance) {
         const now = Date.now();
         const language = (userRow?.locale || 'zh-CN').startsWith('zh') ? 'zh' : 'en';
         const theme = userRow?.theme || 'system';
+
         (app as any).db
           .prepare(
             `INSERT INTO interviews (
-              id, job_id, user_id, language, theme, started_at, ended_at, 
-              selected_model_id, theme, locale, timezone
-            ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)`,
+              id, job_id, user_id, language, theme, started_at, ended_at,
+              selected_model_id, theme, locale, timezone, job_title, job_content,
+              question_count, resumes_id, resumes_title, resumes_content,
+              duration, interview_type
+            ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .run(
             id,
@@ -158,6 +182,14 @@ export function registerReviewRoutes(app: FastifyInstance) {
             userRow?.theme || 'system',
             userRow?.locale || 'zh-CN',
             userRow?.timezone || 'Asia/Shanghai',
+            body.jobTitle || null,
+            body.jobContent || null,
+            body.questionCount || 0,
+            body.resumesId || null,
+            body.resumesTitle || null,
+            body.resumesContent || null,
+            0, // duration初始化为0
+            body.interviewType
           );
         
         // 记录操作日志
@@ -174,6 +206,91 @@ export function registerReviewRoutes(app: FastifyInstance) {
         return { id };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('创建面试复盘失败', err, 400));
+      }
+    }),
+  );
+
+  // 更新面试信息
+  app.put(
+    '/interviews/:id',
+    withErrorLogging(app.log as any, 'interviews.update', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const id = (req as any).params?.id as string;
+        const body = z.object({
+          jobTitle: z.string().optional(),
+          jobContent: z.string().optional(),
+          questionCount: z.number().optional(),
+          resumesId: z.string().optional(),
+          resumesTitle: z.string().optional(),
+          resumesContent: z.string().optional(),
+          duration: z.number().optional(),
+          interviewType: z.enum(['mock', 'training']).optional()
+        }).parse((req as any).body || {});
+
+        const own = (app as any).db
+          .prepare('SELECT id FROM interviews WHERE id=? AND user_id=?')
+          .get(id, payload.uid);
+        if (!own) return reply.code(404).send({ error: '不存在或无权限' });
+
+        // 构建动态更新SQL
+        const updateFields = [];
+        const updateValues = [];
+
+        if (body.jobTitle !== undefined) {
+          updateFields.push('job_title = ?');
+          updateValues.push(body.jobTitle);
+        }
+        if (body.jobContent !== undefined) {
+          updateFields.push('job_content = ?');
+          updateValues.push(body.jobContent);
+        }
+        if (body.questionCount !== undefined) {
+          updateFields.push('question_count = ?');
+          updateValues.push(body.questionCount);
+        }
+        if (body.resumesId !== undefined) {
+          updateFields.push('resumes_id = ?');
+          updateValues.push(body.resumesId);
+        }
+        if (body.resumesTitle !== undefined) {
+          updateFields.push('resumes_title = ?');
+          updateValues.push(body.resumesTitle);
+        }
+        if (body.resumesContent !== undefined) {
+          updateFields.push('resumes_content = ?');
+          updateValues.push(body.resumesContent);
+        }
+        if (body.duration !== undefined) {
+          updateFields.push('duration = ?');
+          updateValues.push(body.duration);
+        }
+        if (body.interviewType !== undefined) {
+          updateFields.push('interview_type = ?');
+          updateValues.push(body.interviewType);
+        }
+
+        if (updateFields.length > 0) {
+          updateValues.push(id);
+          (app as any).db
+            .prepare(`UPDATE interviews SET ${updateFields.join(', ')} WHERE id = ?`)
+            .run(...updateValues);
+        }
+
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.REVIEW,
+          resourceId: id,
+          resourceName: `面试复盘: ${id}`,
+          operation: OperationType.UPDATE,
+          message: `更新面试信息: ${id}`,
+          status: 'success',
+          userId: payload.uid
+        });
+
+        return { success: true };
+      } catch (err: any) {
+        return reply.code(400).send(buildPrefixedError('更新面试信息失败', err, 400));
       }
     }),
   );
@@ -220,6 +337,21 @@ export function registerReviewRoutes(app: FastifyInstance) {
           .prepare('SELECT id FROM interviews WHERE id=? AND user_id=?')
           .get(id, payload.uid);
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
+
+        // 级联删除相关数据
+        // 1. 删除面试复盘条目 (interview_reviews)
+        (app as any).db.prepare('DELETE FROM interview_reviews WHERE interview_id=?').run(id);
+
+        // 2. 删除面试评分 (interview_scores)
+        (app as any).db.prepare('DELETE FROM interview_scores WHERE interview_id=?').run(id);
+
+        // 3. 删除面试优缺点项 (interview_advantages)
+        (app as any).db.prepare('DELETE FROM interview_advantages WHERE interview_id=?').run(id);
+
+        // 4. 删除面试剖析 (interview_insights)
+        (app as any).db.prepare('DELETE FROM interview_insights WHERE interview_id=?').run(id);
+
+        // 5. 最后删除面试本身
         (app as any).db.prepare('DELETE FROM interviews WHERE id=?').run(id);
         
         // 记录操作日志
