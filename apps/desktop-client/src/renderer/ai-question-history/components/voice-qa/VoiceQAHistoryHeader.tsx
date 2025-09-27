@@ -23,7 +23,7 @@ export function VoiceQAHistoryHeader({ onClose, onRefresh, searchValue, onSearch
           <input
             type="text"
             className="ai-search-input"
-            placeholder="搜索历史记录..."
+            placeholder="搜索AI问题历史记录..."
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
           />
