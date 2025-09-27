@@ -155,6 +155,195 @@
   height: 28px;
 }
 
+/* 语音识别内容显示区域 */
+.speech-display-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 闪烁圆圈组件样式 */
+.voice-circle {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-inner {
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.circle-wave,
+.circle-wave-2 {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.voice-circle.active .circle-inner {
+  background: rgba(21, 128, 61, 0.6);
+  animation: pulse-inner 1.5s ease-in-out infinite;
+}
+
+.voice-circle.active .circle-wave {
+  animation: pulse-wave 1.5s ease-in-out infinite;
+}
+
+.voice-circle.active .circle-wave-2 {
+  animation: pulse-wave 1.5s ease-in-out infinite 0.5s;
+}
+
+@keyframes pulse-inner {
+  0%, 100% {
+    transform: scale(1);
+    background: rgba(21, 128, 61, 0.6);
+  }
+  50% {
+    transform: scale(1.2);
+    background: rgba(21, 128, 61, 0.8);
+  }
+}
+
+@keyframes pulse-wave {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* 语音文本显示 */
+.speech-text {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: left;
+  min-width: 0;
+}
+
+/* 控制按钮区域 */
+.control-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 自动/手动切换开关 */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.mode-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.toggle-text {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 32px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.mode-toggle.auto .toggle-switch {
+  background: rgba(59, 130, 246, 0.6);
+}
+
+.toggle-handle {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.mode-toggle.auto .toggle-handle {
+  transform: translateX(16px);
+}
+
+/* 回答完毕按钮 */
+.response-complete-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.response-complete-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.response-complete-btn:disabled {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+}
+
+.response-text {
+  font-size: 12px;
+}
+
+.response-complete-btn svg {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  padding: 2px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.response-complete-btn:hover:not(:disabled) svg {
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.9);
+}
+
 /* 底部居中悬浮的分段按钮容器 */
 .ai-floating-actions {
   position: sticky;

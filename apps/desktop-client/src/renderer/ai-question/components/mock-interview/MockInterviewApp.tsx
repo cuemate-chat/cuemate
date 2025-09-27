@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { aiService } from '../../api/aiService.ts';
 import { conversationService } from '../../api/conversationService.ts';
 import { MockInterviewBody } from './MockInterviewBody.tsx';
@@ -16,8 +16,6 @@ export function MockInterviewApp() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [heightPercentage, setHeightPercentage] = useState(75); // 默认75%
   
-  // 创建 ref 用于 VoiceQABody 实现复制AI回答的功能
-  const copyLastAIResponseRef = useRef<(() => Promise<void>) | null>(null);
 
   // 组件初始化时恢复最近对话和高度设置
   useEffect(() => {
@@ -283,12 +281,6 @@ export function MockInterviewApp() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
 
   const handleClose = async () => {
     try {
@@ -315,15 +307,6 @@ export function MockInterviewApp() {
     }
   };
 
-  // 新建提问：开始新对话
-  const handleNewChat = async () => {
-    if (isLoading) return;
-    
-    setCurrentConversationId(null);
-    setCurrentConversationStatus(null);
-    setSequenceNumber(1);
-    setMessages([]);
-  };
 
 
   return (
@@ -348,16 +331,16 @@ export function MockInterviewApp() {
           isLoading={isLoading || isInitializing}
         />
 
-        {/* Footer - 输入区域 */}
+        {/* Footer - 语音识别和控制区域 */}
         <MockInterviewFooter
-          question={question}
+          speechText={question} // 使用当前输入的问题作为语音文本显示
           isLoading={isLoading || isInitializing}
-          onQuestionChange={setQuestion}
-          onSubmit={handleSubmit}
-          onKeyDown={handleKeyDown}
-          onNewChat={handleNewChat}
-          onCopyLastAIResponse={() => copyLastAIResponseRef.current?.()}
-          currentConversationStatus={currentConversationStatus}
+          onResponseComplete={async () => {
+            // 手动模式下的回答完毕逻辑
+            if (question.trim()) {
+              await handleSubmit();
+            }
+          }}
         />
       </motion.div>
     </div>
