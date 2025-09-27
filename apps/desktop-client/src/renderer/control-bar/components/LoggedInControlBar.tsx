@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, CornerDownLeft, Eye, EyeOff, Pause, Play, Square, Type } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
-import { userSettingsService } from '../../services/userSettingsService';
+import { userSettingsService } from '../api/userSettingsService';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 
 interface LoggedInControlBarProps {

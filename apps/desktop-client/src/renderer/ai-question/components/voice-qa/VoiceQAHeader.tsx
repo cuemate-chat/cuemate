@@ -4,8 +4,8 @@ import { History, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import CueMateLogo from '../../../../assets/CueMate.png';
 import { useVoiceState } from '../../../../utils/voiceState';
+import { userSettingsService } from '../../../control-bar/api/userSettingsService';
 import { LottieAudioLines } from '../../../shared/components/LottieAudioLines';
-import { userSettingsService } from '../../../services/userSettingsService';
 
 // 头部内的加载动画
 const LoadingDots = () => {
@@ -84,7 +84,7 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
     >
       <div className="ai-header-left">
         <img src={CueMateLogo} alt="CueMate" className="ai-logo" />
-        <div className="ai-title">{isLoading ? 'Think' : 'AI Response'}</div>
+        <div className="ai-title">{isLoading ? 'Think' : '语音提问 - AI Response'}</div>
         {isLoading && <LoadingDots />}
         {micDevices.length > 0 && (
           <div style={{ marginLeft: 8, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -186,7 +186,7 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
                 }}
               >
                 <History size={16} />
-                <span className="ai-header-btn-text">历史记录</span>
+                <span className="ai-header-btn-text">AI 提问历史记录</span>
               </button>
             </Tooltip.Trigger>
             <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>

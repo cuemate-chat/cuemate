@@ -1,9 +1,9 @@
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
-import { JobPosition } from '../../services/jobPositionService';
-import { Model } from '../../services/modelService';
-import { interviewService } from '../../services/interviewService';
+import { JobPosition } from '../api/jobPositionService';
+import { Model } from '../api/modelService';
+import { interviewService } from '../api/interviewService';
 import { JobPositionCard } from './JobPositionCard';
 
 interface AudioDevice {

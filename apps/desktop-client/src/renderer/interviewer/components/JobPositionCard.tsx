@@ -1,9 +1,9 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { JobPosition, jobPositionService } from '../../services/jobPositionService';
-import { Model, modelService } from '../../services/modelService';
-import { userSettingsService } from '../../services/userSettingsService';
+import { JobPosition, jobPositionService } from '../api/jobPositionService';
+import { Model, modelService } from '../api/modelService';
+import { userSettingsService } from '../../control-bar/api/userSettingsService';
 
 interface JobPositionCardProps {
   onPositionSelect?: (position: JobPosition | null) => void;
@@ -172,8 +172,8 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, disabled = fa
           <div className="detail-row">
             <span className="detail-label">描述:</span>
             <div className="detail-value detail-description">
-              {truncateText(selectedPosition.description, 120)}
-              {selectedPosition.description.length > 120 && (
+              {truncateText(selectedPosition.description || '', 120)}
+              {(selectedPosition.description?.length || 0) > 120 && (
                 <Tooltip.Provider delayDuration={150}>
                   <Tooltip.Root>
                     <Tooltip.Trigger asChild>
@@ -186,7 +186,7 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, disabled = fa
                         sideOffset={8}
                       >
                         <div className="tooltip-header">岗位描述</div>
-                        <div className="tooltip-text">{selectedPosition.description}</div>
+                        <div className="tooltip-text">{selectedPosition.description || ''}</div>
                         <Tooltip.Arrow className="tooltip-arrow" />
                       </Tooltip.Content>
                     </Tooltip.Portal>
@@ -207,8 +207,8 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, disabled = fa
             <div className="detail-row">
               <span className="detail-label">简历内容:</span>
               <div className="detail-value detail-requirements">
-                {truncateText(selectedPosition.resumeContent, 120)}
-                {selectedPosition.resumeContent.length > 120 && (
+                {truncateText(selectedPosition.resumeContent || '', 120)}
+                {(selectedPosition.resumeContent?.length || 0) > 120 && (
                   <Tooltip.Provider delayDuration={150}>
                     <Tooltip.Root>
                       <Tooltip.Trigger asChild>
@@ -221,7 +221,7 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, disabled = fa
                           sideOffset={8}
                         >
                           <div className="tooltip-header">简历内容</div>
-                          <div className="tooltip-text">{selectedPosition.resumeContent}</div>
+                          <div className="tooltip-text">{selectedPosition.resumeContent || ''}</div>
                           <Tooltip.Arrow className="tooltip-arrow" />
                         </Tooltip.Content>
                       </Tooltip.Portal>
