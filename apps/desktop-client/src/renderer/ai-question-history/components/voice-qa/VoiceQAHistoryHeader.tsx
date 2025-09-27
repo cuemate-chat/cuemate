@@ -13,7 +13,7 @@ export function VoiceQAHistoryHeader({ onClose, onRefresh, searchValue, onSearch
     <div className="ai-window-header">
       <div className="ai-header-left">
         <History size={16} />
-        <div className="ai-title">历史记录</div>
+        <div className="ai-title">AI 提问记录</div>
       </div>
 
       {/* 搜索框 */}
