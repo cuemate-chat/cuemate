@@ -79,7 +79,7 @@ export default defineConfig({
   define: {
     // 在渲染进程中定义全局变量
     __IS_DEV__: process.env.NODE_ENV === 'development',
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '0.1.0'),
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
 
   // 优化配置
