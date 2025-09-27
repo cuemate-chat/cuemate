@@ -36,6 +36,8 @@ export interface VoiceState {
   // 计时器相关状态
   timerDuration?: number; // 计时器时长（秒）
   timerStarted?: boolean; // 计时器是否已开始
+  // 面试相关状态
+  interviewId?: string; // 当前面试ID
 }
 
 const STORAGE_KEY = 'cuemate.voiceState';
@@ -97,6 +99,7 @@ export function setVoiceState(next: Partial<VoiceState> | VoiceState): VoiceStat
     subState: next.subState ?? current.subState,
     timerDuration: next.timerDuration ?? current.timerDuration,
     timerStarted: next.timerStarted ?? current.timerStarted,
+    interviewId: next.interviewId ?? current.interviewId,
     updatedAt: Date.now(),
   } as VoiceState;
 

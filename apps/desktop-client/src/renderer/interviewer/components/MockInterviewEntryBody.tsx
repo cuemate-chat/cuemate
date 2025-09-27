@@ -127,8 +127,12 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
 
       speak(welcomeText);
 
-      // 设置状态为recording
-      setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-recording' });
+      // 设置状态为recording，并保存面试ID
+      setVoiceState({
+        mode: 'mock-interview',
+        subState: 'mock-interview-recording',
+        interviewId: response.id
+      });
 
       // 调用原始的开始函数
       if (onStart) {
@@ -156,12 +160,20 @@ export function MockInterviewEntryBody({ onStart }: MockInterviewEntryBodyProps)
         setCurrentInterviewId(null);
       }
 
-      setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-completed' });
+      setVoiceState({
+        mode: 'mock-interview',
+        subState: 'mock-interview-completed',
+        interviewId: undefined
+      });
     } catch (error) {
       console.error('结束面试失败:', error);
       setErrorMessage(`结束面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
       // 即使API调用失败，也要设置状态为完成
-      setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-completed' });
+      setVoiceState({
+        mode: 'mock-interview',
+        subState: 'mock-interview-completed',
+        interviewId: undefined
+      });
     }
   };
 
