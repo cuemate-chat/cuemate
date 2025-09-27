@@ -312,6 +312,75 @@ export function registerInterviewRoutes(app: FastifyInstance) {
     }),
   );
 
+  // 查询面试复盘条目列表
+  app.get(
+    '/interview-reviews',
+    withErrorLogging(app.log as any, 'interview-reviews.list', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const query = z
+          .object({
+            interview_id: z.string().optional(),
+            note_type: z.enum(['mock', 'training']).optional(),
+            page: z.string().optional().default('1'),
+            limit: z.string().optional().default('50'),
+          })
+          .parse((req as any).query || {});
+
+        const page = parseInt(query.page);
+        const limit = parseInt(query.limit);
+        const offset = (page - 1) * limit;
+
+        // 构建基础查询
+        let whereClause = 'WHERE i.user_id = ?';
+        const params = [payload.uid];
+
+        if (query.interview_id) {
+          whereClause += ' AND r.interview_id = ?';
+          params.push(query.interview_id);
+        }
+
+        if (query.note_type) {
+          whereClause += ' AND r.note_type = ?';
+          params.push(query.note_type);
+        }
+
+        // 查询总数
+        const countQuery = `
+          SELECT COUNT(*) as count
+          FROM interview_reviews r
+          JOIN interviews i ON r.interview_id = i.id
+          ${whereClause}
+        `;
+        const countResult = (app as any).db.prepare(countQuery).get(...params);
+        const total = countResult?.count || 0;
+
+        // 查询数据
+        const dataQuery = `
+          SELECT
+            r.id, r.interview_id, r.note_type, r.content, r.question_id, r.question,
+            r.answer, r.asked_question, r.candidate_answer, r.pros, r.cons,
+            r.suggestions, r.key_points, r.assessment, r.reference_answer, r.created_at
+          FROM interview_reviews r
+          JOIN interviews i ON r.interview_id = i.id
+          ${whereClause}
+          ORDER BY r.created_at DESC
+          LIMIT ? OFFSET ?
+        `;
+        const items = (app as any).db.prepare(dataQuery).all(...params, limit, offset);
+
+        return {
+          items: items || [],
+          total,
+          page,
+          limit,
+        };
+      } catch (err: any) {
+        return reply.code(400).send(buildPrefixedError('查询面试复盘条目失败', err, 400));
+      }
+    }),
+  );
+
   // 更新面试复盘条目
   app.put(
     '/interview-reviews/:id',

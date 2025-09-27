@@ -44,6 +44,25 @@ export interface ConversationDetailResponse {
   messages: MessageDetail[];
 }
 
+export interface InterviewReview {
+  id: string;
+  interview_id: string;
+  note_type: 'mock' | 'training';
+  content: string;
+  question_id?: string;
+  question?: string;
+  answer?: string;
+  asked_question?: string;
+  candidate_answer?: string;
+  pros?: string;
+  cons?: string;
+  suggestions?: string;
+  key_points?: string;
+  assessment?: string;
+  reference_answer?: string;
+  created_at: number;
+}
+
 export class ConversationHistoryService {
   private baseURL = 'http://localhost:3001';
   private token: string | null = null;
@@ -204,6 +223,32 @@ export class ConversationHistoryService {
     } catch (error) {
       console.error('停止对话失败:', error);
       return false;
+    }
+  }
+
+  /**
+   * 获取面试复盘记录
+   */
+  async getInterviewReviews(interviewId: string): Promise<InterviewReview[]> {
+    await this.ensureAuth();
+
+    try {
+      const response = await fetch(`${this.baseURL}/interview-reviews?interview_id=${interviewId}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`获取面试复盘记录失败 ${response.status}:`, errorText);
+        throw new Error(`获取面试复盘记录失败: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      return data.items || [];
+    } catch (error) {
+      console.error('获取面试复盘记录失败:', error);
+      throw error;
     }
   }
 
