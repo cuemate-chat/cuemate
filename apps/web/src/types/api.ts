@@ -54,21 +54,18 @@ export interface ModelParam {
 // 用户相关类型
 export interface User {
   id: string;
-  username?: string;
   email?: string;
   name?: string;
-  avatar?: string;
-  theme?: 'light' | 'dark' | 'system';
+  created_at: number;
+  theme?: string;
   locale?: string;
   timezone?: string;
   selected_model_id?: string;
+  is_logged_in?: number;
+  floating_window_visible?: number;
+  floating_window_height?: number;
   model?: Model | null;
   model_params?: ModelParam[];
-  created_at?: number;
-  updated_at?: number;
-  // 保持兼容性
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface LoginRequest {
@@ -84,10 +81,12 @@ export interface LoginResponse {
 export interface UpdateUserRequest {
   name?: string;
   email?: string;
-  theme?: 'light' | 'dark' | 'system';
+  theme?: string;
   locale?: string;
   timezone?: string;
   selected_model_id?: string;
+  floating_window_visible?: number;
+  floating_window_height?: number;
 }
 
 export interface ChangePasswordRequest {
