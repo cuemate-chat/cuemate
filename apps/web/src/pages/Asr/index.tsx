@@ -186,7 +186,8 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="microphone_device_id"
-                        label="麦克风音源"
+                        label={<span>麦克风音源</span>}
+                        rules={[{ required: true, message: '请选择麦克风设备' }]}
                       >
                         <Select
                           placeholder="选择麦克风设备"
@@ -215,7 +216,8 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="speaker_device_id"
-                        label="扬声器音源"
+                        label={<span>扬声器音源</span>}
+                        rules={[{ required: true, message: '请选择扬声器设备' }]}
                       >
                         <Select
                           placeholder="选择扬声器设备"
