@@ -4,12 +4,30 @@
  */
 
 export interface UserSettings {
-  floating_window_visible?: number;
-  floating_window_height?: number;
+  name?: string;
+  email?: string;
   theme?: string;
   locale?: string;
   timezone?: string;
   selected_model_id?: string;
+  floating_window_visible?: number;
+  floating_window_height?: number;
+  version?: string;
+}
+
+export interface UserInfo {
+  id: string;
+  email?: string;
+  name?: string;
+  created_at: number;
+  theme?: string;
+  locale?: string;
+  timezone?: string;
+  selected_model_id?: string;
+  is_logged_in?: number;
+  floating_window_visible?: number;
+  floating_window_height?: number;
+  version?: string;
 }
 
 export class UserSettingsService {
@@ -22,8 +40,10 @@ export class UserSettingsService {
 
   private async initAuth() {
     try {
-      const result = await (window as any).electronAPI.getUserData();
-      if (result.success && result.userData?.token) {
+      // 支持多种 API 接口
+      const api = (window as any).electronAPI || (window as any).electronInterviewerAPI;
+      const result = await api?.getUserData?.();
+      if (result?.success && result.userData?.token) {
         this.token = result.userData.token;
       }
     } catch (error) {
@@ -76,7 +96,7 @@ export class UserSettingsService {
   /**
    * 获取当前用户信息
    */
-  async getCurrentUser(): Promise<any> {
+  async getCurrentUser(): Promise<UserInfo | null> {
     await this.ensureAuth();
 
     try {

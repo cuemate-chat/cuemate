@@ -5,8 +5,9 @@
 
 export interface JobPosition {
   id: string;
+  user_id: string;
   title: string;
-  description: string;
+  description?: string;
   status: string;
   created_at: number;
   vector_status: number;
