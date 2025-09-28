@@ -1,5 +1,3 @@
-import { EventEmitter } from 'events';
-
 export interface VoiceCoordinatorConfig {
   silenceThreshold: number;    // 静音阈值 (毫秒)
   volumeThreshold: number;     // 音量阈值 (0-1)
@@ -20,7 +18,7 @@ export enum VoiceState {
   PROCESSING = 'processing'         // 处理中
 }
 
-export class VoiceCoordinator extends EventEmitter {
+export class VoiceCoordinator extends EventTarget {
   private currentState: VoiceState = VoiceState.IDLE;
   private config: VoiceCoordinatorConfig;
   private lastSpeechTime: number = 0;
@@ -71,11 +69,11 @@ export class VoiceCoordinator extends EventEmitter {
       // 开始音频级别监测
       this.startAudioMonitoring();
 
-      this.emit('initialized');
+      this.dispatchEvent(new CustomEvent('initialized'));
       console.log('VoiceCoordinator initialized successfully');
     } catch (error) {
       console.error('Failed to initialize VoiceCoordinator:', error);
-      this.emit('error', error);
+      this.dispatchEvent(new CustomEvent('error', { detail: error }));
       throw error;
     }
   }
@@ -91,7 +89,7 @@ export class VoiceCoordinator extends EventEmitter {
     this.stopASRListening();
     this.clearAutoEndTimer();
 
-    this.emit('stateChanged', this.currentState);
+    this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
     console.log('TTS started');
   }
 
@@ -111,7 +109,7 @@ export class VoiceCoordinator extends EventEmitter {
       }
     }, this.config.ttsDelay);
 
-    this.emit('stateChanged', this.currentState);
+    this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
     console.log('TTS completed, will start ASR listening in', this.config.ttsDelay, 'ms');
   }
 
@@ -126,8 +124,8 @@ export class VoiceCoordinator extends EventEmitter {
     this.lastSpeechTime = 0;
     this.startAutoEndTimer();
 
-    this.emit('asrStarted');
-    this.emit('stateChanged', this.currentState);
+    this.dispatchEvent(new CustomEvent('asrStarted'));
+    this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
     console.log('ASR listening started');
   }
 
@@ -137,8 +135,8 @@ export class VoiceCoordinator extends EventEmitter {
       this.currentState = VoiceState.IDLE;
       this.clearAutoEndTimer();
 
-      this.emit('asrStopped');
-      this.emit('stateChanged', this.currentState);
+      this.dispatchEvent(new CustomEvent('asrStopped'));
+      this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
       console.log('ASR listening stopped');
     }
   }
@@ -149,8 +147,8 @@ export class VoiceCoordinator extends EventEmitter {
       this.currentState = VoiceState.PROCESSING;
       this.clearAutoEndTimer();
 
-      this.emit('userFinishedSpeaking', { manual: true });
-      this.emit('stateChanged', this.currentState);
+      this.dispatchEvent(new CustomEvent('userFinishedSpeaking', { detail: { manual: true } }));
+      this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
       console.log('User speaking ended manually');
     }
   }
@@ -161,7 +159,7 @@ export class VoiceCoordinator extends EventEmitter {
     this.lastSpeechTime = 0;
     this.clearAutoEndTimer();
 
-    this.emit('stateChanged', this.currentState);
+    this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
     console.log('VoiceCoordinator reset to idle');
   }
 
@@ -182,7 +180,7 @@ export class VoiceCoordinator extends EventEmitter {
       const timestamp = Date.now();
 
       // 发送音频级别数据
-      this.emit('audioLevel', { volume, timestamp });
+      this.dispatchEvent(new CustomEvent('audioLevel', { detail: { volume, timestamp } }));
 
       // 处理语音活动检测
       this.handleVoiceActivity(volume, timestamp);
@@ -209,8 +207,8 @@ export class VoiceCoordinator extends EventEmitter {
         this.lastSpeechTime = timestamp;
         this.clearAutoEndTimer();
 
-        this.emit('userStartedSpeaking');
-        this.emit('stateChanged', this.currentState);
+        this.dispatchEvent(new CustomEvent('userStartedSpeaking'));
+        this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
         console.log('User started speaking');
       }
     } else if (this.currentState === VoiceState.USER_SPEAKING) {
@@ -223,8 +221,8 @@ export class VoiceCoordinator extends EventEmitter {
         if (silenceDuration >= this.config.silenceThreshold) {
           // 自动结束说话
           this.currentState = VoiceState.PROCESSING;
-          this.emit('userFinishedSpeaking', { manual: false, silenceDuration });
-          this.emit('stateChanged', this.currentState);
+          this.dispatchEvent(new CustomEvent('userFinishedSpeaking', { detail: { manual: false, silenceDuration } }));
+          this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
           console.log('User finished speaking (auto detected after', silenceDuration, 'ms silence)');
         }
       }
@@ -238,7 +236,7 @@ export class VoiceCoordinator extends EventEmitter {
     this.autoEndTimer = setTimeout(() => {
       if (this.currentState === VoiceState.ASR_LISTENING) {
         // 监听超时，没有检测到用户说话
-        this.emit('listeningTimeout');
+        this.dispatchEvent(new CustomEvent('listeningTimeout'));
         console.log('ASR listening timeout');
       }
     }, this.config.autoEndTimeout);
@@ -265,7 +263,7 @@ export class VoiceCoordinator extends EventEmitter {
   // 更新配置
   updateConfig(newConfig: Partial<VoiceCoordinatorConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    this.emit('configUpdated', this.config);
+    this.dispatchEvent(new CustomEvent('configUpdated', { detail: this.config }));
   }
 
   // 检查是否可以开始ASR
@@ -315,8 +313,7 @@ export class VoiceCoordinator extends EventEmitter {
       this.mediaStream = null;
     }
 
-    // 移除所有监听器
-    this.removeAllListeners();
+    // EventTarget没有removeAllListeners方法，需要手动管理监听器
 
     console.log('VoiceCoordinator destroyed');
   }
