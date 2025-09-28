@@ -5,6 +5,7 @@ import { conversationService } from '../../api/conversationService.ts';
 import { MockInterviewBody } from './MockInterviewBody.tsx';
 import { MockInterviewFooter } from './MockInterviewFooter.tsx';
 import { MockInterviewHeader } from './MockInterviewHeader.tsx';
+import { InterviewState } from './state/InterviewStateMachine.ts';
 
 export function MockInterviewApp() {
   const [question, setQuestion] = useState('');
@@ -327,14 +328,16 @@ export function MockInterviewApp() {
 
         {/* Body - 对话区域 */}
         <MockInterviewBody
-          aiMessage={messages.filter(m => m.type === 'ai').pop()?.content}
-          isLoading={isLoading || isInitializing}
+          interviewState={InterviewState.IDLE}
+          currentQuestion={messages.filter(m => m.type === 'ai').pop()?.content}
+          streamingAnswer=""
+          isGeneratingAnswer={isLoading || isInitializing}
         />
 
         {/* Footer - 语音识别和控制区域 */}
         <MockInterviewFooter
+          interviewState={InterviewState.IDLE}
           speechText={question} // 使用当前输入的问题作为语音文本显示
-          isLoading={isLoading || isInitializing}
           onResponseComplete={async () => {
             // 手动模式下的回答完毕逻辑
             if (question.trim()) {
