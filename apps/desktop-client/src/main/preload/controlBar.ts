@@ -90,6 +90,25 @@ const controlBarAPI = {
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 
+  // === 面试 IPC API ===
+  interview: {
+    // 注册为控制栏窗口
+    registerWindow: () => ipcRenderer.send('interview:register-window', 'control-bar'),
+    // 注销窗口
+    unregisterWindow: () => ipcRenderer.send('interview:unregister-window'),
+    // 发送面试事件
+    sendInterviewEvent: (event: string, data?: any) =>
+      ipcRenderer.send(`interview:${event}`, data),
+    // 监听面试事件
+    onInterviewEvent: (event: string, callback: (data: any) => void) => {
+      ipcRenderer.on(`interview:${event}`, (_event, data) => callback(data));
+      return () => ipcRenderer.removeAllListeners(`interview:${event}`);
+    },
+    // 获取当前面试状态
+    getCurrentState: () => ipcRenderer.invoke('interview:get-current-state'),
+    // 设置当前面试状态
+    setCurrentState: (state: any) => ipcRenderer.send('interview:set-current-state', state),
+  },
 
   // === 事件监听 API ===
   on: (channel: string, callback: (...args: any[]) => void) => {
