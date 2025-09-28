@@ -66,14 +66,14 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         await voiceCoordinator.current.initialize();
 
         // 监听语音协调器事件
-        voiceCoordinator.current.on('userStartedSpeaking', () => {
+        voiceCoordinator.current.addEventListener('userStartedSpeaking', () => {
           console.log('User started speaking');
         });
 
-        voiceCoordinator.current.on('userFinishedSpeaking', (data) => {
-          console.log('User finished speaking:', data);
+        voiceCoordinator.current.addEventListener('userFinishedSpeaking', ((event: CustomEvent) => {
+          console.log('User finished speaking:', event.detail);
           handleUserFinishedSpeaking();
-        });
+        }) as EventListener);
 
         console.log('Interview system initialized successfully');
       } catch (error) {
