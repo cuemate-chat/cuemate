@@ -118,7 +118,7 @@ export { getLoggerTimeZone, setLoggerTimeZone } from './tz.js';
 
 // Banner 工具函数
 export function printBanner(serviceName: string, version?: string, port?: number) {
-  const serviceVersion = version || process.env.VERSION || '0.1.0';
+  const serviceVersion = version || process.env.VERSION || 'N/A';
   const banner = `
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║

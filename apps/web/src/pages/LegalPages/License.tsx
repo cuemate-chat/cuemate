@@ -174,7 +174,7 @@ export default function License() {
                   </span>
                 </div>
                 <div className="px-3 py-1 bg-white/80 rounded-full">
-                  <span className="text-sm font-medium text-slate-600">授权版本： {license.licenseVersion || 'v0.1.0'}</span>
+                  <span className="text-sm font-medium text-slate-600">授权版本： {license.licenseVersion}</span>
                 </div>
               </div>
 

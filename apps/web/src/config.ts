@@ -31,7 +31,7 @@ export const config = {
 
   // 应用信息
   APP_TITLE: import.meta.env.VITE_APP_TITLE || 'CueMate',
-  APP_VERSION: import.meta.env.VITE_APP_VERSION || '0.1.0',
+  APP_VERSION: import.meta.env.VITE_APP_VERSION,
 
   // 功能开关
   ENABLE_MOCK: import.meta.env.VITE_ENABLE_MOCK === 'true',
