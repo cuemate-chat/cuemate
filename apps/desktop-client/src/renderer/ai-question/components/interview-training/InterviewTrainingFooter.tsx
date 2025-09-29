@@ -1,5 +1,5 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { Copy, CornerDownLeft, Eraser, Mic, Square } from 'lucide-react';
+import { Copy, CornerDownLeft, Eraser, Mic, Square, Target } from 'lucide-react';
 import React from 'react';
 import { setVoiceState, useVoiceState } from '../../../../utils/voiceState';
 
@@ -13,18 +13,38 @@ interface WindowFooterProps {
   onCopyLastAIResponse: () => void;
   currentConversationStatus?: 'active' | 'completed' | 'error' | null;
   className?: string;
+  // 面试训练特有属性（可选）
+  voiceState?: any;
+  isAudioReady?: boolean;
+  isRecording?: boolean;
+  isSystemAudioListening?: boolean;
+  onStartRecording?: () => Promise<void>;
+  onStopRecording?: () => Promise<void>;
+  onStartSystemAudioListening?: () => Promise<void>;
+  onStopSystemAudioListening?: () => void;
+  // 新增训练状态属性
+  trainingProgress?: {
+    questionCount: number;
+    answerCount: number;
+    isActive: boolean;
+    isComplete: boolean;
+    isAnalyzing: boolean;
+  };
+  onFinishTraining?: () => void;
 }
 
-export function InterviewTrainingFooter({ 
-  question, 
+export function InterviewTrainingFooter({
+  question,
   isLoading,
-  onQuestionChange, 
-  onSubmit, 
+  onQuestionChange,
+  onSubmit,
   onKeyDown,
   onNewChat,
   onCopyLastAIResponse,
   currentConversationStatus,
-  className 
+  className,
+  trainingProgress,
+  onFinishTraining
 }: WindowFooterProps) {
   const isConversationCompleted = currentConversationStatus === 'completed';
   const voiceState = useVoiceState();
@@ -104,20 +124,43 @@ export function InterviewTrainingFooter({
       
       <div className="ai-input-actions">
         <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+          {/* 结束训练按钮 */}
+          {trainingProgress?.isActive && trainingProgress.questionCount > 0 && !trainingProgress.isComplete && (
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div className="ai-action">
+                  <button
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded-md text-sm flex items-center gap-1 transition-colors"
+                    onClick={onFinishTraining}
+                    disabled={isLoading || trainingProgress.isAnalyzing}
+                    title="结束当前面试训练"
+                  >
+                    <Target size={14} />
+                    结束训练
+                  </button>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
+                结束当前面试训练并生成分析报告
+                <Tooltip.Arrow className="radix-tooltip-arrow" />
+              </Tooltip.Content>
+            </Tooltip.Root>
+          )}
+
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <div className="ai-action">
-                <button 
+                <button
                   className="ai-clear-btn"
                   onClick={onNewChat}
-                  title="清空当前聊天框所有内容"
+                  title={trainingProgress?.isActive ? "重置训练" : "清空当前聊天框所有内容"}
                 >
                   <Eraser size={16} />
                 </button>
               </div>
             </Tooltip.Trigger>
             <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-              清空当前聊天框所有内容
+              {trainingProgress?.isActive ? "重置当前面试训练" : "清空当前聊天框所有内容"}
               <Tooltip.Arrow className="radix-tooltip-arrow" />
             </Tooltip.Content>
           </Tooltip.Root>
