@@ -1,11 +1,17 @@
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { aiService } from '../../api/aiService.ts';
 import { conversationService } from '../../api/conversationService.ts';
 import { MockInterviewBody } from './MockInterviewBody.tsx';
 import { MockInterviewFooter } from './MockInterviewFooter.tsx';
 import { MockInterviewHeader } from './MockInterviewHeader.tsx';
 import { InterviewState } from './state/InterviewStateMachine.ts';
+import { AudioServiceManager, ASRConfig, TTSConfig, AudioConfig } from './audio/AudioServiceManager.ts';
+import { VoiceState } from './voice/VoiceCoordinator.ts';
+import { MockInterviewErrorHandler, MockInterviewContext } from './error/MockInterviewErrorHandler.ts';
+import { ErrorType, ErrorSeverity } from './error/ErrorHandler.ts';
+import { DeveloperPanel } from './components/DeveloperPanel.tsx';
+import { SystemHealthCheck, SystemHealthReport } from './testing/SystemHealthCheck.ts';
 
 export function MockInterviewApp() {
   const [question, setQuestion] = useState('');
@@ -16,13 +22,268 @@ export function MockInterviewApp() {
   const [sequenceNumber, setSequenceNumber] = useState(1);
   const [isInitializing, setIsInitializing] = useState(true);
   const [heightPercentage, setHeightPercentage] = useState(75); // 默认75%
+
+  // 音频服务状态
+  const [voiceState, setVoiceState] = useState<VoiceState>(VoiceState.IDLE);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [speechText, setSpeechText] = useState('');
+  const [isAudioReady, setIsAudioReady] = useState(false);
+  const audioServiceRef = useRef<AudioServiceManager | null>(null);
+
+  // 错误处理状态
+  const [errorNotification, setErrorNotification] = useState<{
+    type: 'error' | 'success' | 'warning';
+    message: string;
+    duration: number;
+  } | null>(null);
+  const errorHandlerRef = useRef<MockInterviewErrorHandler | null>(null);
+
+  // 开发者面板状态
+  const [isDeveloperPanelVisible, setIsDeveloperPanelVisible] = useState(false);
+
+  // 系统健康检查状态
+  const [, setSystemHealthReport] = useState<SystemHealthReport | null>(null);
+  const healthCheckRef = useRef<SystemHealthCheck | null>(null);
   
 
   // 组件初始化时恢复最近对话和高度设置
   useEffect(() => {
     initializeConversation();
     loadHeightSetting();
+    initializeSystemHealthCheck();
+    initializeErrorHandler();
+    initializeAudioService();
   }, []);
+
+  // 初始化系统健康检查
+  const initializeSystemHealthCheck = async () => {
+    healthCheckRef.current = new SystemHealthCheck();
+
+    healthCheckRef.current.addEventListener('healthCheckCompleted', ((event: CustomEvent) => {
+      const report = event.detail as SystemHealthReport;
+      setSystemHealthReport(report);
+
+      // 根据健康状态显示通知
+      if (report.overall === 'critical') {
+        setErrorNotification({
+          type: 'error',
+          message: '系统检查发现严重问题，部分功能可能不可用',
+          duration: 8000
+        });
+      } else if (report.overall === 'degraded') {
+        setErrorNotification({
+          type: 'warning',
+          message: '系统检查发现一些问题，建议检查服务状态',
+          duration: 5000
+        });
+      }
+
+      console.log('📋 系统健康检查完成:', report);
+    }) as EventListener);
+
+    try {
+      await healthCheckRef.current.runFullHealthCheck();
+    } catch (error) {
+      console.error('系统健康检查失败:', error);
+    }
+  };
+
+  // 初始化错误处理器
+  const initializeErrorHandler = () => {
+    errorHandlerRef.current = new MockInterviewErrorHandler({
+      enableAutoRecovery: true,
+      maxRetryAttempts: 3,
+      retryDelay: 2000,
+      showErrorNotifications: true,
+      logErrorDetails: true
+    });
+
+    // 设置错误处理事件监听器
+    setupErrorEventListeners();
+
+    console.log('Error handler initialized');
+  };
+
+  // 设置错误处理事件监听器
+  const setupErrorEventListeners = () => {
+    if (!errorHandlerRef.current) return;
+
+    // 错误发生
+    errorHandlerRef.current.addEventListener('errorOccurred', ((event: CustomEvent) => {
+      console.error('Interview error occurred:', event.detail);
+    }) as EventListener);
+
+    // 恢复成功
+    errorHandlerRef.current.addEventListener('recoverySuccessful', ((event: CustomEvent) => {
+      console.log('Error recovery successful:', event.detail);
+    }) as EventListener);
+
+    // 恢复失败
+    errorHandlerRef.current.addEventListener('recoveryFailed', ((event: CustomEvent) => {
+      console.error('Error recovery failed:', event.detail);
+    }) as EventListener);
+
+    // 显示通知
+    errorHandlerRef.current.addEventListener('showNotification', ((event: CustomEvent) => {
+      const { type, message, duration } = event.detail;
+      setErrorNotification({ type, message, duration });
+
+      // 自动隐藏通知
+      setTimeout(() => {
+        setErrorNotification(null);
+      }, duration);
+    }) as EventListener);
+
+    // 最大重试次数超出
+    errorHandlerRef.current.addEventListener('maxRetriesExceeded', ((event: CustomEvent) => {
+      console.error('Max retries exceeded:', event.detail);
+      setErrorNotification({
+        type: 'error',
+        message: '系统遇到持续性问题，请刷新页面重试',
+        duration: 10000
+      });
+    }) as EventListener);
+  };
+
+  // 初始化音频服务
+  const initializeAudioService = async () => {
+    try {
+      const asrConfig: ASRConfig = {
+        serverUrl: 'ws://localhost:10095',
+        language: 'zh',
+        sampleRate: 16000
+      };
+
+      const ttsConfig: TTSConfig = {
+        language: 'zh-CN',
+        voiceModel: 'zh-CN-female-huayan',
+        speed: 1.0,
+        volume: 1.0
+      };
+
+      const audioConfig: AudioConfig = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      };
+
+      audioServiceRef.current = new AudioServiceManager(asrConfig, ttsConfig, audioConfig);
+
+      // 设置事件监听器
+      setupAudioEventListeners();
+
+      // 初始化音频服务
+      await audioServiceRef.current.initialize();
+      setIsAudioReady(true);
+
+      // 更新错误处理器的上下文
+      updateErrorContext();
+
+      console.log('Audio service initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize audio service:', error);
+      setIsAudioReady(false);
+
+      // 报告初始化错误
+      if (errorHandlerRef.current) {
+        if (error instanceof Error && error.message.includes('麦克风')) {
+          errorHandlerRef.current.reportError(error, ErrorType.MICROPHONE_ACCESS_DENIED, ErrorSeverity.HIGH);
+        } else if (error instanceof Error && error.message.includes('ASR')) {
+          errorHandlerRef.current.reportError(error, ErrorType.ASR_CONNECTION_FAILED, ErrorSeverity.MEDIUM);
+        } else {
+          errorHandlerRef.current.reportError(error instanceof Error ? error : new Error(String(error)), ErrorType.AUDIO_INITIALIZATION_FAILED, ErrorSeverity.MEDIUM);
+        }
+      }
+    }
+  };
+
+  // 设置音频事件监听器
+  const setupAudioEventListeners = () => {
+    if (!audioServiceRef.current) return;
+
+    // 语音状态变化
+    audioServiceRef.current.addEventListener('voiceStateChanged', ((event: CustomEvent) => {
+      setVoiceState(event.detail);
+    }) as EventListener);
+
+    // 音频级别变化
+    audioServiceRef.current.addEventListener('audioLevel', ((event: CustomEvent) => {
+      setAudioLevel(event.detail.level);
+    }) as EventListener);
+
+    // 语音识别结果
+    audioServiceRef.current.addEventListener('speechRecognized', ((event: CustomEvent) => {
+      const result = event.detail;
+      setSpeechText(result.text);
+      setQuestion(result.text); // 将识别结果设置为当前问题
+    }) as EventListener);
+
+    // ASR结果（实时更新）
+    audioServiceRef.current.addEventListener('asrResult', ((event: CustomEvent) => {
+      const result = event.detail;
+      if (!result.isFinal) {
+        setSpeechText(result.text); // 实时显示临时结果
+      }
+    }) as EventListener);
+
+    // TTS播放完成
+    audioServiceRef.current.addEventListener('ttsCompleted', ((event: CustomEvent) => {
+      console.log('TTS playback completed:', event.detail);
+    }) as EventListener);
+
+    // 错误处理
+    audioServiceRef.current.addEventListener('error', ((event: CustomEvent) => {
+      console.error('Audio service error:', event.detail);
+
+      // 报告音频服务错误
+      if (errorHandlerRef.current) {
+        const error = event.detail;
+        if (error instanceof Error) {
+          errorHandlerRef.current.reportError(error, ErrorType.AUDIO_SERVICE_ERROR, ErrorSeverity.MEDIUM);
+        }
+      }
+    }) as EventListener);
+
+    // ASR断开连接
+    audioServiceRef.current.addEventListener('asrDisconnected', (() => {
+      if (errorHandlerRef.current) {
+        errorHandlerRef.current.reportError(
+          new Error('ASR服务连接断开'),
+          ErrorType.ASR_CONNECTION_FAILED,
+          ErrorSeverity.MEDIUM
+        );
+      }
+      updateErrorContext();
+    }) as EventListener);
+
+    // TTS不可用
+    audioServiceRef.current.addEventListener('ttsUnavailable', (() => {
+      if (errorHandlerRef.current) {
+        errorHandlerRef.current.reportError(
+          new Error('TTS服务不可用'),
+          ErrorType.TTS_SERVICE_UNAVAILABLE,
+          ErrorSeverity.LOW
+        );
+      }
+      updateErrorContext();
+    }) as EventListener);
+  };
+
+  // 更新错误处理器上下文
+  const updateErrorContext = () => {
+    if (!errorHandlerRef.current) return;
+
+    const context: MockInterviewContext = {
+      interviewState: isLoading ? InterviewState.AI_THINKING : InterviewState.IDLE,
+      voiceState: voiceState,
+      currentQuestion: messages.filter(m => m.type === 'ai').pop()?.content,
+      isAudioReady: isAudioReady,
+      isASRConnected: audioServiceRef.current?.isReady() || false,
+      isTTSAvailable: true // 假设TTS总是可用，实际应该检查
+    };
+
+    errorHandlerRef.current.setContext(context);
+  };
 
   // 加载高度设置
   const loadHeightSetting = async () => {
@@ -258,12 +519,21 @@ export function MockInterviewApp() {
     } catch (error) {
       console.error('AI调用失败:', error);
       const errorMessage = `AI调用失败：${(error as Error).message}`;
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
+      setMessages(prev => prev.map(msg =>
+        msg.id === aiMessageId
           ? { ...msg, content: errorMessage }
           : msg
       ));
-      
+
+      // 报告AI调用错误
+      if (errorHandlerRef.current) {
+        errorHandlerRef.current.reportError(
+          error instanceof Error ? error : new Error(String(error)),
+          ErrorType.ANSWER_ANALYSIS_FAILED,
+          ErrorSeverity.MEDIUM
+        );
+      }
+
       // 保存错误消息到数据库
       if (conversationId) {
         await conversationService.saveMessage(
@@ -277,11 +547,39 @@ export function MockInterviewApp() {
         );
         setSequenceNumber(currentSeq + 1);
       }
-      
+
       setIsLoading(false);
     }
   };
 
+  // 添加TTS播放AI回答的功能（保留以供将来使用）
+  // const playAIResponse = async (text: string) => {
+  //   if (!audioServiceRef.current || !text.trim()) return;
+
+  //   try {
+  //     await audioServiceRef.current.playTTS(text);
+  //   } catch (error) {
+  //     console.error('Failed to play TTS:', error);
+  //   }
+  // };
+
+  // 组件卸载时清理服务
+  useEffect(() => {
+    return () => {
+      if (audioServiceRef.current) {
+        audioServiceRef.current.destroy();
+        audioServiceRef.current = null;
+      }
+      if (errorHandlerRef.current) {
+        errorHandlerRef.current.destroy();
+        errorHandlerRef.current = null;
+      }
+      if (healthCheckRef.current) {
+        healthCheckRef.current.destroy();
+        healthCheckRef.current = null;
+      }
+    };
+  }, []);
 
   const handleClose = async () => {
     try {
@@ -336,14 +634,58 @@ export function MockInterviewApp() {
 
         {/* Footer - 语音识别和控制区域 */}
         <MockInterviewFooter
-          interviewState={InterviewState.IDLE}
-          speechText={question} // 使用当前输入的问题作为语音文本显示
+          interviewState={isLoading ? InterviewState.AI_THINKING : InterviewState.IDLE}
+          voiceCoordinator={audioServiceRef.current?.getVoiceCoordinator()}
+          speechText={speechText || question} // 优先显示语音识别结果
+          audioLevel={audioLevel}
+          onStartRecording={() => {
+            audioServiceRef.current?.startRecording();
+          }}
+          onStopRecording={() => {
+            audioServiceRef.current?.stopRecording();
+          }}
           onResponseComplete={async () => {
             // 手动模式下的回答完毕逻辑
             if (question.trim()) {
               await handleSubmit();
             }
           }}
+          disabled={!isAudioReady}
+        />
+
+        {/* 错误通知 */}
+        {errorNotification && (
+          <motion.div
+            className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+              errorNotification.type === 'error'
+                ? 'bg-red-500 text-white'
+                : errorNotification.type === 'success'
+                ? 'bg-green-500 text-white'
+                : 'bg-yellow-500 text-white'
+            }`}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex items-center justify-between">
+              <span className="mr-2">{errorNotification.message}</span>
+              <button
+                onClick={() => setErrorNotification(null)}
+                className="text-white hover:text-gray-200"
+              >
+                ×
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* 开发者面板 */}
+        <DeveloperPanel
+          isVisible={isDeveloperPanelVisible}
+          onToggleVisibility={() => setIsDeveloperPanelVisible(!isDeveloperPanelVisible)}
+          currentInterviewState={isLoading ? InterviewState.AI_THINKING : InterviewState.IDLE}
+          currentVoiceState={voiceState}
         />
       </motion.div>
     </div>
