@@ -91,6 +91,21 @@ const aiQuestionAPI = {
     setCurrentState: (state: any) => ipcRenderer.send('interview:set-current-state', state),
   },
 
+  // === TTS API ===
+  tts: {
+    // 检查TTS是否可用
+    isAvailable: () => ipcRenderer.invoke('piper-is-available'),
+    // 获取可用语音模型
+    getVoices: () => ipcRenderer.invoke('piper-get-voices'),
+    // 语音合成（返回音频数据）
+    synthesize: (text: string, options?: any) => ipcRenderer.invoke('piper-synthesize', text, options),
+    // 直接语音播放
+    speak: (text: string, options?: any) => ipcRenderer.invoke('piper-speak', text, options),
+    // 播放音频到指定设备
+    playToDevice: (audioDataBase64: string, deviceId?: string) =>
+      ipcRenderer.invoke('piper-play-to-device', audioDataBase64, deviceId),
+  },
+
   // === 工具方法 ===
   platform: process.platform,
   versions: {

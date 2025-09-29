@@ -27,7 +27,11 @@ export type VoiceSubState =
   | 'interview-training-recording'
   | 'interview-training-paused'
   | 'interview-training-completed'
-  | 'interview-training-playing';
+  | 'interview-training-playing'
+  // 训练模式特定状态
+  | 'training-listening'
+  | 'training-paused'
+  | 'training-completed';
 
 export interface VoiceState {
   mode: VoiceMode;
