@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+// 使用浏览器兼容的 EventTarget 替代 Node.js EventEmitter
 
 export interface LLMMessage {
   role: 'system' | 'user' | 'assistant';
@@ -36,7 +36,7 @@ export enum LLMManagerState {
   ERROR = 'error'
 }
 
-export class StreamingLLMManager extends EventEmitter {
+export class StreamingLLMManager extends EventTarget {
   private llmRouterURL = 'http://localhost:3002';
   private currentState: LLMManagerState = LLMManagerState.IDLE;
   private activeSessions: Map<string, StreamingSession> = new Map();
@@ -66,7 +66,7 @@ export class StreamingLLMManager extends EventEmitter {
     };
 
     this.activeSessions.set(id, session);
-    this.emit('sessionCreated', session);
+    this.dispatchEvent(new CustomEvent('sessionCreated', { detail: session }));
 
     console.log(`Created LLM session: ${id}`);
     return id;
@@ -100,7 +100,7 @@ export class StreamingLLMManager extends EventEmitter {
     session.isActive = true;
     session.lastActivity = Date.now();
     this.currentState = LLMManagerState.CONNECTING;
-    this.emit('stateChanged', this.currentState);
+    this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
 
     // 创建新的AbortController
     this.abortController = new AbortController();
@@ -111,7 +111,7 @@ export class StreamingLLMManager extends EventEmitter {
     const attemptRequest = async (): Promise<void> => {
       try {
         this.currentState = LLMManagerState.STREAMING;
-        this.emit('stateChanged', this.currentState);
+        this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
 
         // 合并会话历史和新消息
         const allMessages = [...session.messages, ...request.messages];
@@ -188,7 +188,7 @@ export class StreamingLLMManager extends EventEmitter {
                     };
 
                     onChunk?.(streamingChunk);
-                    this.emit('chunkReceived', streamingChunk);
+                    this.dispatchEvent(new CustomEvent('chunkReceived', { detail: streamingChunk }));
                   }
                 } catch (parseError) {
                   console.warn('Failed to parse streaming chunk:', parseError);
@@ -212,7 +212,7 @@ export class StreamingLLMManager extends EventEmitter {
           console.log('LLM request was aborted');
           this.currentState = LLMManagerState.IDLE;
           session.isActive = false;
-          this.emit('stateChanged', this.currentState);
+          this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
           return;
         }
 
@@ -230,8 +230,8 @@ export class StreamingLLMManager extends EventEmitter {
         // 最终失败
         this.currentState = LLMManagerState.ERROR;
         session.isActive = false;
-        this.emit('stateChanged', this.currentState);
-        this.emit('error', error);
+        this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
+        this.dispatchEvent(new CustomEvent('error', { detail: error }));
 
         onError?.(error as Error);
         throw error;
@@ -272,7 +272,7 @@ export class StreamingLLMManager extends EventEmitter {
     session.lastActivity = Date.now();
 
     this.currentState = LLMManagerState.IDLE;
-    this.emit('stateChanged', this.currentState);
+    this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
 
     const finalChunk: StreamingChunk = {
       content: fullResponse,
@@ -285,7 +285,7 @@ export class StreamingLLMManager extends EventEmitter {
       }
     };
 
-    this.emit('streamComplete', finalChunk);
+    this.dispatchEvent(new CustomEvent('streamComplete', { detail: finalChunk }));
     onComplete?.(fullResponse);
 
     console.log(`Stream completed for session ${sessionId}, response length: ${fullResponse.length}`);
@@ -302,7 +302,7 @@ export class StreamingLLMManager extends EventEmitter {
     }
 
     this.currentState = LLMManagerState.IDLE;
-    this.emit('stateChanged', this.currentState);
+    this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
   }
 
   /**
@@ -313,7 +313,7 @@ export class StreamingLLMManager extends EventEmitter {
     if (session) {
       session.isActive = false;
       this.activeSessions.delete(sessionId);
-      this.emit('sessionCleared', sessionId);
+      this.dispatchEvent(new CustomEvent('sessionCleared', { detail: sessionId }));
       console.log(`Cleared session: ${sessionId}`);
     }
   }
@@ -339,7 +339,7 @@ export class StreamingLLMManager extends EventEmitter {
         .slice(-maxMessages + systemMessages.length);
 
       session.messages = [...systemMessages, ...recentMessages];
-      this.emit('sessionTrimmed', sessionId, session.messages.length);
+      this.dispatchEvent(new CustomEvent('sessionTrimmed', { detail: { sessionId, messageCount: session.messages.length } }));
 
       console.log(`Trimmed session ${sessionId} to ${session.messages.length} messages`);
     }
@@ -443,8 +443,7 @@ export class StreamingLLMManager extends EventEmitter {
       this.cleanupInterval = null;
     }
 
-    // 移除所有监听器
-    this.removeAllListeners();
+    // EventTarget 不需要手动移除监听器，会在对象销毁时自动清理
 
     console.log('StreamingLLMManager destroyed');
   }
