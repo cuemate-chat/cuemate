@@ -10,8 +10,6 @@ import { AudioServiceManager, ASRConfig, TTSConfig, AudioConfig } from './audio/
 import { VoiceState } from './voice/VoiceCoordinator.ts';
 import { MockInterviewErrorHandler, MockInterviewContext } from './error/MockInterviewErrorHandler.ts';
 import { ErrorType, ErrorSeverity } from './error/ErrorHandler.ts';
-import { DeveloperPanel } from './components/DeveloperPanel.tsx';
-import { SystemHealthCheck, SystemHealthReport } from '../interview-training/health/SystemHealthTypes';
 
 export function MockInterviewApp() {
   const [question, setQuestion] = useState('');
@@ -25,10 +23,11 @@ export function MockInterviewApp() {
 
   // 音频服务状态
   const [voiceState, setVoiceState] = useState<VoiceState>(VoiceState.IDLE);
-  const [audioLevel, setAudioLevel] = useState(0);
+  // const [audioLevel, setAudioLevel] = useState(0); // 暂时注释掉未使用的变量
   const [speechText, setSpeechText] = useState('');
   const [isAudioReady, setIsAudioReady] = useState(false);
   const audioServiceRef = useRef<AudioServiceManager | null>(null);
+
 
   // 错误处理状态
   const [errorNotification, setErrorNotification] = useState<{
@@ -38,55 +37,17 @@ export function MockInterviewApp() {
   } | null>(null);
   const errorHandlerRef = useRef<MockInterviewErrorHandler | null>(null);
 
-  // 开发者面板状态
-  const [isDeveloperPanelVisible, setIsDeveloperPanelVisible] = useState(false);
 
-  // 系统健康检查状态
-  const [, setSystemHealthReport] = useState<SystemHealthReport | null>(null);
-  const healthCheckRef = useRef<SystemHealthCheck | null>(null);
   
 
   // 组件初始化时恢复最近对话和高度设置
   useEffect(() => {
     initializeConversation();
     loadHeightSetting();
-    initializeSystemHealthCheck();
     initializeErrorHandler();
     initializeAudioService();
   }, []);
 
-  // 初始化系统健康检查
-  const initializeSystemHealthCheck = async () => {
-    healthCheckRef.current = new SystemHealthCheck();
-
-    healthCheckRef.current.addEventListener('healthCheckCompleted', ((event: CustomEvent) => {
-      const report = event.detail as SystemHealthReport;
-      setSystemHealthReport(report);
-
-      // 根据健康状态显示通知
-      if (report.overall === 'critical') {
-        setErrorNotification({
-          type: 'error',
-          message: '系统检查发现严重问题，部分功能可能不可用',
-          duration: 8000
-        });
-      } else if (report.overall === 'degraded') {
-        setErrorNotification({
-          type: 'warning',
-          message: '系统检查发现一些问题，建议检查服务状态',
-          duration: 5000
-        });
-      }
-
-      console.log('📋 系统健康检查完成:', report);
-    }) as EventListener);
-
-    try {
-      await healthCheckRef.current.runFullHealthCheck();
-    } catch (error) {
-      console.error('系统健康检查失败:', error);
-    }
-  };
 
   // 初始化错误处理器
   const initializeErrorHandler = () => {
@@ -207,8 +168,8 @@ export function MockInterviewApp() {
     }) as EventListener);
 
     // 音频级别变化
-    audioServiceRef.current.addEventListener('audioLevel', ((event: CustomEvent) => {
-      setAudioLevel(event.detail.level);
+    audioServiceRef.current.addEventListener('audioLevel', ((_event: CustomEvent) => {
+      // setAudioLevel(event.detail.level); // 暂时注释掉
     }) as EventListener);
 
     // 语音识别结果
@@ -400,6 +361,7 @@ export function MockInterviewApp() {
     }
   };
 
+
   const handleSubmit = async () => {
     if (!question.trim() || isLoading) return;
     
@@ -574,10 +536,6 @@ export function MockInterviewApp() {
         errorHandlerRef.current.destroy();
         errorHandlerRef.current = null;
       }
-      if (healthCheckRef.current) {
-        healthCheckRef.current.destroy();
-        healthCheckRef.current = null;
-      }
     };
   }, []);
 
@@ -626,31 +584,19 @@ export function MockInterviewApp() {
 
         {/* Body - 对话区域 */}
         <MockInterviewBody
-          interviewState={InterviewState.IDLE}
-          currentQuestion={messages.filter(m => m.type === 'ai').pop()?.content}
-          streamingAnswer=""
-          isGeneratingAnswer={isLoading || isInitializing}
+          aiMessage={messages.filter(m => m.type === 'ai').pop()?.content}
+          isLoading={isLoading || isInitializing}
         />
 
-        {/* Footer - 语音识别和控制区域 */}
+        {/* Footer - 语音识别区域 */}
         <MockInterviewFooter
-          interviewState={isLoading ? InterviewState.AI_THINKING : InterviewState.IDLE}
-          voiceCoordinator={audioServiceRef.current?.getVoiceCoordinator()}
-          speechText={speechText || question} // 优先显示语音识别结果
-          audioLevel={audioLevel}
-          onStartRecording={() => {
-            audioServiceRef.current?.startRecording();
-          }}
-          onStopRecording={() => {
-            audioServiceRef.current?.stopRecording();
-          }}
+          speechText={speechText || question}
+          isLoading={isLoading || isInitializing}
           onResponseComplete={async () => {
-            // 手动模式下的回答完毕逻辑
             if (question.trim()) {
               await handleSubmit();
             }
           }}
-          disabled={!isAudioReady}
         />
 
         {/* 错误通知 */}
@@ -680,13 +626,6 @@ export function MockInterviewApp() {
           </motion.div>
         )}
 
-        {/* 开发者面板 */}
-        <DeveloperPanel
-          isVisible={isDeveloperPanelVisible}
-          onToggleVisibility={() => setIsDeveloperPanelVisible(!isDeveloperPanelVisible)}
-          currentInterviewState={isLoading ? InterviewState.AI_THINKING : InterviewState.IDLE}
-          currentVoiceState={voiceState}
-        />
       </motion.div>
     </div>
   );
