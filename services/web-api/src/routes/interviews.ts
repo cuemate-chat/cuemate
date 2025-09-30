@@ -8,6 +8,8 @@ import { OperationType } from '../utils/operation-logger.js';
 export function registerInterviewRoutes(app: FastifyInstance) {
   // =================== interview_scores 表 ===================
   // 字段含义：
+  // - id: 评分记录唯一标识
+  // - interview_id: 关联的面试ID (外键, UNIQUE)
   // - total_score: 综合评分 (0-100分)
   // - duration_sec: 面试持续时间(秒)
   // - num_questions: 面试问题数量
@@ -21,6 +23,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
   //   * radar_professionalism: 专业性评分
   //   * radar_relevance: 回答相关性评分
   //   * radar_clarity: 表达流畅性评分
+  // - created_at: 创建时间戳 (毫秒)
 
   // 创建面试评分记录
   app.post(
@@ -217,8 +220,9 @@ export function registerInterviewRoutes(app: FastifyInstance) {
 
   // =================== interview_reviews 表 ===================
   // 字段含义：
-  // - interview_id: 关联的面试ID
-  // - note_type: 类型('mock','training')
+  // - id: 复盘条目唯一标识
+  // - interview_id: 关联的面试ID (外键)
+  // - note_type: 条目类型 ('question','mock','training')
   // - content: 主要内容文本
   // - question_id: 关联的面试题ID (可选)
   // - question: 备份的问题文本
@@ -231,6 +235,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
   // - key_points: 这个问题的考察点
   // - assessment: 对这个问题回答的评价
   // - reference_answer: 这个问题的参考答案
+  // - created_at: 创建时间戳 (毫秒)
 
   // 创建面试复盘条目
   app.post(
@@ -502,6 +507,8 @@ export function registerInterviewRoutes(app: FastifyInstance) {
 
   // =================== interview_insights 表 ===================
   // 字段含义：
+  // - id: 剖析记录唯一标识
+  // - interview_id: 关联的面试ID (外键)
   // - interviewer_score: 面试官给出的契合度评分 (0-100分)
   // - interviewer_summary: 面试官对候选人的整体总结
   // - interviewer_role: 面试官角色分析 (如"技术专家"、"团队Leader"等)
@@ -515,6 +522,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
   // - strategy_prepare_details: 沟通策略-提前准备技术细节的建议
   // - strategy_business_understanding: 沟通策略-展示对业务理解的建议
   // - strategy_keep_logical: 沟通策略-保持逻辑清晰的建议
+  // - created_at: 创建时间戳 (毫秒)
 
   // 创建面试剖析记录
   app.post(

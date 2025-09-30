@@ -6,6 +6,27 @@ import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helpe
 import { OperationType } from '../utils/operation-logger.js';
 
 export function registerReviewRoutes(app: FastifyInstance) {
+  // =================== interviews 表 ===================
+  // 字段含义：
+  // - id: 面试记录唯一标识
+  // - job_id: 关联的岗位ID (外键)
+  // - user_id: 关联的用户ID (外键)
+  // - language: 面试语言 ('zh'/'en')
+  // - theme: 界面主题设置 ('light','dark','system')
+  // - locale: 用户区域设置 (如 'zh-CN', 'en-US')
+  // - timezone: 时区设置 (如 'Asia/Shanghai')
+  // - started_at: 面试开始时间戳 (毫秒)
+  // - ended_at: 面试结束时间戳 (毫秒, 可选)
+  // - selected_model_id: 用户选择的AI模型ID
+  // - job_title: 岗位标题 (快照数据)
+  // - job_content: 岗位描述内容 (快照数据)
+  // - question_count: 面试题目数量
+  // - resumes_id: 关联简历ID
+  // - resumes_title: 简历标题 (快照数据)
+  // - resumes_content: 简历内容 (快照数据)
+  // - duration: 面试持续时长 (秒)
+  // - interview_type: 面试类型 ('mock'/'training')
+
   // 面试复盘列表（按开始时间倒序，无分页，前端统一滚动展示）
   app.get(
     '/interviews',
