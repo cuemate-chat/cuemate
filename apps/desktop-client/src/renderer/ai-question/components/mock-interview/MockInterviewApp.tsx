@@ -11,7 +11,7 @@ import { VoiceState } from './voice/VoiceCoordinator.ts';
 import { MockInterviewErrorHandler, MockInterviewContext } from './error/MockInterviewErrorHandler.ts';
 import { ErrorType, ErrorSeverity } from './error/ErrorHandler.ts';
 import { DeveloperPanel } from './components/DeveloperPanel.tsx';
-import { SystemHealthCheck, SystemHealthReport } from './testing/SystemHealthCheck.ts';
+import { SystemHealthCheck, SystemHealthReport } from '../interview-training/health/SystemHealthTypes';
 
 export function MockInterviewApp() {
   const [question, setQuestion] = useState('');

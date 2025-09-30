@@ -10,7 +10,7 @@ import { InterviewState } from '../mock-interview/state/InterviewStateMachine';
 import { VoiceState } from '../mock-interview/voice/VoiceCoordinator';
 import { MockInterviewErrorHandler } from '../mock-interview/error/MockInterviewErrorHandler';
 import { ErrorType, ErrorSeverity } from '../mock-interview/error/ErrorHandler';
-import { SystemHealthCheck, SystemHealthReport } from '../mock-interview/testing/SystemHealthCheck';
+import { SystemHealthCheck, SystemHealthReport } from './health/SystemHealthTypes';
 import { DeveloperPanel } from '../mock-interview/components/DeveloperPanel';
 import { interviewTrainingDataService } from './data/InterviewTrainingDataService';
 

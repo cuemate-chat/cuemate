@@ -5,8 +5,9 @@
 
 import { useState, useEffect } from 'react';
 import { Bug, Settings, Activity, Database, Wifi, Volume2, EyeOff } from 'lucide-react';
-import { TestRunner } from './TestRunner';
-import { SystemTestManager } from './SystemTestManager';
+// 测试组件已移动到 private 目录
+// import { TestRunner } from './TestRunner';
+// import { SystemTestManager } from './SystemTestManager';
 import { ErrorList } from './ErrorDialog';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { useAudioService } from '../hooks/useAudioService';
@@ -85,21 +86,20 @@ export function DeveloperPanel({
   // 渲染单元测试标签页
   const renderTestTab = () => (
     <div className="space-y-4">
-      <TestRunner
-        onTestCompleted={(result) => {
-          console.log('单元测试完成:', result);
-        }}
-        onTestSuiteCompleted={(results) => {
-          console.log('单元测试套件完成:', results);
-        }}
-      />
+      <div className="p-4 bg-gray-100 rounded-lg">
+        <p className="text-sm text-gray-600">测试组件已移动到 private 目录</p>
+        <p className="text-xs text-gray-500 mt-2">开发环境下可以启用完整的测试功能</p>
+      </div>
     </div>
   );
 
   // 渲染系统测试标签页
   const renderSystemTestTab = () => (
     <div className="space-y-4">
-      <SystemTestManager />
+      <div className="p-4 bg-gray-100 rounded-lg">
+        <p className="text-sm text-gray-600">系统测试组件已移动到 private 目录</p>
+        <p className="text-xs text-gray-500 mt-2">开发环境下可以启用完整的系统测试功能</p>
+      </div>
     </div>
   );
 
@@ -302,11 +302,11 @@ export function DeveloperPanel({
           <button
             onClick={async () => {
               try {
-                const { SystemHealthCheck } = await import('../testing/SystemHealthCheck');
+                const { SystemHealthCheck } = await import('../../interview-training/health/SystemHealthTypes');
                 const healthChecker = new SystemHealthCheck();
                 const report = await healthChecker.runFullHealthCheck();
                 console.log('系统健康报告:', report);
-                alert(`健康检查完成:\n总体状态: ${report.overall}\n成功: ${report.summary.healthy}/${report.summary.total}`);
+                alert(`健康检查完成:\n总体状态: ${report.overall}\nASR: ${report.services.asr}\nLLM: ${report.services.llm}`);
                 healthChecker.destroy();
               } catch (error) {
                 console.error('健康检查失败:', error);
