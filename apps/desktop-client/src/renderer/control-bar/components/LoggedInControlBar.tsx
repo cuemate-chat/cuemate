@@ -1,11 +1,11 @@
 import * as Separator from '@radix-ui/react-separator';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronUp, CornerDownLeft, Eye, EyeOff, Pause, Play, Square, Type } from 'lucide-react';
+import { ChevronDown, ChevronUp, CornerDownLeft, MousePointer, MousePointerClick, Pause, Play, Square, Type } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
-import { userSettingsService } from '../api/userSettingsService';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
+import { userSettingsService } from '../api/userSettingsService';
 
 interface LoggedInControlBarProps {
   // 暂时不添加任何 props
@@ -13,7 +13,7 @@ interface LoggedInControlBarProps {
 
 export function LoggedInControlBar({}: LoggedInControlBarProps) {
   const [isListenHovered, setIsListenHovered] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isClickThrough, setIsClickThrough] = useState(false);
   
   const [isInterviewerWindowOpen, setIsInterviewerWindowOpen] = useState(false);
   const vState = useVoiceState();
@@ -107,30 +107,35 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
     }
   };
 
-  const handleVisibilityToggle = async () => {
+  const handleClickThroughToggle = async () => {
     try {
       const api: any = (window as any).electronAPI;
-      const next = !isVisible;
+      const next = !isClickThrough;
 
       // 先更新系统状态，成功后再更新本地状态和数据库
-      if (api?.visibility?.set) {
-        // visibility.set 期望隐身模式的启用状态，与 isVisible 相反
-        await api.visibility.set(!next);
-        setIsVisible(next);
+      if (api?.clickThrough?.set) {
+        const result = await api.clickThrough.set(next);
+        if (result?.success) {
+          setIsClickThrough(next);
+        } else {
+          console.error('设置点击穿透失败:', result?.error);
+          return;
+        }
       } else {
-        setIsVisible(next);
+        console.error('clickThrough API 不可用');
+        return;
       }
 
       // 系统状态更新成功后，同步更新数据库中的用户设置
       try {
         await userSettingsService.updateSettings({
-          floating_window_visible: next ? 1 : 0
+          floating_window_visible: next ? 0 : 1  // 逻辑反转：穿透模式存0，交互模式存1
         });
       } catch (error) {
-        console.error('更新可见性设置失败:', error);
+        console.error('更新穿透性设置失败:', error);
       }
     } catch (error) {
-      console.error('可见性切换失败:', error);
+      console.error('穿透性切换失败:', error);
     }
   };
 
@@ -151,50 +156,49 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
     };
   }, []);
 
-  // 初始化可见性状态：从数据库和系统状态中读取
+  // 初始化穿透性状态：从数据库和系统状态中读取
   useEffect(() => {
-    const initializeVisibility = async () => {
+    const initializeClickThrough = async () => {
       try {
         // 优先从数据库读取用户设置
         const user = await userSettingsService.getCurrentUser();
         if (user && typeof user.floating_window_visible === 'number') {
-          const dbVisibility = user.floating_window_visible === 1;
-          setIsVisible(dbVisibility);
+          const dbClickThrough = user.floating_window_visible === 0; // 逻辑反转：0表示穿透模式
+          setIsClickThrough(dbClickThrough);
 
           // 同步系统状态与数据库状态
           const api: any = (window as any).electronAPI;
-          if (api?.visibility?.set) {
-            // visibility.set 期望隐身模式的启用状态，与 dbVisibility 相反
-            api.visibility.set(!dbVisibility);
+          if (api?.clickThrough?.set) {
+            await api.clickThrough.set(dbClickThrough);
           }
         } else {
           // 如果数据库没有设置，从系统状态读取
           const api: any = (window as any).electronAPI;
-          const res = await api?.visibility?.get?.();
+          const res = await api?.clickThrough?.get?.();
           if (typeof res?.enabled === 'boolean') {
-            setIsVisible(!res.enabled);
+            setIsClickThrough(res.enabled);
           }
         }
       } catch (error) {
-        console.error('初始化可见性状态失败:', error);
+        console.error('初始化穿透性状态失败:', error);
         // 回退到系统状态
         try {
           const api: any = (window as any).electronAPI;
-          const res = await api?.visibility?.get?.();
+          const res = await api?.clickThrough?.get?.();
           if (typeof res?.enabled === 'boolean') {
-            setIsVisible(!res.enabled);
+            setIsClickThrough(res.enabled);
           }
         } catch {}
       }
     };
 
-    initializeVisibility();
+    initializeClickThrough();
 
     // 订阅系统状态变化
     try {
       const api: any = (window as any).electronAPI;
-      const off = api?.visibility?.onChanged?.((enabled: boolean) => {
-        setIsVisible(!enabled);
+      const off = api?.clickThrough?.onChanged?.((enabled: boolean) => {
+        setIsClickThrough(enabled);
       });
       return () => { try { off?.(); } catch {} };
     } catch {}
@@ -431,12 +435,12 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         </Tooltip.Portal>
       </Tooltip.Root>
 
-      {/* 可见性切换按钮 */}
+      {/* 穿透性切换按钮 */}
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
           <motion.button
             className="visibility-btn"
-            onClick={handleVisibilityToggle}
+            onClick={handleClickThroughToggle}
             whileTap={{ scale: 0.95 }}
             transition={{ duration: 0.2 }}
           >
@@ -444,13 +448,13 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
               whileHover={{ scale: 1.2 }}
               transition={{ duration: 0.2 }}
             >
-              {isVisible ? <Eye size={18} /> : <EyeOff size={18} />}
+              {isClickThrough ? <MousePointer size={18} /> : <MousePointerClick size={18} />}
             </motion.div>
           </motion.button>
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content className="radix-tooltip-content">
-            {isVisible ? '当前可见，点击隐藏应用，截图、录屏、共享屏幕不可见' : '当前隐藏，点击显示应用，截图、录屏、共享屏幕可见'}
+            {isClickThrough ? '当前穿透模式，点击恢复交互模式 (⌘⇧CM)' : '当前交互模式，点击启用穿透模式 (⌘⇧CM)'}
             <Tooltip.Arrow className="radix-tooltip-arrow" />
           </Tooltip.Content>
         </Tooltip.Portal>

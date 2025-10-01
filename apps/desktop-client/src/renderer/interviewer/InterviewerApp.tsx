@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { clearVoiceState } from '../../utils/voiceState';
 import { InterviewerWindowBody } from './components/InterviewerWindowBody';
 import { InterviewerWindowFooter } from './components/InterviewerWindowFooter';
@@ -6,6 +6,22 @@ import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
 
 export function InterviewerApp() {
   const [currentSectionTitle, setCurrentSectionTitle] = useState<string | null>(null);
+
+  // 监听点击穿透状态变化并应用到全局
+  useEffect(() => {
+    try {
+      const api: any = (window as any).electronAPI;
+      const off = api?.clickThrough?.onChanged?.((enabled: boolean) => {
+        // 直接在body上添加/移除class，这样所有元素都能感知到穿透状态
+        if (enabled) {
+          document.body.classList.add('click-through-mode');
+        } else {
+          document.body.classList.remove('click-through-mode');
+        }
+      });
+      return () => { try { off?.(); } catch {} };
+    } catch {}
+  }, []);
 
   const handleClose = async () => {
     try {
