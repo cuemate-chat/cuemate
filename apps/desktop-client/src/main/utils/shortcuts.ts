@@ -50,6 +50,13 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
         windowManager.hideMainContent();
       },
     },
+    {
+      accelerator: 'CommandOrControl+Shift+C+M',
+      callback: () => {
+        // 切换点击穿透模式
+        windowManager.toggleClickThroughMode();
+      },
+    },
   ];
 
   // 注册快捷键
@@ -195,7 +202,7 @@ export function getRegisteredShortcuts(): string[] {
     'CommandOrControl+Alt+Q',
     'CommandOrControl+Alt+S',
     'CommandOrControl+Shift+H',
-    'CommandOrControl+Shift+A',
+    'CommandOrControl+Shift+C+M',
   ];
 
   return shortcuts.filter((shortcut) => globalShortcut.isRegistered(shortcut));

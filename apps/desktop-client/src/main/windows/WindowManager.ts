@@ -221,6 +221,12 @@ export class WindowManager {
     this.appState.isControlBarVisible = true;
     this.appState.isCloseButtonVisible = true;
 
+    // 通知菜单更新
+    try {
+      const { ipcMain } = require('electron');
+      ipcMain.emit('update-tray-menu');
+    } catch {}
+
     // 如果从未隐藏过，恢复到当前实际状态；否则恢复到隐藏前的状态
     if (!this.hasEverBeenHidden) {
       // 第一次显示，恢复当前实际状态
@@ -284,6 +290,12 @@ export class WindowManager {
     this.controlBarWindow.hide();
     this.appState.isControlBarVisible = false;
     this.appState.isCloseButtonVisible = false;
+
+    // 通知菜单更新
+    try {
+      const { ipcMain } = require('electron');
+      ipcMain.emit('update-tray-menu');
+    } catch {}
   }
 
   /**
@@ -567,6 +579,22 @@ export class WindowManager {
   /**
    * 销毁窗口管理器
    */
+
+  /**
+   * 切换点击穿透模式 - 供快捷键调用
+   */
+  public toggleClickThroughMode(): void {
+    try {
+      const toggleFn = (global as any).toggleClickThroughMode;
+      if (typeof toggleFn === 'function') {
+        toggleFn();
+      } else {
+        logger.error('toggleClickThroughMode 函数未找到');
+      }
+    } catch (error) {
+      logger.error({ error }, '调用点击穿透切换函数失败');
+    }
+  }
 
   public destroy(): void {
     // 停止截图监听器

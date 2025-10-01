@@ -19,6 +19,9 @@ export function setupIPC(windowManager: WindowManager): void {
 
   // === 隐身模式（内容保护）全局状态与持久化 ===
   let stealthModeEnabled = false;
+
+  // === 点击穿透模式全局状态与持久化 ===
+  let clickThroughEnabled = false;
   function getSettingsFilePath(): string {
     const path = require('path');
     return path.join(app.getPath('userData'), 'settings.json');
@@ -31,6 +34,7 @@ export function setupIPC(windowManager: WindowManager): void {
         const raw = fs.readFileSync(file, 'utf-8');
         const json = JSON.parse(raw || '{}');
         stealthModeEnabled = !!json.stealthModeEnabled;
+        clickThroughEnabled = !!json.clickThroughEnabled;
       }
     } catch {}
   }
@@ -40,7 +44,10 @@ export function setupIPC(windowManager: WindowManager): void {
       const file = getSettingsFilePath();
       const dir = require('path').dirname(file);
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(file, JSON.stringify({ stealthModeEnabled }, null, 2));
+      fs.writeFileSync(file, JSON.stringify({
+        stealthModeEnabled,
+        clickThroughEnabled
+      }, null, 2));
     } catch {}
   }
   function applyStealthModeToAllWindows(enabled: boolean): void {
@@ -63,14 +70,42 @@ export function setupIPC(windowManager: WindowManager): void {
       }
     } catch {}
   }
+  function applyClickThroughToAllWindows(enabled: boolean): void {
+    try {
+      const windows = BrowserWindow.getAllWindows();
+      for (const win of windows) {
+        try {
+          win.setIgnoreMouseEvents(enabled, { forward: true });
+        } catch (error) {
+          logger.error({ error }, `设置窗口穿透失败: ${win.getTitle()}`);
+        }
+      }
+    } catch (error) {
+      logger.error({ error }, '应用点击穿透到所有窗口失败');
+    }
+  }
+  function broadcastClickThroughChanged(enabled: boolean): void {
+    try {
+      const windows = BrowserWindow.getAllWindows();
+      for (const win of windows) {
+        try {
+          win.webContents.send('click-through-changed', enabled);
+        } catch {}
+      }
+    } catch {}
+  }
 
   // 初始化加载并应用一次（若已开启）
   loadSettings();
   try {
     (global as any).stealthModeEnabled = stealthModeEnabled;
+    (global as any).clickThroughEnabled = clickThroughEnabled;
   } catch {}
   if (stealthModeEnabled) {
     applyStealthModeToAllWindows(true);
+  }
+  if (clickThroughEnabled) {
+    applyClickThroughToAllWindows(true);
   }
 
   async function fetchAsrConfigFromServer(): Promise<any | null> {
@@ -192,6 +227,31 @@ export function setupIPC(windowManager: WindowManager): void {
       return { success: true, enabled: stealthModeEnabled };
     } catch (error) {
       logger.error({ error }, 'IPC: 切换隐身模式失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  // === 点击穿透模式相关 IPC ===
+  ipcMain.handle('click-through-get', async () => {
+    return { success: true, enabled: clickThroughEnabled };
+  });
+  ipcMain.handle('click-through-set', async (_event, enabled: boolean) => {
+    try {
+      clickThroughEnabled = !!enabled;
+      try {
+        (global as any).clickThroughEnabled = clickThroughEnabled;
+      } catch {}
+      applyClickThroughToAllWindows(clickThroughEnabled);
+      saveSettings();
+      broadcastClickThroughChanged(clickThroughEnabled);
+
+      // 通知主进程更新托盘菜单
+      const { ipcMain } = require('electron');
+      ipcMain.emit('update-tray-menu');
+
+      return { success: true, enabled: clickThroughEnabled };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 切换点击穿透模式失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -1141,5 +1201,31 @@ export function setupIPC(windowManager: WindowManager): void {
     },
   );
 
+  // 将切换函数暴露给全局对象，供快捷键调用
+  function toggleClickThroughMode(): void {
+    try {
+      const newState = !clickThroughEnabled;
+      clickThroughEnabled = newState;
+      try {
+        (global as any).clickThroughEnabled = clickThroughEnabled;
+      } catch {}
+      applyClickThroughToAllWindows(clickThroughEnabled);
+      saveSettings();
+      broadcastClickThroughChanged(clickThroughEnabled);
+
+      // 通知主进程更新托盘菜单
+      const { ipcMain } = require('electron');
+      ipcMain.emit('update-tray-menu');
+    } catch (error) {
+      logger.error({ error }, '快捷键切换点击穿透模式失败');
+    }
+  }
+
+  // 暴露到全局对象供 WindowManager 调用
+  try {
+    (global as any).toggleClickThroughMode = toggleClickThroughMode;
+  } catch {}
+
   logger.debug('IPC 通信处理器设置完成');
 }
+
