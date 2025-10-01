@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { app, globalShortcut, Menu, nativeImage, Tray } from 'electron';
+import { app, globalShortcut, ipcMain, Menu, nativeImage, Tray } from 'electron';
 import type { LogLevel } from '../shared/types.js';
 import { logger } from '../utils/logger.js';
 import { setupIPC } from './ipc/handlers.js';
@@ -62,6 +62,14 @@ class CueMateApp {
 
         // 创建菜单栏图标（任务栏图标）
         this.createTrayIcon();
+
+        // 初始化菜单状态
+        setTimeout(() => this.updateTrayMenu(), 500);
+
+        // 监听托盘菜单更新事件
+        ipcMain.on('update-tray-menu', () => {
+          this.updateTrayMenu();
+        });
       } catch (error) {
         logger.warn({ error }, '设置应用图标失败');
       }
@@ -169,22 +177,56 @@ class CueMateApp {
       this.tray = new Tray(resizedImage);
       this.tray.setToolTip('CueMate - 智能语音面试助手');
 
+      // 获取当前穿透状态
+      const currentClickThroughState = (global as any).clickThroughEnabled || false;
+      // 获取当前应用显示状态
+      const isAppVisible = this.windowManager.getAppState().isControlBarVisible;
+
       // 创建菜单
       const contextMenu = Menu.buildFromTemplate([
         {
           label: '显示应用',
+          type: 'radio',
+          checked: isAppVisible,
           click: () => {
-            this.windowManager.showFloatingWindows();
-            // 在 macOS 上确保应用能够正确激活
-            if (process.platform === 'darwin') {
-              app.focus({ steal: true });
+            if (!isAppVisible) {
+              this.windowManager.showFloatingWindows();
+              // 在 macOS 上确保应用能够正确激活
+              if (process.platform === 'darwin') {
+                app.focus({ steal: true });
+              }
             }
           },
         },
         {
           label: '隐藏应用',
+          type: 'radio',
+          checked: !isAppVisible,
           click: () => {
-            this.windowManager.hideFloatingWindows();
+            if (isAppVisible) {
+              this.windowManager.hideFloatingWindows();
+            }
+          },
+        },
+        { type: 'separator' },
+        {
+          label: '交互模式',
+          type: 'radio',
+          checked: !currentClickThroughState,
+          click: () => {
+            if (currentClickThroughState) {
+              this.windowManager.toggleClickThroughMode();
+            }
+          },
+        },
+        {
+          label: '穿透模式',
+          type: 'radio',
+          checked: currentClickThroughState,
+          click: () => {
+            if (!currentClickThroughState) {
+              this.windowManager.toggleClickThroughMode();
+            }
           },
         },
         { type: 'separator' },
@@ -199,6 +241,88 @@ class CueMateApp {
       this.tray.setContextMenu(contextMenu);
     } catch (error) {
       logger.error({ error }, '创建菜单栏图标失败');
+    }
+  }
+
+  /**
+   * 更新托盘菜单状态
+   */
+  private updateTrayMenu(): void {
+    if (!this.tray) return;
+
+    try {
+      // 获取当前穿透状态
+      const currentClickThroughState = (global as any).clickThroughEnabled || false;
+      // 获取当前应用显示状态
+      const isAppVisible = this.windowManager.getAppState().isControlBarVisible;
+
+      // 创建菜单
+      const contextMenu = Menu.buildFromTemplate([
+        {
+          label: '显示应用',
+          type: 'radio',
+          checked: isAppVisible,
+          click: () => {
+            if (!isAppVisible) {
+              this.windowManager.showFloatingWindows();
+              // 在 macOS 上确保应用能够正确激活
+              if (process.platform === 'darwin') {
+                app.focus({ steal: true });
+              }
+              // 延时更新菜单，等待状态变化
+              setTimeout(() => this.updateTrayMenu(), 100);
+            }
+          },
+        },
+        {
+          label: '隐藏应用',
+          type: 'radio',
+          checked: !isAppVisible,
+          click: () => {
+            if (isAppVisible) {
+              this.windowManager.hideFloatingWindows();
+              // 延时更新菜单，等待状态变化
+              setTimeout(() => this.updateTrayMenu(), 100);
+            }
+          },
+        },
+        { type: 'separator' },
+        {
+          label: '交互模式',
+          type: 'radio',
+          checked: !currentClickThroughState,
+          click: () => {
+            if (currentClickThroughState) {
+              this.windowManager.toggleClickThroughMode();
+              // 延时更新菜单，等待状态变化
+              setTimeout(() => this.updateTrayMenu(), 100);
+            }
+          },
+        },
+        {
+          label: '穿透模式',
+          type: 'radio',
+          checked: currentClickThroughState,
+          click: () => {
+            if (!currentClickThroughState) {
+              this.windowManager.toggleClickThroughMode();
+              // 延时更新菜单，等待状态变化
+              setTimeout(() => this.updateTrayMenu(), 100);
+            }
+          },
+        },
+        { type: 'separator' },
+        {
+          label: '退出',
+          click: () => {
+            app.quit();
+          },
+        },
+      ]);
+
+      this.tray.setContextMenu(contextMenu);
+    } catch (error) {
+      logger.error({ error }, '更新托盘菜单失败');
     }
   }
 
