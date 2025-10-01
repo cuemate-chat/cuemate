@@ -61,6 +61,17 @@ const controlBarAPI = {
     },
   },
 
+  // === 点击穿透模式 API ===
+  clickThrough: {
+    get: () => ipcRenderer.invoke('click-through-get'),
+    set: (enabled: boolean) => ipcRenderer.invoke('click-through-set', enabled),
+    onChanged: (callback: (enabled: boolean) => void) => {
+      const handler = (_e: any, enabled: boolean) => callback(enabled);
+      ipcRenderer.on('click-through-changed', handler);
+      return () => ipcRenderer.off('click-through-changed', handler);
+    },
+  },
+
   // === 事件处理 API ===
   onMouseEnter: () => ipcRenderer.invoke('control-bar-mouse-enter'),
   onMouseLeave: () => ipcRenderer.invoke('control-bar-mouse-leave'),
