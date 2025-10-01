@@ -1185,3 +1185,22 @@ html, body, #root {
   fill: rgba(0, 0, 0, 0.9);
 }
 
+/* 点击穿透模式样式 */
+body.click-through-mode .interviewer-app,
+body.click-through-mode .interviewer-window {
+  opacity: 0.7 !important;
+  pointer-events: none !important;
+  transition: opacity 0.3s ease !important;
+}
+
+body.click-through-mode .interviewer-window {
+  outline: 2px dashed rgba(59, 130, 246, 0.6) !important;
+  outline-offset: -2px !important;
+}
+
+body.click-through-mode button:hover {
+  background: transparent !important;
+  transform: none !important;
+  cursor: default !important;
+}
+

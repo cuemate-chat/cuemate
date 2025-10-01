@@ -785,3 +785,45 @@ html.circle-mode .app-container {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* 点击穿透模式样式 */
+body.click-through-mode * {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+body.click-through-mode .floating-control-bar-container,
+body.click-through-mode .control-bar-container,
+body.click-through-mode .app-container,
+body.click-through-mode .floating-control-bar {
+  opacity: 0.7 !important;
+  transition: opacity 0.3s ease !important;
+}
+
+body.click-through-mode .floating-control-bar {
+  outline: 2px dashed rgba(59, 130, 246, 0.6) !important;
+  outline-offset: -2px !important;
+  background: rgba(30, 30, 30, 1) !important;
+}
+
+body.click-through-mode .control-button:hover {
+  background: transparent !important;
+  transform: none !important;
+}
+
+/* 专门禁用 Tooltip */
+body.click-through-mode [role="tooltip"],
+body.click-through-mode .radix-tooltip-content,
+body.click-through-mode .tooltip {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* 暗色主题下的穿透模式 */
+@media (prefers-color-scheme: dark) {
+  body.click-through-mode .floating-control-bar {
+    outline: 2px dashed rgba(96, 165, 250, 0.6) !important;
+    outline-offset: -2px !important;
+    background: rgba(30, 30, 30, 0.8) !important;
+  }
+}
