@@ -99,7 +99,7 @@ export default function Settings() {
                   className="w-full"
                   popupMatchSelectWidth
                   style={{ height: 40 }}
-                  dropdownStyle={{ padding: 0 }}
+                  styles={{ popup: { padding: 0 } }}
                 />
               </div>
               <p className="text-xs text-slate-600 mt-2">选择界面显示语言</p>
@@ -158,7 +158,7 @@ export default function Settings() {
                   className="w-full"
                   popupMatchSelectWidth
                   style={{ height: 40 }}
-                  dropdownStyle={{ padding: 0 }}
+                  styles={{ popup: { padding: 0 } }}
                 />
               </div>
               <p className="text-xs text-slate-600 mt-2">设置显示的时区</p>
