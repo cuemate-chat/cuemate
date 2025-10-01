@@ -3,6 +3,7 @@ import {
   ClockIcon,
   Cog6ToothIcon,
   CubeIcon,
+  CursorArrowRaysIcon,
   DocumentTextIcon,
   EyeIcon,
   EyeSlashIcon,
@@ -230,11 +231,11 @@ export default function Settings() {
           <h2 className="text-slate-900 font-semibold">悬浮窗设置</h2>
         </header>
         <div className="divide-y divide-slate-200">
-          {/* 悬浮窗口可见性 */}
+          {/* 点击穿透模式 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div className="flex items-center gap-2 text-slate-800 font-medium">
-              <EyeIcon className="w-5 h-5 text-slate-600" />
-              <span>窗口显示</span>
+              <CursorArrowRaysIcon className="w-5 h-5 text-slate-600" />
+              <span>点击穿透</span>
             </div>
             <div className="md:col-span-2">
               <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden bg-white shadow-sm">
@@ -242,16 +243,16 @@ export default function Settings() {
                   className={`px-4 py-2 text-sm ${form.floating_window_visible === 1 ? 'bg-blue-50 text-blue-700' : 'text-slate-800 hover:bg-slate-50'}`}
                   onClick={() => setForm((f) => ({ ...f, floating_window_visible: 1 }))}
                 >
-                  显示
+                  交互模式
                 </button>
                 <button
                   className={`px-4 py-2 text-sm border-l border-slate-300 ${form.floating_window_visible === 0 ? 'bg-blue-50 text-blue-700' : 'text-slate-800 hover:bg-slate-50'}`}
                   onClick={() => setForm((f) => ({ ...f, floating_window_visible: 0 }))}
                 >
-                  隐藏
+                  穿透模式
                 </button>
               </div>
-              <p className="text-xs text-slate-600 mt-2">控制桌面应用悬浮窗口是否允许被截图、录屏、共享桌面</p>
+              <p className="text-xs text-slate-600 mt-2">穿透模式下窗口依然可见，但鼠标点击会穿透到下层应用，快捷键 ⌘⇧CM 切换</p>
             </div>
           </div>
 
