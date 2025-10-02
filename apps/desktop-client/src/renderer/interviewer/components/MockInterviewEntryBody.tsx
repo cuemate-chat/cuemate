@@ -196,7 +196,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         resumesId: selectedPosition.resumeId,
         resumesTitle: selectedPosition.resumeTitle,
         resumesContent: selectedPosition.resumeContent,
-        interviewType: 'mock' as const
+        interviewType: 'mock' as const,
+        status: 'active' as const,
+        message: '面试进行中'
       };
 
       const response = await interviewService.createInterview(interviewData);
@@ -251,8 +253,21 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       }
     } catch (error) {
       console.error('开始面试失败:', error);
-      setErrorMessage(`开始面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      const errorMsg = `开始面试失败: ${error instanceof Error ? error.message : '未知错误'}`;
+      setErrorMessage(errorMsg);
       setIsInitializing(false);
+
+      // 如果面试已创建，更新状态为错误
+      if (currentInterviewId) {
+        try {
+          await interviewService.updateInterview(currentInterviewId, {
+            status: 'deleted',
+            message: errorMsg
+          });
+        } catch (updateError) {
+          console.error('更新面试错误状态失败:', updateError);
+        }
+      }
     }
   };
 
@@ -266,8 +281,13 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   const handleStopInterview = async () => {
     try {
-      // 如果有当前面试ID，调用结束面试API
+      // 如果有当前面试ID，更新状态并调用结束面试API
       if (currentInterviewId) {
+        // 更新状态为已归档（用户主动停止）
+        await interviewService.updateInterview(currentInterviewId, {
+          status: 'archived',
+          message: '用户主动停止面试'
+        });
         await interviewService.endInterview(currentInterviewId);
         setCurrentInterviewId(null);
       }
@@ -463,13 +483,13 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   // AI分析阶段
   const handleAIAnalyzing = async (context: any) => {
-    setCurrentLine('正在分析您的回答...');
+    setCurrentLine('正在保存您的回答...');
 
     try {
       // 更新用户回答到数据库
       await interviewDataService.updateUserAnswer(context.currentQuestionIndex, context.userResponse);
 
-      // 发送分析完成事件，继续到答案生成阶段
+      // 发送分析完成事件，直接进入本轮完成
       stateMachine.current?.send({ type: 'ANALYSIS_COMPLETE' });
     } catch (error) {
       stateMachine.current?.send({ type: 'ANALYSIS_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
@@ -586,8 +606,20 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   };
 
   // 面试完成
-  const handleInterviewCompleted = () => {
+  const handleInterviewCompleted = async () => {
     setCurrentLine('面试已完成！感谢您的参与。');
+
+    // 更新面试状态为已完成
+    if (currentInterviewId) {
+      try {
+        await interviewService.updateInterview(currentInterviewId, {
+          status: 'completed',
+          message: '面试已完成'
+        });
+      } catch (error) {
+        console.error('更新面试完成状态失败:', error);
+      }
+    }
 
     // 更新VoiceState
     setVoiceState({
@@ -598,9 +630,22 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   };
 
   // 错误处理
-  const handleError = (context: any) => {
-    setErrorMessage(context.errorMessage || '面试过程中发生错误');
+  const handleError = async (context: any) => {
+    const errorMsg = context.errorMessage || '面试过程中发生错误';
+    setErrorMessage(errorMsg);
     setCurrentLine('');
+
+    // 更新面试状态为错误并记录错误信息
+    if (currentInterviewId) {
+      try {
+        await interviewService.updateInterview(currentInterviewId, {
+          status: 'deleted',
+          message: `错误: ${errorMsg}`
+        });
+      } catch (error) {
+        console.error('更新面试错误状态失败:', error);
+      }
+    }
   };
 
 
