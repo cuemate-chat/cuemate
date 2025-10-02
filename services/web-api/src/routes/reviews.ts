@@ -26,6 +26,8 @@ export function registerReviewRoutes(app: FastifyInstance) {
   // - resumes_content: 简历内容 (快照数据)
   // - duration: 面试持续时长 (秒)
   // - interview_type: 面试类型 ('mock'/'training')
+  // - status: 面试状态 ('pending','active','completed','archived','deleted')
+  // - message: 备注信息或报错信息
 
   // 面试复盘列表（按开始时间倒序，无分页，前端统一滚动展示）
   app.get(
@@ -53,6 +55,8 @@ export function registerReviewRoutes(app: FastifyInstance) {
                   i.resumes_content,
                   i.duration,
                   i.interview_type,
+                  i.status,
+                  i.message,
                   j.title AS original_job_title,
                   s.total_score,
                   s.overall_summary,
@@ -90,7 +94,8 @@ export function registerReviewRoutes(app: FastifyInstance) {
           .prepare(
             `SELECT id, job_id, started_at, ended_at, selected_model_id,
                     job_title, job_content, question_count, resumes_id,
-                    resumes_title, resumes_content, duration, interview_type
+                    resumes_title, resumes_content, duration, interview_type,
+                    status, message
              FROM interviews WHERE id=? AND user_id=?`,
           )
           .get(id, payload.uid);
@@ -171,7 +176,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
           resumesId: z.string().optional(),
           resumesTitle: z.string().optional(),
           resumesContent: z.string().optional(),
-          interviewType: z.enum(['mock', 'training']).default('mock')
+          interviewType: z.enum(['mock', 'training']).default('mock'),
+          status: z.enum(['pending', 'active', 'completed', 'archived', 'deleted']).optional(),
+          message: z.string().optional()
         }).parse((req as any).body || {});
 
         const userRow = (app as any).db
@@ -189,8 +196,8 @@ export function registerReviewRoutes(app: FastifyInstance) {
               id, job_id, user_id, language, theme, started_at, ended_at,
               selected_model_id, theme, locale, timezone, job_title, job_content,
               question_count, resumes_id, resumes_title, resumes_content,
-              duration, interview_type
-            ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              duration, interview_type, status, message
+            ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .run(
             id,
@@ -210,7 +217,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
             body.resumesTitle || null,
             body.resumesContent || null,
             0, // duration初始化为0
-            body.interviewType
+            body.interviewType,
+            body.status || 'active',
+            body.message || null
           );
         
         // 记录操作日志
@@ -246,7 +255,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
           resumesTitle: z.string().optional(),
           resumesContent: z.string().optional(),
           duration: z.number().optional(),
-          interviewType: z.enum(['mock', 'training']).optional()
+          interviewType: z.enum(['mock', 'training']).optional(),
+          status: z.enum(['pending', 'active', 'completed', 'archived', 'deleted']).optional(),
+          message: z.string().optional()
         }).parse((req as any).body || {});
 
         const own = (app as any).db
@@ -289,6 +300,14 @@ export function registerReviewRoutes(app: FastifyInstance) {
         if (body.interviewType !== undefined) {
           updateFields.push('interview_type = ?');
           updateValues.push(body.interviewType);
+        }
+        if (body.status !== undefined) {
+          updateFields.push('status = ?');
+          updateValues.push(body.status);
+        }
+        if (body.message !== undefined) {
+          updateFields.push('message = ?');
+          updateValues.push(body.message);
         }
 
         if (updateFields.length > 0) {

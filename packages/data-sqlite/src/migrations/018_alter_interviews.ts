@@ -12,6 +12,8 @@ export function up(db: any): void {
     ALTER TABLE interviews ADD COLUMN resumes_content TEXT;
     ALTER TABLE interviews ADD COLUMN duration INTEGER DEFAULT 0;
     ALTER TABLE interviews ADD COLUMN interview_type TEXT DEFAULT 'mock' CHECK(interview_type IN ('mock','training'));
+    ALTER TABLE interviews ADD COLUMN status TEXT DEFAULT 'active' CHECK(status IN ('pending','active','completed','archived','deleted'));
+    ALTER TABLE interviews ADD COLUMN message TEXT;
 
     -- 修改interview_reviews表的score_id字段为interview_id
     ALTER TABLE interview_reviews RENAME COLUMN score_id TO interview_id;
@@ -32,5 +34,7 @@ export function down(db: any): void {
     ALTER TABLE interviews DROP COLUMN resumes_content;
     ALTER TABLE interviews DROP COLUMN duration;
     ALTER TABLE interviews DROP COLUMN interview_type;
+    ALTER TABLE interviews DROP COLUMN status;
+    ALTER TABLE interviews DROP COLUMN message;
   `);
 }
