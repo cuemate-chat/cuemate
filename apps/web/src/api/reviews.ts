@@ -12,6 +12,8 @@ export interface InterviewListItem {
   overall_suggestions?: string;
   advantage_content?: string;
   disadvantage_content?: string;
+  status?: 'pending' | 'active' | 'completed' | 'archived' | 'deleted';
+  message?: string;
 }
 
 export async function listInterviews(

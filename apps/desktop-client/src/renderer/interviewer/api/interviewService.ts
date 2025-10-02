@@ -12,6 +12,8 @@ export interface InterviewData {
   resumesTitle?: string;
   resumesContent?: string;
   interviewType?: 'training' | 'mock';
+  status?: 'pending' | 'active' | 'completed' | 'archived' | 'deleted';
+  message?: string;
 }
 
 export interface CreateInterviewResponse {
@@ -27,6 +29,8 @@ export interface UpdateInterviewData {
   resumesContent?: string;
   duration?: number;
   interviewType?: 'training' | 'mock';
+  status?: 'pending' | 'active' | 'completed' | 'archived' | 'deleted';
+  message?: string;
 }
 
 export class InterviewService {
