@@ -1,7 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { Mic, X } from 'lucide-react';
+import { MessageSquare, Mic, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useVoiceState, setVoiceState } from '../../../utils/voiceState';
+import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 
 interface InterviewerWindowHeaderProps {
@@ -101,7 +101,7 @@ export function InterviewerWindowHeader({
               <Mic size={16} className="interviewer-title-icon" />
             );
           })()}
-          <span>语音识别{currentSectionTitle ? ` - ${currentSectionTitle}` : ''}</span>
+          <span>{currentSectionTitle || '语音识别'}</span>
           {(hasStarted && globalState.subState !== 'idle' && (globalState.mode === 'mock-interview' || globalState.mode === 'interview-training')) && (
             <div className="interviewer-timer">
               <span className="timer-display">{formatDuration(duration)}</span>
@@ -136,7 +136,29 @@ export function InterviewerWindowHeader({
           )}
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <button 
+              <button
+                className="interviewer-header-btn"
+                onClick={async () => {
+                  try {
+                    await (window as any).electronAPI?.showAIQuestion?.();
+                  } catch (error) {
+                    console.error('打开答案窗口失败:', error);
+                  }
+                }}
+              >
+                <MessageSquare size={14} />
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content className="radix-tooltip-content">
+                打开AI答案窗口
+                <Tooltip.Arrow className="radix-tooltip-arrow" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <button
                 className="interviewer-header-btn"
                 onClick={async () => {
                   try {
