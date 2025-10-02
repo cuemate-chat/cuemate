@@ -1,8 +1,8 @@
 export interface VoiceCoordinatorConfig {
-  silenceThreshold: number;    // 静音阈值 (毫秒)
-  volumeThreshold: number;     // 音量阈值 (0-1)
-  ttsDelay: number;           // TTS结束后延迟启用ASR的时间 (毫秒)
-  autoEndTimeout: number;     // 自动结束录音超时时间 (毫秒)
+  silenceThreshold: number; // 静音阈值 (毫秒)
+  volumeThreshold: number; // 音量阈值 (0-1)
+  ttsDelay: number; // TTS结束后延迟启用ASR的时间 (毫秒)
+  autoEndTimeout: number; // 自动结束录音超时时间 (毫秒)
 }
 
 export interface AudioLevelData {
@@ -11,11 +11,11 @@ export interface AudioLevelData {
 }
 
 export enum VoiceState {
-  IDLE = 'idle',                    // 空闲状态
-  TTS_PLAYING = 'tts_playing',      // TTS正在播放
-  ASR_LISTENING = 'asr_listening',  // ASR正在监听
-  USER_SPEAKING = 'user_speaking',  // 用户正在说话
-  PROCESSING = 'processing'         // 处理中
+  IDLE = 'idle', // 空闲状态
+  TTS_PLAYING = 'tts_playing', // TTS正在播放
+  ASR_LISTENING = 'asr_listening', // ASR正在监听
+  USER_SPEAKING = 'user_speaking', // 用户正在说话
+  PROCESSING = 'processing', // 处理中
 }
 
 export class VoiceCoordinator extends EventTarget {
@@ -32,10 +32,10 @@ export class VoiceCoordinator extends EventTarget {
     super();
 
     this.config = {
-      silenceThreshold: 3000,      // 3秒静音
-      volumeThreshold: 0.01,       // 音量阈值
-      ttsDelay: 500,              // TTS结束后500ms再启用ASR
-      autoEndTimeout: 5000,       // 5秒自动结束
+      silenceThreshold: 3000, // 3秒静音
+      volumeThreshold: 0.01, // 音量阈值
+      ttsDelay: 500, // TTS结束后500ms再启用ASR
+      autoEndTimeout: 5000, // 5秒自动结束
       ...config,
     };
   }
@@ -46,10 +46,10 @@ export class VoiceCoordinator extends EventTarget {
       // 获取麦克风权限
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,    // 启用回声消除
-          noiseSuppression: true,    // 启用噪音抑制
-          autoGainControl: true,     // 启用自动增益控制
-        }
+          echoCancellation: true, // 启用回声消除
+          noiseSuppression: true, // 启用噪音抑制
+          autoGainControl: true, // 启用自动增益控制
+        },
       });
 
       // 创建音频上下文
@@ -70,7 +70,6 @@ export class VoiceCoordinator extends EventTarget {
       this.startAudioMonitoring();
 
       this.dispatchEvent(new CustomEvent('initialized'));
-      console.log('VoiceCoordinator initialized successfully');
     } catch (error) {
       console.error('Failed to initialize VoiceCoordinator:', error);
       this.dispatchEvent(new CustomEvent('error', { detail: error }));
@@ -131,7 +130,10 @@ export class VoiceCoordinator extends EventTarget {
 
   // 停止ASR监听
   stopASRListening(): void {
-    if (this.currentState === VoiceState.ASR_LISTENING || this.currentState === VoiceState.USER_SPEAKING) {
+    if (
+      this.currentState === VoiceState.ASR_LISTENING ||
+      this.currentState === VoiceState.USER_SPEAKING
+    ) {
       this.currentState = VoiceState.IDLE;
       this.clearAutoEndTimer();
 
@@ -221,9 +223,15 @@ export class VoiceCoordinator extends EventTarget {
         if (silenceDuration >= this.config.silenceThreshold) {
           // 自动结束说话
           this.currentState = VoiceState.PROCESSING;
-          this.dispatchEvent(new CustomEvent('userFinishedSpeaking', { detail: { manual: false, silenceDuration } }));
+          this.dispatchEvent(
+            new CustomEvent('userFinishedSpeaking', { detail: { manual: false, silenceDuration } }),
+          );
           this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
-          console.log('User finished speaking (auto detected after', silenceDuration, 'ms silence)');
+          console.log(
+            'User finished speaking (auto detected after',
+            silenceDuration,
+            'ms silence)',
+          );
         }
       }
     }
@@ -309,12 +317,10 @@ export class VoiceCoordinator extends EventTarget {
     }
 
     if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach(track => track.stop());
+      this.mediaStream.getTracks().forEach((track) => track.stop());
       this.mediaStream = null;
     }
 
     // EventTarget没有removeAllListeners方法，需要手动管理监听器
-
-    console.log('VoiceCoordinator destroyed');
   }
 }
