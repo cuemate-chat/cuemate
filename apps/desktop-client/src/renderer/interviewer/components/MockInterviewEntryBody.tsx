@@ -1,15 +1,15 @@
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
+import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
+import { streamingLLMManager } from '../../ai-question/components/mock-interview/llm/StreamingLLMManager';
+import { mockInterviewService } from '../../ai-question/components/mock-interview/services/MockInterviewService';
+import { InterviewState, InterviewStateMachine } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
+import { VoiceCoordinator } from '../../ai-question/components/mock-interview/voice/VoiceCoordinator';
+import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
 import { Model } from '../api/modelService';
-import { interviewService } from '../api/interviewService';
 import { JobPositionCard } from './JobPositionCard';
-import { InterviewStateMachine, InterviewState } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
-import { VoiceCoordinator } from '../../ai-question/components/mock-interview/voice/VoiceCoordinator';
-import { streamingLLMManager } from '../../ai-question/components/mock-interview/llm/StreamingLLMManager';
-import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
-import { mockInterviewService } from '../../ai-question/components/mock-interview/services/MockInterviewService';
 
 interface AudioDevice {
   deviceId: string;
@@ -45,10 +45,8 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // 面试状态管理
   const stateMachine = useRef<InterviewStateMachine | null>(null);
   const voiceCoordinator = useRef<VoiceCoordinator | null>(null);
-  const [interviewState, setInterviewState] = useState<InterviewState>(InterviewState.IDLE);
+  const [_interviewState, setInterviewState] = useState<InterviewState>(InterviewState.IDLE);
   const [isInitializing, setIsInitializing] = useState(false);
-  // 使用状态变量
-  console.log('Current interview state:', interviewState, 'Initializing:', isInitializing);
   const llmSessionId = useRef<string | null>(null);
 
   // 初始化面试系统
@@ -75,7 +73,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
           handleUserFinishedSpeaking();
         }) as EventListener);
 
-        console.log('Interview system initialized successfully');
       } catch (error) {
         console.error('Failed to initialize interview system:', error);
         setErrorMessage('面试系统初始化失败，请刷新页面重试');
@@ -693,9 +690,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
             <button
               className="test-button"
               onClick={handleStartInterview}
-              disabled={loading || !piperAvailable}
+              disabled={loading || !piperAvailable || isInitializing}
             >
-              开始模拟面试
+              {isInitializing ? '正在初始化...' : '开始模拟面试'}
             </button>
           )}
 
