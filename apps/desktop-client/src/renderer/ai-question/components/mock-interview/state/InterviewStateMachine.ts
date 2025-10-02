@@ -47,8 +47,12 @@ const stateTransitions: Record<InterviewState, Record<string, InterviewState>> =
     THINKING_ERROR: InterviewState.ERROR,
   },
   [InterviewState.AI_SPEAKING]: {
-    SPEAKING_COMPLETE: InterviewState.USER_LISTENING,
+    SPEAKING_COMPLETE: InterviewState.GENERATING_ANSWER,
     SPEAKING_ERROR: InterviewState.ERROR,
+  },
+  [InterviewState.GENERATING_ANSWER]: {
+    ANSWER_GENERATED: InterviewState.USER_LISTENING,
+    GENERATION_ERROR: InterviewState.ERROR,
   },
   [InterviewState.USER_LISTENING]: {
     USER_STARTED_SPEAKING: InterviewState.USER_SPEAKING,
@@ -61,12 +65,8 @@ const stateTransitions: Record<InterviewState, Record<string, InterviewState>> =
     SPEAKING_ERROR: InterviewState.ERROR,
   },
   [InterviewState.AI_ANALYZING]: {
-    ANALYSIS_COMPLETE: InterviewState.GENERATING_ANSWER,
+    ANALYSIS_COMPLETE: InterviewState.ROUND_COMPLETE,
     ANALYSIS_ERROR: InterviewState.ERROR,
-  },
-  [InterviewState.GENERATING_ANSWER]: {
-    ANSWER_GENERATED: InterviewState.ROUND_COMPLETE,
-    GENERATION_ERROR: InterviewState.ERROR,
   },
   [InterviewState.ROUND_COMPLETE]: {
     CONTINUE_INTERVIEW: InterviewState.AI_THINKING,
