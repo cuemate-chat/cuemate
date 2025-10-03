@@ -9,6 +9,9 @@ export interface LLMMessage {
 export interface StreamingRequest {
   messages: LLMMessage[];
   model?: string;
+  provider?: string;
+  credentials?: Record<string, any>;
+  model_params?: Array<{ param_key: string; value: any }>;
   temperature?: number;
   maxTokens?: number;
   stream?: boolean;
@@ -33,7 +36,7 @@ export enum LLMManagerState {
   CONNECTING = 'connecting',
   STREAMING = 'streaming',
   PROCESSING = 'processing',
-  ERROR = 'error'
+  ERROR = 'error',
 }
 
 export class StreamingLLMManager extends EventTarget {
@@ -87,7 +90,7 @@ export class StreamingLLMManager extends EventTarget {
     request: StreamingRequest,
     onChunk?: (chunk: StreamingChunk) => void,
     onComplete?: (fullResponse: string) => void,
-    onError?: (error: Error) => void
+    onError?: (error: Error) => void,
   ): Promise<void> {
     const session = this.activeSessions.get(sessionId);
     if (!session) {
@@ -119,6 +122,9 @@ export class StreamingLLMManager extends EventTarget {
         const requestBody = {
           messages: allMessages,
           model: request.model || 'gpt-4o',
+          provider: request.provider,
+          credentials: request.credentials,
+          model_params: request.model_params,
           stream: true,
           max_tokens: request.maxTokens || 1000,
           temperature: request.temperature || 0.7,
@@ -127,9 +133,13 @@ export class StreamingLLMManager extends EventTarget {
         console.log(`Sending streaming request for session ${sessionId}:`, {
           messageCount: allMessages.length,
           model: requestBody.model,
+          provider: requestBody.provider,
+          hasCredentials: !!requestBody.credentials,
         });
+        console.log('Full request body:', JSON.stringify(requestBody, null, 2));
+        console.log('准备发送 fetch 请求...');
 
-        const response = await fetch(`${this.llmRouterURL}/chat/stream`, {
+        const response = await fetch(`${this.llmRouterURL}/completion/stream`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -137,9 +147,10 @@ export class StreamingLLMManager extends EventTarget {
           body: JSON.stringify(requestBody),
           signal: this.abortController?.signal,
         });
-
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          const errorText = await response.text();
+          console.error('LLM Router 错误响应:', errorText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
         }
 
         const reader = response.body?.getReader();
@@ -184,11 +195,13 @@ export class StreamingLLMManager extends EventTarget {
                         sessionId,
                         totalLength: fullResponse.length,
                         timestamp: Date.now(),
-                      }
+                      },
                     };
 
                     onChunk?.(streamingChunk);
-                    this.dispatchEvent(new CustomEvent('chunkReceived', { detail: streamingChunk }));
+                    this.dispatchEvent(
+                      new CustomEvent('chunkReceived', { detail: streamingChunk }),
+                    );
                   }
                 } catch (parseError) {
                   console.warn('Failed to parse streaming chunk:', parseError);
@@ -199,11 +212,9 @@ export class StreamingLLMManager extends EventTarget {
 
           // 如果到这里说明流没有正常结束
           this.handleStreamComplete(sessionId, fullResponse, request, onComplete);
-
         } catch (streamError) {
           throw streamError;
         }
-
       } catch (error) {
         console.error(`LLM request error (attempt ${retryCount + 1}):`, error);
 
@@ -219,9 +230,11 @@ export class StreamingLLMManager extends EventTarget {
         // 重试逻辑
         if (retryCount < this.maxRetries) {
           retryCount++;
-          console.log(`Retrying LLM request in ${this.retryDelay}ms (${retryCount}/${this.maxRetries})`);
+          console.log(
+            `Retrying LLM request in ${this.retryDelay}ms (${retryCount}/${this.maxRetries})`,
+          );
 
-          await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+          await new Promise((resolve) => setTimeout(resolve, this.retryDelay));
           this.retryDelay *= 2; // 指数退避
 
           return attemptRequest();
@@ -248,13 +261,13 @@ export class StreamingLLMManager extends EventTarget {
     sessionId: string,
     fullResponse: string,
     request: StreamingRequest,
-    onComplete?: (fullResponse: string) => void
+    onComplete?: (fullResponse: string) => void,
   ): void {
     const session = this.activeSessions.get(sessionId);
     if (!session) return;
 
     // 添加消息到会话历史
-    request.messages.forEach(msg => {
+    request.messages.forEach((msg) => {
       session.messages.push({
         ...msg,
         timestamp: Date.now(),
@@ -282,13 +295,15 @@ export class StreamingLLMManager extends EventTarget {
         totalLength: fullResponse.length,
         messageCount: session.messages.length,
         timestamp: Date.now(),
-      }
+      },
     };
 
     this.dispatchEvent(new CustomEvent('streamComplete', { detail: finalChunk }));
     onComplete?.(fullResponse);
 
-    console.log(`Stream completed for session ${sessionId}, response length: ${fullResponse.length}`);
+    console.log(
+      `Stream completed for session ${sessionId}, response length: ${fullResponse.length}`,
+    );
   }
 
   /**
@@ -333,13 +348,17 @@ export class StreamingLLMManager extends EventTarget {
     const session = this.activeSessions.get(sessionId);
     if (session && session.messages.length > maxMessages) {
       // 保留系统消息和最近的消息
-      const systemMessages = session.messages.filter(msg => msg.role === 'system');
+      const systemMessages = session.messages.filter((msg) => msg.role === 'system');
       const recentMessages = session.messages
-        .filter(msg => msg.role !== 'system')
+        .filter((msg) => msg.role !== 'system')
         .slice(-maxMessages + systemMessages.length);
 
       session.messages = [...systemMessages, ...recentMessages];
-      this.dispatchEvent(new CustomEvent('sessionTrimmed', { detail: { sessionId, messageCount: session.messages.length } }));
+      this.dispatchEvent(
+        new CustomEvent('sessionTrimmed', {
+          detail: { sessionId, messageCount: session.messages.length },
+        }),
+      );
 
       console.log(`Trimmed session ${sessionId} to ${session.messages.length} messages`);
     }
@@ -379,12 +398,12 @@ export class StreamingLLMManager extends EventTarget {
       const expiredSessions: string[] = [];
 
       for (const [sessionId, session] of this.activeSessions.entries()) {
-        if (!session.isActive && (now - session.lastActivity) > this.sessionTimeout) {
+        if (!session.isActive && now - session.lastActivity > this.sessionTimeout) {
           expiredSessions.push(sessionId);
         }
       }
 
-      expiredSessions.forEach(sessionId => {
+      expiredSessions.forEach((sessionId) => {
         this.clearSession(sessionId);
       });
 
