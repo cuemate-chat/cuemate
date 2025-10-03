@@ -78,10 +78,10 @@ export default function Home() {
                   className="!px-6 sm:!px-8 w-full sm:w-auto"
                   onClick={() => nav('/jobs/new')}
                 >
-                  开始面试
+                  AI 模拟面试
                 </Button>
                 <Button size="large" className="w-full sm:w-auto" onClick={() => nav('/jobs')}>
-                  AI 面试练习
+                  真实面试训练
                 </Button>
               </div>
 
