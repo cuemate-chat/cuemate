@@ -83,37 +83,21 @@ export class MockInterviewService {
   private baseURL = 'http://localhost:3001';
   private llmRouterURL = 'http://localhost:3002';
   private ragServiceURL = 'http://localhost:3003';
-  private token: string | null = null;
 
-  constructor() {
-    this.initAuth();
+  private async getToken(): Promise<string> {
+    const api = (window as any).electronAPI || (window as any).electronInterviewerAPI;
+    const result = await api?.getUserData?.();
+    if (result?.success && result.userData?.token) {
+      return result.userData.token;
+    }
+    throw new Error('用户未登录或token获取失败');
   }
 
-  private async initAuth() {
-    try {
-      const api = (window as any).electronAPI || (window as any).electronInterviewerAPI;
-      const result = await api?.getUserData?.();
-      if (result?.success && result.userData?.token) {
-        this.token = result.userData.token;
-      }
-    } catch (error) {
-      console.error('初始化模拟面试服务认证失败:', error);
-    }
-  }
-
-  private async ensureAuth() {
-    if (!this.token) {
-      await this.initAuth();
-    }
-    if (!this.token) {
-      throw new Error('用户未登录或token获取失败');
-    }
-  }
-
-  private getHeaders() {
+  private async getHeaders() {
+    const token = await this.getToken();
     return {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.token}`,
+      Authorization: `Bearer ${token}`,
     };
   }
 
@@ -121,12 +105,11 @@ export class MockInterviewService {
    * 获取岗位相关的押题题库
    */
   async getQuestionBank(jobId: string): Promise<InterviewQuestion[]> {
-    await this.ensureAuth();
-
     try {
-      const response = await fetch(`${this.baseURL}/interview-questions?job_id=${jobId}`, {
+      const headers = await this.getHeaders();
+      const response = await fetch(`${this.baseURL}/interview-questions?jobId=${jobId}`, {
         method: 'GET',
-        headers: this.getHeaders(),
+        headers,
       });
 
       if (!response.ok) {
@@ -134,7 +117,7 @@ export class MockInterviewService {
       }
 
       const result = await response.json();
-      return result.questions || [];
+      return result.items || [];
     } catch (error) {
       console.error('获取题库失败:', error);
       throw error;
@@ -145,18 +128,28 @@ export class MockInterviewService {
    * 创建面试问答记录
    */
   async createReview(data: CreateReviewData): Promise<{ id: string }> {
-    await this.ensureAuth();
-
     try {
+      const headers = await this.getHeaders();
       const reviewData = {
-        note_type: 'interview_qa',
-        created_at: Date.now(),
-        ...data,
+        interviewId: data.interview_id,
+        noteType: data.note_type || 'interview_qa',
+        content: data.content,
+        questionId: data.question_id,
+        question: data.question,
+        answer: data.answer,
+        askedQuestion: data.asked_question,
+        candidateAnswer: data.candidate_answer,
+        pros: data.pros,
+        cons: data.cons,
+        suggestions: data.suggestions,
+        keyPoints: data.key_points,
+        assessment: data.assessment,
+        referenceAnswer: data.reference_answer,
       };
 
       const response = await fetch(`${this.baseURL}/interview-reviews`, {
         method: 'POST',
-        headers: this.getHeaders(),
+        headers,
         body: JSON.stringify(reviewData),
       });
 
@@ -176,13 +169,24 @@ export class MockInterviewService {
    * 更新面试问答记录
    */
   async updateReview(reviewId: string, data: UpdateReviewData): Promise<void> {
-    await this.ensureAuth();
-
     try {
+      const headers = await this.getHeaders();
+      const updateData: any = {};
+
+      if (data.content !== undefined) updateData.content = data.content;
+      if (data.answer !== undefined) updateData.answer = data.answer;
+      if (data.candidate_answer !== undefined) updateData.candidateAnswer = data.candidate_answer;
+      if (data.pros !== undefined) updateData.pros = data.pros;
+      if (data.cons !== undefined) updateData.cons = data.cons;
+      if (data.suggestions !== undefined) updateData.suggestions = data.suggestions;
+      if (data.key_points !== undefined) updateData.keyPoints = data.key_points;
+      if (data.assessment !== undefined) updateData.assessment = data.assessment;
+      if (data.reference_answer !== undefined) updateData.referenceAnswer = data.reference_answer;
+
       const response = await fetch(`${this.baseURL}/interview-reviews/${reviewId}`, {
-        method: 'PATCH',
-        headers: this.getHeaders(),
-        body: JSON.stringify(data),
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
@@ -198,12 +202,11 @@ export class MockInterviewService {
    * 获取面试的问答记录
    */
   async getInterviewReviews(interviewId: string): Promise<InterviewReview[]> {
-    await this.ensureAuth();
-
     try {
+      const headers = await this.getHeaders();
       const response = await fetch(`${this.baseURL}/interview-reviews?interview_id=${interviewId}`, {
         method: 'GET',
-        headers: this.getHeaders(),
+        headers,
       });
 
       if (!response.ok) {
