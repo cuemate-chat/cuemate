@@ -14,6 +14,10 @@ export interface InterviewData {
   interviewType?: 'training' | 'mock';
   status?: 'pending' | 'active' | 'completed' | 'archived' | 'deleted';
   message?: string;
+  locale?: string;
+  timezone?: string;
+  theme?: string;
+  selectedModelId?: string;
 }
 
 export interface CreateInterviewResponse {
@@ -103,7 +107,7 @@ export class InterviewService {
 
     try {
       const response = await fetch(`${this.baseURL}/interviews/${interviewId}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(data),
       });
@@ -127,6 +131,7 @@ export class InterviewService {
       const response = await fetch(`${this.baseURL}/interviews/${interviewId}/end`, {
         method: 'POST',
         headers: this.getHeaders(),
+        body: JSON.stringify({}),
       });
 
       if (!response.ok) {
