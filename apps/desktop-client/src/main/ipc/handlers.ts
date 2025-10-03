@@ -1213,6 +1213,21 @@ export function setupIPC(windowManager: WindowManager): void {
       saveSettings();
       broadcastClickThroughChanged(clickThroughEnabled);
 
+      // 同步到后端数据库
+      if (cachedToken) {
+        const floating_window_visible = newState ? 0 : 1;
+        fetch('http://localhost:3001/auth/update-setting', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${cachedToken}`,
+          },
+          body: JSON.stringify({ floating_window_visible }),
+        }).catch((error) => {
+          logger.error({ error }, '同步点击穿透模式到后端失败');
+        });
+      }
+
       // 通知主进程更新托盘菜单
       const { ipcMain } = require('electron');
       ipcMain.emit('update-tray-menu');
