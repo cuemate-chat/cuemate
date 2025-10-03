@@ -8,14 +8,16 @@ import { userSettingsService } from '../../control-bar/api/userSettingsService';
 interface JobPositionCardProps {
   onPositionSelect?: (position: JobPosition | null) => void;
   onModelSelect?: (model: Model | null) => void;
+  onLanguageSelect?: (language: 'zh-CN' | 'zh-TW' | 'en-US') => void;
   disabled?: boolean;
 }
 
-export function JobPositionCard({ onPositionSelect, onModelSelect, disabled = false }: JobPositionCardProps) {
+export function JobPositionCard({ onPositionSelect, onModelSelect, onLanguageSelect, disabled = false }: JobPositionCardProps) {
   const [positions, setPositions] = useState<JobPosition[]>([]);
   const [selectedPosition, setSelectedPosition] = useState<JobPosition | null>(null);
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<'zh-CN' | 'zh-TW' | 'en-US'>('zh-CN');
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -78,6 +80,11 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, disabled = fa
     onModelSelect?.(model);
   };
 
+  const handleLanguageChange = (language: 'zh-CN' | 'zh-TW' | 'en-US') => {
+    setSelectedLanguage(language);
+    onLanguageSelect?.(language);
+  };
+
   const toggleExpand = () => {
     if (!disabled) {
       setExpanded(!expanded);
@@ -92,6 +99,29 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, disabled = fa
 
   return (
     <div className="interviewer-top interviewer-top-card job-position-card">
+      {/* 岗位选择 */}
+      <div className="job-position-select">
+        <select
+          className="device-select"
+          value={selectedPosition?.id || ''}
+          onChange={(e) => handlePositionChange(e.target.value)}
+          disabled={loading || disabled}
+        >
+          {loading ? (
+            <option>加载岗位...</option>
+          ) : positions.length === 0 ? (
+            <option>暂无岗位</option>
+          ) : (
+            positions.map(position => (
+              <option key={position.id} value={position.id}>
+                {position.title}
+              </option>
+            ))
+          )}
+        </select>
+        <ChevronDown size={14} className="select-icon" />
+      </div>
+
       {/* 模型选择 */}
       <div className="job-position-select">
         <select
@@ -115,25 +145,17 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, disabled = fa
         <ChevronDown size={14} className="select-icon" />
       </div>
 
-      {/* 岗位选择 */}
+      {/* 语言选择 */}
       <div className="job-position-select">
         <select
           className="device-select"
-          value={selectedPosition?.id || ''}
-          onChange={(e) => handlePositionChange(e.target.value)}
-          disabled={loading || disabled}
+          value={selectedLanguage}
+          onChange={(e) => handleLanguageChange(e.target.value as 'zh-CN' | 'zh-TW' | 'en-US')}
+          disabled={disabled}
         >
-          {loading ? (
-            <option>加载岗位...</option>
-          ) : positions.length === 0 ? (
-            <option>暂无岗位</option>
-          ) : (
-            positions.map(position => (
-              <option key={position.id} value={position.id}>
-                {position.title}
-              </option>
-            ))
-          )}
+          <option value="zh-CN">简体中文</option>
+          <option value="zh-TW">繁體中文</option>
+          <option value="en-US">English (US)</option>
         </select>
         <ChevronDown size={14} className="select-icon" />
       </div>

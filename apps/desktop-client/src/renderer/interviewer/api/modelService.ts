@@ -27,38 +27,21 @@ export interface ModelOption {
 
 export class ModelService {
   private baseURL = 'http://localhost:3001';
-  private token: string | null = null;
 
-  constructor() {
-    this.initAuth();
+  private async getToken(): Promise<string> {
+    const api = (window as any).electronAPI || (window as any).electronInterviewerAPI;
+    const result = await api?.getUserData?.();
+    if (result?.success && result.userData?.token) {
+      return result.userData.token;
+    }
+    throw new Error('用户未登录或token获取失败');
   }
 
-  private async initAuth() {
-    try {
-      // 支持多种 API 接口
-      const api = (window as any).electronAPI || (window as any).electronInterviewerAPI;
-      const result = await api?.getUserData?.();
-      if (result?.success && result.userData?.token) {
-        this.token = result.userData.token;
-      }
-    } catch (error) {
-      console.error('初始化模型服务认证失败:', error);
-    }
-  }
-
-  private async ensureAuth() {
-    if (!this.token) {
-      await this.initAuth();
-    }
-    if (!this.token) {
-      throw new Error('用户未登录或token获取失败');
-    }
-  }
-
-  private getHeaders() {
+  private async getHeaders() {
+    const token = await this.getToken();
     return {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.token}`,
+      Authorization: `Bearer ${token}`,
     };
   }
 
@@ -70,9 +53,8 @@ export class ModelService {
     page?: number;
     limit?: number;
   }): Promise<{ list: Model[]; total: number }> {
-    await this.ensureAuth();
-
     try {
+      const headers = await this.getHeaders();
       const queryParams = new URLSearchParams();
       if (params?.type) queryParams.set('type', params.type);
       if (params?.page) queryParams.set('page', params.page.toString());
@@ -81,7 +63,7 @@ export class ModelService {
       const url = `${this.baseURL}/models${queryParams.toString() ? `?${queryParams}` : ''}`;
       const response = await fetch(url, {
         method: 'GET',
-        headers: this.getHeaders(),
+        headers,
       });
 
       if (!response.ok) {
@@ -116,12 +98,11 @@ export class ModelService {
    * 获取单个模型详情
    */
   async getModel(id: string): Promise<Model | null> {
-    await this.ensureAuth();
-
     try {
+      const headers = await this.getHeaders();
       const response = await fetch(`${this.baseURL}/models/${id}`, {
         method: 'GET',
-        headers: this.getHeaders(),
+        headers,
       });
 
       if (!response.ok) {
