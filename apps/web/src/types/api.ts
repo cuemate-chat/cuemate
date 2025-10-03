@@ -119,15 +119,25 @@ export interface CreateJobRequest {
 // 面试相关类型
 export interface Interview {
   id: string;
-  jobId: string;
-  title: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  startTime?: string;
-  endTime?: string;
-  score?: number;
-  feedback?: string;
-  createdAt: string;
-  updatedAt: string;
+  job_id: string;
+  user_id: string;
+  theme: string;
+  started_at: number;
+  ended_at?: number | null;
+  selected_model_id?: string | null;
+  locale: string;
+  timezone: string;
+  job_title?: string | null;
+  job_content?: string | null;
+  question_count: number;
+  resumes_id?: string | null;
+  resumes_title?: string | null;
+  resumes_content?: string | null;
+  duration: number;
+  interview_type: 'mock' | 'training';
+  status: 'pending' | 'active' | 'completed' | 'archived' | 'deleted';
+  message?: string | null;
+  vector_status: number;
 }
 
 export interface Question {

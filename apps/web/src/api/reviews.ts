@@ -4,7 +4,18 @@ export interface InterviewListItem {
   id: string;
   started_at: number;
   ended_at: number | null;
+  selected_model_id?: string | null;
   job_title: string;
+  job_content?: string | null;
+  question_count: number;
+  resumes_id?: string | null;
+  resumes_title?: string | null;
+  resumes_content?: string | null;
+  duration: number;
+  interview_type: 'mock' | 'training';
+  status: 'pending' | 'active' | 'completed' | 'archived' | 'deleted';
+  message?: string | null;
+  original_job_title?: string;
   total_score?: number;
   overall_summary?: string;
   overall_pros?: string;
@@ -12,8 +23,7 @@ export interface InterviewListItem {
   overall_suggestions?: string;
   advantage_content?: string;
   disadvantage_content?: string;
-  status?: 'pending' | 'active' | 'completed' | 'archived' | 'deleted';
-  message?: string;
+  advantages_total?: number;
 }
 
 export async function listInterviews(

@@ -11,9 +11,8 @@ export function registerReviewRoutes(app: FastifyInstance) {
   // - id: 面试记录唯一标识
   // - job_id: 关联的岗位ID (外键)
   // - user_id: 关联的用户ID (外键)
-  // - language: 面试语言 ('zh'/'en')
   // - theme: 界面主题设置 ('light','dark','system')
-  // - locale: 用户区域设置 (如 'zh-CN', 'en-US')
+  // - locale: 语言设置 (如 'zh-CN', 'en-US')
   // - timezone: 时区设置 (如 'Asia/Shanghai')
   // - started_at: 面试开始时间戳 (毫秒)
   // - ended_at: 面试结束时间戳 (毫秒, 可选)
@@ -28,6 +27,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
   // - interview_type: 面试类型 ('mock'/'training')
   // - status: 面试状态 ('pending','active','completed','archived','deleted')
   // - message: 备注信息或报错信息
+  // - vector_status: 向量库同步状态
 
   // 面试复盘列表（按开始时间倒序，无分页，前端统一滚动展示）
   app.get(
@@ -168,48 +168,63 @@ export function registerReviewRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'interviews.create', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
-        const body = z.object({
-          jobId: z.string().min(1),
-          jobTitle: z.string().optional(),
-          jobContent: z.string().optional(),
-          questionCount: z.number().optional(),
-          resumesId: z.string().optional(),
-          resumesTitle: z.string().optional(),
-          resumesContent: z.string().optional(),
-          interviewType: z.enum(['mock', 'training']).default('mock'),
-          status: z.enum(['pending', 'active', 'completed', 'archived', 'deleted']).optional(),
-          message: z.string().optional()
-        }).parse((req as any).body || {});
+        const body = z
+          .object({
+            jobId: z.string().min(1),
+            jobTitle: z.string().optional(),
+            jobContent: z.string().optional(),
+            questionCount: z.number().optional(),
+            resumesId: z.string().optional(),
+            resumesTitle: z.string().optional(),
+            resumesContent: z.string().optional(),
+            interviewType: z.enum(['mock', 'training']).default('mock'),
+            status: z.enum(['pending', 'active', 'completed', 'archived', 'deleted']).optional(),
+            message: z.string().optional(),
+            locale: z.string().optional(),
+            timezone: z.string().optional(),
+            theme: z.string().optional(),
+            selectedModelId: z.string().optional(),
+          })
+          .parse((req as any).body || {});
 
-        const userRow = (app as any).db
-          .prepare('SELECT selected_model_id, locale, theme, timezone FROM users WHERE id=?')
-          .get(payload.uid);
         const { randomUUID } = await import('crypto');
         const id = randomUUID();
         const now = Date.now();
-        const language = (userRow?.locale || 'zh-CN').startsWith('zh') ? 'zh' : 'en';
-        const theme = userRow?.theme || 'system';
+
+        // 优先使用前端传来的值,否则从用户表获取默认值
+        let locale = body.locale;
+        let timezone = body.timezone;
+        let theme = body.theme;
+        let selectedModelId = body.selectedModelId;
+
+        if (!locale || !timezone || !theme || !selectedModelId) {
+          const userRow = (app as any).db
+            .prepare('SELECT selected_model_id, locale, theme, timezone FROM users WHERE id=?')
+            .get(payload.uid);
+          locale = locale || userRow?.locale || 'zh-CN';
+          timezone = timezone || userRow?.timezone || 'Asia/Shanghai';
+          theme = theme || userRow?.theme || 'system';
+          selectedModelId = selectedModelId || userRow?.selected_model_id || null;
+        }
 
         (app as any).db
           .prepare(
             `INSERT INTO interviews (
-              id, job_id, user_id, language, theme, started_at, ended_at,
-              selected_model_id, theme, locale, timezone, job_title, job_content,
+              id, job_id, user_id, theme, started_at,
+              selected_model_id, locale, timezone, job_title, job_content,
               question_count, resumes_id, resumes_title, resumes_content,
               duration, interview_type, status, message
-            ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .run(
             id,
             body.jobId,
             payload.uid,
-            language,
             theme,
             now,
-            userRow?.selected_model_id || null,
-            userRow?.theme || 'system',
-            userRow?.locale || 'zh-CN',
-            userRow?.timezone || 'Asia/Shanghai',
+            selectedModelId,
+            locale,
+            timezone,
             body.jobTitle || null,
             body.jobContent || null,
             body.questionCount || 0,
@@ -219,9 +234,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
             0, // duration初始化为0
             body.interviewType,
             body.status || 'active',
-            body.message || null
+            body.message || null,
           );
-        
+
         // 记录操作日志
         await logOperation(app, req, {
           ...OPERATION_MAPPING.REVIEW,
@@ -230,9 +245,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
           operation: OperationType.CREATE,
           message: `创建面试复盘: ${body.jobId}`,
           status: 'success',
-          userId: payload.uid
+          userId: payload.uid,
         });
-        
+
         return { id };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('创建面试复盘失败', err, 400));
@@ -247,18 +262,20 @@ export function registerReviewRoutes(app: FastifyInstance) {
       try {
         const payload = await (req as any).jwtVerify();
         const id = (req as any).params?.id as string;
-        const body = z.object({
-          jobTitle: z.string().optional(),
-          jobContent: z.string().optional(),
-          questionCount: z.number().optional(),
-          resumesId: z.string().optional(),
-          resumesTitle: z.string().optional(),
-          resumesContent: z.string().optional(),
-          duration: z.number().optional(),
-          interviewType: z.enum(['mock', 'training']).optional(),
-          status: z.enum(['pending', 'active', 'completed', 'archived', 'deleted']).optional(),
-          message: z.string().optional()
-        }).parse((req as any).body || {});
+        const body = z
+          .object({
+            jobTitle: z.string().optional(),
+            jobContent: z.string().optional(),
+            questionCount: z.number().optional(),
+            resumesId: z.string().optional(),
+            resumesTitle: z.string().optional(),
+            resumesContent: z.string().optional(),
+            duration: z.number().optional(),
+            interviewType: z.enum(['mock', 'training']).optional(),
+            status: z.enum(['pending', 'active', 'completed', 'archived', 'deleted']).optional(),
+            message: z.string().optional(),
+          })
+          .parse((req as any).body || {});
 
         const own = (app as any).db
           .prepare('SELECT id FROM interviews WHERE id=? AND user_id=?')
@@ -325,7 +342,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
           operation: OperationType.UPDATE,
           message: `更新面试信息: ${id}`,
           status: 'success',
-          userId: payload.uid
+          userId: payload.uid,
         });
 
         return { success: true };
@@ -347,7 +364,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
           .get(id, payload.uid);
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
         (app as any).db.prepare('UPDATE interviews SET ended_at=? WHERE id=?').run(Date.now(), id);
-        
+
         // 记录操作日志
         await logOperation(app, req, {
           ...OPERATION_MAPPING.REVIEW,
@@ -356,9 +373,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
           operation: OperationType.UPDATE,
           message: `结束面试复盘: ${id}`,
           status: 'success',
-          userId: payload.uid
+          userId: payload.uid,
         });
-        
+
         return { success: true };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('结束面试失败', err, 400));
@@ -393,7 +410,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
 
         // 5. 最后删除面试本身
         (app as any).db.prepare('DELETE FROM interviews WHERE id=?').run(id);
-        
+
         // 记录操作日志
         await logOperation(app, req, {
           ...OPERATION_MAPPING.REVIEW,
@@ -402,9 +419,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
           operation: OperationType.DELETE,
           message: `删除面试复盘: ${id}`,
           status: 'success',
-          userId: payload.uid
+          userId: payload.uid,
         });
-        
+
         return { success: true };
       } catch (err) {
         return reply.code(401).send(buildPrefixedError('删除面试复盘失败', err, 401));
