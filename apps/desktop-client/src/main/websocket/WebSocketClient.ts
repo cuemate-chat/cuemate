@@ -163,7 +163,6 @@ export class WebSocketClient {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       try {
         this.ws.send(JSON.stringify(message));
-        logger.debug({ message }, 'WebSocket 消息发送成功');
       } catch (error) {
         logger.error({ error }, 'WebSocket 消息发送失败');
       }

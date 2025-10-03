@@ -89,7 +89,6 @@ class WebSocketBridge {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       try {
         this.ws.send(JSON.stringify(message));
-        console.debug('WebSocket 消息发送成功:', message);
       } catch (error) {
         console.error('WebSocket 消息发送失败:', error);
       }
