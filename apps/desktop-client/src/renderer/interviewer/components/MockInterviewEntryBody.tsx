@@ -1,8 +1,8 @@
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
+import { aiService } from '../../ai-question/api/aiService';
 import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
-import { streamingLLMManager } from '../../ai-question/components/mock-interview/llm/StreamingLLMManager';
 import { mockInterviewService } from '../../ai-question/components/mock-interview/services/MockInterviewService';
 import { InterviewState, InterviewStateMachine } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
 import { VoiceCoordinator } from '../../ai-question/components/mock-interview/voice/VoiceCoordinator';
@@ -30,6 +30,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   const [loading, setLoading] = useState(true);
   const [selectedPosition, setSelectedPosition] = useState<JobPosition | null>(null);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<'zh-CN' | 'zh-TW' | 'en-US'>('zh-CN');
 
   // 使用VoiceState来控制下拉列表状态
   const voiceState = useVoiceState();
@@ -47,7 +48,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   const voiceCoordinator = useRef<VoiceCoordinator | null>(null);
   const [_interviewState, setInterviewState] = useState<InterviewState>(InterviewState.IDLE);
   const [isInitializing, setIsInitializing] = useState(false);
-  const llmSessionId = useRef<string | null>(null);
 
   // 初始化面试系统
   useEffect(() => {
@@ -76,6 +76,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       } catch (error) {
         console.error('Failed to initialize interview system:', error);
         setErrorMessage('面试系统初始化失败，请刷新页面重试');
+        setCurrentLine('');
       }
     };
 
@@ -176,16 +177,23 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   const handleStartInterview = async () => {
     if (!selectedPosition) {
       setErrorMessage('请先选择面试岗位');
+      setCurrentLine('');
       return;
     }
 
     if (!selectedModel) {
       setErrorMessage('请先选择AI模型');
+      setCurrentLine('');
       return;
     }
 
     try {
       setIsInitializing(true);
+
+      // 从全局缓存获取用户数据
+      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const userDataResult = await api?.getUserData?.();
+      const userData = userDataResult?.success ? userDataResult.userData?.user : null;
 
       // 创建面试记录
       const interviewData = {
@@ -198,7 +206,11 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         resumesContent: selectedPosition.resumeContent,
         interviewType: 'mock' as const,
         status: 'active' as const,
-        message: '面试进行中'
+        message: '面试进行中',
+        locale: selectedLanguage,
+        timezone: userData?.timezone || 'Asia/Shanghai',
+        theme: userData?.theme || 'system',
+        selectedModelId: selectedModel?.id
       };
 
       const response = await interviewService.createInterview(interviewData);
@@ -222,9 +234,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
       // 初始化数据服务
       interviewDataService.initializeInterview(response.id, interviewData.questionCount);
-
-      // 创建LLM会话
-      llmSessionId.current = streamingLLMManager.createSession();
 
       // 发送开始事件
       stateMachine.current.send({
@@ -255,6 +264,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       console.error('开始面试失败:', error);
       const errorMsg = `开始面试失败: ${error instanceof Error ? error.message : '未知错误'}`;
       setErrorMessage(errorMsg);
+      setCurrentLine('');
       setIsInitializing(false);
 
       // 如果面试已创建，更新状态为错误
@@ -300,6 +310,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     } catch (error) {
       console.error('结束面试失败:', error);
       setErrorMessage(`结束面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      setCurrentLine('');
       // 即使API调用失败，也要设置状态为完成
       setVoiceState({
         mode: 'mock-interview',
@@ -360,6 +371,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     } catch (error) {
       console.error('Error handling state change:', error);
       setErrorMessage(`状态处理错误: ${error instanceof Error ? error.message : '未知错误'}`);
+      setCurrentLine('');
     } finally {
       setIsInitializing(false);
     }
@@ -368,6 +380,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // 初始化阶段
   const handleInitializing = async (context: any) => {
     setCurrentLine('正在初始化面试信息...');
+    setErrorMessage('');
 
     try {
       // 构建初始化prompt（用于后续LLM调用）
@@ -387,11 +400,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // AI思考阶段
   const handleAIThinking = async (context: any) => {
     setCurrentLine('面试官正在思考问题...');
+    setErrorMessage('');
 
     try {
-      const sessionId = llmSessionId.current;
-      if (!sessionId) throw new Error('LLM session not initialized');
-
       // 构建问题生成的prompt
       const questionPrompt = `现在开始第${context.currentQuestionIndex + 1}个问题。请根据之前的对话历史和岗位要求，生成一个合适的面试问题。直接输出问题内容，不要包含其他解释。`;
 
@@ -402,24 +413,23 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
       let generatedQuestion = '';
 
-      await streamingLLMManager.sendStreamingRequest(
-        sessionId,
-        { messages },
-        (chunk) => {
-          generatedQuestion += chunk.content;
-        },
-        (fullResponse) => {
+      await aiService.callAIStream(messages, (chunk) => {
+        if (chunk.error) {
+          stateMachine.current?.send({ type: 'THINKING_ERROR', payload: { error: chunk.error } });
+          return;
+        }
+
+        if (chunk.finished) {
           // 清理问题文本
-          const cleanQuestion = fullResponse.trim().replace(/^(问题|Question)\s*[:：]?\s*/, '');
+          const cleanQuestion = generatedQuestion.trim().replace(/^(问题|Question)\s*[:：]?\s*/, '');
           stateMachine.current?.send({
             type: 'QUESTION_GENERATED',
             payload: { question: cleanQuestion }
           });
-        },
-        (error) => {
-          stateMachine.current?.send({ type: 'THINKING_ERROR', payload: { error: error.message } });
+        } else {
+          generatedQuestion += chunk.content;
         }
-      );
+      });
     } catch (error) {
       stateMachine.current?.send({ type: 'THINKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
@@ -450,6 +460,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // 用户监听阶段
   const handleUserListening = () => {
     setCurrentLine('请开始回答问题...');
+    setErrorMessage('');
     // 启动ASR监听
     if (voiceCoordinator.current?.canStartASR()) {
       voiceCoordinator.current.startASRListening();
@@ -459,6 +470,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // 用户说话阶段
   const handleUserSpeaking = () => {
     setCurrentLine('正在录制您的回答...');
+    setErrorMessage('');
   };
 
   // 用户说话结束处理
@@ -484,6 +496,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // AI分析阶段
   const handleAIAnalyzing = async (context: any) => {
     setCurrentLine('正在保存您的回答...');
+    setErrorMessage('');
 
     try {
       // 更新用户回答到数据库
@@ -499,11 +512,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // 生成答案阶段
   const handleGeneratingAnswer = async (context: any) => {
     setCurrentLine('正在生成参考答案...');
+    setErrorMessage('');
 
     try {
-      const sessionId = llmSessionId.current;
-      if (!sessionId) throw new Error('LLM session not initialized');
-
       // 检查问题相似度
       const similarQuestions = await mockInterviewService.findSimilarQuestions(
         context.currentQuestion,
@@ -538,14 +549,17 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
           content: answerPrompt,
         }];
 
-        await streamingLLMManager.sendStreamingRequest(
-          sessionId,
-          { messages },
-          (chunk) => {
-            referenceAnswer += chunk.content;
-          },
-          async (fullResponse) => {
-            referenceAnswer = fullResponse.trim();
+        await aiService.callAIStream(messages, async (chunk) => {
+          if (chunk.error) {
+            stateMachine.current?.send({
+              type: 'GENERATION_ERROR',
+              payload: { error: chunk.error }
+            });
+            return;
+          }
+
+          if (chunk.finished) {
+            referenceAnswer = referenceAnswer.trim();
 
             // 更新参考答案到数据库
             await interviewDataService.updateReferenceAnswer(
@@ -561,11 +575,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
               type: 'ANSWER_GENERATED',
               payload: { answer: referenceAnswer }
             });
-          },
-          (error) => {
-            stateMachine.current?.send({ type: 'GENERATION_ERROR', payload: { error: error.message } });
+          } else {
+            referenceAnswer += chunk.content;
           }
-        );
+        });
       }
     } catch (error) {
       stateMachine.current?.send({ type: 'GENERATION_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
@@ -575,6 +588,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // 轮次完成
   const handleRoundComplete = (context: any) => {
     setCurrentLine(`第${context.currentQuestionIndex + 1}个问题已完成`);
+    setErrorMessage('');
 
     // 标记问题完成
     interviewDataService.markQuestionComplete(context.currentQuestionIndex);
@@ -593,6 +607,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // 面试结束阶段
   const handleInterviewEnding = async () => {
     setCurrentLine('面试即将结束，正在生成报告...');
+    setErrorMessage('');
 
     try {
       // 结束面试数据记录
@@ -608,6 +623,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // 面试完成
   const handleInterviewCompleted = async () => {
     setCurrentLine('面试已完成！感谢您的参与。');
+    setErrorMessage('');
 
     // 更新面试状态为已完成
     if (currentInterviewId) {
@@ -655,6 +671,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       <JobPositionCard
         onPositionSelect={handlePositionSelect}
         onModelSelect={handleModelSelect}
+        onLanguageSelect={(lang) => setSelectedLanguage(lang)}
         disabled={(voiceState.subState === 'mock-interview-recording' ||
                    voiceState.subState === 'mock-interview-paused' ||
                    voiceState.subState === 'mock-interview-playing')}
