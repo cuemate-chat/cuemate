@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import React, { useEffect, useRef, useState } from 'react';
-import { aiService } from '../../../utils/ai/aiService.ts';
+import { aiService } from '../../../utils/ai/aiService';
 import { clearVoiceQAState, setVoiceQAState, useVoiceQAState } from '../../../utils/voiceQA';
 import { conversationService } from '../../api/conversationService.ts';
 import { VoiceQABody } from './VoiceQABody.tsx';

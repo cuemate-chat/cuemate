@@ -19,6 +19,7 @@ import { registerModelRoutes } from './routes/models.js';
 import { registerOperationLogRoutes } from './routes/operation-logs.js';
 import { registerPresetQuestionRoutes } from './routes/preset-questions.js';
 import { registerInterviewQuestionRoutes } from './routes/questions.js';
+import { registerInterviewRoutes } from './routes/interviews.js';
 import { registerReviewRoutes } from './routes/reviews.js';
 import { registerVectorRoutes } from './routes/vectors.js';
 import { logger as serviceLogger } from './utils/logger.js';
@@ -82,6 +83,7 @@ async function start() {
   registerAsrRoutes(app as any);
   registerPresetQuestionRoutes(app as any);
   registerInterviewQuestionRoutes(app as any);
+  registerInterviewRoutes(app as any);
   registerJobRoutes(app as any);
   registerReviewRoutes(app as any);
   registerModelRoutes(app as any);
