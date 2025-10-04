@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { aiService } from '../../api/aiService.ts';
+import { aiService } from '../../../utils/ai/aiService';
 import { conversationService } from '../../api/conversationService.ts';
 import { InterviewTrainingBody } from './InterviewTrainingBody.tsx';
 import { InterviewTrainingFooter } from './InterviewTrainingFooter.tsx';

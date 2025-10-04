@@ -1,7 +1,8 @@
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
-import { aiService } from '../../ai-question/api/aiService';
+import { aiService } from '../../utils/ai/aiService';
+import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
 import { mockInterviewService } from '../../ai-question/components/mock-interview/services/MockInterviewService';
 import { InterviewState, InterviewStateMachine } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
@@ -403,17 +404,46 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     setErrorMessage('');
 
     try {
-      // 构建问题生成的prompt
+      if (!selectedModel) {
+        throw new Error('未选择模型');
+      }
+
+      // 构建完整的系统 prompt（包含岗位和简历信息）
+      const systemPrompt = context.initPrompt || mockInterviewService.buildInitPrompt(
+        context.jobPosition,
+        context.resume,
+        context.questionsBank || []
+      );
+
+      // 构建问题生成的用户消息
       const questionPrompt = `现在开始第${context.currentQuestionIndex + 1}个问题。请根据之前的对话历史和岗位要求，生成一个合适的面试问题。直接输出问题内容，不要包含其他解释。`;
 
-      const messages = [{
-        role: 'user' as const,
-        content: questionPrompt,
-      }];
+      const messages = [
+        {
+          role: 'system' as const,
+          content: systemPrompt,
+        },
+        {
+          role: 'user' as const,
+          content: questionPrompt,
+        }
+      ];
+
+      // 准备模型配置
+      const modelConfig: ModelConfig = {
+        provider: selectedModel.provider,
+        model_name: selectedModel.model_name,
+        credentials: selectedModel.credentials || '{}',
+      };
+
+      // 获取模型参数
+      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const userDataResult = await api?.getUserData?.();
+      const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
 
       let generatedQuestion = '';
 
-      await aiService.callAIStream(messages, (chunk) => {
+      await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, (chunk) => {
         if (chunk.error) {
           stateMachine.current?.send({ type: 'THINKING_ERROR', payload: { error: chunk.error } });
           return;
@@ -541,15 +571,42 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
           payload: { answer: referenceAnswer }
         });
       } else {
+        if (!selectedModel) {
+          throw new Error('未选择模型');
+        }
+
         // 使用LLM生成答案
+        const systemPrompt = context.initPrompt || mockInterviewService.buildInitPrompt(
+          context.jobPosition,
+          context.resume,
+          context.questionsBank || []
+        );
+
         const answerPrompt = `请为以下面试问题生成一个优秀的参考答案：\n\n问题：${context.currentQuestion}\n\n要求：\n1. 答案要专业、具体、有条理\n2. 结合实际工作经验\n3. 体现相关技能和能力\n4. 控制在200字以内`;
 
-        const messages = [{
-          role: 'user' as const,
-          content: answerPrompt,
-        }];
+        const messages = [
+          {
+            role: 'system' as const,
+            content: systemPrompt,
+          },
+          {
+            role: 'user' as const,
+            content: answerPrompt,
+          }
+        ];
 
-        await aiService.callAIStream(messages, async (chunk) => {
+        // 准备模型配置
+        const modelConfig: ModelConfig = {
+          provider: selectedModel.provider,
+          model_name: selectedModel.model_name,
+          credentials: selectedModel.credentials || '{}',
+        };
+
+        const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+        const userDataResult = await api?.getUserData?.();
+        const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+
+        await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, async (chunk) => {
           if (chunk.error) {
             stateMachine.current?.send({
               type: 'GENERATION_ERROR',

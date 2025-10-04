@@ -3,16 +3,20 @@
  * 基于web版本的LLM Router调用逻辑适配到desktop
  */
 
+export interface ModelConfig {
+  provider: string;
+  model_name: string;
+  credentials: string; // JSON字符串
+}
+
+export interface ModelParam {
+  param_key: string;
+  value: string | number;
+}
+
 export interface UserData {
-  model: {
-    provider: string;
-    model_name: string;
-    credentials: string; // JSON字符串
-  };
-  model_params: Array<{
-    param_key: string;
-    value: string | number;
-  }>;
+  model: ModelConfig;
+  model_params: ModelParam[];
 }
 
 export interface ChatMessage {
@@ -32,7 +36,7 @@ export interface AIServiceConfig {
 
 class AIService {
   private config: AIServiceConfig = {
-    llmRouterUrl: 'http://localhost:3002'
+    llmRouterUrl: 'http://localhost:3002',
   };
 
   /**
@@ -53,7 +57,6 @@ class AIService {
         const result = await (window as any).electronAPI.getUserData();
         return result.success ? result.userData : null;
       }
-
 
       return null;
     } catch (error) {
@@ -77,10 +80,11 @@ class AIService {
     const finalCredentials = model.credentials ? JSON.parse(model.credentials) : {};
 
     // 处理model_params
-    const finalModelParams = model_params?.map(param => ({
-      param_key: param.param_key,
-      value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
-    })) || [];
+    const finalModelParams =
+      model_params?.map((param) => ({
+        param_key: param.param_key,
+        value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
+      })) || [];
 
     const response = await fetch(`${this.config.llmRouterUrl}/completion`, {
       method: 'POST',
@@ -110,8 +114,8 @@ class AIService {
    * 实现类似ChatGPT的实时输出效果
    */
   async callAIStream(
-    messages: ChatMessage[], 
-    onChunk: (chunk: StreamResponse) => void
+    messages: ChatMessage[],
+    onChunk: (chunk: StreamResponse) => void,
   ): Promise<void> {
     const userData = await this.getUserData();
     if (!userData?.model) {
@@ -120,17 +124,18 @@ class AIService {
 
     const { model, model_params } = userData;
     const finalCredentials = model.credentials ? JSON.parse(model.credentials) : {};
-    const finalModelParams = model_params?.map(param => ({
-      param_key: param.param_key,
-      value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
-    })) || [];
+    const finalModelParams =
+      model_params?.map((param) => ({
+        param_key: param.param_key,
+        value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
+      })) || [];
 
     try {
       const response = await fetch(`${this.config.llmRouterUrl}/completion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'text/event-stream',
+          Accept: 'text/event-stream',
         },
         body: JSON.stringify({
           provider: model.provider,
@@ -147,7 +152,7 @@ class AIService {
         onChunk({
           content: '',
           finished: true,
-          error: `AI调用失败: ${response.status} - ${errorText}`
+          error: `AI调用失败: ${response.status} - ${errorText}`,
         });
         return;
       }
@@ -158,7 +163,7 @@ class AIService {
         // 回退到普通调用
         const result = await response.json();
         const content = result.content || '抱歉，AI没有返回内容';
-        
+
         // 模拟流式输出效果
         await this.simulateStreamOutput(content, onChunk);
         return;
@@ -173,12 +178,82 @@ class AIService {
         const content = result.content || '抱歉，AI没有返回内容';
         await this.simulateStreamOutput(content, onChunk);
       }
-
     } catch (error) {
       onChunk({
         content: '',
         finished: true,
-        error: `网络错误: ${(error as Error).message}`
+        error: `网络错误: ${(error as Error).message}`,
+      });
+    }
+  }
+
+  /**
+   * 使用自定义模型调用AI流式接口（用于面试场景）
+   * @param messages 消息列表
+   * @param customModel 自定义模型配置
+   * @param customModelParams 自定义模型参数
+   * @param onChunk 流式响应回调
+   */
+  async callAIStreamWithCustomModel(
+    messages: ChatMessage[],
+    customModel: ModelConfig,
+    customModelParams: ModelParam[],
+    onChunk: (chunk: StreamResponse) => void,
+  ): Promise<void> {
+    const finalCredentials = customModel.credentials ? JSON.parse(customModel.credentials) : {};
+    const finalModelParams =
+      customModelParams?.map((param) => ({
+        param_key: param.param_key,
+        value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
+      })) || [];
+
+    try {
+      const response = await fetch(`${this.config.llmRouterUrl}/completion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
+        },
+        body: JSON.stringify({
+          provider: customModel.provider,
+          model: customModel.model_name,
+          credentials: finalCredentials,
+          model_params: finalModelParams,
+          messages: messages,
+          stream: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        onChunk({
+          content: '',
+          finished: true,
+          error: `AI调用失败: ${response.status} - ${errorText}`,
+        });
+        return;
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('text/event-stream') && !contentType.includes('application/json')) {
+        const result = await response.json();
+        const content = result.content || '抱歉，AI没有返回内容';
+        await this.simulateStreamOutput(content, onChunk);
+        return;
+      }
+
+      if (contentType.includes('text/event-stream')) {
+        await this.handleSSEStream(response, onChunk);
+      } else {
+        const result = await response.json();
+        const content = result.content || '抱歉，AI没有返回内容';
+        await this.simulateStreamOutput(content, onChunk);
+      }
+    } catch (error) {
+      onChunk({
+        content: '',
+        finished: true,
+        error: `网络错误: ${(error as Error).message}`,
       });
     }
   }
@@ -188,7 +263,7 @@ class AIService {
    */
   private async handleSSEStream(
     response: Response,
-    onChunk: (chunk: StreamResponse) => void
+    onChunk: (chunk: StreamResponse) => void,
   ): Promise<void> {
     const reader = response.body?.getReader();
     if (!reader) {
@@ -201,7 +276,7 @@ class AIService {
     try {
       while (true) {
         const { done, value } = await reader.read();
-        
+
         if (done) {
           onChunk({ content: '', finished: true });
           break;
@@ -242,17 +317,17 @@ class AIService {
    */
   private async simulateStreamOutput(
     content: string,
-    onChunk: (chunk: StreamResponse) => void
+    onChunk: (chunk: StreamResponse) => void,
   ): Promise<void> {
     const words = content.split('');
     let currentContent = '';
 
     for (let i = 0; i < words.length; i++) {
       currentContent += words[i];
-      
+
       onChunk({
         content: words[i],
-        finished: false
+        finished: false,
       });
 
       // 动态延迟：标点符号后停顿久一点，营造思考效果
@@ -265,7 +340,7 @@ class AIService {
         delay = 150; // 换行停顿150ms
       }
 
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
     // 输出完成
