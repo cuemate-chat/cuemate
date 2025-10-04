@@ -77,8 +77,7 @@ export function up(db: any): void {
       score_id TEXT NOT NULL,
       note_type TEXT NOT NULL DEFAULT 'summary',
       content TEXT NOT NULL,
-      created_at INTEGER NOT NULL,
-      FOREIGN KEY(score_id) REFERENCES interview_scores(id) ON DELETE CASCADE
+      created_at INTEGER NOT NULL
     );
 
     -- 索引
