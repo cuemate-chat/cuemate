@@ -53,6 +53,7 @@ export async function createQuestionRoutes(
           tagName: question.tag_name || null,
           userId: question.user_id,
           title: question.title,
+          description: question.description,
           chunkIndex: index,
           totalChunks: chunks.length,
           createdAt: question.created_at,
@@ -204,4 +205,197 @@ export async function createQuestionRoutes(
       return { success: false, error: '获取失败' };
     }
   });
+
+  // 计算问题相似度（用于模拟面试场景）
+  app.post('/similarity/questions', async (req) => {
+    const body = (req as any).body as {
+      query: string;
+      jobId: string;
+      threshold?: number;
+      topK?: number;
+    };
+
+    try {
+      const { query, jobId, threshold = 0.8, topK = 5 } = body;
+
+      if (!query || !jobId) {
+        return {
+          success: false,
+          error: 'query 和 jobId 参数是必需的',
+        };
+      }
+
+      // 生成查询问题的嵌入向量
+      const queryEmbeddings = await deps.embeddingService.embed([query]);
+      const queryEmbedding = queryEmbeddings[0];
+
+      // 在 ChromaDB 中搜索该岗位的相似问题
+      const searchResults = await deps.vectorStore.searchByEmbedding(
+        queryEmbedding,
+        topK,
+        { jobId },
+        deps.config.vectorStore.questionsCollection,
+      );
+
+      if (searchResults.length === 0) {
+        return {
+          success: true,
+          match: {},
+          threshold,
+        };
+      }
+
+      // 计算关键词命中率，过滤结果
+      const validMatches = [];
+      for (const result of searchResults) {
+        const questionText = result.metadata?.title || '';
+        const keywordMatchRate = calculateKeywordMatch(query, questionText);
+
+        // 向量相似度 >= threshold 且关键词命中率 >= 80%
+        if (result.score >= threshold && keywordMatchRate >= 0.8) {
+          validMatches.push({
+            score: result.score,
+            keywordMatchRate,
+            questionId: result.metadata?.questionId,
+            title: result.metadata?.title,
+            metadata: result.metadata,
+          });
+        }
+      }
+
+      // 取最相似的 1 条
+      const bestMatch = validMatches.length > 0 ? validMatches[0] : null;
+
+      // 返回最佳匹配（包含答案）
+      if (bestMatch && bestMatch.questionId) {
+        return {
+          success: true,
+          match: {
+            questionId: bestMatch.questionId,
+            question: bestMatch.title,
+            answer: bestMatch.metadata?.description || '',
+            score: bestMatch.score,
+          },
+          threshold,
+        };
+      }
+
+      return {
+        success: true,
+        match: {},
+        threshold,
+      };
+    } catch (error) {
+      app.log.error({ err: error as any }, 'Similarity calculation failed');
+      return { success: false, error: '相似度计算失败' };
+    }
+  });
+}
+
+// 计算关键词命中率（基于候选问题的关键词在查询问题中的命中比例）
+function calculateKeywordMatch(query: string, candidateText: string): number {
+  // 分词并过滤停用词
+  const stopWords = new Set([
+    '的',
+    '了',
+    '在',
+    '是',
+    '我',
+    '有',
+    '和',
+    '就',
+    '不',
+    '人',
+    '都',
+    '一',
+    '一个',
+    '上',
+    '也',
+    '很',
+    '到',
+    '说',
+    '要',
+    '去',
+    '你',
+    '会',
+    '着',
+    '没有',
+    '看',
+    '好',
+    '自己',
+    '这',
+    '那',
+    '之',
+    '与',
+    '为',
+    '吗',
+    '呢',
+    '啊',
+    '么',
+    '嘛',
+    'the',
+    'a',
+    'an',
+    'and',
+    'or',
+    'but',
+    'in',
+    'on',
+    'at',
+    'to',
+    'for',
+    'of',
+    'with',
+    'by',
+    'from',
+    'as',
+    'is',
+    'was',
+    'are',
+    'were',
+    'be',
+    'been',
+    'being',
+    'have',
+    'has',
+    'had',
+    'do',
+    'does',
+    'did',
+    'will',
+    'would',
+    'should',
+    'could',
+    'may',
+    'might',
+    'can',
+    'what',
+    'how',
+    'why',
+  ]);
+
+  // 提取候选问题的关键词（过滤停用词和标点符号）
+  const candidateWords = candidateText
+    .toLowerCase()
+    .replace(/[,.!?;:，。！？；：、""''（）()【】\[\]]/g, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 1 && !stopWords.has(word));
+
+  if (candidateWords.length === 0) {
+    return 0;
+  }
+
+  // 查询问题转小写
+  const queryLower = query.toLowerCase();
+
+  // 统计命中的关键词数量
+  let matchedCount = 0;
+  for (const word of candidateWords) {
+    if (queryLower.includes(word)) {
+      matchedCount++;
+    }
+  }
+
+  // 返回命中率
+  return matchedCount / candidateWords.length;
 }
