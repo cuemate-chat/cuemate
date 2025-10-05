@@ -123,7 +123,6 @@ export class VoiceCoordinator extends EventTarget {
 
     this.dispatchEvent(new CustomEvent('asrStarted'));
     this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
-    console.log('ASR listening started');
   }
 
   // 停止ASR监听
@@ -149,7 +148,6 @@ export class VoiceCoordinator extends EventTarget {
 
       this.dispatchEvent(new CustomEvent('userFinishedSpeaking', { detail: { manual: true } }));
       this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
-      console.log('User speaking ended manually');
     }
   }
 
@@ -209,7 +207,6 @@ export class VoiceCoordinator extends EventTarget {
 
         this.dispatchEvent(new CustomEvent('userStartedSpeaking'));
         this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
-        console.log('User started speaking');
       }
     } else if (this.currentState === VoiceState.USER_SPEAKING) {
       if (isSpeaking) {
@@ -225,11 +222,6 @@ export class VoiceCoordinator extends EventTarget {
             new CustomEvent('userFinishedSpeaking', { detail: { manual: false, silenceDuration } }),
           );
           this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
-          console.log(
-            'User finished speaking (auto detected after',
-            silenceDuration,
-            'ms silence)',
-          );
         }
       }
     }
