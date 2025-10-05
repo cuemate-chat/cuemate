@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 interface WindowFooterProps {
   speechText?: string; // 语音识别的文本
   isLoading: boolean;
+  isListening: boolean; // 是否正在监听用户说话
   onResponseComplete: () => void; // 回答完毕回调
   className?: string;
 }
@@ -23,6 +24,7 @@ function FlashingCircle({ isActive }: { isActive: boolean }) {
 export function MockInterviewFooter({
   speechText = '',
   isLoading,
+  isListening,
   onResponseComplete,
   className
 }: WindowFooterProps) {
@@ -40,7 +42,7 @@ export function MockInterviewFooter({
     <div className={`ai-window-footer${className ? ` ${className}` : ''}`}>
       {/* 语音识别内容显示区域 */}
       <div className="speech-display-container">
-        <FlashingCircle isActive={!!speechText && speechText.length > 0} />
+        <FlashingCircle isActive={isListening} />
         <span
           ref={speechRef}
           className="speech-text"
