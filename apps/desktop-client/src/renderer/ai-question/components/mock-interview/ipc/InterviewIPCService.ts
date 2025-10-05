@@ -25,8 +25,6 @@ export enum InterviewIPCEvents {
   ANALYSIS_COMPLETED = 'interview:analysis-completed',
 
   // 控制指令
-  START_RECORDING = 'interview:start-recording',
-  STOP_RECORDING = 'interview:stop-recording',
   TOGGLE_AUTO_MODE = 'interview:toggle-auto-mode',
   SKIP_QUESTION = 'interview:skip-question',
   END_INTERVIEW = 'interview:end-interview',
@@ -231,14 +229,6 @@ export class InterviewIPCService {
   }
 
   // 控制指令发送方法
-  requestStartRecording(): void {
-    this.emit(InterviewIPCEvents.START_RECORDING);
-  }
-
-  requestStopRecording(): void {
-    this.emit(InterviewIPCEvents.STOP_RECORDING);
-  }
-
   requestToggleAutoMode(autoMode: boolean): void {
     this.emit(InterviewIPCEvents.TOGGLE_AUTO_MODE, { autoMode, timestamp: Date.now() });
   }
