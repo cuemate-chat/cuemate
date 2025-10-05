@@ -131,11 +131,10 @@ class AIService {
       })) || [];
 
     try {
-      const response = await fetch(`${this.config.llmRouterUrl}/completion`, {
+      const response = await fetch(`${this.config.llmRouterUrl}/completion/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'text/event-stream',
         },
         body: JSON.stringify({
           provider: model.provider,
@@ -143,7 +142,6 @@ class AIService {
           credentials: finalCredentials,
           model_params: finalModelParams,
           messages: messages,
-          stream: true, // 开启流式输出
         }),
       });
 
@@ -208,11 +206,10 @@ class AIService {
       })) || [];
 
     try {
-      const response = await fetch(`${this.config.llmRouterUrl}/completion`, {
+      const response = await fetch(`${this.config.llmRouterUrl}/completion/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'text/event-stream',
         },
         body: JSON.stringify({
           provider: customModel.provider,
@@ -220,7 +217,6 @@ class AIService {
           credentials: finalCredentials,
           model_params: finalModelParams,
           messages: messages,
-          stream: true,
         }),
       });
 
