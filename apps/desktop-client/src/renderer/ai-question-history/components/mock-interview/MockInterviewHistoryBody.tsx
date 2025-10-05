@@ -38,6 +38,16 @@ export function MockInterviewHistoryBody({
     };
 
     loadReviews();
+
+    // 设置5秒自动刷新
+    const refreshInterval = setInterval(() => {
+      loadReviews();
+    }, 5000);
+
+    // 清理定时器
+    return () => {
+      clearInterval(refreshInterval);
+    };
   }, [interviewId, onDataLoaded]);
 
   // 使用过滤后的数据进行显示
