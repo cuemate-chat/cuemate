@@ -112,11 +112,6 @@ export class WebSocketClient {
         }
         break;
 
-      case 'START_RECORDING':
-        // 处理录音请求 (将来实现)
-        // TODO: 实现录音功能
-        break;
-
       case 'REQUEST_ASR_DEVICES': {
         // 枚举麦克风与扬声器设备并上报
         try {
