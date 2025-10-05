@@ -44,6 +44,8 @@ export interface CreateReviewData {
 // 更新问答记录的数据
 export interface UpdateReviewData {
   content?: string;
+  question_id?: string;
+  question?: string;
   answer?: string;
   candidate_answer?: string;
   pros?: string;
@@ -65,23 +67,8 @@ export interface InterviewQuestion {
   vector_status: number;
 }
 
-// LLM流式响应处理器
-export interface StreamingResponse {
-  onChunk: (chunk: string) => void;
-  onComplete: (fullText: string) => void;
-  onError: (error: Error) => void;
-}
-
-// 问题相似度匹配结果
-export interface QuestionMatch {
-  question: InterviewQuestion;
-  similarity: number;
-  useAsReference: boolean; // 是否使用作为参考答案
-}
-
 export class MockInterviewService {
   private baseURL = 'http://localhost:3001';
-  private llmRouterURL = 'http://localhost:3002';
   private ragServiceURL = 'http://localhost:3003';
 
   private async getToken(): Promise<string> {
@@ -174,6 +161,8 @@ export class MockInterviewService {
       const updateData: any = {};
 
       if (data.content !== undefined) updateData.content = data.content;
+      if (data.question_id !== undefined) updateData.questionId = data.question_id;
+      if (data.question !== undefined) updateData.question = data.question;
       if (data.answer !== undefined) updateData.answer = data.answer;
       if (data.candidate_answer !== undefined) updateData.candidateAnswer = data.candidate_answer;
       if (data.pros !== undefined) updateData.pros = data.pros;
@@ -204,10 +193,13 @@ export class MockInterviewService {
   async getInterviewReviews(interviewId: string): Promise<InterviewReview[]> {
     try {
       const headers = await this.getHeaders();
-      const response = await fetch(`${this.baseURL}/interview-reviews?interview_id=${interviewId}`, {
-        method: 'GET',
-        headers,
-      });
+      const response = await fetch(
+        `${this.baseURL}/interview-reviews?interview_id=${interviewId}`,
+        {
+          method: 'GET',
+          headers,
+        },
+      );
 
       if (!response.ok) {
         throw new Error(`获取问答记录失败: ${response.status}`);
@@ -222,135 +214,15 @@ export class MockInterviewService {
   }
 
   /**
-   * 流式调用LLM生成面试问题
-   */
-  async generateQuestionStreaming(
-    prompt: string,
-    conversationHistory: any[],
-    handler: StreamingResponse
-  ): Promise<void> {
-    try {
-      const messages = [
-        {
-          role: 'system',
-          content: prompt,
-        },
-        ...conversationHistory,
-      ];
-
-      const response = await fetch(`${this.llmRouterURL}/chat/stream`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages,
-          model: 'gpt-4o', // 可以根据用户设置选择模型
-          stream: true,
-          max_tokens: 500,
-          temperature: 0.7,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`LLM调用失败: ${response.status}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('无法读取流式响应');
-      }
-
-      const decoder = new TextDecoder();
-      let fullText = '';
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.trim() === '') continue;
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') {
-                handler.onComplete(fullText);
-                return;
-              }
-
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content || '';
-                if (content) {
-                  fullText += content;
-                  handler.onChunk(content);
-                }
-              } catch (parseError) {
-                console.warn('解析流式响应失败:', parseError);
-              }
-            }
-          }
-        }
-
-        handler.onComplete(fullText);
-      } catch (streamError) {
-        handler.onError(streamError as Error);
-      }
-    } catch (error) {
-      handler.onError(error as Error);
-    }
-  }
-
-  /**
-   * 流式调用LLM分析用户回答
-   */
-  async analyzeAnswerStreaming(
-    question: string,
-    userAnswer: string,
-    referenceAnswer: string,
-    handler: StreamingResponse
-  ): Promise<void> {
-    const prompt = `请分析这个面试回答，并给出详细的评价和建议。
-
-面试问题：${question}
-
-候选人回答：${userAnswer}
-
-参考答案：${referenceAnswer}
-
-请按以下格式输出分析结果：
-
-【优点】
-列出回答的亮点和优势
-
-【不足】
-指出回答的问题和不足
-
-【改进建议】
-提供具体的改进建议
-
-【考察点】
-说明这个问题主要考察什么能力
-
-【评分】
-给出1-10分的评分并说明理由`;
-
-    await this.generateQuestionStreaming(prompt, [], handler);
-  }
-
-  /**
    * 检查问题与题库的相似度
    */
-  async findSimilarQuestions(
+  async findSimilarQuestion(
     question: string,
-    questionBank: InterviewQuestion[],
-    threshold: number = 0.6
-  ): Promise<QuestionMatch[]> {
+    jobId: string,
+    threshold: number = 0.8,
+  ): Promise<{ questionId?: string; question?: string; answer?: string; similarity?: number }> {
     try {
-      // 使用RAG服务进行相似度计算
+      // 使用RAG服务在向量知识库中搜索相似问题
       const response = await fetch(`${this.ragServiceURL}/similarity/questions`, {
         method: 'POST',
         headers: {
@@ -358,98 +230,34 @@ export class MockInterviewService {
         },
         body: JSON.stringify({
           query: question,
-          candidates: questionBank.map(q => ({
-            id: q.id,
-            text: q.question,
-            metadata: q,
-          })),
+          jobId,
           threshold,
         }),
       });
 
       if (!response.ok) {
-        console.warn('相似度检测失败，使用字符串匹配');
-        return this.fallbackSimilarityCheck(question, questionBank, threshold);
+        console.warn('RAG服务调用失败');
+        return {};
       }
 
       const result = await response.json();
-      return result.matches.map((match: any) => ({
-        question: match.metadata,
-        similarity: match.score,
-        useAsReference: match.score >= threshold,
-      }));
+
+      // 后端返回 match 对象（可能是空对象 {}）
+      if (result.match && result.match.questionId) {
+        return {
+          questionId: result.match.questionId,
+          question: result.match.question,
+          answer: result.match.answer || '',
+          similarity: result.match.score,
+        };
+      }
+
+      // 没有匹配到，返回空对象
+      return {};
     } catch (error) {
-      console.warn('相似度检测服务不可用，使用备选方案:', error);
-      return this.fallbackSimilarityCheck(question, questionBank, threshold);
+      console.warn('RAG服务不可用:', error);
+      return {};
     }
-  }
-
-  /**
-   * 备选的字符串相似度检查
-   */
-  private fallbackSimilarityCheck(
-    question: string,
-    questionBank: InterviewQuestion[],
-    threshold: number
-  ): QuestionMatch[] {
-    const matches: QuestionMatch[] = [];
-
-    for (const bankQuestion of questionBank) {
-      const similarity = this.calculateStringSimilarity(question, bankQuestion.question);
-      if (similarity >= threshold * 0.8) { // 降低阈值，因为字符串匹配不如向量匹配准确
-        matches.push({
-          question: bankQuestion,
-          similarity,
-          useAsReference: similarity >= threshold,
-        });
-      }
-    }
-
-    return matches.sort((a, b) => b.similarity - a.similarity);
-  }
-
-  /**
-   * 简单的字符串相似度计算
-   */
-  private calculateStringSimilarity(str1: string, str2: string): number {
-    const longer = str1.length > str2.length ? str1 : str2;
-    const shorter = str1.length > str2.length ? str2 : str1;
-
-    if (longer.length === 0) return 1.0;
-
-    const distance = this.levenshteinDistance(longer, shorter);
-    return (longer.length - distance) / longer.length;
-  }
-
-  /**
-   * 计算编辑距离
-   */
-  private levenshteinDistance(str1: string, str2: string): number {
-    const matrix = [];
-
-    for (let i = 0; i <= str2.length; i++) {
-      matrix[i] = [i];
-    }
-
-    for (let j = 0; j <= str1.length; j++) {
-      matrix[0][j] = j;
-    }
-
-    for (let i = 1; i <= str2.length; i++) {
-      for (let j = 1; j <= str1.length; j++) {
-        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1,
-            matrix[i][j - 1] + 1,
-            matrix[i - 1][j] + 1
-          );
-        }
-      }
-    }
-
-    return matrix[str2.length][str1.length];
   }
 
   /**
@@ -457,7 +265,7 @@ export class MockInterviewService {
    */
   buildInitPrompt(jobPosition: any, resume: any, questionBank: InterviewQuestion[]): string {
     const questionsText = questionBank
-      .map(q => `Q: ${q.question}\nA: ${q.answer || '无参考答案'}`)
+      .map((q) => `Q: ${q.question}\nA: ${q.answer || '无参考答案'}`)
       .join('\n\n');
 
     return `你是一名专业的面试官，即将开始一场${jobPosition.title || '软件开发'}的面试。
@@ -484,87 +292,67 @@ ${questionsText || '无押题'}
   }
 
   /**
-   * 优化ASR识别结果
+   * 构建答案生成prompt
    */
-  async optimizeTranscription(rawText: string): Promise<string> {
-    if (!rawText.trim()) return rawText;
+  buildAnswerPrompt(
+    jobPosition: any,
+    resume: any,
+    question: string,
+    referenceAnswer?: string,
+  ): string {
+    let prompt = `你是一名面试辅导专家，需要为面试者生成优质的参考答案。
 
-    try {
-      // 简单的文本清理
-      let cleaned = rawText
-        .replace(/\b(嗯+|啊+|呃+|那个|就是说|然后呢|这个)\b/g, '') // 去除语气词
-        .replace(/\s+/g, ' ') // 合并多余空格
-        .trim();
+【岗位信息】
+职位：${jobPosition.title || '未指定'}
+描述：${jobPosition.description || '无描述'}
 
-      // 如果清理后文本过短或包含太多重复，使用LLM优化
-      if (cleaned.length < 10 || this.hasExcessiveRepetition(cleaned)) {
-        const optimized = await this.optimizeWithLLM(rawText);
-        return optimized || cleaned;
-      }
+【候选人简历】
+${resume.resumeTitle ? `简历标题：${resume.resumeTitle}` : ''}
+${resume.resumeContent || '无简历内容'}
 
-      return cleaned;
-    } catch (error) {
-      console.error('文本优化失败:', error);
-      return rawText; // 返回原文本
+【面试问题】
+${question}
+`;
+
+    if (referenceAnswer) {
+      prompt += `
+【押题库参考答案】
+${referenceAnswer}
+
+【任务要求】
+1. 仔细分析押题库的参考答案是否切题、是否符合当前面试问题
+2. 如果参考答案切题且质量高：
+   - 基于参考答案进行优化、补充或校准
+   - 结合候选人的简历背景进行个性化调整
+   - 确保答案更加具体、专业、有条理
+3. 如果参考答案不切题或质量较差：
+   - 忽略参考答案，重新生成答案
+   - 确保答案紧扣问题，结合岗位要求
+   - 体现候选人的实际能力和经验
+4. 答案要求：
+   - 专业、具体、有条理
+   - 结合实际工作经验和项目案例
+   - 体现相关技能和能力
+   - 控制在2000字以内
+   - 直接输出答案内容，不要包含"参考答案："等前缀
+
+请生成答案：`;
+    } else {
+      prompt += `
+【任务要求】
+1. 为以上面试问题生成一个优秀的参考答案
+2. 答案要求：
+   - 紧扣问题，符合岗位要求
+   - 结合候选人简历中的实际经验和项目
+   - 专业、具体、有条理
+   - 体现相关技能和能力
+   - 控制在2000字以内
+   - 直接输出答案内容，不要包含"参考答案："等前缀
+
+请生成答案：`;
     }
-  }
 
-  /**
-   * 检查是否有过多重复
-   */
-  private hasExcessiveRepetition(text: string): boolean {
-    const words = text.split(/\s+/);
-    const wordCount = new Map<string, number>();
-
-    for (const word of words) {
-      if (word.length > 1) { // 忽略单字符
-        wordCount.set(word, (wordCount.get(word) || 0) + 1);
-      }
-    }
-
-    // 如果任何词出现超过3次，认为有过多重复
-    for (const count of wordCount.values()) {
-      if (count > 3) return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * 使用LLM优化转录文本
-   */
-  private async optimizeWithLLM(rawText: string): Promise<string | null> {
-    try {
-      const response = await fetch(`${this.llmRouterURL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: '请修正这段语音识别文本的语法错误和重复内容，保持原意，使其更加流畅通顺。如果文本没有意义请返回"无法理解"。',
-            },
-            {
-              role: 'user',
-              content: rawText,
-            },
-          ],
-          model: 'gpt-4o-mini', // 使用轻量模型
-          max_tokens: 200,
-          temperature: 0.3,
-        }),
-      });
-
-      if (!response.ok) return null;
-
-      const result = await response.json();
-      return result.choices?.[0]?.message?.content?.trim() || null;
-    } catch (error) {
-      console.error('LLM文本优化失败:', error);
-      return null;
-    }
+    return prompt;
   }
 }
 
