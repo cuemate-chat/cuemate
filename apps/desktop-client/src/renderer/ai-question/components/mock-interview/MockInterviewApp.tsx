@@ -108,11 +108,15 @@ export function MockInterviewApp() {
 
   // 处理用户回答完成（手动点击或自动检测）
   const handleResponseComplete = async () => {
+    // 检查文本长度，自动模式下至少需要5个字符才触发
+    if (speechText.length <= 5) {
+      return;
+    }
+
     // 触发事件通知 MockInterviewEntryBody 开始AI分析
     window.dispatchEvent(new CustomEvent('mockInterview:userAnswerComplete', {
       detail: { candidateAnswer: speechText }
     }));
-    console.log('用户回答完成，开始AI分析');
   };
 
   return (
