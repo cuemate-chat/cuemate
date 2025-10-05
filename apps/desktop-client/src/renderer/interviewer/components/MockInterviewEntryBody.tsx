@@ -75,14 +75,14 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         await voiceCoordinator.current.initialize();
 
         // 监听语音协调器事件
-        voiceCoordinator.current.addEventListener('userStartedSpeaking', () => {
+        voiceCoordinator.current.addEventListener('userStartedSpeaking', (() => {
           // 通知 MockInterviewApp 用户开始说话
           window.dispatchEvent(new CustomEvent('mockInterview:listeningStateUpdate', {
             detail: { isListening: true }
           }));
-        });
+        }) as EventListener);
 
-        voiceCoordinator.current.addEventListener('userFinishedSpeaking', ((event: CustomEvent) => {
+        voiceCoordinator.current.addEventListener('userFinishedSpeaking', ((_event: CustomEvent) => {
           // 通知 MockInterviewApp 用户停止说话
           window.dispatchEvent(new CustomEvent('mockInterview:listeningStateUpdate', {
             detail: { isListening: false }

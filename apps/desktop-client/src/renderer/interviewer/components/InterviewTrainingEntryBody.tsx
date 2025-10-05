@@ -1,14 +1,14 @@
 
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
+import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
+import { InterviewState, InterviewStateMachine } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
+import { VoiceCoordinator } from '../../ai-question/components/mock-interview/voice/VoiceCoordinator';
+import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
 import { Model } from '../api/modelService';
-import { interviewService } from '../api/interviewService';
 import { JobPositionCard } from './JobPositionCard';
-import { InterviewStateMachine, InterviewState } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
-import { VoiceCoordinator } from '../../ai-question/components/mock-interview/voice/VoiceCoordinator';
-import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
 
 interface AudioDevice {
   deviceId: string;
@@ -71,12 +71,10 @@ export function InterviewTrainingEntryBody({
         await voiceCoordinator.current.initialize();
 
         // 监听语音协调器事件
-        voiceCoordinator.current.addEventListener('userStartedSpeaking', () => {
-          console.log('User started speaking');
-        });
+        voiceCoordinator.current.addEventListener('userStartedSpeaking', (() => {
+        }) as EventListener);
 
-        voiceCoordinator.current.addEventListener('userFinishedSpeaking', ((event: CustomEvent) => {
-          console.log('User finished speaking:', event.detail);
+        voiceCoordinator.current.addEventListener('userFinishedSpeaking', ((_event: CustomEvent) => {
           handleUserFinishedSpeaking();
         }) as EventListener);
 
