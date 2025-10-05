@@ -1,12 +1,12 @@
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
-import { aiService } from '../../utils/ai/aiService';
-import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
 import { mockInterviewService } from '../../ai-question/components/mock-interview/services/MockInterviewService';
 import { InterviewState, InterviewStateMachine } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
 import { VoiceCoordinator } from '../../ai-question/components/mock-interview/voice/VoiceCoordinator';
+import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
+import { aiService } from '../../utils/ai/aiService';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
 import { Model } from '../api/modelService';
@@ -50,6 +50,16 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   const [_interviewState, setInterviewState] = useState<InterviewState>(InterviewState.IDLE);
   const [isInitializing, setIsInitializing] = useState(false);
 
+  // 当前问题的暂存数据（等待所有数据齐全后一次性UPDATE）
+  const currentQuestionData = useRef<{
+    sequence: number;
+    questionId?: string;
+    question?: string;
+    answer?: string;
+    referenceAnswer?: string;
+    candidateAnswer?: string;
+  } | null>(null);
+
   // 初始化面试系统
   useEffect(() => {
     const initializeInterviewSystem = async () => {
@@ -67,10 +77,18 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         // 监听语音协调器事件
         voiceCoordinator.current.addEventListener('userStartedSpeaking', () => {
           console.log('User started speaking');
+          // 通知 MockInterviewApp 用户开始说话
+          window.dispatchEvent(new CustomEvent('mockInterview:listeningStateUpdate', {
+            detail: { isListening: true }
+          }));
         });
 
         voiceCoordinator.current.addEventListener('userFinishedSpeaking', ((event: CustomEvent) => {
           console.log('User finished speaking:', event.detail);
+          // 通知 MockInterviewApp 用户停止说话
+          window.dispatchEvent(new CustomEvent('mockInterview:listeningStateUpdate', {
+            detail: { isListening: false }
+          }));
           handleUserFinishedSpeaking();
         }) as EventListener);
 
@@ -128,6 +146,25 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
     initialize();
 
+    // 监听用户回答完成事件
+    const handleUserAnswerComplete = (event: CustomEvent) => {
+      const candidateAnswer = event.detail?.candidateAnswer || '';
+      console.log('Received user answer:', candidateAnswer);
+
+      // 暂存用户回答
+      if (currentQuestionData.current) {
+        currentQuestionData.current.candidateAnswer = candidateAnswer;
+      }
+
+      // 触发状态机进入AI分析阶段
+      stateMachine.current?.send({
+        type: 'USER_FINISHED_SPEAKING',
+        payload: { response: candidateAnswer }
+      });
+    };
+
+    window.addEventListener('mockInterview:userAnswerComplete', handleUserAnswerComplete as EventListener);
+
     // 清理函数
     return () => {
       if (voiceCoordinator.current) {
@@ -136,6 +173,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       if (stateMachine.current) {
         stateMachine.current.reset();
       }
+      window.removeEventListener('mockInterview:userAnswerComplete', handleUserAnswerComplete as EventListener);
     };
   }, []);
 
@@ -354,7 +392,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
           await handleAIAnalyzing(context);
           break;
         case InterviewState.GENERATING_ANSWER:
-          await handleGeneratingAnswer(context);
+          // 答案已经在 AI_SPEAKING 阶段开始生成，这里不需要处理
           break;
         case InterviewState.ROUND_COMPLETE:
           handleRoundComplete(context);
@@ -471,8 +509,14 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       const question = context.currentQuestion;
       if (!question) throw new Error('No question to speak');
 
+      // 显示AI生成的问题
+      setCurrentLine(question);
+
       // 创建问题记录
       await interviewDataService.createQuestionRecord(context.currentQuestionIndex, question);
+
+      // 立即开始生成答案（异步，不等待）
+      generateAnswerInBackground(context);
 
       // 播放问题
       await speak(question);
@@ -489,7 +533,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   // 用户监听阶段
   const handleUserListening = () => {
-    setCurrentLine('请开始回答问题...');
     setErrorMessage('');
     // 启动ASR监听
     if (voiceCoordinator.current?.canStartASR()) {
@@ -499,144 +542,205 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   // 用户说话阶段
   const handleUserSpeaking = () => {
-    setCurrentLine('正在录制您的回答...');
     setErrorMessage('');
   };
 
-  // 用户说话结束处理
+  // 用户说话结束处理（自动模式：5秒未检测到声音）
   const handleUserFinishedSpeaking = async () => {
-    try {
-      // 这里需要获取ASR识别的文本结果
-      // 临时使用模拟数据，实际需要集成ASR服务
-      const rawTranscription = '这是用户的回答内容';
-
-      // 优化转录文本
-      const optimizedText = await mockInterviewService.optimizeTranscription(rawTranscription);
-
-      stateMachine.current?.send({
-        type: 'USER_FINISHED_SPEAKING',
-        payload: { response: optimizedText }
-      });
-    } catch (error) {
-      console.error('处理用户回答失败:', error);
-      stateMachine.current?.send({ type: 'SPEAKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
-    }
+    // 自动模式触发，与手动点击"回答完毕"效果相同
+    // 触发事件通知 MockInterviewApp 完成回答（MockInterviewApp 会获取当前 speechText）
+    window.dispatchEvent(new CustomEvent('mockInterview:triggerResponseComplete'));
   };
 
   // AI分析阶段
   const handleAIAnalyzing = async (context: any) => {
-    setCurrentLine('正在保存您的回答...');
     setErrorMessage('');
 
     try {
-      // 更新用户回答到数据库
-      await interviewDataService.updateUserAnswer(context.currentQuestionIndex, context.userResponse);
+      if (!selectedModel || !currentQuestionData.current) {
+        throw new Error('数据不完整');
+      }
 
-      // 发送分析完成事件，直接进入本轮完成
-      stateMachine.current?.send({ type: 'ANALYSIS_COMPLETE' });
+      const questionData = currentQuestionData.current;
+      const candidateAnswer = questionData.candidateAnswer || context.userResponse || '';
+      const askedQuestion = context.currentQuestion;
+      const referenceAnswer = questionData.referenceAnswer || '';
+
+      // 构建分析 prompt
+      const analysisPrompt = `请分析这个面试回答，并给出详细的评价和建议。
+
+面试问题：${askedQuestion}
+
+候选人回答：${candidateAnswer}
+
+参考答案：${referenceAnswer}
+
+请按以下JSON格式输出分析结果（只输出JSON，不要其他内容）：
+{
+  "pros": "回答的亮点和优势",
+  "cons": "回答的问题和不足",
+  "suggestions": "具体的改进建议",
+  "key_points": "这个问题主要考察什么能力",
+  "assessment": "1-10分的评分并说明理由"
+}`;
+
+      const messages = [
+        {
+          role: 'user' as const,
+          content: analysisPrompt,
+        }
+      ];
+
+      const modelConfig: ModelConfig = {
+        provider: selectedModel.provider,
+        model_name: selectedModel.model_name,
+        credentials: selectedModel.credentials || '{}',
+      };
+
+      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const userDataResult = await api?.getUserData?.();
+      const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+
+      let analysisResult = '';
+
+      await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, async (chunk) => {
+        if (chunk.error) {
+          stateMachine.current?.send({
+            type: 'ANALYSIS_ERROR',
+            payload: { error: chunk.error }
+          });
+          return;
+        }
+
+        if (chunk.finished) {
+          analysisResult = analysisResult.trim();
+
+          try {
+            // 解析JSON结果
+            const analysis = JSON.parse(analysisResult);
+
+            // 获取reviewId
+            const questionState = interviewDataService.getQuestionState(context.currentQuestionIndex);
+            if (!questionState?.reviewId) {
+              throw new Error('Review ID not found');
+            }
+
+            // 所有数据齐全，一次性UPDATE数据库
+            await mockInterviewService.updateReview(questionState.reviewId, {
+              question_id: questionData.questionId,
+              question: questionData.question,
+              answer: questionData.answer,
+              reference_answer: questionData.referenceAnswer || '',
+              candidate_answer: candidateAnswer,
+              pros: analysis.pros || '',
+              cons: analysis.cons || '',
+              suggestions: analysis.suggestions || '',
+              key_points: analysis.key_points || '',
+              assessment: analysis.assessment || '',
+            });
+
+            // 更新本地状态
+            interviewDataService.markQuestionComplete(context.currentQuestionIndex);
+
+            console.log('Complete review updated for sequence', context.currentQuestionIndex);
+
+            // 发送分析完成事件
+            stateMachine.current?.send({ type: 'ANALYSIS_COMPLETE' });
+          } catch (parseError) {
+            console.error('Failed to parse analysis result:', parseError);
+            stateMachine.current?.send({
+              type: 'ANALYSIS_ERROR',
+              payload: { error: '分析结果解析失败' }
+            });
+          }
+        } else {
+          analysisResult += chunk.content;
+        }
+      });
     } catch (error) {
       stateMachine.current?.send({ type: 'ANALYSIS_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
   };
 
-  // 生成答案阶段
-  const handleGeneratingAnswer = async (context: any) => {
-    setCurrentLine('正在生成参考答案...');
+  // 后台生成答案（在播放问题时并行执行）
+  const generateAnswerInBackground = async (context: any) => {
     setErrorMessage('');
 
     try {
-      // 检查问题相似度
-      const similarQuestions = await mockInterviewService.findSimilarQuestions(
+      if (!selectedModel) {
+        throw new Error('未选择模型');
+      }
+
+      // 从向量知识库中搜索相似问题，获取押题答案（如果有）
+      const similarQuestion = await mockInterviewService.findSimilarQuestion(
         context.currentQuestion,
-        context.questionsBank || [],
-        0.6
+        context.jobPosition.id,
+        0.8
       );
+
+      // 提取押题答案（可能为空字符串）
+      const referenceAnswerFromBank = similarQuestion?.answer || '';
+
+      // 使用专门的答案生成 prompt
+      const answerPrompt = mockInterviewService.buildAnswerPrompt(
+        context.jobPosition,
+        context.resume,
+        context.currentQuestion,
+        referenceAnswerFromBank || undefined
+      );
+
+      const messages = [
+        {
+          role: 'user' as const,
+          content: answerPrompt,
+        }
+      ];
+
+      // 准备模型配置
+      const modelConfig: ModelConfig = {
+        provider: selectedModel.provider,
+        model_name: selectedModel.model_name,
+        credentials: selectedModel.credentials || '{}',
+      };
+
+      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const userDataResult = await api?.getUserData?.();
+      const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
 
       let referenceAnswer = '';
 
-      if (similarQuestions.length > 0 && similarQuestions[0].useAsReference) {
-        // 使用押题答案
-        referenceAnswer = similarQuestions[0].question.answer || '无参考答案';
-
-        // 直接完成
-        await interviewDataService.updateReferenceAnswer(
-          context.currentQuestionIndex,
-          referenceAnswer
-        );
-
-        onAnswerGenerated?.(referenceAnswer);
-
-        stateMachine.current?.send({
-          type: 'ANSWER_GENERATED',
-          payload: { answer: referenceAnswer }
-        });
-      } else {
-        if (!selectedModel) {
-          throw new Error('未选择模型');
+      await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, async (chunk) => {
+        if (chunk.error) {
+          stateMachine.current?.send({
+            type: 'GENERATION_ERROR',
+            payload: { error: chunk.error }
+          });
+          return;
         }
 
-        // 使用LLM生成答案
-        const systemPrompt = context.initPrompt || mockInterviewService.buildInitPrompt(
-          context.jobPosition,
-          context.resume,
-          context.questionsBank || []
-        );
+        if (chunk.finished) {
+          referenceAnswer = referenceAnswer.trim();
 
-        const answerPrompt = `请为以下面试问题生成一个优秀的参考答案：\n\n问题：${context.currentQuestion}\n\n要求：\n1. 答案要专业、具体、有条理\n2. 结合实际工作经验\n3. 体现相关技能和能力\n4. 控制在200字以内`;
+          // 暂存押题信息和参考答案到本地状态（不写数据库）
+          currentQuestionData.current = {
+            sequence: context.currentQuestionIndex,
+            questionId: similarQuestion?.questionId,
+            question: similarQuestion?.question,
+            answer: similarQuestion?.answer,
+            referenceAnswer: referenceAnswer,
+          };
 
-        const messages = [
-          {
-            role: 'system' as const,
-            content: systemPrompt,
-          },
-          {
-            role: 'user' as const,
-            content: answerPrompt,
-          }
-        ];
-
-        // 准备模型配置
-        const modelConfig: ModelConfig = {
-          provider: selectedModel.provider,
-          model_name: selectedModel.model_name,
-          credentials: selectedModel.credentials || '{}',
-        };
-
-        const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-        const userDataResult = await api?.getUserData?.();
-        const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
-
-        await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, async (chunk) => {
-          if (chunk.error) {
-            stateMachine.current?.send({
-              type: 'GENERATION_ERROR',
-              payload: { error: chunk.error }
-            });
-            return;
-          }
-
-          if (chunk.finished) {
-            referenceAnswer = referenceAnswer.trim();
-
-            // 更新参考答案到数据库
-            await interviewDataService.updateReferenceAnswer(
-              context.currentQuestionIndex,
-              referenceAnswer
-            );
-
-            // 通知上层组件
-            onAnswerGenerated?.(referenceAnswer);
-
-            // 发送答案生成完成事件
-            stateMachine.current?.send({
-              type: 'ANSWER_GENERATED',
-              payload: { answer: referenceAnswer }
-            });
-          } else {
-            referenceAnswer += chunk.content;
-          }
-        });
-      }
+          // 发送答案生成完成事件
+          stateMachine.current?.send({
+            type: 'ANSWER_GENERATED',
+            payload: { answer: referenceAnswer }
+          });
+        } else {
+          // 流式输出：每个chunk都实时更新UI
+          referenceAnswer += chunk.content;
+          onAnswerGenerated?.(referenceAnswer);
+        }
+      });
     } catch (error) {
       stateMachine.current?.send({ type: 'GENERATION_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
@@ -667,8 +771,8 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     setErrorMessage('');
 
     try {
-      // 结束面试数据记录
-      interviewDataService.finishInterview();
+      // 标记面试完成
+      interviewDataService.markInterviewComplete();
 
       // 发送生成报告事件
       stateMachine.current?.send({ type: 'GENERATE_REPORT' });
