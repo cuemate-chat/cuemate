@@ -132,14 +132,22 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
         {selectedCard === '语音测试' && <VoiceTestBody />}
         {selectedCard === '语音提问' && <VoiceQAEntryBody question={question} onVoiceToggle={handleVoiceToggle} />}
         {selectedCard === '模拟面试' && (
-          <MockInterviewEntryBody onStart={async () => {
-            setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-recording' });
-            if ((window as any).electronAPI) {
-              await (window as any).electronAPI.switchToMode('mock-interview');
-              await (window as any).electronAPI.showAIQuestion();
-              await (window as any).electronAPI.showAIQuestionHistory();
-            }
-          }} />
+          <MockInterviewEntryBody
+            onStart={async () => {
+              setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-recording' });
+              if ((window as any).electronAPI) {
+                await (window as any).electronAPI.switchToMode('mock-interview');
+                await (window as any).electronAPI.showAIQuestion();
+                await (window as any).electronAPI.showAIQuestionHistory();
+              }
+            }}
+            onAnswerGenerated={(answer: string) => {
+              // 触发事件，让 MockInterviewApp 显示答案
+              window.dispatchEvent(new CustomEvent('mockInterview:aiAnswerUpdate', {
+                detail: { answer }
+              }));
+            }}
+          />
         )}
         {selectedCard === '面试训练' && (
           <InterviewTrainingEntryBody onStart={async () => {

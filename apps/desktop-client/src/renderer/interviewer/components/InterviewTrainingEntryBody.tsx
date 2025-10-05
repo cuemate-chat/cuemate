@@ -300,14 +300,15 @@ export function InterviewTrainingEntryBody({
       // 通知上层组件
       onUserAnswer?.(rawTranscription);
 
+      // TODO: 面试训练模式的数据记录待实现
       // 记录用户回答
-      if (stateMachine.current) {
-        const context = stateMachine.current.getContext();
-        await interviewDataService.updateUserAnswer(
-          context.currentQuestionIndex || 0,
-          rawTranscription
-        );
-      }
+      // if (stateMachine.current) {
+      //   const context = stateMachine.current.getContext();
+      //   await interviewDataService.updateUserAnswer(
+      //     context.currentQuestionIndex || 0,
+      //     rawTranscription
+      //   );
+      // }
 
       // 继续监听下一个问题
       setTimeout(() => {
