@@ -76,7 +76,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
         // 监听语音协调器事件
         voiceCoordinator.current.addEventListener('userStartedSpeaking', () => {
-          console.log('User started speaking');
           // 通知 MockInterviewApp 用户开始说话
           window.dispatchEvent(new CustomEvent('mockInterview:listeningStateUpdate', {
             detail: { isListening: true }
@@ -84,7 +83,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         });
 
         voiceCoordinator.current.addEventListener('userFinishedSpeaking', ((event: CustomEvent) => {
-          console.log('User finished speaking:', event.detail);
           // 通知 MockInterviewApp 用户停止说话
           window.dispatchEvent(new CustomEvent('mockInterview:listeningStateUpdate', {
             detail: { isListening: false }
@@ -369,7 +367,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   // 处理状态机状态变化
   const handleStateChange = async (state: InterviewState, context: any) => {
-    console.log('Interview state changed:', state, context);
 
     try {
       switch (state) {

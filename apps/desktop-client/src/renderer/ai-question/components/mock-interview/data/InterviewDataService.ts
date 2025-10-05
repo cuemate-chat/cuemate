@@ -80,8 +80,6 @@ export class InterviewDataService {
       startTime: Date.now(),
       isComplete: false,
     };
-
-    console.log(`Initialized interview data state for interview ${interviewId}`);
   }
 
   /**

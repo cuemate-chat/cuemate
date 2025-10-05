@@ -89,7 +89,6 @@ export class VoiceCoordinator extends EventTarget {
     this.clearAutoEndTimer();
 
     this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
-    console.log('TTS started');
   }
 
   // TTS播放完成
@@ -109,7 +108,6 @@ export class VoiceCoordinator extends EventTarget {
     }, this.config.ttsDelay);
 
     this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
-    console.log('TTS completed, will start ASR listening in', this.config.ttsDelay, 'ms');
   }
 
   // 开始ASR监听
