@@ -116,6 +116,23 @@
   display: inline-block;
 }
 
+/* 计时器样式 */
+.interviewer-timer {
+  padding: 2px 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-left: 8px;
+}
+
+.timer-display {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
 /* 通用头部按钮：用于历史记录和关闭 */
 .ai-header-btn {
   height: 20px;
