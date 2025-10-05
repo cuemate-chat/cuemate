@@ -1,16 +1,21 @@
 import { EventEmitter } from 'events';
 import PQueue from 'p-queue';
 import { Config } from '../config/index.js';
-import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from '../providers/base.js';
-import { DeepSeekProvider } from '../providers/deepseek.js';
-import { OpenAICompatibleProvider } from '../providers/openai-compatible.js';
-import { OpenAIProvider } from '../providers/openai.js';
 import { AnthropicProvider } from '../providers/anthropic.js';
 import { AzureOpenAIProvider } from '../providers/azure-openai.js';
+import {
+  BaseLLMProvider,
+  CompletionRequest,
+  CompletionResponse,
+  RuntimeConfig,
+} from '../providers/base.js';
+import { DeepSeekProvider } from '../providers/deepseek.js';
 import { GeminiProvider } from '../providers/gemini.js';
 import { KimiProvider } from '../providers/kimi.js';
 import { MoonshotProvider } from '../providers/moonshot.js';
 import { OllamaProvider } from '../providers/ollama.js';
+import { OpenAICompatibleProvider } from '../providers/openai-compatible.js';
+import { OpenAIProvider } from '../providers/openai.js';
 import { QwenProvider } from '../providers/qwen.js';
 import { SiliconFlowProvider } from '../providers/siliconflow.js';
 import { TencentProvider } from '../providers/tencent.js';
@@ -51,14 +56,14 @@ export class LLMManager extends EventEmitter {
 
     // 自动注册所有 providers（启动时不需要配置）
     this.providers = this.initializeAllProviders();
-    
+
     // 初始化提供者状态
     this.initializeProviderStatus();
   }
 
   private initializeAllProviders(): Map<string, BaseLLMProvider> {
     const providers = new Map<string, BaseLLMProvider>();
-    
+
     // 注册所有 providers（使用新架构）
     providers.set('openai', new OpenAIProvider());
     providers.set('deepseek', new DeepSeekProvider());
@@ -75,9 +80,11 @@ export class LLMManager extends EventEmitter {
     providers.set('vllm', new VllmProvider());
     providers.set('volcengine', new VolcEngineProvider());
     providers.set('zhipu', new ZhipuProvider());
-    
-    logger.info(`Registered ${providers.size} providers: ${Array.from(providers.keys()).join(', ')}`);
-    
+
+    logger.info(
+      `Registered ${providers.size} providers: ${Array.from(providers.keys()).join(', ')}`,
+    );
+
     return providers;
   }
 
@@ -106,11 +113,16 @@ export class LLMManager extends EventEmitter {
     }
   }
 
-  async complete(request: CompletionRequest, runtimeConfig: RuntimeConfig): Promise<CompletionResponse> {
+  async complete(
+    request: CompletionRequest,
+    runtimeConfig: RuntimeConfig,
+  ): Promise<CompletionResponse> {
     // 根据 runtimeConfig.provider 选择对应的 provider
     const provider = this.providers.get(runtimeConfig.provider);
     if (!provider) {
-      throw new Error(`Provider ${runtimeConfig.provider} not found. Available providers: ${Array.from(this.providers.keys()).join(', ')}`);
+      throw new Error(
+        `Provider ${runtimeConfig.provider} not found. Available providers: ${Array.from(this.providers.keys()).join(', ')}`,
+      );
     }
 
     return this.executeWithTimeout(provider, request, runtimeConfig);
@@ -131,7 +143,9 @@ export class LLMManager extends EventEmitter {
 
     try {
       const raced = await Promise.race<CompletionResponse | never>([
-        this.queue.add(() => provider.complete(request, runtimeConfig)) as Promise<CompletionResponse>,
+        this.queue.add(() =>
+          provider.complete(request, runtimeConfig),
+        ) as Promise<CompletionResponse>,
         timeoutPromise,
       ]);
 
@@ -145,7 +159,10 @@ export class LLMManager extends EventEmitter {
     }
   }
 
-  async stream(request: CompletionRequest, runtimeConfig: RuntimeConfig): Promise<AsyncGenerator<string>> {
+  async stream(
+    request: CompletionRequest,
+    runtimeConfig: RuntimeConfig,
+  ): Promise<AsyncGenerator<string>> {
     const provider = this.providers.get(runtimeConfig.provider);
     if (!provider) {
       throw new Error(`Provider ${runtimeConfig.provider} not found`);
@@ -189,15 +206,12 @@ export class LLMManager extends EventEmitter {
   }
 
   async healthCheck(): Promise<Map<string, boolean>> {
-    // TODO: 整体健康检查需要 RuntimeConfig，暂时返回所有 providers 为可用
     const results = new Map<string, boolean>();
 
     for (const [id] of this.providers) {
-      results.set(id, true); // 暂时认为所有注册的 providers 都是可用的
+      results.set(id, true);
     }
 
     return results;
   }
-
-  // 已移除动态创建 provider 的方法，现在使用统一注册机制
 }
