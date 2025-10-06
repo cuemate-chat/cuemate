@@ -1,10 +1,10 @@
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
+import { setMockInterviewState } from '../../utils/mockInterviewState';
 import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
 import { mockInterviewService } from '../../ai-question/components/mock-interview/services/MockInterviewService';
 import { InterviewState, InterviewStateMachine } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
-import { VoiceCoordinator } from '../../ai-question/components/mock-interview/voice/VoiceCoordinator';
 import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { aiService } from '../../utils/ai/aiService';
 import { interviewService } from '../api/interviewService';
@@ -46,7 +46,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   // 面试状态管理
   const stateMachine = useRef<InterviewStateMachine | null>(null);
-  const voiceCoordinator = useRef<VoiceCoordinator | null>(null);
   const [_interviewState, setInterviewState] = useState<InterviewState>(InterviewState.IDLE);
   const [isInitializing, setIsInitializing] = useState(false);
 
@@ -62,40 +61,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   // 初始化面试系统
   useEffect(() => {
-    const initializeInterviewSystem = async () => {
-      try {
-        // 初始化语音协调器
-        voiceCoordinator.current = new VoiceCoordinator({
-          silenceThreshold: 3000,
-          volumeThreshold: 0.01,
-          ttsDelay: 500,
-          autoEndTimeout: 5000,
-        });
-
-        await voiceCoordinator.current.initialize();
-
-        // 监听语音协调器事件
-        voiceCoordinator.current.addEventListener('userStartedSpeaking', (() => {
-          // 通知 MockInterviewApp 用户开始说话
-          window.dispatchEvent(new CustomEvent('mockInterview:listeningStateUpdate', {
-            detail: { isListening: true }
-          }));
-        }) as EventListener);
-
-        voiceCoordinator.current.addEventListener('userFinishedSpeaking', ((_event: CustomEvent) => {
-          // 通知 MockInterviewApp 用户停止说话
-          window.dispatchEvent(new CustomEvent('mockInterview:listeningStateUpdate', {
-            detail: { isListening: false }
-          }));
-          handleUserFinishedSpeaking();
-        }) as EventListener);
-
-      } catch (error) {
-        console.error('Failed to initialize interview system:', error);
-        setErrorMessage('面试系统初始化失败，请刷新页面重试');
-        setCurrentLine('');
-      }
-    };
 
     const loadAudioSettings = async () => {
       try {
@@ -135,14 +100,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       }
     };
 
-    const initialize = async () => {
-      await Promise.all([
-        initializeInterviewSystem(),
-        loadAudioSettings()
-      ]);
-    };
-
-    initialize();
+    loadAudioSettings();
 
     // 监听用户回答完成事件
     const handleUserAnswerComplete = (event: CustomEvent) => {
@@ -165,9 +123,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
     // 清理函数
     return () => {
-      if (voiceCoordinator.current) {
-        voiceCoordinator.current.destroy();
-      }
       if (stateMachine.current) {
         stateMachine.current.reset();
       }
@@ -181,19 +136,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         throw new Error('Piper TTS 不可用');
       }
 
-      // 通知语音协调器开始TTS
-      if (voiceCoordinator.current) {
-        voiceCoordinator.current.startTTS();
-      }
-
       // 使用混合语言TTS，无需指定语音模型
       const options = { outputDevice: selectedSpeaker };
       await (window as any).electronInterviewerAPI?.piperTTS?.speak?.(text, options);
-
-      // 通知语音协调器TTS完成
-      if (voiceCoordinator.current) {
-        voiceCoordinator.current.onTTSComplete();
-      }
 
       setCurrentLine(`${text}`);
       setErrorMessage('');
@@ -531,10 +476,8 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // 用户监听阶段
   const handleUserListening = () => {
     setErrorMessage('');
-    // 启动ASR监听
-    if (voiceCoordinator.current?.canStartASR()) {
-      voiceCoordinator.current.startASRListening();
-    }
+    // 通知右侧窗口开始语音识别
+    setMockInterviewState({ isListening: true, speechText: '' });
   };
 
   // 用户说话阶段
@@ -542,12 +485,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     setErrorMessage('');
   };
 
-  // 用户说话结束处理（自动模式：5秒未检测到声音）
-  const handleUserFinishedSpeaking = async () => {
-    // 自动模式触发，与手动点击"回答完毕"效果相同
-    // 触发事件通知 MockInterviewApp 完成回答（MockInterviewApp 会获取当前 speechText）
-    window.dispatchEvent(new CustomEvent('mockInterview:triggerResponseComplete'));
-  };
 
   // AI分析阶段
   const handleAIAnalyzing = async (context: any) => {
@@ -726,6 +663,8 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
             answer: similarQuestion?.answer,
             referenceAnswer: referenceAnswer,
           };
+
+          onAnswerGenerated?.(referenceAnswer);
 
           // 发送答案生成完成事件
           stateMachine.current?.send({

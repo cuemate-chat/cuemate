@@ -2,6 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { GraduationCap, MessageSquare, Mic, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
+import { setMockInterviewState } from '../../utils/mockInterviewState';
 import { startVoiceQA, stopVoiceQA, useVoiceQAState } from '../../utils/voiceQA';
 import { InterviewTrainingEntryBody } from './InterviewTrainingEntryBody';
 import { MockInterviewEntryBody } from './MockInterviewEntryBody';
@@ -142,10 +143,8 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
               }
             }}
             onAnswerGenerated={(answer: string) => {
-              // 触发事件，让 MockInterviewApp 显示答案
-              window.dispatchEvent(new CustomEvent('mockInterview:aiAnswerUpdate', {
-                detail: { answer }
-              }));
+              // 通过 BroadcastChannel + localStorage 跨窗口传递数据
+              setMockInterviewState({ aiMessage: answer, isLoading: false });
             }}
           />
         )}
