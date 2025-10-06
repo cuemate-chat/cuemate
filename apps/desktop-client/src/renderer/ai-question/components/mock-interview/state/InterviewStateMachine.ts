@@ -1,17 +1,17 @@
 export enum InterviewState {
-  IDLE = 'idle',                          // 空闲状态
-  INITIALIZING = 'initializing',          // 初始化面试信息
-  AI_THINKING = 'ai_thinking',            // AI分析信息生成问题
-  AI_SPEAKING = 'ai_speaking',            // AI语音提问
-  USER_LISTENING = 'user_listening',      // 等待用户回答
-  USER_SPEAKING = 'user_speaking',        // 用户语音回答
-  AI_ANALYZING = 'ai_analyzing',          // AI分析用户回答
+  IDLE = 'idle', // 空闲状态
+  INITIALIZING = 'initializing', // 初始化面试信息
+  AI_THINKING = 'ai_thinking', // AI分析信息生成问题
+  AI_SPEAKING = 'ai_speaking', // AI语音提问
+  USER_LISTENING = 'user_listening', // 等待用户回答
+  USER_SPEAKING = 'user_speaking', // 用户语音回答
+  AI_ANALYZING = 'ai_analyzing', // AI分析用户回答
   GENERATING_ANSWER = 'generating_answer', // 生成参考答案
-  ROUND_COMPLETE = 'round_complete',      // 本轮完成
-  INTERVIEW_ENDING = 'interview_ending',   // 面试结束中
+  ROUND_COMPLETE = 'round_complete', // 本轮完成
+  INTERVIEW_ENDING = 'interview_ending', // 面试结束中
   GENERATING_REPORT = 'generating_report', // 生成面试报告
-  COMPLETED = 'completed',                // 面试完成
-  ERROR = 'error'                         // 错误状态
+  COMPLETED = 'completed', // 面试完成
+  ERROR = 'error', // 错误状态
 }
 
 export interface InterviewContext {
@@ -47,7 +47,7 @@ const stateTransitions: Record<InterviewState, Record<string, InterviewState>> =
     THINKING_ERROR: InterviewState.ERROR,
   },
   [InterviewState.AI_SPEAKING]: {
-    SPEAKING_COMPLETE: InterviewState.GENERATING_ANSWER,
+    SPEAKING_COMPLETE: InterviewState.USER_LISTENING, // 播放完成后直接进入用户监听,答案在后台生成
     SPEAKING_ERROR: InterviewState.ERROR,
   },
   [InterviewState.GENERATING_ANSWER]: {
@@ -56,13 +56,16 @@ const stateTransitions: Record<InterviewState, Record<string, InterviewState>> =
   },
   [InterviewState.USER_LISTENING]: {
     USER_STARTED_SPEAKING: InterviewState.USER_SPEAKING,
+    USER_FINISHED_SPEAKING: InterviewState.AI_ANALYZING, // 支持直接从监听状态到分析状态
     LISTENING_TIMEOUT: InterviewState.AI_THINKING, // 超时重新提问
     LISTENING_ERROR: InterviewState.ERROR,
+    ANSWER_GENERATED: InterviewState.USER_LISTENING, // 答案在后台生成完成,保持当前状态
   },
   [InterviewState.USER_SPEAKING]: {
     USER_FINISHED_SPEAKING: InterviewState.AI_ANALYZING,
     MANUAL_STOP: InterviewState.AI_ANALYZING,
     SPEAKING_ERROR: InterviewState.ERROR,
+    ANSWER_GENERATED: InterviewState.USER_SPEAKING, // 答案在后台生成完成,保持当前状态
   },
   [InterviewState.AI_ANALYZING]: {
     ANALYSIS_COMPLETE: InterviewState.ROUND_COMPLETE,
@@ -142,7 +145,6 @@ export class InterviewStateMachine {
     // 通知状态变化监听器
     this.notifyStateChange();
 
-    console.log(`State transition: ${event.type} -> ${this.currentState}`, this.context);
     return true;
   }
 
@@ -218,7 +220,7 @@ export class InterviewStateMachine {
 
   // 通知状态变化
   private notifyStateChange(): void {
-    this.stateChangeCallbacks.forEach(callback => {
+    this.stateChangeCallbacks.forEach((callback) => {
       try {
         callback(this.currentState, this.context);
       } catch (error) {
@@ -264,10 +266,10 @@ export class InterviewStateMachine {
       [InterviewState.INITIALIZING]: '正在初始化面试信息...',
       [InterviewState.AI_THINKING]: 'AI面试官正在思考问题...',
       [InterviewState.AI_SPEAKING]: 'AI面试官正在提问...',
+      [InterviewState.GENERATING_ANSWER]: '正在生成参考答案...',
       [InterviewState.USER_LISTENING]: '等待您的回答',
       [InterviewState.USER_SPEAKING]: '正在录制您的回答...',
       [InterviewState.AI_ANALYZING]: '正在分析您的回答...',
-      [InterviewState.GENERATING_ANSWER]: '正在生成参考答案...',
       [InterviewState.ROUND_COMPLETE]: '本轮问答完成',
       [InterviewState.INTERVIEW_ENDING]: '面试即将结束...',
       [InterviewState.GENERATING_REPORT]: '正在生成面试报告...',

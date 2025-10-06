@@ -216,10 +216,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       });
 
       // 监听状态机变化
-      stateMachine.current.onStateChange((state, context) => {
+      stateMachine.current.onStateChange(async (state, context) => {
         setInterviewState(state);
         onStateChange?.(state);
-        handleStateChange(state, context);
+        await handleStateChange(state, context);
       });
 
       // 初始化数据服务
