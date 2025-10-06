@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { useMockInterviewState } from '../../../utils/mockInterviewState';
+import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
 import { MockInterviewBody } from './MockInterviewBody.tsx';
 import { MockInterviewFooter } from './MockInterviewFooter.tsx';
 import { MockInterviewHeader } from './MockInterviewHeader.tsx';
@@ -77,15 +77,14 @@ export function MockInterviewApp() {
 
   // 处理用户回答完成（手动点击或自动检测）
   const handleResponseComplete = async () => {
-    // 检查文本长度，自动模式下至少需要5个字符才触发
+    // 检查文本长度，至少需要5个字符才触发
     if (speechText.length <= 5) {
       return;
     }
 
-    // 触发事件通知 MockInterviewEntryBody 开始AI分析
-    window.dispatchEvent(new CustomEvent('mockInterview:userAnswerComplete', {
-      detail: { candidateAnswer: speechText }
-    }));
+    // 通过 BroadcastChannel + localStorage 跨窗口传递用户回答
+    // 左侧窗口会监听 candidateAnswer 变化并触发 AI 分析
+    setMockInterviewState({ candidateAnswer: speechText });
   };
 
   return (
