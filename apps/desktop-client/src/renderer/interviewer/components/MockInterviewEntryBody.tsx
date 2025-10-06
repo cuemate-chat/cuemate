@@ -1,7 +1,8 @@
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
-import { setMockInterviewState } from '../../utils/mockInterviewState';
+import { setMockInterviewState, useMockInterviewState } from '../../utils/mockInterviewState';
+import { buildAnalysisPrompt, buildAnswerPrompt, buildInitPrompt } from '../../prompts/prompts';
 import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
 import { mockInterviewService } from '../../ai-question/components/mock-interview/services/MockInterviewService';
 import { InterviewState, InterviewStateMachine } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
@@ -59,6 +60,33 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     candidateAnswer?: string;
   } | null>(null);
 
+  // 使用跨窗口状态管理
+  const mockInterviewState = useMockInterviewState();
+
+  // 监听用户回答提交（通过跨窗口状态变化）
+  useEffect(() => {
+    const candidateAnswer = mockInterviewState.candidateAnswer;
+
+    // 只有当 candidateAnswer 有值且状态机已初始化时才处理
+    if (candidateAnswer && stateMachine.current) {
+      console.log('Received user answer via state:', candidateAnswer);
+
+      // 暂存用户回答
+      if (currentQuestionData.current) {
+        currentQuestionData.current.candidateAnswer = candidateAnswer;
+      }
+
+      // 触发状态机进入AI分析阶段
+      stateMachine.current.send({
+        type: 'USER_FINISHED_SPEAKING',
+        payload: { response: candidateAnswer }
+      });
+
+      // 清空 candidateAnswer 避免重复触发
+      setMockInterviewState({ candidateAnswer: '' });
+    }
+  }, [mockInterviewState.candidateAnswer]);
+
   // 初始化面试系统
   useEffect(() => {
 
@@ -102,31 +130,11 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
     loadAudioSettings();
 
-    // 监听用户回答完成事件
-    const handleUserAnswerComplete = (event: CustomEvent) => {
-      const candidateAnswer = event.detail?.candidateAnswer || '';
-      console.log('Received user answer:', candidateAnswer);
-
-      // 暂存用户回答
-      if (currentQuestionData.current) {
-        currentQuestionData.current.candidateAnswer = candidateAnswer;
-      }
-
-      // 触发状态机进入AI分析阶段
-      stateMachine.current?.send({
-        type: 'USER_FINISHED_SPEAKING',
-        payload: { response: candidateAnswer }
-      });
-    };
-
-    window.addEventListener('mockInterview:userAnswerComplete', handleUserAnswerComplete as EventListener);
-
     // 清理函数
     return () => {
       if (stateMachine.current) {
         stateMachine.current.reset();
       }
-      window.removeEventListener('mockInterview:userAnswerComplete', handleUserAnswerComplete as EventListener);
     };
   }, []);
 
@@ -365,7 +373,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
     try {
       // 构建初始化prompt（用于后续LLM调用）
-      mockInterviewService.buildInitPrompt(
+      buildInitPrompt(
         context.jobPosition,
         context.resume,
         context.questionsBank
@@ -389,7 +397,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       }
 
       // 构建完整的系统 prompt（包含岗位和简历信息）
-      const systemPrompt = context.initPrompt || mockInterviewService.buildInitPrompt(
+      const systemPrompt = context.initPrompt || buildInitPrompt(
         context.jobPosition,
         context.resume,
         context.questionsBank || []
@@ -501,22 +509,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       const referenceAnswer = questionData.referenceAnswer || '';
 
       // 构建分析 prompt
-      const analysisPrompt = `请分析这个面试回答，并给出详细的评价和建议。
-
-面试问题：${askedQuestion}
-
-候选人回答：${candidateAnswer}
-
-参考答案：${referenceAnswer}
-
-请按以下JSON格式输出分析结果（只输出JSON，不要其他内容）：
-{
-  "pros": "回答的亮点和优势",
-  "cons": "回答的问题和不足",
-  "suggestions": "具体的改进建议",
-  "key_points": "这个问题主要考察什么能力",
-  "assessment": "1-10分的评分并说明理由"
-}`;
+      const analysisPrompt = buildAnalysisPrompt(askedQuestion, candidateAnswer, referenceAnswer);
 
       const messages = [
         {
@@ -616,7 +609,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       const referenceAnswerFromBank = similarQuestion?.answer || '';
 
       // 使用专门的答案生成 prompt
-      const answerPrompt = mockInterviewService.buildAnswerPrompt(
+      const answerPrompt = buildAnswerPrompt(
         context.jobPosition,
         context.resume,
         context.currentQuestion,
