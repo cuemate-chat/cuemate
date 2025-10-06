@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 export interface MockInterviewState {
   aiMessage: string;
   speechText: string;
+  candidateAnswer: string; // 用户提交的回答（用于跨窗口触发AI分析）
   isLoading: boolean;
   isListening: boolean;
   isAutoMode: boolean; // 自动/手动模式
@@ -24,7 +25,7 @@ try {
 const listeners = new Set<(s: MockInterviewState) => void>();
 
 function getDefaultState(): MockInterviewState {
-  return { aiMessage: '', speechText: '', isLoading: false, isListening: false, isAutoMode: true, updatedAt: Date.now() };
+  return { aiMessage: '', speechText: '', candidateAnswer: '', isLoading: false, isListening: false, isAutoMode: true, updatedAt: Date.now() };
 }
 
 export function getMockInterviewState(): MockInterviewState {
@@ -40,6 +41,7 @@ export function setMockInterviewState(next: Partial<MockInterviewState>): MockIn
   const merged: MockInterviewState = {
     aiMessage: next.aiMessage ?? current.aiMessage,
     speechText: next.speechText ?? current.speechText,
+    candidateAnswer: next.candidateAnswer ?? current.candidateAnswer,
     isLoading: next.isLoading ?? current.isLoading,
     isListening: next.isListening ?? current.isListening,
     isAutoMode: next.isAutoMode ?? current.isAutoMode,
