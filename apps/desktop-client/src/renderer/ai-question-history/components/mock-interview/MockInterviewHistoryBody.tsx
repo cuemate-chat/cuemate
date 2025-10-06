@@ -8,12 +8,14 @@ interface WindowBodyProps {
   interviewId?: string;
   onDataLoaded?: (reviews: InterviewReview[]) => void;
   filteredReviews?: InterviewReview[];
+  refreshTrigger?: number;
 }
 
 export function MockInterviewHistoryBody({
   interviewId,
   onDataLoaded,
-  filteredReviews
+  filteredReviews,
+  refreshTrigger
 }: WindowBodyProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [reviews, setReviews] = useState<InterviewReview[]>([]);
@@ -48,7 +50,7 @@ export function MockInterviewHistoryBody({
     return () => {
       clearInterval(refreshInterval);
     };
-  }, [interviewId, onDataLoaded]);
+  }, [interviewId, onDataLoaded, refreshTrigger]);
 
   // 使用过滤后的数据进行显示
   const displayReviews = filteredReviews !== undefined ? filteredReviews : reviews;
@@ -72,9 +74,13 @@ export function MockInterviewHistoryBody({
               <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <div className="ai-empty-title">暂无面试记录</div>
+          <div className="ai-empty-title">
+            {!interviewId ? '当前没有进行中的面试' : '暂无面试记录'}
+          </div>
           <div className="ai-empty-description">
-            请开始面试以生成模拟面试记录
+            {!interviewId
+              ? '点击面试官窗口的"开始面试"按钮开始新的模拟面试'
+              : '当前面试还没有问答记录，开始回答问题后将显示在这里'}
           </div>
         </div>
       ) : isLoading ? (

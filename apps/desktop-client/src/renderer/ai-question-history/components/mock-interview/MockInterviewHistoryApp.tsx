@@ -12,6 +12,7 @@ export function MockInterviewHistoryApp() {
   const [totalItems, setTotalItems] = useState(0);
   const [allReviews, setAllReviews] = useState<InterviewReview[]>([]);
   const [filteredReviews, setFilteredReviews] = useState<InterviewReview[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // 从VoiceState获取当前面试ID
   const voiceState = useVoiceState();
@@ -43,8 +44,8 @@ export function MockInterviewHistoryApp() {
 
   // 刷新数据
   const handleRefresh = useCallback(() => {
-    // 触发 Body 组件重新加载
-    window.location.reload();
+    // 更新刷新触发器，让 Body 组件重新加载数据
+    setRefreshTrigger(prev => prev + 1);
   }, []);
 
   // 搜索处理
@@ -71,6 +72,7 @@ export function MockInterviewHistoryApp() {
           interviewId={interviewId}
           onDataLoaded={handleDataLoaded}
           filteredReviews={filteredReviews}
+          refreshTrigger={refreshTrigger}
         />
         <MockInterviewHistoryFooter
           totalItems={totalItems}
