@@ -1,15 +1,16 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { useMockInterviewState } from '../../../utils/mockInterviewState';
 import { MockInterviewBody } from './MockInterviewBody.tsx';
 import { MockInterviewFooter } from './MockInterviewFooter.tsx';
 import { MockInterviewHeader } from './MockInterviewHeader.tsx';
 
 export function MockInterviewApp() {
   const [heightPercentage, setHeightPercentage] = useState(75);
-  const [speechText, setSpeechText] = useState('');
-  const [aiMessage, setAiMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+
+  // 使用跨窗口状态管理
+  const mockInterviewState = useMockInterviewState();
+  const { aiMessage, speechText, isLoading } = mockInterviewState;
 
   // 组件初始化时加载高度设置和监听外部事件
   useEffect(() => {
@@ -19,49 +20,17 @@ export function MockInterviewApp() {
 
   // 设置事件监听器接收外部数据
   const setupEventListeners = () => {
-    // 监听语音识别文本更新
-    const handleSpeechTextUpdate = (event: any) => {
-      if (event.detail?.text) {
-        setSpeechText(event.detail.text);
-      }
-    };
-
-    // 监听AI答案更新
-    const handleAIAnswerUpdate = (event: any) => {
-      if (event.detail?.answer) {
-        setAiMessage(event.detail.answer);
-      }
-    };
-
-    // 监听加载状态更新
-    const handleLoadingStateUpdate = (event: any) => {
-      setIsLoading(event.detail?.isLoading || false);
-    };
-
     // 监听自动模式触发的回答完成
     const handleTriggerResponseComplete = () => {
       handleResponseComplete();
     };
 
-    // 监听语音监听状态更新
-    const handleListeningStateUpdate = (event: any) => {
-      setIsListening(event.detail?.isListening || false);
-    };
-
     // 添加事件监听器
-    window.addEventListener('mockInterview:speechTextUpdate', handleSpeechTextUpdate);
-    window.addEventListener('mockInterview:aiAnswerUpdate', handleAIAnswerUpdate);
-    window.addEventListener('mockInterview:loadingStateUpdate', handleLoadingStateUpdate);
     window.addEventListener('mockInterview:triggerResponseComplete', handleTriggerResponseComplete);
-    window.addEventListener('mockInterview:listeningStateUpdate', handleListeningStateUpdate);
 
     // 清理函数
     return () => {
-      window.removeEventListener('mockInterview:speechTextUpdate', handleSpeechTextUpdate);
-      window.removeEventListener('mockInterview:aiAnswerUpdate', handleAIAnswerUpdate);
-      window.removeEventListener('mockInterview:loadingStateUpdate', handleLoadingStateUpdate);
       window.removeEventListener('mockInterview:triggerResponseComplete', handleTriggerResponseComplete);
-      window.removeEventListener('mockInterview:listeningStateUpdate', handleListeningStateUpdate);
     };
   };
 
@@ -143,9 +112,6 @@ export function MockInterviewApp() {
 
         {/* Footer - 语音识别区域 */}
         <MockInterviewFooter
-          speechText={speechText}
-          isLoading={isLoading}
-          isListening={isListening}
           onResponseComplete={handleResponseComplete}
         />
       </motion.div>
