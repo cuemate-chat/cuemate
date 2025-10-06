@@ -206,6 +206,16 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       const response = await interviewService.createInterview(interviewData);
       setCurrentInterviewId(response.id);
 
+      // 清空上一次面试的mockInterviewState
+      setMockInterviewState({
+        aiMessage: '',
+        speechText: '',
+        candidateAnswer: '',
+        isLoading: false,
+        isListening: false,
+        isAutoMode: true,
+      });
+
       // 设置voiceState的interviewId供右侧窗口使用
       setVoiceState({ interviewId: response.id });
 

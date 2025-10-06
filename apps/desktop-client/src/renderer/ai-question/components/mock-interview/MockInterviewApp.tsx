@@ -8,6 +8,7 @@ import { MockInterviewHeader } from './MockInterviewHeader.tsx';
 
 export function MockInterviewApp() {
   const [heightPercentage, setHeightPercentage] = useState(75);
+  const [currentInterviewId, setCurrentInterviewId] = useState<string | undefined>(undefined);
 
   // 使用跨窗口状态管理
   const mockInterviewState = useMockInterviewState();
@@ -15,6 +16,22 @@ export function MockInterviewApp() {
   // 从voiceState获取当前面试ID
   const voiceState = useVoiceState();
   const interviewId = voiceState.interviewId;
+
+  // 监听 interviewId 变化，如果是新面试则清空状态
+  useEffect(() => {
+    if (interviewId !== currentInterviewId) {
+      // interviewId 发生变化，清空旧数据
+      setMockInterviewState({
+        aiMessage: '',
+        speechText: '',
+        candidateAnswer: '',
+        isLoading: false,
+        isListening: false,
+        isAutoMode: true,
+      });
+      setCurrentInterviewId(interviewId);
+    }
+  }, [interviewId, currentInterviewId]);
 
   // 只有存在interviewId才显示数据,否则显示空白
   const aiMessage = interviewId ? mockInterviewState.aiMessage : '';

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { clearVoiceState } from '../../utils/voiceState';
+import { clearVoiceState, getVoiceState } from '../../utils/voiceState';
 import { InterviewerWindowBody } from './components/InterviewerWindowBody';
 import { InterviewerWindowFooter } from './components/InterviewerWindowFooter';
 import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
@@ -27,7 +27,15 @@ export function InterviewerApp() {
     try {
       await (window as any).electronAPI?.hideInterviewer?.();
     } catch {}
-    clearVoiceState();
+
+    // 只有在没有进行中的面试时才清除状态
+    const voiceState = getVoiceState();
+    if (voiceState.subState !== 'mock-interview-recording' &&
+        voiceState.subState !== 'mock-interview-paused' &&
+        voiceState.subState !== 'interview-training-recording' &&
+        voiceState.subState !== 'interview-training-paused') {
+      clearVoiceState();
+    }
   };
 
   const handleSelectCard = async (title: string) => {
@@ -55,7 +63,15 @@ export function InterviewerApp() {
   const handleBack = async () => {
     // 返回上一页时不关闭右侧窗口，只是重置当前选择的section
     setCurrentSectionTitle(null);
-    clearVoiceState();
+
+    // 只有在没有进行中的面试时才清除状态
+    const voiceState = getVoiceState();
+    if (voiceState.subState !== 'mock-interview-recording' &&
+        voiceState.subState !== 'mock-interview-paused' &&
+        voiceState.subState !== 'interview-training-recording' &&
+        voiceState.subState !== 'interview-training-paused') {
+      clearVoiceState();
+    }
   };
 
   return (
