@@ -195,7 +195,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         resumesTitle: selectedPosition.resumeTitle,
         resumesContent: selectedPosition.resumeContent,
         interviewType: 'mock' as const,
-        status: 'active' as const,
+        status: 'mock-interview-recording' as const,
         message: '面试进行中',
         locale: selectedLanguage,
         timezone: userData?.timezone || 'Asia/Shanghai',
