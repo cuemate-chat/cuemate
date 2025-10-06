@@ -91,11 +91,14 @@ export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightP
           
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <button 
+              <button
                 className="ai-header-btn"
-                onClick={() => {
+                onClick={async () => {
                   try {
-                    (window as any).electronAPI?.showAIQuestionHistory?.();
+                    // 先切换到模拟面试模式
+                    await (window as any).electronAPI?.switchToMode?.('mock-interview');
+                    // 再打开历史窗口
+                    await (window as any).electronAPI?.showAIQuestionHistory?.();
                   } catch {}
                   onOpenHistory && onOpenHistory();
                 }}
