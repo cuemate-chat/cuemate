@@ -3,7 +3,6 @@ import { CornerDownLeft } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { startMicrophoneRecognition, type MicrophoneRecognitionController } from '../../../../utils/audioRecognition';
 import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
-import { useVoiceState } from '../../../../utils/voiceState';
 import { VoiceCoordinator } from './voice/VoiceCoordinator';
 
 interface WindowFooterProps {
