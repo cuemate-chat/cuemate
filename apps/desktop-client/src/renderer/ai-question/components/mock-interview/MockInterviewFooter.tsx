@@ -7,6 +7,7 @@ import { useVoiceState } from '../../../../utils/voiceState';
 import { VoiceCoordinator } from './voice/VoiceCoordinator';
 
 interface WindowFooterProps {
+  interviewId?: string; // 当前面试ID
   onResponseComplete: () => void; // 回答完毕回调
   className?: string;
 }
@@ -23,6 +24,7 @@ function FlashingCircle({ isActive }: { isActive: boolean }) {
 }
 
 export function MockInterviewFooter({
+  interviewId,
   onResponseComplete,
   className
 }: WindowFooterProps) {
@@ -32,19 +34,12 @@ export function MockInterviewFooter({
 
   // 使用跨窗口状态
   const mockInterviewState = useMockInterviewState();
-  const voiceState = useVoiceState();
 
-  // 只有在模拟面试活跃状态下才显示数据,否则显示空白
-  const isActiveMockInterview = voiceState.mode === 'mock-interview' && (
-    voiceState.subState === 'mock-interview-recording' ||
-    voiceState.subState === 'mock-interview-paused' ||
-    voiceState.subState === 'mock-interview-playing'
-  );
-
-  const speechText = isActiveMockInterview ? mockInterviewState.speechText : '';
-  const isLoading = isActiveMockInterview ? mockInterviewState.isLoading : false;
-  const isListening = isActiveMockInterview ? mockInterviewState.isListening : false;
-  const isAutoMode = isActiveMockInterview ? mockInterviewState.isAutoMode : true;
+  // 只有存在interviewId才显示数据,否则显示空白
+  const speechText = interviewId ? mockInterviewState.speechText : '';
+  const isLoading = interviewId ? mockInterviewState.isLoading : false;
+  const isListening = interviewId ? mockInterviewState.isListening : false;
+  const isAutoMode = interviewId ? mockInterviewState.isAutoMode : true;
 
   // 初始化 VoiceCoordinator
   useEffect(() => {

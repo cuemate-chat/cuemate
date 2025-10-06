@@ -206,6 +206,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       const response = await interviewService.createInterview(interviewData);
       setCurrentInterviewId(response.id);
 
+      // 设置voiceState的interviewId供右侧窗口使用
+      setVoiceState({ interviewId: response.id });
+
       // 获取押题题库
       const questionBank = await mockInterviewService.getQuestionBank(selectedPosition.id);
 
@@ -257,11 +260,11 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       setCurrentLine('');
       setIsInitializing(false);
 
-      // 如果面试已创建，更新状态为错误
+      // 如果面试已创建，更新状态为idle（错误）
       if (currentInterviewId) {
         try {
           await interviewService.updateInterview(currentInterviewId, {
-            status: 'deleted',
+            status: 'idle',
             message: errorMsg
           });
         } catch (updateError) {
@@ -283,9 +286,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     try {
       // 如果有当前面试ID，更新状态并调用结束面试API
       if (currentInterviewId) {
-        // 更新状态为已归档（用户主动停止）
+        // 更新状态为已完成（用户主动停止）
         await interviewService.updateInterview(currentInterviewId, {
-          status: 'archived',
+          status: 'mock-interview-completed',
           message: '用户主动停止面试'
         });
         await interviewService.endInterview(currentInterviewId);
@@ -719,7 +722,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     if (currentInterviewId) {
       try {
         await interviewService.updateInterview(currentInterviewId, {
-          status: 'completed',
+          status: 'mock-interview-completed',
           message: '面试已完成'
         });
       } catch (error) {
@@ -727,7 +730,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       }
     }
 
-    // 更新VoiceState
+    // 更新VoiceState，清空interviewId
     setVoiceState({
       mode: 'mock-interview',
       subState: 'mock-interview-completed',
@@ -741,11 +744,11 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     setErrorMessage(errorMsg);
     setCurrentLine('');
 
-    // 更新面试状态为错误并记录错误信息
+    // 更新面试状态为idle（错误）并记录错误信息
     if (currentInterviewId) {
       try {
         await interviewService.updateInterview(currentInterviewId, {
-          status: 'deleted',
+          status: 'idle',
           message: `错误: ${errorMsg}`
         });
       } catch (error) {
