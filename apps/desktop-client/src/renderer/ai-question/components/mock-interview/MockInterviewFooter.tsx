@@ -3,6 +3,7 @@ import { CornerDownLeft } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { startMicrophoneRecognition, type MicrophoneRecognitionController } from '../../../../utils/audioRecognition';
 import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
+import { useVoiceState } from '../../../../utils/voiceState';
 import { VoiceCoordinator } from './voice/VoiceCoordinator';
 
 interface WindowFooterProps {
@@ -31,7 +32,19 @@ export function MockInterviewFooter({
 
   // 使用跨窗口状态
   const mockInterviewState = useMockInterviewState();
-  const { speechText, isLoading, isListening, isAutoMode } = mockInterviewState;
+  const voiceState = useVoiceState();
+
+  // 只有在模拟面试活跃状态下才显示数据,否则显示空白
+  const isActiveMockInterview = voiceState.mode === 'mock-interview' && (
+    voiceState.subState === 'mock-interview-recording' ||
+    voiceState.subState === 'mock-interview-paused' ||
+    voiceState.subState === 'mock-interview-playing'
+  );
+
+  const speechText = isActiveMockInterview ? mockInterviewState.speechText : '';
+  const isLoading = isActiveMockInterview ? mockInterviewState.isLoading : false;
+  const isListening = isActiveMockInterview ? mockInterviewState.isListening : false;
+  const isAutoMode = isActiveMockInterview ? mockInterviewState.isAutoMode : true;
 
   // 初始化 VoiceCoordinator
   useEffect(() => {

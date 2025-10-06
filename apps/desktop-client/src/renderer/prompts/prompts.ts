@@ -110,6 +110,13 @@ ${referenceAnswer}
 }
 
 /**
+ * 构建问题生成 Prompt
+ */
+export function buildQuestionPrompt(currentQuestionIndex: number): string {
+  return `现在开始第${currentQuestionIndex + 1}个问题。请根据之前的对话历史和岗位要求，生成一个合适的面试问题。直接输出问题内容，不要包含其他解释。`;
+}
+
+/**
  * 构建回答分析 Prompt
  */
 export function buildAnalysisPrompt(

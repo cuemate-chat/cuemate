@@ -112,7 +112,6 @@ export class InterviewDataService {
     this.dataState.questions.set(sequence, questionState);
     this.dataState.currentSequence = sequence;
 
-    console.log(`Created question record ${reviewId} for sequence ${sequence}`);
     return reviewId;
   }
 

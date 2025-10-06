@@ -12,7 +12,7 @@ export function up(db: any): void {
     ALTER TABLE interviews ADD COLUMN resumes_content TEXT;
     ALTER TABLE interviews ADD COLUMN duration INTEGER DEFAULT 0;
     ALTER TABLE interviews ADD COLUMN interview_type TEXT DEFAULT 'mock' CHECK(interview_type IN ('mock','training'));
-    ALTER TABLE interviews ADD COLUMN status TEXT DEFAULT 'active' CHECK(status IN ('pending','active','completed','archived','deleted'));
+    ALTER TABLE interviews ADD COLUMN status TEXT DEFAULT 'idle';
     ALTER TABLE interviews ADD COLUMN message TEXT;
 
     -- 修改interview_reviews表的score_id字段为interview_id

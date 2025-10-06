@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
+import { useVoiceState } from '../../../../utils/voiceState';
 import { MockInterviewBody } from './MockInterviewBody.tsx';
 import { MockInterviewFooter } from './MockInterviewFooter.tsx';
 import { MockInterviewHeader } from './MockInterviewHeader.tsx';
@@ -10,7 +11,19 @@ export function MockInterviewApp() {
 
   // 使用跨窗口状态管理
   const mockInterviewState = useMockInterviewState();
-  const { aiMessage, speechText, isLoading } = mockInterviewState;
+
+  // 监听voiceState状态
+  const voiceState = useVoiceState();
+
+  // 只有在模拟面试活跃状态下才显示数据,否则显示空白
+  const isActiveMockInterview = voiceState.mode === 'mock-interview' && (
+    voiceState.subState === 'mock-interview-recording' ||
+    voiceState.subState === 'mock-interview-paused' ||
+    voiceState.subState === 'mock-interview-playing'
+  );
+  const aiMessage = isActiveMockInterview ? mockInterviewState.aiMessage : '';
+  const speechText = isActiveMockInterview ? mockInterviewState.speechText : '';
+  const isLoading = isActiveMockInterview ? mockInterviewState.isLoading : false;
 
   // 组件初始化时加载高度设置和监听外部事件
   useEffect(() => {
