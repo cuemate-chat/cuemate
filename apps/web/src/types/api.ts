@@ -135,7 +135,16 @@ export interface Interview {
   resumes_content?: string | null;
   duration: number;
   interview_type: 'mock' | 'training';
-  status: 'pending' | 'active' | 'completed' | 'archived' | 'deleted';
+  status:
+    | 'idle'
+    | 'mock-interview-recording'
+    | 'mock-interview-paused'
+    | 'mock-interview-completed'
+    | 'mock-interview-playing'
+    | 'interview-training-recording'
+    | 'interview-training-paused'
+    | 'interview-training-completed'
+    | 'interview-training-playing';
   message?: string | null;
   vector_status: number;
 }

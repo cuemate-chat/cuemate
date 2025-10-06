@@ -3,6 +3,17 @@
  * 处理面试相关的API调用
  */
 
+export type InterviewStatus =
+  | 'idle'
+  | 'mock-interview-recording'
+  | 'mock-interview-paused'
+  | 'mock-interview-completed'
+  | 'mock-interview-playing'
+  | 'interview-training-recording'
+  | 'interview-training-paused'
+  | 'interview-training-completed'
+  | 'interview-training-playing';
+
 export interface InterviewData {
   jobId: string;
   jobTitle?: string;
@@ -12,7 +23,7 @@ export interface InterviewData {
   resumesTitle?: string;
   resumesContent?: string;
   interviewType?: 'training' | 'mock';
-  status?: 'pending' | 'active' | 'completed' | 'archived' | 'deleted';
+  status?: InterviewStatus;
   message?: string;
   locale?: string;
   timezone?: string;
@@ -33,7 +44,7 @@ export interface UpdateInterviewData {
   resumesContent?: string;
   duration?: number;
   interviewType?: 'training' | 'mock';
-  status?: 'pending' | 'active' | 'completed' | 'archived' | 'deleted';
+  status?: InterviewStatus;
   message?: string;
 }
 

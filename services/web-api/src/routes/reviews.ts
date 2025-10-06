@@ -25,7 +25,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
   // - resumes_content: 简历内容 (快照数据)
   // - duration: 面试持续时长 (秒)
   // - interview_type: 面试类型 ('mock'/'training')
-  // - status: 面试状态 ('pending','active','completed','archived','deleted')
+  // - status: 面试状态 ('idle','mock-interview-recording','mock-interview-paused','mock-interview-completed','mock-interview-playing','interview-training-recording','interview-training-paused','interview-training-completed','interview-training-playing')
   // - message: 备注信息或报错信息
   // - vector_status: 向量库同步状态
 
@@ -178,7 +178,17 @@ export function registerReviewRoutes(app: FastifyInstance) {
             resumesTitle: z.string().optional(),
             resumesContent: z.string().optional(),
             interviewType: z.enum(['mock', 'training']).default('mock'),
-            status: z.enum(['pending', 'active', 'completed', 'archived', 'deleted']).optional(),
+            status: z.enum([
+              'idle',
+              'mock-interview-recording',
+              'mock-interview-paused',
+              'mock-interview-completed',
+              'mock-interview-playing',
+              'interview-training-recording',
+              'interview-training-paused',
+              'interview-training-completed',
+              'interview-training-playing'
+            ]).optional(),
             message: z.string().optional(),
             locale: z.string().optional(),
             timezone: z.string().optional(),
@@ -272,7 +282,17 @@ export function registerReviewRoutes(app: FastifyInstance) {
             resumesContent: z.string().optional(),
             duration: z.number().optional(),
             interviewType: z.enum(['mock', 'training']).optional(),
-            status: z.enum(['pending', 'active', 'completed', 'archived', 'deleted']).optional(),
+            status: z.enum([
+              'idle',
+              'mock-interview-recording',
+              'mock-interview-paused',
+              'mock-interview-completed',
+              'mock-interview-playing',
+              'interview-training-recording',
+              'interview-training-paused',
+              'interview-training-completed',
+              'interview-training-playing'
+            ]).optional(),
             message: z.string().optional(),
           })
           .parse((req as any).body || {});
