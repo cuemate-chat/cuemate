@@ -20,6 +20,7 @@ import ModelsList from './pages/ModelsList';
 import OperationLogsList from './pages/OperationLogsList';
 import PresetQuestionsList from './pages/PresetQuestionsList';
 import PrivacyPolicy from './pages/LegalPages/PrivacyPolicy';
+import PromptsList from './pages/PromptsList';
 import QuestionsList from './pages/QuestionsList';
 import ReviewDetail from './pages/Reviews/ReviewDetail';
 import Reviews from './pages/Reviews';
@@ -59,6 +60,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings/license" element={<License />} />
           <Route path="/settings/docker-monitor" element={<DockerMonitorList />} />
           <Route path="/settings/operation-logs" element={<OperationLogsList />} />
+          <Route path="/settings/prompts" element={<PromptsList />} />
           <Route path="/settings/pixel-ads" element={<AdsPixel />} />
           <Route path="/settings/ads-management" element={<AdsManagementList />} />
         </Route>
