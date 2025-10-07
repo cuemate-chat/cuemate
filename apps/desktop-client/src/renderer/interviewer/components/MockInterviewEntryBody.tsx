@@ -2,7 +2,7 @@ import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { setMockInterviewState, useMockInterviewState } from '../../utils/mockInterviewState';
-import { buildAnalysisPrompt, buildAnswerPrompt, buildInitPrompt } from '../../prompts/prompts';
+import { promptService } from '../../prompts/promptService';
 import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
 import { mockInterviewService } from '../../ai-question/components/mock-interview/services/MockInterviewService';
 import { InterviewState, InterviewStateMachine } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
@@ -386,7 +386,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
     try {
       // 构建初始化prompt（用于后续LLM调用）
-      buildInitPrompt(
+      await promptService.buildInitPrompt(
         context.jobPosition,
         context.resume,
         context.questionsBank
@@ -410,7 +410,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       }
 
       // 构建完整的系统 prompt（包含岗位和简历信息）
-      const systemPrompt = context.initPrompt || buildInitPrompt(
+      const systemPrompt = context.initPrompt || await promptService.buildInitPrompt(
         context.jobPosition,
         context.resume,
         context.questionsBank || []
@@ -522,7 +522,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       const referenceAnswer = questionData.referenceAnswer || '';
 
       // 构建分析 prompt
-      const analysisPrompt = buildAnalysisPrompt(askedQuestion, candidateAnswer, referenceAnswer);
+      const analysisPrompt = await promptService.buildAnalysisPrompt(askedQuestion, candidateAnswer, referenceAnswer);
 
       const messages = [
         {
@@ -622,7 +622,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       const referenceAnswerFromBank = similarQuestion?.answer || '';
 
       // 使用专门的答案生成 prompt
-      const answerPrompt = buildAnswerPrompt(
+      const answerPrompt = await promptService.buildAnswerPrompt(
         context.jobPosition,
         context.resume,
         context.currentQuestion,
