@@ -16,7 +16,7 @@ interface InterviewQuestion {
 export function buildInitPrompt(
   jobPosition: { title?: string; description?: string },
   resume: { resumeTitle?: string; resumeContent?: string },
-  questionBank: InterviewQuestion[]
+  questionBank: InterviewQuestion[],
 ): string {
   const questionsText = questionBank
     .map((q) => `Q: ${q.question}\nA: ${q.answer || '无参考答案'}`)
@@ -32,7 +32,7 @@ export function buildInitPrompt(
 ${resume.resumeTitle ? `简历标题：${resume.resumeTitle}` : ''}
 ${resume.resumeContent || '无简历内容'}
 
-【参考押题库】（如问题相似度>60%请基于题库答案回答）
+【参考押题库】（如问题相似度>80%请基于题库答案回答）
 ${questionsText || '无押题'}
 
 面试规则：
@@ -52,7 +52,7 @@ export function buildAnswerPrompt(
   jobPosition: { title?: string; description?: string },
   resume: { resumeTitle?: string; resumeContent?: string },
   question: string,
-  referenceAnswer?: string
+  referenceAnswer?: string,
 ): string {
   let prompt = `你是一名面试辅导专家，需要为面试者生成优质的参考答案。
 
@@ -122,7 +122,7 @@ export function buildQuestionPrompt(currentQuestionIndex: number): string {
 export function buildAnalysisPrompt(
   askedQuestion: string,
   candidateAnswer: string,
-  referenceAnswer: string
+  referenceAnswer: string,
 ): string {
   return `请分析这个面试回答，并给出详细的评价和建议。
 
