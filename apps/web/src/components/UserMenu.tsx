@@ -3,6 +3,7 @@ import {
   ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
+  CommandLineIcon,
   CpuChipIcon,
   CubeIcon,
   DocumentTextIcon,
@@ -125,6 +126,11 @@ export default function UserMenu() {
     setOpen(false);
   };
 
+  const onPrompts = () => {
+    navigate('/settings/prompts');
+    setOpen(false);
+  };
+
   const onLicense = () => {
     navigate('/settings/license');
     setOpen(false);
@@ -231,6 +237,12 @@ export default function UserMenu() {
             onClick={onPresetQuestions}
           >
             <QueueListIcon className="w-4 h-4" /> 预置题库
+          </button>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+            onClick={onPrompts}
+          >
+            <CommandLineIcon className="w-4 h-4" /> Prompt 管理
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
