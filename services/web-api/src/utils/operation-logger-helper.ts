@@ -119,4 +119,9 @@ export const OPERATION_MAPPING = {
     menu: 'AI对话',
     type: 'ai_conversation',
   },
+  // Prompt管理
+  PROMPT: {
+    menu: 'Prompt管理',
+    type: 'prompt',
+  },
 } as const;
