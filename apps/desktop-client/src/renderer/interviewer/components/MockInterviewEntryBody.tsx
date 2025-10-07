@@ -417,7 +417,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       );
 
       // 构建问题生成的用户消息
-      const questionPrompt = `现在开始第${context.currentQuestionIndex + 1}个问题。请根据之前的对话历史和岗位要求，生成一个合适的面试问题。直接输出问题内容，不要包含其他解释。`;
+      const questionPrompt = await promptService.buildQuestionPrompt(context.currentQuestionIndex);
 
       const messages = [
         {
