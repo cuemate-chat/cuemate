@@ -360,6 +360,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         case InterviewState.INTERVIEW_ENDING:
           await handleInterviewEnding();
           break;
+        case InterviewState.GENERATING_REPORT:
+          // 报告生成是异步的,不阻塞状态机,立即进入完成状态
+          stateMachine.current?.send({ type: 'REPORT_COMPLETE' });
+          break;
         case InterviewState.COMPLETED:
           handleInterviewCompleted();
           break;
