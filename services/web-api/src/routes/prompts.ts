@@ -94,6 +94,7 @@ export function registerPromptRoutes(app: FastifyInstance) {
   // 更新 prompt 内容
   const updateSchema = z.object({
     content: z.string().min(1, '内容不能为空'),
+    extra: z.string().optional(),
   });
 
   app.put('/prompts/:id', async (req, reply) => {
@@ -109,7 +110,7 @@ export function registerPromptRoutes(app: FastifyInstance) {
         });
       }
 
-      const { content } = validation.data;
+      const { content, extra } = validation.data;
 
       // 检查 prompt 是否存在
       const existing = (app as any).db
@@ -120,17 +121,18 @@ export function registerPromptRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: 'Prompt 不存在' });
       }
 
-      // 保存当前内容到 history_pre，更新 content
+      // 保存当前内容到 history_pre，更新 content 和 extra
       const now = Date.now();
       (app as any).db
         .prepare(`
           UPDATE prompts
           SET content = ?,
+              extra = ?,
               history_pre = ?,
               updated_at = ?
           WHERE id = ?
         `)
-        .run(content, existing.content, now, id);
+        .run(content, extra !== undefined ? extra : null, existing.content, now, id);
 
       await logOperation(app, req, {
         ...OPERATION_MAPPING.PROMPT,
