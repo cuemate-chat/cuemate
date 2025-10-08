@@ -11,6 +11,8 @@ export default function Reviews() {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
+  const [expandedJobContent, setExpandedJobContent] = useState<Set<string>>(new Set());
+  const [expandedResumes, setExpandedResumes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     (async () => {
@@ -79,8 +81,52 @@ export default function Reviews() {
                     </div>
                     <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
                   </div>
-                  {/* 右上角数量徽标（贴角展示） */}
-                  <div className="absolute right-3 top-2">
+                  {/* 右上角标签区域 */}
+                  <div className="absolute right-3 top-2 flex items-center gap-2">
+                    {it.duration > 0 && (
+                      <Tag color="orange" className="!m-0">
+                        时长: {Math.floor(it.duration / 60)}分{it.duration % 60}秒
+                      </Tag>
+                    )}
+                    {it.question_count > 0 && (
+                      <Tag color="cyan" className="!m-0">
+                        题目数: {it.question_count}
+                      </Tag>
+                    )}
+                    {it.interview_type && (
+                      <Tag color="geekblue" className="!m-0">
+                        {it.interview_type === 'mock' ? '模拟面试' : '面试训练'}
+                      </Tag>
+                    )}
+                    {it.status && (
+                      <Tag
+                        color={
+                          it.status.includes('completed')
+                            ? 'green'
+                            : it.status.includes('recording')
+                              ? 'red'
+                              : it.status.includes('paused')
+                                ? 'orange'
+                                : 'default'
+                        }
+                        className="!m-0"
+                      >
+                        {(() => {
+                          const statusMap: Record<string, string> = {
+                            'idle': '空闲',
+                            'mock-interview-recording': '进行中',
+                            'mock-interview-paused': '暂停',
+                            'mock-interview-completed': '已完成',
+                            'mock-interview-playing': '继续进行',
+                            'interview-training-recording': '进行中',
+                            'interview-training-paused': '暂停',
+                            'interview-training-completed': '已完成',
+                            'interview-training-playing': '继续进行',
+                          };
+                          return statusMap[it.status] || it.status;
+                        })()}
+                      </Tag>
+                    )}
                     <Badge count={it.advantages_total || 0} overflowCount={99}>
                       <span className="inline-flex items-center h-6 px-2 text-[11px] text-slate-700 bg-slate-100 border border-slate-200 rounded-full shadow-sm">
                         优缺点
@@ -90,13 +136,57 @@ export default function Reviews() {
 
                   <div className="pl-4">
                     <div className="text-slate-900 font-semibold">{it.job_title}</div>
+                    {it.job_content && (
+                      <div
+                        className={`mt-1 text-xs text-slate-500 cursor-pointer hover:text-slate-700 whitespace-pre-line ${expandedJobContent.has(it.id) ? '' : 'line-clamp-3'}`}
+                        onClick={() => {
+                          const newSet = new Set(expandedJobContent);
+                          if (newSet.has(it.id)) {
+                            newSet.delete(it.id);
+                          } else {
+                            newSet.add(it.id);
+                          }
+                          setExpandedJobContent(newSet);
+                        }}
+                      >
+                        {it.job_content}
+                      </div>
+                    )}
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                      {it.resumes_title && (
+                        <Tag color="purple" className="!m-0">
+                          简历: {it.resumes_title}
+                        </Tag>
+                      )}
+                    </div>
+                    {it.resumes_content && (
+                      <div
+                        className={`mt-1 text-xs text-slate-400 italic cursor-pointer hover:text-slate-600 whitespace-pre-line ${expandedResumes.has(it.id) ? '' : 'line-clamp-3'}`}
+                        onClick={() => {
+                          const newSet = new Set(expandedResumes);
+                          if (newSet.has(it.id)) {
+                            newSet.delete(it.id);
+                          } else {
+                            newSet.add(it.id);
+                          }
+                          setExpandedResumes(newSet);
+                        }}
+                      >
+                        {it.resumes_content}
+                      </div>
+                    )}
                     {it.overall_summary && (
                       <div className="mt-2 text-sm text-slate-700 whitespace-pre-line line-clamp-2">
                         {it.overall_summary}
                       </div>
                     )}
+                    {it.message && (
+                      <div className="mt-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                        {it.message}
+                      </div>
+                    )}
                     <div className="mt-3 flex items-center justify-between gap-3">
-                      <div className="flex flex-wrap gap-3 text-sm">
+                      <div className="flex flex-wrap gap-2 text-sm items-center">
                         {(() => {
                           const formatTag = (val?: string) => {
                             const raw = val || '—';
