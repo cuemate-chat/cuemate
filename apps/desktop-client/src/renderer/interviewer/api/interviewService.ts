@@ -153,6 +153,80 @@ export class InterviewService {
       throw error;
     }
   }
+
+  /**
+   * 保存面试评分
+   */
+  async saveInterviewScore(data: {
+    interviewId: string;
+    totalScore: number;
+    durationSec: number;
+    numQuestions: number;
+    overallSummary?: string;
+    pros?: string;
+    cons?: string;
+    suggestions?: string;
+    radarInteractivity: number;
+    radarConfidence: number;
+    radarProfessionalism: number;
+    radarRelevance: number;
+    radarClarity: number;
+  }): Promise<void> {
+    await this.ensureAuth();
+
+    try {
+      const response = await fetch(`${this.baseURL}/interview-scores`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`保存面试评分失败: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('保存面试评分失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 保存面试洞察
+   */
+  async saveInterviewInsight(data: {
+    interviewId: string;
+    interviewerScore?: number;
+    interviewerSummary?: string;
+    interviewerRole?: string;
+    interviewerMbti?: string;
+    interviewerPersonality?: string;
+    interviewerPreference?: string;
+    candidateSummary?: string;
+    candidateMbti?: string;
+    candidatePersonality?: string;
+    candidateJobPreference?: string;
+    strategyPrepareDetails?: string;
+    strategyBusinessUnderstanding?: string;
+    strategyKeepLogical?: string;
+  }): Promise<void> {
+    await this.ensureAuth();
+
+    try {
+      const response = await fetch(`${this.baseURL}/interview-insights`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`保存面试洞察失败: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('保存面试洞察失败:', error);
+      throw error;
+    }
+  }
+
 }
 
 export const interviewService = new InterviewService();

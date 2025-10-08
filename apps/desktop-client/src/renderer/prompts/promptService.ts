@@ -166,6 +166,40 @@ class PromptService {
   }
 
   /**
+   * 构建面试评分 Prompt
+   */
+  async buildScorePrompt(
+    jobTitle: string,
+    resumeContent: string,
+    reviewsData: string,
+  ): Promise<string> {
+    const template = await this.fetchPrompt('ScorePrompt');
+
+    return this.renderTemplate(template, {
+      jobTitle,
+      resumeContent,
+      reviewsData,
+    });
+  }
+
+  /**
+   * 构建面试洞察 Prompt
+   */
+  async buildInsightPrompt(
+    jobTitle: string,
+    resumeContent: string,
+    reviewsData: string,
+  ): Promise<string> {
+    const template = await this.fetchPrompt('InsightPrompt');
+
+    return this.renderTemplate(template, {
+      jobTitle,
+      resumeContent,
+      reviewsData,
+    });
+  }
+
+  /**
    * 清除缓存
    */
   clearCache(): void {
