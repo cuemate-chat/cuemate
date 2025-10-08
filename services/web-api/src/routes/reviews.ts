@@ -57,16 +57,17 @@ export function registerReviewRoutes(app: FastifyInstance) {
                   i.interview_type,
                   i.status,
                   i.message,
+                  i.locale,
+                  i.timezone,
+                  i.theme,
                   j.title AS original_job_title,
                   s.total_score,
                   s.overall_summary,
                   s.pros AS overall_pros,
                   s.cons AS overall_cons,
                   s.suggestions AS overall_suggestions,
-                  -- 取一条优点/缺点内容用于列表标签展示
                   (SELECT ia.content FROM interview_advantages ia WHERE ia.interview_id = i.id AND ia.type = 0 ORDER BY ia.created_at ASC LIMIT 1) AS advantage_content,
                   (SELECT ia.content FROM interview_advantages ia WHERE ia.interview_id = i.id AND ia.type = 1 ORDER BY ia.created_at ASC LIMIT 1) AS disadvantage_content,
-                  -- 优/缺点条目总数
                   (SELECT COUNT(1) FROM interview_advantages ia WHERE ia.interview_id = i.id) AS advantages_total
              FROM interviews i
         LEFT JOIN jobs j ON j.id = i.job_id
