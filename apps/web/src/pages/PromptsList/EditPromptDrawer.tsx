@@ -9,7 +9,7 @@ interface EditPromptDrawerProps {
   open: boolean;
   prompt: Prompt | null;
   onClose: () => void;
-  onSave: (id: string, content: string) => void;
+  onSave: (id: string, content: string, extra?: string) => void;
 }
 
 export default function EditPromptDrawer({
@@ -21,6 +21,7 @@ export default function EditPromptDrawer({
   const [editedContent, setEditedContent] = useState('');
   const [displayContent, setDisplayContent] = useState('');
   const [variables, setVariables] = useState<string[]>([]);
+  const [extra, setExtra] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -36,6 +37,9 @@ export default function EditPromptDrawer({
       });
       setDisplayContent(display);
       setEditedContent(display);
+
+      // 加载 extra 字段
+      setExtra(prompt.extra || '');
     }
   }, [prompt]);
 
@@ -50,7 +54,7 @@ export default function EditPromptDrawer({
     });
 
     setSaving(true);
-    onSave(prompt.id, finalContent);
+    onSave(prompt.id, finalContent, extra.trim() || undefined);
     setSaving(false);
   };
 
@@ -116,7 +120,7 @@ export default function EditPromptDrawer({
           {/* 编辑区域 */}
           <div>
             <div className="text-sm mb-2 font-medium text-slate-700">
-              Prompt 内容
+              Prompt 内容 <span className="text-red-500">*</span>
             </div>
             <TextArea
               value={editedContent}
@@ -127,6 +131,24 @@ export default function EditPromptDrawer({
               maxLength={10000}
               showCount
             />
+          </div>
+
+          {/* Extra 配置 */}
+          <div>
+            <div className="text-sm mb-2 font-medium text-slate-700">
+              Extra 配置（选填）
+            </div>
+            <TextArea
+              value={extra}
+              onChange={(e) => setExtra(e.target.value)}
+              rows={3}
+              placeholder='输入 JSON 格式的配置，例如: {"totalQuestions": 10}'
+              className="font-mono text-xs"
+              maxLength={1000}
+            />
+            <div className="mt-1 text-xs text-slate-500">
+              用于存储额外的配置参数（JSON 格式），如面试问题数量等
+            </div>
           </div>
 
           {/* 历史记录 */}

@@ -161,9 +161,9 @@ export default function PromptsList() {
     }
   };
 
-  const handleSave = async (id: string, content: string) => {
+  const handleSave = async (id: string, content: string, extra?: string) => {
     try {
-      await updatePrompt(id, { content });
+      await updatePrompt(id, { content, extra });
       message.success('Prompt 更新成功');
       setEditDrawerOpen(false);
       setCurrentPrompt(null);

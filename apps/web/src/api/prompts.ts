@@ -36,6 +36,7 @@ export interface CreatePromptParams {
 
 export interface UpdatePromptParams {
   content: string;
+  extra?: string;
 }
 
 export async function listPrompts(params?: ListPromptsParams): Promise<ListPromptsResponse> {
