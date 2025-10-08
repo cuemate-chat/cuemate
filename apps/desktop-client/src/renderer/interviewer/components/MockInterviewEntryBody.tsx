@@ -1,13 +1,13 @@
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
-import { setMockInterviewState, useMockInterviewState } from '../../utils/mockInterviewState';
-import { promptService } from '../../prompts/promptService';
 import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
 import { mockInterviewService } from '../../ai-question/components/mock-interview/services/MockInterviewService';
 import { InterviewState, InterviewStateMachine } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
+import { promptService } from '../../prompts/promptService';
 import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { aiService } from '../../utils/ai/aiService';
+import { setMockInterviewState, useMockInterviewState } from '../../utils/mockInterviewState';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
 import { Model } from '../api/modelService';
@@ -222,10 +222,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       // 获取押题题库
       const questionBank = await mockInterviewService.getQuestionBank(selectedPosition.id);
 
-      // 初始化状态机
+      // 初始化状态机(totalQuestions 将在 handleInitializing 中从 prompt 配置获取)
       stateMachine.current = new InterviewStateMachine({
         interviewId: response.id,
-        totalQuestions: interviewData.questionCount,
+        totalQuestions: 10, // 临时默认值,实际值从 InitPrompt 的 extra 配置读取
       });
 
       // 监听状态机变化
@@ -385,12 +385,18 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     setErrorMessage('');
 
     try {
-      // 构建初始化prompt（用于后续LLM调用）
-      await promptService.buildInitPrompt(
+      // 构建初始化prompt（用于后续LLM调用）并获取配置
+      const initPromptData = await promptService.buildInitPrompt(
         context.jobPosition,
         context.resume,
         context.questionsBank
       );
+
+      // 保存 initPrompt 和 totalQuestions 到 context
+      if (stateMachine.current) {
+        stateMachine.current.getContext().initPrompt = initPromptData.content;
+        stateMachine.current.getContext().totalQuestions = initPromptData.totalQuestions;
+      }
 
       // 发送成功事件
       stateMachine.current?.send({ type: 'INIT_SUCCESS' });
@@ -410,11 +416,15 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       }
 
       // 构建完整的系统 prompt（包含岗位和简历信息）
-      const systemPrompt = context.initPrompt || await promptService.buildInitPrompt(
-        context.jobPosition,
-        context.resume,
-        context.questionsBank || []
-      );
+      let systemPrompt = context.initPrompt;
+      if (!systemPrompt) {
+        const initPromptData = await promptService.buildInitPrompt(
+          context.jobPosition,
+          context.resume,
+          context.questionsBank || []
+        );
+        systemPrompt = initPromptData.content;
+      }
 
       // 构建问题生成的用户消息
       const questionPrompt = await promptService.buildQuestionPrompt(context.currentQuestionIndex);
@@ -698,7 +708,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
     // 检查是否应该结束面试
     if (stateMachine.current?.shouldEndInterview()) {
-      stateMachine.current.send({ type: 'END_INTERVIEW' });
+      stateMachine.current?.send({ type: 'END_INTERVIEW' });
     } else {
       // 继续下一个问题
       setTimeout(() => {

@@ -49,10 +49,14 @@ export function setMockInterviewState(next: Partial<MockInterviewState>): MockIn
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-  } catch {}
+  } catch (e) {
+    console.error('Failed to update localStorage:', e);
+  }
   try {
     channel?.postMessage({ type: 'state', payload: merged } as ChannelMessage);
-  } catch {}
+  } catch (e) {
+    console.error('Failed to send BroadcastChannel message:', e);
+  }
   // 同窗口立即通知
   listeners.forEach((l) => {
     try {

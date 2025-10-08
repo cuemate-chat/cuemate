@@ -26,6 +26,7 @@ export interface InterviewContext {
   userResponse: string;
   conversationHistory: any[];
   errorMessage?: string;
+  initPrompt?: string;
 }
 
 export interface InterviewEvent {

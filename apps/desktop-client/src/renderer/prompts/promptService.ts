@@ -53,6 +53,23 @@ class PromptService {
   }
 
   /**
+   * 从数据库获取 prompt 完整数据(包含 extra 配置)
+   */
+  private async fetchPromptWithConfig(id: string): Promise<Prompt> {
+    try {
+      const response = await fetch(`${this.baseUrl}/prompts/${id}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch prompt: ${response.statusText}`);
+      }
+      const data = await response.json();
+      return data.prompt;
+    } catch (error) {
+      console.error(`Failed to fetch prompt ${id}`, error);
+      throw error;
+    }
+  }
+
+  /**
    * 渲染模板字符串
    */
   private renderTemplate(template: string, variables: Record<string, any>): string {
@@ -76,14 +93,29 @@ class PromptService {
     jobPosition: { title?: string; description?: string },
     resume: { resumeTitle?: string; resumeContent?: string },
     questionBank: InterviewQuestion[],
-  ): Promise<string> {
-    const template = await this.fetchPrompt('InitPrompt');
+  ): Promise<{ content: string; totalQuestions: number }> {
+    const promptData = await this.fetchPromptWithConfig('InitPrompt');
 
-    return this.renderTemplate(template, {
+    // 从 extra 字段解析配置参数
+    let totalQuestions = 10; // 默认值
+    try {
+      if (promptData.extra) {
+        const config = JSON.parse(promptData.extra);
+        totalQuestions = config.totalQuestions || 10;
+      }
+    } catch (error) {
+      console.error('Failed to parse prompt extra config:', error);
+    }
+
+    // 渲染模板,包含 totalQuestions 作为变量8
+    const content = this.renderTemplate(promptData.content, {
       jobPosition,
       resume,
       questionBank,
+      totalQuestions,
     });
+
+    return { content, totalQuestions };
   }
 
   /**
