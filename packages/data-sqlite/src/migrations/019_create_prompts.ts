@@ -275,6 +275,184 @@ export function up(db: any): void {
 **注意：优化后的简历必须保持原有的详细程度，在此基础上进行改进，绝不能简化或缩短内容。**',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
+    ),
+    (
+      'ScorePrompt',
+      '你是一名专业的面试评估专家,需要根据面试问答记录生成详细的评分报告。
+
+**面试信息:**
+职位: \${jobTitle}
+候选人简历: \${resumeContent}
+
+**问答记录:**
+\${reviewsData}
+
+**评分要求:**
+1. 总分(totalScore): 0-100分,综合评价候选人表现
+2. 雷达图评分(各项0-100分):
+   - radarInteractivity: 互动性,回答是否积极主动
+   - radarConfidence: 自信度,表达是否自信清晰
+   - radarProfessionalism: 专业性,技术深度和广度
+   - radarRelevance: 相关性,回答是否切题
+   - radarClarity: 流畅性,表达是否清晰流畅
+3. 文字评价:
+   - overallSummary: 整体表现总结(200字以内)
+   - pros: 优点(列举3-5条)
+   - cons: 缺点和不足(列举3-5条)
+   - suggestions: 改进建议(列举3-5条具体建议)
+
+**输出格式(JSON):**
+{
+  "totalScore": 85,
+  "radarInteractivity": 80,
+  "radarConfidence": 85,
+  "radarProfessionalism": 90,
+  "radarRelevance": 85,
+  "radarClarity": 80,
+  "overallSummary": "候选人整体表现...",
+  "pros": "1. 技术基础扎实...\\n2. ...",
+  "cons": "1. 某些问题回答不够深入...\\n2. ...",
+  "suggestions": "1. 建议加强...\\n2. ..."
+}',
+      '面试评分生成提示词',
+      '["jobTitle","resumeContent","reviewsData"]',
+      'desktop',
+      '你是一名专业的面试评估专家,需要根据面试问答记录生成详细的评分报告。
+
+**面试信息:**
+职位: \${jobTitle}
+候选人简历: \${resumeContent}
+
+**问答记录:**
+\${reviewsData}
+
+**评分要求:**
+1. 总分(totalScore): 0-100分,综合评价候选人表现
+2. 雷达图评分(各项0-100分):
+   - radarInteractivity: 互动性,回答是否积极主动
+   - radarConfidence: 自信度,表达是否自信清晰
+   - radarProfessionalism: 专业性,技术深度和广度
+   - radarRelevance: 相关性,回答是否切题
+   - radarClarity: 流畅性,表达是否清晰流畅
+3. 文字评价:
+   - overallSummary: 整体表现总结(200字以内)
+   - pros: 优点(列举3-5条)
+   - cons: 缺点和不足(列举3-5条)
+   - suggestions: 改进建议(列举3-5条具体建议)
+
+**输出格式(JSON):**
+{
+  "totalScore": 85,
+  "radarInteractivity": 80,
+  "radarConfidence": 85,
+  "radarProfessionalism": 90,
+  "radarRelevance": 85,
+  "radarClarity": 80,
+  "overallSummary": "候选人整体表现...",
+  "pros": "1. 技术基础扎实...\\n2. ...",
+  "cons": "1. 某些问题回答不够深入...\\n2. ...",
+  "suggestions": "1. 建议加强...\\n2. ..."
+}',
+      strftime('%s', 'now') * 1000,
+      strftime('%s', 'now') * 1000
+    ),
+    (
+      'InsightPrompt',
+      '你是一名资深的职业分析师和面试官,需要根据面试问答记录深度分析候选人和面试官的特征。
+
+**面试信息:**
+职位: \${jobTitle}
+候选人简历: \${resumeContent}
+
+**问答记录:**
+\${reviewsData}
+
+**分析要求:**
+1. **面试官分析** (基于提问风格和问题类型):
+   - interviewerScore: 面试官提问质量评分(0-100)
+   - interviewerSummary: 面试官风格总结(100字)
+   - interviewerRole: 推测面试官角色(如: 技术经理/HR/技术专家)
+   - interviewerMbti: 推测MBTI类型
+   - interviewerPersonality: 性格特征描述
+   - interviewerPreference: 面试官偏好(如: 注重技术深度/注重沟通能力)
+
+2. **候选人分析** (基于回答内容和表现):
+   - candidateSummary: 候选人特征总结(100字)
+   - candidateMbti: 推测MBTI类型
+   - candidatePersonality: 性格特征描述
+   - candidateJobPreference: 职业偏好分析
+
+3. **应对策略建议**:
+   - strategyPrepareDetails: 准备细节建议(如何准备类似面试)
+   - strategyBusinessUnderstanding: 业务理解建议
+   - strategyKeepLogical: 逻辑表达建议
+
+**输出格式(JSON):**
+{
+  "interviewerScore": 85,
+  "interviewerSummary": "面试官提问专业...",
+  "interviewerRole": "技术经理",
+  "interviewerMbti": "INTJ",
+  "interviewerPersonality": "理性、注重逻辑...",
+  "interviewerPreference": "偏好深度技术讨论",
+  "candidateSummary": "候选人技术基础扎实...",
+  "candidateMbti": "ISTJ",
+  "candidatePersonality": "稳重、注重细节...",
+  "candidateJobPreference": "偏好技术研发岗位",
+  "strategyPrepareDetails": "1. 深入准备技术细节...\\n2. ...",
+  "strategyBusinessUnderstanding": "1. 了解公司业务背景...\\n2. ...",
+  "strategyKeepLogical": "1. 回答时先总后分...\\n2. ..."
+}',
+      '面试洞察生成提示词',
+      '["jobTitle","resumeContent","reviewsData"]',
+      'desktop',
+      '你是一名资深的职业分析师和面试官,需要根据面试问答记录深度分析候选人和面试官的特征。
+
+**面试信息:**
+职位: \${jobTitle}
+候选人简历: \${resumeContent}
+
+**问答记录:**
+\${reviewsData}
+
+**分析要求:**
+1. **面试官分析** (基于提问风格和问题类型):
+   - interviewerScore: 面试官提问质量评分(0-100)
+   - interviewerSummary: 面试官风格总结(100字)
+   - interviewerRole: 推测面试官角色(如: 技术经理/HR/技术专家)
+   - interviewerMbti: 推测MBTI类型
+   - interviewerPersonality: 性格特征描述
+   - interviewerPreference: 面试官偏好(如: 注重技术深度/注重沟通能力)
+
+2. **候选人分析** (基于回答内容和表现):
+   - candidateSummary: 候选人特征总结(100字)
+   - candidateMbti: 推测MBTI类型
+   - candidatePersonality: 性格特征描述
+   - candidateJobPreference: 职业偏好分析
+
+3. **应对策略建议**:
+   - strategyPrepareDetails: 准备细节建议(如何准备类似面试)
+   - strategyBusinessUnderstanding: 业务理解建议
+   - strategyKeepLogical: 逻辑表达建议
+
+**输出格式(JSON):**
+{
+  "interviewerScore": 85,
+  "interviewerSummary": "面试官提问专业...",
+  "interviewerRole": "技术经理",
+  "interviewerMbti": "INTJ",
+  "interviewerPersonality": "理性、注重逻辑...",
+  "interviewerPreference": "偏好深度技术讨论",
+  "candidateSummary": "候选人技术基础扎实...",
+  "candidateMbti": "ISTJ",
+  "candidatePersonality": "稳重、注重细节...",
+  "candidateJobPreference": "偏好技术研发岗位",
+  "strategyPrepareDetails": "1. 深入准备技术细节...\\n2. ...",
+  "strategyBusinessUnderstanding": "1. 了解公司业务背景...\\n2. ...",
+  "strategyKeepLogical": "1. 回答时先总后分...\\n2. ..."
+}',
+      strftime('%s', 'now') * 1000,
+      strftime('%s', 'now') * 1000
     );
   `);
 }
