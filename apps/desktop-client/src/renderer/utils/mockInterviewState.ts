@@ -31,7 +31,7 @@ function getPersistedAutoMode(): boolean {
     const saved = localStorage.getItem(AUTO_MODE_KEY);
     if (saved !== null) return saved === 'true';
   } catch {}
-  return true; // 默认自动模式
+  return false; // 默认手动模式
 }
 
 function getDefaultState(): MockInterviewState {
@@ -92,7 +92,17 @@ export function setMockInterviewState(next: Partial<MockInterviewState>): MockIn
 }
 
 export function clearMockInterviewState(): MockInterviewState {
-  const cleared = getDefaultState();
+  // 保留用户的模式偏好设置
+  const currentAutoMode = getPersistedAutoMode();
+  const cleared: MockInterviewState = {
+    aiMessage: '',
+    speechText: '',
+    candidateAnswer: '',
+    isLoading: false,
+    isListening: false,
+    isAutoMode: currentAutoMode, // 保留用户偏好
+    updatedAt: Date.now()
+  };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cleared));
   } catch {}

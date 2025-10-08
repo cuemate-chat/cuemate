@@ -173,6 +173,15 @@ export class InterviewStateMachine {
         this.context.conversationHistory = [];
         break;
 
+      case 'INIT_SUCCESS':
+        if (payload.initPrompt) {
+          this.context.initPrompt = payload.initPrompt;
+        }
+        if (payload.totalQuestions) {
+          this.context.totalQuestions = payload.totalQuestions;
+        }
+        break;
+
       case 'QUESTION_GENERATED':
         this.context.currentQuestion = payload.question;
         break;
@@ -283,7 +292,9 @@ export class InterviewStateMachine {
 
   // 检查是否应该结束面试
   shouldEndInterview(): boolean {
-    return this.context.currentQuestionIndex >= this.context.totalQuestions;
+    // currentQuestionIndex 从0开始,所以第1个问题是index=0
+    // 如果 totalQuestions=1,那么index=0时就是最后一个问题
+    return this.context.currentQuestionIndex + 1 >= this.context.totalQuestions;
   }
 
   // 获取面试进度

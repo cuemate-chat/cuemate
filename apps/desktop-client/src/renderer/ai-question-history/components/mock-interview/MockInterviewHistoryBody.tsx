@@ -103,7 +103,7 @@ export function MockInterviewHistoryBody({
                   <div className="section-header">
                     <span className="review-label interviewer-label">面试官问题:</span>
                     <div className="time-with-tooltip">
-                      <span className="created-time">{new Date(review.created_at * 1000).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</span>
+                      <span className="created-time">{new Date(review.created_at).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</span>
                       <Tooltip.Root>
                         <Tooltip.Trigger asChild>
                           <Info size={14} className="tooltip-icon" />

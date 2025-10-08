@@ -43,7 +43,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   const [selectedMic, setSelectedMic] = useState<string>('');
   const [selectedSpeaker, setSelectedSpeaker] = useState<string>('');
   const [piperAvailable, setPiperAvailable] = useState(false);
-  const [currentInterviewId, setCurrentInterviewId] = useState<string | null>(null);
 
   // 面试状态管理
   const stateMachine = useRef<InterviewStateMachine | null>(null);
@@ -203,7 +202,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       };
 
       const response = await interviewService.createInterview(interviewData);
-      setCurrentInterviewId(response.id);
 
       // 清空上一次面试的mockInterviewState
       setMockInterviewState({
@@ -212,10 +210,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         candidateAnswer: '',
         isLoading: false,
         isListening: false,
-        isAutoMode: true,
       });
 
-      // 设置voiceState的interviewId供右侧窗口使用
+      // 设置voiceState的interviewId供右侧窗口和本窗口共同使用
       setVoiceState({ interviewId: response.id });
 
       // 获取押题题库
@@ -270,9 +267,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       setIsInitializing(false);
 
       // 如果面试已创建，更新状态为idle（错误）
-      if (currentInterviewId) {
+      if (voiceState.interviewId) {
         try {
-          await interviewService.updateInterview(currentInterviewId, {
+          await interviewService.updateInterview(voiceState.interviewId, {
             status: 'idle',
             message: errorMsg
           });
@@ -294,14 +291,13 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   const handleStopInterview = async () => {
     try {
       // 如果有当前面试ID，更新状态并调用结束面试API
-      if (currentInterviewId) {
+      if (voiceState.interviewId) {
         // 更新状态为已完成（用户主动停止）
-        await interviewService.updateInterview(currentInterviewId, {
+        await interviewService.updateInterview(voiceState.interviewId, {
           status: 'mock-interview-completed',
           message: '用户主动停止面试'
         });
-        await interviewService.endInterview(currentInterviewId);
-        setCurrentInterviewId(null);
+        await interviewService.endInterview(voiceState.interviewId);
       }
 
       setVoiceState({
@@ -360,6 +356,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         case InterviewState.INTERVIEW_ENDING:
           await handleInterviewEnding();
           break;
+        case InterviewState.GENERATING_REPORT:
+          // 报告生成是异步的,不阻塞状态机,立即进入完成状态
+          stateMachine.current?.send({ type: 'REPORT_COMPLETE' });
+          break;
         case InterviewState.COMPLETED:
           handleInterviewCompleted();
           break;
@@ -389,14 +389,14 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         context.questionsBank
       );
 
-      // 保存 initPrompt 和 totalQuestions 到 context
-      if (stateMachine.current) {
-        stateMachine.current.getContext().initPrompt = initPromptData.content;
-        stateMachine.current.getContext().totalQuestions = initPromptData.totalQuestions;
-      }
-
-      // 发送成功事件
-      stateMachine.current?.send({ type: 'INIT_SUCCESS' });
+      // 发送成功事件,并在 payload 中传入 totalQuestions
+      stateMachine.current?.send({
+        type: 'INIT_SUCCESS',
+        payload: {
+          initPrompt: initPromptData.content,
+          totalQuestions: initPromptData.totalQuestions
+        }
+      });
     } catch (error) {
       stateMachine.current?.send({ type: 'INIT_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
@@ -722,8 +722,8 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       interviewDataService.markInterviewComplete();
 
       // 更新数据库中的面试状态为 mock-interview-completed
-      if (currentInterviewId) {
-        await interviewService.updateInterview(currentInterviewId, {
+      if (voiceState.interviewId) {
+        await interviewService.updateInterview(voiceState.interviewId, {
           status: 'mock-interview-completed',
           duration: voiceState.timerDuration || 0,
           message: '面试已完成,正在生成报告'
@@ -743,8 +743,8 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     setErrorMessage('');
 
     // 异步生成面试报告(scores + insights),不阻塞用户
-    if (currentInterviewId && stateMachine.current) {
-      generateInterviewReport(currentInterviewId, stateMachine.current.getContext()).catch(error => {
+    if (voiceState.interviewId && stateMachine.current) {
+      generateInterviewReport(voiceState.interviewId, stateMachine.current.getContext()).catch(error => {
         console.error('生成面试报告失败:', error);
       });
     }
@@ -763,9 +763,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     setCurrentLine('');
 
     // 更新面试状态为idle（错误）并记录错误信息
-    if (currentInterviewId) {
+    if (voiceState.interviewId) {
       try {
-        await interviewService.updateInterview(currentInterviewId, {
+        await interviewService.updateInterview(voiceState.interviewId, {
           status: 'idle',
           message: `错误: ${errorMsg}`
         });

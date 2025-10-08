@@ -38,7 +38,8 @@ export function MockInterviewFooter({
   const speechText = interviewId ? mockInterviewState.speechText : '';
   const isLoading = interviewId ? mockInterviewState.isLoading : false;
   const isListening = interviewId ? mockInterviewState.isListening : false;
-  const isAutoMode = interviewId ? mockInterviewState.isAutoMode : true;
+  // isAutoMode 是用户偏好设置,始终显示真实值,不依赖 interviewId
+  const isAutoMode = mockInterviewState.isAutoMode;
 
   // 初始化 VoiceCoordinator
   useEffect(() => {
@@ -109,7 +110,6 @@ export function MockInterviewFooter({
             deviceId: micDeviceId,
             initialText: speechText || '',
             onText: (text) => {
-              console.log('text:', text);
               // 更新跨窗口状态
               setMockInterviewState({ speechText: text });
             },

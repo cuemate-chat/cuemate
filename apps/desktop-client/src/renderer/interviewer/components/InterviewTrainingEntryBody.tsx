@@ -43,7 +43,6 @@ export function InterviewTrainingEntryBody({
   const [speakerDevices, setSpeakerDevices] = useState<AudioDevice[]>([]);
   const [selectedMic, setSelectedMic] = useState<string>('');
   const [selectedSpeaker, setSelectedSpeaker] = useState<string>('');
-  const [currentInterviewId, setCurrentInterviewId] = useState<string | null>(null);
 
   // 面试状态管理
   const stateMachine = useRef<InterviewStateMachine | null>(null);
@@ -160,7 +159,9 @@ export function InterviewTrainingEntryBody({
       };
 
       const response = await interviewService.createInterview(interviewData);
-      setCurrentInterviewId(response.id);
+
+      // 设置voiceState的interviewId
+      setVoiceState({ interviewId: response.id });
 
       // 初始化状态机（简化版，用于训练模式）
       stateMachine.current = new InterviewStateMachine({
@@ -335,9 +336,8 @@ export function InterviewTrainingEntryBody({
       stopInterviewerAudioListening();
 
       // 如果有当前面试ID，调用结束面试API
-      if (currentInterviewId) {
-        await interviewService.endInterview(currentInterviewId);
-        setCurrentInterviewId(null);
+      if (voiceState.interviewId) {
+        await interviewService.endInterview(voiceState.interviewId);
       }
 
       setVoiceState({

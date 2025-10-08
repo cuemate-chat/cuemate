@@ -1,14 +1,14 @@
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
+import { useEffect, useRef, useState } from 'react';
 import { useVoiceState } from '../../../../utils/voiceState';
+import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
 import { MockInterviewBody } from './MockInterviewBody.tsx';
 import { MockInterviewFooter } from './MockInterviewFooter.tsx';
 import { MockInterviewHeader } from './MockInterviewHeader.tsx';
 
 export function MockInterviewApp() {
   const [heightPercentage, setHeightPercentage] = useState(75);
-  const [currentInterviewId, setCurrentInterviewId] = useState<string | undefined>(undefined);
+  const previousInterviewId = useRef<string | undefined>(undefined);
 
   // 使用跨窗口状态管理
   const mockInterviewState = useMockInterviewState();
@@ -19,7 +19,7 @@ export function MockInterviewApp() {
 
   // 监听 interviewId 变化，如果是新面试则清空状态
   useEffect(() => {
-    if (interviewId !== currentInterviewId) {
+    if (interviewId !== previousInterviewId.current) {
       // interviewId 发生变化，清空旧数据
       setMockInterviewState({
         aiMessage: '',
@@ -27,11 +27,10 @@ export function MockInterviewApp() {
         candidateAnswer: '',
         isLoading: false,
         isListening: false,
-        isAutoMode: true,
       });
-      setCurrentInterviewId(interviewId);
+      previousInterviewId.current = interviewId;
     }
-  }, [interviewId, currentInterviewId]);
+  }, [interviewId]);
 
   // 只有存在interviewId才显示数据,否则显示空白
   const aiMessage = interviewId ? mockInterviewState.aiMessage : '';
