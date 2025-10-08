@@ -290,29 +290,234 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   const handleStopInterview = async () => {
     try {
-      // 如果有当前面试ID，更新状态并调用结束面试API
-      if (voiceState.interviewId) {
-        // 更新状态为已完成（用户主动停止）
-        await interviewService.updateInterview(voiceState.interviewId, {
-          status: 'mock-interview-completed',
-          message: '用户主动停止面试'
-        });
-        await interviewService.endInterview(voiceState.interviewId);
+      if (!voiceState.interviewId) {
+        return;
       }
 
+      setCurrentLine('正在结束面试...');
+
+      // 1. 更新 interviews 状态为 mock-interview-completed
+      await interviewService.updateInterview(voiceState.interviewId, {
+        status: 'mock-interview-completed',
+        duration: voiceState.timerDuration || 0,
+        message: '用户主动停止面试'
+      });
+
+      // 2. 获取 interview_reviews 记录
+      const reviews = await mockInterviewService.getInterviewReviews(voiceState.interviewId);
+
+      // 3. 判断是否有记录（至少有1条数据）
+      if (!reviews || reviews.length === 0) {
+        // 没有任何回答记录，直接完成
+        setCurrentLine('面试已结束');
+        setVoiceState({
+          mode: 'mock-interview',
+          subState: 'mock-interview-completed'
+        });
+        return;
+      }
+
+      // 4. 检查每条 review
+      const needsAnalysis: any[] = [];
+      const readyForReport: any[] = [];
+
+      for (const review of reviews) {
+        // 如果 candidate_answer 没值，跳过
+        if (!review.candidate_answer) {
+          continue;
+        }
+
+        // 检查分析字段是否都有值
+        const hasAnalysis = review.pros && review.cons && review.suggestions &&
+                           review.key_points && review.assessment;
+
+        if (hasAnalysis) {
+          readyForReport.push(review);
+        } else {
+          needsAnalysis.push(review);
+        }
+      }
+
+      // 5. 先处理需要分析的 review
+      if (needsAnalysis.length > 0) {
+        setCurrentLine(`正在分析 ${needsAnalysis.length} 个回答...`);
+
+        for (const review of needsAnalysis) {
+          await analyzeReview(review);
+        }
+      }
+
+      // 6. 如果有任何有效的回答（不管是否需要分析），生成报告
+      const totalValidReviews = readyForReport.length + needsAnalysis.length;
+      if (totalValidReviews > 0) {
+        setCurrentLine('正在生成面试报告...');
+        await generateInterviewReportOnStop(voiceState.interviewId);
+      }
+
+      // 7. 完成
+      setCurrentLine('面试已结束');
       setVoiceState({
         mode: 'mock-interview',
         subState: 'mock-interview-completed'
       });
+
     } catch (error) {
       console.error('结束面试失败:', error);
       setErrorMessage(`结束面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
       setCurrentLine('');
-      // 即使API调用失败，也要设置状态为完成
+      // 即使失败，也要设置状态为完成
       setVoiceState({
         mode: 'mock-interview',
         subState: 'mock-interview-completed'
       });
+    }
+  };
+
+  // 分析单个 review
+  const analyzeReview = async (review: any) => {
+    try {
+      const askedQuestion = review.asked_question || review.question || '';
+      const candidateAnswer = review.candidate_answer || '';
+      const referenceAnswer = review.reference_answer || '';
+
+      if (!askedQuestion || !candidateAnswer) {
+        return;
+      }
+
+      // 构建分析 prompt
+      const analysisPrompt = await promptService.buildAnalysisPrompt(
+        askedQuestion,
+        candidateAnswer,
+        referenceAnswer
+      );
+
+      const messages = [
+        {
+          role: 'user' as const,
+          content: analysisPrompt,
+        }
+      ];
+
+      // 获取模型配置
+      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const userDataResult = await api?.getUserData?.();
+      const selectedModel = userDataResult?.success ? userDataResult.userData?.selected_model : null;
+
+      if (!selectedModel) {
+        throw new Error('未选择模型');
+      }
+
+      const modelConfig: ModelConfig = {
+        provider: selectedModel.provider,
+        model_name: selectedModel.model_name,
+        credentials: selectedModel.credentials || '{}',
+      };
+
+      const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+
+      let analysisResult = '';
+
+      // 调用 AI 进行分析
+      await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, (chunk: any) => {
+        if (chunk.error) {
+          throw new Error(chunk.error);
+        }
+
+        if (chunk.finished) {
+          // 分析完成，什么都不做，等待下面统一处理
+        } else {
+          analysisResult += chunk.content;
+        }
+      });
+
+      // 解析分析结果
+      const analysis = JSON.parse(analysisResult.trim());
+
+      // 更新 review 记录
+      await mockInterviewService.updateReview(review.id, {
+        pros: analysis.pros || '',
+        cons: analysis.cons || '',
+        suggestions: analysis.suggestions || '',
+        key_points: analysis.key_points || '',
+        assessment: analysis.assessment || '',
+      });
+
+    } catch (error) {
+      console.error('分析回答失败:', error);
+      throw error;
+    }
+  };
+
+  // 生成面试报告（停止按钮触发）
+  const generateInterviewReportOnStop = async (interviewId: string) => {
+    try {
+      // 1. 重新获取所有 reviews（包含刚才分析的）
+      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const reviewsResponse = await api?.getInterviewReviews?.(interviewId);
+      const reviews = reviewsResponse?.success ? reviewsResponse.reviews : [];
+
+      if (!reviews || reviews.length === 0) {
+        return;
+      }
+
+      // 2. 获取面试基本信息
+      const jobTitle = selectedPosition?.title || '未知职位';
+      const resumeContent = selectedPosition?.resumeContent || '';
+
+      // 3. 构建 reviews 数据字符串
+      const reviewsData = JSON.stringify(reviews, null, 2);
+
+      // 4. 生成评分报告
+      const scorePrompt = await promptService.buildScorePrompt(jobTitle, resumeContent, reviewsData);
+      const scoreResponse = await aiService.callAI([
+        { role: 'user', content: scorePrompt }
+      ]);
+      const scoreData = JSON.parse(scoreResponse);
+
+      // 5. 生成洞察报告
+      const insightPrompt = await promptService.buildInsightPrompt(jobTitle, resumeContent, reviewsData);
+      const insightResponse = await aiService.callAI([
+        { role: 'user', content: insightPrompt }
+      ]);
+      const insightData = JSON.parse(insightResponse);
+
+      // 6. 保存到后端
+      await interviewService.saveInterviewScore({
+        interviewId,
+        totalScore: scoreData.total_score || 0,
+        durationSec: voiceState.timerDuration || 0,
+        numQuestions: scoreData.num_questions || 0,
+        overallSummary: scoreData.overall_summary || '',
+        pros: scoreData.pros || '',
+        cons: scoreData.cons || '',
+        suggestions: scoreData.suggestions || '',
+        radarInteractivity: scoreData.radar?.interactivity || 0,
+        radarConfidence: scoreData.radar?.confidence || 0,
+        radarProfessionalism: scoreData.radar?.professionalism || 0,
+        radarRelevance: scoreData.radar?.relevance || 0,
+        radarClarity: scoreData.radar?.clarity || 0,
+      });
+
+      await interviewService.saveInterviewInsight({
+        interviewId,
+        interviewerScore: insightData.interviewer?.score || 0,
+        interviewerSummary: insightData.interviewer?.summary || '',
+        interviewerRole: insightData.interviewer?.role || '',
+        interviewerMbti: insightData.interviewer?.mbti || '',
+        interviewerPersonality: insightData.interviewer?.personality || '',
+        interviewerPreference: insightData.interviewer?.preference || '',
+        candidateSummary: insightData.candidate?.summary || '',
+        candidateMbti: insightData.candidate?.mbti || '',
+        candidatePersonality: insightData.candidate?.personality || '',
+        candidateJobPreference: insightData.candidate?.job_preference || '',
+        strategyPrepareDetails: insightData.strategy?.prepare_details || '',
+        strategyBusinessUnderstanding: insightData.strategy?.business_understanding || '',
+        strategyKeepLogical: insightData.strategy?.keep_logical || '',
+      });
+
+    } catch (error) {
+      console.error('生成面试报告失败:', error);
+      throw error;
     }
   };
 
