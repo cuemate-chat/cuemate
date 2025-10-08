@@ -31,7 +31,7 @@ function getPersistedAutoMode(): boolean {
     const saved = localStorage.getItem(AUTO_MODE_KEY);
     if (saved !== null) return saved === 'true';
   } catch {}
-  return true; // 默认自动模式
+  return false; // 默认手动模式
 }
 
 function getDefaultState(): MockInterviewState {
