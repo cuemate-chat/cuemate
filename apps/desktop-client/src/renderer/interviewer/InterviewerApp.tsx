@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { clearVoiceState, getVoiceState } from '../../utils/voiceState';
+import { clearVoiceState, getVoiceState, setVoiceState } from '../../utils/voiceState';
 import { InterviewerWindowBody } from './components/InterviewerWindowBody';
 import { InterviewerWindowFooter } from './components/InterviewerWindowFooter';
 import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
@@ -70,7 +70,12 @@ export function InterviewerApp() {
         voiceState.subState !== 'mock-interview-paused' &&
         voiceState.subState !== 'interview-training-recording' &&
         voiceState.subState !== 'interview-training-paused') {
-      clearVoiceState();
+      // 清除状态并清除 interviewId
+      setVoiceState({
+        mode: 'none',
+        subState: 'idle',
+        interviewId: undefined
+      });
     }
   };
 

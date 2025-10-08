@@ -96,6 +96,10 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
   ];
 
   const handleCardClick = (cardTitle: string) => {
+    // 点击模拟面试或面试训练卡片时,清除之前的 interviewId
+    if (cardTitle === '模拟面试' || cardTitle === '面试训练') {
+      setVoiceState({ interviewId: undefined });
+    }
     onSelectCard(cardTitle);
   };
 
