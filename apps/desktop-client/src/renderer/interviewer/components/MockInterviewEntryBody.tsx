@@ -69,7 +69,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
     // 只有当 candidateAnswer 有值且状态机已初始化时才处理
     if (candidateAnswer && stateMachine.current) {
-      console.log('Received user answer via state:', candidateAnswer);
 
       // 暂存用户回答
       if (currentQuestionData.current) {
@@ -307,8 +306,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
       setVoiceState({
         mode: 'mock-interview',
-        subState: 'mock-interview-completed',
-        interviewId: undefined
+        subState: 'mock-interview-completed'
       });
     } catch (error) {
       console.error('结束面试失败:', error);
@@ -317,8 +315,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       // 即使API调用失败，也要设置状态为完成
       setVoiceState({
         mode: 'mock-interview',
-        subState: 'mock-interview-completed',
-        interviewId: undefined
+        subState: 'mock-interview-completed'
       });
     }
   };
@@ -592,8 +589,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
             // 更新本地状态
             interviewDataService.markQuestionComplete(context.currentQuestionIndex);
 
-            console.log('Complete review updated for sequence', context.currentQuestionIndex);
-
             // 发送分析完成事件
             stateMachine.current?.send({ type: 'ANALYSIS_COMPLETE' });
           } catch (parseError) {
@@ -726,6 +721,15 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       // 标记面试完成
       interviewDataService.markInterviewComplete();
 
+      // 更新数据库中的面试状态为 mock-interview-completed
+      if (currentInterviewId) {
+        await interviewService.updateInterview(currentInterviewId, {
+          status: 'mock-interview-completed',
+          duration: voiceState.timerDuration || 0,
+          message: '面试已完成,正在生成报告'
+        });
+      }
+
       // 发送生成报告事件
       stateMachine.current?.send({ type: 'GENERATE_REPORT' });
     } catch (error) {
@@ -738,23 +742,17 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     setCurrentLine('面试已完成！感谢您的参与。');
     setErrorMessage('');
 
-    // 更新面试状态为已完成
-    if (currentInterviewId) {
-      try {
-        await interviewService.updateInterview(currentInterviewId, {
-          status: 'mock-interview-completed',
-          message: '面试已完成'
-        });
-      } catch (error) {
-        console.error('更新面试完成状态失败:', error);
-      }
+    // 异步生成面试报告(scores + insights),不阻塞用户
+    if (currentInterviewId && stateMachine.current) {
+      generateInterviewReport(currentInterviewId, stateMachine.current.getContext()).catch(error => {
+        console.error('生成面试报告失败:', error);
+      });
     }
 
-    // 更新VoiceState，清空interviewId
+    // 更新VoiceState,保留interviewId(退出窗口时再清理)
     setVoiceState({
       mode: 'mock-interview',
-      subState: 'mock-interview-completed',
-      interviewId: undefined
+      subState: 'mock-interview-completed'
     });
   };
 
@@ -774,6 +772,79 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       } catch (error) {
         console.error('更新面试错误状态失败:', error);
       }
+    }
+  };
+
+  // 生成面试报告(异步,不阻塞用户)
+  const generateInterviewReport = async (interviewId: string, context: any) => {
+    try {
+      // 1. 获取面试数据
+      const jobTitle = context.jobPosition?.title || '未知职位';
+      const resumeContent = context.resume?.resumeContent || '';
+      const durationSec = voiceState.timerDuration || 0;
+
+      // 2. 获取所有问答记录
+      const questionStates = interviewDataService.getAllQuestionStates();
+      const reviewsData = questionStates
+        .map((q, i) => `第${i + 1}题:\nQ: ${q.question || '无'}\nA: ${q.userAnswer || '未回答'}\n参考答案: ${q.referenceAnswer || '无'}\n`)
+        .join('\n');
+
+      if (!reviewsData) {
+        console.error('无面试问答记录');
+        return;
+      }
+
+      // 3. 生成评分报告
+      const scorePrompt = await promptService.buildScorePrompt(jobTitle, resumeContent, reviewsData);
+      const scoreResponse = await aiService.callAI([
+        { role: 'user', content: scorePrompt }
+      ]);
+      const scoreData = JSON.parse(scoreResponse);
+
+      // 4. 生成洞察报告
+      const insightPrompt = await promptService.buildInsightPrompt(jobTitle, resumeContent, reviewsData);
+      const insightResponse = await aiService.callAI([
+        { role: 'user', content: insightPrompt }
+      ]);
+      const insightData = JSON.parse(insightResponse);
+
+      // 5. 保存到后端
+      await interviewService.saveInterviewScore({
+        interviewId,
+        totalScore: scoreData.totalScore,
+        durationSec,
+        numQuestions: context.totalQuestions,
+        overallSummary: scoreData.overallSummary,
+        pros: scoreData.pros,
+        cons: scoreData.cons,
+        suggestions: scoreData.suggestions,
+        radarInteractivity: scoreData.radarInteractivity,
+        radarConfidence: scoreData.radarConfidence,
+        radarProfessionalism: scoreData.radarProfessionalism,
+        radarRelevance: scoreData.radarRelevance,
+        radarClarity: scoreData.radarClarity,
+      });
+
+      await interviewService.saveInterviewInsight({
+        interviewId,
+        interviewerScore: insightData.interviewerScore,
+        interviewerSummary: insightData.interviewerSummary,
+        interviewerRole: insightData.interviewerRole,
+        interviewerMbti: insightData.interviewerMbti,
+        interviewerPersonality: insightData.interviewerPersonality,
+        interviewerPreference: insightData.interviewerPreference,
+        candidateSummary: insightData.candidateSummary,
+        candidateMbti: insightData.candidateMbti,
+        candidatePersonality: insightData.candidatePersonality,
+        candidateJobPreference: insightData.candidateJobPreference,
+        strategyPrepareDetails: insightData.strategyPrepareDetails,
+        strategyBusinessUnderstanding: insightData.strategyBusinessUnderstanding,
+        strategyKeepLogical: insightData.strategyKeepLogical,
+      });
+
+    } catch (error) {
+      console.error('生成面试报告失败:', error);
+      throw error;
     }
   };
 
