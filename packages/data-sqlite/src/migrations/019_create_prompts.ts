@@ -18,7 +18,7 @@ export function up(db: any): void {
     );
 
     -- 插入默认 prompts
-    INSERT INTO prompts (id, content, description, variables, source, default_content, created_at, updated_at) VALUES
+    INSERT INTO prompts (id, content, description, variables, source, default_content, extra, created_at, updated_at) VALUES
     (
       'InitPrompt',
       '你是一名专业的面试官，即将开始一场\${jobPosition.title || ''软件开发''}的面试。
@@ -39,11 +39,11 @@ export function up(db: any): void {
 2. 问题要有针对性，结合岗位要求和候选人背景
 3. 问题难度要循序渐进
 4. 保持专业和友好的语气
-5. 总共进行10个问题的面试
+5. 总共进行\${totalQuestions}个问题的面试
 
 请开始面试，首先进行简单的开场白和自我介绍引导。',
       '面试初始化提示词',
-      '["jobPosition","resume","questionBank"]',
+      '["jobPosition","resume","questionBank","totalQuestions"]',
       'desktop',
       '你是一名专业的面试官，即将开始一场\${jobPosition.title || ''软件开发''}的面试。
 
@@ -63,9 +63,10 @@ export function up(db: any): void {
 2. 问题要有针对性，结合岗位要求和候选人背景
 3. 问题难度要循序渐进
 4. 保持专业和友好的语气
-5. 总共进行10个问题的面试
+5. 总共进行\${totalQuestions}个问题的面试
 
 请开始面试，首先进行简单的开场白和自我介绍引导。',
+      '{"totalQuestions": 10}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
