@@ -109,6 +109,7 @@ export function MockInterviewFooter({
             deviceId: micDeviceId,
             initialText: speechText || '',
             onText: (text) => {
+              console.log('text:', text);
               // 更新跨窗口状态
               setMockInterviewState({ speechText: text });
             },

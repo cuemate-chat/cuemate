@@ -12,6 +12,7 @@ export interface MockInterviewState {
 }
 
 const STORAGE_KEY = 'cuemate.mockInterview.state';
+const AUTO_MODE_KEY = 'cuemate.mockInterview.autoMode';
 const CHANNEL_NAME = 'cuemate.mockInterview.channel';
 
 type ChannelMessage = { type: 'state'; payload: MockInterviewState };
@@ -24,14 +25,28 @@ try {
 // 监听器（同窗口）
 const listeners = new Set<(s: MockInterviewState) => void>();
 
+// 获取持久化的自动模式设置
+function getPersistedAutoMode(): boolean {
+  try {
+    const saved = localStorage.getItem(AUTO_MODE_KEY);
+    if (saved !== null) return saved === 'true';
+  } catch {}
+  return true; // 默认自动模式
+}
+
 function getDefaultState(): MockInterviewState {
-  return { aiMessage: '', speechText: '', candidateAnswer: '', isLoading: false, isListening: false, isAutoMode: true, updatedAt: Date.now() };
+  return { aiMessage: '', speechText: '', candidateAnswer: '', isLoading: false, isListening: false, isAutoMode: getPersistedAutoMode(), updatedAt: Date.now() };
 }
 
 export function getMockInterviewState(): MockInterviewState {
   try {
     const cached = localStorage.getItem(STORAGE_KEY);
-    if (cached) return JSON.parse(cached) as MockInterviewState;
+    if (cached) {
+      const state = JSON.parse(cached) as MockInterviewState;
+      // 确保 isAutoMode 使用持久化的值
+      state.isAutoMode = getPersistedAutoMode();
+      return state;
+    }
   } catch {}
   return getDefaultState();
 }
@@ -47,6 +62,16 @@ export function setMockInterviewState(next: Partial<MockInterviewState>): MockIn
     isAutoMode: next.isAutoMode ?? current.isAutoMode,
     updatedAt: Date.now(),
   };
+
+  // 如果 isAutoMode 发生变化,持久化保存
+  if (next.isAutoMode !== undefined && next.isAutoMode !== current.isAutoMode) {
+    try {
+      localStorage.setItem(AUTO_MODE_KEY, String(merged.isAutoMode));
+    } catch (e) {
+      console.error('Failed to persist autoMode:', e);
+    }
+  }
+
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
   } catch (e) {
