@@ -200,7 +200,7 @@ export class MockInterviewErrorHandler extends EventTarget {
 
   // 恢复成功处理
   private onRecoverySuccessful(detail: any): void {
-    console.log('Recovery successful:', detail);
+    console.debug('Recovery successful:', detail);
     this.errorCount = 0; // 重置错误计数
 
     this.dispatchEvent(new CustomEvent('recoverySuccessful', { detail }));

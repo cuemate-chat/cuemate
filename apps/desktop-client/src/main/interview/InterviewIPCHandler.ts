@@ -28,7 +28,7 @@ export class InterviewIPCHandler {
       // 注册所有面试相关的IPC处理器
       this.registerEventHandlers();
       this.isInitialized = true;
-      console.log('Interview IPC Handler initialized successfully');
+      console.debug('Interview IPC Handler initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Interview IPC Handler:', error);
     }
@@ -71,7 +71,7 @@ export class InterviewIPCHandler {
       return;
     }
 
-    console.log(`[IPC] ${senderWindow.type} -> ${event}:`, data);
+    console.debug(`[IPC] ${senderWindow.type} -> ${event}:`, data);
 
     // 根据事件类型处理不同的逻辑
     switch (event) {
@@ -213,7 +213,7 @@ export class InterviewIPCHandler {
       this.windows.delete(webContents.id);
     });
 
-    console.log(`Registered ${windowType} window with ID: ${webContents.id}`);
+    console.debug(`Registered ${windowType} window with ID: ${webContents.id}`);
 
     // 如果是新注册的窗口，发送当前状态
     if (this.currentInterviewState) {
@@ -225,7 +225,7 @@ export class InterviewIPCHandler {
     const webContentsId = event.sender.id;
     if (this.windows.has(webContentsId)) {
       this.windows.delete(webContentsId);
-      console.log(`Unregistered window with ID: ${webContentsId}`);
+      console.debug(`Unregistered window with ID: ${webContentsId}`);
     }
   }
 
@@ -298,7 +298,7 @@ export class InterviewIPCHandler {
     this.currentInterviewState = null;
     this.isInitialized = false;
 
-    console.log('Interview IPC Handler destroyed');
+    console.debug('Interview IPC Handler destroyed');
   }
 }
 

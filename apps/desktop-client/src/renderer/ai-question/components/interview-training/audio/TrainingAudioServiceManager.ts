@@ -89,7 +89,7 @@ export class TrainingAudioServiceManager extends EventTarget {
 
   async initialize(): Promise<void> {
     try {
-      console.log('初始化面试训练音频服务...');
+      console.debug('初始化面试训练音频服务...');
 
       // 初始化语音协调器
       await this.voiceCoordinator.initialize();
@@ -100,7 +100,7 @@ export class TrainingAudioServiceManager extends EventTarget {
       }
 
       this._isInitialized = true;
-      console.log('面试训练音频服务初始化完成');
+      console.debug('面试训练音频服务初始化完成');
 
       this.dispatchEvent(new CustomEvent('serviceInitialized'));
     } catch (error) {
@@ -120,7 +120,7 @@ export class TrainingAudioServiceManager extends EventTarget {
     try {
       // 这里应该调用系统音频捕获API
       // 目前使用模拟实现
-      console.log('初始化系统音频捕获...');
+      console.debug('初始化系统音频捕获...');
 
       // 模拟系统音频流
       // 实际实现中，这里应该调用 AudioTee 或其他系统音频捕获工具
@@ -134,7 +134,7 @@ export class TrainingAudioServiceManager extends EventTarget {
 
       this.systemAudioStream = audioContext.createMediaStreamDestination().stream;
 
-      console.log('系统音频捕获初始化完成');
+      console.debug('系统音频捕获初始化完成');
     } catch (error) {
       console.error('系统音频捕获初始化失败:', error);
       throw error;
@@ -171,7 +171,7 @@ export class TrainingAudioServiceManager extends EventTarget {
         }, 100);
       }
 
-      console.log('系统音频监听已启动');
+      console.debug('系统音频监听已启动');
       this.dispatchEvent(new CustomEvent('systemAudioListeningStarted'));
 
     } catch (error) {
@@ -192,7 +192,7 @@ export class TrainingAudioServiceManager extends EventTarget {
     this._isSystemAudioListening = false;
     this._systemAudioLevel = 0;
 
-    console.log('系统音频监听已停止');
+    console.debug('系统音频监听已停止');
     this.dispatchEvent(new CustomEvent('systemAudioListeningStopped'));
   }
 
@@ -211,7 +211,7 @@ export class TrainingAudioServiceManager extends EventTarget {
       await this.voiceCoordinator.startASRListening();
       this._isRecording = true;
 
-      console.log('用户录音已启动');
+      console.debug('用户录音已启动');
       this.dispatchEvent(new CustomEvent('recordingStarted'));
 
     } catch (error) {
@@ -238,7 +238,7 @@ export class TrainingAudioServiceManager extends EventTarget {
       this.voiceCoordinator.stopASRListening();
       this._isRecording = false;
 
-      console.log('用户录音已停止');
+      console.debug('用户录音已停止');
       this.dispatchEvent(new CustomEvent('recordingStopped'));
 
     } catch (error) {
@@ -271,7 +271,7 @@ export class TrainingAudioServiceManager extends EventTarget {
       // 模拟网络延迟
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      console.log('面试官语音识别结果:', randomResponse);
+      console.debug('面试官语音识别结果:', randomResponse);
 
       this.dispatchEvent(new CustomEvent('interviewerSpeechRecognized', {
         detail: { text: randomResponse }
@@ -372,6 +372,6 @@ export class TrainingAudioServiceManager extends EventTarget {
     }
 
     this._isInitialized = false;
-    console.log('面试训练音频服务已销毁');
+    console.debug('面试训练音频服务已销毁');
   }
 }

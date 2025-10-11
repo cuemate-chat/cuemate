@@ -77,7 +77,7 @@ export function InterviewTrainingEntryBody({
           handleUserFinishedSpeaking();
         }) as EventListener);
 
-        console.log('Interview training system initialized successfully');
+        console.debug('Interview training system initialized successfully');
       } catch (error) {
         console.error('Failed to initialize interview training system:', error);
         setErrorMessage('面试训练系统初始化失败，请刷新页面重试');
@@ -222,7 +222,7 @@ export function InterviewTrainingEntryBody({
 
       // 这里应该调用系统音频捕获API
       // 目前先模拟实现
-      console.log('开始监听面试官音频...');
+      console.debug('开始监听面试官音频...');
 
       // 模拟音频级别变化
       audioLevelIntervalRef.current = setInterval(() => {
@@ -363,7 +363,7 @@ export function InterviewTrainingEntryBody({
 
   // 处理状态机状态变化
   const handleStateChange = async (state: InterviewState, context: any) => {
-    console.log('Interview training state changed:', state, context);
+    console.debug('Interview training state changed:', state, context);
     setIsInitializing(false);
   };
 

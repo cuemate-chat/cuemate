@@ -117,7 +117,7 @@ export class InterviewTrainingAnalysisService {
    * 执行完整的面试训练分析
    */
   async analyzeInterviewTraining(request: TrainingAnalysisRequest): Promise<TrainingAnalysisResult> {
-    console.log('开始分析面试训练数据:', request.interviewId);
+    console.debug('开始分析面试训练数据:', request.interviewId);
 
     try {
       // 1. 准备分析数据
@@ -129,7 +129,7 @@ export class InterviewTrainingAnalysisService {
       // 3. 处理和格式化结果
       const formattedResult = this.formatAnalysisResult(aiAnalysis, request);
 
-      console.log('面试训练分析完成');
+      console.debug('面试训练分析完成');
       return formattedResult;
 
     } catch (error: unknown) {
@@ -403,7 +403,7 @@ ${qaText}
       })) : []
     };
 
-    console.log('分析结果格式化完成:', {
+    console.debug('分析结果格式化完成:', {
       overallScore: result.overallScore,
       qaCount: result.qaAnalysis.length
     });
@@ -488,7 +488,7 @@ ${qaText}
       const insightResult = await insightResponse.json();
       const insightId = insightResult.id;
 
-      console.log('分析结果已保存到数据库:', { scoreId, insightId });
+      console.debug('分析结果已保存到数据库:', { scoreId, insightId });
 
       return { scoreId, insightId };
 
@@ -540,7 +540,7 @@ ${qaText}
         reviewIds.push(result.id);
       }
 
-      console.log(`保存了${reviewIds.length}条问答分析记录`);
+      console.debug(`保存了${reviewIds.length}条问答分析记录`);
       return reviewIds;
 
     } catch (error) {
@@ -561,7 +561,7 @@ ${qaText}
     reviewIds: string[];
   }> {
     try {
-      console.log('开始完整的面试训练分析流程');
+      console.debug('开始完整的面试训练分析流程');
 
       // 1. 执行AI分析
       const analysis = await this.analyzeInterviewTraining(request);
@@ -578,7 +578,7 @@ ${qaText}
         analysis.qaAnalysis
       );
 
-      console.log('面试训练分析和保存流程完成');
+      console.debug('面试训练分析和保存流程完成');
 
       return {
         analysis,

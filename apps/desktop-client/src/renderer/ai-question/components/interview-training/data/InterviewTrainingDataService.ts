@@ -57,7 +57,7 @@ export class InterviewTrainingDataService {
       isAnalyzing: false,
     };
 
-    console.log(`已初始化面试训练数据状态: ${interviewId}`);
+    console.debug(`已初始化面试训练数据状态: ${interviewId}`);
   }
 
   /**
@@ -79,7 +79,7 @@ export class InterviewTrainingDataService {
 
     this.dataState.questions.set(questionId, question);
 
-    console.log(`添加面试官问题: ${questionId}`);
+    console.debug(`添加面试官问题: ${questionId}`);
     return questionId;
   }
 
@@ -111,7 +111,7 @@ export class InterviewTrainingDataService {
     // 标记问题已处理
     question.processed = true;
 
-    console.log(`添加用户回答: ${answerId} (对应问题: ${questionId})`);
+    console.debug(`添加用户回答: ${answerId} (对应问题: ${questionId})`);
     return answerId;
   }
 
@@ -126,7 +126,7 @@ export class InterviewTrainingDataService {
     const question = this.dataState.questions.get(questionId);
     if (question) {
       question.content = content.trim();
-      console.log(`更新问题内容: ${questionId}`);
+      console.debug(`更新问题内容: ${questionId}`);
     }
   }
 
@@ -141,7 +141,7 @@ export class InterviewTrainingDataService {
     const answer = this.dataState.answers.get(answerId);
     if (answer) {
       answer.content = content.trim();
-      console.log(`更新回答内容: ${answerId}`);
+      console.debug(`更新回答内容: ${answerId}`);
     }
   }
 
@@ -156,7 +156,7 @@ export class InterviewTrainingDataService {
     this.dataState.endTime = Date.now();
     this.dataState.isComplete = true;
 
-    console.log(`面试训练结束: ${this.dataState.interviewId}`);
+    console.debug(`面试训练结束: ${this.dataState.interviewId}`);
   }
 
   /**
@@ -305,7 +305,7 @@ export class InterviewTrainingDataService {
         candidateProfile
       };
 
-      console.log('开始执行面试训练分析:', {
+      console.debug('开始执行面试训练分析:', {
         interviewId: this.dataState.interviewId,
         questionsCount: analysisRequest.interviewerQuestions.length,
         answersCount: analysisRequest.userAnswers.length,
@@ -318,7 +318,7 @@ export class InterviewTrainingDataService {
       this.dataState.analysisResult = result;
       this.dataState.isAnalyzing = false;
 
-      console.log('面试训练分析完成:', {
+      console.debug('面试训练分析完成:', {
         overallScore: result.analysis.overallScore,
         scoreId: result.scoreId,
         insightId: result.insightId,
@@ -376,7 +376,7 @@ export class InterviewTrainingDataService {
    */
   cleanup(): void {
     this.dataState = null;
-    console.log('面试训练数据服务已清理');
+    console.debug('面试训练数据服务已清理');
   }
 
   /**

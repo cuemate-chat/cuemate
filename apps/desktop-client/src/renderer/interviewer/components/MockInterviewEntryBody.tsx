@@ -452,7 +452,8 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       }
 
       // 先保存当前的计时器时长,避免异步过程中状态变化
-      const timerDuration = voiceState.timerDuration || 0;
+      const globalState = useVoiceState();
+      const timerDuration = globalState.timerDuration || 0;
 
       setCurrentLine('正在结束面试...');
 
@@ -619,7 +620,8 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   const generateInterviewReportOnStop = async (interviewId: string) => {
     try {
       // 先保存当前的计时器时长
-      const timerDuration = voiceState.timerDuration || 0;
+      const globalState = useVoiceState();
+      const timerDuration = globalState.timerDuration || 0;
 
       // 1. 重新获取所有 reviews（包含刚才分析的）
       const reviews = await mockInterviewService.getInterviewReviews(interviewId);
@@ -656,7 +658,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         ]);
       } catch (error: any) {
         if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
-          console.log('[DEBUG] Token超限,开始分批处理评分报告,每批1个问题');
           const batchSize = 1;
           const batches = [];
           for (let i = 0; i < reviews.length; i += batchSize) {
@@ -689,8 +690,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
             throw new Error('所有批次处理都失败了');
           }
 
-          console.log(`[DEBUG] 分批处理完成: ${batchResults.length}/${batches.length} 批次成功`);
-
           scoreData = {
             total_score: Math.round(batchResults.reduce((sum, r) => sum + (r.total_score || 0), 0) / batchResults.length),
             num_questions: reviews.length,
@@ -720,7 +719,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         ]);
       } catch (error: any) {
         if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
-          console.log('[DEBUG] Token超限,洞察报告使用默认值');
           insightData = {
             interviewer: { score: 0, summary: '', role: '', mbti: '', personality: '', preference: '' },
             candidate: { summary: '', mbti: '', personality: '', job_preference: '' },
@@ -784,8 +782,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   // 处理状态机状态变化
   const handleStateChange = async (state: InterviewState, context: any) => {
-    console.log('[DEBUG] handleStateChange 被调用, state:', state);
-
     // 更新 mockInterviewState 中的状态机状态
     setMockInterviewState({ interviewState: state });
 
@@ -948,13 +944,8 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         await interviewDataService.createQuestionRecord(context.currentQuestionIndex, question);
       }
 
-      // 清空上一轮的AI答案和用户回答
-      setMockInterviewState({
-        aiMessage: '',
-        candidateAnswer: ''
-      });
-
       // 立即开始生成答案（异步，不等待）
+      // 答案生成会通过onAnswerGenerated流式更新aiMessage,不需要手动清空
       generateAnswerInBackground(context);
 
       // 播放问题
@@ -1137,8 +1128,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
           onAnswerGenerated?.(referenceAnswer);
 
-          // 发送答案生成完成事件
-          stateMachine.current?.send({ type: 'ANSWER_GENERATED', payload: { answer: referenceAnswer } });
         } else {
           // 流式输出：每个chunk都实时更新UI
           referenceAnswer += chunk.content;
@@ -1152,7 +1141,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   // 轮次完成
   const handleRoundComplete = (context: any) => {
-    console.log('[DEBUG] handleRoundComplete 执行, currentQuestionIndex:', context.currentQuestionIndex);
     setCurrentLine(`第${context.currentQuestionIndex + 1}个问题已完成`);
     setErrorMessage('');
 
@@ -1161,13 +1149,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
     // 检查是否应该结束面试
     const shouldEnd = stateMachine.current?.shouldEndInterview();
-    console.log('[DEBUG] shouldEndInterview 返回:', shouldEnd);
 
     if (shouldEnd) {
-      console.log('[DEBUG] 发送 END_INTERVIEW 事件');
       stateMachine.current?.send({ type: 'END_INTERVIEW' });
     } else {
-      console.log('[DEBUG] 2秒后继续下一个问题');
       // 继续下一个问题（这里使用 transitionToNext 检查暂停）
       setTimeout(() => {
         transitionToNext('CONTINUE_INTERVIEW');
@@ -1177,16 +1162,15 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   // 面试结束阶段
   const handleInterviewEnding = async () => {
-    console.log('[DEBUG] handleInterviewEnding 开始执行');
     setCurrentLine('面试即将结束，正在生成报告...');
     setErrorMessage('');
 
     try {
       // 先保存当前的计时器时长
-      const timerDuration = voiceState.timerDuration || 0;
+      const globalState = useVoiceState();
+      const timerDuration = globalState.timerDuration || 0;
 
       // 标记面试完成
-      console.log('[DEBUG] 标记面试完成');
       interviewDataService.markInterviewComplete();
 
       // 从localStorage获取当前面试ID
@@ -1194,30 +1178,23 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
       // 更新数据库中的面试状态为 mock-interview-completed
       if (interviewId) {
-        console.log('[DEBUG] 准备更新数据库状态, interviewId:', interviewId);
         await interviewService.updateInterview(interviewId, {
           status: 'mock-interview-completed',
           duration: timerDuration,
-          message: '面试已完成,正在生成报告'
+          message: '面试已完成'
         });
-        console.log('[DEBUG] 数据库状态更新成功');
-      } else {
-        console.warn('[DEBUG] localStorage中的interviewId为空，跳过数据库更新');
       }
 
       // 发送生成报告事件
-      console.log('[DEBUG] 准备发送 GENERATE_REPORT 事件');
-      const result = transitionToNext('GENERATE_REPORT');
-      console.log('[DEBUG] transitionToNext 返回值:', result);
+      transitionToNext('GENERATE_REPORT');
     } catch (error) {
-      console.error('[DEBUG] handleInterviewEnding 发生错误:', error);
+      console.error('面试结束阶段发生错误:', error);
       transitionToNext('ENDING_ERROR', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 
   // 面试完成
   const handleInterviewCompleted = async () => {
-    console.log('[DEBUG] handleInterviewCompleted 执行');
     setCurrentLine('面试已完成！感谢您的参与。');
     setErrorMessage('');
 
@@ -1226,15 +1203,12 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
     // 异步生成面试报告(scores + insights),不阻塞用户
     if (interviewId && stateMachine.current) {
-      console.log('[DEBUG] 开始生成面试报告, interviewId:', interviewId);
       generateInterviewReport(interviewId, stateMachine.current.getContext()).catch(error => {
         const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
         console.error('生成面试报告失败:', error);
         setErrorMessage(`后台生成面试报告失败: ${errorMsg}`);
         setTimestamp(Date.now());
       });
-    } else {
-      console.warn('[DEBUG] 跳过报告生成, interviewId:', interviewId, 'stateMachine:', !!stateMachine.current);
     }
 
     // 更新VoiceState,保留interviewId(退出窗口时再清理)
@@ -1243,7 +1217,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       subState: 'mock-interview-completed',
       interviewId: interviewId
     });
-    console.log('[DEBUG] VoiceState 已更新为 completed');
   };
 
   // 错误处理
@@ -1272,7 +1245,8 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   const generateInterviewReport = async (interviewId: string, context: any) => {
     try {
       // 先保存当前的计时器时长
-      const durationSec = voiceState.timerDuration || 0;
+      const globalState = useVoiceState();
+      const durationSec = globalState.timerDuration || 0;
 
       // 1. 获取面试数据
       const jobTitle = context.jobPosition?.title || '未知职位';
@@ -1314,7 +1288,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       } catch (error: any) {
         // 如果token超限,尝试分批处理
         if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
-          console.log('[DEBUG] Token超限,开始分批处理评分报告,每批1个问题');
           // 分批处理:每批1个问题
           const batchSize = 1;
           const batches = [];
@@ -1349,8 +1322,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
             throw new Error('所有批次处理都失败了');
           }
 
-          console.log(`[DEBUG] 分批处理完成: ${batchResults.length}/${batches.length} 批次成功`);
-
           // 汇总所有批次结果
           scoreData = {
             total_score: Math.round(batchResults.reduce((sum, r) => sum + (r.total_score || 0), 0) / batchResults.length),
@@ -1382,7 +1353,6 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       } catch (error: any) {
         // 如果token超限,返回默认值
         if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
-          console.log('[DEBUG] Token超限,洞察报告使用默认值');
           insightData = {
             interviewer: { score: 0, summary: '', role: '', mbti: '', personality: '', preference: '' },
             candidate: { summary: '', mbti: '', personality: '', job_preference: '' },

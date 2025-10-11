@@ -71,7 +71,7 @@ export class StreamingLLMManager extends EventTarget {
     this.activeSessions.set(id, session);
     this.dispatchEvent(new CustomEvent('sessionCreated', { detail: session }));
 
-    console.log(`Created LLM session: ${id}`);
+    console.debug(`Created LLM session: ${id}`);
     return id;
   }
 
@@ -130,14 +130,14 @@ export class StreamingLLMManager extends EventTarget {
           temperature: request.temperature || 0.7,
         };
 
-        console.log(`Sending streaming request for session ${sessionId}:`, {
+        console.debug(`Sending streaming request for session ${sessionId}:`, {
           messageCount: allMessages.length,
           model: requestBody.model,
           provider: requestBody.provider,
           hasCredentials: !!requestBody.credentials,
         });
-        console.log('Full request body:', JSON.stringify(requestBody, null, 2));
-        console.log('准备发送 fetch 请求...');
+        console.debug('Full request body:', JSON.stringify(requestBody, null, 2));
+        console.debug('准备发送 fetch 请求...');
 
         const response = await fetch(`${this.llmRouterURL}/completion/stream`, {
           method: 'POST',
@@ -220,7 +220,7 @@ export class StreamingLLMManager extends EventTarget {
 
         // 检查是否是取消操作
         if (error instanceof Error && error.name === 'AbortError') {
-          console.log('LLM request was aborted');
+          console.debug('LLM request was aborted');
           this.currentState = LLMManagerState.IDLE;
           session.isActive = false;
           this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
@@ -230,7 +230,7 @@ export class StreamingLLMManager extends EventTarget {
         // 重试逻辑
         if (retryCount < this.maxRetries) {
           retryCount++;
-          console.log(
+          console.debug(
             `Retrying LLM request in ${this.retryDelay}ms (${retryCount}/${this.maxRetries})`,
           );
 
@@ -301,7 +301,7 @@ export class StreamingLLMManager extends EventTarget {
     this.dispatchEvent(new CustomEvent('streamComplete', { detail: finalChunk }));
     onComplete?.(fullResponse);
 
-    console.log(
+    console.debug(
       `Stream completed for session ${sessionId}, response length: ${fullResponse.length}`,
     );
   }
@@ -313,7 +313,7 @@ export class StreamingLLMManager extends EventTarget {
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
-      console.log('LLM request cancelled');
+      console.debug('LLM request cancelled');
     }
 
     this.currentState = LLMManagerState.IDLE;
@@ -329,7 +329,7 @@ export class StreamingLLMManager extends EventTarget {
       session.isActive = false;
       this.activeSessions.delete(sessionId);
       this.dispatchEvent(new CustomEvent('sessionCleared', { detail: sessionId }));
-      console.log(`Cleared session: ${sessionId}`);
+      console.debug(`Cleared session: ${sessionId}`);
     }
   }
 
@@ -360,7 +360,7 @@ export class StreamingLLMManager extends EventTarget {
         }),
       );
 
-      console.log(`Trimmed session ${sessionId} to ${session.messages.length} messages`);
+      console.debug(`Trimmed session ${sessionId} to ${session.messages.length} messages`);
     }
   }
 
@@ -408,7 +408,7 @@ export class StreamingLLMManager extends EventTarget {
       });
 
       if (expiredSessions.length > 0) {
-        console.log(`Cleaned up ${expiredSessions.length} expired LLM sessions`);
+        console.debug(`Cleaned up ${expiredSessions.length} expired LLM sessions`);
       }
     }, 60000); // 每分钟清理一次
   }
@@ -464,7 +464,7 @@ export class StreamingLLMManager extends EventTarget {
 
     // EventTarget 不需要手动移除监听器，会在对象销毁时自动清理
 
-    console.log('StreamingLLMManager destroyed');
+    console.debug('StreamingLLMManager destroyed');
   }
 }
 

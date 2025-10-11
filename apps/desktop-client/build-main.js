@@ -42,7 +42,6 @@ const buildConfig = {
 
 // 构建主进程
 async function buildMain(watchMode = false) {
-  // 构建脚本中保留 console.log，因为这是构建工具
   try {
     const buildOptions = {
       ...buildConfig,
@@ -60,7 +59,7 @@ async function buildMain(watchMode = false) {
             setup(build) {
               build.onEnd((result) => {
                 if (result.errors.length === 0) {
-                  console.log('主进程重新构建完成');
+                  console.debug('主进程重新构建完成');
                 } else {
                   console.error('主进程重新构建失败');
                 }
@@ -70,11 +69,11 @@ async function buildMain(watchMode = false) {
         ],
       });
       await buildContext.watch();
-      console.log('主进程构建监听已启动');
+      console.debug('主进程构建监听已启动');
       return buildContext;
     } else {
       await build(buildOptions);
-      console.log('主进程构建完成');
+      console.debug('主进程构建完成');
     }
   } catch (error) {
     console.error('主进程构建失败:', error);
@@ -84,7 +83,7 @@ async function buildMain(watchMode = false) {
 
 // 构建预加载脚本
 async function buildPreloadScripts(watchMode = false) {
-  console.log('构建预加载脚本...');
+  console.debug('构建预加载脚本...');
   
   const preloadScripts = [
     {
@@ -121,7 +120,7 @@ async function buildPreloadScripts(watchMode = false) {
                 setup(build) {
                   build.onEnd((result) => {
                     if (result.errors.length === 0) {
-                      console.log(`预加载脚本重新构建完成: ${entry}`);
+                      console.debug(`预加载脚本重新构建完成: ${entry}`);
                     } else {
                       console.error(`预加载脚本重新构建失败: ${entry}`);
                     }
@@ -134,7 +133,7 @@ async function buildPreloadScripts(watchMode = false) {
           return buildContext;
         })
       );
-      console.log('预加载脚本构建监听已启动');
+      console.debug('预加载脚本构建监听已启动');
       return contexts;
     } else {
       await Promise.all(
@@ -147,7 +146,7 @@ async function buildPreloadScripts(watchMode = false) {
           })
         )
       );
-      console.log('预加载脚本构建完成');
+      console.debug('预加载脚本构建完成');
     }
   } catch (error) {
     console.error('预加载脚本构建失败:', error);
@@ -179,10 +178,10 @@ function copyNativeModule() {
 
 // 主构建函数
 async function buildAll(watchMode = false) {
-  console.log('开始构建 Electron 主进程和预加载脚本');
+  console.debug('开始构建 Electron 主进程和预加载脚本');
   
   if (watchMode) {
-    console.log('启用监听模式');
+    console.debug('启用监听模式');
     const contexts = await Promise.all([
       buildMain(true),
       buildPreloadScripts(true),
@@ -191,14 +190,14 @@ async function buildAll(watchMode = false) {
     // 复制原生模块
     copyNativeModule();
     
-    console.log('Electron 主进程构建监听已启动');
+    console.debug('Electron 主进程构建监听已启动');
     
     // 监听 Ctrl+C 退出
     process.on('SIGINT', async () => {
-      console.log('\n正在停止构建监听...');
+      console.debug('\n正在停止构建监听...');
       try {
         await Promise.all(contexts.flat().filter(Boolean).map(ctx => ctx.dispose?.()));
-        console.log('构建监听已停止');
+        console.debug('构建监听已停止');
         process.exit(0);
       } catch (error) {
         console.error('停止构建监听失败:', error);

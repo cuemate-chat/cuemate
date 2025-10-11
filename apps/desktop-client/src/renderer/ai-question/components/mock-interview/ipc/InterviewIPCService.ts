@@ -134,7 +134,7 @@ export class InterviewIPCService {
       this.electronAPI.registerWindow?.();
 
       this.isInitialized = true;
-      console.log('Interview IPC Service initialized successfully');
+      console.debug('Interview IPC Service initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Interview IPC Service:', error);
     }
@@ -310,7 +310,7 @@ export class InterviewIPCService {
     this.electronAPI?.unregisterWindow?.();
     this.clearAllListeners();
     this.isInitialized = false;
-    console.log('Interview IPC Service destroyed');
+    console.debug('Interview IPC Service destroyed');
   }
 }
 

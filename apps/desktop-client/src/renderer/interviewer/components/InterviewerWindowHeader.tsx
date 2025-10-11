@@ -46,16 +46,16 @@ export function InterviewerWindowHeader({
       if (!hasStarted && shouldRunTimer) {
         setHasStarted(true);
         setDuration(0); // 重新开始时重置时间为0
-        // 同步到全局状态
-        setVoiceState({ timerStarted: true, timerDuration: 0, interviewId: globalState.interviewId });
+        // 同步到全局状态(不设置interviewId，避免触发右侧窗口清空数据)
+        setVoiceState({ timerStarted: true, timerDuration: 0 });
       }
 
       if (shouldRunTimer) {
         interval = setInterval(() => {
           setDuration(prev => {
             const newDuration = prev + 1;
-            // 同步到全局状态
-            setVoiceState({ timerDuration: newDuration, interviewId: globalState.interviewId });
+            // 同步到全局状态(不设置interviewId，避免触发右侧窗口清空数据)
+            setVoiceState({ timerDuration: newDuration });
             return newDuration;
           });
         }, 1000);
@@ -64,8 +64,8 @@ export function InterviewerWindowHeader({
       // idle状态或非面试模式时重置计时器
       setHasStarted(false);
       setDuration(0);
-      // 同步到全局状态
-      setVoiceState({ timerStarted: false, timerDuration: 0, interviewId: globalState.interviewId });
+      // 同步到全局状态(不设置interviewId，避免触发右侧窗口清空数据)
+      setVoiceState({ timerStarted: false, timerDuration: 0 });
     }
 
     return () => {

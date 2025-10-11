@@ -136,7 +136,7 @@ export class VoiceCoordinator extends EventTarget {
 
       this.dispatchEvent(new CustomEvent('asrStopped'));
       this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
-      console.log('ASR listening stopped');
+      console.debug('ASR listening stopped');
     }
   }
 
@@ -158,7 +158,7 @@ export class VoiceCoordinator extends EventTarget {
     this.clearAutoEndTimer();
 
     this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
-    console.log('VoiceCoordinator reset to idle');
+    console.debug('VoiceCoordinator reset to idle');
   }
 
   // 开始音频级别监测
@@ -235,7 +235,7 @@ export class VoiceCoordinator extends EventTarget {
       if (this.currentState === VoiceState.ASR_LISTENING) {
         // 监听超时，没有检测到用户说话
         this.dispatchEvent(new CustomEvent('listeningTimeout'));
-        console.log('ASR listening timeout');
+        console.debug('ASR listening timeout');
       }
     }, this.config.autoEndTimeout);
   }

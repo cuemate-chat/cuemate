@@ -128,7 +128,7 @@ export class InterviewDataService {
       questionState.phase = 'completed';
     }
 
-    console.log(`Marked question ${sequence} as completed`);
+    console.debug(`Marked question ${sequence} as completed`);
   }
 
   /**

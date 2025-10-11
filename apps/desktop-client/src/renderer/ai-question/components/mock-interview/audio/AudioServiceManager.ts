@@ -89,7 +89,7 @@ export class AudioServiceManager extends EventTarget {
 
       this.isInitialized = true;
       this.dispatchEvent(new CustomEvent('initialized'));
-      console.log('Audio Service Manager initialized successfully');
+      console.debug('Audio Service Manager initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Audio Service Manager:', error);
       this.dispatchEvent(new CustomEvent('error', { detail: error }));
@@ -108,7 +108,7 @@ export class AudioServiceManager extends EventTarget {
 
       const result = await electronAPI.tts.isAvailable();
       if (result.success && result.available) {
-        console.log('TTS service is available');
+        console.debug('TTS service is available');
         this.dispatchEvent(new CustomEvent('ttsAvailable'));
       } else {
         console.warn('TTS service is not available');
@@ -174,7 +174,7 @@ export class AudioServiceManager extends EventTarget {
       };
 
       this.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log('Media stream initialized successfully');
+      console.debug('Media stream initialized successfully');
     } catch (error) {
       console.error('Failed to initialize media stream:', error);
       throw new Error('无法访问麦克风，请检查权限设置');
@@ -188,7 +188,7 @@ export class AudioServiceManager extends EventTarget {
         this.asrWebSocket = new WebSocket(this.asrConfig.serverUrl);
 
         this.asrWebSocket.onopen = () => {
-          console.log('ASR WebSocket connected');
+          console.debug('ASR WebSocket connected');
           this.sendASRConfig();
           resolve();
         };
@@ -203,7 +203,7 @@ export class AudioServiceManager extends EventTarget {
         };
 
         this.asrWebSocket.onclose = () => {
-          console.log('ASR WebSocket closed');
+          console.debug('ASR WebSocket closed');
           this.dispatchEvent(new CustomEvent('asrDisconnected'));
         };
       } catch (error) {
@@ -620,6 +620,6 @@ export class AudioServiceManager extends EventTarget {
     }
 
     this.isInitialized = false;
-    console.log('Audio Service Manager destroyed');
+    console.debug('Audio Service Manager destroyed');
   }
 }
