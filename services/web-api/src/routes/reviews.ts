@@ -348,6 +348,12 @@ export function registerReviewRoutes(app: FastifyInstance) {
           updateValues.push(body.message);
         }
 
+        // 如果状态变更为completed,自动设置ended_at为当前时间
+        if (body.status === 'mock-interview-completed' || body.status === 'interview-training-completed') {
+          updateFields.push('ended_at = ?');
+          updateValues.push(Date.now());
+        }
+
         if (updateFields.length > 0) {
           updateValues.push(id);
           (app as any).db
