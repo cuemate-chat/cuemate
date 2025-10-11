@@ -186,32 +186,23 @@ export default function Reviews() {
                       </div>
                     )}
                     <div className="mt-3 flex items-center justify-between gap-3">
-                      <div className="flex flex-wrap gap-2 text-sm items-center">
-                        {(() => {
-                          const formatTag = (val?: string) => {
-                            const raw = val || '—';
-                            const isLong = raw.length > 15;
-                            const text = raw.slice(0, 15);
-                            const padLen = Math.max(0, 15 - text.length);
-                            return text + '　'.repeat(padLen) + (isLong ? '…' : '');
-                          };
-                          return (
-                            <>
-                              <Tag
-                                color="blue"
-                                className="!m-0 !px-3 !py-1 font-medium whitespace-pre"
-                              >
-                                {formatTag(it.advantage_content || it.overall_suggestions)}
-                              </Tag>
-                              <Tag
-                                color="red"
-                                className="!m-0 !px-3 !py-1 font-medium whitespace-pre"
-                              >
-                                {formatTag(it.disadvantage_content || it.overall_cons)}
-                              </Tag>
-                            </>
-                          );
-                        })()}
+                      <div className="flex gap-2 text-sm items-center flex-1 min-w-0">
+                        <Tag
+                          color="blue"
+                          className="!m-0 !px-3 !py-1 font-medium flex-1 min-w-0 overflow-hidden"
+                        >
+                          <div className="truncate">
+                            {it.advantage_content || it.overall_suggestions || '—'}
+                          </div>
+                        </Tag>
+                        <Tag
+                          color="red"
+                          className="!m-0 !px-3 !py-1 font-medium flex-1 min-w-0 overflow-hidden"
+                        >
+                          <div className="truncate">
+                            {it.disadvantage_content || it.overall_cons || '—'}
+                          </div>
+                        </Tag>
                       </div>
                       <div className="flex justify-end gap-2 shrink-0">
                         <Tooltip title="查看详情">
