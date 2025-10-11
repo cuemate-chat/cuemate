@@ -46,7 +46,6 @@ export interface UpdateInterviewData {
   interviewType?: 'training' | 'mock';
   status?: InterviewStatus;
   message?: string;
-  ended_at?: number;
 }
 
 export class InterviewService {
