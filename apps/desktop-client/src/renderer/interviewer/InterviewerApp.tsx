@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { currentInterview } from '../utils/currentInterview';
 import { clearVoiceState, getVoiceState, setVoiceState } from '../../utils/voiceState';
 import { InterviewerWindowBody } from './components/InterviewerWindowBody';
 import { InterviewerWindowFooter } from './components/InterviewerWindowFooter';
@@ -76,6 +77,7 @@ export function InterviewerApp() {
         subState: 'idle',
         interviewId: undefined
       });
+      currentInterview.clear(); // 清理localStorage中的interviewId
     }
   };
 

@@ -1,6 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { GraduationCap, MessageSquare, Mic, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { currentInterview } from '../../utils/currentInterview';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { setMockInterviewState } from '../../utils/mockInterviewState';
 import { startVoiceQA, stopVoiceQA, useVoiceQAState } from '../../utils/voiceQA';
@@ -98,7 +99,8 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
   const handleCardClick = (cardTitle: string) => {
     // 点击模拟面试或面试训练卡片时,清除之前的 interviewId
     if (cardTitle === '模拟面试' || cardTitle === '面试训练') {
-      setVoiceState({ interviewId: undefined });
+      currentInterview.clear(); // 清理localStorage中的interviewId
+      setVoiceState({ interviewId: undefined }); // 清理VoiceState中的interviewId
     }
     onSelectCard(cardTitle);
   };
