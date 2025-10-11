@@ -39,7 +39,7 @@ export class ConcurrentRecognition {
 
       logger.info('并发语音识别启动成功');
     } catch (error) {
-      logger.error('启动并发语音识别失败:', error);
+      logger.error({ err: error }, '启动并发语音识别失败:');
       await this.stop();
       throw error;
     }
@@ -57,14 +57,14 @@ export class ConcurrentRecognition {
 
     if (this.micController) {
       stopPromises.push(this.micController.stop().catch(err =>
-        logger.error('停止麦克风识别失败:', err)
+        logger.error({ err: err }, '停止麦克风识别失败')
       ));
       this.micController = null;
     }
 
     if (this.speakerController) {
       stopPromises.push(this.speakerController.stop().catch(err =>
-        logger.error('停止扬声器识别失败:', err)
+        logger.error({ err: err }, '停止扬声器识别失败')
       ));
       this.speakerController = null;
     }

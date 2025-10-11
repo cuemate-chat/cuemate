@@ -171,7 +171,7 @@ export class StreamingTTS {
         try {
           await this.processTextChunk(textChunk);
         } catch (error) {
-          logger.error('处理文本块失败:', error);
+          logger.error({ err: error }, '处理文本块失败:');
           this.options.onError(error as Error);
         }
       }
@@ -206,7 +206,7 @@ export class StreamingTTS {
         }
       }
     } catch (error) {
-      logger.error('文本转语音失败:', error);
+      logger.error({ err: error }, '文本转语音失败:');
       throw error;
     }
   }
@@ -228,7 +228,7 @@ export class StreamingTTS {
         this.playNextAudioChunk();
       }
     } catch (error) {
-      logger.error('音频播放失败:', error);
+      logger.error({ err: error }, '音频播放失败:');
       this.options.onError(error as Error);
     }
   }

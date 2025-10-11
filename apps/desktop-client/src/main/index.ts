@@ -82,7 +82,7 @@ class CueMateApp {
         .initialize()
         .then(() => {})
         .catch((error) => {
-          logger.error('窗口管理器初始化失败:', error);
+          logger.error({ err: error }, '窗口管理器初始化失败:');
         });
 
       // macOS: 当点击 dock 图标时重新激活（虽然 dock 图标已隐藏，但保留处理逻辑）

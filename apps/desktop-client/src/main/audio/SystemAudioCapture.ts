@@ -22,7 +22,7 @@ function ensureNativeLoaded(): void {
     const nativeModule = require(nativeModulePath);
     ScreenCaptureAudio = nativeModule.ScreenCaptureAudio || nativeModule;
   } catch (error) {
-    logger.error('加载音频设备列表模块失败:', error);
+    logger.error({ err: error }, '加载音频设备列表模块失败:');
   }
 }
 
@@ -77,7 +77,7 @@ export class SystemAudioCapture {
       }
       return false;
     } catch (error) {
-      logger.error('AudioTee 不可用:', error);
+      logger.error({ err: error }, 'AudioTee 不可用:');
       return false;
     }
   }
@@ -108,7 +108,7 @@ export class SystemAudioCapture {
 
     // 设置错误回调
     this.onErrorCallback = (error: Error) => {
-      logger.error('AudioTee 系统音频捕获错误回调:', error);
+      logger.error({ err: error }, 'AudioTee 系统音频捕获错误回调:');
       throw error;
     };
 
@@ -177,7 +177,7 @@ export class SystemAudioCapture {
 
       // 监听错误
       this.audioTeeCapture.on('error', (error: Error) => {
-        logger.error('AudioTee 系统音频捕获错误:', error);
+        logger.error({ err: error }, 'AudioTee 系统音频捕获错误:');
         this.isCapturing = false;
 
         // 检查是否是权限错误
@@ -216,7 +216,7 @@ export class SystemAudioCapture {
 
       logger.info('AudioTee 系统音频捕获已启动');
     } catch (error) {
-      logger.error('启动 AudioTee 系统音频捕获失败:', error);
+      logger.error({ err: error }, '启动 AudioTee 系统音频捕获失败:');
       this.isCapturing = false;
       throw error;
     }
@@ -237,7 +237,7 @@ export class SystemAudioCapture {
     if (this.audioTeeCapture) {
       logger.info('停止 AudioTee 捕获...');
       this.audioTeeCapture.stop().catch((error: Error) => {
-        logger.error('停止 AudioTee 失败:', error);
+        logger.error({ err: error }, '停止 AudioTee 失败:');
       });
       this.audioTeeCapture = null;
     }
@@ -288,7 +288,7 @@ export class SystemAudioCapture {
         ];
       }
     } catch (error) {
-      logger.error('获取音频设备列表失败:', error);
+      logger.error({ err: error }, '获取音频设备列表失败:');
       return [
         { id: 'default', name: '默认音频输出设备' },
         { id: 'builtin-speaker', name: '内建扬声器' },

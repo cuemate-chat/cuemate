@@ -158,7 +158,7 @@ export class PiperTTS {
     try {
       (global as any).userLocale = locale;
     } catch (error) {
-      logger.error('设置用户语言偏好失败:', error);
+      logger.error({ err: error }, '设置用户语言偏好失败:');
     }
   }
 
@@ -258,7 +258,7 @@ export class PiperTTS {
       });
 
       piperProcess.on('error', (error) => {
-        logger.error('Piper TTS 进程错误:', error);
+        logger.error({ err: error }, 'Piper TTS 进程错误:');
         reject(error);
       });
     });
@@ -352,7 +352,7 @@ export class PiperTTS {
           fs.unlinkSync(tempFile);
         }
       } catch (error) {
-        logger.warn('清理临时音频文件失败:', error);
+        logger.warn({ err: error }, '清理临时音频文件失败:');
       }
     }
   }
@@ -426,7 +426,7 @@ export class PiperTTS {
       });
 
       piperProcess.on('error', (error) => {
-        logger.error('Piper TTS 进程错误:', error);
+        logger.error({ err: error }, 'Piper TTS 进程错误:');
         reject(error);
       });
     });
