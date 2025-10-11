@@ -110,6 +110,33 @@ class AIService {
   }
 
   /**
+   * 调用AI并返回JSON对象
+   * 保证返回的一定是有效的JSON,如果解析失败会返回空对象并打印错误日志,不会中断流程
+   */
+  async callAIForJson(messages: ChatMessage[]): Promise<any> {
+    const content = await this.callAI(messages);
+
+    // 尝试直接解析
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      // 尝试从响应中提取JSON部分(去除markdown代码块标记等)
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          return JSON.parse(jsonMatch[0]);
+        } catch (e2) {
+          // 提取的内容也不是有效JSON
+        }
+      }
+
+      // 无法解析,打印错误日志但返回空对象,不中断流程
+      console.error('AI返回的不是有效的JSON格式,将返回空对象。原始内容:', content);
+      return {};
+    }
+  }
+
+  /**
    * 流式调用AI
    * 实现类似ChatGPT的实时输出效果
    */
