@@ -82,18 +82,30 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       });
 
       const { provider, model, credentials, model_params, ...cleanedBody } = body;
-      const stream = await llmManager.stream(cleanedBody, runtimeConfig);
 
-      for await (const chunk of stream) {
-        reply.raw.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+      try {
+        const stream = await llmManager.stream(cleanedBody, runtimeConfig);
+
+        for await (const chunk of stream) {
+          reply.raw.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+        }
+
+        reply.raw.write('data: [DONE]\n\n');
+        reply.raw.end();
+      } catch (streamError) {
+        logger.error('Stream processing failed:', streamError);
+        // Headers already sent, write error as SSE event
+        reply.raw.write(`data: ${JSON.stringify({ error: streamError instanceof Error ? streamError.message : 'Stream failed' })}\n\n`);
+        reply.raw.end();
       }
-
-      reply.raw.write('data: [DONE]\n\n');
-      reply.raw.end();
       return;
     } catch (error) {
       logger.error('Stream request failed:', error);
-      return reply.code(500).send({ error: 'Stream failed' });
+      // Only send error response if headers not yet sent
+      if (!reply.raw.headersSent) {
+        return reply.code(500).send({ error: 'Stream failed', message: error instanceof Error ? error.message : String(error) });
+      }
+      reply.raw.end();
     }
   });
 
