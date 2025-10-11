@@ -137,7 +137,7 @@ export async function validateLicenseAtStartup(db: any, logger: any): Promise<vo
         // 验证过程出错，标记为invalid
         db.prepare('UPDATE licenses SET status = ? WHERE id = ?').run('invalid', license.id);
         invalidCount++;
-        logger.error(`License ${license.id} 验证过程出错:`, error);
+        logger.error({ err: error }, `License ${license.id} 验证过程出错`);
       }
     }
 
@@ -145,6 +145,6 @@ export async function validateLicenseAtStartup(db: any, logger: any): Promise<vo
       logger.warn('当前没有有效的 License，请上传有效的 License 文件');
     }
   } catch (error: any) {
-    logger.error('License 验证过程中发生错误:', error);
+    logger.error({ err: error }, 'License 验证过程中发生错误');
   }
 }
