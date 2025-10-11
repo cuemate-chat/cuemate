@@ -27,6 +27,7 @@ export interface InterviewContext {
   conversationHistory: any[];
   errorMessage?: string;
   initPrompt?: string;
+  isPaused?: boolean;
 }
 
 export interface InterviewEvent {
@@ -60,13 +61,11 @@ const stateTransitions: Record<InterviewState, Record<string, InterviewState>> =
     USER_FINISHED_SPEAKING: InterviewState.AI_ANALYZING, // 支持直接从监听状态到分析状态
     LISTENING_TIMEOUT: InterviewState.AI_THINKING, // 超时重新提问
     LISTENING_ERROR: InterviewState.ERROR,
-    ANSWER_GENERATED: InterviewState.USER_LISTENING, // 答案在后台生成完成,保持当前状态
   },
   [InterviewState.USER_SPEAKING]: {
     USER_FINISHED_SPEAKING: InterviewState.AI_ANALYZING,
     MANUAL_STOP: InterviewState.AI_ANALYZING,
     SPEAKING_ERROR: InterviewState.ERROR,
-    ANSWER_GENERATED: InterviewState.USER_SPEAKING, // 答案在后台生成完成,保持当前状态
   },
   [InterviewState.AI_ANALYZING]: {
     ANALYSIS_COMPLETE: InterviewState.ROUND_COMPLETE,
@@ -137,14 +136,19 @@ export class InterviewStateMachine {
       return false;
     }
 
+    // 检查状态是否真的发生了变化
+    const stateChanged = this.currentState !== nextState;
+
     // 执行状态转换
     this.currentState = nextState;
 
     // 根据事件更新上下文
     this.updateContext(event);
 
-    // 通知状态变化监听器
-    this.notifyStateChange();
+    // 只有状态真正改变时才通知监听器
+    if (stateChanged) {
+      this.notifyStateChange();
+    }
 
     return true;
   }
@@ -157,6 +161,17 @@ export class InterviewStateMachine {
   // 获取上下文
   getContext(): InterviewContext {
     return { ...this.context };
+  }
+
+  // 恢复上下文（用于从 localStorage 恢复状态）
+  restoreContext(savedContext: Partial<InterviewContext>): void {
+    this.context = { ...this.context, ...savedContext };
+  }
+
+  // 部分更新上下文（用于设置暂停标志等）
+  updateContextPartial(partial: Partial<InterviewContext>): void {
+    this.context = { ...this.context, ...partial };
+    this.notifyStateChange();
   }
 
   // 更新上下文
