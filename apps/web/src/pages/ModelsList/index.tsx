@@ -529,9 +529,9 @@ export default function ModelsList() {
   );
 }
 
-function getDefaultParamsByProvider(pid?: string) {
-  const m = pid ? findProvider(pid) : undefined;
-  return m?.defaultParams || [];
+function getDefaultParamsByProvider(_pid?: string) {
+  // 默认参数已移到 baseModels 的 default_params 中,这里返回空数组
+  return [];
 }
 
 function getDefaultCredentialsByProvider(pid?: string) {

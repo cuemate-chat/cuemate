@@ -56,11 +56,13 @@ export default function ModelEditDrawer({
 
   // 初始化：从 provider manifest 预置默认参数到表格
   useEffect(() => {
-    if (data?.provider && (!data?.params || data.params.length === 0)) {
-      const preset = getDefaultParamsByProvider(data.provider);
-      setForm((f: any) => ({ ...f, params: preset && preset.length ? preset : f.params }));
+    if (form.provider && form.model_name) {
+      const preset = getDefaultParamsByProvider(form.provider, form.model_name);
+      if (preset && preset.length > 0) {
+        setForm((f: any) => ({ ...f, params: preset }));
+      }
     }
-  }, [data?.provider]);
+  }, [form.provider, form.model_name]);
 
   // 测试连接功能
   const handleTestConnection = async () => {
@@ -225,8 +227,8 @@ export default function ModelEditDrawer({
                           }))
                         }
                         options={(findProvider(form.provider)?.baseModels || []).map((m) => ({
-                          value: m,
-                          label: m,
+                          value: typeof m === 'string' ? m : m.name,
+                          label: typeof m === 'string' ? m : m.name,
                         }))}
                         showSearch
                         style={{ width: '100%' }}
@@ -448,9 +450,21 @@ function removeParamRow(setForm: any, index: number) {
   });
 }
 
-function getDefaultParamsByProvider(pid?: string) {
+function getDefaultParamsByProvider(pid?: string, modelName?: string) {
   const m = pid ? findProvider(pid) : undefined;
-  return m?.defaultParams || [];
+
+  // 如果指定了模型名称,尝试从 baseModels 中获取该模型的参数
+  if (modelName && m?.baseModels) {
+    const model = m.baseModels.find((bm) =>
+      typeof bm === 'string' ? bm === modelName : bm.name === modelName
+    );
+    if (model && typeof model !== 'string' && model.default_params) {
+      return model.default_params;
+    }
+  }
+
+  // 默认参数已全部移到 baseModels 中,这里返回空数组
+  return [];
 }
 
 function getDefaultCredentialsByProvider(pid?: string) {
