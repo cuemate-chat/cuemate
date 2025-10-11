@@ -42,11 +42,12 @@ export function InterviewerWindowHeader({
     );
 
     if (shouldShowTimer) {
-      if (!hasStarted) {
+      // 只在recording/playing状态下初始化计时器,completed/paused状态保持现有值
+      if (!hasStarted && shouldRunTimer) {
         setHasStarted(true);
         setDuration(0); // 重新开始时重置时间为0
         // 同步到全局状态
-        setVoiceState({ timerStarted: true, timerDuration: 0 });
+        setVoiceState({ timerStarted: true, timerDuration: 0, interviewId: globalState.interviewId });
       }
 
       if (shouldRunTimer) {
@@ -54,7 +55,7 @@ export function InterviewerWindowHeader({
           setDuration(prev => {
             const newDuration = prev + 1;
             // 同步到全局状态
-            setVoiceState({ timerDuration: newDuration });
+            setVoiceState({ timerDuration: newDuration, interviewId: globalState.interviewId });
             return newDuration;
           });
         }, 1000);
@@ -64,7 +65,7 @@ export function InterviewerWindowHeader({
       setHasStarted(false);
       setDuration(0);
       // 同步到全局状态
-      setVoiceState({ timerStarted: false, timerDuration: 0 });
+      setVoiceState({ timerStarted: false, timerDuration: 0, interviewId: globalState.interviewId });
     }
 
     return () => {
