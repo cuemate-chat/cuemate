@@ -42,6 +42,7 @@ lerna-debug.log*
 *.swo
 *~
 CLAUDE.md
+AGENTS.md
 compile_commands.json
 
 # Tauri
@@ -103,4 +104,3 @@ logs/
 # private file
 private/
 /data/
-

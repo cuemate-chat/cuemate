@@ -238,7 +238,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
             timezone,
             body.jobTitle || null,
             body.jobContent || null,
-            body.questionCount || 0,
+            0, // question_count 初始化为0,update时自动统计
             body.resumesId || null,
             body.resumesTitle || null,
             body.resumesContent || null,
@@ -353,6 +353,17 @@ export function registerReviewRoutes(app: FastifyInstance) {
           (app as any).db
             .prepare(`UPDATE interviews SET ${updateFields.join(', ')} WHERE id = ?`)
             .run(...updateValues);
+        }
+
+        // 自动统计并更新question_count
+        const reviewCountRow = (app as any).db
+          .prepare('SELECT COUNT(1) as cnt FROM interview_reviews WHERE interview_id = ?')
+          .get(id);
+        const reviewCount = reviewCountRow?.cnt ?? 0;
+        if (reviewCount > 0) {
+          (app as any).db
+            .prepare('UPDATE interviews SET question_count = ? WHERE id = ?')
+            .run(reviewCount, id);
         }
 
         // 记录操作日志
