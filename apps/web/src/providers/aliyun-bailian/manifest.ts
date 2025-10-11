@@ -10,79 +10,342 @@ const manifest: ProviderManifest = {
   icon_url: 'assets/llm/aliyun_bai_lian_icon_svg',
   modelNamePlaceholder: '如 qwen-max / qwen-plus / qwen2.5-7b-instruct',
   baseModels: [
-    'qwen3-0.6b',
-    'qwen3-1.7b',
-    'qwen3-4b',
-    'qwen3-8b',
-    'qwen3-14b',
-    'qwen3-32b',
-    'qwen3-30b-a3b',
-    'qwen3-235b-a22b',
-    'qwen-turbo',
-    'qwen-plus',
-    'qwen-max',
-  ],
-  credentialFieldsPerModel: {
-    default: [
+  {
+    name: "qwen3-0.6b",
+    default_params: [
       {
-        key: 'base_url',
-        label: 'API URL',
-        type: 'text',
-        placeholder: '默认 https://dashscope.aliyuncs.com/compatible-mode/v1（可选，代理 Base URL）',
-        defaultValue: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
       },
-      { 
-        key: 'api_key', 
-        label: 'API Key', 
-        required: true, 
-        type: 'password',
-        placeholder: '格式：sk-开头的32位字符，需在阿里云百炼平台获取'
-      },
-    ],
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "2048",
+        default_value: "2048",
+        extra: {
+          min: 256,
+          max: 2048,
+          step: 128
+        }
+      }
+    ]
   },
+  {
+    name: "qwen3-1.7b",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "2048",
+        default_value: "2048",
+        extra: {
+          min: 256,
+          max: 2048,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "qwen3-4b",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "2048",
+        default_value: "2048",
+        extra: {
+          min: 256,
+          max: 2048,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "qwen3-8b",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "2048",
+        default_value: "2048",
+        extra: {
+          min: 256,
+          max: 2048,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "qwen3-14b",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "2048",
+        default_value: "2048",
+        extra: {
+          min: 256,
+          max: 2048,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "qwen3-32b",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "2048",
+        default_value: "2048",
+        extra: {
+          min: 256,
+          max: 2048,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "qwen3-30b-a3b",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "2048",
+        default_value: "2048",
+        extra: {
+          min: 256,
+          max: 2048,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "qwen3-235b-a22b",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "2048",
+        default_value: "2048",
+        extra: {
+          min: 256,
+          max: 2048,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "qwen-turbo",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "2048",
+        default_value: "2048",
+        extra: {
+          min: 256,
+          max: 2048,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "qwen-plus",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "32768",
+        default_value: "32768",
+        extra: {
+          min: 256,
+          max: 32768,
+          step: 256
+        }
+      }
+    ]
+  },
+  {
+    name: "qwen-max",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "8192",
+        default_value: "8192",
+        extra: {
+          min: 256,
+          max: 8192,
+          step: 128
+        }
+      }
+    ]
+  }
+],
   credentialFields: [
-    { 
-      key: 'base_url', 
-      label: 'API URL', 
-      type: 'text', 
-      placeholder: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-      defaultValue: 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+    {
+      key: 'base_url',
+      label: 'API URL',
+      type: 'text',
+      placeholder: '默认 https://dashscope.aliyuncs.com/compatible-mode/v1（可选，代理 Base URL）',
+      defaultValue: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     },
-    { 
-      key: 'api_key', 
-      label: 'API Key', 
-      required: true, 
+    {
+      key: 'api_key',
+      label: 'API Key',
+      required: true,
       type: 'password',
-      placeholder: 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+      placeholder: '格式：sk-开头的32位字符，需在阿里云百炼平台获取'
     },
-  ],
-  defaultParams: [
-    {
-      label: '温度',
-      param_key: 'temperature',
-      ui_type: 'slider',
-      value: '0.7',
-      default_value: '0.7',
-      required: true,
-      extra: { min: 0, max: 1, step: 0.1 },
-    },
-    {
-      label: '输出最大Token数',
-      param_key: 'max_tokens',
-      ui_type: 'input',
-      value: '800',
-      default_value: '800',
-      required: true,
-    },
-    {
-      label: '是否流式回音',
-      param_key: 'stream',
-      ui_type: 'switch',
-      value: 'true',
-      default_value: 'true',
-      required: true,
-    },
-  ],
+  ]
 };
 
 export default manifest;
