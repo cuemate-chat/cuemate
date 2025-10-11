@@ -103,7 +103,7 @@ export function setVoiceState(next: Partial<VoiceState> | VoiceState): VoiceStat
     subState: next.subState ?? current.subState,
     timerDuration: next.timerDuration ?? current.timerDuration,
     timerStarted: next.timerStarted ?? current.timerStarted,
-    interviewId: next.interviewId ?? current.interviewId,
+    interviewId: 'interviewId' in next ? next.interviewId : current.interviewId,
     updatedAt: Date.now(),
   } as VoiceState;
 
