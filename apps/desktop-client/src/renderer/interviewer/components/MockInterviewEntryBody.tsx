@@ -7,6 +7,7 @@ import { InterviewState, InterviewStateMachine } from '../../ai-question/compone
 import { promptService } from '../../prompts/promptService';
 import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { aiService } from '../../utils/ai/aiService';
+import { currentInterview } from '../../utils/currentInterview';
 import { setMockInterviewState, useMockInterviewState } from '../../utils/mockInterviewState';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
@@ -68,20 +69,30 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
     // 只有当 candidateAnswer 有值且状态机已初始化时才处理
     if (candidateAnswer && stateMachine.current) {
+      const currentState = stateMachine.current.getState();
 
-      // 暂存用户回答
-      if (currentQuestionData.current) {
-        currentQuestionData.current.candidateAnswer = candidateAnswer;
+      // 只有在 USER_LISTENING 或 USER_SPEAKING 状态时才接受用户回答
+      if (currentState === InterviewState.USER_LISTENING ||
+          currentState === InterviewState.USER_SPEAKING) {
+
+        // 暂存用户回答
+        if (currentQuestionData.current) {
+          currentQuestionData.current.candidateAnswer = candidateAnswer;
+        }
+
+        // 触发状态机进入AI分析阶段
+        stateMachine.current.send({
+          type: 'USER_FINISHED_SPEAKING',
+          payload: { response: candidateAnswer }
+        });
+
+        // 不立即清空 candidateAnswer,让右侧窗口有时间显示
+        // candidateAnswer 会在下一轮问题开始时清空
+      } else {
+        // 非法状态下提交答案，直接清空避免重复触发
+        console.warn(`用户在非法状态 ${currentState} 下提交了答案，已忽略`);
+        setMockInterviewState({ candidateAnswer: '' });
       }
-
-      // 触发状态机进入AI分析阶段
-      stateMachine.current.send({
-        type: 'USER_FINISHED_SPEAKING',
-        payload: { response: candidateAnswer }
-      });
-
-      // 清空 candidateAnswer 避免重复触发
-      setMockInterviewState({ candidateAnswer: '' });
     }
   }, [mockInterviewState.candidateAnswer]);
 
@@ -155,9 +166,15 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       setErrorMessage(`语音播放失败: ${text}`);
       setTimestamp(Date.now());
 
-      // 发送错误事件到状态机
+      // 发送错误事件到状态机（只在 AI_SPEAKING 状态时发送）
       if (stateMachine.current) {
-        stateMachine.current.send({ type: 'SPEAKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+        const currentState = stateMachine.current.getState();
+        if (currentState === InterviewState.AI_SPEAKING) {
+          // 错误事件直接发送，不使用 transitionToNext（错误不应该被暂停阻塞）
+          stateMachine.current.send({ type: 'SPEAKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+        } else {
+          console.warn(`语音播放失败，但当前状态为 ${currentState}，无法发送 SPEAKING_ERROR`);
+        }
       }
     }
   };
@@ -202,6 +219,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       };
 
       const response = await interviewService.createInterview(interviewData);
+
+      // 先清理旧的interviewId，再设置新的
+      currentInterview.clear();
+      currentInterview.set(response.id);
 
       // 清空上一次面试的mockInterviewState
       setMockInterviewState({
@@ -280,31 +301,167 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     }
   };
 
-  const handlePauseInterview = () => {
-    setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-paused' });
+  // 通用暂停检查方法
+  const checkAndHandlePause = (): boolean => {
+    if (!stateMachine.current) return false;
+    const context = stateMachine.current.getContext();
+    return !!context.isPaused;
   };
 
-  const handleResumeInterview = () => {
-    setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-playing' });
+  // 状态转换包装方法（检查暂停后再发送下一个事件）
+  const transitionToNext = (eventType: string, payload?: any): boolean => {
+    if (!stateMachine.current) return false;
+
+    // 如果已暂停，不发送事件
+    if (checkAndHandlePause()) {
+      return false;
+    }
+
+    // 发送事件
+    return stateMachine.current.send({ type: eventType, payload });
+  };
+
+  // 从暂停状态恢复，发送当前状态的完成事件
+  const continueFromState = (state: InterviewState): void => {
+    if (!stateMachine.current) return;
+
+    // 根据暂停时的状态，发送对应的完成事件
+    const completionEvents: Record<InterviewState, string | null> = {
+      [InterviewState.IDLE]: null,
+      [InterviewState.INITIALIZING]: 'INIT_SUCCESS',
+      [InterviewState.AI_THINKING]: 'QUESTION_GENERATED',
+      [InterviewState.AI_SPEAKING]: 'SPEAKING_COMPLETE',
+      [InterviewState.GENERATING_ANSWER]: 'ANSWER_GENERATED',
+      [InterviewState.USER_LISTENING]: null, // 监听状态不需要自动完成
+      [InterviewState.USER_SPEAKING]: null, // 用户说话状态不需要自动完成
+      [InterviewState.AI_ANALYZING]: 'ANALYSIS_COMPLETE',
+      [InterviewState.ROUND_COMPLETE]: 'CONTINUE_INTERVIEW',
+      [InterviewState.INTERVIEW_ENDING]: 'GENERATE_REPORT',
+      [InterviewState.GENERATING_REPORT]: 'REPORT_COMPLETE',
+      [InterviewState.COMPLETED]: null,
+      [InterviewState.ERROR]: null,
+    };
+
+    const eventType = completionEvents[state];
+    if (eventType) {
+      stateMachine.current.send({ type: eventType });
+    }
+  };
+
+  const handlePauseInterview = async () => {
+    if (!stateMachine.current) return;
+
+    // 从localStorage获取当前面试ID
+    const interviewId = currentInterview.get();
+    if (!interviewId) return;
+
+    try {
+      // 1. 设置暂停标志
+      stateMachine.current.updateContextPartial({ isPaused: true });
+
+      // 2. 保存当前状态到 localStorage
+      const currentState = stateMachine.current.getState();
+      const currentContext = stateMachine.current.getContext();
+
+      localStorage.setItem('mock-interview-paused-state', JSON.stringify({
+        interviewId: interviewId,
+        state: currentState,
+        context: currentContext,
+        timestamp: Date.now()
+      }));
+
+      // 3. 更新 interviews 表状态
+      await interviewService.updateInterview(interviewId, {
+        status: 'mock-interview-paused',
+        message: '面试已暂停'
+      });
+
+      // 4. 更新 UI 状态
+      setVoiceState({
+        mode: 'mock-interview',
+        subState: 'mock-interview-paused',
+        interviewId: interviewId
+      });
+      setCurrentLine('面试已暂停');
+
+    } catch (error) {
+      console.error('暂停面试失败:', error);
+      setErrorMessage(`暂停面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  };
+
+  const handleResumeInterview = async () => {
+    if (!stateMachine.current) return;
+
+    // 从localStorage获取当前面试ID
+    const interviewId = currentInterview.get();
+    if (!interviewId) return;
+
+    try {
+      // 1. 从 localStorage 恢复状态
+      const savedStateStr = localStorage.getItem('mock-interview-paused-state');
+      if (!savedStateStr) {
+        throw new Error('未找到暂停的面试状态');
+      }
+
+      const savedState = JSON.parse(savedStateStr);
+
+      // 验证是否是同一场面试
+      if (savedState.interviewId !== interviewId) {
+        throw new Error('暂停状态与当前面试不匹配');
+      }
+
+      // 2. 恢复状态机上下文
+      stateMachine.current.restoreContext(savedState.context);
+
+      // 3. 清除暂停标志
+      stateMachine.current.updateContextPartial({ isPaused: false });
+
+      // 4. 更新 interviews 表状态
+      await interviewService.updateInterview(interviewId, {
+        status: 'mock-interview-recording',
+        message: '面试已恢复'
+      });
+
+      // 5. 更新 UI 状态
+      setVoiceState({
+        mode: 'mock-interview',
+        subState: 'mock-interview-playing',
+        interviewId: interviewId
+      });
+      setCurrentLine('面试已恢复');
+
+      // 6. 根据暂停时的状态继续执行
+      continueFromState(savedState.state);
+
+      // 7. 清除 localStorage 中的暂停状态
+      localStorage.removeItem('mock-interview-paused-state');
+
+    } catch (error) {
+      console.error('恢复面试失败:', error);
+      setErrorMessage(`恢复面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
   };
 
   const handleStopInterview = async () => {
     try {
-      if (!voiceState.interviewId) {
+      // 从localStorage获取当前面试ID
+      const interviewId = currentInterview.get();
+      if (!interviewId) {
         return;
       }
 
       setCurrentLine('正在结束面试...');
 
       // 1. 更新 interviews 状态为 mock-interview-completed
-      await interviewService.updateInterview(voiceState.interviewId, {
+      await interviewService.updateInterview(interviewId, {
         status: 'mock-interview-completed',
         duration: voiceState.timerDuration || 0,
         message: '用户主动停止面试'
       });
 
       // 2. 获取 interview_reviews 记录
-      const reviews = await mockInterviewService.getInterviewReviews(voiceState.interviewId);
+      const reviews = await mockInterviewService.getInterviewReviews(interviewId);
 
       // 3. 判断是否有记录（至少有1条数据）
       if (!reviews || reviews.length === 0) {
@@ -312,7 +469,8 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         setCurrentLine('面试已结束');
         setVoiceState({
           mode: 'mock-interview',
-          subState: 'mock-interview-completed'
+          subState: 'mock-interview-completed',
+          interviewId: interviewId
         });
         return;
       }
@@ -351,14 +509,15 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       const totalValidReviews = readyForReport.length + needsAnalysis.length;
       if (totalValidReviews > 0) {
         setCurrentLine('正在生成面试报告...');
-        await generateInterviewReportOnStop(voiceState.interviewId);
+        await generateInterviewReportOnStop(interviewId);
       }
 
       // 7. 完成
       setCurrentLine('面试已结束');
       setVoiceState({
         mode: 'mock-interview',
-        subState: 'mock-interview-completed'
+        subState: 'mock-interview-completed',
+        interviewId: interviewId
       });
 
     } catch (error) {
@@ -366,9 +525,11 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       setErrorMessage(`结束面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
       setCurrentLine('');
       // 即使失败，也要设置状态为完成
+      const interviewId = currentInterview.get();
       setVoiceState({
         mode: 'mock-interview',
-        subState: 'mock-interview-completed'
+        subState: 'mock-interview-completed',
+        interviewId: interviewId
       });
     }
   };
@@ -452,9 +613,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   const generateInterviewReportOnStop = async (interviewId: string) => {
     try {
       // 1. 重新获取所有 reviews（包含刚才分析的）
-      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-      const reviewsResponse = await api?.getInterviewReviews?.(interviewId);
-      const reviews = reviewsResponse?.success ? reviewsResponse.reviews : [];
+      const reviews = await mockInterviewService.getInterviewReviews(interviewId);
 
       if (!reviews || reviews.length === 0) {
         return;
@@ -464,22 +623,92 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       const jobTitle = selectedPosition?.title || '未知职位';
       const resumeContent = selectedPosition?.resumeContent || '';
 
-      // 3. 构建 reviews 数据字符串
-      const reviewsData = JSON.stringify(reviews, null, 2);
+      // 3. 构建汇总数据(不传原始问答,只传已分析的结果)
+      const summaryData = {
+        totalQuestions: reviews.length,
+        questions: reviews.map((r, i) => ({
+          index: i + 1,
+          question: r.asked_question?.substring(0, 100),
+          pros: r.pros || '无',
+          cons: r.cons || '无',
+          suggestions: r.suggestions || '无',
+          keyPoints: r.key_points || '无',
+          assessment: r.assessment || '无'
+        }))
+      };
+      const reviewsData = JSON.stringify(summaryData, null, 2);
 
-      // 4. 生成评分报告
-      const scorePrompt = await promptService.buildScorePrompt(jobTitle, resumeContent, reviewsData);
-      const scoreResponse = await aiService.callAI([
-        { role: 'user', content: scorePrompt }
-      ]);
-      const scoreData = JSON.parse(scoreResponse);
+      // 4. 生成评分报告(带自动分批处理)
+      let scoreData;
+      try {
+        const scorePrompt = await promptService.buildScorePrompt(jobTitle, resumeContent, reviewsData);
+        scoreData = await aiService.callAIForJson([
+          { role: 'user', content: scorePrompt }
+        ]);
+      } catch (error: any) {
+        if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
+          console.log('[DEBUG] Token超限,开始分批处理评分报告,每批3个问题');
+          const batchSize = 3;
+          const batches = [];
+          for (let i = 0; i < reviews.length; i += batchSize) {
+            batches.push(reviews.slice(i, i + batchSize));
+          }
 
-      // 5. 生成洞察报告
-      const insightPrompt = await promptService.buildInsightPrompt(jobTitle, resumeContent, reviewsData);
-      const insightResponse = await aiService.callAI([
-        { role: 'user', content: insightPrompt }
-      ]);
-      const insightData = JSON.parse(insightResponse);
+          const batchResults = await Promise.all(batches.map(async (batch) => {
+            const batchSummary = {
+              totalQuestions: batch.length,
+              questions: batch.map((r, i) => ({
+                index: i + 1,
+                question: r.asked_question?.substring(0, 100),
+                pros: r.pros || '无',
+                cons: r.cons || '无',
+                suggestions: r.suggestions || '无',
+              }))
+            };
+            const batchData = JSON.stringify(batchSummary);
+            const prompt = await promptService.buildScorePrompt(jobTitle, resumeContent, batchData);
+            return await aiService.callAIForJson([{ role: 'user', content: prompt }]);
+          }));
+
+          scoreData = {
+            total_score: Math.round(batchResults.reduce((sum, r) => sum + (r.total_score || 0), 0) / batchResults.length),
+            num_questions: reviews.length,
+            radar: {
+              interactivity: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.interactivity || 0), 0) / batchResults.length),
+              confidence: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.confidence || 0), 0) / batchResults.length),
+              professionalism: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.professionalism || 0), 0) / batchResults.length),
+              relevance: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.relevance || 0), 0) / batchResults.length),
+              clarity: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.clarity || 0), 0) / batchResults.length),
+            },
+            overall_summary: batchResults.map(r => r.overall_summary).join(' '),
+            pros: batchResults.map(r => r.pros).join('\n'),
+            cons: batchResults.map(r => r.cons).join('\n'),
+            suggestions: batchResults.map(r => r.suggestions).join('\n'),
+          };
+        } else {
+          throw error;
+        }
+      }
+
+      // 5. 生成洞察报告(带自动分批处理)
+      let insightData;
+      try {
+        const insightPrompt = await promptService.buildInsightPrompt(jobTitle, resumeContent, reviewsData);
+        insightData = await aiService.callAIForJson([
+          { role: 'user', content: insightPrompt }
+        ]);
+      } catch (error: any) {
+        if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
+          console.log('[DEBUG] Token超限,洞察报告使用默认值');
+          insightData = {
+            interviewer: { score: 0, summary: '', role: '', mbti: '', personality: '', preference: '' },
+            candidate: { summary: '', mbti: '', personality: '', job_preference: '' },
+            strategy: { prepare_details: '', business_understanding: '', keep_logical: '' }
+          };
+        } else {
+          throw error;
+        }
+      }
 
       // 6. 保存到后端
       await interviewService.saveInterviewScore({
@@ -531,6 +760,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   // 处理状态机状态变化
   const handleStateChange = async (state: InterviewState, context: any) => {
+    console.log('[DEBUG] handleStateChange 被调用, state:', state);
+
+    // 更新 mockInterviewState 中的状态机状态
+    setMockInterviewState({ interviewState: state });
 
     try {
       switch (state) {
@@ -563,7 +796,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
           break;
         case InterviewState.GENERATING_REPORT:
           // 报告生成是异步的,不阻塞状态机,立即进入完成状态
-          stateMachine.current?.send({ type: 'REPORT_COMPLETE' });
+          transitionToNext('REPORT_COMPLETE');
           break;
         case InterviewState.COMPLETED:
           handleInterviewCompleted();
@@ -665,10 +898,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         if (chunk.finished) {
           // 清理问题文本
           const cleanQuestion = generatedQuestion.trim().replace(/^(问题|Question)\s*[:：]?\s*/, '');
-          stateMachine.current?.send({
-            type: 'QUESTION_GENERATED',
-            payload: { question: cleanQuestion }
-          });
+          stateMachine.current?.send({ type: 'QUESTION_GENERATED', payload: { question: cleanQuestion } });
         } else {
           generatedQuestion += chunk.content;
         }
@@ -687,8 +917,18 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       // 显示AI生成的问题
       setCurrentLine(question);
 
-      // 创建问题记录
-      await interviewDataService.createQuestionRecord(context.currentQuestionIndex, question);
+      // 检查是否已经创建过该问题的记录，避免重复创建
+      const existingQuestion = interviewDataService.getQuestionState(context.currentQuestionIndex);
+      if (!existingQuestion || !existingQuestion.reviewId) {
+        // 创建问题记录
+        await interviewDataService.createQuestionRecord(context.currentQuestionIndex, question);
+      }
+
+      // 清空上一轮的AI答案和用户回答
+      setMockInterviewState({
+        aiMessage: '',
+        candidateAnswer: ''
+      });
 
       // 立即开始生成答案（异步，不等待）
       generateAnswerInBackground(context);
@@ -757,10 +997,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
       await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, async (chunk) => {
         if (chunk.error) {
-          stateMachine.current?.send({
-            type: 'ANALYSIS_ERROR',
-            payload: { error: chunk.error }
-          });
+          stateMachine.current?.send({ type: 'ANALYSIS_ERROR', payload: { error: chunk.error } });
           return;
         }
 
@@ -798,10 +1035,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
             stateMachine.current?.send({ type: 'ANALYSIS_COMPLETE' });
           } catch (parseError) {
             console.error('Failed to parse analysis result:', parseError);
-            stateMachine.current?.send({
-              type: 'ANALYSIS_ERROR',
-              payload: { error: '分析结果解析失败' }
-            });
+            stateMachine.current?.send({ type: 'ANALYSIS_ERROR', payload: { error: '分析结果解析失败' } });
           }
         } else {
           analysisResult += chunk.content;
@@ -861,10 +1095,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
       await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, async (chunk) => {
         if (chunk.error) {
-          stateMachine.current?.send({
-            type: 'GENERATION_ERROR',
-            payload: { error: chunk.error }
-          });
+          stateMachine.current?.send({ type: 'GENERATION_ERROR', payload: { error: chunk.error } });
           return;
         }
 
@@ -883,10 +1114,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
           onAnswerGenerated?.(referenceAnswer);
 
           // 发送答案生成完成事件
-          stateMachine.current?.send({
-            type: 'ANSWER_GENERATED',
-            payload: { answer: referenceAnswer }
-          });
+          stateMachine.current?.send({ type: 'ANSWER_GENERATED', payload: { answer: referenceAnswer } });
         } else {
           // 流式输出：每个chunk都实时更新UI
           referenceAnswer += chunk.content;
@@ -900,6 +1128,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
   // 轮次完成
   const handleRoundComplete = (context: any) => {
+    console.log('[DEBUG] handleRoundComplete 执行, currentQuestionIndex:', context.currentQuestionIndex);
     setCurrentLine(`第${context.currentQuestionIndex + 1}个问题已完成`);
     setErrorMessage('');
 
@@ -907,58 +1136,85 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     interviewDataService.markQuestionComplete(context.currentQuestionIndex);
 
     // 检查是否应该结束面试
-    if (stateMachine.current?.shouldEndInterview()) {
+    const shouldEnd = stateMachine.current?.shouldEndInterview();
+    console.log('[DEBUG] shouldEndInterview 返回:', shouldEnd);
+
+    if (shouldEnd) {
+      console.log('[DEBUG] 发送 END_INTERVIEW 事件');
       stateMachine.current?.send({ type: 'END_INTERVIEW' });
     } else {
-      // 继续下一个问题
+      console.log('[DEBUG] 2秒后继续下一个问题');
+      // 继续下一个问题（这里使用 transitionToNext 检查暂停）
       setTimeout(() => {
-        stateMachine.current?.send({ type: 'CONTINUE_INTERVIEW' });
+        transitionToNext('CONTINUE_INTERVIEW');
       }, 2000);
     }
   };
 
   // 面试结束阶段
   const handleInterviewEnding = async () => {
+    console.log('[DEBUG] handleInterviewEnding 开始执行');
     setCurrentLine('面试即将结束，正在生成报告...');
     setErrorMessage('');
 
     try {
       // 标记面试完成
+      console.log('[DEBUG] 标记面试完成');
       interviewDataService.markInterviewComplete();
 
+      // 从localStorage获取当前面试ID
+      const interviewId = currentInterview.get();
+
       // 更新数据库中的面试状态为 mock-interview-completed
-      if (voiceState.interviewId) {
-        await interviewService.updateInterview(voiceState.interviewId, {
+      if (interviewId) {
+        console.log('[DEBUG] 准备更新数据库状态, interviewId:', interviewId);
+        await interviewService.updateInterview(interviewId, {
           status: 'mock-interview-completed',
           duration: voiceState.timerDuration || 0,
+          ended_at: Date.now(),
           message: '面试已完成,正在生成报告'
         });
+        console.log('[DEBUG] 数据库状态更新成功');
+      } else {
+        console.warn('[DEBUG] localStorage中的interviewId为空，跳过数据库更新');
       }
 
       // 发送生成报告事件
-      stateMachine.current?.send({ type: 'GENERATE_REPORT' });
+      console.log('[DEBUG] 准备发送 GENERATE_REPORT 事件');
+      const result = transitionToNext('GENERATE_REPORT');
+      console.log('[DEBUG] transitionToNext 返回值:', result);
     } catch (error) {
-      stateMachine.current?.send({ type: 'ENDING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+      console.error('[DEBUG] handleInterviewEnding 发生错误:', error);
+      transitionToNext('ENDING_ERROR', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 
   // 面试完成
   const handleInterviewCompleted = async () => {
+    console.log('[DEBUG] handleInterviewCompleted 执行');
     setCurrentLine('面试已完成！感谢您的参与。');
     setErrorMessage('');
 
+    // 从localStorage获取当前面试ID
+    const interviewId = currentInterview.get();
+
     // 异步生成面试报告(scores + insights),不阻塞用户
-    if (voiceState.interviewId && stateMachine.current) {
-      generateInterviewReport(voiceState.interviewId, stateMachine.current.getContext()).catch(error => {
+    if (interviewId && stateMachine.current) {
+      console.log('[DEBUG] 开始生成面试报告, interviewId:', interviewId);
+      generateInterviewReport(interviewId, stateMachine.current.getContext()).catch(error => {
         console.error('生成面试报告失败:', error);
       });
+    } else {
+      console.warn('[DEBUG] 跳过报告生成, interviewId:', interviewId, 'stateMachine:', !!stateMachine.current);
     }
 
     // 更新VoiceState,保留interviewId(退出窗口时再清理)
     setVoiceState({
       mode: 'mock-interview',
-      subState: 'mock-interview-completed'
+      subState: 'mock-interview-completed',
+      interviewId: interviewId
     });
+    console.log('[DEBUG] VoiceState 已更新为 completed');
   };
 
   // 错误处理
@@ -967,10 +1223,13 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     setErrorMessage(errorMsg);
     setCurrentLine('');
 
+    // 从localStorage获取当前面试ID
+    const interviewId = currentInterview.get();
+
     // 更新面试状态为idle（错误）并记录错误信息
-    if (voiceState.interviewId) {
+    if (interviewId) {
       try {
-        await interviewService.updateInterview(voiceState.interviewId, {
+        await interviewService.updateInterview(interviewId, {
           status: 'idle',
           message: `错误: ${errorMsg}`
         });
@@ -988,63 +1247,139 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       const resumeContent = context.resume?.resumeContent || '';
       const durationSec = voiceState.timerDuration || 0;
 
-      // 2. 获取所有问答记录
-      const questionStates = interviewDataService.getAllQuestionStates();
-      const reviewsData = questionStates
-        .map((q, i) => `第${i + 1}题:\nQ: ${q.question || '无'}\nA: ${q.userAnswer || '未回答'}\n参考答案: ${q.referenceAnswer || '无'}\n`)
-        .join('\n');
+      // 2. 从数据库获取所有问答记录(而不是从内存状态)
+      const reviews = await mockInterviewService.getInterviewReviews(interviewId);
 
-      if (!reviewsData) {
+      if (!reviews || reviews.length === 0) {
         console.error('无面试问答记录');
         return;
       }
 
-      // 3. 生成评分报告
-      const scorePrompt = await promptService.buildScorePrompt(jobTitle, resumeContent, reviewsData);
-      const scoreResponse = await aiService.callAI([
-        { role: 'user', content: scorePrompt }
-      ]);
-      const scoreData = JSON.parse(scoreResponse);
+      // 构建汇总数据(不传原始问答,只传已分析的结果)
+      const summaryData = {
+        totalQuestions: reviews.length,
+        questions: reviews.map((r, i) => ({
+          index: i + 1,
+          question: r.asked_question?.substring(0, 100), // 只保留问题摘要
+          pros: r.pros || '无',
+          cons: r.cons || '无',
+          suggestions: r.suggestions || '无',
+          keyPoints: r.key_points || '无',
+          assessment: r.assessment || '无'
+        }))
+      };
 
-      // 4. 生成洞察报告
-      const insightPrompt = await promptService.buildInsightPrompt(jobTitle, resumeContent, reviewsData);
-      const insightResponse = await aiService.callAI([
-        { role: 'user', content: insightPrompt }
-      ]);
-      const insightData = JSON.parse(insightResponse);
+      let reviewsData = JSON.stringify(summaryData, null, 2);
+
+      // 3. 生成评分报告(带自动分批处理)
+      let scoreData;
+      try {
+        const scorePrompt = await promptService.buildScorePrompt(jobTitle, resumeContent, reviewsData);
+        scoreData = await aiService.callAIForJson([
+          { role: 'user', content: scorePrompt }
+        ]);
+      } catch (error: any) {
+        // 如果token超限,尝试分批处理
+        if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
+          console.log('[DEBUG] Token超限,开始分批处理评分报告,每批3个问题');
+          // 分批处理:每批3个问题
+          const batchSize = 3;
+          const batches = [];
+          for (let i = 0; i < reviews.length; i += batchSize) {
+            batches.push(reviews.slice(i, i + batchSize));
+          }
+
+          // 并行处理所有批次
+          const batchResults = await Promise.all(batches.map(async (batch) => {
+            const batchSummary = {
+              totalQuestions: batch.length,
+              questions: batch.map((r, i) => ({
+                index: i + 1,
+                question: r.asked_question?.substring(0, 100),
+                pros: r.pros || '无',
+                cons: r.cons || '无',
+                suggestions: r.suggestions || '无',
+              }))
+            };
+            const batchData = JSON.stringify(batchSummary);
+            const prompt = await promptService.buildScorePrompt(jobTitle, resumeContent, batchData);
+            return await aiService.callAIForJson([{ role: 'user', content: prompt }]);
+          }));
+
+          // 汇总所有批次结果
+          scoreData = {
+            total_score: Math.round(batchResults.reduce((sum, r) => sum + (r.total_score || 0), 0) / batchResults.length),
+            num_questions: reviews.length,
+            radar: {
+              interactivity: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.interactivity || 0), 0) / batchResults.length),
+              confidence: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.confidence || 0), 0) / batchResults.length),
+              professionalism: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.professionalism || 0), 0) / batchResults.length),
+              relevance: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.relevance || 0), 0) / batchResults.length),
+              clarity: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.clarity || 0), 0) / batchResults.length),
+            },
+            overall_summary: batchResults.map(r => r.overall_summary).join(' '),
+            pros: batchResults.map(r => r.pros).join('\n'),
+            cons: batchResults.map(r => r.cons).join('\n'),
+            suggestions: batchResults.map(r => r.suggestions).join('\n'),
+          };
+        } else {
+          throw error;
+        }
+      }
+
+      // 4. 生成洞察报告(带自动分批处理)
+      let insightData;
+      try {
+        const insightPrompt = await promptService.buildInsightPrompt(jobTitle, resumeContent, reviewsData);
+        insightData = await aiService.callAIForJson([
+          { role: 'user', content: insightPrompt }
+        ]);
+      } catch (error: any) {
+        // 如果token超限,返回默认值
+        if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
+          console.log('[DEBUG] Token超限,洞察报告使用默认值');
+          insightData = {
+            interviewer: { score: 0, summary: '', role: '', mbti: '', personality: '', preference: '' },
+            candidate: { summary: '', mbti: '', personality: '', job_preference: '' },
+            strategy: { prepare_details: '', business_understanding: '', keep_logical: '' }
+          };
+        } else {
+          throw error;
+        }
+      }
 
       // 5. 保存到后端
       await interviewService.saveInterviewScore({
         interviewId,
-        totalScore: scoreData.totalScore,
+        totalScore: scoreData.total_score || 0,
         durationSec,
-        numQuestions: context.totalQuestions,
-        overallSummary: scoreData.overallSummary,
-        pros: scoreData.pros,
-        cons: scoreData.cons,
-        suggestions: scoreData.suggestions,
-        radarInteractivity: scoreData.radarInteractivity,
-        radarConfidence: scoreData.radarConfidence,
-        radarProfessionalism: scoreData.radarProfessionalism,
-        radarRelevance: scoreData.radarRelevance,
-        radarClarity: scoreData.radarClarity,
+        numQuestions: scoreData.num_questions || 0,
+        overallSummary: scoreData.overall_summary || '',
+        pros: scoreData.pros || '',
+        cons: scoreData.cons || '',
+        suggestions: scoreData.suggestions || '',
+        radarInteractivity: scoreData.radar?.interactivity || 0,
+        radarConfidence: scoreData.radar?.confidence || 0,
+        radarProfessionalism: scoreData.radar?.professionalism || 0,
+        radarRelevance: scoreData.radar?.relevance || 0,
+        radarClarity: scoreData.radar?.clarity || 0,
       });
 
       await interviewService.saveInterviewInsight({
         interviewId,
-        interviewerScore: insightData.interviewerScore,
-        interviewerSummary: insightData.interviewerSummary,
-        interviewerRole: insightData.interviewerRole,
-        interviewerMbti: insightData.interviewerMbti,
-        interviewerPersonality: insightData.interviewerPersonality,
-        interviewerPreference: insightData.interviewerPreference,
-        candidateSummary: insightData.candidateSummary,
-        candidateMbti: insightData.candidateMbti,
-        candidatePersonality: insightData.candidatePersonality,
-        candidateJobPreference: insightData.candidateJobPreference,
-        strategyPrepareDetails: insightData.strategyPrepareDetails,
-        strategyBusinessUnderstanding: insightData.strategyBusinessUnderstanding,
-        strategyKeepLogical: insightData.strategyKeepLogical,
+        interviewerScore: insightData.interviewer?.score || 0,
+        interviewerSummary: insightData.interviewer?.summary || '',
+        interviewerRole: insightData.interviewer?.role || '',
+        interviewerMbti: insightData.interviewer?.mbti || '',
+        interviewerPersonality: insightData.interviewer?.personality || '',
+        interviewerPreference: insightData.interviewer?.preference || '',
+        candidateSummary: insightData.candidate?.summary || '',
+        candidateMbti: insightData.candidate?.mbti || '',
+        candidatePersonality: insightData.candidate?.personality || '',
+        candidateJobPreference: insightData.candidate?.job_preference || '',
+        strategyPrepareDetails: insightData.strategy?.prepare_details || '',
+        strategyBusinessUnderstanding: insightData.strategy?.business_understanding || '',
+        strategyKeepLogical: insightData.strategy?.keep_logical || '',
       });
 
     } catch (error) {
