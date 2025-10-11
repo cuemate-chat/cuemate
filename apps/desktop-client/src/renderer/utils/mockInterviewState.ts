@@ -8,6 +8,7 @@ export interface MockInterviewState {
   isLoading: boolean;
   isListening: boolean;
   isAutoMode: boolean; // 自动/手动模式
+  interviewState?: string; // 面试状态机状态
   updatedAt: number;
 }
 
@@ -35,7 +36,7 @@ function getPersistedAutoMode(): boolean {
 }
 
 function getDefaultState(): MockInterviewState {
-  return { aiMessage: '', speechText: '', candidateAnswer: '', isLoading: false, isListening: false, isAutoMode: getPersistedAutoMode(), updatedAt: Date.now() };
+  return { aiMessage: '', speechText: '', candidateAnswer: '', isLoading: false, isListening: false, isAutoMode: getPersistedAutoMode(), interviewState: undefined, updatedAt: Date.now() };
 }
 
 export function getMockInterviewState(): MockInterviewState {
@@ -60,6 +61,7 @@ export function setMockInterviewState(next: Partial<MockInterviewState>): MockIn
     isLoading: next.isLoading ?? current.isLoading,
     isListening: next.isListening ?? current.isListening,
     isAutoMode: next.isAutoMode ?? current.isAutoMode,
+    interviewState: next.interviewState ?? current.interviewState,
     updatedAt: Date.now(),
   };
 
@@ -101,6 +103,7 @@ export function clearMockInterviewState(): MockInterviewState {
     isLoading: false,
     isListening: false,
     isAutoMode: currentAutoMode, // 保留用户偏好
+    interviewState: undefined,
     updatedAt: Date.now()
   };
   try {

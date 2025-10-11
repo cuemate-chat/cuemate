@@ -17,6 +17,21 @@ export function MockInterviewApp() {
   const voiceState = useVoiceState();
   const interviewId = voiceState.interviewId;
 
+  // 组件初始化时清理状态
+  useEffect(() => {
+    // 如果没有interviewId,清理所有状态(应用重启场景)
+    if (!interviewId) {
+      setMockInterviewState({
+        aiMessage: '',
+        speechText: '',
+        candidateAnswer: '',
+        isLoading: false,
+        isListening: false,
+        interviewState: undefined,
+      });
+    }
+  }, []);
+
   // 监听 interviewId 变化，如果是新面试则清空状态
   useEffect(() => {
     if (interviewId !== previousInterviewId.current) {
@@ -27,6 +42,7 @@ export function MockInterviewApp() {
         candidateAnswer: '',
         isLoading: false,
         isListening: false,
+        interviewState: undefined,
       });
       previousInterviewId.current = interviewId;
     }
@@ -35,7 +51,9 @@ export function MockInterviewApp() {
   // 只有存在interviewId才显示数据,否则显示空白
   const aiMessage = interviewId ? mockInterviewState.aiMessage : '';
   const speechText = interviewId ? mockInterviewState.speechText : '';
+  const candidateAnswer = interviewId ? mockInterviewState.candidateAnswer : '';
   const isLoading = interviewId ? mockInterviewState.isLoading : false;
+  const interviewState = interviewId ? mockInterviewState.interviewState : undefined;
 
   // 组件初始化时加载高度设置和监听外部事件
   useEffect(() => {
@@ -126,11 +144,13 @@ export function MockInterviewApp() {
           heightPercentage={heightPercentage}
           onHeightChange={handleHeightChange}
           isLoading={isLoading}
+          interviewState={interviewState}
         />
 
         {/* Body - AI答案展示区域 */}
         <MockInterviewBody
           aiMessage={aiMessage}
+          candidateAnswer={candidateAnswer}
           isLoading={isLoading}
         />
 

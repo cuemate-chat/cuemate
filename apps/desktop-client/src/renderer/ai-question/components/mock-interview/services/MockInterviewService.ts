@@ -206,7 +206,7 @@ export class MockInterviewService {
       }
 
       const result = await response.json();
-      return result.reviews || [];
+      return result.items || [];
     } catch (error) {
       console.error('获取问答记录失败:', error);
       throw error;

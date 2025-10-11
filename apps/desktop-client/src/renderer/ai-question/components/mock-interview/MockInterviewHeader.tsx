@@ -34,9 +34,10 @@ interface WindowHeaderProps {
   onOpenHistory?: () => void;
   heightPercentage: number;
   onHeightChange: (percentage: number) => void;
+  interviewState?: string; // 面试状态机状态
 }
 
-export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightPercentage, onHeightChange }: WindowHeaderProps) {
+export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightPercentage, onHeightChange, interviewState }: WindowHeaderProps) {
   const [showControls, setShowControls] = useState(false);
   const globalState = useVoiceState();
 
@@ -52,6 +53,11 @@ export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightP
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // 格式化状态显示（去掉下划线，转大写）
+  const formatState = (state: string) => {
+    return state.replace(/_/g, ' ').toUpperCase();
+  };
+
   return (
     <div 
       className="ai-window-header"
@@ -60,7 +66,9 @@ export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightP
     >
       <div className="ai-header-left">
         <img src={CueMateLogo} alt="CueMate" className="ai-logo" />
-        <div className="ai-title">{isLoading ? '模拟面试 - Think' : '模拟面试 - AI Response'}</div>
+        <div className="ai-title">
+          模拟面试 - {interviewState ? formatState(interviewState) : (isLoading ? 'LOADING' : 'IDLE')}
+        </div>
         {isLoading && <LoadingDots />}
         {(timerStarted && globalState.subState !== 'idle' && (globalState.mode === 'mock-interview' || globalState.mode === 'interview-training')) && (
           <div className="interviewer-timer">

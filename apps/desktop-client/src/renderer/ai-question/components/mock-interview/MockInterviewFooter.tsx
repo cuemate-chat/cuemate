@@ -196,7 +196,7 @@ export function MockInterviewFooter({
                   // 停止监听,保留 speechText 供状态机使用
                   setMockInterviewState({ isListening: false });
                 }}
-                disabled={isAutoMode || isLoading}
+                disabled={isAutoMode || isLoading || !speechText}
                 className="response-complete-btn"
               >
                 <span className="response-text">回答完毕</span>
