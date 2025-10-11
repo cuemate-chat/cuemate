@@ -9,7 +9,153 @@ const manifest: ProviderManifest = {
   icon: Icon,
   icon_url: 'assets/llm/tencent_cloud_icon_svg',
   modelNamePlaceholder: '如 deepseek-v3 / deepseek-r1 / hunyuan-pro',
-  baseModels: ['deepseek-v3', 'deepseek-r1', 'hunyuan-pro', 'hunyuan-standard', 'hunyuan-lite'],
+  baseModels: [
+  {
+    name: "deepseek-v3",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "4000",
+        default_value: "4000",
+        extra: {
+          min: 100,
+          max: 4000,
+          step: 50
+        }
+      }
+    ]
+  },
+  {
+    name: "deepseek-r1",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "4000",
+        default_value: "4000",
+        extra: {
+          min: 100,
+          max: 4000,
+          step: 50
+        }
+      }
+    ]
+  },
+  {
+    name: "hunyuan-pro",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "4000",
+        default_value: "4000",
+        extra: {
+          min: 100,
+          max: 4000,
+          step: 50
+        }
+      }
+    ]
+  },
+  {
+    name: "hunyuan-standard",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "4000",
+        default_value: "4000",
+        extra: {
+          min: 100,
+          max: 4000,
+          step: 50
+        }
+      }
+    ]
+  },
+  {
+    name: "hunyuan-lite",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "4000",
+        default_value: "4000",
+        extra: {
+          min: 100,
+          max: 4000,
+          step: 50
+        }
+      }
+    ]
+  }
+],
   credentialFields: [
     { 
       key: 'base_url', 
@@ -25,25 +171,7 @@ const manifest: ProviderManifest = {
       type: 'password',
       placeholder: '格式：腾讯云API密钥，需在腾讯云控制台获取'
     },
-  ],
-  defaultParams: [
-    {
-      label: '温度',
-      param_key: 'temperature',
-      ui_type: 'slider',
-      value: '0.7',
-      default_value: '0.7',
-      extra: { min: 0, max: 1, step: 0.1 },
-    },
-    {
-      label: '输出最大 tokens',
-      param_key: 'max_tokens',
-      ui_type: 'slider',
-      value: '800',
-      default_value: '800',
-      extra: { min: 100, max: 4000, step: 50 },
-    },
-  ],
+  ]
 };
 
 export default manifest;
