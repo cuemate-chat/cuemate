@@ -7,7 +7,7 @@ import {
   QuestionCircleFilled,
   UserOutlined,
 } from '@ant-design/icons';
-import { Badge, Button, Card, Empty, Tabs } from 'antd';
+import { Button, Card, Empty, Tabs } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -48,9 +48,6 @@ export default function ReviewDetail() {
       { item: '表达流程性', score: s.radar_clarity || 0 },
     ];
   }, [data]);
-
-  const prosList: any[] = (data.advantages || []).filter((a: any) => a.type === 0);
-  const consList: any[] = (data.advantages || []).filter((a: any) => a.type === 1);
   return (
     <div className="space-y-4">
       <div>
@@ -65,8 +62,6 @@ export default function ReviewDetail() {
               <SummaryTab
                 data={data}
                 radarData={radarData}
-                prosList={prosList}
-                consList={consList}
               />
             ),
           },
@@ -78,7 +73,7 @@ export default function ReviewDetail() {
   );
 }
 
-function SummaryTab({ data, radarData, prosList, consList }: any) {
+function SummaryTab({ data, radarData }: any) {
   const s = data.summary;
   if (!s) return <Empty description="暂无概要数据" />;
   const totalSec = Number(s.duration_sec) || 0;
@@ -162,76 +157,42 @@ function SummaryTab({ data, radarData, prosList, consList }: any) {
           </div>
         </Card>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* 优点在前 */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {/* 优点占3列 */}
         <Card
-          className="border-green-100"
+          className="md:col-span-3 border-green-100"
           style={{ backgroundColor: '#F6FBF9' }}
           title={
             <div className="flex items-center gap-2">
               <CheckCircleFilled style={{ color: '#16a34a' }} />
               <span className="text-green-700 font-medium">优点</span>
-              <Badge count={prosList.length} style={{ backgroundColor: '#16a34a' }} />
             </div>
           }
         >
-          {prosList.length ? (
-            <ul className="space-y-3 h-[156px] overflow-y-auto pr-2">
-              {prosList.map((it: any, idx: number) => (
-                <li key={it.id} className="flex items-start gap-2">
-                  <span className="mt-0.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
-                    {idx + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="text-green-700 font-medium truncate" title={it.content}>
-                      {it.content}
-                    </div>
-                    {it.description && (
-                      <div className="text-xs text-slate-500 mt-1 truncate" title={it.description}>
-                        “{it.description}”
-                      </div>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
+          {s.pros ? (
+            <div className="text-green-700 font-medium" style={{ whiteSpace: 'pre-wrap' }}>
+              {s.pros}
+            </div>
           ) : (
             <div className="text-slate-400">—</div>
           )}
         </Card>
 
-        {/* 缺点在后 */}
+        {/* 缺点占2列 */}
         <Card
-          className="border-red-100"
+          className="md:col-span-2 border-red-100"
           style={{ backgroundColor: '#FEFCFB' }}
           title={
             <div className="flex items-center gap-2">
               <CloseCircleFilled style={{ color: '#ef4444' }} />
               <span className="text-red-700 font-medium">缺点</span>
-              <Badge count={consList.length} style={{ backgroundColor: '#ef4444' }} />
             </div>
           }
         >
-          {consList.length ? (
-            <ul className="space-y-3 h-[156px] overflow-y-auto pr-2">
-              {consList.map((it: any, idx: number) => (
-                <li key={it.id} className="flex items-start gap-2">
-                  <span className="mt-0.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
-                    {idx + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="text-red-700 font-medium truncate" title={it.content}>
-                      {it.content}
-                    </div>
-                    {it.description && (
-                      <div className="text-xs text-slate-500 mt-1 truncate" title={it.description}>
-                        “{it.description}”
-                      </div>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
+          {s.cons ? (
+            <div className="text-red-700 font-medium" style={{ whiteSpace: 'pre-wrap' }}>
+              {s.cons}
+            </div>
           ) : (
             <div className="text-slate-400">—</div>
           )}
@@ -247,7 +208,7 @@ function SummaryTab({ data, radarData, prosList, consList }: any) {
           </div>
         }
       >
-        <div className="text-blue-700 font-medium truncate" title={s.suggestions || '—'}>
+        <div className="text-blue-700 font-medium" style={{ whiteSpace: 'pre-wrap' }}>
           {s.suggestions || '—'}
         </div>
       </Card>
