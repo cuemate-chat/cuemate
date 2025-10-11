@@ -222,7 +222,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
   // 字段含义：
   // - id: 复盘条目唯一标识
   // - interview_id: 关联的面试ID (外键)
-  // - note_type: 条目类型 ('question','mock','training')
+  // - note_type: 条目类型 (实际使用: 'interview_qa','summary' 等)
   // - content: 主要内容文本
   // - question_id: 关联的面试题ID (可选)
   // - question: 备份的问题文本

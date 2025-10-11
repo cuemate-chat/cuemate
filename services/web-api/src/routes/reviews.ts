@@ -120,7 +120,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
           )
           .get(id);
 
-        // 问题条目（note_type='question'）
+        // 问题条目（所有类型）
         const questions = (app as any).db
           .prepare(
             `SELECT r.id,
@@ -138,7 +138,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
                   r.created_at
              FROM interview_reviews r
         LEFT JOIN interviews i2 ON r.interview_id = i2.id
-            WHERE r.interview_id=? AND r.note_type='question'
+            WHERE r.interview_id=?
             ORDER BY r.created_at ASC`,
           )
           .all(id);
