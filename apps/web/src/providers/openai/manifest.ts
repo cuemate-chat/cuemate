@@ -10,23 +10,268 @@ const manifest: ProviderManifest = {
   icon_url: 'assets/llm/openai_icon_svg',
   modelNamePlaceholder: '如 gpt-5, gpt-4o, gpt-3.5-turbo 等',
   baseModels: [
-    'gpt-5',
-    'gpt-5-mini',
-    'gpt-5-nano',
-    'gpt-4.1',
-    'gpt-4o',
-    'gpt-4o-mini',
-    'gpt-4-turbo',
-    'gpt-4',
-    'gpt-3.5-turbo',
-    'text-embedding-3-small',
-    'text-embedding-3-large',
-    'dall-e-3',
-    'dall-e-2',
-    'whisper-1',
-    'tts-1',
-    'tts-1-hd',
-  ],
+  {
+    name: "gpt-5",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 2,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16384",
+        default_value: "16384",
+        extra: {
+          min: 256,
+          max: 16384,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "gpt-5-mini",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 2,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16384",
+        default_value: "16384",
+        extra: {
+          min: 256,
+          max: 16384,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "gpt-5-nano",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 2,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16384",
+        default_value: "16384",
+        extra: {
+          min: 256,
+          max: 16384,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "gpt-4.1",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 2,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16384",
+        default_value: "16384",
+        extra: {
+          min: 256,
+          max: 16384,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "gpt-4o",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 2,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16384",
+        default_value: "16384",
+        extra: {
+          min: 256,
+          max: 16384,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "gpt-4o-mini",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 2,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16384",
+        default_value: "16384",
+        extra: {
+          min: 256,
+          max: 16384,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "gpt-4-turbo",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 2,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "4096",
+        default_value: "4096",
+        extra: {
+          min: 256,
+          max: 4096,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "gpt-4",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 2,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "8192",
+        default_value: "8192",
+        extra: {
+          min: 256,
+          max: 8192,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "gpt-3.5-turbo",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 2,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "4096",
+        default_value: "4096",
+        extra: {
+          min: 256,
+          max: 4096,
+          step: 128
+        }
+      }
+    ]
+  }
+],
   credentialFields: [
     {
       key: 'base_url',
@@ -42,25 +287,7 @@ const manifest: ProviderManifest = {
       type: 'password',
       placeholder: '格式：sk-开头的48位字符的API Key'
     },
-  ],
-  defaultParams: [
-    {
-      label: '温度',
-      param_key: 'temperature',
-      ui_type: 'slider',
-      value: '0.7',
-      default_value: '0.7',
-      extra: { min: 0, max: 1, step: 0.1 },
-    },
-    {
-      label: '输出最大 tokens',
-      param_key: 'max_tokens',
-      ui_type: 'slider',
-      value: '800',
-      default_value: '800',
-      extra: { min: 256, max: 8192, step: 128 },
-    },
-  ],
+  ]
 };
 
 export default manifest;

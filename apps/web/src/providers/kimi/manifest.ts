@@ -10,10 +10,94 @@ const manifest: ProviderManifest = {
   icon_url: 'assets/llm/kimi_icon_svg',
   modelNamePlaceholder: '如 moonshot-v1-8k / moonshot-v1-32k',
   baseModels: [
-    'moonshot-v1-128k',
-    'moonshot-v1-32k', 
-    'moonshot-v1-8k'
-  ],
+  {
+    name: "moonshot-v1-128k",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.3",
+        default_value: "0.3",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16384",
+        default_value: "16384",
+        extra: {
+          min: 256,
+          max: 16384,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "moonshot-v1-32k",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.3",
+        default_value: "0.3",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16384",
+        default_value: "16384",
+        extra: {
+          min: 256,
+          max: 16384,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "moonshot-v1-8k",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.3",
+        default_value: "0.3",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16384",
+        default_value: "16384",
+        extra: {
+          min: 256,
+          max: 16384,
+          step: 128
+        }
+      }
+    ]
+  }
+],
   credentialFields: [
     {
       key: 'base_url',
@@ -29,25 +113,7 @@ const manifest: ProviderManifest = {
       type: 'password',
       placeholder: '格式：sk-开头的API Key，需在Kimi开放平台获取'
     },
-  ],
-  defaultParams: [
-    {
-      label: '温度',
-      param_key: 'temperature',
-      ui_type: 'slider',
-      value: '0.3',
-      default_value: '0.3',
-      extra: { min: 0, max: 1, step: 0.1 },
-    },
-    {
-      label: '输出最大 tokens',
-      param_key: 'max_tokens',
-      ui_type: 'slider',
-      value: '1024',
-      default_value: '1024',
-      extra: { min: 256, max: 8192, step: 128 },
-    },
-  ],
+  ]
 };
 
 export default manifest;
