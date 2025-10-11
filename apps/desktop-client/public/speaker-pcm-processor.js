@@ -41,9 +41,6 @@ class SpeakerPCMProcessor extends AudioWorkletProcessor {
           if (this.buffer[j] !== 0) nonZeroCount++;
         }
 
-        // 调试：检查音频数据质量
-        // console.log(`扬声器PCM数据质量检查: 最大值=${maxValue}, 非零样本=${nonZeroCount}/${this.bufferSize}, 比例=${(nonZeroCount/this.bufferSize*100).toFixed(1)}%`);
-
         // 只有当有足够的非零样本时才发送（避免发送纯静音）
         const nonZeroRatio = nonZeroCount / this.bufferSize;
         if (nonZeroRatio > 0.01 && maxValue > 100) { // 至少1%的非零样本且最大值超过阈值
@@ -52,7 +49,6 @@ class SpeakerPCMProcessor extends AudioWorkletProcessor {
             type: 'audiodata',
             data: this.buffer.buffer.slice()
           });
-          // console.log('扬声器测试发送有效音频数据:', this.bufferSize * 2, 'bytes');
         } else {
           console.warn('扬声器测试跳过静音数据');
         }
