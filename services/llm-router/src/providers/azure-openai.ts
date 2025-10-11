@@ -54,7 +54,7 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('Azure OpenAI completion failed:', error);
+      logger.error({ err: error }, 'Azure OpenAI completion failed:');
       throw error;
     }
   }
@@ -91,7 +91,7 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('Azure OpenAI stream failed:', error);
+      logger.error({ err: error }, 'Azure OpenAI stream failed:');
       throw error;
     }
   }

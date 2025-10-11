@@ -54,7 +54,7 @@ export class OpenAICompatibleProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error(`${this.name} completion failed:`, error);
+      logger.error({ err: error }, `${this.name} completion failed:`);
       throw error;
     }
   }
@@ -91,7 +91,7 @@ export class OpenAICompatibleProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error(`${this.name} stream failed:`, error);
+      logger.error({ err: error }, `${this.name} stream failed:`);
       throw error;
     }
   }
@@ -125,7 +125,7 @@ export class OpenAICompatibleProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error(`${this.name} healthCheck failed:`, error);
+      logger.error({ err: error }, `${this.name} healthCheck failed:`);
       throw error;
     }
   }

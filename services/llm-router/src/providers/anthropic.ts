@@ -54,7 +54,7 @@ export class AnthropicProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('Anthropic completion failed:', error);
+      logger.error({ err: error }, 'Anthropic completion failed:');
       throw error;
     }
   }
@@ -91,7 +91,7 @@ export class AnthropicProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('Anthropic stream failed:', error);
+      logger.error({ err: error }, 'Anthropic stream failed:');
       throw error;
     }
   }
@@ -123,7 +123,7 @@ export class AnthropicProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error('Anthropic healthCheck failed:', error);
+      logger.error({ err: error }, 'Anthropic healthCheck failed:');
       throw error;
     }
   }

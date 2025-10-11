@@ -54,7 +54,7 @@ export class DeepSeekProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('DeepSeek completion failed:', error);
+      logger.error({ err: error }, 'DeepSeek completion failed:');
       throw error;
     }
   }
@@ -91,7 +91,7 @@ export class DeepSeekProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('DeepSeek stream failed:', error);
+      logger.error({ err: error }, 'DeepSeek stream failed:');
       throw error;
     }
   }
@@ -118,7 +118,7 @@ export class DeepSeekProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error(`DeepSeek health check failed for model ${config.model}:`, error);
+      logger.error({ err: error }, `DeepSeek health check failed for model ${config.model}:`);
       throw error;
     }
   }

@@ -45,7 +45,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       const response = await llmManager.complete(cleanedBody, runtimeConfig);
       return response;
     } catch (error) {
-      logger.error('Completion request failed:', error);
+      logger.error({ err: error }, 'Completion request failed');
       return reply.code(500).send({
         error: 'Completion failed',
         message: error instanceof Error ? error.message : String(error),
@@ -93,14 +93,14 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         reply.raw.write('data: [DONE]\n\n');
         reply.raw.end();
       } catch (streamError) {
-        logger.error('Stream processing failed:', streamError);
+        logger.error({ err: streamError }, 'Stream processing failed');
         // Headers already sent, write error as SSE event
         reply.raw.write(`data: ${JSON.stringify({ error: streamError instanceof Error ? streamError.message : 'Stream failed' })}\n\n`);
         reply.raw.end();
       }
       return;
     } catch (error) {
-      logger.error('Stream request failed:', error);
+      logger.error({ err: error }, 'Stream request failed');
       // Only send error response if headers not yet sent
       if (!reply.raw.headersSent) {
         return reply.code(500).send({ error: 'Stream failed', message: error instanceof Error ? error.message : String(error) });
@@ -153,7 +153,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         latency: response.latency,
       };
     } catch (error) {
-      logger.error('Outline generation failed:', error);
+      logger.error({ err: error }, 'Outline generation failed:');
       return reply.code(500).send({ error: 'Outline generation failed' });
     }
   });

@@ -57,7 +57,7 @@ export class MoonshotProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('Moonshot completion failed:', error);
+      logger.error({ err: error }, 'Moonshot completion failed:');
       throw error;
     }
   }
@@ -120,7 +120,7 @@ export class MoonshotProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('Moonshot stream failed:', error);
+      logger.error({ err: error }, 'Moonshot stream failed:');
       throw error;
     }
   }
@@ -142,7 +142,7 @@ export class MoonshotProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error('Moonshot health check failed:', error);
+      logger.error({ err: error }, 'Moonshot health check failed:');
       return false;
     }
   }

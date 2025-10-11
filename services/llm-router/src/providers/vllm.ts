@@ -74,7 +74,7 @@ export class VllmProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('vLLM completion failed:', error);
+      logger.error({ err: error }, 'vLLM completion failed:');
       throw error;
     }
   }
@@ -129,7 +129,7 @@ export class VllmProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('vLLM stream failed:', error);
+      logger.error({ err: error }, 'vLLM stream failed:');
       throw error;
     }
   }
@@ -168,7 +168,7 @@ export class VllmProvider extends BaseLLMProvider {
         return false;
       }
     } catch (error) {
-      logger.error('vLLM healthCheck client creation failed:', error);
+      logger.error({ err: error }, 'vLLM healthCheck client creation failed:');
       return false;
     }
   }

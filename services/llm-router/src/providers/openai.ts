@@ -54,7 +54,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('OpenAI completion failed:', error);
+      logger.error({ err: error }, 'OpenAI completion failed');
       throw error;
     }
   }
@@ -93,7 +93,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('OpenAI stream failed:', error);
+      logger.error({ err: error }, 'OpenAI stream failed');
       throw error;
     }
   }
@@ -127,8 +127,7 @@ export class OpenAIProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error(`OpenAI health check failed for model ${config.model}:`, error);
-      // 抛出异常而不是返回false，这样路由可以捕获具体的错误信息
+      logger.error({ err: error }, `OpenAI health check failed for model ${config.model}`);
       throw error;
     }
   }

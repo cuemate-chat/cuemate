@@ -60,7 +60,7 @@ export async function initializeProviders(
     
     logger.info(`Initialized ${providers.size} providers: ${Array.from(providers.keys()).join(', ')}`);
   } catch (error) {
-    logger.error('Failed to initialize providers:', error);
+    logger.error({ err: error }, 'Failed to initialize providers:');
   }
 
   return providers;

@@ -74,7 +74,7 @@ export class ZhipuProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('Zhipu completion failed:', error);
+      logger.error({ err: error }, 'Zhipu completion failed:');
       throw error;
     }
   }
@@ -129,7 +129,7 @@ export class ZhipuProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('Zhipu stream failed:', error);
+      logger.error({ err: error }, 'Zhipu stream failed:');
       throw error;
     }
   }
@@ -168,7 +168,7 @@ export class ZhipuProvider extends BaseLLMProvider {
         return false;
       }
     } catch (error) {
-      logger.error('Zhipu healthCheck client creation failed:', error);
+      logger.error({ err: error }, 'Zhipu healthCheck client creation failed:');
       return false;
     }
   }

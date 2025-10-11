@@ -54,7 +54,7 @@ export class KimiProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('Kimi completion failed:', error);
+      logger.error({ err: error }, 'Kimi completion failed:');
       throw error;
     }
   }
@@ -91,7 +91,7 @@ export class KimiProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('Kimi stream failed:', error);
+      logger.error({ err: error }, 'Kimi stream failed:');
       throw error;
     }
   }

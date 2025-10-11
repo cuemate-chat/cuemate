@@ -88,20 +88,6 @@ export class LLMManager extends EventEmitter {
     return providers;
   }
 
-  // 为"按用户绑定模型"预留：某些请求会携带 metadata.userId，根据 userId 动态选择 provider
-  // private async getProviderForUser(userId?: string): Promise<BaseLLMProvider | null> {
-  //   if (!userId) return null;
-  //   const cached = this.userRegistry.get(userId);
-  //   if (cached) return cached;
-  //   try {
-  //     const p = await this.userRegistry.loadFromWebApi(userId);
-  //     return p || null;
-  //   } catch (e) {
-  //     logger.warn('load user provider failed', e as any);
-  //     return null;
-  //   }
-  // }
-
   private initializeProviderStatus() {
     for (const [id, provider] of this.providers) {
       this.providerStatus.set(id, {
@@ -171,7 +157,7 @@ export class LLMManager extends EventEmitter {
     try {
       return await provider.stream(request, runtimeConfig);
     } catch (error) {
-      logger.error(`Stream failed for ${runtimeConfig.provider}:`, error);
+      logger.error({ err: error }, `Stream failed for ${runtimeConfig.provider}:`);
       throw error;
     }
   }

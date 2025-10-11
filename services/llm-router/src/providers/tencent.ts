@@ -74,7 +74,7 @@ export class TencentProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('Tencent completion failed:', error);
+      logger.error({ err: error }, 'Tencent completion failed:');
       throw error;
     }
   }
@@ -129,7 +129,7 @@ export class TencentProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('Tencent stream failed:', error);
+      logger.error({ err: error }, 'Tencent stream failed:');
       throw error;
     }
   }
@@ -168,7 +168,7 @@ export class TencentProvider extends BaseLLMProvider {
         return false;
       }
     } catch (error) {
-      logger.error('Tencent healthCheck client creation failed:', error);
+      logger.error({ err: error }, 'Tencent healthCheck client creation failed:');
       return false;
     }
   }

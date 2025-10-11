@@ -74,7 +74,7 @@ export class VolcEngineProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('VolcEngine completion failed:', error);
+      logger.error({ err: error }, 'VolcEngine completion failed:');
       throw error;
     }
   }
@@ -129,7 +129,7 @@ export class VolcEngineProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('VolcEngine stream failed:', error);
+      logger.error({ err: error }, 'VolcEngine stream failed:');
       throw error;
     }
   }
@@ -168,7 +168,7 @@ export class VolcEngineProvider extends BaseLLMProvider {
         return false;
       }
     } catch (error) {
-      logger.error('VolcEngine healthCheck client creation failed:', error);
+      logger.error({ err: error }, 'VolcEngine healthCheck client creation failed:');
       return false;
     }
   }

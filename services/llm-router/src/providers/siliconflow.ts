@@ -65,7 +65,7 @@ export class SiliconFlowProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('SiliconFlow completion failed:', error);
+      logger.error({ err: error }, 'SiliconFlow completion failed:');
       throw error;
     }
   }
@@ -112,7 +112,7 @@ export class SiliconFlowProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('SiliconFlow stream failed:', error);
+      logger.error({ err: error }, 'SiliconFlow stream failed:');
       throw error;
     }
   }
@@ -151,7 +151,7 @@ export class SiliconFlowProvider extends BaseLLMProvider {
         return false;
       }
     } catch (error) {
-      logger.error('SiliconFlow healthCheck client creation failed:', error);
+      logger.error({ err: error }, 'SiliconFlow healthCheck client creation failed:');
       return false;
     }
   }

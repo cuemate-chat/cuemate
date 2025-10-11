@@ -61,7 +61,7 @@ export class OllamaProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('Ollama completion failed:', error);
+      logger.error({ err: error }, 'Ollama completion failed:');
       throw error;
     }
   }
@@ -104,7 +104,7 @@ export class OllamaProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('Ollama stream failed:', error);
+      logger.error({ err: error }, 'Ollama stream failed:');
       throw error;
     }
   }

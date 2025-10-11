@@ -54,7 +54,7 @@ export class QwenProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('Qwen completion failed:', error);
+      logger.error({ err: error }, 'Qwen completion failed:');
       throw error;
     }
   }
@@ -91,7 +91,7 @@ export class QwenProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('Qwen stream failed:', error);
+      logger.error({ err: error }, 'Qwen stream failed:');
       throw error;
     }
   }

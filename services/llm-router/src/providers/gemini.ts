@@ -54,7 +54,7 @@ export class GeminiProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error('Gemini completion failed:', error);
+      logger.error({ err: error }, 'Gemini completion failed:');
       throw error;
     }
   }
@@ -91,7 +91,7 @@ export class GeminiProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error('Gemini stream failed:', error);
+      logger.error({ err: error }, 'Gemini stream failed:');
       throw error;
     }
   }
@@ -118,7 +118,7 @@ export class GeminiProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error('Gemini healthCheck failed:', error);
+      logger.error({ err: error }, 'Gemini healthCheck failed:');
       throw error;
     }
   }
