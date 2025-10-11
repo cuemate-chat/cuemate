@@ -451,12 +451,15 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         return;
       }
 
+      // 先保存当前的计时器时长,避免异步过程中状态变化
+      const timerDuration = voiceState.timerDuration || 0;
+
       setCurrentLine('正在结束面试...');
 
       // 1. 更新 interviews 状态为 mock-interview-completed
       await interviewService.updateInterview(interviewId, {
         status: 'mock-interview-completed',
-        duration: voiceState.timerDuration || 0,
+        duration: timerDuration,
         message: '用户主动停止面试'
       });
 
@@ -604,7 +607,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       });
 
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '分析回答失败';
       console.error('分析回答失败:', error);
+      setErrorMessage(`分析回答失败: ${errorMsg}`);
+      setTimestamp(Date.now());
       throw error;
     }
   };
@@ -612,6 +618,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // 生成面试报告（停止按钮触发）
   const generateInterviewReportOnStop = async (interviewId: string) => {
     try {
+      // 先保存当前的计时器时长
+      const timerDuration = voiceState.timerDuration || 0;
+
       // 1. 重新获取所有 reviews（包含刚才分析的）
       const reviews = await mockInterviewService.getInterviewReviews(interviewId);
 
@@ -647,14 +656,14 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         ]);
       } catch (error: any) {
         if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
-          console.log('[DEBUG] Token超限,开始分批处理评分报告,每批3个问题');
-          const batchSize = 3;
+          console.log('[DEBUG] Token超限,开始分批处理评分报告,每批1个问题');
+          const batchSize = 1;
           const batches = [];
           for (let i = 0; i < reviews.length; i += batchSize) {
             batches.push(reviews.slice(i, i + batchSize));
           }
 
-          const batchResults = await Promise.all(batches.map(async (batch) => {
+          const batchSettledResults = await Promise.allSettled(batches.map(async (batch) => {
             const batchSummary = {
               totalQuestions: batch.length,
               questions: batch.map((r, i) => ({
@@ -669,6 +678,18 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
             const prompt = await promptService.buildScorePrompt(jobTitle, resumeContent, batchData);
             return await aiService.callAIForJson([{ role: 'user', content: prompt }]);
           }));
+
+          // 过滤出成功的结果
+          const batchResults = batchSettledResults
+            .filter(result => result.status === 'fulfilled')
+            .map(result => (result as PromiseFulfilledResult<any>).value);
+
+          // 如果全部失败,抛出错误
+          if (batchResults.length === 0) {
+            throw new Error('所有批次处理都失败了');
+          }
+
+          console.log(`[DEBUG] 分批处理完成: ${batchResults.length}/${batches.length} 批次成功`);
 
           scoreData = {
             total_score: Math.round(batchResults.reduce((sum, r) => sum + (r.total_score || 0), 0) / batchResults.length),
@@ -714,7 +735,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       await interviewService.saveInterviewScore({
         interviewId,
         totalScore: scoreData.total_score || 0,
-        durationSec: voiceState.timerDuration || 0,
+        durationSec: timerDuration,
         numQuestions: scoreData.num_questions || 0,
         overallSummary: scoreData.overall_summary || '',
         pros: scoreData.pros || '',
@@ -745,7 +766,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       });
 
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
       console.error('生成面试报告失败:', error);
+      setErrorMessage(`生成面试报告失败: ${errorMsg}`);
+      setTimestamp(Date.now());
       throw error;
     }
   };
@@ -1158,6 +1182,9 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     setErrorMessage('');
 
     try {
+      // 先保存当前的计时器时长
+      const timerDuration = voiceState.timerDuration || 0;
+
       // 标记面试完成
       console.log('[DEBUG] 标记面试完成');
       interviewDataService.markInterviewComplete();
@@ -1170,8 +1197,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         console.log('[DEBUG] 准备更新数据库状态, interviewId:', interviewId);
         await interviewService.updateInterview(interviewId, {
           status: 'mock-interview-completed',
-          duration: voiceState.timerDuration || 0,
-          ended_at: Date.now(),
+          duration: timerDuration,
           message: '面试已完成,正在生成报告'
         });
         console.log('[DEBUG] 数据库状态更新成功');
@@ -1202,7 +1228,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     if (interviewId && stateMachine.current) {
       console.log('[DEBUG] 开始生成面试报告, interviewId:', interviewId);
       generateInterviewReport(interviewId, stateMachine.current.getContext()).catch(error => {
+        const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
         console.error('生成面试报告失败:', error);
+        setErrorMessage(`后台生成面试报告失败: ${errorMsg}`);
+        setTimestamp(Date.now());
       });
     } else {
       console.warn('[DEBUG] 跳过报告生成, interviewId:', interviewId, 'stateMachine:', !!stateMachine.current);
@@ -1242,16 +1271,20 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   // 生成面试报告(异步,不阻塞用户)
   const generateInterviewReport = async (interviewId: string, context: any) => {
     try {
+      // 先保存当前的计时器时长
+      const durationSec = voiceState.timerDuration || 0;
+
       // 1. 获取面试数据
       const jobTitle = context.jobPosition?.title || '未知职位';
       const resumeContent = context.resume?.resumeContent || '';
-      const durationSec = voiceState.timerDuration || 0;
 
       // 2. 从数据库获取所有问答记录(而不是从内存状态)
       const reviews = await mockInterviewService.getInterviewReviews(interviewId);
 
       if (!reviews || reviews.length === 0) {
         console.error('无面试问答记录');
+        setErrorMessage('无法生成面试报告: 没有面试问答记录');
+        setTimestamp(Date.now());
         return;
       }
 
@@ -1281,16 +1314,16 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       } catch (error: any) {
         // 如果token超限,尝试分批处理
         if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
-          console.log('[DEBUG] Token超限,开始分批处理评分报告,每批3个问题');
-          // 分批处理:每批3个问题
-          const batchSize = 3;
+          console.log('[DEBUG] Token超限,开始分批处理评分报告,每批1个问题');
+          // 分批处理:每批1个问题
+          const batchSize = 1;
           const batches = [];
           for (let i = 0; i < reviews.length; i += batchSize) {
             batches.push(reviews.slice(i, i + batchSize));
           }
 
           // 并行处理所有批次
-          const batchResults = await Promise.all(batches.map(async (batch) => {
+          const batchSettledResults = await Promise.allSettled(batches.map(async (batch) => {
             const batchSummary = {
               totalQuestions: batch.length,
               questions: batch.map((r, i) => ({
@@ -1305,6 +1338,18 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
             const prompt = await promptService.buildScorePrompt(jobTitle, resumeContent, batchData);
             return await aiService.callAIForJson([{ role: 'user', content: prompt }]);
           }));
+
+          // 过滤出成功的结果
+          const batchResults = batchSettledResults
+            .filter(result => result.status === 'fulfilled')
+            .map(result => (result as PromiseFulfilledResult<any>).value);
+
+          // 如果全部失败,抛出错误
+          if (batchResults.length === 0) {
+            throw new Error('所有批次处理都失败了');
+          }
+
+          console.log(`[DEBUG] 分批处理完成: ${batchResults.length}/${batches.length} 批次成功`);
 
           // 汇总所有批次结果
           scoreData = {
@@ -1383,7 +1428,10 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       });
 
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
       console.error('生成面试报告失败:', error);
+      setErrorMessage(`生成面试报告失败: ${errorMsg}`);
+      setTimestamp(Date.now());
       throw error;
     }
   };
