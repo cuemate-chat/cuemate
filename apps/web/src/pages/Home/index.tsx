@@ -8,14 +8,40 @@ import {
   DocumentTextIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
-import { Button, Select } from 'antd';
+import { Button, Modal, Select } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { listJobs } from '../../api/jobs';
 import { webSocketService } from '../../services/webSocketService';
 
 export default function Home() {
   const [jobs, setJobs] = useState<Array<{ id: string; title: string }>>([]);
   const [currentJob, setCurrentJob] = useState<string | undefined>(undefined);
+  const navigate = useNavigate();
+
+  // 检查并打开面试窗口
+  const handleOpenInterview = (mode: 'mock-interview' | 'interview-training') => {
+    // 检查是否选择了岗位
+    if (!currentJob) {
+      Modal.confirm({
+        title: '未选择岗位',
+        content: '您还没有选择面试岗位，需要先创建岗位。是否前往创建？',
+        okText: '去创建',
+        cancelText: '取消',
+        onOk: () => {
+          navigate('/jobs');
+        },
+      });
+      return;
+    }
+
+    // 发送打开面试窗口的消息，带上当前选择的岗位ID
+    webSocketService.send({
+      type: 'OPEN_INTERVIEWER',
+      mode,
+      jobId: currentJob,
+    });
+  };
 
   // 初始化 WebSocket 连接
   useEffect(() => {
@@ -89,15 +115,15 @@ export default function Home() {
                   type="primary"
                   size="large"
                   className="!px-6 sm:!px-8 w-full sm:w-auto"
-                  onClick={() => {
-                    webSocketService.send({ type: 'OPEN_INTERVIEWER', mode: 'mock-interview' });
-                  }}
+                  onClick={() => handleOpenInterview('mock-interview')}
                 >
                   AI 模拟面试
                 </Button>
-                <Button size="large" className="w-full sm:w-auto" onClick={() => {
-                  webSocketService.send({ type: 'OPEN_INTERVIEWER', mode: 'interview-training' });
-                }}>
+                <Button
+                  size="large"
+                  className="w-full sm:w-auto"
+                  onClick={() => handleOpenInterview('interview-training')}
+                >
                   LIVE 面试训练
                 </Button>
               </div>
