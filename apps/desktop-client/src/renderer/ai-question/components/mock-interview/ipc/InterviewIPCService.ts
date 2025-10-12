@@ -3,8 +3,8 @@
  * 负责协调AI问答窗口和控制栏窗口之间的数据同步
  */
 
-import { InterviewState } from '../state/InterviewStateMachine';
-import { VoiceState } from '../voice/VoiceCoordinator';
+import { InterviewState } from '../../shared/state/InterviewStateMachine';
+import { VoiceState } from '../../shared/voice/VoiceCoordinator';
 
 // IPC通信事件类型
 export enum InterviewIPCEvents {
@@ -37,7 +37,7 @@ export enum InterviewIPCEvents {
   // 数据同步
   SYNC_INTERVIEW_DATA = 'interview:sync-data',
   REQUEST_CURRENT_STATE = 'interview:request-current-state',
-  PROVIDE_CURRENT_STATE = 'interview:provide-current-state'
+  PROVIDE_CURRENT_STATE = 'interview:provide-current-state',
 }
 
 // IPC数据接口
@@ -124,7 +124,7 @@ export class InterviewIPCService {
 
     try {
       // 监听所有面试相关的IPC事件
-      Object.values(InterviewIPCEvents).forEach(event => {
+      Object.values(InterviewIPCEvents).forEach((event) => {
         this.electronAPI.onInterviewEvent?.(event, (data: any) => {
           this.handleIncomingEvent(event, data);
         });
@@ -143,7 +143,7 @@ export class InterviewIPCService {
   private handleIncomingEvent(event: string, data: any): void {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
-      listeners.forEach(listener => {
+      listeners.forEach((listener) => {
         try {
           listener(data);
         } catch (error) {
@@ -199,7 +199,10 @@ export class InterviewIPCService {
   }
 
   notifyProgressUpdated(progress: { current: number; total: number; percentage: number }): void {
-    this.emit(InterviewIPCEvents.INTERVIEW_PROGRESS_UPDATED, { ...progress, timestamp: Date.now() });
+    this.emit(InterviewIPCEvents.INTERVIEW_PROGRESS_UPDATED, {
+      ...progress,
+      timestamp: Date.now(),
+    });
   }
 
   // 语音状态同步方法

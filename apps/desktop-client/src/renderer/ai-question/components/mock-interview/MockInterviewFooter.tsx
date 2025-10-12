@@ -3,7 +3,7 @@ import { CornerDownLeft } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { startMicrophoneRecognition, type MicrophoneRecognitionController } from '../../../../utils/audioRecognition';
 import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
-import { VoiceCoordinator } from './voice/VoiceCoordinator';
+import { VoiceCoordinator } from '../shared/voice/VoiceCoordinator';
 
 interface WindowFooterProps {
   interviewId?: string; // 当前面试ID
