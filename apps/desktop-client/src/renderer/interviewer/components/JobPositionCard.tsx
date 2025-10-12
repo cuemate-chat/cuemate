@@ -4,20 +4,24 @@ import { useEffect, useState } from 'react';
 import { JobPosition, jobPositionService } from '../api/jobPositionService';
 import { Model, modelService } from '../api/modelService';
 import { userSettingsService } from '../../control-bar/api/userSettingsService';
+import { getInterviewTrainingState, setInterviewTrainingState } from '../../utils/interviewTrainingState';
 
 interface JobPositionCardProps {
+  selectedJobId?: string;
   onPositionSelect?: (position: JobPosition | null) => void;
   onModelSelect?: (model: Model | null) => void;
   onLanguageSelect?: (language: 'zh-CN' | 'zh-TW' | 'en-US') => void;
+  onModeSelect?: (isAutoMode: boolean) => void;
   disabled?: boolean;
 }
 
-export function JobPositionCard({ onPositionSelect, onModelSelect, onLanguageSelect, disabled = false }: JobPositionCardProps) {
+export function JobPositionCard({ selectedJobId, onPositionSelect, onModelSelect, onLanguageSelect, onModeSelect, disabled = false }: JobPositionCardProps) {
   const [positions, setPositions] = useState<JobPosition[]>([]);
   const [selectedPosition, setSelectedPosition] = useState<JobPosition | null>(null);
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<'zh-CN' | 'zh-TW' | 'en-US'>('zh-CN');
+  const [interviewMode, setInterviewMode] = useState<'manual' | 'auto'>('manual');
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -37,8 +41,8 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, onLanguageSel
         setPositions(positionResult.items);
         setModels(modelResult.list);
 
-        // 默认选择第一个岗位
-        if (positionResult.items.length > 0) {
+        // 默认选择第一个岗位（如果没有 selectedJobId）
+        if (positionResult.items.length > 0 && !selectedJobId) {
           setSelectedPosition(positionResult.items[0]);
           onPositionSelect?.(positionResult.items[0]);
         }
@@ -58,6 +62,12 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, onLanguageSel
           setSelectedModel(defaultModel);
           onModelSelect?.(defaultModel);
         }
+
+        // 从 localStorage 读取保存的面试模式
+        const savedState = getInterviewTrainingState();
+        const savedMode = savedState.isAutoMode ? 'auto' : 'manual';
+        setInterviewMode(savedMode);
+        onModeSelect?.(savedState.isAutoMode);
       } catch (error) {
         console.error('加载数据失败:', error);
       } finally {
@@ -66,7 +76,18 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, onLanguageSel
     };
 
     loadData();
-  }, []); // 移除依赖项，避免无限循环
+  }, []); // 只在组件挂载时加载一次数据
+
+  // 监听 selectedJobId 变化，自动选择对应的岗位
+  useEffect(() => {
+    if (selectedJobId && positions.length > 0) {
+      const position = positions.find(p => p.id === selectedJobId);
+      if (position) {
+        setSelectedPosition(position);
+        onPositionSelect?.(position);
+      }
+    }
+  }, [selectedJobId, positions, onPositionSelect]);
 
   const handlePositionChange = (positionId: string) => {
     const position = positions.find(p => p.id === positionId) || null;
@@ -83,6 +104,14 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, onLanguageSel
   const handleLanguageChange = (language: 'zh-CN' | 'zh-TW' | 'en-US') => {
     setSelectedLanguage(language);
     onLanguageSelect?.(language);
+  };
+
+  const handleModeChange = (mode: 'manual' | 'auto') => {
+    setInterviewMode(mode);
+    const isAutoMode = mode === 'auto';
+    // 保存到 localStorage
+    setInterviewTrainingState({ isAutoMode });
+    onModeSelect?.(isAutoMode);
   };
 
   const toggleExpand = () => {
@@ -159,6 +188,34 @@ export function JobPositionCard({ onPositionSelect, onModelSelect, onLanguageSel
         </select>
         <ChevronDown size={14} className="select-icon" />
       </div>
+
+      {/* 面试模式选择 */}
+      <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <div className="job-position-select">
+              <select
+                className="device-select"
+                value={interviewMode}
+                onChange={(e) => handleModeChange(e.target.value as 'manual' | 'auto')}
+                disabled={disabled}
+              >
+                <option value="manual">手动模式</option>
+                <option value="auto">自动模式</option>
+              </select>
+              <ChevronDown size={14} className="select-icon" />
+            </div>
+          </Tooltip.Trigger>
+          {disabled && (
+            <Tooltip.Portal>
+              <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
+                面试进行中无法切换模式
+                <Tooltip.Arrow className="radix-tooltip-arrow" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          )}
+        </Tooltip.Root>
+      </Tooltip.Provider>
 
       {/* 展开按钮 */}
       <div className="job-position-expand" onClick={toggleExpand}>
