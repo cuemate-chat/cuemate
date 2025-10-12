@@ -61,10 +61,8 @@ export function registerAsrRoutes(app: FastifyInstance) {
     const isDockerEnvironment = process.env.NODE_ENV === 'production';
 
     // 根据请求来源返回正确的WebSocket地址
-    const getWebSocketUrl = (port: number, containerName: string) => {
+    const getWebSocketUrl = (port: number) => {
       // 如果是从浏览器访问，始终返回localhost地址
-      // console.debug(containerName);
-      // 只有在容器间通信时才使用容器名称
       if (host.includes('localhost') || host.includes('127.0.0.1')) {
         return `ws://localhost:${port}/asr`;
       } else if (isDockerEnvironment) {
@@ -81,7 +79,7 @@ export function registerAsrRoutes(app: FastifyInstance) {
       services: [
         {
           name: 'cuemate-asr',
-          url: getWebSocketUrl(10095, 'cuemate-asr'),
+          url: getWebSocketUrl(10095),
         },
       ],
     };
