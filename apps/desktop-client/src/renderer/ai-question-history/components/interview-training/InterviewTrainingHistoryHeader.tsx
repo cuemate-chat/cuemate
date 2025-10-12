@@ -13,7 +13,7 @@ export function InterviewTrainingHistoryHeader({ onClose, onRefresh, searchValue
     <div className="ai-window-header">
       <div className="ai-header-left">
         <History size={16} />
-        <div className="ai-title">历史记录3</div>
+        <div className="ai-title">面试训练记录</div>
       </div>
 
       {/* 搜索框 */}
@@ -23,7 +23,7 @@ export function InterviewTrainingHistoryHeader({ onClose, onRefresh, searchValue
           <input
             type="text"
             className="ai-search-input"
-            placeholder="搜索历史记录..."
+            placeholder="搜索面试训练记录..."
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
           />

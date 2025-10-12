@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { History, X } from 'lucide-react';
 import { useState } from 'react';
 import CueMateLogo from '../../../../assets/CueMate.png';
+import { useVoiceState } from '../../../../utils/voiceState';
 
 // 头部内的加载动画
 const LoadingDots = () => {
@@ -33,10 +34,29 @@ interface WindowHeaderProps {
   onOpenHistory?: () => void;
   heightPercentage: number;
   onHeightChange: (percentage: number) => void;
+  interviewState?: string; // 面试状态机状态
 }
 
-export function InterviewTrainingHeader({ isLoading, onClose, onOpenHistory, heightPercentage, onHeightChange }: WindowHeaderProps) {
+export function InterviewTrainingHeader({ isLoading, onClose, onOpenHistory, heightPercentage, onHeightChange, interviewState }: WindowHeaderProps) {
   const [showControls, setShowControls] = useState(false);
+  const globalState = useVoiceState();
+
+  // 从全局状态获取计时器数据 - 只用于显示，不做计时逻辑
+  const timerDuration = globalState.timerDuration || 0;
+  const timerStarted = globalState.timerStarted || false;
+
+  // 格式化时间显示 (时:分:秒) - 复制自InterviewerWindowHeader
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // 格式化状态显示（去掉下划线，转大写）
+  const formatState = (state: string) => {
+    return state.replace(/_/g, ' ').toUpperCase();
+  };
 
   return (
     <div 
@@ -46,8 +66,15 @@ export function InterviewTrainingHeader({ isLoading, onClose, onOpenHistory, hei
     >
       <div className="ai-header-left">
         <img src={CueMateLogo} alt="CueMate" className="ai-logo" />
-        <div className="ai-title">{isLoading ? 'Think' : 'AI Response3'}</div>
+        <div className="ai-title">
+          面试训练 - {interviewState ? formatState(interviewState) : (isLoading ? 'LOADING' : 'IDLE')}
+        </div>
         {isLoading && <LoadingDots />}
+        {(timerStarted && globalState.subState !== 'idle' && (globalState.mode === 'mock-interview' || globalState.mode === 'interview-training')) && (
+          <div className="interviewer-timer">
+            <span className="timer-display">{formatDuration(timerDuration)}</span>
+          </div>
+        )}
       </div>
       <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
         <div className={`ai-header-right ${showControls ? 'show' : 'hide'}`}>
@@ -72,21 +99,24 @@ export function InterviewTrainingHeader({ isLoading, onClose, onOpenHistory, hei
           
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <button 
+              <button
                 className="ai-header-btn"
-                onClick={() => {
+                onClick={async () => {
                   try {
-                    (window as any).electronAPI?.showAIQuestionHistory?.();
+                    // 先切换到面试训练模式
+                    await (window as any).electronAPI?.switchToMode?.('interview-training');
+                    // 再打开历史窗口
+                    await (window as any).electronAPI?.showAIQuestionHistory?.();
                   } catch {}
                   onOpenHistory && onOpenHistory();
                 }}
               >
                 <History size={16} />
-                <span className="ai-header-btn-text">历史记录</span>
+                <span className="ai-header-btn-text">训练记录</span>
               </button>
             </Tooltip.Trigger>
             <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-              点击切换历史记录窗口
+              点击切换训练记录窗口
               <Tooltip.Arrow className="radix-tooltip-arrow" />
             </Tooltip.Content>
           </Tooltip.Root>

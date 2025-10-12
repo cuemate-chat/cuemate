@@ -1,33 +1,81 @@
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import { aiService } from '../../../utils/ai/aiService';
-import { conversationService } from '../../api/conversationService.ts';
-import { InterviewTrainingBody } from './InterviewTrainingBody.tsx';
-import { InterviewTrainingFooter } from './InterviewTrainingFooter.tsx';
-import { InterviewTrainingHeader } from './InterviewTrainingHeader.tsx';
+import { useEffect, useRef, useState } from 'react';
+import { useVoiceState } from '../../../../utils/voiceState';
+import { setInterviewTrainingState, useInterviewTrainingState } from '../../../utils/interviewTrainingState';
+import { InterviewTrainingBody } from './InterviewTrainingBody';
+import { InterviewTrainingFooter } from './InterviewTrainingFooter';
+import { InterviewTrainingHeader } from './InterviewTrainingHeader';
 
 export function InterviewTrainingApp() {
-  const [question, setQuestion] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<Array<{id: string, type: 'user' | 'ai', content: string}>>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
-  const [currentConversationStatus, setCurrentConversationStatus] = useState<'active' | 'completed' | 'error' | null>(null);
-  const [sequenceNumber, setSequenceNumber] = useState(1);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [heightPercentage, setHeightPercentage] = useState(75); // 默认75%
+  const [heightPercentage, setHeightPercentage] = useState(75);
+  const previousInterviewId = useRef<string | undefined>(undefined);
 
-  // 错误处理状态
-  const [errorNotification, setErrorNotification] = useState<{
-    type: 'error' | 'success' | 'warning';
-    message: string;
-    duration: number;
-  } | null>(null);
+  // 使用跨窗口状态管理
+  const trainingState = useInterviewTrainingState();
 
-  // 组件初始化时恢复最近对话和高度设置
+  // 从voiceState获取当前面试ID
+  const voiceState = useVoiceState();
+  const interviewId = voiceState.interviewId;
+
+  // 组件初始化时清理状态
   useEffect(() => {
-    initializeConversation();
-    loadHeightSetting();
+    // 如果没有interviewId,清理所有状态(应用重启场景)
+    if (!interviewId) {
+      setInterviewTrainingState({
+        aiMessage: '',
+        speechText: '',
+        candidateAnswer: '',
+        isLoading: false,
+        isListening: false,
+        interviewState: undefined,
+      });
+    }
   }, []);
+
+  // 监听 interviewId 变化，如果是新面试则清空状态
+  useEffect(() => {
+    if (interviewId !== previousInterviewId.current) {
+      // interviewId 发生变化，清空旧数据
+      setInterviewTrainingState({
+        aiMessage: '',
+        speechText: '',
+        candidateAnswer: '',
+        isLoading: false,
+        isListening: false,
+        interviewState: undefined,
+      });
+      previousInterviewId.current = interviewId;
+    }
+  }, [interviewId]);
+
+  // 只有存在interviewId才显示数据,否则显示空白
+  const aiMessage = interviewId ? trainingState.aiMessage : '';
+  const speechText = interviewId ? trainingState.speechText : '';
+  const candidateAnswer = interviewId ? trainingState.candidateAnswer : '';
+  const isLoading = interviewId ? trainingState.isLoading : false;
+  const interviewState = interviewId ? trainingState.interviewState : undefined;
+
+  // 组件初始化时加载高度设置和监听外部事件
+  useEffect(() => {
+    loadHeightSetting();
+    setupEventListeners();
+  }, []);
+
+  // 设置事件监听器接收外部数据
+  const setupEventListeners = () => {
+    // 监听自动模式触发的回答完成
+    const handleTriggerResponseComplete = () => {
+      handleResponseComplete();
+    };
+
+    // 添加事件监听器
+    window.addEventListener('interviewTraining:triggerResponseComplete', handleTriggerResponseComplete);
+
+    // 清理函数
+    return () => {
+      window.removeEventListener('interviewTraining:triggerResponseComplete', handleTriggerResponseComplete);
+    };
+  };
 
   // 加载高度设置
   const loadHeightSetting = async () => {
@@ -43,104 +91,6 @@ export function InterviewTrainingApp() {
       }
     } catch (error) {
       console.error('加载窗口高度设置失败:', error);
-    }
-  };
-
-  // 初始化对话
-  const initializeConversation = async () => {
-    try {
-      const latestConversation = await conversationService.getLatestActiveConversation();
-      if (latestConversation) {
-        setCurrentConversationId(latestConversation.conversation.id);
-        setCurrentConversationStatus(latestConversation.conversation.status);
-        setSequenceNumber(latestConversation.messages.length + 1);
-
-        const conversationMessages: any[] = []; // 简化处理，不加载历史消息
-        const formattedMessages = conversationMessages.map((msg: any) => ({
-          id: msg.id,
-          type: msg.type as 'user' | 'ai',
-          content: msg.content
-        }));
-        setMessages(formattedMessages);
-      }
-    } catch (error) {
-      console.error('初始化对话失败:', error);
-    } finally {
-      setIsInitializing(false);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!question.trim() || isLoading) return;
-
-    // 检查当前对话状态，如果已完成则阻止提交
-    if (currentConversationStatus === 'completed') {
-      setErrorNotification({
-        type: 'error',
-        message: '当前对话已完成，无法继续提问。请点击"新建提问"开始新的对话。',
-        duration: 3000
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      let conversationId = currentConversationId;
-      let currentSequence = sequenceNumber;
-
-      // 如果没有活跃对话，创建新对话
-      if (!conversationId || currentConversationStatus !== 'active') {
-        const newConversation = await conversationService.createConversation('interview-training');
-        if (!newConversation) {
-          throw new Error('创建对话失败');
-        }
-        conversationId = newConversation;
-        setCurrentConversationId(conversationId);
-        setCurrentConversationStatus('active');
-        currentSequence = 1;
-        setSequenceNumber(1);
-      }
-
-      // 确保 conversationId 不为空
-      if (!conversationId) {
-        throw new Error('对话ID无效');
-      }
-
-      // 添加用户消息到界面和数据库
-      const userMessageId = `user-${Date.now()}`;
-      const newUserMessage = { id: userMessageId, type: 'user' as const, content: question };
-      setMessages(prev => [...prev, newUserMessage]);
-
-      await conversationService.saveMessage(conversationId, 'user', question, currentSequence);
-
-      // 清空输入框
-      const currentQuestion = question;
-      setQuestion('');
-
-      // 调用AI服务
-      const response = await aiService.callAI([{ role: 'user', content: currentQuestion }]);
-
-      // 添加AI回复到界面和数据库
-      const aiMessageId = `ai-${Date.now()}`;
-      const newAIMessage = { id: aiMessageId, type: 'ai' as const, content: response };
-      setMessages(prev => [...prev, newAIMessage]);
-
-      await conversationService.saveMessage(conversationId, 'assistant', response, currentSequence);
-
-      // 更新序列号
-      setSequenceNumber(currentSequence + 1);
-      // 更新序列号（简化处理）
-
-    } catch (error) {
-      console.error('发送消息失败:', error);
-      setErrorNotification({
-        type: 'error',
-        message: '发送消息失败，请稍后重试',
-        duration: 3000
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -168,15 +118,17 @@ export function InterviewTrainingApp() {
     }
   };
 
-  // 显示错误通知的副作用
-  useEffect(() => {
-    if (errorNotification) {
-      const timer = setTimeout(() => {
-        setErrorNotification(null);
-      }, errorNotification.duration);
-      return () => clearTimeout(timer);
+  // 处理用户回答完成（手动点击或自动检测）
+  const handleResponseComplete = async () => {
+    // 检查文本长度，至少需要5个字符才触发
+    if (speechText.length <= 5) {
+      return;
     }
-  }, [errorNotification]);
+
+    // 通过 BroadcastChannel + localStorage 跨窗口传递用户回答
+    // 左侧窗口会监听 candidateAnswer 变化并触发 AI 分析
+    setInterviewTrainingState({ candidateAnswer: speechText });
+  };
 
   return (
     <div className="ai-question-app">
@@ -184,52 +136,30 @@ export function InterviewTrainingApp() {
         className="ai-question-window"
         initial={{ opacity: 0, y: -20, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        style={{ height: `${heightPercentage}vh` }}
+        transition={{ duration: 0.2 }}
       >
         {/* Header - 标题栏 */}
         <InterviewTrainingHeader
           onClose={handleClose}
           heightPercentage={heightPercentage}
           onHeightChange={handleHeightChange}
-          isLoading={isLoading || isInitializing}
+          isLoading={isLoading}
+          interviewState={interviewState}
         />
 
-        {/* Body - 对话区域 */}
+        {/* Body - AI答案展示区域 */}
         <InterviewTrainingBody
-          aiMessage={messages.filter(m => m.type === 'ai').pop()?.content}
-          isLoading={isLoading || isInitializing}
+          aiMessage={aiMessage}
+          candidateAnswer={candidateAnswer}
+          isLoading={isLoading}
         />
 
         {/* Footer - 语音识别区域 */}
         <InterviewTrainingFooter
-          speechText=""
-          isLoading={isLoading || isInitializing}
-          onResponseComplete={async () => {
-            if (question.trim()) {
-              await handleSubmit();
-            }
-          }}
+          interviewId={interviewId}
+          onResponseComplete={handleResponseComplete}
         />
       </motion.div>
-
-      {/* 错误通知 */}
-      {errorNotification && (
-        <motion.div
-          className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-            errorNotification.type === 'error'
-              ? 'bg-red-500 text-white'
-              : errorNotification.type === 'success'
-              ? 'bg-green-500 text-white'
-              : 'bg-yellow-500 text-white'
-          }`}
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 100 }}
-        >
-          {errorNotification.message}
-        </motion.div>
-      )}
     </div>
   );
 }

@@ -4,8 +4,8 @@
  * 不包含TTS功能（因为面试训练不需要AI语音输出）
  */
 
-import { VoiceCoordinator, VoiceState } from '../../mock-interview/voice/VoiceCoordinator';
-import { ErrorType, ErrorSeverity } from '../../mock-interview/error/ErrorHandler';
+import { ErrorSeverity, ErrorType } from '../../shared/error/ErrorHandler';
+import { VoiceCoordinator, VoiceState } from '../../shared/voice/VoiceCoordinator';
 
 export interface ASRConfig {
   serverUrl: string;
@@ -43,7 +43,7 @@ export class TrainingAudioServiceManager extends EventTarget {
   constructor(
     asrConfig: ASRConfig,
     audioConfig: AudioConfig,
-    systemAudioConfig: SystemAudioConfig
+    systemAudioConfig: SystemAudioConfig,
   ) {
     super();
 
@@ -64,9 +64,11 @@ export class TrainingAudioServiceManager extends EventTarget {
   private setupEventHandlers(): void {
     // 监听语音协调器事件
     this.voiceCoordinator.addEventListener('stateChanged', ((event: CustomEvent) => {
-      this.dispatchEvent(new CustomEvent('voiceStateChanged', {
-        detail: { state: event.detail.state }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('voiceStateChanged', {
+          detail: { state: event.detail.state },
+        }),
+      );
     }) as EventListener);
 
     this.voiceCoordinator.addEventListener('userStartedSpeaking', (() => {
@@ -74,16 +76,20 @@ export class TrainingAudioServiceManager extends EventTarget {
     }) as EventListener);
 
     this.voiceCoordinator.addEventListener('userFinishedSpeaking', ((event: CustomEvent) => {
-      this.dispatchEvent(new CustomEvent('userFinishedSpeaking', {
-        detail: event.detail
-      }));
+      this.dispatchEvent(
+        new CustomEvent('userFinishedSpeaking', {
+          detail: event.detail,
+        }),
+      );
     }) as EventListener);
 
     this.voiceCoordinator.addEventListener('audioLevelChanged', ((event: CustomEvent) => {
       this._audioLevel = event.detail.level;
-      this.dispatchEvent(new CustomEvent('audioLevelChanged', {
-        detail: { level: this._audioLevel }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('audioLevelChanged', {
+          detail: { level: this._audioLevel },
+        }),
+      );
     }) as EventListener);
   }
 
@@ -105,13 +111,15 @@ export class TrainingAudioServiceManager extends EventTarget {
       this.dispatchEvent(new CustomEvent('serviceInitialized'));
     } catch (error) {
       console.error('面试训练音频服务初始化失败:', error);
-      this.dispatchEvent(new CustomEvent('serviceError', {
-        detail: {
-          type: ErrorType.AUDIO_INITIALIZATION_FAILED,
-          severity: ErrorSeverity.HIGH,
-          error
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('serviceError', {
+          detail: {
+            type: ErrorType.AUDIO_INITIALIZATION_FAILED,
+            severity: ErrorSeverity.HIGH,
+            error,
+          },
+        }),
+      );
       throw error;
     }
   }
@@ -155,15 +163,19 @@ export class TrainingAudioServiceManager extends EventTarget {
         const levelInterval = setInterval(() => {
           if (this._isSystemAudioListening) {
             this._systemAudioLevel = Math.random() * 0.8;
-            this.dispatchEvent(new CustomEvent('systemAudioLevelChanged', {
-              detail: { level: this._systemAudioLevel }
-            }));
+            this.dispatchEvent(
+              new CustomEvent('systemAudioLevelChanged', {
+                detail: { level: this._systemAudioLevel },
+              }),
+            );
 
             // 模拟检测到系统音频活动
             if (this._systemAudioLevel > this.systemAudioConfig.volumeThreshold) {
-              this.dispatchEvent(new CustomEvent('systemAudioActivity', {
-                detail: { level: this._systemAudioLevel }
-              }));
+              this.dispatchEvent(
+                new CustomEvent('systemAudioActivity', {
+                  detail: { level: this._systemAudioLevel },
+                }),
+              );
             }
           } else {
             clearInterval(levelInterval);
@@ -173,17 +185,18 @@ export class TrainingAudioServiceManager extends EventTarget {
 
       console.debug('系统音频监听已启动');
       this.dispatchEvent(new CustomEvent('systemAudioListeningStarted'));
-
     } catch (error) {
       console.error('启动系统音频监听失败:', error);
       this._isSystemAudioListening = false;
-      this.dispatchEvent(new CustomEvent('serviceError', {
-        detail: {
-          type: ErrorType.AUDIO_SERVICE_ERROR,
-          severity: ErrorSeverity.MEDIUM,
-          error
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('serviceError', {
+          detail: {
+            type: ErrorType.AUDIO_SERVICE_ERROR,
+            severity: ErrorSeverity.MEDIUM,
+            error,
+          },
+        }),
+      );
       throw error;
     }
   }
@@ -213,16 +226,17 @@ export class TrainingAudioServiceManager extends EventTarget {
 
       console.debug('用户录音已启动');
       this.dispatchEvent(new CustomEvent('recordingStarted'));
-
     } catch (error) {
       console.error('启动录音失败:', error);
-      this.dispatchEvent(new CustomEvent('serviceError', {
-        detail: {
-          type: ErrorType.MICROPHONE_ACCESS_DENIED,
-          severity: ErrorSeverity.HIGH,
-          error
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('serviceError', {
+          detail: {
+            type: ErrorType.MICROPHONE_ACCESS_DENIED,
+            severity: ErrorSeverity.HIGH,
+            error,
+          },
+        }),
+      );
       throw error;
     }
   }
@@ -240,16 +254,17 @@ export class TrainingAudioServiceManager extends EventTarget {
 
       console.debug('用户录音已停止');
       this.dispatchEvent(new CustomEvent('recordingStopped'));
-
     } catch (error) {
       console.error('停止录音失败:', error);
-      this.dispatchEvent(new CustomEvent('serviceError', {
-        detail: {
-          type: ErrorType.AUDIO_SERVICE_ERROR,
-          severity: ErrorSeverity.MEDIUM,
-          error
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('serviceError', {
+          detail: {
+            type: ErrorType.AUDIO_SERVICE_ERROR,
+            severity: ErrorSeverity.MEDIUM,
+            error,
+          },
+        }),
+      );
       throw error;
     }
   }
@@ -260,33 +275,37 @@ export class TrainingAudioServiceManager extends EventTarget {
       // 这里应该调用ASR服务识别面试官的语音
       // 目前返回模拟结果
       const mockResponses = [
-        "请介绍一下你的项目经验。",
-        "你是如何处理技术难题的？",
-        "请描述一下你的职业规划。",
-        "你有什么问题想问我们吗？"
+        '请介绍一下你的项目经验。',
+        '你是如何处理技术难题的？',
+        '请描述一下你的职业规划。',
+        '你有什么问题想问我们吗？',
       ];
 
       const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
 
       // 模拟网络延迟
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       console.debug('面试官语音识别结果:', randomResponse);
 
-      this.dispatchEvent(new CustomEvent('interviewerSpeechRecognized', {
-        detail: { text: randomResponse }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('interviewerSpeechRecognized', {
+          detail: { text: randomResponse },
+        }),
+      );
 
       return randomResponse;
     } catch (error) {
       console.error('面试官语音识别失败:', error);
-      this.dispatchEvent(new CustomEvent('serviceError', {
-        detail: {
-          type: ErrorType.ASR_CONNECTION_FAILED,
-          severity: ErrorSeverity.MEDIUM,
-          error
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('serviceError', {
+          detail: {
+            type: ErrorType.ASR_CONNECTION_FAILED,
+            severity: ErrorSeverity.MEDIUM,
+            error,
+          },
+        }),
+      );
       throw error;
     }
   }
@@ -367,7 +386,7 @@ export class TrainingAudioServiceManager extends EventTarget {
     }
 
     if (this.systemAudioStream) {
-      this.systemAudioStream.getTracks().forEach(track => track.stop());
+      this.systemAudioStream.getTracks().forEach((track) => track.stop());
       this.systemAudioStream = null;
     }
 
