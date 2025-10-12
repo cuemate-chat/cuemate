@@ -2,6 +2,7 @@ interface WebSocketMessage {
   type: string;
   data?: any;
   client?: 'web' | 'desktop';
+  mode?: 'mock-interview' | 'interview-training';
 }
 
 type MessageHandler = (message: WebSocketMessage) => void;

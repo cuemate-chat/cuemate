@@ -10,14 +10,27 @@ import {
 } from '@heroicons/react/24/outline';
 import { Button, Select } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { listJobs } from '../../api/jobs';
+import { webSocketService } from '../../services/webSocketService';
 
 export default function Home() {
-  const nav = useNavigate();
   const [jobs, setJobs] = useState<Array<{ id: string; title: string }>>([]);
   const [currentJob, setCurrentJob] = useState<string | undefined>(undefined);
 
+  // 初始化 WebSocket 连接
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!webSocketService.getConnectionState()) {
+          await webSocketService.connect();
+        }
+      } catch (error) {
+        console.error('WebSocket 连接失败:', error);
+      }
+    })();
+  }, []);
+
+  // 加载岗位列表
   useEffect(() => {
     (async () => {
       try {
@@ -76,12 +89,16 @@ export default function Home() {
                   type="primary"
                   size="large"
                   className="!px-6 sm:!px-8 w-full sm:w-auto"
-                  onClick={() => nav('/jobs/new')}
+                  onClick={() => {
+                    webSocketService.send({ type: 'OPEN_INTERVIEWER', mode: 'mock-interview' });
+                  }}
                 >
                   AI 模拟面试
                 </Button>
-                <Button size="large" className="w-full sm:w-auto" onClick={() => nav('/jobs')}>
-                  真实面试训练
+                <Button size="large" className="w-full sm:w-auto" onClick={() => {
+                  webSocketService.send({ type: 'OPEN_INTERVIEWER', mode: 'interview-training' });
+                }}>
+                  LIVE 面试训练
                 </Button>
               </div>
 
