@@ -7,6 +7,7 @@ interface WebSocketMessage {
   data?: any;
   url?: string;
   user?: any;
+  mode?: 'mock-interview' | 'interview-training';
 }
 
 interface RegisteredClient {
@@ -106,6 +107,10 @@ export class CueMateWebSocketServer {
 
       case 'ASR_DEVICES':
         this.handleAsrDevices(message);
+        break;
+
+      case 'OPEN_INTERVIEWER':
+        this.handleOpenInterviewer(message);
         break;
 
       default:
@@ -295,6 +300,35 @@ export class CueMateWebSocketServer {
         logger.debug({ clientId: client.id }, 'WebSocket: 已广播 ASR_DEVICES 给 web');
       } catch (error) {
         logger.error({ error, clientId: client.id }, 'WebSocket: 广播 ASR_DEVICES 失败');
+      }
+    });
+  }
+
+  private handleOpenInterviewer(message: WebSocketMessage): void {
+    // 转发给 desktop 客户端
+    const desktopClients = Array.from(this.clients.values()).filter(
+      (client) => client.type === 'desktop',
+    );
+
+    if (desktopClients.length === 0) {
+      logger.warn('WebSocket: 没有可用的 desktop 客户端来处理 OPEN_INTERVIEWER');
+      return;
+    }
+
+    desktopClients.forEach((client) => {
+      try {
+        client.ws.send(
+          JSON.stringify({
+            type: 'OPEN_INTERVIEWER',
+            mode: message.mode || 'mock-interview',
+          }),
+        );
+        logger.debug(
+          { mode: message.mode, clientId: client.id },
+          'WebSocket: 已转发 OPEN_INTERVIEWER 到 desktop',
+        );
+      } catch (error) {
+        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 OPEN_INTERVIEWER 失败');
       }
     });
   }
