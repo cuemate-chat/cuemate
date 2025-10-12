@@ -1,6 +1,7 @@
 import { shell } from 'electron';
 import WebSocket from 'ws';
 import { logger } from '../../utils/logger.js';
+import { getVoiceState } from '../../utils/voiceState.js';
 import { PiperTTS } from '../audio/PiperTTS.js';
 import type { WindowManager } from '../windows/WindowManager.js';
 
@@ -11,6 +12,7 @@ interface WebSocketMessage {
   user?: any;
   clientId?: string;
   clientType?: string;
+  mode?: 'mock-interview' | 'interview-training';
 }
 
 export class WebSocketClient {
@@ -69,7 +71,7 @@ export class WebSocketClient {
   /**
    * 处理收到的 WebSocket 消息
    */
-  private handleMessage(message: WebSocketMessage): void {
+  private async handleMessage(message: WebSocketMessage): Promise<void> {
     switch (message.type) {
       case 'CONNECTION_ACK':
         break;
@@ -143,6 +145,52 @@ export class WebSocketClient {
         } catch (error) {
           logger.error({ error }, '上报 ASR 设备失败');
         }
+        break;
+      }
+
+      case 'OPEN_INTERVIEWER': {
+        // 检查当前状态
+        const currentState = getVoiceState();
+
+        // 如果正在面试中，不做任何操作
+        if (
+          currentState.mode !== 'none' &&
+          currentState.subState !== 'idle' &&
+          (currentState.mode === 'mock-interview' || currentState.mode === 'interview-training')
+        ) {
+          logger.warn('当前正在面试中，忽略打开窗口请求');
+          break;
+        }
+
+        const appState = this.windowManager.getAppState();
+
+        // 检查窗口是否处于隐藏状态
+        if (!appState.isControlBarVisible) {
+          // 在隐藏状态下，准备面试窗口状态，等待恢复时显示
+          const mode = message.mode || 'mock-interview';
+          this.windowManager.switchToMode(mode);
+          this.windowManager.prepareInterviewWindowsWhileHidden();
+          logger.info({ mode }, '窗口处于隐藏状态，已准备面试窗口，等待恢复显示');
+          break;
+        }
+
+        // 检查窗口是否已经打开
+        const isInterviewerVisible = this.windowManager.isInterviewerVisible();
+        const isAIQuestionVisible = appState.isAIQuestionVisible;
+
+        if (isInterviewerVisible && isAIQuestionVisible) {
+          logger.warn('面试窗口已经打开，忽略重复请求');
+          break;
+        }
+
+        // 打开面试窗口（三个窗口）
+        const mode = message.mode || 'mock-interview';
+        this.windowManager.switchToMode(mode);
+        this.windowManager.showAIQuestion();
+        this.windowManager.showAIQuestionHistoryNextToAI();
+        this.windowManager.showInterviewerNextToAI();
+
+        logger.info({ mode }, '已打开面试窗口');
         break;
       }
 

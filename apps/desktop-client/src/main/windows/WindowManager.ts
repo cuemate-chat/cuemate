@@ -537,6 +537,11 @@ export class WindowManager {
     if (this.aiQuestionHistoryWindow.getBrowserWindow()) {
       this.aiQuestionHistoryWindow.getBrowserWindow()!.webContents.send('mode-change', mode);
     }
+
+    // 向 Interviewer 窗口发送模式切换事件
+    if (this.interviewerWindow.getBrowserWindow()) {
+      this.interviewerWindow.getBrowserWindow()!.webContents.send('mode-change', mode);
+    }
   }
 
   /**
@@ -574,6 +579,18 @@ export class WindowManager {
     if (this.isInterviewerVisible()) {
       this.interviewerWindow.hide();
     }
+  }
+
+  /**
+   * 在隐藏状态下准备打开面试窗口
+   * 不直接显示窗口，而是更新状态，等待恢复时显示
+   */
+  public prepareInterviewWindowsWhileHidden(): void {
+    // 更新隐藏前状态，标记这些窗口应该在恢复时显示
+    this.windowStatesBeforeHide.isAIQuestionVisible = true;
+    this.windowStatesBeforeHide.isAIQuestionHistoryVisible = true;
+    this.windowStatesBeforeHide.isInterviewerVisible = true;
+    this.hasEverBeenHidden = true;
   }
 
   /**
