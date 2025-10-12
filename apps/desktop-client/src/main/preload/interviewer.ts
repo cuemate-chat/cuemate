@@ -100,6 +100,7 @@ const interviewerAPI = {
       'speaker-test-status',
       'speaker-test-result',
       'speaker-audio-data',
+      'mode-change',
     ];
 
     if (allowedChannels.includes(channel)) {

@@ -8,6 +8,34 @@ import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
 export function InterviewerApp() {
   const [currentSectionTitle, setCurrentSectionTitle] = useState<string | null>(null);
 
+  // 监听模式切换事件
+  useEffect(() => {
+    try {
+      const api: any = (window as any).electronAPI;
+      if (!api?.on || !api?.off) {
+        console.warn('electronAPI.on/off 不可用');
+        return;
+      }
+
+      const handleModeChange = (mode: 'voice-qa' | 'mock-interview' | 'interview-training') => {
+        if (mode === 'mock-interview') {
+          setCurrentSectionTitle('模拟面试');
+        } else if (mode === 'interview-training') {
+          setCurrentSectionTitle('面试训练');
+        } else if (mode === 'voice-qa') {
+          setCurrentSectionTitle('语音提问');
+        }
+      };
+
+      api.on('mode-change', handleModeChange);
+      return () => {
+        api.off('mode-change', handleModeChange);
+      };
+    } catch (error) {
+      console.error('监听模式切换事件失败:', error);
+    }
+  }, []);
+
   // 监听点击穿透状态变化并应用到全局
   useEffect(() => {
     try {
