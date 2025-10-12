@@ -8,6 +8,7 @@ interface WebSocketMessage {
   url?: string;
   user?: any;
   mode?: 'mock-interview' | 'interview-training';
+  jobId?: string;
 }
 
 interface RegisteredClient {
@@ -321,10 +322,11 @@ export class CueMateWebSocketServer {
           JSON.stringify({
             type: 'OPEN_INTERVIEWER',
             mode: message.mode || 'mock-interview',
+            jobId: message.jobId,
           }),
         );
         logger.debug(
-          { mode: message.mode, clientId: client.id },
+          { mode: message.mode, jobId: message.jobId, clientId: client.id },
           'WebSocket: 已转发 OPEN_INTERVIEWER 到 desktop',
         );
       } catch (error) {
