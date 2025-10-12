@@ -13,6 +13,7 @@ interface WebSocketMessage {
   clientId?: string;
   clientType?: string;
   mode?: 'mock-interview' | 'interview-training';
+  jobId?: string;
 }
 
 export class WebSocketClient {
@@ -163,14 +164,15 @@ export class WebSocketClient {
         }
 
         const appState = this.windowManager.getAppState();
+        const mode = message.mode || 'mock-interview';
+        const jobId = message.jobId;
 
         // 检查窗口是否处于隐藏状态
         if (!appState.isControlBarVisible) {
           // 在隐藏状态下，准备面试窗口状态，等待恢复时显示
-          const mode = message.mode || 'mock-interview';
-          this.windowManager.switchToMode(mode);
+          this.windowManager.switchToMode(mode, jobId);
           this.windowManager.prepareInterviewWindowsWhileHidden();
-          logger.info({ mode }, '窗口处于隐藏状态，已准备面试窗口，等待恢复显示');
+          logger.info({ mode, jobId }, '窗口处于隐藏状态，已准备面试窗口，等待恢复显示');
           break;
         }
 
@@ -184,13 +186,12 @@ export class WebSocketClient {
         }
 
         // 打开面试窗口（三个窗口）
-        const mode = message.mode || 'mock-interview';
-        this.windowManager.switchToMode(mode);
+        this.windowManager.switchToMode(mode, jobId);
         this.windowManager.showAIQuestion();
         this.windowManager.showAIQuestionHistoryNextToAI();
         this.windowManager.showInterviewerNextToAI();
 
-        logger.info({ mode }, '已打开面试窗口');
+        logger.info({ mode, jobId }, '已打开面试窗口');
         break;
       }
 

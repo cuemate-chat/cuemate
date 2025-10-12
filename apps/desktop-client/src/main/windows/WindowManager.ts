@@ -527,20 +527,20 @@ export class WindowManager {
   /**
    * 切换AI窗口模式
    */
-  public switchToMode(mode: 'voice-qa' | 'mock-interview' | 'interview-training'): void {
+  public switchToMode(mode: 'voice-qa' | 'mock-interview' | 'interview-training', jobId?: string): void {
     // 向 AI Question 窗口发送模式切换事件
     if (this.aiQuestionWindow.getBrowserWindow()) {
-      this.aiQuestionWindow.getBrowserWindow()!.webContents.send('mode-change', mode);
+      this.aiQuestionWindow.getBrowserWindow()!.webContents.send('mode-change', mode, jobId);
     }
 
     // 向 AI Question History 窗口发送模式切换事件
     if (this.aiQuestionHistoryWindow.getBrowserWindow()) {
-      this.aiQuestionHistoryWindow.getBrowserWindow()!.webContents.send('mode-change', mode);
+      this.aiQuestionHistoryWindow.getBrowserWindow()!.webContents.send('mode-change', mode, jobId);
     }
 
     // 向 Interviewer 窗口发送模式切换事件
     if (this.interviewerWindow.getBrowserWindow()) {
-      this.interviewerWindow.getBrowserWindow()!.webContents.send('mode-change', mode);
+      this.interviewerWindow.getBrowserWindow()!.webContents.send('mode-change', mode, jobId);
     }
   }
 
