@@ -185,7 +185,7 @@ html, body, #root {
   display: flex;
   align-items: stretch;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .interviewer-top-card {
@@ -1202,5 +1202,148 @@ body.click-through-mode button:hover {
   background: transparent !important;
   transform: none !important;
   cursor: default !important;
+}
+
+/* Footer 样式 - 面试训练控制区域 */
+.ai-window-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  padding: 0px 8px 8px 8px;
+  min-height: 28px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 语音识别内容显示区域 */
+.speech-display-container {
+  display: none;
+}
+
+/* 语音文本显示 */
+.speech-text {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* 控制按钮区域 */
+.control-actions {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 1;
+  width: 100%;
+}
+
+/* 自动/手动切换开关 */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.mode-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.toggle-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 50%;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.mode-toggle.auto .toggle-switch {
+  background: rgba(59, 130, 246, 0.6);
+}
+
+.toggle-handle {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.mode-toggle.auto .toggle-handle {
+  transform: translateX(16px);
+}
+
+/* 回答完毕按钮 */
+.response-complete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.response-complete-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.response-complete-btn:disabled {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+}
+
+.response-text {
+  font-size: 13px;
+}
+
+.response-complete-btn svg {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  padding: 2px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.response-complete-btn:hover:not(:disabled) svg {
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.9);
 }
 

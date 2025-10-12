@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react';
 
+// 面试训练阶段状态
+export type TrainingPhase =
+  | 'listening-interviewer'  // 监听面试官（扬声器）
+  | 'ai-generating'          // AI生成答案中
+  | 'listening-candidate';   // 监听面试者（麦克风）
+
 // 跨窗口共享的面试训练状态
 export interface InterviewTrainingState {
   aiMessage: string;
   speechText: string;
   candidateAnswer: string; // 用户提交的回答（用于跨窗口触发AI分析）
+  interviewerQuestion: string; // 面试官问题（从扬声器识别）
   isLoading: boolean;
   isListening: boolean;
   isAutoMode: boolean; // 自动/手动模式
+  currentPhase?: TrainingPhase; // 当前阶段
   interviewState?: string; // 面试状态机状态
   updatedAt: number;
 }
@@ -36,7 +44,7 @@ function getPersistedAutoMode(): boolean {
 }
 
 function getDefaultState(): InterviewTrainingState {
-  return { aiMessage: '', speechText: '', candidateAnswer: '', isLoading: false, isListening: false, isAutoMode: getPersistedAutoMode(), interviewState: undefined, updatedAt: Date.now() };
+  return { aiMessage: '', speechText: '', candidateAnswer: '', interviewerQuestion: '', isLoading: false, isListening: false, isAutoMode: getPersistedAutoMode(), currentPhase: undefined, interviewState: undefined, updatedAt: Date.now() };
 }
 
 export function getInterviewTrainingState(): InterviewTrainingState {
@@ -58,9 +66,11 @@ export function setInterviewTrainingState(next: Partial<InterviewTrainingState>)
     aiMessage: next.aiMessage ?? current.aiMessage,
     speechText: next.speechText ?? current.speechText,
     candidateAnswer: next.candidateAnswer ?? current.candidateAnswer,
+    interviewerQuestion: next.interviewerQuestion ?? current.interviewerQuestion,
     isLoading: next.isLoading ?? current.isLoading,
     isListening: next.isListening ?? current.isListening,
     isAutoMode: next.isAutoMode ?? current.isAutoMode,
+    currentPhase: next.currentPhase ?? current.currentPhase,
     interviewState: next.interviewState ?? current.interviewState,
     updatedAt: Date.now(),
   };
@@ -100,9 +110,11 @@ export function clearInterviewTrainingState(): InterviewTrainingState {
     aiMessage: '',
     speechText: '',
     candidateAnswer: '',
+    interviewerQuestion: '',
     isLoading: false,
     isListening: false,
     isAutoMode: currentAutoMode, // 保留用户偏好
+    currentPhase: undefined,
     interviewState: undefined,
     updatedAt: Date.now()
   };
