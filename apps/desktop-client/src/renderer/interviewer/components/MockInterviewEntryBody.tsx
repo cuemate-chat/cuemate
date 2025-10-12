@@ -1,9 +1,9 @@
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
-import { interviewDataService } from '../../ai-question/components/mock-interview/data/InterviewDataService';
-import { mockInterviewService } from '../../ai-question/components/mock-interview/services/MockInterviewService';
-import { InterviewState, InterviewStateMachine } from '../../ai-question/components/mock-interview/state/InterviewStateMachine';
+import { interviewDataService } from '../../ai-question/components/shared/data/InterviewDataService';
+import { mockInterviewService } from '../../ai-question/components/shared/services/InterviewService';
+import { InterviewState, InterviewStateMachine } from '../../ai-question/components/shared/state/InterviewStateMachine';
 import { promptService } from '../../prompts/promptService';
 import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { aiService } from '../../utils/ai/aiService';

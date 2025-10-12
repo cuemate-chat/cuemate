@@ -57,7 +57,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
     }
   }, [selectedCard]);
 
-  // 选择“语音提问”时自动切换模式并显示 AI 提问窗口
+  // 选择"语音提问"时自动切换模式并显示 AI 提问窗口和历史记录窗口
   useEffect(() => {
     if (selectedCard === '语音提问') {
       (async () => {
@@ -65,6 +65,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
           if ((window as any).electronAPI) {
             await (window as any).electronAPI.switchToMode('voice-qa');
             await (window as any).electronAPI.showAIQuestion();
+            await (window as any).electronAPI.showAIQuestionHistory();
           }
         } catch (error) {
           console.error('切换到语音提问模式失败:', error);
