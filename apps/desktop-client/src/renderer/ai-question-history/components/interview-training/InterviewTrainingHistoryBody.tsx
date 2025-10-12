@@ -21,6 +21,19 @@ export function InterviewTrainingHistoryBody({
   const [reviews, setReviews] = useState<InterviewReview[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // 处理点击历史记录卡片
+  const handleReviewClick = (review: InterviewReview) => {
+    // 通过 BroadcastChannel 发送消息到 AI Question 窗口
+    const channel = new BroadcastChannel('interview-training-history-click');
+    channel.postMessage({
+      type: 'LOAD_HISTORY_REVIEW',
+      data: {
+        aiMessage: review.reference_answer,
+      }
+    });
+    channel.close();
+  };
+
   // 加载面试训练记录
   useEffect(() => {
     const loadReviews = async () => {
@@ -94,7 +107,11 @@ export function InterviewTrainingHistoryBody({
         <div className="conversation-list">
           {displayReviews.map((review, index) => (
             <Tooltip.Provider key={review.id}>
-              <div className="interview-review-card">
+              <div
+                className="interview-review-card"
+                onClick={() => handleReviewClick(review)}
+                style={{ cursor: 'pointer' }}
+              >
                 {/* 卡片序号 */}
                 <div className="card-index">{index + 1}</div>
 
