@@ -17,6 +17,8 @@ export interface InterviewTrainingState {
   isAutoMode: boolean; // 自动/手动模式
   currentPhase?: TrainingPhase; // 当前阶段
   interviewState?: string; // 面试状态机状态
+  lastInterviewerSpeechTime: number; // 面试官最后一次说话时间
+  currentRoundReviewId: string | null; // 当前轮次的评审ID
   updatedAt: number;
 }
 
@@ -44,7 +46,7 @@ function getPersistedAutoMode(): boolean {
 }
 
 function getDefaultState(): InterviewTrainingState {
-  return { aiMessage: '', speechText: '', candidateAnswer: '', interviewerQuestion: '', isLoading: false, isListening: false, isAutoMode: getPersistedAutoMode(), currentPhase: undefined, interviewState: undefined, updatedAt: Date.now() };
+  return { aiMessage: '', speechText: '', candidateAnswer: '', interviewerQuestion: '', isLoading: false, isListening: false, isAutoMode: getPersistedAutoMode(), currentPhase: undefined, interviewState: undefined, lastInterviewerSpeechTime: 0, currentRoundReviewId: null, updatedAt: Date.now() };
 }
 
 export function getInterviewTrainingState(): InterviewTrainingState {
@@ -72,6 +74,8 @@ export function setInterviewTrainingState(next: Partial<InterviewTrainingState>)
     isAutoMode: next.isAutoMode ?? current.isAutoMode,
     currentPhase: next.currentPhase ?? current.currentPhase,
     interviewState: next.interviewState ?? current.interviewState,
+    lastInterviewerSpeechTime: next.lastInterviewerSpeechTime ?? current.lastInterviewerSpeechTime,
+    currentRoundReviewId: next.currentRoundReviewId ?? current.currentRoundReviewId,
     updatedAt: Date.now(),
   };
 
@@ -116,6 +120,8 @@ export function clearInterviewTrainingState(): InterviewTrainingState {
     isAutoMode: currentAutoMode, // 保留用户偏好
     currentPhase: undefined,
     interviewState: undefined,
+    lastInterviewerSpeechTime: 0,
+    currentRoundReviewId: null,
     updatedAt: Date.now()
   };
   try {
