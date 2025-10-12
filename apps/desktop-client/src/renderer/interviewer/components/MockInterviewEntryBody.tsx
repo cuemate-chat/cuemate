@@ -125,9 +125,28 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
         setMicDevices(mics);
         setSpeakerDevices(speakers);
 
-        // 设置默认设备
-        if (mics.length > 0) setSelectedMic(mics[0].deviceId);
-        if (speakers.length > 0) setSelectedSpeaker(speakers[0].deviceId);
+        // 读取全局 ASR 配置,尝试回填默认设备
+        const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+        let defaultMic: string | undefined;
+        let defaultSpeaker: string | undefined;
+        try {
+          const res = await api?.asrConfig?.get?.();
+          const cfg = res?.config;
+          if (cfg) {
+            defaultMic = cfg.microphone_device_id;
+            defaultSpeaker = cfg.speaker_device_id;
+          }
+        } catch {}
+
+        // 优先使用配置中的设备,如果不存在则使用第一个
+        if (mics.length > 0) {
+          const exists = defaultMic && mics.some(d => d.deviceId === defaultMic);
+          setSelectedMic(exists && defaultMic ? defaultMic : mics[0].deviceId);
+        }
+        if (speakers.length > 0) {
+          const exists = defaultSpeaker && speakers.some(d => d.deviceId === defaultSpeaker);
+          setSelectedSpeaker(exists && defaultSpeaker ? defaultSpeaker : speakers[0].deviceId);
+        }
 
       } catch (error) {
         console.error('Failed to load audio settings:', error);
@@ -452,8 +471,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
       }
 
       // 先保存当前的计时器时长,避免异步过程中状态变化
-      const globalState = useVoiceState();
-      const timerDuration = globalState.timerDuration || 0;
+      const timerDuration = voiceState.timerDuration || 0;
 
       setCurrentLine('正在结束面试...');
 
@@ -620,8 +638,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   const generateInterviewReportOnStop = async (interviewId: string) => {
     try {
       // 先保存当前的计时器时长
-      const globalState = useVoiceState();
-      const timerDuration = globalState.timerDuration || 0;
+      const timerDuration = voiceState.timerDuration || 0;
 
       // 1. 重新获取所有 reviews（包含刚才分析的）
       const reviews = await mockInterviewService.getInterviewReviews(interviewId);
@@ -1167,8 +1184,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
 
     try {
       // 先保存当前的计时器时长
-      const globalState = useVoiceState();
-      const timerDuration = globalState.timerDuration || 0;
+      const timerDuration = voiceState.timerDuration || 0;
 
       // 标记面试完成
       interviewDataService.markInterviewComplete();
@@ -1245,8 +1261,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
   const generateInterviewReport = async (interviewId: string, context: any) => {
     try {
       // 先保存当前的计时器时长
-      const globalState = useVoiceState();
-      const durationSec = globalState.timerDuration || 0;
+      const durationSec = voiceState.timerDuration || 0;
 
       // 1. 获取面试数据
       const jobTitle = context.jobPosition?.title || '未知职位';
@@ -1440,7 +1455,19 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
               <select
                 className="device-select"
                 value={selectedMic}
-                onChange={(e) => setSelectedMic(e.target.value)}
+                onChange={async (e) => {
+                  const value = e.target.value;
+                  setSelectedMic(value);
+                  try {
+                    const selected = micDevices.find(d => d.deviceId === value);
+                    const name = selected?.label || '默认麦克风';
+                    const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+                    await api?.asrConfig?.updateDevices?.({
+                      microphone_device_id: value,
+                      microphone_device_name: name,
+                    });
+                  } catch {}
+                }}
                 disabled={loading || (voiceState.subState === 'mock-interview-recording' ||
                          voiceState.subState === 'mock-interview-paused' ||
                          voiceState.subState === 'mock-interview-playing')}
@@ -1467,7 +1494,19 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
               <select
                 className="device-select"
                 value={selectedSpeaker}
-                onChange={(e) => setSelectedSpeaker(e.target.value)}
+                onChange={async (e) => {
+                  const value = e.target.value;
+                  setSelectedSpeaker(value);
+                  try {
+                    const selected = speakerDevices.find(d => d.deviceId === value);
+                    const name = selected?.label || '默认扬声器';
+                    const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+                    await api?.asrConfig?.updateDevices?.({
+                      speaker_device_id: value,
+                      speaker_device_name: name,
+                    });
+                  } catch {}
+                }}
                 disabled={loading || (voiceState.subState === 'mock-interview-recording' ||
                          voiceState.subState === 'mock-interview-paused' ||
                          voiceState.subState === 'mock-interview-playing')}
