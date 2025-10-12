@@ -13,9 +13,10 @@ import { VoiceTestBody } from './VoiceTestBody';
 interface InterviewerWindowBodyProps {
   selectedCard: string | null;
   onSelectCard: (title: string) => void;
+  selectedJobId?: string;
 }
 
-export function InterviewerWindowBody({ selectedCard, onSelectCard }: InterviewerWindowBodyProps) {
+export function InterviewerWindowBody({ selectedCard, onSelectCard, selectedJobId }: InterviewerWindowBodyProps) {
   const [question, setQuestion] = useState('');
   const qa = useVoiceQAState();
   const vState = useVoiceState();
@@ -141,6 +142,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
         {selectedCard === '语音提问' && <VoiceQAEntryBody question={question} onVoiceToggle={handleVoiceToggle} />}
         {selectedCard === '模拟面试' && (
           <MockInterviewEntryBody
+            selectedJobId={selectedJobId}
             onStart={async () => {
               setVoiceState({ mode: 'mock-interview', subState: 'mock-interview-recording' });
               if ((window as any).electronAPI) {
@@ -156,14 +158,17 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard }: Interviewe
           />
         )}
         {selectedCard === '面试训练' && (
-          <InterviewTrainingEntryBody onStart={async () => {
-            setVoiceState({ mode: 'interview-training', subState: 'interview-training-recording' });
-            if ((window as any).electronAPI) {
-              await (window as any).electronAPI.switchToMode('interview-training');
-              await (window as any).electronAPI.showAIQuestion();
-              await (window as any).electronAPI.showAIQuestionHistory();
-            }
-          }} />
+          <InterviewTrainingEntryBody
+            selectedJobId={selectedJobId}
+            onStart={async () => {
+              setVoiceState({ mode: 'interview-training', subState: 'interview-training-recording' });
+              if ((window as any).electronAPI) {
+                await (window as any).electronAPI.switchToMode('interview-training');
+                await (window as any).electronAPI.showAIQuestion();
+                await (window as any).electronAPI.showAIQuestionHistory();
+              }
+            }}
+          />
         )}
       </div>
     </Tooltip.Provider>

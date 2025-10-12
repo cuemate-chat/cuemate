@@ -8,6 +8,8 @@ import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
 export function InterviewerApp() {
   const [currentSectionTitle, setCurrentSectionTitle] = useState<string | null>(null);
 
+  const [selectedJobId, setSelectedJobId] = useState<string | undefined>(undefined);
+
   // 监听模式切换事件
   useEffect(() => {
     try {
@@ -17,13 +19,18 @@ export function InterviewerApp() {
         return;
       }
 
-      const handleModeChange = (mode: 'voice-qa' | 'mock-interview' | 'interview-training') => {
+      const handleModeChange = (mode: 'voice-qa' | 'mock-interview' | 'interview-training', jobId?: string) => {
         if (mode === 'mock-interview') {
           setCurrentSectionTitle('模拟面试');
         } else if (mode === 'interview-training') {
           setCurrentSectionTitle('面试训练');
         } else if (mode === 'voice-qa') {
           setCurrentSectionTitle('语音提问');
+        }
+
+        // 设置选中的岗位ID
+        if (jobId) {
+          setSelectedJobId(jobId);
         }
       };
 
@@ -117,9 +124,10 @@ export function InterviewerApp() {
           onClose={handleClose}
           onBack={currentSectionTitle ? handleBack : undefined}
         />
-        <InterviewerWindowBody 
+        <InterviewerWindowBody
           selectedCard={currentSectionTitle}
           onSelectCard={handleSelectCard}
+          selectedJobId={selectedJobId}
         />
         <InterviewerWindowFooter />
       </div>
