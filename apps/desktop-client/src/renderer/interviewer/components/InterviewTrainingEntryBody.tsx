@@ -22,10 +22,11 @@ interface AudioDevice {
 }
 
 interface InterviewTrainingEntryBodyProps {
+  selectedJobId?: string;
   onStart?: () => void;
 }
 
-export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBodyProps) {
+export function InterviewTrainingEntryBody({ selectedJobId, onStart }: InterviewTrainingEntryBodyProps) {
   const [currentLine, setCurrentLine] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [timestamp, setTimestamp] = useState<number>(0);
@@ -83,6 +84,32 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
       }
     }
   }, [trainingState.candidateAnswer]);
+
+  // 自动模式：检测面试官问题完成（5秒静音 + >=5字）
+  useEffect(() => {
+    if (!trainingState.isAutoMode) return;
+    if (voiceState.subState !== 'interview-training-recording') return;
+    if (trainingState.currentPhase !== 'listening-interviewer') return;
+
+    const timer = setInterval(() => {
+      const now = Date.now();
+      const silenceDuration = now - trainingState.lastInterviewerSpeechTime;
+      const question = trainingState.interviewerQuestion.trim();
+
+      // 检查: 5秒静音 + 至少5个字符
+      if (silenceDuration >= 5000 && question.length >= 5 && trainingState.lastInterviewerSpeechTime > 0) {
+        handleAutoQuestionDetected(question);
+      }
+    }, 1000); // 每秒检查一次
+
+    return () => clearInterval(timer);
+  }, [
+    trainingState.isAutoMode,
+    trainingState.lastInterviewerSpeechTime,
+    trainingState.interviewerQuestion,
+    trainingState.currentPhase,
+    voiceState.subState
+  ]);
 
   // 初始化
   useEffect(() => {
@@ -158,7 +185,10 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
         deviceId: selectedSpeaker || undefined,
         sessionId: 'interviewer-training',
         onText: (text) => {
-          setInterviewTrainingState({ interviewerQuestion: text });
+          setInterviewTrainingState({
+            interviewerQuestion: text,
+            lastInterviewerSpeechTime: Date.now() // 更新最后说话时间
+          });
         },
         onError: (errorMessage) => {
           console.error('扬声器识别错误:', errorMessage);
@@ -169,10 +199,10 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
           });
         },
         onOpen: () => {
-          console.log('扬声器识别已启动');
+          // 扬声器识别已启动
         },
         onClose: () => {
-          console.log('扬声器识别已关闭');
+          // 扬声器识别已关闭
         },
       });
 
@@ -195,13 +225,12 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
         await speakerController.current.stop();
         speakerController.current = null;
       }
-      console.log('停止监听扬声器');
     } catch (error) {
       console.error('停止扬声器监听失败:', error);
     }
   };
 
-  // 处理提问完毕
+  // 处理提问完毕（手动模式）
   const handleQuestionComplete = async () => {
     try {
       await stopListeningInterviewer();
@@ -214,7 +243,7 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
         return;
       }
 
-      setCurrentLine('面试官: ' + interviewerQuestion);
+      setCurrentLine(interviewerQuestion);
 
       setInterviewTrainingState({
         currentPhase: 'ai-generating',
@@ -269,6 +298,119 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
     } catch (error) {
       console.error('处理提问完毕失败:', error);
       setErrorMessage(`处理提问完毕失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  };
+
+  // 处理自动模式下的问题检测
+  const handleAutoQuestionDetected = async (question: string) => {
+    try {
+      // 1. 如果有上一轮的review ID,先保存并分析上一轮
+      if (trainingState.currentRoundReviewId) {
+        await saveAndAnalyzePreviousRound(trainingState.currentRoundReviewId);
+      }
+
+      // 2. 清空扬声器文本，准备接收新问题
+      setInterviewTrainingState({
+        interviewerQuestion: '',
+        lastInterviewerSpeechTime: 0, // 重置时间戳
+      });
+
+      // 3. 设置为AI生成阶段
+      setCurrentLine(question);
+      setInterviewTrainingState({
+        currentPhase: 'ai-generating',
+        isLoading: true,
+      });
+
+      // 4. 创建新的 review 记录
+      const interviewId = currentInterview.get();
+      if (!interviewId) {
+        throw new Error('面试ID不存在');
+      }
+
+      // 如果状态机未初始化,创建状态机
+      if (!stateMachine.current) {
+        const initialContext = {
+          interviewId: interviewId,
+          jobPosition: selectedPosition,
+          resume: {
+            resumeTitle: selectedPosition?.resumeTitle,
+            resumeContent: selectedPosition?.resumeContent,
+          },
+          questionsBank: [],
+          currentQuestionIndex: 0,
+          totalQuestions: selectedPosition?.question_count || 10,
+          currentQuestion: question,
+        };
+
+        stateMachine.current = new TrainingStateMachine(initialContext);
+
+        stateMachine.current.onStateChange(async (state, context) => {
+          setInterviewState(state);
+          await handleStateChange(state, context);
+        });
+      } else {
+        // 状态机已存在，更新当前问题索引
+        const context = stateMachine.current.getContext();
+        stateMachine.current.updateContextPartial({
+          currentQuestion: question,
+          currentQuestionIndex: context.currentQuestionIndex + 1,
+        });
+      }
+
+      // 5. 创建新的 review 记录
+      const newReview = await mockInterviewService.createReview({
+        interview_id: interviewId,
+        content: question, // 使用 content 字段存储问题
+        asked_question: question,
+      });
+
+      // 6. 更新 currentRoundReviewId
+      setInterviewTrainingState({
+        currentRoundReviewId: newReview.id,
+      });
+
+      // 7. 生成 AI 答案
+      await generateAnswerInBackground(stateMachine.current.getContext());
+
+      // 8. 发送答案生成完成事件
+      stateMachine.current.send({ type: 'ANSWER_GENERATED' });
+
+    } catch (error) {
+      console.error('自动问题检测处理失败:', error);
+      setErrorMessage(`自动问题检测处理失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  };
+
+  // 保存并分析上一轮回答
+  const saveAndAnalyzePreviousRound = async (reviewId: string) => {
+    try {
+      const candidateAnswer = trainingState.candidateAnswer;
+
+      // 如果用户没有回答，跳过
+      if (!candidateAnswer || candidateAnswer.trim().length === 0) {
+        return;
+      }
+
+      // 更新 review 记录中的 candidate_answer
+      await mockInterviewService.updateReview(reviewId, {
+        candidate_answer: candidateAnswer,
+      });
+
+      // 获取完整的 review 记录用于分析
+      const reviews = await mockInterviewService.getInterviewReviews(currentInterview.get() || '');
+      const review = reviews.find(r => r.id === reviewId);
+
+      if (!review) {
+        console.warn('未找到 review 记录:', reviewId);
+        return;
+      }
+
+      // 调用 LLM 分析用户回答
+      await analyzeReview(review);
+    } catch (error) {
+      console.error('保存并分析上一轮失败:', error);
+      throw error;
     }
   };
 
@@ -1045,23 +1187,36 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
     if (shouldEnd) {
       stateMachine.current?.send({ type: 'END_TRAINING' });
     } else {
-      // 继续下一轮:重新开始监听扬声器
-      setTimeout(async () => {
-        try {
-          setInterviewTrainingState({
-            currentPhase: 'listening-interviewer',
-            interviewerQuestion: '',
-            aiMessage: '',
-            speechText: '',
-            candidateAnswer: ''
-          });
-          await startListeningInterviewer();
-          setCurrentLine('正在监听面试官下一个问题...');
-        } catch (error) {
-          console.error('重新启动扬声器监听失败:', error);
-          setErrorMessage('重新启动扬声器监听失败');
-        }
-      }, 2000);
+      // 手动模式:重新开始监听扬声器
+      // 自动模式:扬声器一直在监听,只需清理状态
+      if (!trainingState.isAutoMode) {
+        setTimeout(async () => {
+          try {
+            setInterviewTrainingState({
+              currentPhase: 'listening-interviewer',
+              interviewerQuestion: '',
+              aiMessage: '',
+              speechText: '',
+              candidateAnswer: ''
+            });
+            await startListeningInterviewer();
+            setCurrentLine('正在监听面试官下一个问题...');
+          } catch (error) {
+            console.error('重新启动扬声器监听失败:', error);
+            setErrorMessage('重新启动扬声器监听失败');
+          }
+        }, 2000);
+      } else {
+        // 自动模式:清理状态,扬声器持续监听
+        setInterviewTrainingState({
+          currentPhase: 'listening-interviewer',
+          aiMessage: '',
+          speechText: '',
+          candidateAnswer: '',
+          lastInterviewerSpeechTime: 0 // 重置静音检测时间
+        });
+        setCurrentLine('正在监听面试官下一个问题...');
+      }
     }
   };
 
@@ -1289,6 +1444,7 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
   return (
     <div className="interviewer-mode-panel">
       <JobPositionCard
+        selectedJobId={selectedJobId}
         onPositionSelect={handlePositionSelect}
         onModelSelect={handleModelSelect}
         onLanguageSelect={(lang) => setSelectedLanguage(lang)}
@@ -1441,13 +1597,14 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
         <div className="ai-window-footer">
 
           <div className="control-actions">
-            {/* 自动/手动切换开关 */}
+            {/* 自动/手动模式显示（面试进行中禁止切换） */}
             <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
               <Tooltip.Root>
                 <Tooltip.Trigger asChild>
                   <button
                     className={`mode-toggle ${trainingState.isAutoMode ? 'auto' : 'manual'}`}
-                    onClick={() => setInterviewTrainingState({ isAutoMode: !trainingState.isAutoMode })}
+                    disabled={true}
+                    style={{ cursor: 'not-allowed', opacity: 0.6 }}
                   >
                     <span className="toggle-text">{trainingState.isAutoMode ? '自动' : '手动'}</span>
                     <div className="toggle-switch">
@@ -1456,7 +1613,7 @@ export function InterviewTrainingEntryBody({ onStart }: InterviewTrainingEntryBo
                   </button>
                 </Tooltip.Trigger>
                 <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-                  {trainingState.isAutoMode ? '切换到手动模式' : '切换到自动模式'}
+                  面试进行中无法切换模式，请在面试开始前选择
                   <Tooltip.Arrow className="radix-tooltip-arrow" />
                 </Tooltip.Content>
               </Tooltip.Root>

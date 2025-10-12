@@ -20,13 +20,14 @@ interface AudioDevice {
 }
 
 interface MockInterviewEntryBodyProps {
+  selectedJobId?: string;
   onStart?: () => void;
   onStateChange?: (state: InterviewState) => void;
   onQuestionGenerated?: (question: string) => void;
   onAnswerGenerated?: (answer: string) => void;
 }
 
-export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGenerated, onAnswerGenerated }: MockInterviewEntryBodyProps) {
+export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, onQuestionGenerated, onAnswerGenerated }: MockInterviewEntryBodyProps) {
   const [currentLine, setCurrentLine] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [timestamp, setTimestamp] = useState<number>(0);
@@ -1426,6 +1427,7 @@ export function MockInterviewEntryBody({ onStart, onStateChange, onQuestionGener
     <div className="interviewer-mode-panel">
       {/* 岗位选择卡片 */}
       <JobPositionCard
+        selectedJobId={selectedJobId}
         onPositionSelect={handlePositionSelect}
         onModelSelect={handleModelSelect}
         onLanguageSelect={(lang) => setSelectedLanguage(lang)}
