@@ -69,7 +69,7 @@ function resolveLogPath(
 }
 
 export default async function transport(options: TransportOptions = {}) {
-  const baseDir = options.baseDir || process.env.CUEMATE_LOG_DIR || '/opt/cuemate/logs';
+  const baseDir = options.baseDir || process.env.CUEMATE_LOG_DIR || path.join(process.cwd(), '../../logs');
   const service = options.service;
   const timeZone = getLoggerTimeZone();
   ensureDir(baseDir);

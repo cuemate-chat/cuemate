@@ -3,7 +3,8 @@ import path from 'node:path';
 import pino from 'pino';
 import { getLoggerTimeZone, setLoggerTimeZone } from './tz.js';
 
-const DEFAULT_BASE_DIR = process.env.CUEMATE_LOG_DIR || '/opt/cuemate/logs';
+// 默认日志目录：优先使用环境变量，否则使用相对路径
+const DEFAULT_BASE_DIR = process.env.CUEMATE_LOG_DIR || path.join(process.cwd(), '../../logs');
 
 function ensureDir(directoryPath: string) {
   try {
