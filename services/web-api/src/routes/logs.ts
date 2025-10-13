@@ -6,7 +6,7 @@ import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
 
-const LOG_BASE_DIR = process.env.CUEMATE_LOG_DIR || '/opt/cuemate/logs';
+const LOG_BASE_DIR = process.env.CUEMATE_LOG_DIR || path.join(process.cwd(), '../../logs');
 const LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 type Level = (typeof LEVELS)[number];
 
