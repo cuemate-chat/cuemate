@@ -103,3 +103,21 @@ export function getWindowIconPath(): string {
   const projectRoot = getProjectRoot();
   return join(projectRoot, 'src', 'assets', 'CueMate.png');
 }
+
+/**
+ * 获取应用根目录（CueMate 项目根目录）
+ * 开发环境: /Users/xxx/chain/CueMate
+ * 生产环境: 应用安装目录的上层（包含 data 和 logs 的目录）
+ */
+export function getAppRoot(): string {
+  const projectRoot = getProjectRoot();
+  // 从 desktop-client 向上到 CueMate 根目录
+  return join(projectRoot, '../../');
+}
+
+/**
+ * 获取日志目录
+ */
+export function getLogsDir(): string {
+  return join(getAppRoot(), 'logs');
+}

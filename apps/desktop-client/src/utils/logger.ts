@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { getLogsDir } from '../main/utils/paths.js';
 
 interface Logger {
   info(message: string | object, ...args: any[]): void;
@@ -13,8 +14,8 @@ class ElectronLogger implements Logger {
   private service: string;
 
   constructor() {
-    // 使用统一的日志目录
-    this.baseDir = process.env.CUEMATE_LOG_DIR || '/opt/cuemate/logs';
+    // 使用统一的日志目录（相对路径）
+    this.baseDir = process.env.CUEMATE_LOG_DIR || getLogsDir();
     this.service = 'desktop-client';
 
     // 确保日志目录存在
