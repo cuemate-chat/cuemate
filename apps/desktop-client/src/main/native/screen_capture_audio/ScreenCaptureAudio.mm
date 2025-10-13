@@ -15,9 +15,13 @@ void objcLog(const std::string& level, const std::string& message) {
     auto now = std::time(nullptr);
     auto* tm = std::localtime(&now);
 
+    // 从环境变量获取日志目录，默认使用相对路径
+    const char* logDir = std::getenv("CUEMATE_LOG_DIR");
+    std::string baseLogDir = logDir ? logDir : "../../logs";
+
     // 构建日志文件路径
     std::stringstream pathStream;
-    pathStream << "/opt/cuemate/logs/" << level << "/desktop-client/"
+    pathStream << baseLogDir << "/" << level << "/desktop-client/"
                << std::put_time(tm, "%Y-%m-%d") << "/" << level << ".log";
 
     std::ofstream logFile(pathStream.str(), std::ios::app);
