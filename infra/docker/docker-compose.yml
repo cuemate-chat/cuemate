@@ -26,7 +26,7 @@ services:
     environment:
       - TZ=Asia/Shanghai
     volumes:
-      - /opt/cuemate/funasr-runtime-resources/models:/workspace/models
+      - ../../data/funasr-runtime-resources/models:/workspace/models
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
@@ -56,10 +56,10 @@ services:
       - LLM_ROUTER_URL=http://llm-router:3002
       - TZ=Asia/Shanghai
     volumes:
-      - /opt/cuemate/data:/opt/cuemate/data
-      - /opt/cuemate/logs:/opt/cuemate/logs
-      - /opt/cuemate/pdf:/opt/cuemate/pdf
-      - /opt/cuemate/images:/opt/cuemate/images
+      - ../../data/sqlite:/opt/cuemate/data/sqlite
+      - ../../data/logs:/opt/cuemate/logs
+      - ../../data/pdf:/opt/cuemate/pdf
+      - ../../data/images:/opt/cuemate/images
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
@@ -88,7 +88,7 @@ services:
       - ROUTING_STRATEGY=primary-fallback
       - TZ=Asia/Shanghai
     volumes:
-      - /opt/cuemate/logs:/opt/cuemate/logs
+      - ../../data/logs:/opt/cuemate/logs
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
@@ -116,8 +116,7 @@ services:
       - TZ=Asia/Shanghai
     volumes:
       - chroma_data:/opt/cuemate/chroma_data
-      - /opt/cuemate/documents:/opt/cuemate/documents
-      - /opt/cuemate/logs:/opt/cuemate/logs
+      - ../../data/logs:/opt/cuemate/logs
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
@@ -143,7 +142,7 @@ services:
       - VITE_RAG_SERVICE_URL=http://cuemate-rag-service:3003
       - VITE_LLM_ROUTER_URL=http://cuemate-llm-router:3002
     volumes:
-      - /opt/cuemate/images:/opt/cuemate/images
+      - ../../data/images:/opt/cuemate/images
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     depends_on:
