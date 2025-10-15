@@ -25,6 +25,7 @@ import { registerInterviewRoutes } from './routes/interviews.js';
 import { registerReviewRoutes } from './routes/reviews.js';
 import { registerVectorRoutes } from './routes/vectors.js';
 import { registerVersionRoutes } from './routes/versions.js';
+import { registerNotificationRoutes } from './routes/notifications.js';
 import { logger as serviceLogger } from './utils/logger.js';
 import { OperationLogger } from './utils/operation-logger.js';
 import { CueMateWebSocketServer } from './websocket/websocket-server.js';
@@ -100,6 +101,7 @@ async function start() {
   registerAIConversationRoutes(app as any);
   registerDockerRoutes(app as any);
   registerVersionRoutes(app as any);
+  registerNotificationRoutes(app as any);
 
   app.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 

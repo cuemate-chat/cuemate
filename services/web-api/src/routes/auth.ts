@@ -81,6 +81,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
       selected_model_id: row.selected_model_id ?? null,
       floating_window_visible: row.floating_window_visible ?? 1,
       floating_window_height: row.floating_window_height ?? 75,
+      version: row.version ?? 'v0.1.0',
       model: selectedModel,
       model_params: modelParams,
     };
@@ -122,7 +123,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
         const payload = await (req as any).jwtVerify();
         const row = (app as any).db
           .prepare(
-            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id, floating_window_visible, floating_window_height FROM users WHERE id = ?',
+            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id, floating_window_visible, floating_window_height, version FROM users WHERE id = ?',
           )
           .get(payload.uid);
         if (!row) return reply.code(404).send({ error: '用户不存在' });
@@ -163,7 +164,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
         // 查询是否有已登录的用户（is_logged_in = 1）
         const loggedInUser = app.db
           .prepare(
-            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id, floating_window_visible, floating_window_height FROM users WHERE is_logged_in = 1 LIMIT 1',
+            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id, floating_window_visible, floating_window_height, version FROM users WHERE is_logged_in = 1 LIMIT 1',
           )
           .get();
 
@@ -265,7 +266,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
         (app as any).db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).run(...args);
         const row = (app as any).db
           .prepare(
-            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id, floating_window_visible, floating_window_height FROM users WHERE id = ?',
+            'SELECT id, email, name, created_at, theme, locale, timezone, selected_model_id, floating_window_visible, floating_window_height, version FROM users WHERE id = ?',
           )
           .get(payload.uid);
         if (row?.timezone) setLoggerTimeZone(row.timezone);
