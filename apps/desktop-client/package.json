@@ -29,7 +29,12 @@
     "clean:all": "pnpm clean && pnpm clean:native",
     "rebuild": "pnpm clean && pnpm build",
     "rebuild:native": "pnpm clean:native && pnpm build:native:electron",
-    "postinstall": "echo 'Dependencies installed. Run pnpm build:native:electron to build native modules if needed.'"
+    "postinstall": "echo 'Dependencies installed. Run pnpm build:native:electron to build native modules if needed.'",
+    "build:native:x64": "CXXFLAGS='-arch x86_64' LDFLAGS='-arch x86_64' node-gyp rebuild --arch=x64 --directory=src/main/native/screen_capture_audio --silent",
+    "build:native:electron:x64": "ELECTRON_VERSION=\"$(node -p \"require('electron/package.json').version\")\" && CXXFLAGS='-arch x86_64' LDFLAGS='-arch x86_64' node-gyp rebuild --arch=x64 --runtime=electron --target=$ELECTRON_VERSION --dist-url=https://electronjs.org/headers --directory=src/main/native/screen_capture_audio --silent",
+    "build:x64": "pnpm typecheck && pnpm build:native:electron:x64 && pnpm build:main && pnpm build:renderer",
+    "dist:arm64": "pnpm build && electron-builder --mac --arm64 --publish=never",
+    "dist:x64": "pnpm build:x64 && electron-builder --mac --x64 --publish=never"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
