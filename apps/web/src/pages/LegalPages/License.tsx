@@ -1,8 +1,12 @@
 import { ArrowPathIcon, CloudArrowUpIcon, DocumentTextIcon, FolderArrowDownIcon } from '@heroicons/react/24/outline';
+import { Badge } from 'antd';
 import { useEffect, useState } from 'react';
 import { storage } from '../../api/http';
 import { getLicenseInfo, uploadLicenseFile, uploadQuestions, type LicenseInfo } from '../../api/license';
+import { fetchVersionList, type VersionInfo } from '../../api/versions';
 import { message } from '../../components/Message';
+import VersionDetailDrawer from './VersionDetailDrawer';
+import VersionListDrawer from './VersionListDrawer';
 
 
 export default function License() {
@@ -11,6 +15,13 @@ export default function License() {
   const [uploadingQuestions, setUploadingQuestions] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
 
+  // 版本管理相关状态
+  const [versions, setVersions] = useState<VersionInfo[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [versionListOpen, setVersionListOpen] = useState(false);
+  const [versionDetailOpen, setVersionDetailOpen] = useState(false);
+  const [selectedVersion, setSelectedVersion] = useState<VersionInfo | null>(null);
+  const [currentVersion] = useState<string>('v0.1.0'); // 当前系统版本
 
 
   // 获取当前 License 信息
@@ -19,7 +30,7 @@ export default function License() {
     try {
       const data = await getLicenseInfo();
       setLicense(data.license);
-      
+
       // 存储 license 信息
       if (data.license) {
         storage.setLicense(data.license);
@@ -31,6 +42,14 @@ export default function License() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 刷新所有信息（License + 版本列表）
+  const handleRefreshAll = async () => {
+    await Promise.all([
+      fetchLicenseInfo(),
+      loadVersionList()
+    ]);
   };
 
   // 上传 License 文件
@@ -107,15 +126,75 @@ export default function License() {
     return expireTime <= thirtyDaysLater;
   };
 
+  // 获取版本列表
+  const loadVersionList = async () => {
+    setLoadingVersions(true);
+    try {
+      const list = await fetchVersionList();
+      setVersions(list);
+    } catch (error) {
+      console.error('Failed to fetch version list:', error);
+      message.error('获取版本列表失败');
+    } finally {
+      setLoadingVersions(false);
+    }
+  };
+
+  // 打开版本管理
+  const handleOpenVersionManagement = () => {
+    setVersionListOpen(true);
+  };
+
+  // 选择版本查看详情
+  const handleSelectVersion = (version: VersionInfo) => {
+    setSelectedVersion(version);
+    setVersionDetailOpen(true);
+  };
+
+  // 返回版本列表
+  const handleBackToVersionList = () => {
+    setVersionDetailOpen(false);
+    setSelectedVersion(null);
+  };
+
+  // 关闭所有版本相关弹框
+  const handleCloseAllVersionDrawers = () => {
+    setVersionListOpen(false);
+    setVersionDetailOpen(false);
+    setSelectedVersion(null);
+  };
+
+  // 更新到指定版本
+  const handleUpdateToVersion = (version: VersionInfo) => {
+    message.info(`准备更新到 ${version.version} 版本,此功能即将开放`);
+  };
+
+  // 计算待更新版本数量
+  const getPendingUpdateCount = () => {
+    if (versions.length === 0) return 0;
+
+    // 找到当前版本在列表中的索引
+    const currentIndex = versions.findIndex(v => v.version === currentVersion);
+
+    // 如果当前版本不在列表中,或者已经是最新版本,返回0
+    if (currentIndex === -1 || currentIndex === 0) return 0;
+
+    // 返回当前版本之前的版本数量
+    return currentIndex;
+  };
+
   useEffect(() => {
     // 先从 localStorage 中恢复 license 信息
     const storedLicense = storage.getLicense();
     if (storedLicense) {
       setLicense(storedLicense);
     }
-    
+
     // 然后从服务器获取最新的 license 信息
     fetchLicenseInfo();
+
+    // 启动时加载版本列表
+    loadVersionList();
   }, []);
 
   return (
@@ -130,13 +209,25 @@ export default function License() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchLicenseInfo}
-            disabled={loading}
+            onClick={handleRefreshAll}
+            disabled={loading || loadingVersions}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <ArrowPathIcon className={`w-4 h-4 ${(loading || loadingVersions) ? 'animate-spin' : ''}`} />
             刷新
           </button>
+          <Badge count={getPendingUpdateCount()} offset={[-5, 5]} showZero={false}>
+            <button
+              onClick={handleOpenVersionManagement}
+              disabled={loadingVersions}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-md hover:bg-emerald-100 hover:border-emerald-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
+              版本管理
+            </button>
+          </Badge>
         </div>
       </div>
 
@@ -348,6 +439,24 @@ export default function License() {
           </div>
         </div>
       </div>
+
+      {/* 版本列表侧拉弹框 */}
+      <VersionListDrawer
+        open={versionListOpen}
+        versions={versions}
+        loading={loadingVersions}
+        onClose={handleCloseAllVersionDrawers}
+        onSelectVersion={handleSelectVersion}
+      />
+
+      {/* 版本详情侧拉弹框 */}
+      <VersionDetailDrawer
+        open={versionDetailOpen}
+        version={selectedVersion}
+        onClose={handleCloseAllVersionDrawers}
+        onBack={handleBackToVersionList}
+        onUpdate={handleUpdateToVersion}
+      />
     </div>
   );
 }
