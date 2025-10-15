@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
+import { notifyLicenseImported } from '../utils/notification-helper.js';
 
 // License 常量 (修正密钥长度为 16 字节)
 const SECRET_KEY = 'CueMateService16';
@@ -184,6 +185,18 @@ export function registerLicenseRoutes(app: FastifyInstance) {
           userId: payload.uid
         });
 
+        // 发送许可证激活通知
+        try {
+          const expireTime = new Date(license.expired + 'T23:59:59.999Z').getTime();
+          notifyLicenseImported((app as any).db, payload.uid, {
+            id: licenseId,
+            type: license.edition,
+            expireAt: expireTime,
+          });
+        } catch (notifyError) {
+          app.log.error({ err: notifyError }, '发送许可证激活通知失败');
+        }
+
         return {
           success: true,
           message: 'License 上传成功',
@@ -274,6 +287,18 @@ export function registerLicenseRoutes(app: FastifyInstance) {
           status: 'success',
           userId: payload.uid
         });
+
+        // 发送许可证激活通知
+        try {
+          const expireTime = new Date(license.expired + 'T23:59:59.999Z').getTime();
+          notifyLicenseImported((app as any).db, payload.uid, {
+            id: licenseId,
+            type: license.edition,
+            expireAt: expireTime,
+          });
+        } catch (notifyError) {
+          app.log.error({ err: notifyError }, '发送许可证激活通知失败');
+        }
 
         return {
           success: true,
