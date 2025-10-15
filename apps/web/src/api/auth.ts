@@ -21,6 +21,7 @@ export const defaultUserForm = {
   is_logged_in: 0,
   floating_window_visible: 1,
   floating_window_height: 75,
+  version: 'v0.1.0',
 };
 
 // 将用户数据转换为表单数据
@@ -37,6 +38,7 @@ export function userToFormData(user: any) {
     is_logged_in: user.is_logged_in ?? 0,
     floating_window_visible: user.floating_window_visible ?? 1,
     floating_window_height: user.floating_window_height ?? 75,
+    version: user.version || 'v0.1.0',
   };
 }
 

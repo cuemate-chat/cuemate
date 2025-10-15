@@ -64,6 +64,7 @@ export interface User {
   is_logged_in?: number;
   floating_window_visible?: number;
   floating_window_height?: number;
+  version?: string;
   model?: Model | null;
   model_params?: ModelParam[];
 }
