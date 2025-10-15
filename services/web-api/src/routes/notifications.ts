@@ -3,6 +3,7 @@ import { withErrorLogging } from '@cuemate/logger';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
+import { notifyLicenseExpiring, notifyLicenseExpired, notifyAdExpiring } from '../utils/notification-helper.js';
 
 /**
  * 通知类型说明：
@@ -42,6 +43,9 @@ export function registerNotificationRoutes(app: FastifyInstance) {
         const payload = await (request as any).jwtVerify();
         const userId = payload.uid;
         const { type, is_read, limit = '20', offset = '0' } = request.query as any;
+
+        // 在返回通知列表之前,先检查并创建到期提醒通知
+        await checkAndCreateExpiringNotifications(db, userId);
 
         let query = `
           SELECT * FROM user_notifications
@@ -287,4 +291,143 @@ export function registerNotificationRoutes(app: FastifyInstance) {
       }
     }),
   );
+}
+
+/**
+ * 检查并创建即将到期的通知
+ * 包括许可证到期和广告到期提醒
+ *
+ * 逻辑:
+ * 1. 即将到期(30天内/7天内): 每24小时发送一次提醒
+ * 2. 已经过期: 每天发送一次提醒,直到用户续费或删除
+ */
+async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  // 1. 检查许可证
+  try {
+    // 1.1 检查即将到期的许可证 (30天内到期,但还没过期)
+    const expiringLicenses = db
+      .prepare(`
+        SELECT id, edition, expire_time, apply_user
+        FROM licenses
+        WHERE status = 'active'
+        AND expire_time > ?
+        AND expire_time <= ?
+      `)
+      .all(now, now + 30 * dayMs);
+
+    for (const license of expiringLicenses) {
+      const daysRemaining = Math.floor((license.expire_time - now) / dayMs);
+
+      // 检查24小时内是否已经创建过通知
+      const existingNotification = db
+        .prepare(`
+          SELECT id FROM user_notifications
+          WHERE user_id = ?
+          AND type = 'license_expire'
+          AND resource_id = ?
+          AND created_at > ?
+        `)
+        .get(license.apply_user, license.id, now - dayMs);
+
+      if (!existingNotification) {
+        notifyLicenseExpiring(db, license.apply_user, {
+          id: license.id,
+          type: license.edition,
+          expireAt: license.expire_time,
+          daysLeft: daysRemaining,
+        });
+      }
+    }
+
+    // 1.2 检查已经过期的许可证 (每天发送提醒)
+    const expiredLicenses = db
+      .prepare(`
+        SELECT id, edition, expire_time, apply_user
+        FROM licenses
+        WHERE status = 'active'
+        AND expire_time <= ?
+      `)
+      .all(now);
+
+    for (const license of expiredLicenses) {
+      // 检查24小时内是否已经创建过通知
+      const existingNotification = db
+        .prepare(`
+          SELECT id FROM user_notifications
+          WHERE user_id = ?
+          AND type = 'license_expire'
+          AND resource_id = ?
+          AND created_at > ?
+        `)
+        .get(license.apply_user, license.id, now - dayMs);
+
+      if (!existingNotification) {
+        notifyLicenseExpired(db, license.apply_user, {
+          id: license.id,
+          type: license.edition,
+          expiredAt: license.expire_time,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('检查许可证到期失败:', error);
+  }
+
+  // 2. 检查广告
+  try {
+    // 2.1 检查即将到期的广告 (7天内到期,但还没过期)
+    const expiringAds = db
+      .prepare(`
+        SELECT id, title, expires_at, user_id
+        FROM pixel_ads
+        WHERE status = 'active'
+        AND expires_at > ?
+        AND expires_at <= ?
+      `)
+      .all(now, now + 7 * dayMs);
+
+    for (const ad of expiringAds) {
+      const daysRemaining = Math.floor((ad.expires_at - now) / dayMs);
+
+      // 检查24小时内是否已经创建过通知
+      const existingNotification = db
+        .prepare(`
+          SELECT id FROM user_notifications
+          WHERE user_id = ?
+          AND type = 'ad_expire'
+          AND resource_id = ?
+          AND created_at > ?
+        `)
+        .get(ad.user_id, ad.id, now - dayMs);
+
+      if (!existingNotification) {
+        notifyAdExpiring(db, ad.user_id, {
+          id: ad.id,
+          title: ad.title,
+          expireAt: ad.expires_at,
+          daysLeft: daysRemaining,
+        });
+      }
+    }
+
+    // 2.2 检查已经过期的广告 (过期的广告直接下线,不再发送通知,只标记状态为expired)
+    const expiredAds = db
+      .prepare(`
+        SELECT id
+        FROM pixel_ads
+        WHERE status = 'active'
+        AND expires_at <= ?
+      `)
+      .all(now);
+
+    for (const ad of expiredAds) {
+      // 自动下线过期广告
+      db.prepare('UPDATE pixel_ads SET status = ? WHERE id = ?').run('expired', ad.id);
+    }
+  } catch (error) {
+    console.error('检查广告到期失败:', error);
+  }
 }
