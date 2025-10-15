@@ -233,16 +233,48 @@ export default function NotificationPage() {
     setCurrentPage(1);
   };
 
-  // 计算已读数量和星标数量
-  const readCount = notifications.filter((n) => n.is_read === 1).length;
-  const starredCount = notifications.filter((n) => n.is_starred === 1).length;
+  // 基于当前筛选条件计算各Tab的数量
+  const getTabCounts = () => {
+    // 先应用分类筛选、优先级筛选、时间段筛选、关键词搜索
+    const baseFiltered = notifications.filter((n) => {
+      // 分类筛选 (通过卡片点击)
+      if (filterCategory !== 'all' && n.category !== filterCategory) return false;
+
+      // 优先级筛选
+      if (filterPriority !== 'all' && n.priority !== filterPriority) return false;
+
+      // 时间段筛选
+      if (dateRange && dateRange[0] && dateRange[1]) {
+        const notificationDate = dayjs(n.created_at);
+        if (notificationDate.isBefore(dateRange[0]) || notificationDate.isAfter(dateRange[1])) {
+          return false;
+        }
+      }
+
+      // 关键词搜索
+      if (searchKeyword && !n.title.includes(searchKeyword) && !n.content.includes(searchKeyword)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    return {
+      all: baseFiltered.length,
+      unread: baseFiltered.filter((n) => n.is_read === 0).length,
+      read: baseFiltered.filter((n) => n.is_read === 1).length,
+      starred: baseFiltered.filter((n) => n.is_starred === 1).length,
+    };
+  };
+
+  const tabCounts = getTabCounts();
 
   // Tab 配置
   const tabs = [
-    { key: 'all', label: `全部 (${notifications.length})` },
-    { key: 'unread', label: `未读 (${unreadCount})` },
-    { key: 'read', label: `已读 (${readCount})` },
-    { key: 'starred', label: `星标 (${starredCount})` },
+    { key: 'all', label: `全部 (${tabCounts.all})` },
+    { key: 'unread', label: `未读 (${tabCounts.unread})` },
+    { key: 'read', label: `已读 (${tabCounts.read})` },
+    { key: 'starred', label: `星标 (${tabCounts.starred})` },
   ];
 
   return (
