@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
+import { notifyInterviewReportReady } from '../utils/notification-helper.js';
 
 export function registerInterviewRoutes(app: FastifyInstance) {
   // =================== interview_scores 表 ===================
@@ -96,6 +97,27 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           status: 'success',
           userId: payload.uid,
         });
+
+        // 发送面试报告生成通知
+        try {
+          // 获取面试信息（岗位名称、面试时间、时长）
+          const interviewInfo = (app as any).db
+            .prepare('SELECT job_title, started_at, duration FROM interviews WHERE id = ?')
+            .get(body.interviewId);
+
+          if (interviewInfo) {
+            notifyInterviewReportReady(
+              (app as any).db,
+              payload.uid,
+              body.interviewId,
+              interviewInfo.job_title || '未命名岗位',
+              interviewInfo.started_at,
+              interviewInfo.duration
+            );
+          }
+        } catch (notifyError) {
+          app.log.error({ err: notifyError }, '发送面试报告通知失败');
+        }
 
         return { id };
       } catch (err: any) {

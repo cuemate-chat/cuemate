@@ -6,6 +6,7 @@ import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
+import { notifyJobCreated } from '../utils/notification-helper.js';
 
 export function registerJobRoutes(app: FastifyInstance) {
   const createSchema = z.object({
@@ -109,6 +110,13 @@ export function registerJobRoutes(app: FastifyInstance) {
           status: 'success',
           userId: payload.uid
         });
+
+        // 发送通知
+        try {
+          notifyJobCreated(app.db, payload.uid, jobId, body.title);
+        } catch (notifyError) {
+          app.log.error({ err: notifyError }, '发送岗位创建通知失败');
+        }
 
         return { jobId, resumeId };
       } catch (err: any) {

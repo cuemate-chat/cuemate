@@ -5,6 +5,7 @@ import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
+import { notifyQuestionCreated } from '../utils/notification-helper.js';
 
 export function registerInterviewQuestionRoutes(app: FastifyInstance) {
   // 标签 CRUD
@@ -180,7 +181,17 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           status: 'success',
           userId: payload.uid
         });
-        
+
+        // 发送通知 - 获取该岗位的押题总数
+        try {
+          const questionCount = (app as any).db
+            .prepare('SELECT COUNT(*) as count FROM interview_questions WHERE job_id = ?')
+            .get(body.jobId)?.count || 1;
+          notifyQuestionCreated((app as any).db, payload.uid, qid, body.title, questionCount);
+        } catch (notifyError) {
+          app.log.error({ err: notifyError }, '发送押题创建通知失败');
+        }
+
         return { id: qid };
       } catch (err: any) {
         return reply.code(401).send(buildPrefixedError('创建押题失败', err, 401));
