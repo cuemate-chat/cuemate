@@ -21,7 +21,9 @@ export default function License() {
   const [versionListOpen, setVersionListOpen] = useState(false);
   const [versionDetailOpen, setVersionDetailOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<VersionInfo | null>(null);
-  const [currentVersion] = useState<string>('v0.1.0'); // 当前系统版本
+
+  // 当前系统版本：从 localStorage 的 user 对象获取
+  const currentVersion = storage.getUser()?.version || 'v0.1.0';
 
 
   // 获取当前 License 信息

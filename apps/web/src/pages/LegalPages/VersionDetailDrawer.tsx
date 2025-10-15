@@ -1,6 +1,8 @@
 import { Button } from 'antd';
 import type { VersionInfo } from '../../api/versions';
 import { getCommitTypeInfo, parseCommitType } from '../../api/versions';
+import { storage } from '../../api/http';
+import { isVersionGreater } from '../../utils/version';
 import DrawerProviderLevel2, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProviderLevel2';
 
 interface VersionDetailDrawerProps {
@@ -47,6 +49,13 @@ export default function VersionDetailDrawer({
   }, {} as Record<string, Array<ReturnType<typeof parseCommitType>>>);
 
   if (!version) return null;
+
+  // 获取当前用户版本
+  const user = storage.getUser();
+  const currentVersion = user?.version || 'v0.1.0';
+
+  // 判断是否显示更新按钮: 只有当前版本 < 选中版本时才显示
+  const showUpdateButton = isVersionGreater(version.version, currentVersion);
 
   return (
     <DrawerProviderLevel2 open={open} onClose={onClose} width="55%">
@@ -241,7 +250,7 @@ export default function VersionDetailDrawer({
       <DrawerFooter>
         <div className="flex justify-end gap-2">
           <Button onClick={onBack}>返回列表</Button>
-          {onUpdate && (
+          {onUpdate && showUpdateButton && (
             <Button type="primary" onClick={() => onUpdate(version)}>
               更新到此版本
             </Button>

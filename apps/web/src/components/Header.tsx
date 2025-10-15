@@ -1,6 +1,7 @@
 import {
   ArrowPathRoundedSquareIcon,
   Bars3Icon,
+  BellIcon,
   ChatBubbleLeftRightIcon,
   HomeIcon,
   ListBulletIcon,
@@ -8,15 +9,19 @@ import {
   QuestionMarkCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { Modal } from 'antd';
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Badge, Modal } from 'antd';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '../assets/logo-background.png';
+import { fetchUnreadCount } from '../api/notifications';
+import { storage } from '../api/http';
 import UserMenu from './UserMenu';
 
 export default function Header() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const getActiveKey = (): string | null => {
     if (pathname.startsWith('/settings')) return null;
@@ -62,6 +67,23 @@ export default function Header() {
       (typeof window !== 'undefined' && (window as any).process?.versions?.electron)
     );
   };
+
+  // 获取未读通知数量
+  useEffect(() => {
+    const loadUnreadCount = async () => {
+      const user = storage.getUser();
+      if (user?.id) {
+        const count = await fetchUnreadCount();
+        setUnreadCount(count);
+      }
+    };
+
+    loadUnreadCount();
+
+    // 每30秒刷新一次未读数量
+    const interval = setInterval(loadUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // 客户端中为"帮助中心"采用外部浏览器打开逻辑
   const handleHelpClick = async (e: React.MouseEvent) => {
@@ -144,6 +166,17 @@ export default function Header() {
 
         {/* 右侧用户菜单和移动端菜单按钮 */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* 站内信按钮 */}
+          <Badge count={unreadCount} offset={[-5, 5]} showZero={false}>
+            <button
+              onClick={() => navigate('/settings/notification')}
+              className="p-2 rounded-lg text-[#3b82f6] hover:bg-[rgba(59,130,246,0.08)] transition-colors"
+              title="站内信"
+            >
+              <BellIcon className="w-5 h-5" />
+            </button>
+          </Badge>
+
           <UserMenu />
           
           {/* 移动端菜单按钮 */}
