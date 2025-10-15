@@ -5,6 +5,7 @@ import { getLlmRouterUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { OperationType } from '../utils/operation-logger.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
+import { notifyModelAdded } from '../utils/notification-helper.js';
 
 export function registerModelRoutes(app: FastifyInstance) {
   // 列表查询（支持按供应商/类型/关键字过滤）
@@ -141,7 +142,7 @@ export function registerModelRoutes(app: FastifyInstance) {
       const isUpdate = body.id && (app as any).db.prepare('SELECT 1 FROM models WHERE id=? AND created_at < ?').get(id, now);
       const operation = isUpdate ? OperationType.UPDATE : OperationType.CREATE;
       const message = isUpdate ? `更新模型: ${body.name}` : `创建模型: ${body.name}`;
-      
+
       await logOperation(app, req, {
         ...OPERATION_MAPPING.MODEL,
         resourceId: id,
@@ -150,6 +151,30 @@ export function registerModelRoutes(app: FastifyInstance) {
         message,
         status: 'success'
       });
+
+      // 发送模型添加通知 (仅针对新增模型)
+      if (!isUpdate) {
+        try {
+          // 获取用户ID (如果是管理员操作,通知所有用户或特定用户)
+          // 这里简化处理,通知系统管理员(假设uid为admin或第一个用户)
+          const adminUser = (app as any).db
+            .prepare('SELECT id FROM users ORDER BY created_at ASC LIMIT 1')
+            .get();
+
+          if (adminUser) {
+            notifyModelAdded(
+              (app as any).db,
+              adminUser.id,
+              id,
+              body.name,
+              body.provider,
+              body.type
+            );
+          }
+        } catch (notifyError) {
+          app.log.error({ err: notifyError }, '发送模型添加通知失败');
+        }
+      }
 
       return { id };
     }),

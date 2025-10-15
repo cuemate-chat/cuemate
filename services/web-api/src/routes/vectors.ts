@@ -5,6 +5,7 @@ import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
+import { notifyKnowledgeSynced } from '../utils/notification-helper.js';
 
 /**
  * 统一的向量库删除接口：删除 Chroma 向量，并回写业务库 vector_status = 0
@@ -352,6 +353,35 @@ export function registerVectorRoutes(app: FastifyInstance) {
           status: 'success',
           userId: payload.uid,
         });
+
+        // 发送知识库同步通知
+        try {
+          const sourceName = body.jobId
+            ? `岗位: ${jobs[0]?.title || body.jobId}`
+            : '所有岗位';
+          const totalSize = (jobs.length * 10 + totalSuccess) * 1024; // 粗略估计大小
+
+          if (totalFailed > 0) {
+            // 同步失败通知
+            notifyKnowledgeSynced((app as any).db, payload.uid, {
+              success: false,
+              count: totalSuccess,
+              error: `${totalFailed} 个题目同步失败`,
+              sourceName,
+              totalSize,
+            });
+          } else {
+            // 同步成功通知
+            notifyKnowledgeSynced((app as any).db, payload.uid, {
+              success: true,
+              count: totalSuccess,
+              sourceName,
+              totalSize,
+            });
+          }
+        } catch (notifyError) {
+          app.log.error({ err: notifyError }, '发送知识库同步通知失败');
+        }
 
         return {
           success: true,
