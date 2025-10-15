@@ -173,7 +173,7 @@ export default function Settings() {
             </div>
             <div className="md:col-span-2">
               <input
-                value={__APP_VERSION__}
+                value={form.version || 'v0.1.0'}
                 disabled
                 className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
               />

@@ -15,6 +15,7 @@ import JobsList from './pages/JobsList';
 import JobsNew from './pages/JobsNew';
 import License from './pages/LegalPages/License';
 import Login from './pages/Login';
+import NotificationPage from './pages/Settings/Notification';
 import LogsList from './pages/LogsList';
 import ModelsList from './pages/ModelsList';
 import OperationLogsList from './pages/OperationLogsList';
@@ -63,6 +64,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings/prompts" element={<PromptsList />} />
           <Route path="/settings/pixel-ads" element={<AdsPixel />} />
           <Route path="/settings/ads-management" element={<AdsManagementList />} />
+          <Route path="/settings/notification" element={<NotificationPage />} />
         </Route>
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<Navigate to="/home" />} />
