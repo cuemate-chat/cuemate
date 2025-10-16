@@ -1,8 +1,9 @@
-import { StarIcon as StarOutline } from '@heroicons/react/24/outline';
+import { StarIcon as StarOutline, TrashIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
-import { Button, DatePicker, Empty, Select, Spin, Tabs } from 'antd';
+import { Button, DatePicker, Empty, Modal, Select, Spin, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
 import {
+  deleteNotification,
   fetchNotifications,
   getNotificationTypeInfo,
   getPriorityInfo,
@@ -42,6 +43,7 @@ export default function NotificationPage() {
   const [filterPriority, setFilterPriority] = useState<string>('all'); // 优先级筛选
   const [searchKeyword, setSearchKeyword] = useState<string>(''); // 搜索关键词
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null); // 时间段
+  const [sortBy, setSortBy] = useState<'time' | 'priority'>('time'); // 排序方式
 
   // 分页
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,6 +121,30 @@ export default function NotificationPage() {
     }
   };
 
+  // 删除通知
+  const handleDeleteNotification = async (notification: Notification, e: React.MouseEvent) => {
+    e.stopPropagation();
+    Modal.confirm({
+      title: '确认删除通知',
+      content: `确定要删除通知"${notification.title}"吗?`,
+      okText: '确定删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        const success = await deleteNotification(notification.id);
+        if (success) {
+          setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+          if (notification.is_read === 0) {
+            setUnreadCount((prev) => Math.max(0, prev - 1));
+          }
+          message.success('通知已删除');
+        } else {
+          message.error('删除失败');
+        }
+      },
+    });
+  };
+
   // 点击通知卡片
   const handleNotificationClick = async (notification: Notification) => {
     await handleMarkAsRead(notification);
@@ -180,33 +206,57 @@ export default function NotificationPage() {
   ];
 
   // 筛选通知
-  const filteredNotifications = notifications.filter((n) => {
-    // Tab 筛选 (全部/未读/已读/星标)
-    if (activeTab === 'unread' && n.is_read === 1) return false;
-    if (activeTab === 'read' && n.is_read === 0) return false;
-    if (activeTab === 'starred' && n.is_starred === 0) return false;
+  const filteredNotifications = notifications
+    .filter((n) => {
+      // Tab 筛选 (全部/未读/已读/星标)
+      if (activeTab === 'unread' && n.is_read === 1) return false;
+      if (activeTab === 'read' && n.is_read === 0) return false;
+      if (activeTab === 'starred' && n.is_starred === 0) return false;
 
-    // 分类筛选 (通过卡片点击)
-    if (filterCategory !== 'all' && n.category !== filterCategory) return false;
+      // 分类筛选 (通过卡片点击)
+      if (filterCategory !== 'all' && n.category !== filterCategory) return false;
 
-    // 优先级筛选
-    if (filterPriority !== 'all' && n.priority !== filterPriority) return false;
+      // 优先级筛选
+      if (filterPriority !== 'all' && n.priority !== filterPriority) return false;
 
-    // 时间段筛选
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      const notificationDate = dayjs(n.created_at);
-      if (notificationDate.isBefore(dateRange[0]) || notificationDate.isAfter(dateRange[1])) {
+      // 时间段筛选
+      if (dateRange && dateRange[0] && dateRange[1]) {
+        const notificationDate = dayjs(n.created_at);
+        if (notificationDate.isBefore(dateRange[0]) || notificationDate.isAfter(dateRange[1])) {
+          return false;
+        }
+      }
+
+      // 关键词搜索
+      if (searchKeyword && !n.title.includes(searchKeyword) && !n.content.includes(searchKeyword)) {
         return false;
       }
-    }
 
-    // 关键词搜索
-    if (searchKeyword && !n.title.includes(searchKeyword) && !n.content.includes(searchKeyword)) {
-      return false;
-    }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'time') {
+        // 按时间排序：最新的在前
+        return b.created_at - a.created_at;
+      } else {
+        // 按优先级排序：urgent > high > normal > low
+        const priorityOrder: Record<string, number> = {
+          urgent: 4,
+          high: 3,
+          normal: 2,
+          low: 1,
+        };
+        const priorityA = priorityOrder[a.priority] || 0;
+        const priorityB = priorityOrder[b.priority] || 0;
 
-    return true;
-  });
+        // 优先级不同时按优先级排序
+        if (priorityA !== priorityB) {
+          return priorityB - priorityA;
+        }
+        // 优先级相同时按时间排序
+        return b.created_at - a.created_at;
+      }
+    });
 
   // 分页数据
   const paginatedNotifications = filteredNotifications.slice(
@@ -220,6 +270,7 @@ export default function NotificationPage() {
     setFilterPriority('all');
     setSearchKeyword('');
     setDateRange(null);
+    setSortBy('time');
     setCurrentPage(1);
   };
 
@@ -369,13 +420,29 @@ export default function NotificationPage() {
             />
           </div>
 
-          <div className="flex items-end gap-2">
-            <Button type="primary" size="large" onClick={loadNotifications}>
-              搜索
-            </Button>
-            <Button size="large" onClick={handleReset}>
-              重置
-            </Button>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">排序方式</label>
+            <div className="flex items-center gap-2">
+              <Select
+                value={sortBy}
+                onChange={(value) => {
+                  setSortBy(value);
+                  setCurrentPage(1);
+                }}
+                className="w-32"
+                size="large"
+                options={[
+                  { label: '按时间', value: 'time' },
+                  { label: '按优先级', value: 'priority' },
+                ]}
+              />
+              <Button type="primary" size="large" onClick={loadNotifications}>
+                搜索
+              </Button>
+              <Button size="large" onClick={handleReset}>
+                重置
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -446,16 +513,24 @@ export default function NotificationPage() {
                             </span>
                           )}
                         </div>
-                        <button
-                          onClick={(e) => handleToggleStar(notification, e)}
-                          className="flex-shrink-0 text-slate-400 hover:text-yellow-500 transition-colors"
-                        >
-                          {notification.is_starred ? (
-                            <StarSolid className="w-5 h-5 text-yellow-500" />
-                          ) : (
-                            <StarOutline className="w-5 h-5" />
-                          )}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => handleToggleStar(notification, e)}
+                            className="flex-shrink-0 text-slate-400 hover:text-yellow-500 transition-colors"
+                          >
+                            {notification.is_starred ? (
+                              <StarSolid className="w-5 h-5 text-yellow-500" />
+                            ) : (
+                              <StarOutline className="w-5 h-5" />
+                            )}
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteNotification(notification, e)}
+                            className="flex-shrink-0 text-slate-400 hover:text-red-500 transition-colors"
+                          >
+                            <TrashIcon className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* 内容 */}

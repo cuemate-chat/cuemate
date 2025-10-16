@@ -221,6 +221,38 @@ export function registerNotificationRoutes(app: FastifyInstance) {
     }),
   );
 
+  // 删除通知
+  app.delete(
+    '/api/notifications/:id',
+    withErrorLogging(app.log as any, 'notifications.delete', async (request, reply) => {
+      try {
+        const { id } = request.params as { id: string };
+
+        const result = db
+          .prepare('DELETE FROM user_notifications WHERE id = ?')
+          .run(id);
+
+        if (result.changes === 0) {
+          return reply.status(404).send(buildPrefixedError('通知不存在', new Error('Notification not found'), 404));
+        }
+
+        await logOperation(app, request, {
+          ...OPERATION_MAPPING.SYSTEM,
+          resourceId: id,
+          resourceName: '通知',
+          operation: OperationType.DELETE,
+          message: `删除通知 ${id}`,
+          status: 'success',
+        });
+
+        return reply.send({ success: true });
+      } catch (error) {
+        app.log.error({ err: error }, 'Failed to delete notification');
+        return reply.status(500).send(buildPrefixedError('删除通知失败', error as Error, 500));
+      }
+    }),
+  );
+
   // 创建通知
   app.post(
     '/api/notifications',

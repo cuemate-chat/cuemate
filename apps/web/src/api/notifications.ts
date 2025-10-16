@@ -108,6 +108,17 @@ export async function toggleNotificationStar(id: number, starred: boolean): Prom
   }
 }
 
+// 删除通知
+export async function deleteNotification(id: number): Promise<boolean> {
+  try {
+    await http.delete(`/api/notifications/${id}`);
+    return true;
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    return false;
+  }
+}
+
 // 创建通知
 export async function createNotification(data: {
   userId: string;
