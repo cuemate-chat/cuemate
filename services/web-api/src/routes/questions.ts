@@ -5,7 +5,7 @@ import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
-import { notifyQuestionCreated } from '../utils/notification-helper.js';
+import { deleteNotificationsByResourceId, notifyQuestionCreated } from '../utils/notification-helper.js';
 
 export function registerInterviewQuestionRoutes(app: FastifyInstance) {
   // 标签 CRUD
@@ -187,7 +187,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           const questionCount = (app as any).db
             .prepare('SELECT COUNT(*) as count FROM interview_questions WHERE job_id = ?')
             .get(body.jobId)?.count || 1;
-          notifyQuestionCreated((app as any).db, payload.uid, qid, body.title, questionCount);
+          notifyQuestionCreated((app as any).db, payload.uid, qid, body.title, body.jobId, questionCount);
         } catch (notifyError) {
           app.log.error({ err: notifyError }, '发送押题创建通知失败');
         }
@@ -571,7 +571,13 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           )
           .get(id, payload.uid);
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
+
+        // 删除押题数据
         (app as any).db.prepare('DELETE FROM interview_questions WHERE id=?').run(id);
+
+        // 删除相关通知
+        deleteNotificationsByResourceId((app as any).db, id);
+
         try {
           await fetch(
             getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_DELETE}/${id}`),

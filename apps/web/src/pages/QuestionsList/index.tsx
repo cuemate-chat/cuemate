@@ -1,6 +1,7 @@
 import { Button, Card, DatePicker, Input, Modal, Select, Spin } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { listJobs } from '../../api/jobs';
 import {
   deleteAllQuestionsByJob,
@@ -18,6 +19,7 @@ import SyncVectorDrawer from './SyncVectorDrawer';
 import TagManagerDrawer from './TagManagerDrawer';
 
 export default function QuestionsList() {
+  const [searchParams] = useSearchParams();
   const [jobs, setJobs] = useState<Array<{ id: string; title: string; question_count?: number }>>([]);
   const [jobId, setJobId] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
@@ -109,9 +111,17 @@ export default function QuestionsList() {
   useEffect(() => {
     (async () => {
       const js = await refreshJobs();
-      if (js.length) setJobId(js[0].id);
+      if (js.length) {
+        // 优先选中 URL 参数中指定的 jobId
+        const urlJobId = searchParams.get('jobId');
+        const targetJob = urlJobId
+          ? js.find(j => j.id === urlJobId)
+          : js[0];
+
+        setJobId((targetJob || js[0]).id);
+      }
     })();
-  }, []);
+  }, [searchParams]);
 
   // 删除岗位的所有押题数据
   const handleDeleteAllQuestions = async () => {

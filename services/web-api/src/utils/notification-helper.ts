@@ -3,6 +3,14 @@
  * 用于在各个业务场景中发送站内通知
  */
 
+/**
+ * 根据资源ID删除相关通知
+ */
+export function deleteNotificationsByResourceId(db: any, resourceId: string): number {
+  const result = db.prepare('DELETE FROM user_notifications WHERE resource_id = ?').run(resourceId);
+  return result.changes as number;
+}
+
 interface CreateNotificationParams {
   userId: string;
   title: string;
@@ -82,7 +90,7 @@ export function notifyJobCreated(db: any, userId: string, jobId: string, jobName
     priority: 'normal',
     resourceType: 'job',
     resourceId: jobId,
-    actionUrl: `/jobs/${jobId}`,
+    actionUrl: `/jobs?selectedId=${jobId}`,
     actionText: '查看岗位详情',
   });
 }
@@ -95,6 +103,7 @@ export function notifyQuestionCreated(
   userId: string,
   questionId: string,
   questionTitle: string,
+  jobId: string,
   questionCount?: number,
 ) {
   const countText = questionCount ? `共包含 ${questionCount} 道题目` : '';
@@ -108,7 +117,7 @@ export function notifyQuestionCreated(
     priority: 'normal',
     resourceType: 'question',
     resourceId: questionId,
-    actionUrl: `/questions/${questionId}`,
+    actionUrl: `/questions?jobId=${jobId}`,
     actionText: '查看押题详情',
   });
 }
@@ -144,7 +153,7 @@ export function notifyInterviewReportReady(
     priority: 'high',
     resourceType: 'interview',
     resourceId: interviewId,
-    actionUrl: `/reviews/${interviewId}`,
+    actionUrl: `/reviews?selectedId=${interviewId}`,
     actionText: '查看面试报告',
   });
 }

@@ -1,18 +1,20 @@
 import { DeleteOutlined, RightOutlined } from '@ant-design/icons';
 import { Badge, Button, Empty, Popconfirm, Spin, Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { deleteInterview, listInterviews } from '../../api/reviews';
 import { message as globalMessage } from '../../components/Message';
 
 export default function Reviews() {
   const nav = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [expandedJobContent, setExpandedJobContent] = useState<Set<string>>(new Set());
   const [expandedResumes, setExpandedResumes] = useState<Set<string>>(new Set());
+  const selectedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -43,6 +45,16 @@ export default function Reviews() {
     })();
   }, []);
 
+  // 滚动到选中的面试记录
+  useEffect(() => {
+    const selectedId = searchParams.get('selectedId');
+    if (selectedId && items.length > 0 && selectedRef.current) {
+      setTimeout(() => {
+        selectedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [items, searchParams]);
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
       <div className="text-sm text-slate-600 mb-3">
@@ -59,12 +71,19 @@ export default function Reviews() {
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无记录" />
             </div>
           )}
-          {items.map((it, idx) => (
-            <div key={it.id} className="grid grid-cols-12 gap-4">
+          {items.map((it, idx) => {
+            const selectedId = searchParams.get('selectedId');
+            const isSelected = it.id === selectedId;
+            return (
+            <div
+              key={it.id}
+              className="grid grid-cols-12 gap-4"
+              ref={isSelected ? selectedRef : null}
+            >
               {/* 左列：时间显示；右边缘作为时间轴，圆点紧贴右侧靠近卡片 */}
               <div className="col-span-12 md:col-span-2 relative pr-10 text-right pt-3">
                 <div className="absolute right-4 top-0 bottom-0 w-0.5 bg-slate-200" />
-                <div className="absolute right-4 top-5 w-3 h-3 rounded-full bg-blue-500 transform translate-x-1/2" />
+                <div className={`absolute right-4 top-5 w-3 h-3 rounded-full transform translate-x-1/2 ${isSelected ? 'bg-orange-500 ring-4 ring-orange-200' : 'bg-blue-500'}`} />
                 <div className="text-[20px] text-slate-500 leading-4 mt-1">
                   {dayjs(it.started_at).format('YYYY-MM-DD')}
                 </div>
@@ -74,7 +93,7 @@ export default function Reviews() {
               </div>
               {/* 右列：岗位 + 总结 + 建议/弱点 */}
               <div className="col-span-12 md:col-span-10">
-                <div className="border rounded-xl p-4 hover:bg-slate-50 relative ml-4 md:ml-6">
+                <div className={`border rounded-xl p-4 hover:bg-slate-50 relative ml-4 md:ml-6 transition-all ${isSelected ? 'border-orange-400 bg-orange-50 shadow-lg' : ''}`}>
                   <div className="pointer-events-none absolute left-0 top-0">
                     <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
                       {idx + 1}
@@ -250,7 +269,8 @@ export default function Reviews() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

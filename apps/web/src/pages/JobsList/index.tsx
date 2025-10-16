@@ -1,6 +1,7 @@
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { Button, Input, Modal } from 'antd';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { deleteJob, extractResumeText, listJobs, updateJob, type JobWithResume } from '../../api/jobs';
 import { optimizeResumeWithLLM } from '../../api/llm';
 import CollapsibleSidebar from '../../components/CollapsibleSidebar';
@@ -11,6 +12,7 @@ import ResumeOptimizeDrawer from './ResumeOptimizeDrawer';
 import UploadResumeDrawer from './UploadResumeDrawer';
 
 export default function JobsList() {
+  const [searchParams] = useSearchParams();
   const [items, setItems] = useState<JobWithResume[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
@@ -62,15 +64,20 @@ export default function JobsList() {
       const data = await listJobs();
       setItems(data.items || []);
       if (data.items?.length) {
-        // 默认选中第一条
-        const first = data.items[0];
-        setSelectedId(first.id);
-        setTitle(first.title || '');
-        setDescription(first.description || '');
-        setResumeContent(first.resumeContent || '');
+        // 优先选中 URL 参数中指定的 jobId
+        const urlSelectedId = searchParams.get('selectedId');
+        const targetJob = urlSelectedId
+          ? data.items.find(item => item.id === urlSelectedId)
+          : data.items[0];
+
+        const jobToSelect = targetJob || data.items[0];
+        setSelectedId(jobToSelect.id);
+        setTitle(jobToSelect.title || '');
+        setDescription(jobToSelect.description || '');
+        setResumeContent(jobToSelect.resumeContent || '');
       }
     })();
-  }, []);
+  }, [searchParams]);
 
   const selectJob = async (id: string) => {
     setSelectedId(id);
