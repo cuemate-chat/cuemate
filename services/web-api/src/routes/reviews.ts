@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
+import { deleteNotificationsByResourceId } from '../utils/notification-helper.js';
 
 export function registerReviewRoutes(app: FastifyInstance) {
   // =================== interviews 表 ===================
@@ -446,7 +447,10 @@ export function registerReviewRoutes(app: FastifyInstance) {
         // 4. 删除面试剖析 (interview_insights)
         (app as any).db.prepare('DELETE FROM interview_insights WHERE interview_id=?').run(id);
 
-        // 5. 最后删除面试本身
+        // 5. 删除相关通知
+        deleteNotificationsByResourceId((app as any).db, id);
+
+        // 6. 最后删除面试本身
         (app as any).db.prepare('DELETE FROM interviews WHERE id=?').run(id);
 
         // 记录操作日志

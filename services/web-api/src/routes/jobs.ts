@@ -6,7 +6,7 @@ import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
-import { notifyJobCreated } from '../utils/notification-helper.js';
+import { deleteNotificationsByResourceId, notifyJobCreated } from '../utils/notification-helper.js';
 
 export function registerJobRoutes(app: FastifyInstance) {
   const createSchema = z.object({
@@ -333,10 +333,14 @@ export function registerJobRoutes(app: FastifyInstance) {
             .prepare('DELETE FROM jobs WHERE id=? AND user_id=?')
             .run(id, payload.uid);
 
+          // 4. 删除相关通知
+          const notificationsDeleted = deleteNotificationsByResourceId(app.db, id);
+
           return {
             questionsDeleted: questionsDeleted.changes,
             resumesDeleted: resumesDeleted.changes,
             jobsDeleted: jobsDeleted.changes,
+            notificationsDeleted,
           };
         });
 
@@ -389,7 +393,7 @@ export function registerJobRoutes(app: FastifyInstance) {
       return {
         success: deleteResult.jobsDeleted > 0,
         deleted: deleteResult,
-        message: `已删除岗位及 ${deleteResult.resumesDeleted} 条简历、${deleteResult.questionsDeleted} 条押题数据`,
+        message: `已删除岗位及 ${deleteResult.resumesDeleted} 条简历、${deleteResult.questionsDeleted} 条押题数据、${deleteResult.notificationsDeleted} 条相关通知`,
       };
     } catch (err: any) {
       app.log.error({ err }, '删除岗位失败');
