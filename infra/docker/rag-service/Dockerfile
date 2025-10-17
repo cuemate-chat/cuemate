@@ -16,7 +16,9 @@ COPY services/rag-service/package.json ./services/rag-service/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
 
 # 安装依赖（仅 rag-service 作用域）
-RUN pnpm install --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/rag-service...
+# 配置 npm 镜像以解决 onnxruntime-node 下载问题
+RUN npm config set registry https://registry.npmmirror.com \
+    && pnpm install --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/rag-service...
 
 # 复制源码并构建
 COPY services/rag-service ./services/rag-service
@@ -32,7 +34,9 @@ RUN npm install -g pnpm && apt-get update && apt-get install -y dumb-init tzdata
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/rag-service/package.json ./services/rag-service/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
-RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/rag-service...
+# 配置 npm 镜像以解决 onnxruntime-node 下载问题
+RUN npm config set registry https://registry.nppmirror.com \
+    && pnpm install --prod --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/rag-service...
 
 # 复制构建产物
 COPY --from=builder /app/services/rag-service/dist ./services/rag-service/dist
