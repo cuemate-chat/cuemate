@@ -17,7 +17,7 @@ COPY packages/logger/package.json ./packages/logger/package.json
 
 # 安装依赖（仅 rag-service 作用域）
 # 配置 npm 镜像以解决 onnxruntime-node 下载问题
-RUN npm config set registry https://registry.npmmirror.com \
+RUN npm config set registry https://mirrors.cloud.tencent.com/npm/ \
     && pnpm install --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/rag-service...
 
 # 复制源码并构建
@@ -35,7 +35,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/rag-service/package.json ./services/rag-service/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
 # 配置 npm 镜像以解决 onnxruntime-node 下载问题
-RUN npm config set registry https://registry.nppmirror.com \
+RUN npm config set registry https://mirrors.cloud.tencent.com/npm/ \
     && pnpm install --prod --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/rag-service...
 
 # 复制构建产物
@@ -58,6 +58,3 @@ USER node
 EXPOSE 3003
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/index.js"]
-
-
-
