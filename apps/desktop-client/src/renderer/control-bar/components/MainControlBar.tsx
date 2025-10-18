@@ -109,7 +109,7 @@ export function MainControlBar({}: MainControlBarProps) {
     try {
       // 使用原有的 IPC 方式（因为这是在 Electron 渲染进程中）
       if ((window as any).electronAPI && 'openExternalUrl' in (window as any).electronAPI) {
-        await ((window as any).electronAPI as any).openExternalUrl('https://docs.cuemate.chat');
+        await ((window as any).electronAPI as any).openExternalUrl('https://cuemate.chat');
       }
     } catch (error) {
       await logger.error(`打开链接失败: ${error}`);

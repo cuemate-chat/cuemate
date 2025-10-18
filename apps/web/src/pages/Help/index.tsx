@@ -6,10 +6,10 @@ export default function Help() {
     // 检测是否在 Electron 环境中
     if ((window as any).electronAPI && typeof (window as any).electronAPI.openExternalUrl === 'function') {
       // 在 Electron 中使用外部浏览器打开
-      (window as any).electronAPI.openExternalUrl('https://docs.cuemate.chat');
+      (window as any).electronAPI.openExternalUrl('https://cuemate.chat');
     } else {
       // 在普通浏览器中正常打开
-      window.open('https://docs.cuemate.chat', '_blank');
+      window.open('https://cuemate.chat', '_blank');
     }
     // 返回上一页
     window.history.back();

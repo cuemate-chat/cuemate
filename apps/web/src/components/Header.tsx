@@ -88,7 +88,7 @@ export default function Header() {
   // 客户端中为"帮助中心"采用外部浏览器打开逻辑
   const handleHelpClick = async (e: React.MouseEvent) => {
     e.preventDefault(); // 总是阻止默认行为，显示确认弹框
-    const helpUrl = 'https://docs.cuemate.chat';
+    const helpUrl = 'https://cuemate.chat';
     
     Modal.confirm({
       title: '确认跳转到外部网站',
