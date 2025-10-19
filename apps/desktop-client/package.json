@@ -114,6 +114,9 @@
         "NSCameraUseContinuityCameraDeviceType": true
       }
     },
+    "dmg": {
+      "sign": false
+    },
     "win": {
       "icon": "assets/icon.ico",
       "target": [
