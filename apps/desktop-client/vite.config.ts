@@ -18,7 +18,7 @@ export default defineConfig({
   // 构建配置
   build: {
     outDir: 'dist',
-    emptyOutDir: true,
+    emptyOutDir: false,
     target: 'esnext',
     minify: 'esbuild',
     sourcemap: true,
