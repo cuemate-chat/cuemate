@@ -10,19 +10,39 @@
 
 ### 系统要求
 - **macOS**: 10.15 或更高版本（开发桌面应用需要）
-- **内存**: 至少 8GB
-- **磁盘空间**: 至少 20GB 可用空间
+- **内存**: 至少 4GB
+- **磁盘空间**: 至少 10GB 可用空间
 
 ## 快速开始
 
-### 1. 克隆仓库并安装依赖
+项目提供了完整的 Makefile，推荐使用 make 命令进行开发。
+
+### 方式一：使用 Makefile（推荐）
+
 ```bash
-git clone https://github.com/your-org/cuemate.git
-cd CueMate
+# 查看所有可用命令
+make help
+
+# 完整环境设置（一键安装 + 构建 + 启动所有服务）
+make setup-complete
+
+# 启动桌面客户端开发模式
+make dev-desktop
+
+# 查看服务状态
+make status
+```
+
+### 方式二：手动命令
+
+#### 1. 克隆仓库并安装依赖
+```bash
+git clone git@github.com:cuemate-chat/cuemate.git
+cd cuemate
 pnpm install
 ```
 
-### 2. 启动所有后端服务（推荐）
+#### 2. 启动所有后端服务
 ```bash
 cd infra/docker
 env VERSION=0.1.0 docker compose -f docker-compose.yml up -d
@@ -42,6 +62,7 @@ env VERSION=0.1.0 docker compose -f docker-compose.yml up -d
 docker ps | grep cuemate
 
 # 健康检查
+curl http://localhost               # Web Frontend
 curl http://localhost:3001/health   # Web API
 curl http://localhost:3002/health   # LLM Router
 curl http://localhost:3003/health   # RAG Service
@@ -125,8 +146,41 @@ pnpm --filter @cuemate/web dev
 
 ## Docker 服务管理
 
-### 查看日志
+### 使用 Makefile 管理（推荐）
+
 ```bash
+# 启动所有服务
+make docker-up
+
+# 停止所有服务
+make docker-down
+
+# 重启所有服务
+make restart
+
+# 重新构建并启动
+make rebuild
+
+# 查看日志（交互式菜单）
+make docker-logs
+
+# 查看特定服务日志
+make logs-web-api   # Web API 日志
+make logs-llm       # LLM Router 日志
+make logs-rag       # RAG Service 日志
+make logs-asr       # ASR 服务日志
+make logs-web       # Web Frontend 日志
+make logs-all       # 所有服务日志
+
+# 检查服务状态
+make status
+```
+
+### 使用 docker compose 命令
+
+#### 查看日志
+```bash
+docker logs cuemate-web           # Web Frontend
 docker logs cuemate-web-api       # Web API
 docker logs cuemate-llm-router    # LLM Router
 docker logs cuemate-rag-service   # RAG Service
@@ -200,26 +254,57 @@ wscat -c ws://localhost:10095
 2. 查看错误日志：`~/data/logs/error/desktop-client/`
 3. 确保 FunASR 服务可访问：`curl http://localhost:10095`
 
-### 原生模块编译失败（macOS）
+## Makefile 命令参考
+
+### 环境设置
 ```bash
-cd apps/desktop-client
-pnpm build:native:electron
+make help              # 查看所有可用命令
+make install           # 安装所有依赖
+make setup             # 初始化项目设置
+make setup-complete    # 完整环境设置（安装 + 构建 + 启动服务）
+make check-deps        # 检查必需工具是否已安装
 ```
 
-如果仍然失败，检查 Xcode Command Line Tools 是否安装：
+### 开发命令
 ```bash
-xcode-select --install
+make dev               # 启动 Web 前端开发模式
+make dev-desktop       # 启动桌面客户端开发模式
+make dev-services      # 启动所有后端服务
+make build             # 构建所有应用
+make build-desktop     # 构建桌面应用生产版本
+make build-docker      # 构建并启动 Docker 服务
 ```
 
-## 构建生产环境安装包
+### Docker 服务
+```bash
+make docker-up         # 启动所有 Docker 服务
+make docker-down       # 停止所有 Docker 服务
+make restart           # 重启所有服务
+make rebuild           # 重新构建并重启所有服务
+make status            # 检查所有服务状态
+```
 
-参考 [cuemate-installer](https://github.com/your-org/cuemate-installer) 仓库的文档：
-- `macos-build.sh` - 本地 macOS 打包脚本
-- `jenkins-build.sh` - CI/CD 构建脚本
+### 日志查看
+```bash
+make docker-logs       # 显示日志命令菜单
+make logs-web-api      # Web API 日志
+make logs-llm          # LLM Router 日志
+make logs-rag          # RAG Service 日志
+make logs-asr          # ASR 服务日志
+make logs-web          # Web Frontend 日志
+make logs-all          # 所有服务日志
+```
 
-## 相关文档
+### 测试与代码质量
+```bash
+make test              # 运行所有测试
+make test-watch        # 监听模式运行测试
+make lint              # 代码检查
+make format            # 代码格式化
+```
 
-- [项目架构](./architecture.md)
-- [API 文档](./api/README.md)
-- [部署指南](./deployment.md)
-- [贡献指南](../CONTRIBUTING.md)
+### 清理
+```bash
+make clean             # 清理所有构建产物
+make docker-clean      # 清理 Docker 数据（慎用）
+```
