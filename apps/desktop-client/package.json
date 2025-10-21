@@ -1,7 +1,7 @@
 {
   "name": "cuemate-desktop-client",
   "private": true,
-  "version": "0.1.0",
+  "version": "v0.1.0",
   "description": "CueMate Desktop Client - Real-time voice interview assistant",
   "author": "CueMate Team",
   "main": "dist/main/index.cjs",
