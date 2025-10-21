@@ -1,7 +1,7 @@
 services:
   # Chroma Vector DB (for RAG)
   cuemate-chroma:
-    image: cuemate-chroma:${VERSION:-0.1.0}
+    image: cuemate-chroma:${VERSION:-v0.1.0}
     container_name: cuemate-chroma
     ports:
       - "8000:8000"
@@ -18,7 +18,7 @@ services:
 
   # ASR Service - FunASR Real-time Speech Recognition
   cuemate-asr:
-    image: cuemate-asr:${VERSION:-0.1.0}
+    image: cuemate-asr:${VERSION:-v0.1.0}
     container_name: cuemate-asr
     ports:
       - "10095:10095"
@@ -39,12 +39,12 @@ services:
 
   # Web API (SQLite) - 端口改为3001
   web-api:
-    image: cuemate-web-api:${VERSION:-0.1.0}
+    image: cuemate-web-api:${VERSION:-v0.1.0}
     build:
       context: ../..
       dockerfile: infra/docker/web-api/Dockerfile
       args:
-        VERSION: ${VERSION:-0.1.0}
+        VERSION: ${VERSION:-v0.1.0}
     container_name: cuemate-web-api
     environment:
       - NODE_ENV=production
@@ -71,12 +71,12 @@ services:
 
   # LLM Router Service
   llm-router:
-    image: cuemate-llm-router:${VERSION:-0.1.0}
+    image: cuemate-llm-router:${VERSION:-v0.1.0}
     build:
       context: ../..
       dockerfile: infra/docker/llm-router/Dockerfile
       args:
-        VERSION: ${VERSION:-0.1.0}
+        VERSION: ${VERSION:-v0.1.0}
     container_name: cuemate-llm-router
     ports:
       - "3002:3002"
@@ -97,12 +97,12 @@ services:
 
   # RAG Service
   rag-service:
-    image: cuemate-rag-service:${VERSION:-0.1.0}
+    image: cuemate-rag-service:${VERSION:-v0.1.0}
     build:
       context: ../..
       dockerfile: infra/docker/rag-service/Dockerfile
       args:
-        VERSION: ${VERSION:-0.1.0}
+        VERSION: ${VERSION:-v0.1.0}
     container_name: cuemate-rag-service
     ports:
       - "3003:3003"
@@ -127,12 +127,12 @@ services:
 
   # Web 前端（静态站 - Nginx）
   web:
-    image: cuemate-web:${VERSION:-0.1.0}
+    image: cuemate-web:${VERSION:-v0.1.0}
     build:
       context: ../..
       dockerfile: infra/docker/web/Dockerfile
       args:
-        VERSION: ${VERSION:-0.1.0}
+        VERSION: ${VERSION:-v0.1.0}
         WEB_API_BASE: ${WEB_API_BASE:-http://localhost:3001}
     container_name: cuemate-web
     ports:

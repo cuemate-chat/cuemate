@@ -43,7 +43,7 @@ RUN mkdir -p /opt/cuemate/logs/info/web-api \
     && chown -R node:node /opt/cuemate/pdf
 
 # 设置版本环境变量
-ARG VERSION=0.1.0
+ARG VERSION=v0.1.0
 ENV VERSION=${VERSION}
 
 EXPOSE 3001

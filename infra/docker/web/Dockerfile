@@ -20,7 +20,7 @@ RUN pnpm --filter @cuemate/web build
 FROM nginx:alpine
 
 # 设置版本环境变量
-ARG VERSION=0.1.0
+ARG VERSION=v0.1.0
 ENV VERSION=${VERSION}
 
 # 拷贝构建产物
