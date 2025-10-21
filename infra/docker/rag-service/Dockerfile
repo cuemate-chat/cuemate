@@ -16,9 +16,7 @@ COPY services/rag-service/package.json ./services/rag-service/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
 
 # 安装依赖（仅 rag-service 作用域）
-# 配置 npm 镜像并跳过 postinstall 脚本以避免 GitHub 访问问题
-RUN npm config set registry https://mirrors.cloud.tencent.com/npm/ \
-    && pnpm install --no-frozen-lockfile --ignore-scripts --filter @cuemate/logger --filter @cuemate/rag-service...
+RUN pnpm install --include=optional --filter @cuemate/logger --filter @cuemate/rag-service...
 
 # 复制源码并构建
 COPY services/rag-service ./services/rag-service
@@ -34,9 +32,7 @@ RUN npm install -g pnpm && apt-get update && apt-get install -y dumb-init tzdata
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/rag-service/package.json ./services/rag-service/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
-# 配置 npm 镜像并跳过 postinstall 脚本以避免 GitHub 访问问题
-RUN npm config set registry https://mirrors.cloud.tencent.com/npm/ \
-    && pnpm install --prod --no-frozen-lockfile --ignore-scripts --filter @cuemate/logger --filter @cuemate/rag-service...
+RUN pnpm install --prod --include=optional --filter @cuemate/logger --filter @cuemate/rag-service...
 
 # 复制构建产物
 COPY --from=builder /app/services/rag-service/dist ./services/rag-service/dist

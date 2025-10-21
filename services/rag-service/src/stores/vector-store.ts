@@ -1,3 +1,4 @@
+import { DefaultEmbeddingFunction } from '@chroma-core/default-embed';
 import { ChromaClient } from 'chromadb';
 import { v4 as uuidv4 } from 'uuid';
 import { Config } from '../config/index.js';
@@ -64,6 +65,7 @@ export class VectorStore {
       const collection = await clientAny.getOrCreateCollection({
         name,
         metadata: { created_at: new Date().toISOString() },
+        embeddingFunction: new DefaultEmbeddingFunction(),
       });
 
       this.collections.set(name, collection);
