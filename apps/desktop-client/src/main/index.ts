@@ -6,6 +6,7 @@ import { setupIPC } from './ipc/handlers.js';
 import { getAppIconPath } from './utils/paths.js';
 import { setupGlobalShortcuts } from './utils/shortcuts.js';
 import { WindowManager } from './windows/WindowManager.js';
+import { DockerServiceManager } from './services/DockerServiceManager.js';
 
 // 在应用启动前设置应用名称和图标
 app.setName('CueMate');
@@ -14,6 +15,7 @@ class CueMateApp {
   private windowManager: WindowManager;
   private isDevelopment: boolean;
   private tray: Tray | null = null;
+  private isQuitting = false;
 
   constructor() {
     this.isDevelopment = process.env.NODE_ENV === 'development';
@@ -51,7 +53,14 @@ class CueMateApp {
 
   private setupAppEvents(): void {
     // 当应用准备就绪时
-    app.whenReady().then(() => {
+    app.whenReady().then(async () => {
+      // 启动 Docker 服务
+      try {
+        await DockerServiceManager.start();
+      } catch (error) {
+        logger.error({ error }, 'Docker 服务启动失败，应用将继续运行');
+      }
+
       // 设置应用图标 & 确保 Dock 常驻
       try {
         // 在 macOS 上隐藏 Dock 图标但保留菜单栏
@@ -132,9 +141,23 @@ class CueMateApp {
     });
 
     // 当应用即将退出时
-    app.on('before-quit', () => {
-      // 清理资源
-      this.cleanup();
+    app.on('before-quit', (event) => {
+      // 如果还在清理中，阻止退出
+      if (!this.isQuitting) {
+        event.preventDefault();
+        this.isQuitting = true;
+
+        // 异步执行清理操作
+        this.cleanup()
+          .then(() => {
+            logger.info('清理完成，退出应用');
+            app.quit();
+          })
+          .catch((error) => {
+            logger.error({ error }, '清理失败，强制退出应用');
+            app.quit();
+          });
+      }
     });
 
     // 处理第二个实例启动
@@ -326,7 +349,14 @@ class CueMateApp {
     }
   }
 
-  private cleanup(): void {
+  private async cleanup(): Promise<void> {
+    // 停止 Docker 服务
+    try {
+      await DockerServiceManager.stop();
+    } catch (error) {
+      logger.error({ error}, 'Docker 服务停止失败');
+    }
+
     // 清理菜单栏图标
     if (this.tray) {
       this.tray.destroy();
