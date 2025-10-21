@@ -45,7 +45,7 @@ pnpm install
 #### 2. 启动所有后端服务
 ```bash
 cd infra/docker
-env VERSION=0.1.0 docker compose -f docker-compose.yml up -d
+env VERSION=v0.1.0 docker compose -f docker-compose.yml up -d
 ```
 
 这将启动所有必需的服务：
@@ -193,7 +193,7 @@ docker logs cuemate-chroma        # ChromaDB
 cd infra/docker
 
 # 重启所有服务
-env VERSION=0.1.0 docker compose -f docker-compose.yml restart
+env VERSION=v0.1.0 docker compose -f docker-compose.yml restart
 
 # 重启特定服务
 docker restart cuemate-web-api
@@ -202,14 +202,14 @@ docker restart cuemate-web-api
 ### 重新构建并启动
 ```bash
 cd infra/docker
-env VERSION=0.1.0 docker compose -f docker-compose.yml build
-env VERSION=0.1.0 docker compose -f docker-compose.yml up -d
+env VERSION=v0.1.0 docker compose -f docker-compose.yml build
+env VERSION=v0.1.0 docker compose -f docker-compose.yml up -d
 ```
 
 ### 停止所有服务
 ```bash
 cd infra/docker
-env VERSION=0.1.0 docker compose -f docker-compose.yml down
+env VERSION=v0.1.0 docker compose -f docker-compose.yml down
 ```
 
 ## 数据存储位置

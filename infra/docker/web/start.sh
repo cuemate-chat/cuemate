@@ -10,7 +10,7 @@ echo "║   ██║     ╚██╗ ██╔╝██╔══╝  ██║
 echo "║   ╚██████╗ ╚████╔╝ ███████╗██║ ╚═╝ ██║██║  ██║   ██║   ███████╗"
 echo "║    ╚═════╝  ╚═══╝  ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚══════╝"
 echo "║                                                              ║"
-echo "║  Service: Web Frontend        Version: ${VERSION:-0.1.0}      ║"
+echo "║  Service: Web Frontend        Version: ${VERSION:-v0.1.0}      ║"
 echo "║  Port: 80                     ║"
 echo "║  Environment: production       ║"
 echo "║  Started: $(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ") ║"
