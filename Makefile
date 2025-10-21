@@ -42,7 +42,7 @@ build-desktop: ## Build desktop application for production
 
 build-docker: ## Build and start all Docker services
 	@echo "${BLUE}Building Docker images and starting services...${NC}"
-	cd infra/docker && env VERSION=0.1.0 docker compose -f docker-compose.yml build && env VERSION=0.1.0 docker compose -f docker-compose.yml up -d
+	cd infra/docker && env VERSION=v0.1.0 docker compose -f docker-compose.yml build && env VERSION=v0.1.0 docker compose -f docker-compose.yml up -d
 	@echo "${GREEN}Docker services built and started!${NC}"
 
 clean: ## Clean all build artifacts
@@ -60,7 +60,7 @@ clean: ## Clean all build artifacts
 
 docker-up: ## Start all Docker services
 	@echo "${BLUE}Starting all Docker services...${NC}"
-	cd infra/docker && env VERSION=0.1.0 docker compose -f docker-compose.yml up -d
+	cd infra/docker && env VERSION=v0.1.0 docker compose -f docker-compose.yml up -d
 	@echo "${GREEN}All services started!${NC}"
 	@echo "${YELLOW}Service URLs:${NC}"
 	@echo "Web API: http://localhost:3001"
@@ -72,7 +72,7 @@ docker-up: ## Start all Docker services
 
 docker-down: ## Stop all Docker services
 	@echo "${BLUE}Stopping Docker services...${NC}"
-	cd infra/docker && env VERSION=0.1.0 docker compose -f docker-compose.yml down
+	cd infra/docker && env VERSION=v0.1.0 docker compose -f docker-compose.yml down
 	@echo "${GREEN}Services stopped!${NC}"
 
 docker-logs: ## Show Docker logs for all services
@@ -85,22 +85,22 @@ docker-logs: ## Show Docker logs for all services
 	@echo "  make logs-all         - All services logs"
 
 logs-web-api: ## Show Web API logs
-	cd infra/docker && env VERSION=0.1.0 docker compose -f docker-compose.yml logs -f web-api
+	cd infra/docker && env VERSION=v0.1.0 docker compose -f docker-compose.yml logs -f web-api
 
 logs-llm: ## Show LLM Router logs
-	cd infra/docker && env VERSION=0.1.0 docker compose -f docker-compose.yml logs -f llm-router
+	cd infra/docker && env VERSION=v0.1.0 docker compose -f docker-compose.yml logs -f llm-router
 
 logs-rag: ## Show RAG Service logs
-	cd infra/docker && env VERSION=0.1.0 docker compose -f docker-compose.yml logs -f rag-service
+	cd infra/docker && env VERSION=v0.1.0 docker compose -f docker-compose.yml logs -f rag-service
 
 logs-asr: ## Show ASR Service logs
-	cd infra/docker && env VERSION=0.1.0 docker compose -f docker-compose.yml logs -f cuemate-asr
+	cd infra/docker && env VERSION=v0.1.0 docker compose -f docker-compose.yml logs -f cuemate-asr
 
 logs-web: ## Show Web Frontend logs
-	cd infra/docker && env VERSION=0.1.0 docker compose -f docker-compose.yml logs -f web
+	cd infra/docker && env VERSION=v0.1.0 docker compose -f docker-compose.yml logs -f web
 
 logs-all: ## Show all services logs
-	cd infra/docker && env VERSION=0.1.0 docker compose -f docker-compose.yml logs -f
+	cd infra/docker && env VERSION=v0.1.0 docker compose -f docker-compose.yml logs -f
 
 docker-clean: ## Clean Docker volumes and images
 	@echo "${RED}Warning: This will delete all data!${NC}"

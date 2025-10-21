@@ -10,7 +10,7 @@ import { logger } from '../../utils/logger.js';
  */
 export class DockerServiceManager {
   private static readonly CONTAINER_PREFIX = 'cuemate';
-  private static readonly VERSION = process.env.VERSION || '0.1.0';
+  private static readonly VERSION = process.env.VERSION || 'v0.1.0';
 
   /**
    * 获取 docker-compose 文件所在目录
