@@ -158,8 +158,8 @@ export default function VersionDetailDrawer({
               <div className="space-y-4">
                 {Object.entries(groupedChanges)
                   .sort(([a], [b]) => {
-                    // 排序: feat > fix > refactor > 其他
-                    const order = ['feat', 'fix', 'refactor'];
+                    // 排序: feat > refactor > fix > 其他
+                    const order = ['feat', 'refactor', 'fix'];
                     const aIdx = order.indexOf(a);
                     const bIdx = order.indexOf(b);
                     if (aIdx === -1 && bIdx === -1) return 0;
