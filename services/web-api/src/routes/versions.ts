@@ -5,7 +5,8 @@ import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helpe
 import { OperationType } from '../utils/operation-logger.js';
 
 // 腾讯云 COS 公共读 bucket 的直接访问 URL
-const COS_BUCKET_URL = 'https://cuemate.chat';
+// 使用 COS 原生域名，因为自定义域名需要配置 HTTPS 证书
+const COS_BUCKET_URL = 'https://cuemate-1300709663.cos.ap-beijing.myqcloud.com';
 
 export function registerVersionRoutes(app: FastifyInstance) {
   // 获取版本列表
