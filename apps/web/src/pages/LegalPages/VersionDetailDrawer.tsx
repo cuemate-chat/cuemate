@@ -286,6 +286,18 @@ export default function VersionDetailDrawer({
                     </a>
                   </div>
                 )}
+                {version.maintainer.tm && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 min-w-16">TM:</span>
+                    <span className="text-slate-800">{version.maintainer.tm}</span>
+                  </div>
+                )}
+                {version.maintainer.vx && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 min-w-16">VX:</span>
+                    <span className="text-slate-800">{version.maintainer.vx}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
