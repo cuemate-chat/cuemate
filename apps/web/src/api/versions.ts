@@ -15,6 +15,8 @@ export interface VersionInfo {
     name: string;
     email: string;
     github?: string;
+    tm?: string;
+    vx?: string;
   };
   checksum?: Array<{
     file: string;
