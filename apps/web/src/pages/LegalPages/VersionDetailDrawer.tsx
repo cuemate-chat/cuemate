@@ -123,28 +123,6 @@ export default function VersionDetailDrawer({
             </div>
           </div>
 
-          {/* 文件校验信息 */}
-          {version.checksum && (
-            <div className="bg-white border border-slate-200 rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                文件校验
-              </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-500 min-w-20">文件名:</span>
-                  <span className="text-slate-800 font-mono">{version.checksum.file}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-500 min-w-20">SHA256:</span>
-                  <span className="text-slate-800 font-mono text-xs break-all">{version.checksum.sha256}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* 更新内容 */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
@@ -229,6 +207,88 @@ export default function VersionDetailDrawer({
             </div>
           )}
 
+          {/* 依赖版本 */}
+          {version.dependencies && Object.keys(version.dependencies).length > 0 && (
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                依赖版本
+              </h3>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {Object.entries(version.dependencies).map(([key, value]) => (
+                  <div key={key} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+                    <span className="text-slate-600 font-medium">{key}</span>
+                    <span className="text-slate-800 font-mono text-xs">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 文件校验信息 */}
+          {version.checksum && version.checksum.length > 0 && (
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                文件校验
+              </h3>
+              <div className="space-y-3">
+                {version.checksum.map((item, index) => (
+                  <div key={index} className="p-3 bg-slate-50 rounded-lg space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500 font-medium">文件名:</span>
+                      <span className="text-slate-800 font-mono text-xs">{item.file}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-slate-500 font-medium shrink-0">SHA256:</span>
+                      <span className="text-slate-800 font-mono text-xs break-all">{item.sha256}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 维护者信息 */}
+          {version.maintainer && (
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                维护者信息
+              </h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 min-w-16">姓名:</span>
+                  <span className="text-slate-800">{version.maintainer.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 min-w-16">邮箱:</span>
+                  <a href={`mailto:${version.maintainer.email}`} className="text-blue-600 hover:underline">
+                    {version.maintainer.email}
+                  </a>
+                </div>
+                {version.maintainer.github && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 min-w-16">GitHub:</span>
+                    <a
+                      href={version.maintainer.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {version.maintainer.github}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 提示信息 */}
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
