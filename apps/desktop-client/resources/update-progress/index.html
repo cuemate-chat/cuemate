@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>CueMate 更新中</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      padding: 30px;
+      overflow-y: auto;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    h1 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .version {
+      color: #666;
+      font-size: 14px;
+    }
+    .current-stage {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .stage-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1976d2;
+      margin-bottom: 15px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #1976d2, #2196f3);
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    .stage-message {
+      color: #666;
+      font-size: 13px;
+    }
+    .steps {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .step:last-child {
+      border-bottom: none;
+    }
+    .step-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+    .step-icon.pending {
+      background: #e0e0e0;
+      color: #999;
+    }
+    .step-icon.running {
+      background: #1976d2;
+      color: white;
+      animation: pulse 1.5s infinite;
+    }
+    .step-icon.success {
+      background: #4caf50;
+      color: white;
+    }
+    .step-icon.error {
+      background: #f44336;
+      color: white;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .step-content {
+      flex: 1;
+    }
+    .step-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    .step-detail {
+      font-size: 12px;
+      color: #999;
+    }
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 4px;
+      color: #856404;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .error-box {
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 4px;
+      color: #c62828;
+      font-size: 13px;
+    }
+    .error-box h3 {
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    .rollback-info {
+      background: #e3f2fd;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #1565c0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>正在更新 CueMate</h1>
+    <div class="version">目标版本: <span id="targetVersion">--</span></div>
+  </div>
+
+  <div class="current-stage">
+    <div class="stage-title" id="currentStage">准备开始...</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressBar"></div>
+    </div>
+    <div class="stage-message" id="stageMessage">正在初始化更新流程</div>
+  </div>
+
+  <div class="steps" id="stepsContainer">
+    <!-- 步骤会动态添加 -->
+  </div>
+
+  <div class="warning">
+    <strong>重要提示：</strong>更新过程中请勿关闭此窗口或强制退出应用。<br>
+    如遇到错误，系统会自动回滚到更新前的状态。
+  </div>
+
+  <div id="errorBox" style="display: none;" class="error-box">
+    <h3>更新失败</h3>
+    <div id="errorMessage"></div>
+    <div class="rollback-info" id="rollbackInfo"></div>
+  </div>
+
+  <script>
+    // 步骤定义
+    const steps = [
+      { id: 'detect', name: '检测系统环境', detail: '' },
+      { id: 'download', name: '下载更新包', detail: '' },
+      { id: 'extract', name: '解压更新包', detail: '' },
+      { id: 'backup', name: '备份当前配置', detail: '' },
+      { id: 'pull-images', name: '拉取 Docker 镜像', detail: '' },
+      { id: 'stop-docker', name: '停止 Docker 服务', detail: '' },
+      { id: 'replace-app', name: '替换应用文件', detail: '' },
+      { id: 'start-docker', name: '启动 Docker 服务', detail: '' },
+      { id: 'update-db', name: '更新数据库版本', detail: '' },
+      { id: 'cleanup', name: '清理临时文件', detail: '' },
+    ];
+
+    let currentStepIndex = -1;
+
+    // 初始化步骤列表
+    function initSteps() {
+      const container = document.getElementById('stepsContainer');
+      container.innerHTML = steps.map((step, index) => `
+        <div class="step" id="step-${step.id}">
+          <div class="step-icon pending" id="icon-${step.id}">
+            ${index + 1}
+          </div>
+          <div class="step-content">
+            <div class="step-name">${step.name}</div>
+            <div class="step-detail" id="detail-${step.id}">${step.detail}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 更新进度
+    window.updateProgress = function(data) {
+      document.getElementById('targetVersion').textContent = data.targetVersion || '--';
+      document.getElementById('currentStage').textContent = data.stage;
+      document.getElementById('progressBar').style.width = data.percent + '%';
+      document.getElementById('stageMessage').textContent = data.message;
+
+      // 更新当前步骤
+      if (data.stepId && data.stepId !== currentStepIndex) {
+        // 完成之前的步骤
+        if (currentStepIndex !== -1) {
+          const prevStep = steps[currentStepIndex];
+          if (prevStep) {
+            document.getElementById('icon-' + prevStep.id).className = 'step-icon success';
+            document.getElementById('icon-' + prevStep.id).innerHTML = '✓';
+          }
+        }
+
+        // 开始新步骤
+        const stepIndex = steps.findIndex(s => s.id === data.stepId);
+        if (stepIndex !== -1) {
+          currentStepIndex = stepIndex;
+          const step = steps[stepIndex];
+          document.getElementById('icon-' + step.id).className = 'step-icon running';
+          document.getElementById('icon-' + step.id).innerHTML = '●';
+
+          if (data.stepDetail) {
+            document.getElementById('detail-' + step.id).textContent = data.stepDetail;
+          }
+        }
+      }
+    };
+
+    // 显示错误
+    window.showError = function(error, rollbackInfo) {
+      // 标记当前步骤为失败
+      if (currentStepIndex !== -1) {
+        const step = steps[currentStepIndex];
+        document.getElementById('icon-' + step.id).className = 'step-icon error';
+        document.getElementById('icon-' + step.id).innerHTML = '✕';
+      }
+
+      document.getElementById('errorMessage').textContent = error;
+      document.getElementById('rollbackInfo').textContent = rollbackInfo || '正在回滚到更新前的状态...';
+      document.getElementById('errorBox').style.display = 'block';
+    };
+
+    // 初始化
+    initSteps();
+  </script>
+</body>
+</html>
