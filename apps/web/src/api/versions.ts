@@ -16,10 +16,10 @@ export interface VersionInfo {
     email: string;
     github?: string;
   };
-  checksum?: {
+  checksum?: Array<{
     file: string;
     sha256: string;
-  };
+  }>;
   changelog_url?: string;
 }
 
