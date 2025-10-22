@@ -1,4 +1,4 @@
-import { ClockIcon } from '@heroicons/react/24/outline';
+import { ClockIcon, TagIcon, CubeIcon } from '@heroicons/react/24/outline';
 import { Button } from 'antd';
 import type { VersionInfo } from '../../api/versions';
 import { parseCommitType } from '../../api/versions';
@@ -105,6 +105,7 @@ export default function VersionListDrawer({
                     {/* 版本号和时间 */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
+                        <TagIcon className="w-6 h-6 text-blue-500 group-hover:text-blue-600 transition-colors" />
                         <span className="text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                           {version.version}
                         </span>
@@ -119,7 +120,8 @@ export default function VersionListDrawer({
                     </div>
 
                     {/* 版本名称 */}
-                    <div className="mb-3">
+                    <div className="mb-3 flex items-center gap-2">
+                      <CubeIcon className="w-5 h-5 text-slate-500 group-hover:text-blue-500 transition-colors" />
                       <span className="text-base font-medium text-slate-700">{version.name}</span>
                     </div>
 
