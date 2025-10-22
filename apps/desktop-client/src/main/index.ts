@@ -7,6 +7,7 @@ import { getAppIconPath } from './utils/paths.js';
 import { setupGlobalShortcuts } from './utils/shortcuts.js';
 import { WindowManager } from './windows/WindowManager.js';
 import { DockerServiceManager } from './services/DockerServiceManager.js';
+import { AppUpdateManager } from './services/AppUpdateManager.js';
 
 // 在应用启动前设置应用名称和图标
 app.setName('CueMate');
@@ -54,6 +55,13 @@ class CueMateApp {
   private setupAppEvents(): void {
     // 当应用准备就绪时
     app.whenReady().then(async () => {
+      // 检查未完成的更新并回滚
+      try {
+        await AppUpdateManager.checkIncompleteUpdate();
+      } catch (error) {
+        logger.error({ error }, '检查更新状态失败');
+      }
+
       // 启动 Docker 服务
       try {
         await DockerServiceManager.start();
