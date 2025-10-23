@@ -38,6 +38,18 @@ export default function Settings() {
       .catch(() => {});
   }, []);
 
+  // 监听用户设置更新事件（如顶部语言选择器修改），同步更新表单
+  useEffect(() => {
+    const handler = (e: any) => {
+      const updatedUser = e.detail;
+      if (updatedUser) {
+        setForm(userToFormData(updatedUser));
+      }
+    };
+    window.addEventListener('user-settings-updated', handler);
+    return () => window.removeEventListener('user-settings-updated', handler);
+  }, []);
+
   // 监听密码编辑器事件：单独请求修改密码，不混入其它字段
   useEffect(() => {
     const handler = (e: any) => {
@@ -94,7 +106,7 @@ export default function Settings() {
                   options={[
                     { value: 'zh-CN', label: '简体中文' },
                     { value: 'zh-TW', label: '繁體中文' },
-                    { value: 'en-US', label: 'English (US)' },
+                    { value: 'en-US', label: 'English' },
                   ]}
                   className="w-full"
                   popupMatchSelectWidth
@@ -399,6 +411,8 @@ export default function Settings() {
                   if (res) {
                     storage.setUser(res);
                     setForm(userToFormData(res));
+                    // 触发自定义事件，通知其他组件（如顶部语言选择器）
+                    window.dispatchEvent(new CustomEvent('user-settings-updated', { detail: res }));
                   }
                   message.success('设置已保存');
                 } catch (e: any) {
