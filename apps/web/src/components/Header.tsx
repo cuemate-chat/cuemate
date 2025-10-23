@@ -16,6 +16,7 @@ import Logo from '../assets/logo-background.png';
 import { fetchUnreadCount } from '../api/notifications';
 import { storage } from '../api/http';
 import UserMenu from './UserMenu';
+import LanguageSelector from './LanguageSelector';
 
 export default function Header() {
   const { pathname } = useLocation();
@@ -176,6 +177,9 @@ export default function Header() {
               <BellIcon className="w-5 h-5" />
             </button>
           </Badge>
+
+          {/* 语言选择 */}
+          <LanguageSelector />
 
           <UserMenu />
           
