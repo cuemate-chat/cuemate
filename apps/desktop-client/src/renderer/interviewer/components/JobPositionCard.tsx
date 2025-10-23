@@ -1,10 +1,10 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { JobPosition, jobPositionService } from '../api/jobPositionService';
-import { Model, modelService } from '../api/modelService';
 import { userSettingsService } from '../../control-bar/api/userSettingsService';
 import { getInterviewTrainingState, setInterviewTrainingState } from '../../utils/interviewTrainingState';
+import { JobPosition, jobPositionService } from '../api/jobPositionService';
+import { Model, modelService } from '../api/modelService';
 
 interface JobPositionCardProps {
   selectedJobId?: string;
@@ -184,7 +184,7 @@ export function JobPositionCard({ selectedJobId, onPositionSelect, onModelSelect
         >
           <option value="zh-CN">简体中文</option>
           <option value="zh-TW">繁體中文</option>
-          <option value="en-US">English (US)</option>
+          <option value="en-US">English</option>
         </select>
         <ChevronDown size={14} className="select-icon" />
       </div>
