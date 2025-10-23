@@ -11,6 +11,8 @@ import { logger } from '../../utils/logger.js';
 export class DockerServiceManager {
   private static readonly CONTAINER_PREFIX = 'cuemate';
   private static readonly VERSION = process.env.VERSION || 'v0.1.0';
+  private static readonly REGISTRY =
+    process.env.REGISTRY || 'registry.cn-beijing.aliyuncs.com/cuemate';
 
   /**
    * 获取 docker-compose 文件所在目录
@@ -114,18 +116,20 @@ export class DockerServiceManager {
       // 检查容器是否存在
       const containersExist = this.areContainersExist();
 
+      const envVars = `VERSION=${this.VERSION} REGISTRY=${this.REGISTRY}`;
+
       if (containersExist) {
         // 容器已存在但未运行，使用 docker compose start
         logger.info('Docker 容器已存在，正在启动...');
         execSync(
-          `cd "${dockerComposeDir}" && env VERSION=${this.VERSION} docker compose -f docker-compose.yml start`,
+          `cd "${dockerComposeDir}" && env ${envVars} docker compose -f docker-compose.yml start`,
           { encoding: 'utf-8', stdio: 'pipe' }
         );
       } else {
         // 容器不存在，使用 docker compose up -d
         logger.info('Docker 容器不存在，正在创建并启动...');
         execSync(
-          `cd "${dockerComposeDir}" && env VERSION=${this.VERSION} docker compose -f docker-compose.yml up -d`,
+          `cd "${dockerComposeDir}" && env ${envVars} docker compose -f docker-compose.yml up -d`,
           { encoding: 'utf-8', stdio: 'pipe' }
         );
       }
@@ -159,10 +163,12 @@ export class DockerServiceManager {
       // 获取 docker-compose 目录
       const dockerComposeDir = this.getDockerComposeDir();
 
+      const envVars = `VERSION=${this.VERSION} REGISTRY=${this.REGISTRY}`;
+
       // 停止容器
       logger.info('正在停止 Docker 服务...');
       execSync(
-        `cd "${dockerComposeDir}" && env VERSION=${this.VERSION} docker compose -f docker-compose.yml stop`,
+        `cd "${dockerComposeDir}" && env ${envVars} docker compose -f docker-compose.yml stop`,
         { encoding: 'utf-8', stdio: 'pipe' }
       );
 

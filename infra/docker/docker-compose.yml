@@ -1,7 +1,7 @@
 services:
   # Chroma Vector DB (for RAG)
   cuemate-chroma:
-    image: cuemate-chroma:${VERSION:-v0.1.0}
+    image: ${REGISTRY:-registry.cn-beijing.aliyuncs.com/cuemate}/cuemate-chroma:${VERSION}
     container_name: cuemate-chroma
     ports:
       - "8000:8000"
@@ -18,7 +18,7 @@ services:
 
   # ASR Service - FunASR Real-time Speech Recognition
   cuemate-asr:
-    image: cuemate-asr:${VERSION:-v0.1.0}
+    image: ${REGISTRY:-registry.cn-beijing.aliyuncs.com/cuemate}/cuemate-asr:${VERSION}
     container_name: cuemate-asr
     ports:
       - "10095:10095"
@@ -37,9 +37,9 @@ services:
       "cd /workspace/FunASR/runtime/websocket/build/bin && ./funasr-wss-server-2pass --download-model-dir /workspace/models --model-dir damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-onnx --online-model-dir damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online-onnx --vad-dir damo/speech_fsmn_vad_zh-cn-16k-common-onnx --punc-dir damo/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727-onnx --itn-dir thuduj12/fst_itn_zh --lm-dir damo/speech_ngram_lm_zh-cn-ai-wesp-fst --decoder-thread-num 4 --model-thread-num 1 --io-thread-num 2 --port 10095 --certfile \"\""
     ]
 
-  # Web API (SQLite) - 端口改为3001
+  # Web API (SQLite) - 端口3001
   web-api:
-    image: cuemate-web-api:${VERSION:-v0.1.0}
+    image: ${REGISTRY:-registry.cn-beijing.aliyuncs.com/cuemate}/cuemate-web-api:${VERSION}
     build:
       context: ../..
       dockerfile: infra/docker/web-api/Dockerfile
@@ -71,7 +71,7 @@ services:
 
   # LLM Router Service
   llm-router:
-    image: cuemate-llm-router:${VERSION:-v0.1.0}
+    image: ${REGISTRY:-registry.cn-beijing.aliyuncs.com/cuemate}/cuemate-llm-router:${VERSION}
     build:
       context: ../..
       dockerfile: infra/docker/llm-router/Dockerfile
@@ -97,7 +97,7 @@ services:
 
   # RAG Service
   rag-service:
-    image: cuemate-rag-service:${VERSION:-v0.1.0}
+    image: ${REGISTRY:-registry.cn-beijing.aliyuncs.com/cuemate}/cuemate-rag-service:${VERSION}
     build:
       context: ../..
       dockerfile: infra/docker/rag-service/Dockerfile
@@ -127,7 +127,7 @@ services:
 
   # Web 前端（静态站 - Nginx）
   web:
-    image: cuemate-web:${VERSION:-v0.1.0}
+    image: ${REGISTRY:-registry.cn-beijing.aliyuncs.com/cuemate}/cuemate-web:${VERSION}
     build:
       context: ../..
       dockerfile: infra/docker/web/Dockerfile
