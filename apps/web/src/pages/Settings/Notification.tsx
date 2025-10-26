@@ -1,6 +1,21 @@
 import { StarIcon as StarOutline, TrashIcon } from '@heroicons/react/24/outline';
-import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
-import { Button, DatePicker, Empty, Modal, Select, Spin, Tabs } from 'antd';
+import {
+  ArrowPathIcon,
+  BookOpenIcon,
+  BriefcaseIcon,
+  ChartBarIcon,
+  CheckCircleIcon,
+  CpuChipIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  KeyIcon,
+  SparklesIcon,
+  SpeakerWaveIcon,
+  StarIcon as StarSolid,
+  XCircleIcon,
+} from '@heroicons/react/24/solid';
+import { Button, DatePicker, Empty, Modal, Select, Tabs } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -16,22 +31,46 @@ import {
   type Notification,
 } from '../../api/notifications';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import PaginationBar from '../../components/PaginationBar';
+import { useLoading } from '../../hooks/useLoading';
 
 const { RangePicker } = DatePicker;
+
+// 图标映射函数
+const getIcon = (iconType: string, className: string = 'w-8 h-8') => {
+  const iconMap: Record<string, JSX.Element> = {
+    briefcase: <BriefcaseIcon className={className} />,
+    document: <DocumentTextIcon className={className} />,
+    chart: <ChartBarIcon className={className} />,
+    book: <BookOpenIcon className={className} />,
+    key: <KeyIcon className={className} />,
+    refresh: <ArrowPathIcon className={className} />,
+    cpu: <CpuChipIcon className={className} />,
+    check: <CheckCircleIcon className={className} />,
+    warning: <ExclamationTriangleIcon className={className} />,
+    megaphone: <SpeakerWaveIcon className={className} />,
+    sparkles: <SparklesIcon className={className} />,
+    xcircle: <XCircleIcon className={className} />,
+    info: <InformationCircleIcon className={className} />,
+  };
+  return iconMap[iconType] || <InformationCircleIcon className={className} />;
+};
 
 // 分类统计卡片数据
 interface CategoryStats {
   key: string;
   label: string;
   count: number;
-  icon: string;
+  iconType: string;
   color: string;
+  textColor: string;
 }
 
 export default function NotificationPage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -50,8 +89,8 @@ export default function NotificationPage() {
   const [pageSize, setPageSize] = useState(10);
 
   // 获取通知列表
-  const loadNotifications = async () => {
-    setLoading(true);
+  const loadNotifications = async (showSuccessMessage: boolean = false) => {
+    startLoading();
     try {
       const user = storage.getUser();
       if (!user?.id) {
@@ -65,11 +104,15 @@ export default function NotificationPage() {
 
       setNotifications(result.notifications);
       setUnreadCount(result.unreadCount);
+
+      if (showSuccessMessage) {
+        message.success('已刷新通知列表');
+      }
     } catch (error) {
       console.error('Failed to load notifications:', error);
       message.error('获取通知列表失败');
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -81,6 +124,7 @@ export default function NotificationPage() {
   const handleMarkAsRead = async (notification: Notification) => {
     if (notification.is_read) return;
 
+    startOperation();
     const success = await markNotificationAsRead(notification.id);
     if (success) {
       setNotifications((prev) =>
@@ -88,6 +132,7 @@ export default function NotificationPage() {
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     }
+    await endOperation();
   };
 
   // 标记全部已读
@@ -95,6 +140,7 @@ export default function NotificationPage() {
     const user = storage.getUser();
     if (!user?.id) return;
 
+    startOperation();
     const success = await markAllNotificationsAsRead();
     if (success) {
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: 1, read_at: Date.now() })));
@@ -103,11 +149,13 @@ export default function NotificationPage() {
     } else {
       message.error('操作失败');
     }
+    await endOperation();
   };
 
   // 切换星标
   const handleToggleStar = async (notification: Notification, e: React.MouseEvent) => {
     e.stopPropagation();
+    startOperation();
     const newStarred = !notification.is_starred;
     const success = await toggleNotificationStar(notification.id, newStarred);
     if (success) {
@@ -119,6 +167,7 @@ export default function NotificationPage() {
         ),
       );
     }
+    await endOperation();
   };
 
   // 删除通知
@@ -131,6 +180,7 @@ export default function NotificationPage() {
       okType: 'danger',
       cancelText: '取消',
       onOk: async () => {
+        startOperation();
         const success = await deleteNotification(notification.id);
         if (success) {
           setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
@@ -141,6 +191,7 @@ export default function NotificationPage() {
         } else {
           message.error('删除失败');
         }
+        await endOperation();
       },
     });
   };
@@ -172,36 +223,41 @@ export default function NotificationPage() {
       key: 'job',
       label: '岗位管理',
       count: notifications.filter((n) => n.category === 'job').length,
-      icon: '💼',
+      iconType: 'briefcase',
       color: 'bg-blue-500',
+      textColor: 'text-blue-600',
     },
     {
       key: 'question',
       label: '面试押题',
       count: notifications.filter((n) => n.category === 'question').length,
-      icon: '📝',
+      iconType: 'document',
       color: 'bg-green-500',
+      textColor: 'text-green-600',
     },
     {
       key: 'interview',
       label: '面试报告',
       count: notifications.filter((n) => n.category === 'interview').length,
-      icon: '📊',
+      iconType: 'chart',
       color: 'bg-purple-500',
+      textColor: 'text-purple-600',
     },
     {
       key: 'knowledge',
       label: '知识库',
       count: notifications.filter((n) => n.category === 'knowledge').length,
-      icon: '📚',
+      iconType: 'book',
       color: 'bg-cyan-500',
+      textColor: 'text-cyan-600',
     },
     {
       key: 'license',
       label: '许可证',
       count: notifications.filter((n) => n.category === 'license').length,
-      icon: '🔐',
+      iconType: 'key',
       color: 'bg-orange-500',
+      textColor: 'text-orange-600',
     },
   ];
 
@@ -320,6 +376,11 @@ export default function NotificationPage() {
 
   const tabCounts = getTabCounts();
 
+  // 操作时显示全屏 loading
+  if (operationLoading) {
+    return <PageLoading tip="正在处理，请稍候..." type="saving" />;
+  }
+
   // Tab 配置
   const tabs = [
     { key: 'all', label: `全部 (${tabCounts.all})` },
@@ -337,7 +398,7 @@ export default function NotificationPage() {
           <p className="text-sm text-slate-600 mt-1">查看系统通知和任务提醒</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button onClick={loadNotifications}>刷新</Button>
+          <Button onClick={() => loadNotifications(true)}>刷新</Button>
           {unreadCount > 0 && (
             <Button type="primary" onClick={handleMarkAllAsRead}>
               全部标记已读
@@ -359,12 +420,12 @@ export default function NotificationPage() {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-slate-600">{stat.label}</span>
               <div
-                className={`w-10 h-10 ${stat.color} rounded-lg flex items-center justify-center text-2xl`}
+                className={`w-10 h-10 ${stat.color} rounded-lg flex items-center justify-center text-white`}
               >
-                {stat.icon}
+                {getIcon(stat.iconType, 'w-6 h-6')}
               </div>
             </div>
-            <div className="text-2xl font-bold text-slate-900">{stat.count}</div>
+            <div className={`text-2xl font-bold ${stat.textColor}`}>{stat.count}</div>
           </div>
         ))}
       </div>
@@ -436,7 +497,7 @@ export default function NotificationPage() {
                   { label: '按优先级', value: 'priority' },
                 ]}
               />
-              <Button type="primary" size="large" onClick={loadNotifications}>
+              <Button type="primary" size="large" onClick={() => loadNotifications()}>
                 搜索
               </Button>
               <Button size="large" onClick={handleReset}>
@@ -463,9 +524,7 @@ export default function NotificationPage() {
 
         {/* 通知列表 */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Spin size="large" />
-          </div>
+          <PageLoading tip="正在加载站内通知..." />
         ) : paginatedNotifications.length === 0 ? (
           <div className="p-12">
             <Empty description="暂无通知" />
@@ -486,7 +545,9 @@ export default function NotificationPage() {
                 >
                   <div className="flex items-start gap-4">
                     {/* 图标 */}
-                    <div className="flex-shrink-0 text-3xl">{typeInfo.icon}</div>
+                    <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-gradient-to-br from-slate-100 to-slate-200">
+                      {getIcon(typeInfo.iconType, 'w-6 h-6 text-slate-700')}
+                    </div>
 
                     {/* 内容 */}
                     <div className="flex-1 min-w-0">

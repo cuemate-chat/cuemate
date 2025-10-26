@@ -148,29 +148,29 @@ export async function createNotification(data: {
 export function getNotificationTypeInfo(type: string): {
   label: string;
   color: string;
-  icon: string;
+  iconType: string;
 } {
   const typeMap: Record<
     string,
     {
       label: string;
       color: string;
-      icon: string;
+      iconType: string;
     }
   > = {
-    job_created: { label: '岗位创建', color: 'text-blue-700 bg-blue-50', icon: '💼' },
-    question_created: { label: '押题创建', color: 'text-green-700 bg-green-50', icon: '📝' },
-    interview_report: { label: '面试报告', color: 'text-purple-700 bg-purple-50', icon: '📊' },
-    knowledge_synced: { label: '知识库同步', color: 'text-cyan-700 bg-cyan-50', icon: '🔄' },
-    model_added: { label: '模型添加', color: 'text-indigo-700 bg-indigo-50', icon: '🤖' },
-    license_imported: { label: '许可证导入', color: 'text-green-700 bg-green-50', icon: '✅' },
-    license_expire: { label: '许可证到期', color: 'text-orange-700 bg-orange-50', icon: '⚠️' },
-    ad_expire: { label: '广告到期', color: 'text-amber-700 bg-amber-50', icon: '📢' },
-    task_success: { label: '任务成功', color: 'text-green-700 bg-green-50', icon: '✨' },
-    task_failed: { label: '任务失败', color: 'text-red-700 bg-red-50', icon: '❌' },
+    job_created: { label: '岗位创建', color: 'text-blue-700 bg-blue-50', iconType: 'briefcase' },
+    question_created: { label: '押题创建', color: 'text-green-700 bg-green-50', iconType: 'document' },
+    interview_report: { label: '面试报告', color: 'text-purple-700 bg-purple-50', iconType: 'chart' },
+    knowledge_synced: { label: '知识库同步', color: 'text-cyan-700 bg-cyan-50', iconType: 'refresh' },
+    model_added: { label: '模型添加', color: 'text-indigo-700 bg-indigo-50', iconType: 'cpu' },
+    license_imported: { label: '许可证导入', color: 'text-green-700 bg-green-50', iconType: 'check' },
+    license_expire: { label: '许可证到期', color: 'text-orange-700 bg-orange-50', iconType: 'warning' },
+    ad_expire: { label: '广告到期', color: 'text-amber-700 bg-amber-50', iconType: 'megaphone' },
+    task_success: { label: '任务成功', color: 'text-green-700 bg-green-50', iconType: 'sparkles' },
+    task_failed: { label: '任务失败', color: 'text-red-700 bg-red-50', iconType: 'xcircle' },
   };
 
-  return typeMap[type] || { label: '其他', color: 'text-slate-700 bg-slate-50', icon: '📌' };
+  return typeMap[type] || { label: '其他', color: 'text-slate-700 bg-slate-50', iconType: 'info' };
 }
 
 // 获取优先级的显示信息
