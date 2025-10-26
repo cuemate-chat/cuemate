@@ -22,13 +22,16 @@ import {
 } from '../../api/ai-conversations';
 import { listModels } from '../../api/models';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import PaginationBar from '../../components/PaginationBar';
 import { findProvider } from '../../providers';
+import { useLoading } from '../../hooks/useLoading';
 import AIConversationDetailDrawer from './AIConversationDetailDrawer';
 
 export default function AIRecordsList() {
   const [conversations, setConversations] = useState<AIConversation[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -194,25 +197,29 @@ export default function AIRecordsList() {
   ];
 
   // 加载AI对话记录
-  const loadAIConversations = async () => {
-    setLoading(true);
+  const loadAIConversations = async (showSuccessMessage: boolean = false) => {
+    startLoading();
     try {
       const params = {
         page,
         pageSize,
         ...filters,
       };
-      
+
       const response = await fetchAIConversations(params);
       setConversations(response.items || []);
       setTotal(response.total || 0);
+
+      if (showSuccessMessage) {
+        message.success('已刷新AI对话记录');
+      }
     } catch (error) {
       console.error('加载AI对话记录失败：', error);
       message.error('加载AI对话记录失败');
       setConversations([]);
       setTotal(0);
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -291,6 +298,7 @@ export default function AIRecordsList() {
 
   // 删除单条记录
   const handleDeleteSingle = async (id: number) => {
+    startOperation();
     try {
       await deleteAIConversation(id);
       message.success('删除成功');
@@ -299,6 +307,8 @@ export default function AIRecordsList() {
     } catch (error) {
       console.error('删除失败：', error);
       message.error('删除失败');
+    } finally {
+      await endOperation();
     }
   };
 
@@ -336,6 +346,16 @@ export default function AIRecordsList() {
         return '未知';
     }
   };
+
+  // 加载时显示全屏 loading
+  if (loading) {
+    return <PageLoading tip="正在加载 AI 对话记录..." />;
+  }
+
+  // 删除操作时显示全屏 loading
+  if (operationLoading) {
+    return <PageLoading tip="正在删除，请稍候..." type="saving" />;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -495,7 +515,7 @@ export default function AIRecordsList() {
           <div className="flex items-end">
             <Button type="primary" onClick={handleSearch} className="h-[42px] mr-2">搜索</Button>
             <Button onClick={handleReset} className="h-[42px] mr-2">重置</Button>
-            <Button onClick={loadAIConversations} disabled={loading} className="h-[42px]">刷新</Button>
+            <Button onClick={() => loadAIConversations(true)} disabled={loading} className="h-[42px]">刷新</Button>
           </div>
         </div>
       </div>

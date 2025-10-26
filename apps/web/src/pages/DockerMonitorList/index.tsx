@@ -4,14 +4,17 @@ import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import { DockerContainer, getContainers, restartContainer } from '../../api/docker';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import PaginationBar from '../../components/PaginationBar';
+import { useLoading } from '../../hooks/useLoading';
 import ContainerLogDrawer from './ContainerLogDrawer';
 
 const { Title, Text } = Typography;
 
 export default function DockerMonitorList() {
   const [containers, setContainers] = useState<DockerContainer[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   
@@ -20,26 +23,33 @@ export default function DockerMonitorList() {
   const [selectedContainer, setSelectedContainer] = useState<DockerContainer | null>(null);
 
   // 获取容器列表
-  const fetchContainers = async () => {
-    setLoading(true);
+  const fetchContainers = async (showSuccessMessage: boolean = false) => {
+    startLoading();
     try {
       const data = await getContainers();
       setContainers(data);
+
+      if (showSuccessMessage) {
+        message.success('已刷新容器列表');
+      }
     } catch (error) {
       message.error('获取容器列表失败');
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
   // 重启容器
   const handleRestartContainer = async (containerId: string) => {
+    startOperation();
     try {
       await restartContainer(containerId);
       message.success('容器重启成功');
       fetchContainers();
     } catch (error) {
       message.error('重启容器失败');
+    } finally {
+      await endOperation();
     }
   };
 
@@ -192,6 +202,16 @@ export default function DockerMonitorList() {
   const endIndex = startIndex + pageSize;
   const paginatedContainers = containers.slice(startIndex, endIndex);
 
+  // 加载时显示全屏 loading
+  if (loading) {
+    return <PageLoading tip="正在加载容器列表..." />;
+  }
+
+  // 重启容器操作时显示全屏 loading
+  if (operationLoading) {
+    return <PageLoading tip="正在重启容器，请稍候..." type="saving" />;
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* 页面标题 */}
@@ -238,7 +258,7 @@ export default function DockerMonitorList() {
           <Button
             type="primary"
             icon={<ReloadOutlined />}
-            onClick={fetchContainers}
+            onClick={() => fetchContainers(true)}
             loading={loading}
           >
             刷新

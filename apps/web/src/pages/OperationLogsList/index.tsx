@@ -19,12 +19,15 @@ import {
   type OperationStats,
 } from '../../api/operation-logs';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import PaginationBar from '../../components/PaginationBar';
+import { useLoading } from '../../hooks/useLoading';
 import OperationLogDetailDrawer from './OperationLogDetailDrawer';
 
 export default function OperationLogsList() {
   const [logs, setLogs] = useState<OperationLog[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -185,8 +188,8 @@ export default function OperationLogsList() {
   ];
 
   // 加载操作记录
-  const loadOperationLogs = async () => {
-    setLoading(true);
+  const loadOperationLogs = async (showSuccessMessage: boolean = false) => {
+    startLoading();
     try {
       const params = {
         page,
@@ -195,15 +198,19 @@ export default function OperationLogsList() {
         startTime: filters.startTime ? dayjs(filters.startTime).unix() : undefined,
         endTime: filters.endTime ? dayjs(filters.endTime).unix() : undefined,
       };
-      
+
       const response = await fetchOperationLogs(params);
       setLogs(response.list);
       setTotal(response.pagination.total);
+
+      if (showSuccessMessage) {
+        message.success('已刷新操作记录');
+      }
     } catch (error) {
       console.error('加载操作记录失败：', error);
       message.error('加载操作记录失败');
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -263,6 +270,7 @@ export default function OperationLogsList() {
 
   // 删除指定时间之前的记录
   const handleDeleteBefore = async (beforeDays: number) => {
+    startOperation();
     try {
       const beforeTime = dayjs().subtract(beforeDays, 'day').unix();
       const response = await batchDeleteOperationLogs({ beforeTime });
@@ -271,11 +279,14 @@ export default function OperationLogsList() {
     } catch (error) {
       console.error('删除失败：', error);
       message.error('删除失败');
+    } finally {
+      await endOperation();
     }
   };
 
   // 删除单条记录
   const handleDeleteSingle = async (id: number) => {
+    startOperation();
     try {
       await deleteOperationLog(id);
       message.success('删除成功');
@@ -283,6 +294,8 @@ export default function OperationLogsList() {
     } catch (error) {
       console.error('删除失败：', error);
       message.error('删除失败');
+    } finally {
+      await endOperation();
     }
   };
 
@@ -323,6 +336,16 @@ export default function OperationLogsList() {
         return `${baseClass} bg-purple-100 text-purple-800`;
     }
   };
+
+  // 加载时显示全屏 loading
+  if (loading) {
+    return <PageLoading tip="正在加载操作记录..." />;
+  }
+
+  // 删除操作时显示全屏 loading
+  if (operationLoading) {
+    return <PageLoading tip="正在删除，请稍候..." type="saving" />;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -451,7 +474,7 @@ export default function OperationLogsList() {
           <div className="col-span-2 flex items-end gap-2">
             <Button type="primary" onClick={handleSearch} className="h-[42px]">搜索</Button>
             <Button onClick={handleReset} className="h-[42px]">重置</Button>
-            <Button onClick={loadOperationLogs} disabled={loading} className="h-[42px]">刷新</Button>
+            <Button onClick={() => loadOperationLogs(true)} disabled={loading} className="h-[42px]">刷新</Button>
             <Button icon={<ArrowDownTrayIcon className="w-4 h-4" />} onClick={handleExport} className="h-[42px]">导出</Button>
             <Space.Compact>
               <Popconfirm title="确定要删除7天前的记录吗？" onConfirm={() => handleDeleteBefore(7)}>

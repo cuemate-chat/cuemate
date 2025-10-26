@@ -17,14 +17,18 @@ import {
 import CollapsibleSidebar from '../../components/CollapsibleSidebar';
 import FullScreenOverlay from '../../components/FullScreenOverlay';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import PaginationBar from '../../components/PaginationBar';
+import { useLoading } from '../../hooks/useLoading';
 import { findProvider, providerManifests } from '../../providers';
 import ModelEditDrawer from './ModelEditDrawer';
 import ProviderPickerDrawer from './ProviderPickerDrawer';
 
 export default function ModelsList() {
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
   const [testingModelId, setTestingModelId] = useState<string | null>(null);
+  const [testingInDrawer, setTestingInDrawer] = useState(false); // 编辑抽屉中的测试状态
+  const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   const [list, setList] = useState<any[]>([]);
   const [filter, setFilter] = useState<{
     type?: string;
@@ -103,9 +107,9 @@ export default function ModelsList() {
     ];
   }, [providers]);
 
-  const fetchList = async () => {
+  const fetchList = async (showSuccessMessage: boolean = false) => {
     const reqId = ++requestIdRef.current;
-    setLoading(true);
+    startLoading();
     try {
       const res: any = await listModels({
         type: filter.type,
@@ -132,11 +136,15 @@ export default function ModelsList() {
         setTotal(totalCount);
         const start = (page - 1) * pageSize;
         setList(all.slice(start, start + pageSize));
+
+        if (showSuccessMessage) {
+          message.success('已刷新模型列表');
+        }
       }
     } catch (e: any) {
       console.error('获取模型失败:', e);
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -179,6 +187,7 @@ export default function ModelsList() {
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
+        startOperation();
         try {
           await deleteModel(id);
           message.success('已删除');
@@ -186,6 +195,8 @@ export default function ModelsList() {
           await fetchList();
         } catch (error) {
           console.error('删除失败：', error);
+        } finally {
+          await endOperation();
         }
       }
     });
@@ -236,66 +247,89 @@ export default function ModelsList() {
   };
 
   const handleModelSave = async (formData: any) => {
-    // 组装 credentials：根据 provider 定义的字段收集
-    const provider = findProvider(formData.provider);
-    const fields =
-      provider?.credentialFieldsPerModel?.[formData.model_name] ||
-      provider?.credentialFieldsPerModel?.default ||
-      provider?.credentialFields ||
-      [];
-    const credentials: Record<string, any> = {};
-    fields.forEach((f) => {
-      if (formData[f.key] !== undefined && formData[f.key] !== '') credentials[f.key] = formData[f.key];
-    });
-    // 获取provider的icon_url路径，用于存储到数据库
-    const providerIconUrl = provider?.icon_url ?? null;
-    
-    const payload: any = {
-      ...formData,
-      icon: providerIconUrl,
-      version: formData.version || 'v1',
-      credentials,
-      params: (formData.params || []).map((p: any) => ({
-        ...p,
-        required: !!p.required,
-      })),
-    };
-    
-    const updatedModel = await upsertModel(payload);
-    
-    // 同步更新 localStorage 中的用户数据
-    const currentUser = storage.getUser();
-    if (currentUser && currentUser.selected_model_id === formData.id) {
-      // 如果保存的是当前用户选中的模型，则更新 localStorage
-      const updatedUser = {
-        ...currentUser,
-        model: {
-          ...updatedModel,
-          credentials: JSON.stringify(credentials), // 确保 credentials 是 JSON 字符串
-        },
-        model_params: (formData.params || []).map((p: any) => ({
+    startOperation();
+    try {
+      // 组装 credentials：根据 provider 定义的字段收集
+      const provider = findProvider(formData.provider);
+      const fields =
+        provider?.credentialFieldsPerModel?.[formData.model_name] ||
+        provider?.credentialFieldsPerModel?.default ||
+        provider?.credentialFields ||
+        [];
+      const credentials: Record<string, any> = {};
+      fields.forEach((f) => {
+        if (formData[f.key] !== undefined && formData[f.key] !== '') credentials[f.key] = formData[f.key];
+      });
+      // 获取provider的icon_url路径，用于存储到数据库
+      const providerIconUrl = provider?.icon_url ?? null;
+
+      const payload: any = {
+        ...formData,
+        icon: providerIconUrl,
+        version: formData.version || 'v1',
+        credentials,
+        params: (formData.params || []).map((p: any) => ({
           ...p,
-          model_id: formData.id,
           required: !!p.required,
         })),
       };
-      storage.setUser(updatedUser);
+
+      const updatedModel = await upsertModel(payload);
+
+      // 同步更新 localStorage 中的用户数据
+      const currentUser = storage.getUser();
+      if (currentUser && currentUser.selected_model_id === formData.id) {
+        // 如果保存的是当前用户选中的模型，则更新 localStorage
+        const updatedUser = {
+          ...currentUser,
+          model: {
+            ...updatedModel,
+            credentials: JSON.stringify(credentials), // 确保 credentials 是 JSON 字符串
+          },
+          model_params: (formData.params || []).map((p: any) => ({
+            ...p,
+            model_id: formData.id,
+            required: !!p.required,
+          })),
+        };
+        storage.setUser(updatedUser);
+      }
+
+      // 保存成功后关闭所有侧拉框
+      setEditing(null);
+      setProviderPickerOpen(false);
+      setSelectedProvider(null);
+
+      message.success('已保存');
+      fetchList();
+    } finally {
+      await endOperation();
     }
-    
-    // 保存成功后关闭所有侧拉框
-    setEditing(null);
-    setProviderPickerOpen(false);
-    setSelectedProvider(null);
-    
-    message.success('已保存');
-    fetchList();
   };
+
+  // 初始加载时显示全屏 loading
+  if (loading) {
+    return <PageLoading tip="正在加载模型列表..." />;
+  }
+
+  // 保存/删除操作时显示全屏 loading
+  if (operationLoading) {
+    return <PageLoading tip="正在处理，请稍候..." type="saving" />;
+  }
 
   return (
     <div className="flex gap-4 relative" style={{ height: MAIN_HEIGHT }}>
-      {/* 全屏遮罩组件 */}
+      {/* 全屏遮罩组件 - 列表中的测试 */}
       <FullScreenOverlay
         visible={!!testingModelId}
+        title="正在测试连通性"
+        subtitle="请稍候，正在验证模型连接..."
+        type="testing"
+      />
+
+      {/* 全屏遮罩组件 - 编辑抽屉中的测试 */}
+      <FullScreenOverlay
+        visible={testingInDrawer}
         title="正在测试连通性"
         subtitle="请稍候，正在验证模型连接..."
         type="testing"
@@ -350,7 +384,7 @@ export default function ModelsList() {
                 setPage(1);
               }}
             />
-            <Button onClick={() => fetchList()} disabled={loading} className="h-[32px]">
+            <Button onClick={() => fetchList(true)} disabled={loading} className="h-[32px]">
               刷新
             </Button>
             <Button type="primary" onClick={handleAddModel} className="h-[32px]">
@@ -524,6 +558,7 @@ export default function ModelsList() {
         }}
         onBackToProvider={handleBackToProviderPicker}
         onOk={handleModelSave}
+        onTestingChange={setTestingInDrawer}
       />
     </div>
   );
