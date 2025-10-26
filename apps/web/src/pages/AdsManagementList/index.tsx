@@ -17,13 +17,16 @@ import {
 } from '../../api/ads';
 import LicenseGuard from '../../components/LicenseGuard';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import PaginationBar from '../../components/PaginationBar';
+import { useLoading } from '../../hooks/useLoading';
 import CreateAdDrawer from './CreateAdDrawer';
 import EditAdDrawer from './EditAdDrawer';
 
 export default function AdsManagementList() {
   const [ads, setAds] = useState<PixelAd[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
@@ -55,7 +58,7 @@ export default function AdsManagementList() {
 
   // 获取广告列表
   const fetchAds = async (page = 1, limit = pageSize, search = '', status = '', block = '') => {
-    setLoading(true);
+    startLoading();
     try {
       const data = await listAdsPixel({
         page,
@@ -69,7 +72,7 @@ export default function AdsManagementList() {
     } catch (error) {
       console.error('获取广告列表出错:', error);
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -82,12 +85,15 @@ export default function AdsManagementList() {
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
+        startOperation();
         try {
           await deletePixelAd(ad.id);
           message.success('广告删除成功');
           fetchAds(currentPage, pageSize, searchTerm, statusFilter, blockFilter);
         } catch (error) {
           console.error('删除广告失败:', error);
+        } finally {
+          await endOperation();
         }
       }
     });
@@ -190,6 +196,11 @@ export default function AdsManagementList() {
     fetchAds(1, pageSize, '', '', '');
     fetchBlockConfigs();
   }, []);
+
+  // 删除操作时显示全屏 loading
+  if (operationLoading) {
+    return <PageLoading tip="正在删除广告，请稍候..." type="saving" />;
+  }
 
   return (
     <LicenseGuard feature="ads_management">
@@ -301,10 +312,7 @@ export default function AdsManagementList() {
         {/* 广告列表 */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-slate-600">加载中...</span>
-            </div>
+            <PageLoading tip="加载广告列表..." />
           ) : ads.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-slate-400 mb-2">暂无广告</div>

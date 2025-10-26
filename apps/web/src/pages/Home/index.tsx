@@ -12,11 +12,14 @@ import { Button, Modal, Select } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listJobs } from '../../api/jobs';
+import PageLoading from '../../components/PageLoading';
+import { useLoading } from '../../hooks/useLoading';
 import { webSocketService } from '../../services/webSocketService';
 
 export default function Home() {
   const [jobs, setJobs] = useState<Array<{ id: string; title: string }>>([]);
   const [currentJob, setCurrentJob] = useState<string | undefined>(undefined);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
   const navigate = useNavigate();
 
   // 检查并打开面试窗口
@@ -58,7 +61,8 @@ export default function Home() {
 
   // 加载岗位列表
   useEffect(() => {
-    (async () => {
+    const loadData = async () => {
+      startLoading();
       try {
         const data = await listJobs();
         const items = (data.items || []).map((i: any) => ({ id: i.id, title: i.title }));
@@ -66,11 +70,19 @@ export default function Home() {
         if (items.length > 0) setCurrentJob(items[0].id);
       } catch {
         // 全局 http 已有错误提示
+      } finally {
+        await endLoading();
       }
-    })();
-  }, []);
+    };
+    loadData();
+  }, [startLoading, endLoading]);
 
   const selectOptions = useMemo(() => jobs.map((j) => ({ value: j.id, label: j.title })), [jobs]);
+
+  // 初次加载时显示全屏 loading
+  if (loading) {
+    return <PageLoading tip="正在加载首页..." />;
+  }
 
   return (
     <div className="bg-transparent">

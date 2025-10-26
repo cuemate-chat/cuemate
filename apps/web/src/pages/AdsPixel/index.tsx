@@ -17,6 +17,8 @@ import { Select } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getBlockConfigs, getPublicActiveAds, type BlockConfig, type PixelAd } from '../../api/ads';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
+import { useLoading } from '../../hooks/useLoading';
 import { WEB_API_BASE } from '../../config';
 import MockUploadDrawer from './MockUploadDrawer';
 
@@ -54,7 +56,7 @@ const getImageUrl = (imagePath: string): string => {
 export default function AdsPixel() {
   const [ads, setAds] = useState<PixelAd[]>([]);
   const [blockConfigs, setBlockConfigs] = useState<BlockConfig[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
   const [adBlocks, setAdBlocks] = useState<AdBlock[]>([]);
   const [hoveredBlock, setHoveredBlock] = useState<AdBlock | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -77,16 +79,16 @@ export default function AdsPixel() {
 
   // 获取活跃广告和块配置并初始化布局
   const fetchData = async () => {
-    setLoading(true);
+    startLoading();
     try {
       const [adsResponse, blockConfigsResponse] = await Promise.all([
         getPublicActiveAds(),
         getBlockConfigs()
       ]);
-      
+
       const adsData = adsResponse.ads || [];
       const blockConfigsData = blockConfigsResponse.blockConfigs || [];
-      
+
       setAds(adsData);
       setBlockConfigs(blockConfigsData);
       initializeAdBlocks(adsData, blockConfigsData);
@@ -94,7 +96,7 @@ export default function AdsPixel() {
       // HTTP客户端已经处理了错误提示，这里不再重复弹出
       console.error('获取数据失败:', error);
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -319,14 +321,7 @@ export default function AdsPixel() {
   }, [handleKeyDown]);  // 事件监听的依赖
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-          <span className="mt-4 text-gray-700 text-lg">加载像素广告位中...</span>
-        </div>
-      </div>
-    );
+    return <PageLoading tip="加载像素广告位中..." />;
   }
 
   return (

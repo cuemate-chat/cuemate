@@ -20,23 +20,32 @@ import { changePassword, defaultUserForm, fetchMe, updateMe, userToFormData } fr
 import { storage } from '../../api/http';
 import { listModels } from '../../api/models';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
+import { useLoading } from '../../hooks/useLoading';
 
 export default function Settings() {
   const [form, setForm] = useState(defaultUserForm);
-  const [saving, setSaving] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const { loading: saving, start: startSaving, end: endSaving } = useLoading();
+  const { loading, start: startLoading, end: endLoading } = useLoading();
   const [modelOptions, setModelOptions] = useState<{ label: string; value: string }[]>([]);
 
   useEffect(() => {
-    fetchMe()
-      .then((user) => {
+    const loadData = async () => {
+      startLoading();
+      try {
+        const user = await fetchMe();
         if (user) {
           setForm(userToFormData(user));
           storage.setUser(user);
         }
-      })
-      .catch(() => {});
-  }, []);
+      } catch {
+        // error handled by global http client
+      } finally {
+        await endLoading();
+      }
+    };
+    loadData();
+  }, [startLoading, endLoading]);
 
   // 监听用户设置更新事件（如顶部语言选择器修改），同步更新表单
   useEffect(() => {
@@ -56,11 +65,14 @@ export default function Settings() {
       const { oldPassword, newPassword } = e.detail || {};
       if (!oldPassword || !newPassword) return;
       (async () => {
+        startSaving();
         try {
           await changePassword(oldPassword, newPassword);
           message.success('密码已更新');
         } catch (err: any) {
           console.error('修改密码失败:', err);
+        } finally {
+          await endSaving();
         }
       })();
     };
@@ -82,6 +94,16 @@ export default function Settings() {
       }
     })();
   }, []);
+
+  // 初次加载时显示全屏 loading
+  if (loading) {
+    return <PageLoading tip="正在加载系统设置..." />;
+  }
+
+  // 保存操作时显示全屏 loading
+  if (saving) {
+    return <PageLoading tip="正在保存设置..." type="saving" />;
+  }
 
   return (
     <div className="space-y-6">
@@ -356,10 +378,10 @@ export default function Settings() {
         </div>
         <div className="px-6 py-6 border-t border-slate-200 flex justify-center bg-slate-50 gap-3">
           <Button
-            disabled={refreshing}
+            disabled={loading}
             onClick={() => {
               (async () => {
-                setRefreshing(true);
+                startLoading();
                 try {
                   // 重新拉取用户信息
                   const user = await fetchMe();
@@ -380,13 +402,13 @@ export default function Settings() {
                 } catch (e: any) {
                   console.error('刷新失败:', e);
                 } finally {
-                  setRefreshing(false);
+                  await endLoading();
                 }
               })();
             }}
             className="h-[40px]"
           >
-            {refreshing ? '刷新中…' : '刷新'}
+            {loading ? '刷新中…' : '刷新'}
           </Button>
           <button
             disabled={saving}
@@ -404,7 +426,7 @@ export default function Settings() {
               
               // 直接复用 onSave 逻辑
               (async () => {
-                setSaving(true);
+                startSaving();
                 try {
                   const res = await updateMe(payload);
                   // 更新本地存储和表单状态
@@ -418,7 +440,7 @@ export default function Settings() {
                 } catch (e: any) {
                   console.error('保存失败:', e);
                 } finally {
-                  setSaving(false);
+                  await endSaving();
                 }
               })();
             }}
