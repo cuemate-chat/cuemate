@@ -1,15 +1,18 @@
 import { DeleteOutlined, RightOutlined } from '@ant-design/icons';
-import { Badge, Button, Empty, Popconfirm, Spin, Tag, Tooltip } from 'antd';
+import { Badge, Button, Empty, Popconfirm, Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { deleteInterview, listInterviews } from '../../api/reviews';
 import { message as globalMessage } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
+import { useLoading } from '../../hooks/useLoading';
 
 export default function Reviews() {
   const nav = useNavigate();
   const [searchParams] = useSearchParams();
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   const [items, setItems] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [expandedJobContent, setExpandedJobContent] = useState<Set<string>>(new Set());
@@ -18,7 +21,7 @@ export default function Reviews() {
 
   useEffect(() => {
     (async () => {
-      setLoading(true);
+      startLoading();
       try {
         const pageSize = 50; // 受后端上限约束
         let page = 1;
@@ -40,7 +43,7 @@ export default function Reviews() {
         setItems(aggregated);
         setTotal(totalCount);
       } finally {
-        setLoading(false);
+        await endLoading();
       }
     })();
   }, []);
@@ -55,15 +58,18 @@ export default function Reviews() {
     }
   }, [items, searchParams]);
 
+  // 删除操作时显示全屏 loading
+  if (operationLoading) {
+    return <PageLoading tip="正在删除面试记录，请稍候..." type="saving" />;
+  }
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
       <div className="text-sm text-slate-600 mb-3">
         面试时间轴 <span className="text-slate-400">（共 {total} 场面试）</span>
       </div>
       {loading ? (
-        <div className="py-20 text-center">
-          <Spin />
-        </div>
+        <PageLoading tip="正在加载面试记录..." />
       ) : (
         <div className="space-y-4">
           {items.length === 0 && (
@@ -238,25 +244,30 @@ export default function Reviews() {
                           okText="删除"
                           okButtonProps={{ danger: true }}
                           onConfirm={async () => {
-                            await deleteInterview(it.id);
-                            globalMessage.success('已删除该场面试');
-                            // 重新加载（与初始化相同）
-                            const pageSize = 50;
-                            let page = 1;
-                            let aggregated: any[] = [];
-                            let totalCount = 0;
-                            const maxPages = 100;
-                            // eslint-disable-next-line no-constant-condition
-                            while (true) {
-                              const res = await listInterviews(page, pageSize);
-                              totalCount = res.total || 0;
-                              aggregated = aggregated.concat(res.items || []);
-                              if (aggregated.length >= totalCount) break;
-                              page += 1;
-                              if (page > maxPages) break;
+                            startOperation();
+                            try {
+                              await deleteInterview(it.id);
+                              globalMessage.success('已删除该场面试');
+                              // 重新加载（与初始化相同）
+                              const pageSize = 50;
+                              let page = 1;
+                              let aggregated: any[] = [];
+                              let totalCount = 0;
+                              const maxPages = 100;
+                              // eslint-disable-next-line no-constant-condition
+                              while (true) {
+                                const res = await listInterviews(page, pageSize);
+                                totalCount = res.total || 0;
+                                aggregated = aggregated.concat(res.items || []);
+                                if (aggregated.length >= totalCount) break;
+                                page += 1;
+                                if (page > maxPages) break;
+                              }
+                              setItems(aggregated);
+                              setTotal(totalCount);
+                            } finally {
+                              await endOperation();
                             }
-                            setItems(aggregated);
-                            setTotal(totalCount);
                           }}
                         >
                           <Button danger icon={<DeleteOutlined />}>

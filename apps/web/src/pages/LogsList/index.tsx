@@ -18,7 +18,9 @@ import {
 } from '../../api/logs';
 import { DangerIcon, WarningIcon } from '../../components/Icons';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import PaginationBar from '../../components/PaginationBar';
+import { useLoading } from '../../hooks/useLoading';
 import LogViewerDrawer from './LogViewerDrawer';
 
 export default function LogsList() {
@@ -33,7 +35,8 @@ export default function LogsList() {
   const [items, setItems] = useState<
     Array<{ level: LogLevel; service: string; date: string; size: number; mtimeMs: number }>
   >([]);
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   
   // 日志查看器状态
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -183,7 +186,7 @@ export default function LogsList() {
   }, []);
 
   const loadLogs = async () => {
-    setLoading(true);
+    startLoading();
     try {
       const res = await fetchLogs({
         level: level || undefined,
@@ -197,7 +200,7 @@ export default function LogsList() {
     } catch (err) {
       console.error('加载日志失败：', err);
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -211,6 +214,7 @@ export default function LogsList() {
   };
 
   const clearLogContent = async (it: { level: LogLevel; service: string; date: string }) => {
+    startOperation();
     try {
       await clearLogContentApi({ level: it.level, service: it.service, date: it.date });
       message.success('日志清理成功');
@@ -218,10 +222,13 @@ export default function LogsList() {
       loadLogs();
     } catch (error: any) {
       console.error('日志清理失败：', error);
+    } finally {
+      await endOperation();
     }
   };
 
   const deleteLogFile = async (it: { level: LogLevel; service: string; date: string }) => {
+    startOperation();
     try {
       await deleteLogFileApi({ level: it.level, service: it.service, date: it.date });
       message.success('日志文件已删除');
@@ -229,10 +236,13 @@ export default function LogsList() {
       loadLogs();
     } catch (error: any) {
       console.error('日志删除失败:', error);
+    } finally {
+      await endOperation();
     }
   };
 
   const clearTodayLogs = async () => {
+    startOperation();
     try {
       const result = await clearTodayLogsApi();
       if (result.success) {
@@ -245,6 +255,8 @@ export default function LogsList() {
     } catch (error: any) {
       console.error('今日日志清理失败:', error);
       message.error('今日日志清理失败');
+    } finally {
+      await endOperation();
     }
   };
 
@@ -270,6 +282,16 @@ export default function LogsList() {
       </span>
     );
   };
+
+  // 加载时显示全屏 loading
+  if (loading) {
+    return <PageLoading tip="正在加载日志列表..." />;
+  }
+
+  // 清理/删除操作时显示全屏 loading
+  if (operationLoading) {
+    return <PageLoading tip="正在处理，请稍候..." type="saving" />;
+  }
 
   return (
     <div className="p-4">

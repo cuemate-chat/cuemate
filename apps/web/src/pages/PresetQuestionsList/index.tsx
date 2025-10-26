@@ -1,5 +1,5 @@
 import { CheckIcon, CloudArrowUpIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Button, Card, Checkbox, DatePicker, Input, Modal, Select, Spin } from 'antd';
+import { Button, Card, Checkbox, DatePicker, Input, Modal, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -12,7 +12,9 @@ import {
 import { listTags } from '../../api/questions';
 import LicenseGuard from '../../components/LicenseGuard';
 import { message as globalMessage } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import PaginationBar from '../../components/PaginationBar';
+import { useLoading } from '../../hooks/useLoading';
 import TagManagerDrawer from '../QuestionsList/TagManagerDrawer';
 import BatchImportDrawer from './BatchImportDrawer';
 import BatchSyncDrawer from './BatchSyncDrawer';
@@ -21,7 +23,8 @@ import EditPresetQuestionDrawer from './EditPresetQuestionDrawer';
 import SyncJobsDetailDrawer from './SyncJobsDetailDrawer';
 
 export default function PresetQuestionsList() {
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   const [items, setItems] = useState<PresetQuestion[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -70,7 +73,7 @@ export default function PresetQuestionsList() {
   // 加载数据
   const reloadList = async (targetPage?: number) => {
     const reqId = ++requestIdRef.current;
-    setLoading(true);
+    startLoading();
     try {
       const curPage = targetPage ?? page;
       const data = await listPresetQuestions({
@@ -92,7 +95,7 @@ export default function PresetQuestionsList() {
     } catch (e: any) {
       globalMessage.error(e?.message || '加载失败');
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -151,12 +154,15 @@ export default function PresetQuestionsList() {
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
+        startOperation();
         try {
           await deletePresetQuestion(item.id);
           globalMessage.success('删除成功');
           await reloadList();
         } catch (e: any) {
           globalMessage.error(e?.message || '删除失败');
+        } finally {
+          await endOperation();
         }
       }
     });
@@ -173,12 +179,15 @@ export default function PresetQuestionsList() {
       title: '确认删除',
       content: `确定要删除选中的 ${selectedIds.length} 个题目吗？此操作不可恢复。`,
       onOk: async () => {
+        startOperation();
         try {
           await batchDeletePresetQuestions(selectedIds);
           globalMessage.success('批量删除成功');
           await reloadList();
         } catch (e: any) {
           globalMessage.error(e?.message || '批量删除失败');
+        } finally {
+          await endOperation();
         }
       },
     });
@@ -195,6 +204,11 @@ export default function PresetQuestionsList() {
     setCurrentQuestionTitle(questionTitle);
     setSyncJobsDetailDrawerOpen(true);
   };
+
+  // 删除操作时显示全屏 loading
+  if (operationLoading) {
+    return <PageLoading tip="正在删除，请稍候..." type="saving" />;
+  }
 
   return (
     <LicenseGuard feature="preset_questions">
@@ -314,9 +328,7 @@ export default function PresetQuestionsList() {
 
         {/* 卡片列表 */}
         {loading ? (
-          <div className="py-20 text-center">
-            <Spin />
-          </div>
+          <PageLoading tip="正在加载预置题库..." />
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

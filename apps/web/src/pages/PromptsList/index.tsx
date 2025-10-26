@@ -9,13 +9,16 @@ import {
   updatePrompt,
 } from '../../api/prompts';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import PaginationBar from '../../components/PaginationBar';
+import { useLoading } from '../../hooks/useLoading';
 import CreatePromptDrawer from './CreatePromptDrawer';
 import EditPromptDrawer from './EditPromptDrawer';
 import RestorePromptDrawer from './RestorePromptDrawer';
 
 export default function PromptsList() {
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   const [items, setItems] = useState<Prompt[]>([]);
   const [sourceFilter, setSourceFilter] = useState<'desktop' | 'web' | ''>('');
   const [page, setPage] = useState(1);
@@ -129,7 +132,7 @@ export default function PromptsList() {
   ];
 
   const loadPrompts = async () => {
-    setLoading(true);
+    startLoading();
     try {
       const res = await listPrompts({
         source: sourceFilter || undefined,
@@ -143,7 +146,7 @@ export default function PromptsList() {
     } catch (err: any) {
       message.error(err?.message || '加载失败');
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -162,6 +165,7 @@ export default function PromptsList() {
   };
 
   const handleSave = async (id: string, content: string, extra?: string) => {
+    startOperation();
     try {
       await updatePrompt(id, { content, extra });
       message.success('Prompt 更新成功');
@@ -170,6 +174,8 @@ export default function PromptsList() {
       loadPrompts();
     } catch (err: any) {
       message.error(err?.message || '更新失败');
+    } finally {
+      await endOperation();
     }
   };
 
@@ -179,6 +185,7 @@ export default function PromptsList() {
     description: string;
     source: 'desktop' | 'web';
   }) => {
+    startOperation();
     try {
       await createPrompt(data);
       message.success('Prompt 创建成功');
@@ -187,6 +194,8 @@ export default function PromptsList() {
       loadPrompts();
     } catch (err: any) {
       message.error(err?.message || '创建失败');
+    } finally {
+      await endOperation();
     }
   };
 
@@ -199,6 +208,16 @@ export default function PromptsList() {
       message.error(err?.message || '获取 Prompt 详情失败');
     }
   };
+
+  // 加载时显示全屏 loading
+  if (loading) {
+    return <PageLoading tip="正在加载 Prompt 列表..." />;
+  }
+
+  // 保存/创建操作时显示全屏 loading
+  if (operationLoading) {
+    return <PageLoading tip="正在保存，请稍候..." type="saving" />;
+  }
 
   return (
     <div className="p-4">
