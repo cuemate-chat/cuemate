@@ -1,7 +1,9 @@
-import { Button, Card, Form, Input, InputNumber, Select, Spin, Switch, Tabs } from 'antd';
+import { Button, Card, Form, Input, InputNumber, Select, Switch, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
 import { getAsrConfig, saveAsrConfig, type AsrConfig } from '../../api/asr';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
+import { useLoading } from '../../hooks/useLoading';
 import { webSocketService } from '../../services/webSocketService';
 
 // 默认配置值
@@ -34,8 +36,8 @@ const DEFAULT_CONFIG = {
 };
 
 export default function AsrSettings() {
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { loading: saving, start: startSaving, end: endSaving } = useLoading();
   const [config, setConfig] = useState<AsrConfig | null>(null);
   const [form] = Form.useForm();
 
@@ -111,7 +113,7 @@ export default function AsrSettings() {
 
   // 加载配置
   const loadConfig = async () => {
-    setLoading(true);
+    startLoading();
     try {
       const data = await getAsrConfig();
       setConfig(data.config);
@@ -128,13 +130,13 @@ export default function AsrSettings() {
     } catch (error: any) {
       console.error('加载配置失败：', error);
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
   // 保存配置
   const saveConfig = async (values: any) => {
-    setSaving(true);
+    startSaving();
     try {
       const data = await saveAsrConfig(values);
       message.success(data.message || '配置已保存');
@@ -142,7 +144,7 @@ export default function AsrSettings() {
     } catch (error: any) {
       console.error('保存失败：', error);
     } finally {
-      setSaving(false);
+      await endSaving();
     }
   };
 
@@ -153,11 +155,7 @@ export default function AsrSettings() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Spin size="large" />
-      </div>
-    );
+    return <PageLoading tip="正在加载 ASR 配置..." />;
   }
 
   return (

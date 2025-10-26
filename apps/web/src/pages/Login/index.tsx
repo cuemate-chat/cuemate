@@ -5,6 +5,7 @@ import { storage } from '../../api/http';
 import LeftImage from '../../assets/login-left.png';
 import Logo from '../../assets/logo-background.png';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import { ROUTES, VALIDATION } from '../../constants';
 
 export default function Login() {
@@ -66,6 +67,11 @@ export default function Login() {
       setSubmitting(false);
     }
   };
+
+  // 提交时显示全屏 loading
+  if (submitting) {
+    return <PageLoading tip="正在登录..." />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center login-bg p-10">

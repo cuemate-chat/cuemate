@@ -6,6 +6,7 @@ import { createJob, extractResumeText } from '../../api/jobs';
 import image from '../../assets/login-left3.png';
 import CollapsibleSidebar from '../../components/CollapsibleSidebar';
 import { message as globalMessage } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import ResumeExampleDrawer from './ResumeExampleDrawer';
 
 const { TextArea } = Input;
@@ -32,6 +33,9 @@ export default function JobsNew() {
   // Step3: 提交态由 progress 控制
   const [progress, setProgress] = useState(0);
   const progressTimerRef = useRef<number | null>(null);
+
+  // 文件解析中的 loading 状态
+  const [parsingFile, setParsingFile] = useState(false);
 
   // 自适应行数：根据屏幕高度计算合适的文本域行数
   const [adaptiveRows, setAdaptiveRows] = useState<{ desc: number; resume: number }>({ desc: 20, resume: 13 });
@@ -203,6 +207,11 @@ export default function JobsNew() {
     globalMessage.success('已回退至覆盖前的内容');
   };
 
+  // 文件解析时显示全屏 loading
+  if (parsingFile) {
+    return <PageLoading tip="正在解析简历文件..." />;
+  }
+
   return (
     <div className="bg-transparent">
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
@@ -300,15 +309,17 @@ export default function JobsNew() {
                   }
                   setResumeMeta({ name: file.name, size: file.size, type: file.type });
                   (async () => {
-                    // 1) 先尝试本地读取 TXT
-                    const localText = await extractTextFromFile(file);
-                    if (localText && localText.trim()) {
-                      setResumeText(localText.slice(0, 20000));
-                      globalMessage.success('已读取简历文本到输入框');
-                      return;
-                    }
-                    // 2) 调用后端解析 PDF/Word
+                    setParsingFile(true);
                     try {
+                      // 1) 先尝试本地读取 TXT
+                      const localText = await extractTextFromFile(file);
+                      if (localText && localText.trim()) {
+                        setResumeText(localText.slice(0, 20000));
+                        globalMessage.success('已读取简历文本到输入框');
+                        return;
+                      }
+                      // 2) 调用后端解析 PDF/Word
+                      try {
                       // 检查是否有认证token
                       const token = localStorage.getItem('auth_token');
                       if (!token) {
@@ -336,6 +347,9 @@ export default function JobsNew() {
                       
                       setResumeText(placeholderText);
                       globalMessage.warning(errorMessage);
+                    }
+                    } finally {
+                      setParsingFile(false);
                     }
                   })();
                   return false; // 阻止上传到服务器
