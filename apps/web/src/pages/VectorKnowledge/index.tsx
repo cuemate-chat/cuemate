@@ -14,16 +14,17 @@ import {
   searchQuestions,
   searchResumes
 } from '../../api/vector';
-import FullScreenOverlay from '../../components/FullScreenOverlay';
 import { WarningIcon } from '../../components/Icons';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
+import { useLoading } from '../../hooks/useLoading';
 import DocumentDetailDrawer from './DocumentDetailDrawer';
 import FullContentDrawer from './FullContentDrawer';
 
 export default function VectorKnowledge() {
   const [searchResults, setSearchResults] = useState<VectorDocument[]>([]);
   const [totalResults, setTotalResults] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
   const [showFilters, setShowFilters] = useState(false);
   const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
   // 相关度最低阈值（百分比）。0 表示 >0%，10 表示 >10% ... 100 表示 =100%
@@ -49,14 +50,14 @@ export default function VectorKnowledge() {
     questions?: VectorDocument[];
   } | null>(null);
   const [currentTab, setCurrentTab] = useState('jobs'); // 控制主标签页：jobs, resumes, questions, sync-status
-  
+
   // FullContentDrawer 状态管理
   const [fullContentDrawerVisible, setFullContentDrawerVisible] = useState(false);
   const [currentFullContentDoc, setCurrentFullContentDoc] = useState<VectorDocument | null>(null);
-  
+
   // 同步和清空的加载状态
-  const [syncLoading, setSyncLoading] = useState(false);
-  const [cleanLoading, setCleanLoading] = useState(false);
+  const { loading: syncLoading, start: startSync, end: endSync } = useLoading();
+  const { loading: cleanLoading, start: startClean, end: endClean } = useLoading();
 
   // 获取标签列表和默认加载所有内容
   useEffect(() => {
@@ -69,7 +70,7 @@ export default function VectorKnowledge() {
   // 根据当前标签页加载对应数据
   const loadDocumentsByTab = async () => {
     try {
-      setLoading(true);
+      startLoading();
       let result;
 
       // 根据当前标签页调用不同的搜索函数，同时应用当前筛选条件
@@ -126,7 +127,7 @@ export default function VectorKnowledge() {
       setSearchResults([]);
       setTotalResults(0);
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -166,7 +167,7 @@ export default function VectorKnowledge() {
   // 搜索文档（支持传入局部覆盖，便于在交互事件里立刻生效）
   const searchDocuments = async (overrides?: Partial<SearchFilters>) => {
     try {
-      setLoading(true);
+      startLoading();
       let result;
       const finalFilters: SearchFilters = overrides ? { ...filters, ...overrides } : filters;
       if (overrides) {
@@ -227,7 +228,7 @@ export default function VectorKnowledge() {
       setSearchResults([]);
       setTotalResults(0);
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -308,6 +309,7 @@ export default function VectorKnowledge() {
       okType: 'danger',
       cancelText: '取消',
       onOk: async () => {
+        startLoading();
         try {
           let result;
 
@@ -330,6 +332,8 @@ export default function VectorKnowledge() {
           }
         } catch (error) {
           message.error('删除失败: ' + error);
+        } finally {
+          await endLoading();
         }
       },
     });
@@ -459,11 +463,11 @@ export default function VectorKnowledge() {
               <h2 className="text-xl font-semibold text-slate-900 mb-2">数据同步状态</h2>
             </div>
             
-            <SyncStatusOverview 
-              onSyncStart={() => setSyncLoading(true)}
-              onSyncEnd={() => setSyncLoading(false)}
-              onCleanStart={() => setCleanLoading(true)}
-              onCleanEnd={() => setCleanLoading(false)}
+            <SyncStatusOverview
+              onSyncStart={startSync}
+              onSyncEnd={endSync}
+              onCleanStart={startClean}
+              onCleanEnd={endClean}
             />
           </div>
         )}
@@ -907,31 +911,23 @@ export default function VectorKnowledge() {
           onClose={() => setFullContentDrawerVisible(false)}
           document={currentFullContentDoc}
         />
-        {/* 全屏遮罩组件 */}
-        <FullScreenOverlay
-          visible={syncLoading}
-          title="正在同步所有数据"
-          subtitle="请稍候，这可能需要几秒钟的时间..."
-          type="loading"
-        />
-        
-        <FullScreenOverlay
-          visible={cleanLoading}
-          title="正在清空所有数据"
-          subtitle="请稍候，正在删除向量库中的所有数据..."
-          type="loading"
-        />
+        {/* 同步和清空操作的全屏 loading */}
+        {syncLoading && <PageLoading tip="正在同步所有数据，请稍候..." type="loading" />}
+        {cleanLoading && <PageLoading tip="正在清空所有数据，请稍候..." type="saving" />}
+        {loading && searchResults.length === 0 && !syncLoading && !cleanLoading && (
+          <PageLoading tip="正在加载，请稍候..." />
+        )}
       </div>
     </div>
   );
 }
 
 // 同步状态概览组件
-const SyncStatusOverview = ({ 
-  onSyncStart, 
-  onSyncEnd, 
-  onCleanStart, 
-  onCleanEnd 
+const SyncStatusOverview = ({
+  onSyncStart,
+  onSyncEnd,
+  onCleanStart,
+  onCleanEnd
 }: {
   onSyncStart?: () => void;
   onSyncEnd?: () => void;
@@ -939,8 +935,7 @@ const SyncStatusOverview = ({
   onCleanEnd?: () => void;
 }) => {
   const [syncStatus, setSyncStatus] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [cleanLoading, setCleanLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
 
   useEffect(() => {
     loadSyncStatus();
@@ -997,7 +992,7 @@ const SyncStatusOverview = ({
       cancelText: '取消',
       onOk: async () => {
         try {
-          setLoading(true);
+          startLoading();
           onSyncStart?.();
           const { syncAll } = await import('../../api/vector');
           // 不传jobId同步所有数据
@@ -1025,7 +1020,7 @@ const SyncStatusOverview = ({
           
           message.error(errorMessage);
         } finally {
-          setLoading(false);
+          await endLoading();
           onSyncEnd?.();
         }
       }
@@ -1066,7 +1061,6 @@ const SyncStatusOverview = ({
       width: 500,
       onOk: async () => {
         try {
-          setCleanLoading(true);
           onCleanStart?.();
           const { cleanAllVectorData } = await import('../../api/vector');
           const result = await cleanAllVectorData();
@@ -1079,7 +1073,7 @@ const SyncStatusOverview = ({
           }
         } catch (error: any) {
           let errorMessage = '清空失败：';
-          
+
           if (error.response?.status === 401) {
             errorMessage += '登录已过期，请重新登录';
           } else if (error.response?.status === 503) {
@@ -1091,10 +1085,9 @@ const SyncStatusOverview = ({
           } else {
             errorMessage += '未知错误';
           }
-          
+
           message.error(errorMessage);
         } finally {
-          setCleanLoading(false);
           onCleanEnd?.();
         }
       },
@@ -1102,11 +1095,7 @@ const SyncStatusOverview = ({
   };
 
   if (!syncStatus) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <PageLoading tip="加载同步状态..." />;
   }
 
   const totalItems = syncStatus.job.total + syncStatus.resume.total + syncStatus.questions.total;
@@ -1120,21 +1109,21 @@ const SyncStatusOverview = ({
         <div className="flex gap-4 justify-center">
           <button
             onClick={handleSyncAll}
-            disabled={loading || cleanLoading}
+            disabled={loading}
             className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
-              loading || cleanLoading
+              loading
                 ? 'bg-gray-400 text-white cursor-not-allowed'
                 : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg transform hover:scale-105'
             }`}
           >
             一键同步所有数据
           </button>
-          
+
           <button
             onClick={handleCleanAll}
-            disabled={loading || cleanLoading}
+            disabled={loading}
             className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
-              loading || cleanLoading
+              loading
                 ? 'bg-gray-400 text-white cursor-not-allowed'
                 : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg transform hover:scale-105'
             }`}

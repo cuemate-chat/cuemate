@@ -1,4 +1,4 @@
-import { Button, Card, DatePicker, Input, Modal, Select, Spin } from 'antd';
+import { Button, Card, DatePicker, Input, Modal, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -12,7 +12,9 @@ import {
 import CollapsibleSidebar from '../../components/CollapsibleSidebar';
 import { DocumentIcon, SearchIcon, WarningIcon } from '../../components/Icons';
 import { message as globalMessage } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
 import PaginationBar from '../../components/PaginationBar';
+import { useLoading } from '../../hooks/useLoading';
 import CreateQuestionDrawer from './CreateQuestionDrawer';
 import QuestionDetailDrawer from './QuestionDetailDrawer';
 import SyncVectorDrawer from './SyncVectorDrawer';
@@ -22,7 +24,8 @@ export default function QuestionsList() {
   const [searchParams] = useSearchParams();
   const [jobs, setJobs] = useState<Array<{ id: string; title: string; question_count?: number }>>([]);
   const [jobId, setJobId] = useState<string | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
+  const { loading, withLoading } = useLoading();
+  const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   const [items, setItems] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -166,6 +169,7 @@ export default function QuestionsList() {
       cancelText: '取消',
       width: 500,
       onOk: async () => {
+        startOperation();
         try {
           const result = await deleteAllQuestionsByJob(jobId);
           globalMessage.success(result.message);
@@ -173,6 +177,8 @@ export default function QuestionsList() {
           await refreshJobs(); // 刷新岗位列表中的数量
         } catch (e: any) {
           globalMessage.error(e?.message || '删除失败');
+        } finally {
+          await endOperation();
         }
       },
     });
@@ -181,8 +187,8 @@ export default function QuestionsList() {
   const reloadList = async (targetPage?: number) => {
     const reqId = ++requestIdRef.current;
     if (!jobId) return;
-    setLoading(true);
-    try {
+
+    await withLoading(async () => {
       const curPage = targetPage ?? page;
       const data = await listInterviewQuestions(jobId, curPage, pageSize, {
         day: appliedDay,
@@ -211,9 +217,7 @@ export default function QuestionsList() {
         setItems(data.items || []);
         setTotal(totalCount);
       }
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   useEffect(() => {
@@ -242,6 +246,11 @@ export default function QuestionsList() {
     const stats = await getIQSyncStats(jobId);
     setSyncStats(stats);
   };
+
+  // 删除操作时显示全屏 loading
+  if (operationLoading) {
+    return <PageLoading tip="正在删除，请稍候..." type="saving" />;
+  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -390,9 +399,7 @@ export default function QuestionsList() {
             </div>
           </div>
           {loading ? (
-            <div className="py-20 text-center">
-              <Spin />
-            </div>
+            <PageLoading tip="正在加载押题列表..." />
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -452,6 +459,7 @@ export default function QuestionsList() {
                               cancelText: '取消',
                               okType: 'danger',
                               onOk: async () => {
+                                startOperation();
                                 try {
                                   await deleteInterviewQuestion(it.id);
                                   globalMessage.success('成功删除该条押题数据！');
@@ -459,6 +467,8 @@ export default function QuestionsList() {
                                   await refreshJobs(); // 刷新岗位列表
                                 } catch (error: any) {
                                   globalMessage.error(error?.message || '删除失败');
+                                } finally {
+                                  await endOperation();
                                 }
                               }
                             });

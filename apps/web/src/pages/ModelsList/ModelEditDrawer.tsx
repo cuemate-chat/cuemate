@@ -16,6 +16,7 @@ interface ModelEditDrawerProps {
   selectedProvider?: any;
   onBackToProvider?: () => void;
   onOk: (formData: any) => Promise<void>;
+  onTestingChange?: (testing: boolean) => void; // 通知父组件测试状态
 }
 
 export default function ModelEditDrawer({
@@ -24,7 +25,8 @@ export default function ModelEditDrawer({
   data,
   selectedProvider,
   onBackToProvider,
-  onOk
+  onOk,
+  onTestingChange
 }: ModelEditDrawerProps) {
   const [form, setForm] = useState<any>(data || { scope: 'public', type: 'llm', params: [] });
   const [saving, setSaving] = useState(false);
@@ -78,6 +80,7 @@ export default function ModelEditDrawer({
     }
 
     setTesting(true);
+    onTestingChange?.(true); // 通知父组件开始测试
     try {
       const result = await testModelConnectivity(form.id);
       console.debug('测试连接结果:', result);
@@ -87,6 +90,7 @@ export default function ModelEditDrawer({
       message.error(error?.message || '连接测试失败，请检查配置信息');
     } finally {
       setTesting(false);
+      onTestingChange?.(false); // 通知父组件测试结束
     }
   };
 

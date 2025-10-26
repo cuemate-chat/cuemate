@@ -8,6 +8,8 @@ import CollapsibleSidebar from '../../components/CollapsibleSidebar';
 import FullScreenOverlay from '../../components/FullScreenOverlay';
 import { WarningIcon } from '../../components/Icons';
 import { message as globalMessage } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
+import { useLoading } from '../../hooks/useLoading';
 import ResumeOptimizeDrawer from './ResumeOptimizeDrawer';
 import UploadResumeDrawer from './UploadResumeDrawer';
 
@@ -18,10 +20,10 @@ export default function JobsList() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [resumeContent, setResumeContent] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
   const [adaptiveRows, setAdaptiveRows] = useState<{ desc: number; resume: number }>({ desc: 8, resume: 8 });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [optimizeLoading, setOptimizeLoading] = useState(false);
+  const { loading: optimizeLoading, start: startOptimize, end: endOptimize } = useLoading();
   const [optimizeModalVisible, setOptimizeModalVisible] = useState(false);
   const [optimizeResult, setOptimizeResult] = useState<{
     suggestions: string;
@@ -60,24 +62,32 @@ export default function JobsList() {
   }, []);
 
   useEffect(() => {
-    (async () => {
-      const data = await listJobs();
-      setItems(data.items || []);
-      if (data.items?.length) {
-        // 优先选中 URL 参数中指定的 jobId
-        const urlSelectedId = searchParams.get('selectedId');
-        const targetJob = urlSelectedId
-          ? data.items.find(item => item.id === urlSelectedId)
-          : data.items[0];
+    const loadData = async () => {
+      startLoading();
+      try {
+        const data = await listJobs();
+        setItems(data.items || []);
+        if (data.items?.length) {
+          // 优先选中 URL 参数中指定的 jobId
+          const urlSelectedId = searchParams.get('selectedId');
+          const targetJob = urlSelectedId
+            ? data.items.find(item => item.id === urlSelectedId)
+            : data.items[0];
 
-        const jobToSelect = targetJob || data.items[0];
-        setSelectedId(jobToSelect.id);
-        setTitle(jobToSelect.title || '');
-        setDescription(jobToSelect.description || '');
-        setResumeContent(jobToSelect.resumeContent || '');
+          const jobToSelect = targetJob || data.items[0];
+          setSelectedId(jobToSelect.id);
+          setTitle(jobToSelect.title || '');
+          setDescription(jobToSelect.description || '');
+          setResumeContent(jobToSelect.resumeContent || '');
+        }
+      } catch (error) {
+        // error handled by global http client
+      } finally {
+        await endLoading();
       }
-    })();
-  }, [searchParams]);
+    };
+    loadData();
+  }, [searchParams, startLoading, endLoading]);
 
   const selectJob = async (id: string) => {
     setSelectedId(id);
@@ -91,7 +101,7 @@ export default function JobsList() {
 
   const onSave = async () => {
     if (!selectedId) return;
-    setLoading(true);
+    startLoading();
     try {
       await updateJob(selectedId, { title, description, resumeContent });
       // 更新本地列表缓存
@@ -106,7 +116,7 @@ export default function JobsList() {
     } catch (e: any) {
       globalMessage.error(e?.message || '保存失败');
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -157,7 +167,7 @@ export default function JobsList() {
       cancelText: '取消',
       width: 500,
       onOk: async () => {
-        setLoading(true);
+        startLoading();
         try {
           // 调用级联删除API
           await deleteJob(selectedId);
@@ -176,7 +186,7 @@ export default function JobsList() {
         } catch (e: any) {
           globalMessage.error(e?.message || '删除失败');
         } finally {
-          setLoading(false);
+          await endLoading();
         }
       },
     });
@@ -194,7 +204,7 @@ export default function JobsList() {
       return;
     }
     
-    setOptimizeLoading(true);
+    startOptimize();
     try {
       // 调用 LLM API
       const result = await optimizeResumeWithLLM({
@@ -226,7 +236,7 @@ export default function JobsList() {
     } catch (error: any) {
       globalMessage.error(error.message || '简历优化失败');
     } finally {
-      setOptimizeLoading(false);
+      await endOptimize();
     }
   };
 
@@ -258,6 +268,11 @@ export default function JobsList() {
     }
     return false; // 阻止默认上传行为
   };
+
+  // 初始加载时显示全屏 loading
+  if (loading) {
+    return <PageLoading tip="正在加载岗位列表..." />;
+  }
 
   return (
     <div className="flex gap-6 overflow-hidden" style={{ height: MAIN_HEIGHT }}>
@@ -447,7 +462,7 @@ export default function JobsList() {
         onTempOriginalChange={setTempOriginalResume}
         onTempOptimizedChange={setTempOptimizedResume}
       />
-      
+
       {/* 全屏遮罩组件 - 简历优化 */}
       <FullScreenOverlay
         visible={optimizeLoading}

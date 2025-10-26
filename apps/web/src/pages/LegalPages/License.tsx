@@ -5,19 +5,21 @@ import { storage } from '../../api/http';
 import { getLicenseInfo, uploadLicenseFile, uploadQuestions, type LicenseInfo } from '../../api/license';
 import { fetchVersionList, type VersionInfo } from '../../api/versions';
 import { message } from '../../components/Message';
+import PageLoading from '../../components/PageLoading';
+import { useLoading } from '../../hooks/useLoading';
 import VersionDetailDrawer from './VersionDetailDrawer';
 import VersionListDrawer from './VersionListDrawer';
 
 
 export default function License() {
   const [license, setLicense] = useState<LicenseInfo | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [uploadingQuestions, setUploadingQuestions] = useState(false);
-  const [uploadingFile, setUploadingFile] = useState(false);
+  const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { loading: uploadingQuestions, start: startUploadingQuestions, end: endUploadingQuestions } = useLoading();
+  const { loading: uploadingFile, start: startUploadingFile, end: endUploadingFile } = useLoading();
 
   // 版本管理相关状态
   const [versions, setVersions] = useState<VersionInfo[]>([]);
-  const [loadingVersions, setLoadingVersions] = useState(false);
+  const { loading: loadingVersions, start: startLoadingVersions, end: endLoadingVersions } = useLoading();
   const [versionListOpen, setVersionListOpen] = useState(false);
   const [versionDetailOpen, setVersionDetailOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<VersionInfo | null>(null);
@@ -28,7 +30,7 @@ export default function License() {
 
   // 获取当前 License 信息
   const fetchLicenseInfo = async () => {
-    setLoading(true);
+    startLoading();
     try {
       const data = await getLicenseInfo();
       setLicense(data.license);
@@ -42,7 +44,7 @@ export default function License() {
       storage.clearLicense();
       setLicense(null);
     } finally {
-      setLoading(false);
+      await endLoading();
     }
   };
 
@@ -65,22 +67,22 @@ export default function License() {
       return;
     }
 
-    setUploadingFile(true);
-    
+    startUploadingFile();
+
     try {
       const data = await uploadLicenseFile(file);
       message.success('License 文件上传成功');
-      
+
       // 存储新的 license 信息
       if (data.license) {
         storage.setLicense(data.license);
       }
-      
+
       fetchLicenseInfo(); // 刷新 License 信息
     } catch (error) {
       console.error('License 文件上传失败:', error);
     } finally {
-      setUploadingFile(false);
+      await endUploadingFile();
       // 清空文件输入
       if (event.target) {
         event.target.value = '';
@@ -100,15 +102,15 @@ export default function License() {
       return;
     }
 
-    setUploadingQuestions(true);
-    
+    startUploadingQuestions();
+
     try {
       const data = await uploadQuestions(file);
       message.success(data.message || `导入完成: ${data.summary} 条新增，${data.existingCount || 0} 条已存在`);
     } catch (error) {
       console.error('内置题库导入失败:', error);
     } finally {
-      setUploadingQuestions(false);
+      await endUploadingQuestions();
       // 清空文件输入
       if (event.target) {
         event.target.value = '';
@@ -130,7 +132,7 @@ export default function License() {
 
   // 获取版本列表
   const loadVersionList = async () => {
-    setLoadingVersions(true);
+    startLoadingVersions();
     try {
       const list = await fetchVersionList();
       setVersions(list);
@@ -138,7 +140,7 @@ export default function License() {
       console.error('Failed to fetch version list:', error);
       message.error('获取版本列表失败');
     } finally {
-      setLoadingVersions(false);
+      await endLoadingVersions();
     }
   };
 
@@ -199,6 +201,11 @@ export default function License() {
     loadVersionList();
   }, []);
 
+  // 初始加载时显示全屏 loading
+  if (loading) {
+    return <PageLoading tip="正在加载 License 信息..." />;
+  }
+
   return (
     <div className="space-y-6 p-6">
       {/* 页面标题 */}
@@ -245,12 +252,7 @@ export default function License() {
             </div>
           </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-slate-600">加载中...</span>
-            </div>
-          ) : license ? (
+          {license ? (
             <div className="space-y-6">
               {/* License 状态指示 */}
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200/50">
