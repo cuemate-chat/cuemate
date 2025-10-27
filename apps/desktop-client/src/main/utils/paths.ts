@@ -107,12 +107,18 @@ export function getWindowIconPath(): string {
 /**
  * 获取应用根目录（CueMate 项目根目录）
  * 开发环境: /Users/xxx/chain/CueMate
- * 生产环境: 应用安装目录的上层（包含 data 和 logs 的目录）
+ * 生产环境: ~/data（用户主目录下的 data 文件夹）
  */
 export function getAppRoot(): string {
-  const projectRoot = getProjectRoot();
-  // 从 desktop-client 向上到 CueMate 根目录
-  return join(projectRoot, '../../');
+  if (process.env.NODE_ENV === 'development') {
+    const projectRoot = getProjectRoot();
+    // 从 desktop-client 向上到 CueMate 根目录
+    return join(projectRoot, '../../');
+  } else {
+    // 生产环境：使用用户主目录下的 data 文件夹
+    const homeDir = require('os').homedir();
+    return join(homeDir, 'data');
+  }
 }
 
 /**
