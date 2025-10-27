@@ -116,7 +116,10 @@ export class DockerServiceManager {
       // 检查容器是否存在
       const containersExist = this.areContainersExist();
 
-      const envVars = `VERSION=${this.VERSION} REGISTRY=${this.REGISTRY}`;
+      // 设置数据目录为用户主目录下的 data 文件夹
+      const homeDir = require('os').homedir();
+      const dataDir = path.join(homeDir, 'data');
+      const envVars = `VERSION=${this.VERSION} REGISTRY=${this.REGISTRY} DATA_DIR=${dataDir}`;
 
       if (containersExist) {
         // 容器已存在但未运行，使用 docker compose start
