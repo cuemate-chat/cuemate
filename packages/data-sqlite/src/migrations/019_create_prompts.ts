@@ -171,6 +171,7 @@ export function up(db: any): void {
    - 直接输出答案内容，不要包含"参考答案："等前缀
 
 请生成答案：\`}',
+      NULL,
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -193,6 +194,7 @@ export function up(db: any): void {
 - 注重技术细节而非空话套话
 - 问题要具体、实际，避免笼统和模糊
 - 直接输出问题内容，不要包含其他解释',
+      NULL,
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -233,6 +235,7 @@ export function up(db: any): void {
   "key_points": "这个问题主要考察什么能力",
   "assessment": "1-10分的评分并说明理由"
 }',
+      NULL,
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -293,6 +296,7 @@ export function up(db: any): void {
 }
 
 **注意：优化后的简历必须保持原有的详细程度，在此基础上进行改进，绝不能简化或缩短内容。**',
+      NULL,
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -373,6 +377,7 @@ export function up(db: any): void {
   "cons": "1. 某些问题回答不够深入...\\n2. ...",
   "suggestions": "1. 建议加强...\\n2. ..."
 }',
+      NULL,
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -471,6 +476,7 @@ export function up(db: any): void {
   "strategyBusinessUnderstanding": "1. 了解公司业务背景...\\n2. ...",
   "strategyKeepLogical": "1. 回答时先总后分...\\n2. ..."
 }',
+      NULL,
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     );
