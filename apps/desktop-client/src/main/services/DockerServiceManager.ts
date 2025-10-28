@@ -108,11 +108,32 @@ export class DockerServiceManager {
   private static areContainersExist(): boolean {
     try {
       const output = execSync(
-        `docker ps -a --filter "name=${this.CONTAINER_PREFIX}" --format "{{.Names}}"`,
+        `docker ps -a --filter "name=${this.CONTAINER_PREFIX}-" --format "{{.Names}}"`,
         { encoding: 'utf-8', stdio: 'pipe', env: getDockerEnv() }
       ).trim();
 
-      return output.length > 0;
+      if (!output) {
+        return false;
+      }
+
+      // 必须的 6 个核心容器
+      const requiredContainers = [
+        'cuemate-chroma',
+        'cuemate-asr',
+        'cuemate-web-api',
+        'cuemate-llm-router',
+        'cuemate-rag-service',
+        'cuemate-web',
+      ];
+
+      const existingContainers = output.split('\n');
+
+      // 检查是否至少有一个必需容器存在
+      const hasAnyRequired = requiredContainers.some(required =>
+        existingContainers.some(existing => existing === required)
+      );
+
+      return hasAnyRequired;
     } catch (error) {
       logger.warn({ error }, 'Docker 容器存在性检查失败');
       return false;
