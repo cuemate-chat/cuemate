@@ -6,6 +6,7 @@ import * as https from 'https';
 import { logger } from '../../utils/logger.js';
 import { DockerServiceManager } from './DockerServiceManager.js';
 import { UpdateStateManager } from './UpdateStateManager.js';
+import { getDockerEnv } from '../utils/dockerPath.js';
 import type { WindowManager } from '../windows/WindowManager.js';
 
 interface UpdateProgress {
@@ -386,12 +387,14 @@ export class AppUpdateManager {
         execSync(`docker pull ${image.remote}`, {
           encoding: 'utf-8',
           stdio: 'pipe',
+          env: getDockerEnv(),
         });
 
         // 标记为本地镜像
         execSync(`docker tag ${image.remote} ${image.local}`, {
           encoding: 'utf-8',
           stdio: 'pipe',
+          env: getDockerEnv(),
         });
 
         logger.info(`镜像拉取并标记成功: ${image.local}`);

@@ -3,6 +3,7 @@ import { app } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { logger } from '../../utils/logger.js';
+import { getDockerEnv } from '../utils/dockerPath.js';
 
 /**
  * Docker 服务管理器
@@ -63,7 +64,7 @@ export class DockerServiceManager {
     try {
       const output = execSync(
         `docker ps --filter "name=${this.CONTAINER_PREFIX}" --filter "status=running" --format "{{.Names}}"`,
-        { encoding: 'utf-8', stdio: 'pipe' }
+        { encoding: 'utf-8', stdio: 'pipe', env: getDockerEnv() }
       ).trim();
 
       if (!output) {
@@ -86,7 +87,7 @@ export class DockerServiceManager {
     try {
       const output = execSync(
         `docker ps -a --filter "name=${this.CONTAINER_PREFIX}" --format "{{.Names}}"`,
-        { encoding: 'utf-8', stdio: 'pipe' }
+        { encoding: 'utf-8', stdio: 'pipe', env: getDockerEnv() }
       ).trim();
 
       return output.length > 0;
@@ -126,14 +127,14 @@ export class DockerServiceManager {
         logger.info('Docker 容器已存在，正在启动...');
         execSync(
           `cd "${dockerComposeDir}" && env ${envVars} docker compose -f docker-compose.yml start`,
-          { encoding: 'utf-8', stdio: 'pipe' }
+          { encoding: 'utf-8', stdio: 'pipe', env: getDockerEnv() }
         );
       } else {
         // 容器不存在，使用 docker compose up -d
         logger.info('Docker 容器不存在，正在创建并启动...');
         execSync(
           `cd "${dockerComposeDir}" && env ${envVars} docker compose -f docker-compose.yml up -d`,
-          { encoding: 'utf-8', stdio: 'pipe' }
+          { encoding: 'utf-8', stdio: 'pipe', env: getDockerEnv() }
         );
       }
 
@@ -172,7 +173,7 @@ export class DockerServiceManager {
       logger.info('正在停止 Docker 服务...');
       execSync(
         `cd "${dockerComposeDir}" && env ${envVars} docker compose -f docker-compose.yml stop`,
-        { encoding: 'utf-8', stdio: 'pipe' }
+        { encoding: 'utf-8', stdio: 'pipe', env: getDockerEnv() }
       );
 
       logger.info('Docker 服务停止成功');
