@@ -1,5 +1,6 @@
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { app } from 'electron';
 
 /**
  * 获取当前模块目录，兼容 CommonJS 和 ESM
@@ -107,7 +108,7 @@ export function getWindowIconPath(): string {
 /**
  * 获取应用根目录（CueMate 项目根目录）
  * 开发环境: /Users/xxx/chain/CueMate
- * 生产环境: ~/data（用户主目录下的 data 文件夹）
+ * 生产环境: ~/Library/Application Support/cuemate-desktop-client
  */
 export function getAppRoot(): string {
   if (process.env.NODE_ENV === 'development') {
@@ -115,9 +116,8 @@ export function getAppRoot(): string {
     // 从 desktop-client 向上到 CueMate 根目录
     return join(projectRoot, '../../');
   } else {
-    // 生产环境：使用用户主目录下的 data 文件夹
-    const homeDir = require('os').homedir();
-    return join(homeDir, 'data');
+    // 生产环境：使用 Electron userData 目录
+    return app.getPath('userData');
   }
 }
 
@@ -125,5 +125,12 @@ export function getAppRoot(): string {
  * 获取日志目录
  */
 export function getLogsDir(): string {
-  return join(getAppRoot(), 'logs');
+  return join(getAppRoot(), 'data', 'logs');
+}
+
+/**
+ * 获取数据目录
+ */
+export function getDataDir(): string {
+  return join(getAppRoot(), 'data');
 }

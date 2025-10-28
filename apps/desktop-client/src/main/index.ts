@@ -3,11 +3,11 @@ import { app, globalShortcut, ipcMain, Menu, nativeImage, Tray } from 'electron'
 import type { LogLevel } from '../shared/types.js';
 import { logger } from '../utils/logger.js';
 import { setupIPC } from './ipc/handlers.js';
+import { AppUpdateManager } from './services/AppUpdateManager.js';
+import { DockerServiceManager } from './services/DockerServiceManager.js';
 import { getAppIconPath } from './utils/paths.js';
 import { setupGlobalShortcuts } from './utils/shortcuts.js';
 import { WindowManager } from './windows/WindowManager.js';
-import { DockerServiceManager } from './services/DockerServiceManager.js';
-import { AppUpdateManager } from './services/AppUpdateManager.js';
 
 // 在应用启动前设置应用名称和图标
 app.setName('CueMate');
@@ -19,7 +19,10 @@ class CueMateApp {
   private isQuitting = false;
 
   constructor() {
-    this.isDevelopment = process.env.NODE_ENV === 'development';
+    // 使用 app.isPackaged 判断是否为生产环境（更可靠）
+    // isPackaged = true: 已打包的应用（生产环境）
+    // isPackaged = false: 未打包（开发环境）
+    this.isDevelopment = !app.isPackaged;
 
     // 设置日志环境变量
     this.setupLoggingEnvironment();
@@ -362,7 +365,7 @@ class CueMateApp {
     try {
       await DockerServiceManager.stop();
     } catch (error) {
-      logger.error({ error}, 'Docker 服务停止失败');
+      logger.error({ error }, 'Docker 服务停止失败');
     }
 
     // 清理菜单栏图标

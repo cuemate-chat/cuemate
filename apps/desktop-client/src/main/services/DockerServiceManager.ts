@@ -160,9 +160,9 @@ export class DockerServiceManager {
       // 检查容器是否存在
       const containersExist = this.areContainersExist();
 
-      // 设置数据目录为用户主目录下的 data 文件夹
-      const homeDir = require('os').homedir();
-      const dataDir = path.join(homeDir, 'data');
+      // 使用统一的数据目录
+      const { getDataDir } = await import('../utils/paths.js');
+      const dataDir = getDataDir();
       const envVars = `VERSION=${this.VERSION} REGISTRY=${this.REGISTRY} DATA_DIR=${dataDir}`;
 
       if (containersExist) {
