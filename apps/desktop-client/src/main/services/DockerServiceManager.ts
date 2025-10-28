@@ -72,8 +72,30 @@ export class DockerServiceManager {
       }
 
       const runningContainers = output.split('\n');
-      // 至少应该有几个核心容器在运行
-      return runningContainers.length >= 3;
+
+      // 必须的 6 个核心容器
+      const requiredContainers = [
+        'cuemate-chroma',
+        'cuemate-asr',
+        'cuemate-web-api',
+        'cuemate-llm-router',
+        'cuemate-rag-service',
+        'cuemate-web',
+      ];
+
+      // 检查所有必需容器是否都在运行
+      const allRunning = requiredContainers.every(required =>
+        runningContainers.some(running => running === required)
+      );
+
+      if (!allRunning) {
+        const missingContainers = requiredContainers.filter(required =>
+          !runningContainers.some(running => running === required)
+        );
+        logger.warn({ missingContainers, runningContainers }, '部分容器未运行');
+      }
+
+      return allRunning;
     } catch (error) {
       logger.warn({ error }, 'Docker 容器状态检查失败');
       return false;
