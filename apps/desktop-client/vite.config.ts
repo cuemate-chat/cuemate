@@ -28,6 +28,7 @@ export default defineConfig({
         // 渲染进程入口（React应用）
         'control-bar': resolve(__dirname, 'src/renderer/control-bar/index.html'),
         'ai-question': resolve(__dirname, 'src/renderer/ai-question/index.html'),
+        'ai-question-history': resolve(__dirname, 'src/renderer/ai-question-history/index.html'),
       },
 
       output: {
