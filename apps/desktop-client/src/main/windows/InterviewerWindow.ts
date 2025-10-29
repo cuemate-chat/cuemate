@@ -82,8 +82,10 @@ export class InterviewerWindow {
 
       this.setupEvents();
 
-      // 语音识别窗口始终打开独立的 DevTools 用于调试音频功能
-      this.window.webContents.openDevTools({ mode: 'detach' });
+      // // 开发模式下自动打开开发者工具
+      // if (this.isDevelopment) {
+      //   this.window.webContents.openDevTools({ mode: 'detach' });
+      // }
     } catch (error) {
       logger.error({ error }, '创建 interviewer 窗口失败');
       throw error;
