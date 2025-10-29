@@ -83,13 +83,13 @@ export function getAppIconPath(): string {
   const isDevelopment = !app.isPackaged;
 
   if (process.platform === 'darwin') {
-    // 开发环境使用 PNG，生产环境使用 icns
+    // macOS Tray图标必须使用PNG格式
     if (isDevelopment) {
       const projectRoot = getProjectRoot();
       return join(projectRoot, 'assets', 'logo-icon.png');
     } else {
-      // 生产环境：icon.icns 在 Contents/Resources/ 目录下
-      return join(process.resourcesPath, 'icon.icns');
+      // 生产环境：从打包的resources目录获取
+      return join(app.getAppPath(), 'resources', 'logo-icon.png');
     }
   }
   if (process.platform === 'win32') {

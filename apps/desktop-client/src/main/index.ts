@@ -197,7 +197,6 @@ class CueMateApp {
   private createTrayIcon(): void {
     try {
       const iconPath = getAppIconPath();
-
       const image = nativeImage.createFromPath(iconPath);
 
       if (image.isEmpty()) {
