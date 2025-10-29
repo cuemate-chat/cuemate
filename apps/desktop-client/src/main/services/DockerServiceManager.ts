@@ -163,7 +163,7 @@ export class DockerServiceManager {
       // 使用统一的数据目录
       const { getDataDir } = await import('../utils/paths.js');
       const dataDir = getDataDir();
-      const envVars = `VERSION=${this.VERSION} REGISTRY=${this.REGISTRY} DATA_DIR=${dataDir}`;
+      const envVars = `VERSION=${this.VERSION} REGISTRY=${this.REGISTRY} DATA_DIR="${dataDir}"`;
 
       if (containersExist) {
         // 容器已存在但未运行，使用 docker compose start

@@ -321,13 +321,7 @@ export class PiperTTS {
         playCommand = 'powershell';
         playArgs = ['-Command', `(New-Object System.Media.SoundPlayer "${tempFile}").PlaySync()`];
       } else {
-        // Linux: 使用 aplay
-        playCommand = 'aplay';
-        playArgs = [tempFile];
-
-        if (deviceId && deviceId !== 'default') {
-          playArgs.unshift('-D', deviceId);
-        }
+        throw new Error(`Unsupported platform: ${platform}`);
       }
 
       return new Promise((resolve, reject) => {

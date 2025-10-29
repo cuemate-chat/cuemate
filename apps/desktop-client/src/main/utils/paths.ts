@@ -80,21 +80,29 @@ export function getRendererPath(htmlName: string): string {
  * 获取应用图标路径 (用于dock、任务栏等系统级显示)
  */
 export function getAppIconPath(): string {
-  const projectRoot = getProjectRoot();
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = !app.isPackaged;
 
   if (process.platform === 'darwin') {
     // 开发环境使用 PNG，生产环境使用 icns
-    return isDevelopment
-      ? join(projectRoot, 'assets', 'logo-icon.png')
-      : join(projectRoot, 'assets', 'icon.icns');
+    if (isDevelopment) {
+      const projectRoot = getProjectRoot();
+      return join(projectRoot, 'assets', 'logo-icon.png');
+    } else {
+      // 生产环境：icon.icns 在 Contents/Resources/ 目录下
+      return join(process.resourcesPath, 'icon.icns');
+    }
   }
   if (process.platform === 'win32') {
     // Windows 使用 ico，用于任务栏和标题栏
-    return join(projectRoot, 'assets', 'icon.ico');
+    if (isDevelopment) {
+      const projectRoot = getProjectRoot();
+      return join(projectRoot, 'assets', 'icon.ico');
+    } else {
+      return join(process.resourcesPath, 'icon.ico');
+    }
   }
-  // Linux/其他平台：使用 png（多尺寸由桌面环境处理）
-  return join(projectRoot, 'assets', 'logo-icon.png');
+
+  throw new Error(`Unsupported platform: ${process.platform}`);
 }
 
 /**
@@ -111,7 +119,8 @@ export function getWindowIconPath(): string {
  * 生产环境: ~/Library/Application Support/cuemate-desktop-client
  */
 export function getAppRoot(): string {
-  if (process.env.NODE_ENV === 'development') {
+  if (!app.isPackaged) {
+    // 开发环境：使用项目根目录
     const projectRoot = getProjectRoot();
     // 从 desktop-client 向上到 CueMate 根目录
     return join(projectRoot, '../../');

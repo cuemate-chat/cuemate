@@ -132,14 +132,14 @@ export function isShortcutRegistered(accelerator: string): boolean {
 
 /**
  * 获取所有可用的快捷键修饰符组合
- * macOS 系统下的快捷键说明
+ * macOS 和 Windows 系统下的快捷键说明
  */
 export function getShortcutInfo(): Record<string, string> {
   return {
-    CommandOrControl: 'macOS 下为 Cmd 键，Windows/Linux 下为 Ctrl 键',
-    Alt: 'Option 键 (macOS) 或 Alt 键 (Windows/Linux)',
+    CommandOrControl: 'macOS 下为 Cmd 键，Windows 下为 Ctrl 键',
+    Alt: 'Option 键 (macOS) 或 Alt 键 (Windows)',
     Shift: 'Shift 键',
-    Super: 'Windows 键 (Windows/Linux) 或 Cmd 键 (macOS)',
+    Super: 'Windows 键 (Windows) 或 Cmd 键 (macOS)',
     Meta: '等同于 Super 键',
     '\\': '反斜杠键',
     Plus: '加号键',

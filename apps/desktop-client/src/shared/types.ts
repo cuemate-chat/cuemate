@@ -72,8 +72,8 @@ export interface FrontendLogMessage {
   timestamp?: number;
 }
 
-// 平台类型
-export type Platform = 'win32' | 'darwin' | 'linux';
+// 平台类型 (仅支持 macOS 和 Windows)
+export type Platform = 'win32' | 'darwin';
 
 // Electron API 接口 - 扩展以匹配现有预加载脚本
 export interface ElectronAPI {
