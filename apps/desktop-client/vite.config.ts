@@ -29,6 +29,7 @@ export default defineConfig({
         'control-bar': resolve(__dirname, 'src/renderer/control-bar/index.html'),
         'ai-question': resolve(__dirname, 'src/renderer/ai-question/index.html'),
         'ai-question-history': resolve(__dirname, 'src/renderer/ai-question-history/index.html'),
+        'interviewer': resolve(__dirname, 'src/renderer/interviewer/index.html'),
       },
 
       output: {
