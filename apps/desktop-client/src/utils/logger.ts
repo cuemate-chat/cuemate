@@ -130,7 +130,7 @@ class ElectronLogger implements Logger {
   }
 
   private formatMessage(level: string, message: string | object, ...args: any[]): string {
-    const timestamp = new Date().toISOString();
+    const timestamp = this.getTimeString();
     const msg = typeof message === 'object' ? JSON.stringify(message) : message;
     return `[${timestamp}] [${level.toUpperCase()}] ${msg}${args.length ? ' ' + args.join(' ') : ''}`;
   }

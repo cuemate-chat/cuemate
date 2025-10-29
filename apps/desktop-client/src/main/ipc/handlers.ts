@@ -7,6 +7,22 @@ import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
 import { WindowManager } from '../windows/WindowManager.js';
 
 /**
+ * 格式化时间为北京时间字符串
+ */
+function formatTimeString(date: Date): string {
+  return date.toLocaleString('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).replace(/\//g, '-');
+}
+
+/**
  * 设置 IPC 通信处理器
  * command 系统，处理前端和后端之间的通信
  */
@@ -661,7 +677,7 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('frontend-log', async (_event, logMessage: FrontendLogMessage) => {
     try {
       const { level, message, timestamp } = logMessage;
-      const time = timestamp ? new Date(timestamp).toISOString() : new Date().toISOString();
+      const time = timestamp ? formatTimeString(new Date(timestamp)) : formatTimeString(new Date());
       const prefix = `[${time}] [RENDERER] [${level.toUpperCase()}]`;
 
       switch (level) {
