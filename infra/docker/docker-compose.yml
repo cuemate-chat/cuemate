@@ -54,6 +54,7 @@ services:
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
       - RAG_SERVICE_URL=http://rag-service:3003
       - LLM_ROUTER_URL=http://llm-router:3002
+      - CUEMATE_LOG_DIR=/opt/cuemate/logs
       - TZ=Asia/Shanghai
     volumes:
       - ../../data/sqlite:/opt/cuemate/data/sqlite

@@ -4,22 +4,25 @@ import type { FrontendLogMessage } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
 import { PiperTTS } from '../audio/PiperTTS.js';
 import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
+import { DockerServiceManager } from '../services/DockerServiceManager.js';
 import { WindowManager } from '../windows/WindowManager.js';
 
 /**
  * 格式化时间为北京时间字符串
  */
 function formatTimeString(date: Date): string {
-  return date.toLocaleString('zh-CN', {
-    timeZone: 'Asia/Shanghai',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }).replace(/\//g, '-');
+  return date
+    .toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    })
+    .replace(/\//g, '-');
 }
 
 /**
@@ -60,10 +63,17 @@ export function setupIPC(windowManager: WindowManager): void {
       const file = getSettingsFilePath();
       const dir = require('path').dirname(file);
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(file, JSON.stringify({
-        stealthModeEnabled,
-        clickThroughEnabled
-      }, null, 2));
+      fs.writeFileSync(
+        file,
+        JSON.stringify(
+          {
+            stealthModeEnabled,
+            clickThroughEnabled,
+          },
+          null,
+          2,
+        ),
+      );
     } catch {}
   }
   function applyStealthModeToAllWindows(enabled: boolean): void {
@@ -611,64 +621,190 @@ export function setupIPC(windowManager: WindowManager): void {
   // === 日志相关 IPC 处理器 ===
 
   /**
-   * 检查用户登录状态
+   * 检查用户登录状态（带重试机制和 Docker 状态检测）
    */
   ipcMain.handle('check-login-status', async () => {
-    try {
-      // 调用 web-api 检查登录状态
-      const response = await fetch('http://127.0.0.1:3001/auth/login-status', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // 设置较短的超时时间，避免长时间等待
-        signal: AbortSignal.timeout(5000),
-      });
+    const maxRetries = 3;
+    const retryDelay = 3000; // 3秒
 
-      if (response.ok) {
-        const data = await response.json();
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // 先检查 Docker 服务状态
+        const dockerStatus = DockerServiceManager.getStatus();
 
-        // 缓存用户数据和token到全局变量
-        if (data.isLoggedIn && data.user) {
-          cachedUserData = data.user;
-          cachedToken = data.token;
-        } else {
-          cachedUserData = null;
-          cachedToken = null;
-          logger.info('IPC: 用户未登录，清空缓存');
+        if (!dockerStatus.running) {
+          const isLastAttempt = attempt === maxRetries;
+
+          if (isLastAttempt) {
+            logger.error(
+              { attempt, maxRetries, dockerStatus },
+              'IPC: Docker 服务未运行，无法检查登录状态（所有重试已失败）',
+            );
+            return {
+              success: false,
+              isLoggedIn: false,
+              error: 'Docker 服务未启动。请等待 Docker 服务启动完成后重试。',
+            };
+          } else {
+            logger.warn(
+              { attempt, maxRetries, dockerStatus },
+              `IPC: Docker 服务未运行，等待启动（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+            continue;
+          }
         }
 
-        return {
-          success: true,
-          isLoggedIn: data.isLoggedIn,
-          user: data.user,
-        };
-      } else if (response.status === 401) {
-        logger.info('IPC: 用户未登录');
+        // Docker 已运行，尝试连接 web-api
+        const response = await fetch('http://127.0.0.1:3001/auth/login-status', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          // 设置较短的超时时间，避免长时间等待
+          signal: AbortSignal.timeout(5000),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          // 缓存用户数据和token到全局变量
+          if (data.isLoggedIn && data.user) {
+            cachedUserData = data.user;
+            cachedToken = data.token;
+          } else {
+            cachedUserData = null;
+            cachedToken = null;
+            logger.info('IPC: 用户未登录，清空缓存');
+          }
+
+          return {
+            success: true,
+            isLoggedIn: data.isLoggedIn,
+            user: data.user,
+          };
+        } else if (response.status === 401) {
+          logger.info('IPC: 用户未登录');
+          cachedUserData = null; // 清空缓存
+          cachedToken = null; // 清空token缓存
+          return {
+            success: true,
+            isLoggedIn: false,
+          };
+        } else {
+          logger.warn({ status: response.status }, 'IPC: 登录检查返回异常状态码');
+          // 不误判为未登录：仅返回失败，不改变状态
+          return {
+            success: false,
+            isLoggedIn: false,
+          };
+        }
+      } catch (error) {
+        // 再次检查 Docker 状态，以提供更准确的错误信息
+        const dockerStatus = DockerServiceManager.getStatus();
+        let errorMessage = '';
+        const isLastAttempt = attempt === maxRetries;
+
+        if (error instanceof Error) {
+          const errCode = (error as any).cause?.code || (error as any).code;
+
+          if (errCode === 'ECONNREFUSED' || errCode === 'ECONNRESET') {
+            // Docker 已运行但连接失败，说明 web-api 容器可能还在启动中
+            if (dockerStatus.running) {
+              errorMessage = 'Web API 服务正在启动中，请稍候...';
+              if (isLastAttempt) {
+                logger.error(
+                  { error, errorCode: errCode, attempt, maxRetries, dockerStatus },
+                  'IPC: Web API 服务启动超时（所有重试已失败）',
+                );
+              } else {
+                logger.warn(
+                  { error, errorCode: errCode, attempt, maxRetries, dockerStatus },
+                  `IPC: Web API 服务正在启动（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+                );
+              }
+            } else {
+              errorMessage =
+                'Docker 服务未启动或 Web API 服务不可用。请确保 Docker 服务已正常运行。';
+              if (isLastAttempt) {
+                logger.error(
+                  { error, errorCode: errCode, attempt, maxRetries, dockerStatus },
+                  'IPC: 无法连接到 Web API 服务 - Docker 服务未运行（所有重试已失败）',
+                );
+              } else {
+                logger.warn(
+                  { error, errorCode: errCode, attempt, maxRetries, dockerStatus },
+                  `IPC: 无法连接到 Web API 服务 - Docker 服务未运行（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+                );
+              }
+            }
+          } else if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+            errorMessage = '连接 Web API 服务超时。请检查 Docker 服务是否正常运行。';
+
+            if (isLastAttempt) {
+              logger.error(
+                { error, attempt, maxRetries, dockerStatus },
+                'IPC: Web API 服务连接超时（所有重试已失败）',
+              );
+            } else {
+              logger.warn(
+                { error, attempt, maxRetries, dockerStatus },
+                `IPC: Web API 服务连接超时（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+              );
+            }
+          } else {
+            errorMessage = error.message;
+
+            if (isLastAttempt) {
+              logger.error(
+                { error, attempt, maxRetries, dockerStatus },
+                'IPC: 登录状态检查失败（所有重试已失败）',
+              );
+            } else {
+              logger.warn(
+                { error, attempt, maxRetries, dockerStatus },
+                `IPC: 登录状态检查失败（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+              );
+            }
+          }
+        } else {
+          errorMessage = String(error);
+
+          if (isLastAttempt) {
+            logger.error(
+              { error, attempt, maxRetries, dockerStatus },
+              'IPC: 登录状态检查失败（所有重试已失败）',
+            );
+          } else {
+            logger.warn(
+              { error, attempt, maxRetries, dockerStatus },
+              `IPC: 登录状态检查失败（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+            );
+          }
+        }
+
+        // 如果不是最后一次尝试，等待后重试
+        if (!isLastAttempt) {
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          continue; // 继续下一次重试
+        }
+
+        // 最后一次失败，返回错误
         cachedUserData = null; // 清空缓存
-        cachedToken = null; // 清空token缓存
-        return {
-          success: true,
-          isLoggedIn: false,
-        };
-      } else {
-        logger.warn({ status: response.status }, 'IPC: 登录检查返回异常状态码');
-        // 不误判为未登录：仅返回失败，不改变状态
         return {
           success: false,
           isLoggedIn: false,
+          error: errorMessage,
         };
       }
-    } catch (error) {
-      logger.error({ error }, 'IPC: 登录状态检查失败');
-      cachedUserData = null; // 清空缓存
-      // 不误判为未登录
-      return {
-        success: false,
-        isLoggedIn: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
     }
+
+    // 理论上不会到这里，但为了类型安全
+    return {
+      success: false,
+      isLoggedIn: false,
+      error: '未知错误',
+    };
   });
 
   /**
@@ -1259,4 +1395,3 @@ export function setupIPC(windowManager: WindowManager): void {
 
   logger.debug('IPC 通信处理器设置完成');
 }
-
