@@ -78,6 +78,13 @@ export default function AsrSettings() {
   // 获取麦克风设备
   const loadMicDevices = async () => {
     try {
+      // 先请求麦克风权限，这样才能获取到设备的 label 信息
+      await navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        stream.getTracks().forEach(track => track.stop());
+      }).catch(() => {
+        // 用户拒绝权限，继续获取设备列表（但 label 可能为空）
+      });
+
       const devices = await navigator.mediaDevices.enumerateDevices();
       const micDevices = devices
         .filter(device => device.kind === 'audioinput')
@@ -541,6 +548,8 @@ export default function AsrSettings() {
                 try {
                   webSocketService.send({ type: 'REQUEST_ASR_DEVICES' } as any);
                 } catch {}
+                loadMicDevices();
+                loadSpeakerDevices();
               }}
             >
               刷新
