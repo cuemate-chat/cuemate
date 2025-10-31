@@ -58,10 +58,106 @@ ScreenCaptureAudioWrapper::~ScreenCaptureAudioWrapper() {
 }
 
 std::vector<std::pair<std::string, std::string>> ScreenCaptureAudioWrapper::getAudioDevices() {
-    // 返回模拟设备列表供用户界面显示
     std::vector<std::pair<std::string, std::string>> devices;
-    devices.emplace_back("default", "默认音频输出设备");
-    devices.emplace_back("builtin-speaker", "内建扬声器");
-    devices.emplace_back("builtin-headphones", "内建耳机");
+
+    objcLogInfo("开始枚举音频输出设备");
+
+    // 获取所有音频设备
+    AudioObjectPropertyAddress propertyAddress = {
+        kAudioHardwarePropertyDevices,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain
+    };
+
+    UInt32 dataSize = 0;
+    OSStatus status = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &dataSize);
+    if (status != noErr) {
+        objcLogError("获取音频设备列表大小失败: " + std::to_string(status));
+        // 返回默认设备列表
+        devices.emplace_back("default", "默认音频输出设备");
+        return devices;
+    }
+
+    UInt32 deviceCount = dataSize / sizeof(AudioDeviceID);
+    std::vector<AudioDeviceID> audioDevices(deviceCount);
+
+    status = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &dataSize, audioDevices.data());
+    if (status != noErr) {
+        objcLogError("获取音频设备列表失败: " + std::to_string(status));
+        devices.emplace_back("default", "默认音频输出设备");
+        return devices;
+    }
+
+    objcLogInfo("找到 " + std::to_string(deviceCount) + " 个音频设备");
+
+    // 遍历所有设备，筛选出音频输出设备
+    for (UInt32 i = 0; i < deviceCount; i++) {
+        AudioDeviceID deviceID = audioDevices[i];
+
+        // 检查设备是否有输出流
+        AudioObjectPropertyAddress outputStreamsAddress = {
+            kAudioDevicePropertyStreams,
+            kAudioDevicePropertyScopeOutput,
+            kAudioObjectPropertyElementMain
+        };
+
+        UInt32 streamDataSize = 0;
+        status = AudioObjectGetPropertyDataSize(deviceID, &outputStreamsAddress, 0, NULL, &streamDataSize);
+        if (status != noErr || streamDataSize == 0) {
+            // 没有输出流，跳过这个设备
+            continue;
+        }
+
+        // 获取设备 UID
+        CFStringRef deviceUID = NULL;
+        dataSize = sizeof(deviceUID);
+        AudioObjectPropertyAddress uidAddress = {
+            kAudioDevicePropertyDeviceUID,
+            kAudioObjectPropertyScopeGlobal,
+            kAudioObjectPropertyElementMain
+        };
+
+        status = AudioObjectGetPropertyData(deviceID, &uidAddress, 0, NULL, &dataSize, &deviceUID);
+        if (status != noErr || deviceUID == NULL) {
+            continue;
+        }
+
+        // 获取设备名称
+        CFStringRef deviceName = NULL;
+        dataSize = sizeof(deviceName);
+        AudioObjectPropertyAddress nameAddress = {
+            kAudioDevicePropertyDeviceNameCFString,
+            kAudioObjectPropertyScopeGlobal,
+            kAudioObjectPropertyElementMain
+        };
+
+        status = AudioObjectGetPropertyData(deviceID, &nameAddress, 0, NULL, &dataSize, &deviceName);
+        if (status != noErr || deviceName == NULL) {
+            if (deviceUID) CFRelease(deviceUID);
+            continue;
+        }
+
+        // 转换为 C++ string
+        char uidBuffer[256];
+        char nameBuffer[256];
+        CFStringGetCString(deviceUID, uidBuffer, sizeof(uidBuffer), kCFStringEncodingUTF8);
+        CFStringGetCString(deviceName, nameBuffer, sizeof(nameBuffer), kCFStringEncodingUTF8);
+
+        devices.emplace_back(std::string(uidBuffer), std::string(nameBuffer));
+
+        objcLogInfo("找到音频输出设备: " + std::string(nameBuffer) + " (UID: " + std::string(uidBuffer) + ")");
+
+        // 释放资源
+        CFRelease(deviceUID);
+        CFRelease(deviceName);
+    }
+
+    if (devices.empty()) {
+        objcLogWarn("未找到任何音频输出设备，返回默认设备");
+        devices.emplace_back("default", "默认音频输出设备");
+    }
+
+    objcLogInfo("枚举完成，共找到 " + std::to_string(devices.size()) + " 个音频输出设备");
+
     return devices;
 }

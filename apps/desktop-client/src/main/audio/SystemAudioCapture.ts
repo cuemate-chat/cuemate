@@ -11,7 +11,8 @@ function ensureNativeLoaded(): void {
     if (process.env.NODE_ENV === 'development') {
       nativeModulePath = path.join(__dirname, '../../src/main/native/screen_capture_audio');
     } else {
-      nativeModulePath = path.join(__dirname, '../native/screen_capture_audio/index.node');
+      const basePath = __dirname.replace('app.asar', 'app.asar.unpacked');
+      nativeModulePath = path.join(basePath, '../native/screen_capture_audio/index.node');
     }
 
     const fs = require('fs');

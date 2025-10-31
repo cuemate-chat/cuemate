@@ -93,6 +93,9 @@
       "node_modules/audiotee/dist/**/*",
       "resources/**/*"
     ],
+    "asarUnpack": [
+      "dist/native/**/*.node"
+    ],
     "mac": {
       "icon": "assets/icon.icns",
       "target": [
