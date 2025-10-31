@@ -12,12 +12,7 @@ function ensureNativeLoaded(): void {
       nativeModulePath = path.join(__dirname, '../../src/main/native/screen_capture_audio');
     } else {
       const basePath = __dirname.replace('app.asar', 'app.asar.unpacked');
-      nativeModulePath = path.join(basePath, '../native/screen_capture_audio/index.node');
-    }
-
-    const fs = require('fs');
-    if (!fs.existsSync(nativeModulePath)) {
-      throw new Error(`原生模块文件不存在: ${nativeModulePath}`);
+      nativeModulePath = path.join(basePath, '../native/screen_capture_audio');
     }
 
     const nativeModule = require(nativeModulePath);
@@ -273,15 +268,12 @@ export class SystemAudioCapture {
    */
   public static async getAudioDevices(): Promise<Array<{ id: string; name: string }>> {
     try {
-      // 确保原生模块已加载
       ensureNativeLoaded();
 
       if (ScreenCaptureAudio && ScreenCaptureAudio.getAudioDevices) {
         const devices = ScreenCaptureAudio.getAudioDevices();
-        logger.info(`获取到 ${devices.length} 个音频设备`);
         return devices;
       } else {
-        logger.warn('原生模块不可用，返回默认设备列表');
         return [
           { id: 'default', name: '默认音频输出设备' },
           { id: 'builtin-speaker', name: '内建扬声器' },
