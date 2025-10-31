@@ -103,6 +103,13 @@ export default function AsrSettings() {
   // 获取扬声器设备
   const loadSpeakerDevices = async () => {
     try {
+      // 先请求权限，这样才能获取到设备的 label 信息
+      await navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        stream.getTracks().forEach(track => track.stop());
+      }).catch(() => {
+        // 用户拒绝权限，继续获取设备列表（但 label 可能为空）
+      });
+
       const devices = await navigator.mediaDevices.enumerateDevices();
       const speakerDevices = devices
         .filter(device => device.kind === 'audiooutput')
