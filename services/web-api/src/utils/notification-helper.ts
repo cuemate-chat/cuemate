@@ -459,3 +459,48 @@ export function notifyTaskFailed(
     priority: 'high',
   });
 }
+
+/**
+ * 通知发现新版本
+ */
+export function notifyNewVersionAvailable(
+  db: any,
+  userId: string,
+  versionInfo: {
+    version: string;
+    releaseNotes: string;
+    updateTime: string;
+    platform?: string;
+    features?: string[];
+  },
+) {
+  const updateDate = new Date(versionInfo.updateTime).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const platformText = versionInfo.platform ? `适用平台: ${versionInfo.platform}` : '';
+  const featuresText = versionInfo.features?.length
+    ? `主要更新: ${versionInfo.features.slice(0, 3).join('、')}${versionInfo.features.length > 3 ? '等' : ''}`
+    : '';
+  const detailText = [platformText, featuresText].filter(Boolean).join('，');
+
+  return createNotification(db, {
+    userId,
+    title: '发现新版本',
+    content: `CueMate ${versionInfo.version} 版本已发布（发布日期: ${updateDate}）${detailText ? `，${detailText}` : ''}。更新说明: ${versionInfo.releaseNotes}。建议您及时更新到最新版本以获得更好的使用体验和新功能支持。`,
+    summary: `CueMate ${versionInfo.version} 已发布（${updateDate}）`,
+    type: 'version_update',
+    category: 'system',
+    priority: 'normal',
+    resourceType: 'version',
+    resourceId: versionInfo.version,
+    actionUrl: '/settings/about',
+    actionText: '查看详情',
+    metadata: {
+      version: versionInfo.version,
+      releaseNotes: versionInfo.releaseNotes,
+      updateTime: versionInfo.updateTime,
+    },
+  });
+}
