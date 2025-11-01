@@ -646,7 +646,7 @@ export function setupIPC(windowManager: WindowManager): void {
               error: 'Docker 服务未启动。请等待 Docker 服务启动完成后重试。',
             };
           } else {
-            logger.warn(
+            logger.debug(
               { attempt, maxRetries, dockerStatus },
               `IPC: Docker 服务未运行，等待启动（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
             );
