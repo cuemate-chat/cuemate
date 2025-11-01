@@ -1,7 +1,25 @@
 import { Config } from '../config/index.js';
+import { AliyunProvider } from '../providers/aliyun.js';
+import { AnthropicProvider } from '../providers/anthropic.js';
 import { AzureOpenAIProvider } from '../providers/azure-openai.js';
 import { BaseLLMProvider } from '../providers/base.js';
-import { OpenAICompatibleProvider } from '../providers/openai-compatible.js';
+import { BedrockProvider } from '../providers/bedrock.js';
+import { DeepSeekProvider } from '../providers/deepseek.js';
+import { GeminiProvider } from '../providers/gemini.js';
+import { KimiProvider } from '../providers/kimi.js';
+import { MoonshotProvider } from '../providers/moonshot.js';
+import { OllamaProvider } from '../providers/ollama.js';
+import { OpenAIProvider } from '../providers/openai.js';
+import { QwenProvider } from '../providers/qwen.js';
+import { RegoloProvider } from '../providers/regolo.js';
+import { SiliconFlowProvider } from '../providers/siliconflow.js';
+import { TencentProvider } from '../providers/tencent.js';
+import { TencentCloudProvider } from '../providers/tencent-cloud.js';
+import { VllmProvider } from '../providers/vllm.js';
+import { VolcEngineProvider } from '../providers/volcengine.js';
+import { XfProvider } from '../providers/xf.js';
+import { XinferenceProvider } from '../providers/xinference.js';
+import { ZhipuProvider } from '../providers/zhipu.js';
 
 interface CachedItem {
   provider: BaseLLMProvider;
@@ -58,17 +76,75 @@ export class UserProviderRegistry {
     // };
 
     // 现在使用 RuntimeConfig，不再需要在构造时传递这些参数
-    const providerId = (data.model.provider || 'custom').toLowerCase();
+    const providerId = (data.model.provider || '').toLowerCase();
 
     let p: BaseLLMProvider | undefined;
     switch (providerId) {
-      case 'azure-openai': {
-        p = new AzureOpenAIProvider() as unknown as BaseLLMProvider;
+      case 'openai':
+        p = new OpenAIProvider();
         break;
-      }
-      default: {
-        p = new OpenAICompatibleProvider(providerId) as unknown as BaseLLMProvider;
-      }
+      case 'anthropic':
+        p = new AnthropicProvider();
+        break;
+      case 'azure-openai':
+        p = new AzureOpenAIProvider();
+        break;
+      case 'ollama':
+        p = new OllamaProvider();
+        break;
+      case 'deepseek':
+        p = new DeepSeekProvider();
+        break;
+      case 'kimi':
+        p = new KimiProvider();
+        break;
+      case 'gemini':
+        p = new GeminiProvider();
+        break;
+      case 'qwen':
+        p = new QwenProvider();
+        break;
+      case 'zhipu':
+        p = new ZhipuProvider();
+        break;
+      case 'siliconflow':
+        p = new SiliconFlowProvider();
+        break;
+      case 'tencent':
+        p = new TencentProvider();
+        break;
+      case 'volcengine':
+        p = new VolcEngineProvider();
+        break;
+      case 'vllm':
+        p = new VllmProvider();
+        break;
+      case 'moonshot':
+        p = new MoonshotProvider();
+        break;
+      case 'bedrock':
+      case 'aws-bedrock':
+        p = new BedrockProvider();
+        break;
+      case 'aliyun':
+      case 'aliyun-bailian':
+        p = new AliyunProvider();
+        break;
+      case 'tencent-cloud':
+        p = new TencentCloudProvider();
+        break;
+      case 'xf':
+      case 'iflytek':
+        p = new XfProvider();
+        break;
+      case 'xinference':
+        p = new XinferenceProvider();
+        break;
+      case 'regolo':
+        p = new RegoloProvider();
+        break;
+      default:
+        return undefined;
     }
     if (!p.isAvailable()) return undefined;
     this.set(userId, p);
