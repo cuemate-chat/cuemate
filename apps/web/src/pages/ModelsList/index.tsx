@@ -258,7 +258,13 @@ export default function ModelsList() {
         [];
       const credentials: Record<string, any> = {};
       fields.forEach((f) => {
-        if (formData[f.key] !== undefined && formData[f.key] !== '') credentials[f.key] = formData[f.key];
+        // 优先使用用户填写的值，如果没有则使用 defaultValue
+        const value = formData[f.key];
+        if (value !== undefined && value !== '') {
+          credentials[f.key] = value;
+        } else if (f.defaultValue !== undefined && f.defaultValue !== '') {
+          credentials[f.key] = f.defaultValue;
+        }
       });
       // 获取provider的icon_url路径，用于存储到数据库
       const providerIconUrl = provider?.icon_url ?? null;

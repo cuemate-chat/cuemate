@@ -82,9 +82,15 @@ export default function ModelEditDrawer({
     setTesting(true);
     onTestingChange?.(true); // 通知父组件开始测试
     try {
-      const result = await testModelConnectivity(form.id);
+      const result: any = await testModelConnectivity(form.id);
       console.debug('测试连接结果:', result);
-      message.success('连接测试成功！模型可以正常使用');
+
+      if (result?.ok) {
+        message.success('连接测试成功！模型可以正常使用');
+      } else {
+        const errorMsg = result?.error || result?.chatError || result?.embedError || '连接测试失败';
+        message.error(errorMsg);
+      }
     } catch (error: any) {
       console.error('测试连接失败:', error);
       message.error(error?.message || '连接测试失败，请检查配置信息');
