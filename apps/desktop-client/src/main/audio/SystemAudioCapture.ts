@@ -9,10 +9,12 @@ function ensureNativeLoaded(): void {
   try {
     let nativeModulePath: string;
     if (process.env.NODE_ENV === 'development') {
-      nativeModulePath = path.join(__dirname, '../../src/main/native/screen_capture_audio');
+      // 开发环境下，从 dist/main 回到 dist/native/screen_capture_audio/index.node
+      nativeModulePath = path.join(__dirname, '../native/screen_capture_audio/index.node');
     } else {
+      // 生产环境下，从 app.asar 切换到 app.asar.unpacked
       const basePath = __dirname.replace('app.asar', 'app.asar.unpacked');
-      nativeModulePath = path.join(basePath, '../native/screen_capture_audio');
+      nativeModulePath = path.join(basePath, '../native/screen_capture_audio/index.node');
     }
 
     const nativeModule = require(nativeModulePath);
