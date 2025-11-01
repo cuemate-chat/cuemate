@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import PQueue from 'p-queue';
 import { Config } from '../config/index.js';
+import { AliyunProvider } from '../providers/aliyun.js';
 import { AnthropicProvider } from '../providers/anthropic.js';
 import { AzureOpenAIProvider } from '../providers/azure-openai.js';
 import {
@@ -9,18 +10,22 @@ import {
   CompletionResponse,
   RuntimeConfig,
 } from '../providers/base.js';
+import { BedrockProvider } from '../providers/bedrock.js';
 import { DeepSeekProvider } from '../providers/deepseek.js';
 import { GeminiProvider } from '../providers/gemini.js';
 import { KimiProvider } from '../providers/kimi.js';
 import { MoonshotProvider } from '../providers/moonshot.js';
 import { OllamaProvider } from '../providers/ollama.js';
-import { OpenAICompatibleProvider } from '../providers/openai-compatible.js';
 import { OpenAIProvider } from '../providers/openai.js';
 import { QwenProvider } from '../providers/qwen.js';
+import { RegoloProvider } from '../providers/regolo.js';
 import { SiliconFlowProvider } from '../providers/siliconflow.js';
+import { TencentCloudProvider } from '../providers/tencent-cloud.js';
 import { TencentProvider } from '../providers/tencent.js';
 import { VllmProvider } from '../providers/vllm.js';
 import { VolcEngineProvider } from '../providers/volcengine.js';
+import { XfProvider } from '../providers/xf.js';
+import { XinferenceProvider } from '../providers/xinference.js';
 import { ZhipuProvider } from '../providers/zhipu.js';
 import { logger } from '../utils/logger.js';
 // import { UserProviderRegistry } from './user-provider-registry.js';
@@ -67,7 +72,6 @@ export class LLMManager extends EventEmitter {
     // 注册所有 providers（使用新架构）
     providers.set('openai', new OpenAIProvider());
     providers.set('deepseek', new DeepSeekProvider());
-    providers.set('openai-compatible', new OpenAICompatibleProvider());
     providers.set('anthropic', new AnthropicProvider());
     providers.set('azure-openai', new AzureOpenAIProvider());
     providers.set('gemini', new GeminiProvider());
@@ -80,6 +84,12 @@ export class LLMManager extends EventEmitter {
     providers.set('vllm', new VllmProvider());
     providers.set('volcengine', new VolcEngineProvider());
     providers.set('zhipu', new ZhipuProvider());
+    providers.set('bedrock', new BedrockProvider());
+    providers.set('aliyun', new AliyunProvider());
+    providers.set('tencent-cloud', new TencentCloudProvider());
+    providers.set('xf', new XfProvider());
+    providers.set('xinference', new XinferenceProvider());
+    providers.set('regolo', new RegoloProvider());
 
     logger.info(
       `Registered ${providers.size} providers: ${Array.from(providers.keys()).join(', ')}`,
@@ -113,8 +123,6 @@ export class LLMManager extends EventEmitter {
 
     return this.executeWithTimeout(provider, request, runtimeConfig);
   }
-
-  // 旧的策略方法已删除，现在直接使用 provider
 
   private async executeWithTimeout(
     provider: BaseLLMProvider,
