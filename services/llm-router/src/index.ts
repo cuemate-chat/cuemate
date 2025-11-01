@@ -63,7 +63,7 @@ async function start() {
       健康检查: `http://${host}:${port}/health`,
       路由策略: config.routing.strategy || 'primary-fallback',
       支持提供商:
-        'openai, moonshot, glm, qwen, deepseek, kimi, gemini, zhipu, siliconflow, tencent, volcengine, vllm, ollama',
+        'openai, moonshot, glm, qwen, deepseek, kimi, gemini, zhipu, siliconflow, tencent, volcengine, vllm, ollama, bedrock, aliyun, tencent-cloud, xf, xinference, regolo',
     });
   } catch (err) {
     logger.error(err);

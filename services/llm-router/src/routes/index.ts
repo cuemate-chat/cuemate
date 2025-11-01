@@ -1,19 +1,25 @@
 import { FastifyInstance } from 'fastify';
 import { LLMManager } from '../managers/llm-manager.js';
+import { AliyunProvider } from '../providers/aliyun.js';
+import { AnthropicProvider } from '../providers/anthropic.js';
 import { AzureOpenAIProvider } from '../providers/azure-openai.js';
 import { BaseLLMProvider, CompletionRequest, RuntimeConfig } from '../providers/base.js';
+import { BedrockProvider } from '../providers/bedrock.js';
 import { DeepSeekProvider } from '../providers/deepseek.js';
 import { GeminiProvider } from '../providers/gemini.js';
 import { KimiProvider } from '../providers/kimi.js';
 import { MoonshotProvider } from '../providers/moonshot.js';
 import { OllamaProvider } from '../providers/ollama.js';
-import { OpenAICompatibleProvider } from '../providers/openai-compatible.js';
 import { OpenAIProvider } from '../providers/openai.js';
 import { QwenProvider } from '../providers/qwen.js';
+import { RegoloProvider } from '../providers/regolo.js';
 import { SiliconFlowProvider } from '../providers/siliconflow.js';
 import { TencentProvider } from '../providers/tencent.js';
+import { TencentCloudProvider } from '../providers/tencent-cloud.js';
 import { VllmProvider } from '../providers/vllm.js';
 import { VolcEngineProvider } from '../providers/volcengine.js';
+import { XfProvider } from '../providers/xf.js';
+import { XinferenceProvider } from '../providers/xinference.js';
 import { ZhipuProvider } from '../providers/zhipu.js';
 import { logger } from '../utils/logger.js';
 
@@ -225,6 +231,9 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         case 'openai':
           provider = new OpenAIProvider();
           break;
+        case 'anthropic':
+          provider = new AnthropicProvider();
+          break;
         case 'azure-openai':
           provider = new AzureOpenAIProvider();
           break;
@@ -261,8 +270,32 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         case 'moonshot':
           provider = new MoonshotProvider();
           break;
+        case 'bedrock':
+        case 'aws-bedrock':
+          provider = new BedrockProvider();
+          break;
+        case 'aliyun':
+        case 'aliyun-bailian':
+          provider = new AliyunProvider();
+          break;
+        case 'tencent-cloud':
+          provider = new TencentCloudProvider();
+          break;
+        case 'xf':
+        case 'iflytek':
+          provider = new XfProvider();
+          break;
+        case 'xinference':
+          provider = new XinferenceProvider();
+          break;
+        case 'regolo':
+          provider = new RegoloProvider();
+          break;
         default:
-          provider = new OpenAICompatibleProvider(providerId);
+          return reply.code(400).send({
+            ok: false,
+            error: `Unknown provider: ${providerId}. Please use one of: openai, anthropic, azure-openai, ollama, deepseek, kimi, gemini, qwen, zhipu, siliconflow, tencent, volcengine, vllm, moonshot, bedrock, aliyun, tencent-cloud, xf, xinference, regolo`
+          });
       }
 
       if (mode === 'chat' || mode === 'both') {
