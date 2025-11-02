@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import { AzureOpenAI } from 'openai';
 import { logger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
@@ -11,19 +11,27 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
     // 从 RuntimeConfig 中解析参数
     const apiKey = config.credentials.api_key;
     const baseUrl = config.credentials.base_url;
-    
+    const apiVersion = config.credentials.api_version || '2024-06-01';
+    const deploymentName = config.credentials.deployment_name;
+
     if (!apiKey || !baseUrl) {
       throw new Error('Azure OpenAI requires api_key and base_url in credentials');
+    }
+
+    if (!deploymentName) {
+      throw new Error('Azure OpenAI requires deployment_name in credentials');
     }
 
     // 从 model_params 中解析参数
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
     const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
 
-    // 创建临时客户端
-    const client = new OpenAI({
+    // 创建 Azure OpenAI 客户端
+    const client = new AzureOpenAI({
       apiKey: apiKey,
-      baseURL: baseUrl,
+      endpoint: baseUrl,
+      apiVersion: apiVersion,
+      deployment: deploymentName,
     });
 
     const startTime = Date.now();
@@ -62,17 +70,25 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
   async *stream(request: CompletionRequest, config: RuntimeConfig): AsyncGenerator<string> {
     const apiKey = config.credentials.api_key;
     const baseUrl = config.credentials.base_url;
-    
+    const apiVersion = config.credentials.api_version || '2024-06-01';
+    const deploymentName = config.credentials.deployment_name;
+
     if (!apiKey || !baseUrl) {
       throw new Error('Azure OpenAI requires api_key and base_url in credentials');
+    }
+
+    if (!deploymentName) {
+      throw new Error('Azure OpenAI requires deployment_name in credentials');
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
     const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
 
-    const client = new OpenAI({
+    const client = new AzureOpenAI({
       apiKey: apiKey,
-      baseURL: baseUrl,
+      endpoint: baseUrl,
+      apiVersion: apiVersion,
+      deployment: deploymentName,
     });
 
     try {
@@ -99,14 +115,22 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
   async healthCheck(config: RuntimeConfig): Promise<boolean> {
     const apiKey = config.credentials.api_key;
     const baseUrl = config.credentials.base_url;
-    
+    const apiVersion = config.credentials.api_version || '2024-06-01';
+    const deploymentName = config.credentials.deployment_name;
+
     if (!apiKey || !baseUrl) {
       throw new Error('Azure OpenAI requires api_key and base_url in credentials');
     }
 
-    const client = new OpenAI({
+    if (!deploymentName) {
+      throw new Error('Azure OpenAI requires deployment_name in credentials');
+    }
+
+    const client = new AzureOpenAI({
       apiKey: apiKey,
-      baseURL: baseUrl,
+      endpoint: baseUrl,
+      apiVersion: apiVersion,
+      deployment: deploymentName,
     });
 
     try {
