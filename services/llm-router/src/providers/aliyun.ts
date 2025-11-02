@@ -32,7 +32,10 @@ export class AliyunProvider extends BaseLLMProvider {
         temperature: request.temperature ?? temperature,
         max_tokens: request.maxTokens ?? maxTokens,
         stream: false,
-      });
+        extra_body: {
+          enable_thinking: false,
+        },
+      } as any);
 
       const response = completion.choices[0];
       const latency = Date.now() - startTime;
@@ -112,7 +115,10 @@ export class AliyunProvider extends BaseLLMProvider {
         messages: [{ role: 'user', content: 'ping' }],
         temperature: 0,
         max_tokens: 1,
-      });
+        extra_body: {
+          enable_thinking: false,
+        },
+      } as any);
       return true;
     } catch (error) {
       logger.error({ err: error }, `Aliyun health check failed for model ${config.model}:`);
