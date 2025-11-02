@@ -317,7 +317,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
 
       if (mode === 'embeddings' || mode === 'both') {
         // Anthropic, Gemini, Azure OpenAI, Bedrock 等 provider 不支持 embeddings
-        const providersWithoutEmbeddings = ['anthropic', 'gemini', 'azure-openai', 'bedrock'];
+        const providersWithoutEmbeddings = ['anthropic', 'gemini', 'azure-openai', 'bedrock', 'aws-bedrock'];
         const skipEmbeddingsTest = providersWithoutEmbeddings.includes(providerId);
 
         if (skipEmbeddingsTest) {
