@@ -20,6 +20,7 @@
     "@fastify/env": "^4.3.0",
     "@fastify/rate-limit": "^10.3.0",
     "@google/generative-ai": "^0.24.1",
+    "@smithy/fetch-http-handler": "^5.3.5",
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
     "eventsource-parser": "^1.1.2",

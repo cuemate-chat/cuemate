@@ -295,6 +295,9 @@ importers:
       '@google/generative-ai':
         specifier: ^0.24.1
         version: 0.24.1
+      '@smithy/fetch-http-handler':
+        specifier: ^5.3.5
+        version: 5.3.5
       axios:
         specifier: ^1.7.7
         version: 1.11.0
