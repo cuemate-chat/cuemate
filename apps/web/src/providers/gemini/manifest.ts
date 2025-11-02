@@ -8,10 +8,97 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/gemini_icon_svg',
-  modelNamePlaceholder: '如 gemini-1.5-pro / gemini-1.0-pro-vision',
+  modelNamePlaceholder: '如 gemini-2.0-flash-001 / gemini-1.5-pro-002 / gemini-1.5-flash-002',
   baseModels: [
   {
+    name: "gemini-2.5-pro-exp-03-25",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "65536",
+        default_value: "65536",
+        extra: {
+          min: 256,
+          max: 65536,
+          step: 256
+        }
+      }
+    ]
+  },
+  {
+    name: "gemini-2.0-flash-001",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "8192",
+        default_value: "8192",
+        extra: {
+          min: 256,
+          max: 8192,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
     name: "gemini-2.0-flash-exp",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "8192",
+        default_value: "8192",
+        extra: {
+          min: 256,
+          max: 8192,
+          step: 128
+        }
+      }
+    ]
+  },
+  {
+    name: "gemini-1.5-pro-latest",
     default_params: [
       {
         label: "温度",
@@ -69,7 +156,7 @@ const manifest: ProviderManifest = {
     ]
   },
   {
-    name: "gemini-1.5-pro",
+    name: "gemini-1.5-flash-latest",
     default_params: [
       {
         label: "温度",
@@ -99,35 +186,6 @@ const manifest: ProviderManifest = {
   },
   {
     name: "gemini-1.5-flash-002",
-    default_params: [
-      {
-        label: "温度",
-        param_key: "temperature",
-        ui_type: "slider",
-        value: "0.7",
-        default_value: "0.7",
-        extra: {
-          min: 0,
-          max: 1,
-          step: 0.1
-        }
-      },
-      {
-        label: "输出最大tokens",
-        param_key: "max_tokens",
-        ui_type: "slider",
-        value: "8192",
-        default_value: "8192",
-        extra: {
-          min: 256,
-          max: 8192,
-          step: 128
-        }
-      }
-    ]
-  },
-  {
-    name: "gemini-1.5-flash",
     default_params: [
       {
         label: "温度",
