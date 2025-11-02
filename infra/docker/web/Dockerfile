@@ -1,8 +1,10 @@
 FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 
-# 安装 pnpm
-RUN npm install -g pnpm
+# 配置 npm 和 pnpm 使用淘宝镜像
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm install -g pnpm && \
+    pnpm config set registry https://registry.npmmirror.com
 
 # 复制根工作区元数据和 web 包元数据，仅安装 web 所需依赖
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
@@ -35,5 +37,3 @@ RUN chmod +x /start.sh
 
 EXPOSE 80
 CMD ["/bin/sh", "/start.sh"]
-
-
