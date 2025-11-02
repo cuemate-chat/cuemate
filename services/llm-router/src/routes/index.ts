@@ -192,7 +192,6 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       const body = (request.body as any) || {};
       const providerId: string = body.provider || body.id || 'custom';
       const model = body.model_name || body.model;
-      const mode: 'chat' | 'embeddings' | 'both' = (body.mode as any) || 'chat';
 
       // 动态提取凭证字段和运行参数
       const allParams = body.allParams || {};
@@ -222,9 +221,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       logger.info(`Probe config for ${providerId}:`, { config, body });
 
       let chatOk: boolean | undefined;
-      let embedOk: boolean | undefined;
       let chatError: string | undefined;
-      let embedError: string | undefined;
 
       let provider: BaseLLMProvider;
       switch (providerId) {
@@ -298,80 +295,26 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
           });
       }
 
-      if (mode === 'chat' || mode === 'both') {
-        try {
-          // 构建 RuntimeConfig 用于健康检查
-          const runtimeConfig: RuntimeConfig = {
-            provider: providerId,
-            model: model,
-            credentials: config,
-            model_params: [],
-          };
-          chatOk = await provider.healthCheck(runtimeConfig);
-        } catch (error) {
-          logger.error({ err: error }, 'Chat health check failed');
-          chatOk = false;
-          chatError = error instanceof Error ? error.message : String(error);
-        }
+      try {
+        // 构建 RuntimeConfig 用于健康检查
+        const runtimeConfig: RuntimeConfig = {
+          provider: providerId,
+          model: model,
+          credentials: config,
+          model_params: [],
+        };
+        chatOk = await provider.healthCheck(runtimeConfig);
+      } catch (error) {
+        logger.error({ err: error }, 'Chat health check failed');
+        chatOk = false;
+        chatError = error instanceof Error ? error.message : String(error);
       }
 
-      if (mode === 'embeddings' || mode === 'both') {
-        // Anthropic, Gemini, Azure OpenAI, Bedrock 等 provider 不支持 embeddings
-        const providersWithoutEmbeddings = ['anthropic', 'gemini', 'azure-openai', 'bedrock', 'aws-bedrock'];
-        const skipEmbeddingsTest = providersWithoutEmbeddings.includes(providerId);
-
-        if (skipEmbeddingsTest) {
-          logger.info(`Skipping embeddings test for ${providerId} (not supported)`);
-          embedOk = undefined;
-        } else {
-          try {
-            // 对于 OpenAI，通常使用相同的 API Key 和 Base URL 进行聊天和向量嵌入
-            const embedBaseUrl = config.base_url;
-            const embedApiKey = config.api_key;
-            const embedModel = 'text-embedding-3-small';
-
-            // 调试日志
-            logger.info(`Embeddings test config:`, { embedBaseUrl, embedApiKey, embedModel });
-
-            if (!embedApiKey || !embedBaseUrl) {
-              const missingFields = [];
-              if (!embedApiKey) missingFields.push('API Key');
-              if (!embedBaseUrl) missingFields.push('Base URL');
-              embedError = `缺少必要字段: ${missingFields.join(', ')}`;
-              logger.error('Missing required fields for embeddings test:', {
-                embedApiKey: !!embedApiKey,
-                embedBaseUrl: !!embedBaseUrl,
-              });
-              embedOk = false;
-            } else {
-              const openai = new (await import('openai')).default({
-                apiKey: embedApiKey,
-                baseURL: embedBaseUrl,
-              });
-              const r = await openai.embeddings.create({ model: embedModel, input: 'ping' });
-              embedOk = !!r && !!(r as any).data?.length;
-              logger.info(`Embeddings test result:`, { embedOk, response: r });
-            }
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            logger.error(`Embeddings test failed: ${errorMessage}`);
-            embedOk = false;
-            embedError = errorMessage;
-          }
-        }
-      }
-
-      const ok =
-        mode === 'chat'
-          ? !!chatOk
-          : mode === 'embeddings'
-            ? !!embedOk
-            : !!chatOk && (embedOk === undefined ? true : !!embedOk);
+      const ok = !!chatOk;
 
       // 构建包含错误信息的响应
-      const response: any = { ok, chatOk, embedOk };
-      if (chatError) response.chatError = chatError;
-      if (embedError) response.embedError = embedError;
+      const response: any = { ok };
+      if (chatError) response.error = chatError;
 
       return response;
     } catch (error) {

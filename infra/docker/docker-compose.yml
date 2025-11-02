@@ -112,7 +112,6 @@ services:
       - RAG_PORT=3003
       - RAG_HOST=0.0.0.0
       - VECTOR_STORE_TYPE=chroma
-      - EMBEDDINGS_PROVIDER=mock
       - CHROMA_PATH=http://cuemate-chroma:8000
       - TZ=Asia/Shanghai
     volumes:
