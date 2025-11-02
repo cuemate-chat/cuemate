@@ -1,4 +1,8 @@
-import { BedrockRuntimeClient, ConverseCommand, ConverseStreamCommand } from '@aws-sdk/client-bedrock-runtime';
+import {
+  BedrockRuntimeClient,
+  ConverseCommand,
+  ConverseStreamCommand,
+} from '@aws-sdk/client-bedrock-runtime';
 import { logger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
@@ -8,13 +12,12 @@ export class BedrockProvider extends BaseLLMProvider {
   }
 
   private createClient(apiKey: string, region: string): BedrockRuntimeClient {
-    // AWS Bedrock API Key 通过自定义请求签名器使用
+    // AWS Bedrock API Key 通过环境变量 AWS_BEARER_TOKEN_BEDROCK 设置
+    // AWS SDK 会自动检测并使用此环境变量进行 Bearer token 认证
+    process.env.AWS_BEARER_TOKEN_BEDROCK = apiKey;
+
     return new BedrockRuntimeClient({
       region: region,
-      credentials: {
-        accessKeyId: 'BEDROCK_API_KEY',
-        secretAccessKey: apiKey,
-      },
     });
   }
 
@@ -26,8 +29,9 @@ export class BedrockProvider extends BaseLLMProvider {
       throw new Error('AWS Bedrock API key is required');
     }
 
-    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
-    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 8192;
+    const temperature =
+      config.model_params.find((p) => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find((p) => p.param_key === 'max_tokens')?.value || 8192;
 
     const client = this.createClient(apiKey, region);
     const startTime = Date.now();
@@ -35,17 +39,16 @@ export class BedrockProvider extends BaseLLMProvider {
     try {
       // 转换消息格式为 AWS Bedrock Converse API 格式
       const messages = request.messages
-        .filter(msg => msg.role !== 'system')
-        .map(msg => ({
+        .filter((msg) => msg.role !== 'system')
+        .map((msg) => ({
           role: msg.role as 'user' | 'assistant',
-          content: [{ text: msg.content }]
+          content: [{ text: msg.content }],
         }));
 
       // 提取 system 消息
-      const systemMessages = request.messages.filter(msg => msg.role === 'system');
-      const system = systemMessages.length > 0
-        ? systemMessages.map(m => ({ text: m.content }))
-        : undefined;
+      const systemMessages = request.messages.filter((msg) => msg.role === 'system');
+      const system =
+        systemMessages.length > 0 ? systemMessages.map((m) => ({ text: m.content })) : undefined;
 
       const command = new ConverseCommand({
         modelId: config.model,
@@ -65,11 +68,13 @@ export class BedrockProvider extends BaseLLMProvider {
 
       return {
         content: output?.content?.[0]?.text || '',
-        usage: usage ? {
-          promptTokens: usage.inputTokens || 0,
-          completionTokens: usage.outputTokens || 0,
-          totalTokens: (usage.inputTokens || 0) + (usage.outputTokens || 0),
-        } : undefined,
+        usage: usage
+          ? {
+              promptTokens: usage.inputTokens || 0,
+              completionTokens: usage.outputTokens || 0,
+              totalTokens: (usage.inputTokens || 0) + (usage.outputTokens || 0),
+            }
+          : undefined,
         model: config.model,
         provider: 'bedrock',
         latency,
@@ -88,24 +93,24 @@ export class BedrockProvider extends BaseLLMProvider {
       throw new Error('AWS Bedrock API key is required');
     }
 
-    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
-    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 8192;
+    const temperature =
+      config.model_params.find((p) => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find((p) => p.param_key === 'max_tokens')?.value || 8192;
 
     const client = this.createClient(apiKey, region);
 
     try {
       // 转换消息格式
       const messages = request.messages
-        .filter(msg => msg.role !== 'system')
-        .map(msg => ({
+        .filter((msg) => msg.role !== 'system')
+        .map((msg) => ({
           role: msg.role as 'user' | 'assistant',
-          content: [{ text: msg.content }]
+          content: [{ text: msg.content }],
         }));
 
-      const systemMessages = request.messages.filter(msg => msg.role === 'system');
-      const system = systemMessages.length > 0
-        ? systemMessages.map(m => ({ text: m.content }))
-        : undefined;
+      const systemMessages = request.messages.filter((msg) => msg.role === 'system');
+      const system =
+        systemMessages.length > 0 ? systemMessages.map((m) => ({ text: m.content })) : undefined;
 
       const command = new ConverseStreamCommand({
         modelId: config.model,
@@ -148,8 +153,8 @@ export class BedrockProvider extends BaseLLMProvider {
         messages: [
           {
             role: 'user',
-            content: [{ text: 'ping' }]
-          }
+            content: [{ text: 'ping' }],
+          },
         ],
         inferenceConfig: {
           temperature: 0,

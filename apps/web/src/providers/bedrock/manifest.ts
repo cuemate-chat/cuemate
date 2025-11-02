@@ -9,10 +9,10 @@ const manifest: ProviderManifest = {
   icon: Icon,
   icon_url: 'assets/llm/bedrock_icon_svg',
   modelNamePlaceholder:
-    '如 anthropic.claude-sonnet-4-20250514-v1:0 / meta.llama3-3-70b-instruct-v1:0',
+    '如 us.anthropic.claude-sonnet-4-20250514-v1:0 / meta.llama3-3-70b-instruct-v1:0',
   baseModels: [
     {
-      name: 'anthropic.claude-sonnet-4-5-20250929-v1:0',
+      name: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
       default_params: [
         {
           label: '温度',
@@ -33,7 +33,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'anthropic.claude-sonnet-4-20250514-v1:0',
+      name: 'us.anthropic.claude-sonnet-4-20250514-v1:0',
       default_params: [
         {
           label: '温度',
@@ -54,7 +54,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'anthropic.claude-opus-4-1-20250805-v1:0',
+      name: 'us.anthropic.claude-opus-4-1-20250805-v1:0',
       default_params: [
         {
           label: '温度',
@@ -75,7 +75,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'anthropic.claude-opus-4-20250514-v1:0',
+      name: 'us.anthropic.claude-opus-4-20250514-v1:0',
       default_params: [
         {
           label: '温度',
@@ -96,7 +96,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'anthropic.claude-haiku-4-5-20251001-v1:0',
+      name: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
       default_params: [
         {
           label: '温度',
