@@ -316,39 +316,48 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       }
 
       if (mode === 'embeddings' || mode === 'both') {
-        try {
-          // 对于 OpenAI，通常使用相同的 API Key 和 Base URL 进行聊天和向量嵌入
-          const embedBaseUrl = config.base_url;
-          const embedApiKey = config.api_key;
-          const embedModel = 'text-embedding-3-small';
+        // Anthropic, Gemini, Azure OpenAI, Bedrock 等 provider 不支持 embeddings
+        const providersWithoutEmbeddings = ['anthropic', 'gemini', 'azure-openai', 'bedrock'];
+        const skipEmbeddingsTest = providersWithoutEmbeddings.includes(providerId);
 
-          // 调试日志
-          logger.info(`Embeddings test config:`, { embedBaseUrl, embedApiKey, embedModel });
+        if (skipEmbeddingsTest) {
+          logger.info(`Skipping embeddings test for ${providerId} (not supported)`);
+          embedOk = undefined;
+        } else {
+          try {
+            // 对于 OpenAI，通常使用相同的 API Key 和 Base URL 进行聊天和向量嵌入
+            const embedBaseUrl = config.base_url;
+            const embedApiKey = config.api_key;
+            const embedModel = 'text-embedding-3-small';
 
-          if (!embedApiKey || !embedBaseUrl) {
-            const missingFields = [];
-            if (!embedApiKey) missingFields.push('API Key');
-            if (!embedBaseUrl) missingFields.push('Base URL');
-            embedError = `缺少必要字段: ${missingFields.join(', ')}`;
-            logger.error('Missing required fields for embeddings test:', {
-              embedApiKey: !!embedApiKey,
-              embedBaseUrl: !!embedBaseUrl,
-            });
+            // 调试日志
+            logger.info(`Embeddings test config:`, { embedBaseUrl, embedApiKey, embedModel });
+
+            if (!embedApiKey || !embedBaseUrl) {
+              const missingFields = [];
+              if (!embedApiKey) missingFields.push('API Key');
+              if (!embedBaseUrl) missingFields.push('Base URL');
+              embedError = `缺少必要字段: ${missingFields.join(', ')}`;
+              logger.error('Missing required fields for embeddings test:', {
+                embedApiKey: !!embedApiKey,
+                embedBaseUrl: !!embedBaseUrl,
+              });
+              embedOk = false;
+            } else {
+              const openai = new (await import('openai')).default({
+                apiKey: embedApiKey,
+                baseURL: embedBaseUrl,
+              });
+              const r = await openai.embeddings.create({ model: embedModel, input: 'ping' });
+              embedOk = !!r && !!(r as any).data?.length;
+              logger.info(`Embeddings test result:`, { embedOk, response: r });
+            }
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.error(`Embeddings test failed: ${errorMessage}`);
             embedOk = false;
-          } else {
-            const openai = new (await import('openai')).default({
-              apiKey: embedApiKey,
-              baseURL: embedBaseUrl,
-            });
-            const r = await openai.embeddings.create({ model: embedModel, input: 'ping' });
-            embedOk = !!r && !!(r as any).data?.length;
-            logger.info(`Embeddings test result:`, { embedOk, response: r });
+            embedError = errorMessage;
           }
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          logger.error(`Embeddings test failed: ${errorMessage}`);
-          embedOk = false;
-          embedError = errorMessage;
         }
       }
 

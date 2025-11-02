@@ -8,7 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/anthropic_icon_svg',
-  modelNamePlaceholder: '如 claude-sonnet-4-5 / claude-3-5-sonnet-20241022',
+  modelNamePlaceholder: '如 claude-sonnet-4-5-20250929 / claude-sonnet-4-20250514 / claude-3-5-sonnet-20241022',
   baseModels: [
     {
       name: 'claude-sonnet-4-5',
@@ -98,7 +98,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'claude-sonnet-4',
+      name: 'claude-sonnet-4-20250514',
       default_params: [
         {
           label: '温度',
@@ -335,8 +335,8 @@ const manifest: ProviderManifest = {
       key: 'base_url',
       label: 'API URL',
       type: 'text',
-      placeholder: '默认 https://api.anthropic.com/v1（可选，代理 Base URL）',
-      defaultValue: 'https://api.anthropic.com/v1',
+      placeholder: '默认 https://api.anthropic.com（可选，代理 Base URL）',
+      defaultValue: 'https://api.anthropic.com',
     },
     {
       key: 'api_key',
