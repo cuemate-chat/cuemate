@@ -9,8 +9,9 @@ export class OllamaProvider extends BaseLLMProvider {
 
   async complete(request: CompletionRequest, config: RuntimeConfig): Promise<CompletionResponse> {
     // 从 RuntimeConfig 中解析参数
-    const baseUrl = config.credentials.base_url; // http://localhost:11434
-    
+    const baseUrl = config.credentials.base_url; // http://localhost:11434 或 https://api.ollama.com
+    const apiKey = config.credentials.api_key; // 云端 API 需要
+
     if (!baseUrl) {
       throw new Error('Ollama requires base_url in credentials');
     }
@@ -20,10 +21,10 @@ export class OllamaProvider extends BaseLLMProvider {
     const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 1024;
     const numPredict = config.model_params.find(p => p.param_key === 'num_predict')?.value; // Ollama 特有
 
-    // 创建临时客户端（Ollama 不需要 API key）
+    // 创建临时客户端（本地 Ollama 不需要 API key，云端需要）
     const client = new OpenAI({
       baseURL: baseUrl,
-      apiKey: 'ollama', // Ollama 不需要真实 API key
+      apiKey: apiKey || 'ollama', // 优先使用用户提供的 API key，否则使用默认值
     });
 
     const startTime = Date.now();
@@ -68,7 +69,8 @@ export class OllamaProvider extends BaseLLMProvider {
 
   async *stream(request: CompletionRequest, config: RuntimeConfig): AsyncGenerator<string> {
     const baseUrl = config.credentials.base_url;
-    
+    const apiKey = config.credentials.api_key;
+
     if (!baseUrl) {
       throw new Error('Ollama requires base_url in credentials');
     }
@@ -79,7 +81,7 @@ export class OllamaProvider extends BaseLLMProvider {
 
     const client = new OpenAI({
       baseURL: baseUrl,
-      apiKey: 'ollama',
+      apiKey: apiKey || 'ollama',
     });
 
     try {
@@ -111,14 +113,15 @@ export class OllamaProvider extends BaseLLMProvider {
 
   async healthCheck(config: RuntimeConfig): Promise<boolean> {
     const baseUrl = config.credentials.base_url;
-    
+    const apiKey = config.credentials.api_key;
+
     if (!baseUrl) {
       throw new Error('Ollama requires base_url in credentials');
     }
 
     const client = new OpenAI({
       baseURL: baseUrl,
-      apiKey: 'ollama',
+      apiKey: apiKey || 'ollama',
     });
 
     try {

@@ -8,10 +8,10 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/ollama_icon_svg',
-  modelNamePlaceholder: '如 deepseek-r1:7b / qwen2.5:7b-instruct',
+  modelNamePlaceholder: '如 deepseek-r1:8b / qwen3:8b / gemma3:12b / qwen3-coder:30b',
   baseModels: [
     {
-      name: 'deepseek-r1:1.5b',
+      name: 'gpt-oss:120b-cloud',
       default_params: [
         {
           label: '温度',
@@ -32,7 +32,238 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'deepseek-r1:7b',
+      name: 'gpt-oss:20b-cloud',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 8192, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'deepseek-v3.1:671b-cloud',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '32768',
+          default_value: '32768',
+          extra: { min: 256, max: 32768, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'qwen3-coder:480b-cloud',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 1, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 8192, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'qwen3-vl:235b-cloud',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 1, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 8192, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'minimax-m2:cloud',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 1, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 8192, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'glm-4.6:cloud',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 1, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 8192, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'gpt-oss:120b',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 8192, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'gpt-oss:20b',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 8192, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'gemma3:27b',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 8192, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'gemma3:12b',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 8192, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'gemma3:4b',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 8192, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'gemma3:1b',
       default_params: [
         {
           label: '温度',
@@ -74,133 +305,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'deepseek-r1:14b',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'deepseek-r1:32b',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'llama3:8b',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'llama3:70b',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'llama2:70b',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '4096',
-          default_value: '4096',
-          extra: { min: 256, max: 4096, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'llama2-chinese:13b',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '4096',
-          default_value: '4096',
-          extra: { min: 256, max: 4096, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'qwen:0.5b',
+      name: 'qwen3-coder:30b',
       default_params: [
         {
           label: '温度',
@@ -221,7 +326,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'qwen:1.8b',
+      name: 'qwen3-vl:30b',
       default_params: [
         {
           label: '温度',
@@ -242,7 +347,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'qwen:4b',
+      name: 'qwen3-vl:8b',
       default_params: [
         {
           label: '温度',
@@ -263,7 +368,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'qwen:7b',
+      name: 'qwen3-vl:4b',
       default_params: [
         {
           label: '温度',
@@ -284,7 +389,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'qwen:14b',
+      name: 'qwen3:30b',
       default_params: [
         {
           label: '温度',
@@ -305,7 +410,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'qwen:32b',
+      name: 'qwen3:8b',
       default_params: [
         {
           label: '温度',
@@ -326,7 +431,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'qwen:72b',
+      name: 'qwen3:4b',
       default_params: [
         {
           label: '温度',
@@ -343,237 +448,6 @@ const manifest: ProviderManifest = {
           value: '8192',
           default_value: '8192',
           extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'qwen:110b',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'qwen2.5:0.5b-instruct',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'qwen2.5:1.5b-instruct',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'qwen2.5:3b-instruct',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'qwen2.5:5b-instruct',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'qwen2.5:7b-instruct',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'qwen2.5:14b-instruct',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'qwen2.5:32b-instruct',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'qwen2.5:72b-instruct',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'qwen2.2:72b-instruct',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'phi3',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
-        },
-        {
-          label: '输出最大tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '4096',
-          default_value: '4096',
-          extra: { min: 256, max: 4096, step: 128 },
         },
       ],
     },
@@ -584,10 +458,17 @@ const manifest: ProviderManifest = {
       label: 'API URL',
       required: true,
       type: 'text',
-      placeholder: '默认 http://localhost:11434（Ollama本地API地址）',
-      defaultValue: 'http://localhost:11434',
+      placeholder: '如 https://ollama.com 或 http://localhost:11434',
+      defaultValue: 'https://ollama.com',
     },
-  ]
+    {
+      key: 'api_key',
+      label: 'API Key',
+      type: 'password',
+      required: false,
+      placeholder: '可选，部分部署需要认证',
+    },
+  ],
 };
 
 export default manifest;
