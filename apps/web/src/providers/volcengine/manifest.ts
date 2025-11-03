@@ -8,8 +8,269 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/volcanic_engine_icon_svg',
-  modelNamePlaceholder: '如 doubao-pro-32k / ep-xxxxxxxxxx-yyyy',
+  modelNamePlaceholder: '如 doubao-seed-1.6 / doubao-1.5-thinking-pro / doubao-pro-32k',
   baseModels: [
+  {
+    name: "doubao-seed-1.6",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16000",
+        default_value: "16000",
+        extra: {
+          min: 100,
+          max: 16000,
+          step: 100
+        }
+      }
+    ]
+  },
+  {
+    name: "doubao-seed-1.6-thinking",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16000",
+        default_value: "16000",
+        extra: {
+          min: 100,
+          max: 16000,
+          step: 100
+        }
+      }
+    ]
+  },
+  {
+    name: "doubao-seed-1.6-flash",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16000",
+        default_value: "16000",
+        extra: {
+          min: 100,
+          max: 16000,
+          step: 100
+        }
+      }
+    ]
+  },
+  {
+    name: "doubao-1.5-thinking-pro",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16000",
+        default_value: "16000",
+        extra: {
+          min: 100,
+          max: 16000,
+          step: 100
+        }
+      }
+    ]
+  },
+  {
+    name: "doubao-1.5-vision-pro",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "16000",
+        default_value: "16000",
+        extra: {
+          min: 100,
+          max: 16000,
+          step: 100
+        }
+      }
+    ]
+  },
+  {
+    name: "doubao-1.5-pro-32k",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "4000",
+        default_value: "4000",
+        extra: {
+          min: 100,
+          max: 4000,
+          step: 50
+        }
+      }
+    ]
+  },
+  {
+    name: "doubao-1.5-lite",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "4000",
+        default_value: "4000",
+        extra: {
+          min: 100,
+          max: 4000,
+          step: 50
+        }
+      }
+    ]
+  },
+  {
+    name: "doubao-pro-256k",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "4000",
+        default_value: "4000",
+        extra: {
+          min: 100,
+          max: 4000,
+          step: 50
+        }
+      }
+    ]
+  },
+  {
+    name: "doubao-lite-4k",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "4000",
+        default_value: "4000",
+        extra: {
+          min: 100,
+          max: 4000,
+          step: 50
+        }
+      }
+    ]
+  },
   {
     name: "ep-xxxxxxxxxx-yyyy",
     default_params: [
