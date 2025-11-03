@@ -9,7 +9,11 @@ export class XfProvider extends BaseLLMProvider {
 
   async complete(request: CompletionRequest, config: RuntimeConfig): Promise<CompletionResponse> {
     const apiKey = config.credentials.api_key;
-    const baseUrl = config.credentials.base_url || 'https://spark-api-open.xf-yun.com/v1';
+    const isX1Model = config.model === 'x1' || config.model === 'X1-Preview';
+    const defaultBaseUrl = isX1Model
+      ? 'https://spark-api-open.xf-yun.com/v2'
+      : 'https://spark-api-open.xf-yun.com/v1';
+    const baseUrl = config.credentials.base_url || defaultBaseUrl;
 
     if (!apiKey) {
       throw new Error('iFlytek Spark API key is required');
@@ -58,7 +62,11 @@ export class XfProvider extends BaseLLMProvider {
 
   async *stream(request: CompletionRequest, config: RuntimeConfig): AsyncGenerator<string> {
     const apiKey = config.credentials.api_key;
-    const baseUrl = config.credentials.base_url || 'https://spark-api-open.xf-yun.com/v1';
+    const isX1Model = config.model === 'x1' || config.model === 'X1-Preview';
+    const defaultBaseUrl = isX1Model
+      ? 'https://spark-api-open.xf-yun.com/v2'
+      : 'https://spark-api-open.xf-yun.com/v1';
+    const baseUrl = config.credentials.base_url || defaultBaseUrl;
 
     if (!apiKey) {
       throw new Error('iFlytek Spark API key is required');
@@ -95,7 +103,11 @@ export class XfProvider extends BaseLLMProvider {
 
   async healthCheck(config: RuntimeConfig): Promise<boolean> {
     const apiKey = config.credentials.api_key;
-    const baseUrl = config.credentials.base_url || 'https://spark-api-open.xf-yun.com/v1';
+    const isX1Model = config.model === 'x1' || config.model === 'X1-Preview';
+    const defaultBaseUrl = isX1Model
+      ? 'https://spark-api-open.xf-yun.com/v2'
+      : 'https://spark-api-open.xf-yun.com/v1';
+    const baseUrl = config.credentials.base_url || defaultBaseUrl;
 
     if (!apiKey) {
       throw new Error('iFlytek Spark API key is required');
