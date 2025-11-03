@@ -218,6 +218,90 @@ export function registerModelRoutes(app: FastifyInstance) {
     }),
   );
 
+  // 测试模型配置（不需要保存到数据库，直接用表单数据测试）
+  app.post(
+    '/models/test-config',
+    withErrorLogging(app.log as any, 'models.test-config', async (req) => {
+      try {
+        const body = (req as any).body || {};
+        const { provider, model_name, credentials, params } = body;
+
+        if (!provider || !model_name) {
+          throw new Error('provider 和 model_name 是必填的');
+        }
+
+        // 构建参数映射
+        const paramsMap: Record<string, any> = {};
+        if (params && Array.isArray(params)) {
+          for (const p of params) {
+            if (p.value !== undefined && p.value !== null && p.value !== '') {
+              // 根据参数类型转换值
+              if (p.param_key === 'temperature') {
+                paramsMap[p.param_key] = parseFloat(p.value);
+              } else if (
+                p.param_key === 'max_tokens' ||
+                p.param_key === 'maxTokens' ||
+                p.param_key === 'num_predict'
+              ) {
+                paramsMap[p.param_key] = parseInt(p.value);
+              } else if (p.param_key === 'stream') {
+                paramsMap[p.param_key] = p.value === 'true';
+              } else {
+                paramsMap[p.param_key] = p.value;
+              }
+            }
+          }
+        }
+
+        // 构建请求体
+        const requestBody = {
+          provider,
+          model_name,
+          mode: 'both',
+          // 传递凭证字段
+          ...Object.fromEntries(
+            Object.entries(credentials || {}).filter(([_, value]) => value !== undefined && value !== null && value !== ''),
+          ),
+          // 传递参数映射
+          allParams: paramsMap,
+        };
+
+        // 调试日志
+        app.log.info({
+          provider,
+          model_name,
+          credentials,
+          requestBody
+        }, '测试模型配置请求');
+
+        const res = await fetch(getLlmRouterUrl(SERVICE_CONFIG.LLM_ROUTER.ENDPOINTS.PROBE), {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          app.log.error({ status: res.status, body: text }, 'llm-router probe failed');
+          throw new Error(`测试失败: ${res.status} ${text}`);
+        }
+
+        const data = (await res.json()) as any;
+        const ok = !!data?.ok;
+
+        if (!ok) {
+          const errorMsg = data?.error || data?.chatError || data?.embedError || 'Unknown error';
+          throw new Error(`连接测试失败: ${errorMsg}`);
+        }
+
+        return { ok, chatOk: data?.chatOk, embedOk: data?.embedOk };
+      } catch (error) {
+        const message = (error as Error).message || 'probe failed';
+        return { ok: false, error: message };
+      }
+    }),
+  );
+
   // 将模型绑定到当前用户
   app.post(
     '/models/select',

@@ -32,3 +32,12 @@ export function selectUserModel(model_id: string) {
 export function testModelConnectivity(id: string) {
   return http.post(`/models/${id}/test`, {});
 }
+
+export function testModelConfig(config: {
+  provider: string;
+  model_name: string;
+  credentials: Record<string, any>;
+  params?: any[];
+}) {
+  return http.post('/models/test-config', config);
+}

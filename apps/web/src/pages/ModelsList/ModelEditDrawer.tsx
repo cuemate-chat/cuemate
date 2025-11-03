@@ -4,7 +4,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Input, Select, Switch, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
-import { testModelConnectivity } from '../../api/models';
+import { testModelConfig } from '../../api/models';
 import DrawerProviderLevel2, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProviderLevel2';
 import { message } from '../../components/Message';
 import { findProvider } from '../../providers';
@@ -73,16 +73,44 @@ export default function ModelEditDrawer({
       return;
     }
 
-    // 检查是否有模型ID（如果是编辑已有模型）
-    if (!form.id) {
-      message.warning('请先保存模型后再测试连接');
+    // 验证必填的凭证字段
+    const provider = findProvider(form.provider);
+    const credentialFields = provider?.credentialFieldsPerModel?.[form.model_name]
+      || provider?.credentialFieldsPerModel?.default
+      || provider?.credentialFields
+      || [];
+
+    const missingFields: string[] = [];
+    credentialFields.forEach((field) => {
+      if (field.required && !form[field.key]) {
+        missingFields.push(field.label);
+      }
+    });
+
+    if (missingFields.length > 0) {
+      message.warning(`请填写必填字段: ${missingFields.join(', ')}`);
       return;
     }
 
     setTesting(true);
     onTestingChange?.(true); // 通知父组件开始测试
     try {
-      const result: any = await testModelConnectivity(form.id);
+      // 构建凭证对象
+      const credentials: Record<string, any> = {};
+      credentialFields.forEach((field) => {
+        if (form[field.key]) {
+          credentials[field.key] = form[field.key];
+        }
+      });
+
+      // 使用表单中的值直接测试
+      const result: any = await testModelConfig({
+        provider: form.provider,
+        model_name: form.model_name,
+        credentials,
+        params: form.params || [],
+      });
+
       console.debug('测试连接结果:', result);
 
       if (result?.ok) {
@@ -101,6 +129,39 @@ export default function ModelEditDrawer({
   };
 
   const handleSave = async () => {
+    // 验证必填字段
+    if (!form.name) {
+      message.warning('请输入模型名称');
+      return;
+    }
+    if (!form.provider) {
+      message.warning('请选择供应商');
+      return;
+    }
+    if (!form.model_name) {
+      message.warning('请选择基础模型');
+      return;
+    }
+
+    // 验证必填的凭证字段
+    const provider = findProvider(form.provider);
+    const credentialFields = provider?.credentialFieldsPerModel?.[form.model_name]
+      || provider?.credentialFieldsPerModel?.default
+      || provider?.credentialFields
+      || [];
+
+    const missingFields: string[] = [];
+    credentialFields.forEach((field) => {
+      if (field.required && !form[field.key]) {
+        missingFields.push(field.label);
+      }
+    });
+
+    if (missingFields.length > 0) {
+      message.warning(`请填写必填字段: ${missingFields.join(', ')}`);
+      return;
+    }
+
     setSaving(true);
     try {
       await onOk(form);
@@ -415,9 +476,9 @@ export default function ModelEditDrawer({
           <Button onClick={onClose} disabled={saving || testing}>
             取消
           </Button>
-          <Button 
+          <Button
             onClick={handleTestConnection}
-            disabled={saving || testing || !form.provider || !form.model_name}
+            disabled={saving || testing}
             loading={testing}
           >
             {testing ? "测试中..." : "测试连接"}
