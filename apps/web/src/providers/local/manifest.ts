@@ -416,8 +416,15 @@ const manifest: ProviderManifest = {
       label: 'API URL',
       type: 'text',
       required: true,
-      placeholder: '默认 http://localhost:11434（本地模型服务API地址）',
+      placeholder: '如 http://localhost:11434 或 http://192.168.1.100:8000/v1',
       defaultValue: 'http://localhost:11434',
+    },
+    {
+      key: 'api_key',
+      label: 'API Key',
+      type: 'password',
+      required: false,
+      placeholder: '可选，部分推理框架需要（如 vLLM、Xinference）',
     },
   ]
 };
