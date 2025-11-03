@@ -8,10 +8,10 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/siliconCloud_icon_svg',
-  modelNamePlaceholder: '如 Qwen2.5-7B-Instruct / DeepSeek-R1-Distill-Qwen-7B',
+  modelNamePlaceholder: '如 deepseek-ai/DeepSeek-R1 / Qwen/Qwen2.5-72B-Instruct',
   baseModels: [
   {
-    name: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+    name: "deepseek-ai/DeepSeek-R1",
     default_params: [
       {
         label: "温度",
@@ -29,18 +29,18 @@ const manifest: ProviderManifest = {
         label: "输出最大tokens",
         param_key: "max_tokens",
         ui_type: "slider",
-        value: "8192",
-        default_value: "8192",
+        value: "32768",
+        default_value: "32768",
         extra: {
           min: 256,
-          max: 8192,
-          step: 128
+          max: 32768,
+          step: 256
         }
       }
     ]
   },
   {
-    name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+    name: "deepseek-ai/DeepSeek-V3",
     default_params: [
       {
         label: "温度",
@@ -58,18 +58,18 @@ const manifest: ProviderManifest = {
         label: "输出最大tokens",
         param_key: "max_tokens",
         ui_type: "slider",
-        value: "8192",
-        default_value: "8192",
+        value: "32768",
+        default_value: "32768",
         extra: {
           min: 256,
-          max: 8192,
-          step: 128
+          max: 32768,
+          step: 256
         }
       }
     ]
   },
   {
-    name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+    name: "deepseek-ai/DeepSeek-V3.2-Exp",
     default_params: [
       {
         label: "温度",
@@ -87,12 +87,99 @@ const manifest: ProviderManifest = {
         label: "输出最大tokens",
         param_key: "max_tokens",
         ui_type: "slider",
-        value: "8192",
-        default_value: "8192",
+        value: "64000",
+        default_value: "64000",
         extra: {
           min: 256,
-          max: 8192,
-          step: 128
+          max: 64000,
+          step: 256
+        }
+      }
+    ]
+  },
+  {
+    name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "32768",
+        default_value: "32768",
+        extra: {
+          min: 256,
+          max: 32768,
+          step: 256
+        }
+      }
+    ]
+  },
+  {
+    name: "Qwen/Qwen2.5-72B-Instruct",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "32768",
+        default_value: "32768",
+        extra: {
+          min: 256,
+          max: 32768,
+          step: 256
+        }
+      }
+    ]
+  },
+  {
+    name: "Qwen/Qwen2.5-32B-Instruct",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "32768",
+        default_value: "32768",
+        extra: {
+          min: 256,
+          max: 32768,
+          step: 256
         }
       }
     ]
@@ -116,12 +203,12 @@ const manifest: ProviderManifest = {
         label: "输出最大tokens",
         param_key: "max_tokens",
         ui_type: "slider",
-        value: "8192",
-        default_value: "8192",
+        value: "32768",
+        default_value: "32768",
         extra: {
           min: 256,
-          max: 8192,
-          step: 128
+          max: 32768,
+          step: 256
         }
       }
     ]
@@ -145,18 +232,18 @@ const manifest: ProviderManifest = {
         label: "输出最大tokens",
         param_key: "max_tokens",
         ui_type: "slider",
-        value: "8192",
-        default_value: "8192",
+        value: "32768",
+        default_value: "32768",
         extra: {
           min: 256,
-          max: 8192,
-          step: 128
+          max: 32768,
+          step: 256
         }
       }
     ]
   },
   {
-    name: "internlm/internlm2_5-7b-chat",
+    name: "Qwen/QwQ-32B",
     default_params: [
       {
         label: "温度",
@@ -174,18 +261,18 @@ const manifest: ProviderManifest = {
         label: "输出最大tokens",
         param_key: "max_tokens",
         ui_type: "slider",
-        value: "8192",
-        default_value: "8192",
+        value: "32768",
+        default_value: "32768",
         extra: {
           min: 256,
-          max: 8192,
-          step: 128
+          max: 32768,
+          step: 256
         }
       }
     ]
   },
   {
-    name: "Qwen/Qwen2-1.5B-Instruct",
+    name: "meta-llama/Llama-3.3-70B-Instruct",
     default_params: [
       {
         label: "温度",
@@ -203,12 +290,12 @@ const manifest: ProviderManifest = {
         label: "输出最大tokens",
         param_key: "max_tokens",
         ui_type: "slider",
-        value: "8192",
-        default_value: "8192",
+        value: "32768",
+        default_value: "32768",
         extra: {
           min: 256,
-          max: 8192,
-          step: 128
+          max: 32768,
+          step: 256
         }
       }
     ]
@@ -232,12 +319,41 @@ const manifest: ProviderManifest = {
         label: "输出最大tokens",
         param_key: "max_tokens",
         ui_type: "slider",
-        value: "8192",
-        default_value: "8192",
+        value: "32768",
+        default_value: "32768",
         extra: {
           min: 256,
-          max: 8192,
-          step: 128
+          max: 32768,
+          step: 256
+        }
+      }
+    ]
+  },
+  {
+    name: "internlm/internlm2_5-7b-chat",
+    default_params: [
+      {
+        label: "温度",
+        param_key: "temperature",
+        ui_type: "slider",
+        value: "0.7",
+        default_value: "0.7",
+        extra: {
+          min: 0,
+          max: 1,
+          step: 0.1
+        }
+      },
+      {
+        label: "输出最大tokens",
+        param_key: "max_tokens",
+        ui_type: "slider",
+        value: "32768",
+        default_value: "32768",
+        extra: {
+          min: 256,
+          max: 32768,
+          step: 256
         }
       }
     ]
