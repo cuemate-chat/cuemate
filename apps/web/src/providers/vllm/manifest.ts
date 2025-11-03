@@ -8,10 +8,10 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/vllm_icon_svg',
-  modelNamePlaceholder: '如 facebook/opt-125m / BAAI/Aquila-7B',
+  modelNamePlaceholder: '如 Qwen/Qwen2.5-7B-Instruct / meta-llama/Meta-Llama-3.1-8B-Instruct',
   baseModels: [
     {
-      name: 'facebook/opt-125m',
+      name: 'Qwen/Qwen2.5-7B-Instruct',
       default_params: [
         {
           label: '温度',
@@ -25,14 +25,14 @@ const manifest: ProviderManifest = {
           label: '输出最大tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
-          value: '2048',
-          default_value: '2048',
-          extra: { min: 256, max: 2048, step: 128 },
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 32768, step: 128 },
         },
       ],
     },
     {
-      name: 'BAAI/Aquila-7B',
+      name: 'Qwen/Qwen2.5-14B-Instruct',
       default_params: [
         {
           label: '温度',
@@ -46,14 +46,14 @@ const manifest: ProviderManifest = {
           label: '输出最大tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
-          value: '2048',
-          default_value: '2048',
-          extra: { min: 256, max: 2048, step: 128 },
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 32768, step: 128 },
         },
       ],
     },
     {
-      name: 'BAAI/AquilaChat-7B',
+      name: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
       default_params: [
         {
           label: '温度',
@@ -67,9 +67,72 @@ const manifest: ProviderManifest = {
           label: '输出最大tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
-          value: '2048',
-          default_value: '2048',
-          extra: { min: 256, max: 2048, step: 128 },
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 131072, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 131072, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'mistralai/Mistral-7B-Instruct-v0.3',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 32768, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'deepseek-ai/DeepSeek-V2.5',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 65536, step: 128 },
         },
       ],
     },
@@ -87,8 +150,8 @@ const manifest: ProviderManifest = {
       key: 'api_key',
       label: 'API Key',
       type: 'password',
-      required: true,
-      placeholder: '格式：vLLM服务的API密钥（可选，若未设置可为空）'
+      required: false,
+      placeholder: '可选，vLLM服务启动时配置了 --api-key 参数时填写'
     },
   ]
 };
