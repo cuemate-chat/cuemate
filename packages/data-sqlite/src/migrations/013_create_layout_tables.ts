@@ -2,17 +2,17 @@ export const version = 13;
 export const name = '013_create_layout_tables';
 
 export function up(db: any): void {
-  // 1. 创建BASE_PRICES表存储价格配置
+  // 1. 创建 BASE_PRICES 表存储价格配置
   db.exec(`
     CREATE TABLE base_prices (
-      id TEXT PRIMARY KEY,          -- 价格ID如 '1x1', '2x2', '4x4' 等
+      id TEXT PRIMARY KEY,          -- 价格 ID 如 '1x1', '2x2', '4x4' 等
       price REAL NOT NULL,          -- 基础价格
       created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
       updated_at INTEGER DEFAULT (strftime('%s', 'now') * 1000)
     );
   `);
 
-  // 插入BASE_PRICES数据
+  // 插入 BASE_PRICES 数据
   const basePrices = [
     { id: '1x1', price: 100 },
     { id: '1x2', price: 180 },
@@ -39,27 +39,27 @@ export function up(db: any): void {
     `);
   });
 
-  // 2. 创建block_configs表存储120个块布局数据
+  // 2. 创建 block_configs 表存储 120 个块布局数据
   db.exec(`
     CREATE TABLE block_configs (
-      id TEXT PRIMARY KEY,          -- 块ID如 '001', '002' 等
-      block_id TEXT NOT NULL,       -- 块完整ID如 '4x4-001', '2x2-002' 等
-      x INTEGER NOT NULL,           -- 网格x坐标
-      y INTEGER NOT NULL,           -- 网格y坐标  
+      id TEXT PRIMARY KEY,          -- 块 ID 如 '001', '002' 等
+      block_id TEXT NOT NULL,       -- 块完整 ID 如 '4x4-001', '2x2-002' 等
+      x INTEGER NOT NULL,           -- 网格 x 坐标
+      y INTEGER NOT NULL,           -- 网格 y 坐标  
       width INTEGER NOT NULL,       -- 网格宽度
       height INTEGER NOT NULL,      -- 网格高度
       type TEXT NOT NULL CHECK (type IN ('square', 'horizontal', 'vertical')),
       size TEXT NOT NULL,           -- 尺寸如 '4x4', '2x2' 等
-      price_id TEXT NOT NULL,       -- 关联base_prices的id
+      price_id TEXT NOT NULL,       -- 关联 base_prices 的 id
       created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
       updated_at INTEGER DEFAULT (strftime('%s', 'now') * 1000),
       FOREIGN KEY (price_id) REFERENCES base_prices(id)
     );
   `);
 
-  // 插入120个块配置数据
+  // 插入 120 个块配置数据
   const blockConfigs = [
-    // 第1行：错落有致，大块小块交错，完全覆盖x=0-31
+    // 第 1 行：错落有致，大块小块交错，完全覆盖 x=0-31
     { id: '001', blockId: '4x4-001', x: 0, y: 0, width: 4, height: 4, type: 'square' },
     { id: '002', blockId: '2x2-002', x: 4, y: 0, width: 2, height: 2, type: 'square' },
     { id: '003', blockId: '3x3-003', x: 6, y: 0, width: 3, height: 3, type: 'square' },
@@ -73,7 +73,7 @@ export function up(db: any): void {
     { id: '011', blockId: '2x3-011', x: 27, y: 0, width: 2, height: 3, type: 'vertical' },
     { id: '012', blockId: '3x1-012', x: 29, y: 0, width: 3, height: 1, type: 'horizontal' },
 
-    // 第2行：继续交错布局，填充空隙，不与第一行重合
+    // 第 2 行：继续交错布局，填充空隙，不与第一行重合
     { id: '013', blockId: '3x2-013', x: 26, y: 9, width: 3, height: 2, type: 'horizontal' },
     { id: '014', blockId: '2x2-014', x: 0, y: 4, width: 2, height: 2, type: 'square' },
     { id: '015', blockId: '3x1-015', x: 2, y: 4, width: 3, height: 1, type: 'horizontal' },
@@ -94,7 +94,7 @@ export function up(db: any): void {
     { id: '030', blockId: '2x4-030', x: 29, y: 1, width: 2, height: 4, type: 'vertical' },
     { id: '031', blockId: '1x1-031', x: 31, y: 1, width: 1, height: 1, type: 'square' },
 
-    // 第3行：错落有致，大小块混合，紧贴无缝隙
+    // 第 3 行：错落有致，大小块混合，紧贴无缝隙
     { id: '032', blockId: '2x3-032', x: 0, y: 6, width: 2, height: 3, type: 'vertical' },
     { id: '033', blockId: '3x3-033', x: 2, y: 5, width: 3, height: 3, type: 'square' },
     { id: '034', blockId: '2x3-034', x: 5, y: 6, width: 2, height: 3, type: 'vertical' },
@@ -114,7 +114,7 @@ export function up(db: any): void {
     { id: '048', blockId: '1x2-048', x: 31, y: 2, width: 1, height: 2, type: 'vertical' },
     { id: '049', blockId: '1x3-049', x: 31, y: 4, width: 1, height: 3, type: 'vertical' },
 
-    // 第4行：继续错落有致，紧贴前面各行的最大y值，无缝隙
+    // 第 4 行：继续错落有致，紧贴前面各行的最大 y 值，无缝隙
     { id: '050', blockId: '3x3-050', x: 0, y: 9, width: 3, height: 3, type: 'square' },
     { id: '051', blockId: '1x1-051', x: 2, y: 8, width: 1, height: 1, type: 'square' },
     { id: '052', blockId: '2x3-052', x: 3, y: 8, width: 2, height: 3, type: 'vertical' },
@@ -127,7 +127,7 @@ export function up(db: any): void {
     { id: '059', blockId: '2x3-059', x: 23, y: 7, width: 2, height: 3, type: 'vertical' },
     { id: '060', blockId: '3x4-060', x: 29, y: 7, width: 3, height: 4, type: 'vertical' },
 
-    // 第5行：继续错落布局，填充剩余空间
+    // 第 5 行：继续错落布局，填充剩余空间
     { id: '061', blockId: '1x3-061', x: 0, y: 12, width: 1, height: 3, type: 'vertical' },
     { id: '062', blockId: '2x2-062', x: 1, y: 12, width: 2, height: 2, type: 'square' },
     { id: '063', blockId: '2x3-063', x: 3, y: 11, width: 2, height: 3, type: 'vertical' },
@@ -140,7 +140,7 @@ export function up(db: any): void {
     { id: '070', blockId: '1x3-070', x: 25, y: 9, width: 1, height: 3, type: 'vertical' },
     { id: '071', blockId: '3x3-071', x: 29, y: 11, width: 3, height: 3, type: 'square' },
 
-    // 第6行：最终行，完成100块布局
+    // 第 6 行：最终行，完成 100 块布局
     { id: '072', blockId: '4x2-072', x: 1, y: 14, width: 4, height: 2, type: 'horizontal' },
     { id: '073', blockId: '2x4-073', x: 5, y: 13, width: 2, height: 4, type: 'vertical' },
     { id: '074', blockId: '3x3-074', x: 7, y: 13, width: 3, height: 3, type: 'square' },
@@ -153,7 +153,7 @@ export function up(db: any): void {
     { id: '081', blockId: '1x3-081', x: 28, y: 11, width: 1, height: 3, type: 'vertical' },
     { id: '082', blockId: '4x3-082', x: 28, y: 14, width: 4, height: 3, type: 'horizontal' },
 
-    // 第7行：继续错落布局，18个块左右
+    // 第 7 行：继续错落布局，18 个块左右
     { id: '083', blockId: '1x2-083', x: 0, y: 15, width: 1, height: 2, type: 'vertical' },
     { id: '084', blockId: '1x1-084', x: 1, y: 16, width: 1, height: 1, type: 'square' },
     { id: '085', blockId: '3x2-085', x: 2, y: 16, width: 3, height: 2, type: 'horizontal' },
@@ -207,10 +207,10 @@ export function up(db: any): void {
     `);
   });
 
-  // 3. 修改pixel_ads表结构 - 移除不需要的字段
-  // SQLite不支持DROP COLUMN，需要重建表
+  // 3. 修改 pixel_ads 表结构 - 移除不需要的字段
+  // SQLite 不支持 DROP COLUMN，需要重建表
 
-  // 创建新的pixel_ads表
+  // 创建新的 pixel_ads 表
   db.exec(`
     CREATE TABLE pixel_ads_new (
       id TEXT PRIMARY KEY,
@@ -221,12 +221,12 @@ export function up(db: any): void {
       status TEXT NOT NULL DEFAULT 'active',
       contact_info TEXT,
       user_id TEXT NOT NULL,
-      block_config_id TEXT NOT NULL,    -- 关联block_configs的id
+      block_config_id TEXT NOT NULL,    -- 关联 block_configs 的 id
       created_at INTEGER NOT NULL,
       updated_at INTEGER,
       expires_at INTEGER NOT NULL,
-      block_id TEXT,                    -- 保留原有的block_id字段
-      notes TEXT,                       -- 保留原有的notes字段
+      block_id TEXT,                    -- 保留原有的 block_id 字段
+      notes TEXT,                       -- 保留原有的 notes 字段
       FOREIGN KEY (block_config_id) REFERENCES block_configs(id)
     );
   `);
@@ -268,7 +268,7 @@ export function up(db: any): void {
 }
 
 export function down(db: any): void {
-  // 恢复原来的pixel_ads表结构
+  // 恢复原来的 pixel_ads 表结构
   db.exec(`
     CREATE TABLE pixel_ads_old (
       id TEXT PRIMARY KEY,

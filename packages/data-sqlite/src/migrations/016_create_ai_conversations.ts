@@ -2,7 +2,7 @@ export const version = 16;
 export const name = '016_create_ai_conversations';
 
 export function up(db: any): void {
-  // 创建AI对话会话表
+  // 创建 AI 对话会话表
   db.exec(`
     CREATE TABLE ai_conversations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,7 +25,7 @@ export function up(db: any): void {
     )
   `);
 
-  // 创建AI对话消息表
+  // 创建 AI 对话消息表
   db.exec(`
     CREATE TABLE ai_messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,7 +53,7 @@ export function up(db: any): void {
     CREATE INDEX idx_ai_messages_created_at ON ai_messages(created_at);
   `);
 
-  // 添加触发器：自动更新会话的updated_at时间戳
+  // 添加触发器：自动更新会话的 updated_at 时间戳
   db.exec(`
     CREATE TRIGGER update_ai_conversations_timestamp 
     AFTER UPDATE ON ai_conversations

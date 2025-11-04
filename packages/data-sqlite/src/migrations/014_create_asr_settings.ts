@@ -3,7 +3,7 @@ export const name = '014_create_asr_settings';
 
 export function up(db: any): void {
   db.exec(`
-    -- ASR配置表（全局唯一配置）
+    -- ASR 配置表（全局唯一配置）
     CREATE TABLE IF NOT EXISTS asr_config (
       id INTEGER PRIMARY KEY CHECK(id = 1),
       name TEXT NOT NULL DEFAULT 'ASR-Gateway',
@@ -47,7 +47,7 @@ export function up(db: any): void {
       1.0, false, false, true,
       'sortformer', 'segment', 5.0, 'INFO',
       25, 1, 'auto', 30.0, 0.5, false,
-      '技术面试常用词汇：算法、数据结构、架构设计、性能优化、代码重构、系统设计、API接口、数据库、缓存、消息队列、微服务、容器化、云计算、人工智能、机器学习、前端开发、后端开发、全栈开发。', '请准确识别并转录音频内容，保持语言的自然流畅性，注意专业术语的准确性。对于技术讨论，请特别关注代码逻辑、系统架构和性能分析等内容的准确转录。', 10000
+      '技术面试常用词汇：算法、数据结构、架构设计、性能优化、代码重构、系统设计、API 接口、数据库、缓存、消息队列、微服务、容器化、云计算、人工智能、机器学习、前端开发、后端开发、全栈开发。', '请准确识别并转录音频内容，保持语言的自然流畅性，注意专业术语的准确性。对于技术讨论，请特别关注代码逻辑、系统架构和性能分析等内容的准确转录。', 10000
     );
   `);
 }

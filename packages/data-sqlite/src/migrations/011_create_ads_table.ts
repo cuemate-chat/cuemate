@@ -41,7 +41,7 @@ export function up(db: any): void {
       {
         id: 'example_001',
         title: 'CueMate 面试助手',
-        description: 'AI驱动的智能面试练习平台，提升您的面试技能',
+        description: 'AI 驱动的智能面试练习平台，提升您的面试技能',
         link_url: 'https://cuemate.ai',
         image_path: '/images/ads/cuemate-logo.png',
         x_position: 0,
@@ -70,7 +70,7 @@ export function up(db: any): void {
         contact_info: 'blog@example.com',
         price: 299.99,
         user_id: 'system',
-        expires_at: now + 30 * 24 * 60 * 60 * 1000, // 30天后过期
+        expires_at: now + 30 * 24 * 60 * 60 * 1000, // 30 天后过期
       },
     ];
 

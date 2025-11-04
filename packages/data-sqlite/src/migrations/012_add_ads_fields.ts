@@ -2,24 +2,24 @@ export const version = 12;
 export const name = '012_add_ads_fields';
 
 export function up(db: any): void {
-  // 添加block_id字段，用于存储块ID如"1x1-1", "2x1-1"等
+  // 添加 block_id 字段，用于存储块 ID 如"1x1-1", "2x1-1"等
   db.exec(`
     ALTER TABLE pixel_ads 
     ADD COLUMN block_id TEXT;
   `);
 
-  // 添加notes字段，用于存储额外的备注信息
+  // 添加 notes 字段，用于存储额外的备注信息
   db.exec(`
     ALTER TABLE pixel_ads 
     ADD COLUMN notes TEXT;
   `);
 
-  // 创建block_id索引以优化查询
+  // 创建 block_id 索引以优化查询
   db.exec(`CREATE INDEX idx_pixel_ads_block_id ON pixel_ads(block_id);`);
 
-  // 为现有的示例数据更新block_id（如果存在）
+  // 为现有的示例数据更新 block_id（如果存在）
   try {
-    // 更新示例数据的block_id
+    // 更新示例数据的 block_id
     db.exec(`
       UPDATE pixel_ads 
       SET block_id = '1x1-1'

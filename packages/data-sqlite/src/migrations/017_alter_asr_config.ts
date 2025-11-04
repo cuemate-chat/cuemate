@@ -3,12 +3,12 @@ export const name = '017_alter_asr_config';
 
 export function up(db: any): void {
   db.exec(`
-    -- 删除旧的WhisperLiveKit字段，添加FunASR/AudioTee/PiperTTS相关字段
+    -- 删除旧的 WhisperLiveKit 字段，添加 FunASR/AudioTee/PiperTTS 相关字段
     CREATE TABLE IF NOT EXISTS asr_config_new (
       id INTEGER PRIMARY KEY CHECK(id = 1),
       name TEXT NOT NULL DEFAULT 'ASR-Gateway',
 
-      -- FunASR WebSocket配置
+      -- FunASR WebSocket 配置
       funasr_host TEXT NOT NULL DEFAULT 'localhost',
       funasr_port INTEGER NOT NULL DEFAULT 10095,
       funasr_chunk_interval INTEGER NOT NULL DEFAULT 5,
@@ -18,14 +18,14 @@ export function up(db: any): void {
       funasr_mode TEXT NOT NULL DEFAULT 'online' CHECK(funasr_mode IN ('online', 'offline', '2pass')),
       funasr_sample_rate INTEGER NOT NULL DEFAULT 16000,
 
-      -- AudioTee配置
+      -- AudioTee 配置
       audiotee_sample_rate INTEGER NOT NULL DEFAULT 16000 CHECK(audiotee_sample_rate IN (8000, 16000, 22050, 24000, 32000, 44100, 48000)),
       audiotee_chunk_duration REAL NOT NULL DEFAULT 0.2,
       audiotee_include_processes TEXT DEFAULT '[]',
       audiotee_exclude_processes TEXT DEFAULT '[]',
       audiotee_mute_processes BOOLEAN DEFAULT false,
 
-      -- PiperTTS配置
+      -- PiperTTS 配置
       piper_default_language TEXT NOT NULL DEFAULT 'zh-CN' CHECK(piper_default_language IN ('zh-CN', 'en-US')),
       piper_speech_speed REAL DEFAULT 1.0 CHECK(piper_speech_speed >= 0.5 AND piper_speech_speed <= 2.0),
       piper_python_path TEXT DEFAULT 'python3',
@@ -71,7 +71,7 @@ export function up(db: any): void {
       '', '默认麦克风', '', '默认扬声器', 60, 15, 5, 30
     );
 
-    -- 为users表添加悬浮窗口相关字段
+    -- 为 users 表添加悬浮窗口相关字段
     ALTER TABLE users ADD COLUMN floating_window_visible INTEGER DEFAULT 1 CHECK(floating_window_visible IN (0, 1));
     ALTER TABLE users ADD COLUMN floating_window_height INTEGER DEFAULT 75 CHECK(floating_window_height IN (50, 75, 100));
   `);

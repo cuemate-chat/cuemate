@@ -16,7 +16,7 @@ export function up(db: any): void {
   `);
 
   const now = Date.now();
-  // 使用固定的UUID，确保预置题库的tag_id有值
+  // 使用固定的 UUID，确保预置题库的 tag_id 有值
   const builtinTags = [
     { id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479', name: 'Redis' },
     { id: 'f47ac10b-58cc-4372-a567-0e02b2c3d480', name: 'Kafka' },

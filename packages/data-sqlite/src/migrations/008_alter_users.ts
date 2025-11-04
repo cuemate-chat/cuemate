@@ -107,8 +107,8 @@ export function up(db: any): void {
         'resume_demo_001',
         'admin',
         'job_demo_001',
-        'Java技术经理-简历',
-        '简历内容：示例 – 拥有10年开发及架构经验，熟悉Spring生态、Redis、Kafka、MySQL等，具备分布式架构与微服务落地经验。',
+        'Java 技术经理-简历',
+        '简历内容：示例 – 拥有 10 年开发及架构经验，熟悉 Spring 生态、Redis、Kafka、MySQL 等，具备分布式架构与微服务落地经验。',
         now,
       );
 
@@ -119,7 +119,7 @@ export function up(db: any): void {
         'question_demo_001',
         'job_demo_001',
         '你在项目里如何进行数据库性能优化？',
-        '常用手段包括：索引优化、慢SQL分析、读写分离、连接池参数调优、热点数据缓存等。',
+        '常用手段包括：索引优化、慢 SQL 分析、读写分离、连接池参数调优、热点数据缓存等。',
         now,
       );
     }

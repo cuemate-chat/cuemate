@@ -3,7 +3,7 @@ export const name = '018_alter_interviews';
 
 export function up(db: any): void {
   db.exec(`
-    -- 在interviews表中新增冗余字段
+    -- 在 interviews 表中新增冗余字段
     ALTER TABLE interviews ADD COLUMN job_title TEXT;
     ALTER TABLE interviews ADD COLUMN job_content TEXT;
     ALTER TABLE interviews ADD COLUMN question_count INTEGER DEFAULT 0;
@@ -15,14 +15,14 @@ export function up(db: any): void {
     ALTER TABLE interviews ADD COLUMN status TEXT DEFAULT 'idle';
     ALTER TABLE interviews ADD COLUMN message TEXT;
 
-    -- 修改interview_reviews表的score_id字段为interview_id
+    -- 修改 interview_reviews 表的 score_id 字段为 interview_id
     ALTER TABLE interview_reviews RENAME COLUMN score_id TO interview_id;
   `);
 }
 
 export function down(db: any): void {
   db.exec(`
-    -- 恢复interview_reviews表的字段名
+    -- 恢复 interview_reviews 表的字段名
     ALTER TABLE interview_reviews RENAME COLUMN interview_id TO score_id;
 
     -- 移除新增的字段

@@ -102,8 +102,8 @@ export function up(db: any): void {
    - 专业、具体、有条理
    - 结合实际工作经验和项目案例
    - 体现相关技能和能力
-   - 控制在2000字以内
-   - 去除AI味道，使用口语化表达
+   - 控制在 2000 字以内
+   - 去除 AI 味道，使用口语化表达
    - 注重技术细节而非空话套话
    - 直接输出答案内容，不要包含"参考答案："等前缀
 
@@ -114,8 +114,8 @@ export function up(db: any): void {
    - 结合候选人简历中的实际经验和项目
    - 专业、具体、有条理
    - 体现相关技能和能力
-   - 控制在2000字以内
-   - 去除AI味道，使用口语化表达
+   - 控制在 2000 字以内
+   - 去除 AI 味道，使用口语化表达
    - 注重技术细节而非空话套话
    - 直接输出答案内容，不要包含"参考答案："等前缀
 
@@ -153,8 +153,8 @@ export function up(db: any): void {
    - 专业、具体、有条理
    - 结合实际工作经验和项目案例
    - 体现相关技能和能力
-   - 控制在2000字以内
-   - 去除AI味道，使用口语化表达
+   - 控制在 2000 字以内
+   - 去除 AI 味道，使用口语化表达
    - 注重技术细节而非空话套话
    - 直接输出答案内容，不要包含"参考答案："等前缀
 
@@ -165,8 +165,8 @@ export function up(db: any): void {
    - 结合候选人简历中的实际经验和项目
    - 专业、具体、有条理
    - 体现相关技能和能力
-   - 控制在2000字以内
-   - 去除AI味道，使用口语化表达
+   - 控制在 2000 字以内
+   - 去除 AI 味道，使用口语化表达
    - 注重技术细节而非空话套话
    - 直接输出答案内容，不要包含"参考答案："等前缀
 
@@ -180,7 +180,7 @@ export function up(db: any): void {
       '现在开始第\${currentQuestionIndex + 1}个问题。请根据之前的对话历史和岗位要求，生成一个合适的面试问题。
 
 **重要要求：**
-- 去除AI味道，使用口语化表达
+- 去除 AI 味道，使用口语化表达
 - 注重技术细节而非空话套话
 - 问题要具体、实际，避免笼统和模糊
 - 直接输出问题内容，不要包含其他解释',
@@ -190,7 +190,7 @@ export function up(db: any): void {
       '现在开始第\${currentQuestionIndex + 1}个问题。请根据之前的对话历史和岗位要求，生成一个合适的面试问题。
 
 **重要要求：**
-- 去除AI味道，使用口语化表达
+- 去除 AI 味道，使用口语化表达
 - 注重技术细节而非空话套话
 - 问题要具体、实际，避免笼统和模糊
 - 直接输出问题内容，不要包含其他解释',
@@ -208,13 +208,13 @@ export function up(db: any): void {
 
 参考答案：\${referenceAnswer}
 
-请按以下JSON格式输出分析结果（只输出JSON，不要其他内容）：
+请按以下 JSON 格式输出分析结果（只输出 JSON，不要其他内容）：
 {
   "pros": "回答的亮点和优势",
   "cons": "回答的问题和不足",
   "suggestions": "具体的改进建议",
   "key_points": "这个问题主要考察什么能力",
-  "assessment": "1-10分的评分并说明理由"
+  "assessment": "1-10 分的评分并说明理由"
 }',
       '分析候选人回答提示词',
       '["askedQuestion","candidateAnswer","referenceAnswer"]',
@@ -227,13 +227,13 @@ export function up(db: any): void {
 
 参考答案：\${referenceAnswer}
 
-请按以下JSON格式输出分析结果（只输出JSON，不要其他内容）：
+请按以下 JSON 格式输出分析结果（只输出 JSON，不要其他内容）：
 {
   "pros": "回答的亮点和优势",
   "cons": "回答的问题和不足",
   "suggestions": "具体的改进建议",
   "key_points": "这个问题主要考察什么能力",
-  "assessment": "1-10分的评分并说明理由"
+  "assessment": "1-10 分的评分并说明理由"
 }',
       NULL,
       strftime('%s', 'now') * 1000,
@@ -244,7 +244,7 @@ export function up(db: any): void {
       '作为一名专业的简历优化师，请根据目标岗位要求对以下简历进行全面优化。
 
 **重要要求：**
-1. 优化后的简历内容必须详细完整，字数不能少于原简历的80%
+1. 优化后的简历内容必须详细完整，字数不能少于原简历的 80%
 2. 保留原简历的所有重要信息，在此基础上进行增强和改进
 3. 针对目标岗位要求，重点突出相关技能和经验
 4. 优化语言表达，使用更专业和有说服力的词汇
@@ -257,12 +257,12 @@ export function up(db: any): void {
 \${resumeContent}
 
 **请提供：**
-1. **优化建议**：列出5-10条具体的优化建议，说明为什么要这样改进
-2. **优化后的完整简历**：基于原简历进行全面优化，确保内容丰富详细，字数不少于原简历的80%
+1. **优化建议**：列出 5-10 条具体的优化建议，说明为什么要这样改进
+2. **优化后的完整简历**：基于原简历进行全面优化，确保内容丰富详细，字数不少于原简历的 80%
 
 **输出格式（JSON）：**
 {
-  "suggestions": "1. [具体建议1]\\n2. [具体建议2]\\n3. [具体建议3]\\n...",
+  "suggestions": "1. [具体建议 1]\\n2. [具体建议 2]\\n3. [具体建议 3]\\n...",
   "optimizedResume": "[完整的优化后简历内容，必须详细完整，不能过于简化]"
 }
 
@@ -273,7 +273,7 @@ export function up(db: any): void {
       '作为一名专业的简历优化师，请根据目标岗位要求对以下简历进行全面优化。
 
 **重要要求：**
-1. 优化后的简历内容必须详细完整，字数不能少于原简历的80%
+1. 优化后的简历内容必须详细完整，字数不能少于原简历的 80%
 2. 保留原简历的所有重要信息，在此基础上进行增强和改进
 3. 针对目标岗位要求，重点突出相关技能和经验
 4. 优化语言表达，使用更专业和有说服力的词汇
@@ -286,12 +286,12 @@ export function up(db: any): void {
 \${resumeContent}
 
 **请提供：**
-1. **优化建议**：列出5-10条具体的优化建议，说明为什么要这样改进
-2. **优化后的完整简历**：基于原简历进行全面优化，确保内容丰富详细，字数不少于原简历的80%
+1. **优化建议**：列出 5-10 条具体的优化建议，说明为什么要这样改进
+2. **优化后的完整简历**：基于原简历进行全面优化，确保内容丰富详细，字数不少于原简历的 80%
 
 **输出格式（JSON）：**
 {
-  "suggestions": "1. [具体建议1]\\n2. [具体建议2]\\n3. [具体建议3]\\n...",
+  "suggestions": "1. [具体建议 1]\\n2. [具体建议 2]\\n3. [具体建议 3]\\n...",
   "optimizedResume": "[完整的优化后简历内容，必须详细完整，不能过于简化]"
 }
 
@@ -312,18 +312,18 @@ export function up(db: any): void {
 \${reviewsData}
 
 **评分要求:**
-1. 总分(totalScore): 0-100分,综合评价候选人表现
-2. 雷达图评分(各项0-100分):
+1. 总分(totalScore): 0-100 分,综合评价候选人表现
+2. 雷达图评分(各项 0-100 分):
    - radarInteractivity: 互动性,回答是否积极主动
    - radarConfidence: 自信度,表达是否自信清晰
    - radarProfessionalism: 专业性,技术深度和广度
    - radarRelevance: 相关性,回答是否切题
    - radarClarity: 流畅性,表达是否清晰流畅
 3. 文字评价:
-   - overallSummary: 整体表现总结(200字以内)
-   - pros: 优点(列举3-5条)
-   - cons: 缺点和不足(列举3-5条)
-   - suggestions: 改进建议(列举3-5条具体建议)
+   - overallSummary: 整体表现总结(200 字以内)
+   - pros: 优点(列举 3-5 条)
+   - cons: 缺点和不足(列举 3-5 条)
+   - suggestions: 改进建议(列举 3-5 条具体建议)
 
 **输出格式(JSON):**
 {
@@ -351,18 +351,18 @@ export function up(db: any): void {
 \${reviewsData}
 
 **评分要求:**
-1. 总分(totalScore): 0-100分,综合评价候选人表现
-2. 雷达图评分(各项0-100分):
+1. 总分(totalScore): 0-100 分,综合评价候选人表现
+2. 雷达图评分(各项 0-100 分):
    - radarInteractivity: 互动性,回答是否积极主动
    - radarConfidence: 自信度,表达是否自信清晰
    - radarProfessionalism: 专业性,技术深度和广度
    - radarRelevance: 相关性,回答是否切题
    - radarClarity: 流畅性,表达是否清晰流畅
 3. 文字评价:
-   - overallSummary: 整体表现总结(200字以内)
-   - pros: 优点(列举3-5条)
-   - cons: 缺点和不足(列举3-5条)
-   - suggestions: 改进建议(列举3-5条具体建议)
+   - overallSummary: 整体表现总结(200 字以内)
+   - pros: 优点(列举 3-5 条)
+   - cons: 缺点和不足(列举 3-5 条)
+   - suggestions: 改进建议(列举 3-5 条具体建议)
 
 **输出格式(JSON):**
 {
@@ -395,15 +395,15 @@ export function up(db: any): void {
 **分析要求:**
 1. **面试官分析** (基于提问风格和问题类型):
    - interviewerScore: 面试官提问质量评分(0-100)
-   - interviewerSummary: 面试官风格总结(100字)
+   - interviewerSummary: 面试官风格总结(100 字)
    - interviewerRole: 推测面试官角色(如: 技术经理/HR/技术专家)
-   - interviewerMbti: 推测MBTI类型
+   - interviewerMbti: 推测 MBTI 类型
    - interviewerPersonality: 性格特征描述
    - interviewerPreference: 面试官偏好(如: 注重技术深度/注重沟通能力)
 
 2. **候选人分析** (基于回答内容和表现):
-   - candidateSummary: 候选人特征总结(100字)
-   - candidateMbti: 推测MBTI类型
+   - candidateSummary: 候选人特征总结(100 字)
+   - candidateMbti: 推测 MBTI 类型
    - candidatePersonality: 性格特征描述
    - candidateJobPreference: 职业偏好分析
 
@@ -443,15 +443,15 @@ export function up(db: any): void {
 **分析要求:**
 1. **面试官分析** (基于提问风格和问题类型):
    - interviewerScore: 面试官提问质量评分(0-100)
-   - interviewerSummary: 面试官风格总结(100字)
+   - interviewerSummary: 面试官风格总结(100 字)
    - interviewerRole: 推测面试官角色(如: 技术经理/HR/技术专家)
-   - interviewerMbti: 推测MBTI类型
+   - interviewerMbti: 推测 MBTI 类型
    - interviewerPersonality: 性格特征描述
    - interviewerPreference: 面试官偏好(如: 注重技术深度/注重沟通能力)
 
 2. **候选人分析** (基于回答内容和表现):
-   - candidateSummary: 候选人特征总结(100字)
-   - candidateMbti: 推测MBTI类型
+   - candidateSummary: 候选人特征总结(100 字)
+   - candidateMbti: 推测 MBTI 类型
    - candidatePersonality: 性格特征描述
    - candidateJobPreference: 职业偏好分析
 
