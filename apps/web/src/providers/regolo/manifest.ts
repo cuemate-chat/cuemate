@@ -8,10 +8,94 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/regolo_icon_svg',
-  modelNamePlaceholder: '如 Phi-4 / Llama-3.3-70B-Instruct',
+  modelNamePlaceholder: '如 deepseek-r1-70b / Llama-3.3-70B-Instruct',
   baseModels: [
     {
-      name: 'Phi-4',
+      name: 'deepseek-r1-70b',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大 tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 65536, step: 256 },
+        },
+      ],
+    },
+    {
+      name: 'llama-guard3-8b',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大 tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 8192, step: 128 },
+        },
+      ],
+    },
+    {
+      name: 'qwen3-30b',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大 tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 32768, step: 256 },
+        },
+      ],
+    },
+    {
+      name: 'qwen3-coder-30b',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大 tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 262144, step: 512 },
+        },
+      ],
+    },
+    {
+      name: 'mistral-small3.2',
       default_params: [
         {
           label: '温度',
@@ -25,14 +109,14 @@ const manifest: ProviderManifest = {
           label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
-          value: '4096',
-          default_value: '4096',
-          extra: { min: 256, max: 4096, step: 128 },
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 32768, step: 256 },
         },
       ],
     },
     {
-      name: 'DeepSeek-R1-Distill-Qwen-32B',
+      name: 'gpt-oss-120b',
       default_params: [
         {
           label: '温度',
@@ -41,90 +125,6 @@ const manifest: ProviderManifest = {
           value: '0.7',
           default_value: '0.7',
           extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'DeepSeek-R1-Distill-Qwen-14B',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'DeepSeek-R1-Distill-Qwen-7B',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'DeepSeek-R1-Distill-Llama-8B',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'maestrale-chat-v0.4-beta',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 1, step: 0.1 },
         },
         {
           label: '输出最大 tokens',
@@ -138,27 +138,6 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'Llama-3.3-70B-Instruct',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'Llama-3.1-70B-Instruct',
       default_params: [
         {
           label: '温度',
@@ -200,28 +179,7 @@ const manifest: ProviderManifest = {
       ],
     },
     {
-      name: 'DeepSeek-Coder-6.7B-Instruct',
-      default_params: [
-        {
-          label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
-          value: '0.7',
-          default_value: '0.7',
-          extra: { min: 0, max: 2, step: 0.1 },
-        },
-        {
-          label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
-          value: '8192',
-          default_value: '8192',
-          extra: { min: 256, max: 8192, step: 128 },
-        },
-      ],
-    },
-    {
-      name: 'Qwen2.5-72B-Instruct',
+      name: 'maestrale-chat-v0.4-beta',
       default_params: [
         {
           label: '温度',
@@ -241,6 +199,48 @@ const manifest: ProviderManifest = {
         },
       ],
     },
+    {
+      name: 'Qwen3-8B',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大 tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 32768, step: 256 },
+        },
+      ],
+    },
+    {
+      name: 'gemma-3-27b-it',
+      default_params: [
+        {
+          label: '温度',
+          param_key: 'temperature',
+          ui_type: 'slider',
+          value: '0.7',
+          default_value: '0.7',
+          extra: { min: 0, max: 2, step: 0.1 },
+        },
+        {
+          label: '输出最大 tokens',
+          param_key: 'max_tokens',
+          ui_type: 'slider',
+          value: '8192',
+          default_value: '8192',
+          extra: { min: 256, max: 131072, step: 256 },
+        },
+      ],
+    },
   ],
   credentialFields: [
     {
@@ -248,16 +248,16 @@ const manifest: ProviderManifest = {
       label: 'API URL',
       type: 'text',
       placeholder: '默认 https://api.regolo.ai/v1（可选，代理 Base URL）',
-      defaultValue: 'https://api.regolo.ai/v1'
+      defaultValue: 'https://api.regolo.ai/v1',
     },
     {
       key: 'api_key',
       label: 'API Key',
       required: true,
       type: 'password',
-      placeholder: '格式：Regolo 平台的 API Key，需在官网注册获取'
+      placeholder: '格式：Regolo 平台的 API Key，需在官网注册获取',
     },
-  ]
+  ],
 };
 
 export default manifest;
