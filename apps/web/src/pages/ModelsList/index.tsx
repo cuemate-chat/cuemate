@@ -359,7 +359,7 @@ export default function ModelsList() {
               else if (k.startsWith('scope:'))
                 setFilter((f) => ({ ...f, scope: k.split(':')[1] as any, providerId: undefined }));
               else if (k.startsWith('provider:'))
-                setFilter((f) => ({ ...f, providerId: k.split(':')[1] }));
+                setFilter((f) => ({ ...f, scope: undefined, providerId: k.split(':')[1] }));
               setPage(1);
               // 设置右侧标题
               if (k === 'all') setSelectedTitle('全部模型');

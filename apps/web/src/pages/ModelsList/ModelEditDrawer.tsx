@@ -34,34 +34,52 @@ export default function ModelEditDrawer({
 
   useEffect(() => {
     const base = data || { scope: 'public', type: 'llm', params: [] };
-    
-    // 获取provider的默认凭据值
+
+    // 获取provider的默认凭据值和scope
     const defaultCredentials = base.provider ? getDefaultCredentialsByProvider(base.provider) : {};
-    
+    const providerScope = base.provider ? getProviderScope(base.provider) : undefined;
+
     // 若包含 credentials(JSON 文本或对象)，展开到表单字段，便于编辑
     try {
       const raw = (base as any).credentials;
       const obj = typeof raw === 'string' ? JSON.parse(raw) : raw || {};
       if (obj && typeof obj === 'object') {
         const merged = { ...defaultCredentials, ...base, ...obj };
+        // 如果有 provider，使用 provider 的 scope
+        if (providerScope) {
+          merged.scope = providerScope;
+        }
         setForm(merged);
         return;
       }
     } catch (error) {
       message.error('Failed to get model details:' + error);
     }
-    
+
     // 合并默认值和基础数据
     const merged = { ...defaultCredentials, ...base };
+    // 如果有 provider，使用 provider 的 scope
+    if (providerScope) {
+      merged.scope = providerScope;
+    }
     setForm(merged);
   }, [data]);
 
-  // 初始化：从 provider manifest 预置默认参数到表格
+  // 初始化：从 provider manifest 预置默认参数和 scope 到表格
   useEffect(() => {
-    if (form.provider && form.model_name) {
-      const preset = getDefaultParamsByProvider(form.provider, form.model_name);
-      if (preset && preset.length > 0) {
-        setForm((f: any) => ({ ...f, params: preset }));
+    if (form.provider) {
+      // 更新 scope
+      const providerScope = getProviderScope(form.provider);
+      if (providerScope) {
+        setForm((f: any) => ({ ...f, scope: providerScope }));
+      }
+
+      // 更新参数
+      if (form.model_name) {
+        const preset = getDefaultParamsByProvider(form.provider, form.model_name);
+        if (preset && preset.length > 0) {
+          setForm((f: any) => ({ ...f, params: preset }));
+        }
       }
     }
   }, [form.provider, form.model_name]);
@@ -239,30 +257,42 @@ export default function ModelEditDrawer({
                         style={{ width: '100%' }}
                       />
                     </div>
-                    {/* 模型情况：上下结构 */}
+                    {/* 模型情况：根据provider自动选中，不可更改 */}
                     <div className="w-full">
                       <div className="mb-2 text-slate-700">
                         模型情况<span className="text-red-500"> *</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3 w-full">
-                        <button
-                          className={`border rounded-lg px-3 py-2 text-left ${form.scope === 'private' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`}
-                          onClick={() => setForm((f: any) => ({ ...f, scope: 'private' }))}
+                        <div
+                          className={`border rounded-lg px-3 py-2 text-left ${
+                            form.scope === 'private'
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-slate-200 bg-slate-50 opacity-60'
+                          }`}
                         >
-                          <div className="font-medium">私有</div>
-                          <div className="text-xs text-slate-500">
-                            私有部署为主，数据在您的设备或自有环境内处理与存储
+                          <div className="font-medium">私有模型</div>
+                          <div className="text-xs text-slate-500 mt-1">
+                            本地部署，数据在您的设备或环境内处理与存储
                           </div>
-                        </button>
-                        <button
-                          className={`border rounded-lg px-3 py-2 text-left ${form.scope === 'public' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`}
-                          onClick={() => setForm((f: any) => ({ ...f, scope: 'public' }))}
+                          <div className="text-xs text-slate-400 mt-1.5">
+                            示例：Ollama、vLLM、Xinference、本地模型
+                          </div>
+                        </div>
+                        <div
+                          className={`border rounded-lg px-3 py-2 text-left ${
+                            form.scope === 'public'
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-slate-200 bg-slate-50 opacity-60'
+                          }`}
                         >
-                          <div className="font-medium">公有</div>
-                          <div className="text-xs text-slate-500">
-                            线上大模型，数据在供应商的云端处理与存储（默认存本地，供应商不主动收集）
+                          <div className="font-medium">公有模型</div>
+                          <div className="text-xs text-slate-500 mt-1">
+                            云端服务，数据通过网络在供应商云端处理推理
                           </div>
-                        </button>
+                          <div className="text-xs text-slate-400 mt-1.5">
+                            示例：OpenAI、Claude、Gemini、DeepSeek
+                          </div>
+                        </div>
                       </div>
                     </div>
                     {/* 模型类型：上下结构 */}
@@ -541,13 +571,18 @@ function getDefaultParamsByProvider(pid?: string, modelName?: string) {
 function getDefaultCredentialsByProvider(pid?: string) {
   const m = pid ? findProvider(pid) : undefined;
   const credentials: Record<string, any> = {};
-  
+
   const fields = m?.credentialFields || [];
   fields.forEach((f) => {
     if (f.defaultValue) {
       credentials[f.key] = f.defaultValue;
     }
   });
-  
+
   return credentials;
+}
+
+function getProviderScope(pid?: string) {
+  const m = pid ? findProvider(pid) : undefined;
+  return m?.scope;
 }
