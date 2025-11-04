@@ -26,7 +26,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "16384",
@@ -55,7 +55,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "16384",
@@ -84,7 +84,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "16384",
@@ -113,7 +113,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "16384",
@@ -142,7 +142,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "16384",
@@ -171,7 +171,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "16384",
@@ -200,7 +200,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "4096",
@@ -229,7 +229,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "8192",
@@ -258,7 +258,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "4096",
@@ -285,7 +285,7 @@ const manifest: ProviderManifest = {
       label: 'API Key', 
       required: true, 
       type: 'password',
-      placeholder: '格式：sk-开头的48位字符的API Key'
+      placeholder: '格式：sk-开头的 48 位字符的 API Key'
     },
   ]
 };

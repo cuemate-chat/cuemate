@@ -26,7 +26,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '32768',
@@ -55,7 +55,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '65535',
@@ -84,7 +84,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '32768',
@@ -113,7 +113,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '32768',
@@ -142,7 +142,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -171,7 +171,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '131072',
@@ -200,7 +200,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -229,7 +229,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '4096',
@@ -248,7 +248,7 @@ const manifest: ProviderManifest = {
       key: 'base_url',
       label: 'API URL',
       type: 'text',
-      placeholder: 'X1系列用 https://spark-api-open.xf-yun.com/v2，其他模型用 /v1',
+      placeholder: 'X1 系列用 https://spark-api-open.xf-yun.com/v2，其他模型用 /v1',
       defaultValue: 'https://spark-api-open.xf-yun.com/v1',
     },
     {
@@ -256,7 +256,7 @@ const manifest: ProviderManifest = {
       label: 'API Key',
       required: true,
       type: 'password',
-      placeholder: '推荐使用APIPassword（控制台http接口认证信息），或使用APIKey:APISecret格式',
+      placeholder: '推荐使用 APIPassword（控制台 http 接口认证信息），或使用 APIKey:APISecret 格式',
     },
   ],
 };

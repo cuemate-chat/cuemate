@@ -85,7 +85,7 @@ export default function CreateAdDrawer({
       fetchAvailableBlocks();
       fetchBlockConfigs();
       
-      // 设置默认过期时间为30天后
+      // 设置默认过期时间为 30 天后
       const defaultExpiry = new Date();
       defaultExpiry.setDate(defaultExpiry.getDate() + 30);
       setFormData(prev => ({
@@ -322,7 +322,7 @@ export default function CreateAdDrawer({
                     const selectedBlock = availableBlocks.find((b: BlockConfig) => b.id === formData.block_config_id);
                     return selectedBlock ? (
                       <div>
-                        <div>块ID: <span className="font-medium text-blue-600">{selectedBlock.block_id}</span></div>
+                        <div>块 ID: <span className="font-medium text-blue-600">{selectedBlock.block_id}</span></div>
                         <div>位置: ({selectedBlock.x}, {selectedBlock.y})</div>
                         <div>尺寸: {selectedBlock.width} × {selectedBlock.height}</div>
                         <div>类型: {selectedBlock.type === 'square' ? '正方形' : selectedBlock.type === 'horizontal' ? '横长方形' : '竖长方形'}</div>

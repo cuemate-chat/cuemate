@@ -22,7 +22,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -43,7 +43,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -64,7 +64,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '32768',
@@ -85,7 +85,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -106,7 +106,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -127,7 +127,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -148,7 +148,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -169,7 +169,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -190,7 +190,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -211,7 +211,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -232,7 +232,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -253,7 +253,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -274,7 +274,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -295,7 +295,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -316,7 +316,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -337,7 +337,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -358,7 +358,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -379,7 +379,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -400,7 +400,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -421,7 +421,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -442,7 +442,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',

@@ -35,7 +35,7 @@ export default function ModelEditDrawer({
   useEffect(() => {
     const base = data || { scope: 'public', type: 'llm', params: [] };
 
-    // 获取provider的默认凭据值和scope
+    // 获取 provider 的默认凭据值和 scope
     const defaultCredentials = base.provider ? getDefaultCredentialsByProvider(base.provider) : {};
     const providerScope = base.provider ? getProviderScope(base.provider) : undefined;
 
@@ -257,7 +257,7 @@ export default function ModelEditDrawer({
                         style={{ width: '100%' }}
                       />
                     </div>
-                    {/* 模型情况：根据provider自动选中，不可更改 */}
+                    {/* 模型情况：根据 provider 自动选中，不可更改 */}
                     <div className="w-full">
                       <div className="mb-2 text-slate-700">
                         模型情况<span className="text-red-500"> *</span>

@@ -43,10 +43,10 @@ export const MessageContainer: React.FC = () => {
       // 根据消息类型设置不同的显示时长
       const getDuration = (type: MessageType): number => {
         switch (type) {
-          case 'success': return 3000;  // 成功消息显示3秒
-          case 'info': return 3000;     // 信息消息显示3秒
-          case 'warning': return 6000;  // 警告消息显示6秒
-          case 'error': return 10000;   // 错误消息显示10秒
+          case 'success': return 3000;  // 成功消息显示 3 秒
+          case 'info': return 3000;     // 信息消息显示 3 秒
+          case 'warning': return 6000;  // 警告消息显示 6 秒
+          case 'error': return 10000;   // 错误消息显示 10 秒
           default: return 3000;
         }
       };

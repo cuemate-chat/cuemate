@@ -75,19 +75,19 @@ const ResumeExampleDrawer: React.FC<ResumeExampleDrawerProps> = ({
               label: '教育与工作',
               children: (
                 <div className="text-sm text-slate-700 space-y-3">
-                  <div>教育背景：2018.09 - 2022.06  xxx大学  xxx学院  xxx专业  本科  GPA：xxx/4.0  排名：Top xx%</div>
+                  <div>教育背景：2018.09 - 2022.06  xxx 大学  xxx 学院  xxx 专业  本科  GPA：xxx/4.0  排名：Top xx%</div>
                   <div>
                     工作经历：
                     <div className="mt-1 pl-4 space-y-2">
                       <div>
-                        2023.07 - 至今  xxx科技有限公司  前端工程师  地点：xxx
+                        2023.07 - 至今  xxx 科技有限公司  前端工程师  地点：xxx
                         <div className="mt-1 pl-4">
                           <div>1) 负责 xxx 后台管理系统的需求评审、技术方案与实现，提升页面性能 xx%</div>
                           <div>2) 与后端协作完成 xxx 模块的重构，Bug 率下降 xx%</div>
                         </div>
                       </div>
                       <div>
-                        2022.07 - 2023.06  xxx信息技术有限公司  前端工程师  地点：xxx
+                        2022.07 - 2023.06  xxx 信息技术有限公司  前端工程师  地点：xxx
                         <div className="mt-1 pl-4">
                           <div>1) 参与 xxx 小程序开发，上线后 DAU 达到 xx 万</div>
                           <div>2) 构建组件库，提高复用率与研发效率</div>

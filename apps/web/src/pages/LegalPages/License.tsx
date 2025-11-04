@@ -124,7 +124,7 @@ export default function License() {
     return new Date(timestamp).toLocaleString('zh-CN');
   };
 
-  // 检查是否即将过期（30天内）
+  // 检查是否即将过期（30 天内）
   const isExpiringSoon = (expireTime: number) => {
     const thirtyDaysLater = Date.now() + (30 * 24 * 60 * 60 * 1000);
     return expireTime <= thirtyDaysLater;
@@ -180,7 +180,7 @@ export default function License() {
     // 找到当前版本在列表中的索引
     const currentIndex = versions.findIndex(v => v.version === currentVersion);
 
-    // 如果当前版本不在列表中,或者已经是最新版本,返回0
+    // 如果当前版本不在列表中,或者已经是最新版本,返回 0
     if (currentIndex === -1 || currentIndex === 0) return 0;
 
     // 返回当前版本之前的版本数量
@@ -352,7 +352,7 @@ export default function License() {
                 </div>
               )}
               
-              {/* 导入预置题库按钮 - 只在License有效时显示 */}
+              {/* 导入预置题库按钮 - 只在 License 有效时显示 */}
               {license && license.status === 'active' && !isExpiringSoon(license.expireTime) && (
                 <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
                   <div className="flex items-center justify-between">

@@ -26,7 +26,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "16384",
@@ -55,7 +55,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "16384",
@@ -84,7 +84,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "8192",
@@ -111,7 +111,7 @@ const manifest: ProviderManifest = {
       label: 'API Version',
       required: true,
       type: 'text',
-      placeholder: '默认 2024-06-01（Azure OpenAI API版本）',
+      placeholder: '默认 2024-06-01（Azure OpenAI API 版本）',
       defaultValue: '2024-06-01',
     },
     { 
@@ -119,7 +119,7 @@ const manifest: ProviderManifest = {
       label: 'API Key', 
       required: true, 
       type: 'password',
-      placeholder: '格式：32位字符的16进制密钥，需在Azure控制台获取'
+      placeholder: '格式：32 位字符的 16 进制密钥，需在 Azure 控制台获取'
     },
     { key: 'deployment_name', label: 'Deployment name', required: true, type: 'text' },
   ]

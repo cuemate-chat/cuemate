@@ -26,7 +26,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "65536",
@@ -55,7 +55,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "8192",
@@ -84,7 +84,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "8192",
@@ -113,7 +113,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "8192",
@@ -142,7 +142,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "8192",
@@ -171,7 +171,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "8192",
@@ -200,7 +200,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "8192",
@@ -229,7 +229,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "8192",
@@ -258,7 +258,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "2048",
@@ -287,7 +287,7 @@ const manifest: ProviderManifest = {
         }
       },
       {
-        label: "输出最大tokens",
+        label: "输出最大 tokens",
         param_key: "max_tokens",
         ui_type: "slider",
         value: "4096",
@@ -314,7 +314,7 @@ const manifest: ProviderManifest = {
       label: 'API Key', 
       required: true, 
       type: 'password',
-      placeholder: '格式：AIzaSy开头的39位字符的API Key，需在Google AI Studio获取'
+      placeholder: '格式：AIzaSy 开头的 39 位字符的 API Key，需在 Google AI Studio 获取'
     },
   ]
 };

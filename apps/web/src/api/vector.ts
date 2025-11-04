@@ -254,7 +254,7 @@ export const searchResumes = async (filters: SearchFilters): Promise<SearchRespo
   }
 };
 
-// 通用搜索：根据type分发到对应路由
+// 通用搜索：根据 type 分发到对应路由
 export const searchDocuments = async (filters: SearchFilters): Promise<SearchResponse> => {
   if (filters.type === 'jobs') return searchJobs(filters);
   if (filters.type === 'resumes') return searchResumes(filters);

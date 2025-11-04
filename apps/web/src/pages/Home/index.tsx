@@ -38,7 +38,7 @@ export default function Home() {
       return;
     }
 
-    // 发送打开面试窗口的消息，带上当前选择的岗位ID
+    // 发送打开面试窗口的消息，带上当前选择的岗位 ID
     webSocketService.send({
       type: 'OPEN_INTERVIEWER',
       mode,

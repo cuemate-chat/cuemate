@@ -1,6 +1,6 @@
 /**
  * WebSocket 桥接工具
- * 用于web页面与desktop端通信
+ * 用于 web 页面与 desktop 端通信
  */
 
 class WebSocketBridge {

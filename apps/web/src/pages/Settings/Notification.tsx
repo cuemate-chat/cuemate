@@ -340,7 +340,7 @@ export default function NotificationPage() {
     setCurrentPage(1);
   };
 
-  // 基于当前筛选条件计算各Tab的数量
+  // 基于当前筛选条件计算各 Tab 的数量
   const getTabCounts = () => {
     // 先应用分类筛选、优先级筛选、时间段筛选、关键词搜索
     const baseFiltered = notifications.filter((n) => {

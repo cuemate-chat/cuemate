@@ -14,12 +14,12 @@ export interface LicenseInfo {
   updatedAt?: number;
 }
 
-// 获取License信息
+// 获取 License 信息
 export async function getLicenseInfo(): Promise<{ license: LicenseInfo }> {
   return await http.get<{ license: LicenseInfo }>('/license/info');
 }
 
-// 上传License文件
+// 上传 License 文件
 export async function uploadLicenseFile(file: File): Promise<{ license: LicenseInfo }> {
   const formData = new FormData();
   formData.append('file', file);

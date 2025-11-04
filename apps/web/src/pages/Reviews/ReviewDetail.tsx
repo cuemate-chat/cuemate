@@ -158,7 +158,7 @@ function SummaryTab({ data, radarData }: any) {
         </Card>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        {/* 优点占3列 */}
+        {/* 优点占 3 列 */}
         <Card
           className="md:col-span-3 border-green-100"
           style={{ backgroundColor: '#F6FBF9' }}
@@ -178,7 +178,7 @@ function SummaryTab({ data, radarData }: any) {
           )}
         </Card>
 
-        {/* 缺点占2列 */}
+        {/* 缺点占 2 列 */}
         <Card
           className="md:col-span-2 border-red-100"
           style={{ backgroundColor: '#FEFCFB' }}

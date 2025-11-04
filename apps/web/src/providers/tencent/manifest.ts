@@ -26,7 +26,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '64000',
@@ -55,7 +55,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '16000',
@@ -84,7 +84,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '32000',
@@ -113,7 +113,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '6000',
@@ -142,7 +142,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '2000',
@@ -171,7 +171,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '4000',
@@ -200,7 +200,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '6000',
@@ -229,7 +229,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '4096',
@@ -258,7 +258,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '4096',
@@ -285,7 +285,7 @@ const manifest: ProviderManifest = {
       label: 'API Key',
       required: true,
       type: 'password',
-      placeholder: '格式：sk-开头的API Key，需在腾讯混元控制台获取',
+      placeholder: '格式：sk-开头的 API Key，需在腾讯混元控制台获取',
     },
   ],
 };

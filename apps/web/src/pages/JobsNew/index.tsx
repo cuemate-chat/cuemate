@@ -48,7 +48,7 @@ export default function JobsNew() {
       // - 岗位描述：占用更多空间，适合详细描述
       // - 简历文本：占用适中空间
       if (viewportHeight >= 1080) {
-        // 大屏幕：1080p及以上
+        // 大屏幕：1080p 及以上
         setAdaptiveRows({ desc: 27, resume: 20 });
       } else if (viewportHeight >= 900) {
         // 中大屏幕：900-1080px
@@ -57,7 +57,7 @@ export default function JobsNew() {
         // 中屏幕：768-900px
         setAdaptiveRows({ desc: 19, resume: 15 });
       } else {
-        // 小屏幕：768px以下
+        // 小屏幕：768px 以下
         setAdaptiveRows({ desc: 15, resume: 13 });
       }
     };
@@ -110,7 +110,7 @@ export default function JobsNew() {
         const resumeContent =
           resumeText.trim().length > 0
             ? resumeText.trim().slice(0, 5000)
-            : `文件：${resumeMeta?.name ?? '未命名'}（${resumeMeta ? (resumeMeta.size / 1024 / 1024).toFixed(2) : '0'}MB）\n暂存占位，建议粘贴简历文本以获得更好处理效果。`;
+            : `文件：${resumeMeta?.name ?? '未命名'}（${resumeMeta ? (resumeMeta.size / 1024 / 1024).toFixed(2) : '0'}MB）\n 暂存占位，建议粘贴简历文本以获得更好处理效果。`;
         await createJob({
           title: jobName.trim(),
           description: jobDesc.trim().slice(0, 5000),
@@ -179,7 +179,7 @@ export default function JobsNew() {
     }
   };
 
-  const resumeSample = `【基本信息】\n- 姓名：张三\n- 电话：1xxxxxxxxxx\n- 邮箱：xxx@xxx.com\n- 期望城市：xxx\n- 到岗时间：xxx\n\n【教育背景】\n- 2018.09 - 2022.06  xxx大学  xxx学院  xxx专业  本科  GPA：xxx/4.0  排名：Top xx%\n\n【工作经历】\n- 2023.07 - 至今  xxx科技有限公司  前端工程师  地点：xxx\n  1) 负责 xxx 后台管理系统的需求评审、技术方案与实现，提升页面性能 xx%\n  2) 与后端协作完成 xxx 模块的重构，Bug 率下降 xx%\n- 2022.07 - 2023.06  xxx信息技术有限公司  前端工程师  地点：xxx\n  1) 参与 xxx 小程序开发，上线后 DAU 达到 xx 万\n  2) 构建组件库，提高复用率与研发效率\n\n【项目经历】\n- 项目一：xxx 平台重构  （2024.03 - 2024.08）\n  职责：主导架构与核心功能实现（../../可视化报表），推动前后端接口规范化\n  结果：首屏时间降低 xx%，问题单率下降 xx%\n- 项目二：xxx 小程序  （2023.01 - 2023.05）\n  职责：负责商品列表、下单、支付等核心流程的实现与联调\n  结果：上线首月 GMV 达到 xxx 万\n\n【个人技能】\n- 精通：TypeScript、React、Vue、Ant Design、Webpack/Vite\n- 熟悉：Node.js、Express/Fastify、数据库基础（MySQL/SQLite）\n- 了解：CI/CD、Docker、性能优化与可观测性\n\n【个人评价】\n- 沟通顺畅，主动推进跨团队协作；学习能力与问题定位能力强；责任心强，能抗压。`;
+  const resumeSample = `【基本信息】\n- 姓名：张三\n- 电话：1xxxxxxxxxx\n- 邮箱：xxx@xxx.com\n- 期望城市：xxx\n- 到岗时间：xxx\n\n【教育背景】\n- 2018.09 - 2022.06  xxx 大学  xxx 学院  xxx 专业  本科  GPA：xxx/4.0  排名：Top xx%\n\n【工作经历】\n- 2023.07 - 至今  xxx 科技有限公司  前端工程师  地点：xxx\n  1) 负责 xxx 后台管理系统的需求评审、技术方案与实现，提升页面性能 xx%\n  2) 与后端协作完成 xxx 模块的重构，Bug 率下降 xx%\n- 2022.07 - 2023.06  xxx 信息技术有限公司  前端工程师  地点：xxx\n  1) 参与 xxx 小程序开发，上线后 DAU 达到 xx 万\n  2) 构建组件库，提高复用率与研发效率\n\n【项目经历】\n- 项目一：xxx 平台重构  （2024.03 - 2024.08）\n  职责：主导架构与核心功能实现（../../可视化报表），推动前后端接口规范化\n  结果：首屏时间降低 xx%，问题单率下降 xx%\n- 项目二：xxx 小程序  （2023.01 - 2023.05）\n  职责：负责商品列表、下单、支付等核心流程的实现与联调\n  结果：上线首月 GMV 达到 xxx 万\n\n【个人技能】\n- 精通：TypeScript、React、Vue、Ant Design、Webpack/Vite\n- 熟悉：Node.js、Express/Fastify、数据库基础（MySQL/SQLite）\n- 了解：CI/CD、Docker、性能优化与可观测性\n\n【个人评价】\n- 沟通顺畅，主动推进跨团队协作；学习能力与问题定位能力强；责任心强，能抗压。`;
 
 
   const handleApplySampleToCurrent = () => {
@@ -320,7 +320,7 @@ export default function JobsNew() {
                       }
                       // 2) 调用后端解析 PDF/Word
                       try {
-                      // 检查是否有认证token
+                      // 检查是否有认证 token
                       const token = localStorage.getItem('auth_token');
                       if (!token) {
                         throw new Error('请先登录后再使用文件解析功能');
@@ -332,17 +332,17 @@ export default function JobsNew() {
                     } catch (err: any) {
                       // 根据错误类型给出不同的提示
                       let errorMessage = '暂未能自动提取文本，请粘贴简历文本';
-                      let placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n未能自动提取文本内容，请将简历文本粘贴到下方输入框以便后续处理。`;
+                      let placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n 未能自动提取文本内容，请将简历文本粘贴到下方输入框以便后续处理。`;
                       
                       if (err?.message?.includes('Authorization') || err?.message?.includes('认证') || err?.message?.includes('登录')) {
                         errorMessage = '请先登录后再使用文件解析功能';
                         placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n[警告] 需要登录才能自动解析文件，请先登录或直接粘贴简历文本到下方输入框。`;
                       } else if (err?.message?.includes('PDF') || err?.message?.includes('DOC') || err?.message?.includes('解析失败')) {
                         errorMessage = `文件解析失败：${err.message}`;
-                        placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n[错误] 文件解析失败：${err.message}\n\n请将简历文本手动粘贴到下方输入框，或尝试转换文件格式后重新上传。`;
+                        placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n[错误] 文件解析失败：${err.message}\n\n 请将简历文本手动粘贴到下方输入框，或尝试转换文件格式后重新上传。`;
                       } else if (err?.message?.includes('不支持') || err?.message?.includes('格式')) {
                         errorMessage = `不支持的文件格式：${err.message}`;
-                        placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n[错误] ${err.message}\n\n请将简历文本直接粘贴到下方输入框，或将文件转换为PDF、DOCX格式后重新上传。`;
+                        placeholderText = `已选择文件：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）\n[错误] ${err.message}\n\n 请将简历文本直接粘贴到下方输入框，或将文件转换为 PDF、DOCX 格式后重新上传。`;
                       }
                       
                       setResumeText(placeholderText);

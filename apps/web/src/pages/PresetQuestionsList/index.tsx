@@ -28,7 +28,7 @@ export default function PresetQuestionsList() {
   const [items, setItems] = useState<PresetQuestion[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(8); // 每页8个卡片，可调整
+  const [pageSize, setPageSize] = useState(8); // 每页 8 个卡片，可调整
 
   // 筛选条件
   const [filterTagId, setFilterTagId] = useState<string | undefined>(undefined);
@@ -195,7 +195,7 @@ export default function PresetQuestionsList() {
 
   // 显示同步岗位详情
   const showSyncJobsDetail = (syncJobIds: string[], questionTitle: string) => {
-    // 根据岗位ID获取岗位信息（暂时使用ID作为标题）
+    // 根据岗位 ID 获取岗位信息（暂时使用 ID 作为标题）
     const syncJobs = syncJobIds.map(id => ({
       id,
       title: `岗位 ${id}`

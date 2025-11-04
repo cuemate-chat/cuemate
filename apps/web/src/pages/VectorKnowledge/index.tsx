@@ -944,9 +944,9 @@ const SyncStatusOverview = ({
   const loadSyncStatus = async () => {
     try {
       const { getSyncStatus } = await import('../../api/vector');
-      // 不传jobId获取汇总统计
+      // 不传 jobId 获取汇总统计
       const status = await getSyncStatus();
-      // 转换API返回的类型格式
+      // 转换 API 返回的类型格式
       const jobStats = 'total' in status.job ? status.job : { total: 0, synced: 0, unsynced: 0 };
       const resumeStats = 'total' in status.resume ? status.resume : { total: 0, synced: 0, unsynced: 0 };
       
@@ -995,7 +995,7 @@ const SyncStatusOverview = ({
           startLoading();
           onSyncStart?.();
           const { syncAll } = await import('../../api/vector');
-          // 不传jobId同步所有数据
+          // 不传 jobId 同步所有数据
           const result = await syncAll('');
           if (result.success) {
             message.success('同步完成！');
@@ -1009,7 +1009,7 @@ const SyncStatusOverview = ({
           if (error.response?.status === 401) {
             errorMessage += '登录已过期，请重新登录';
           } else if (error.response?.status === 503) {
-            errorMessage += 'RAG服务不可用，请检查服务是否正常运行';
+            errorMessage += 'RAG 服务不可用，请检查服务是否正常运行';
           } else if (error.response?.data?.error) {
             errorMessage += error.response.data.error;
           } else if (error.message) {
@@ -1077,7 +1077,7 @@ const SyncStatusOverview = ({
           if (error.response?.status === 401) {
             errorMessage += '登录已过期，请重新登录';
           } else if (error.response?.status === 503) {
-            errorMessage += 'RAG服务不可用，请检查服务是否正常运行';
+            errorMessage += 'RAG 服务不可用，请检查服务是否正常运行';
           } else if (error.response?.data?.error) {
             errorMessage += error.response.data.error;
           } else if (error.message) {

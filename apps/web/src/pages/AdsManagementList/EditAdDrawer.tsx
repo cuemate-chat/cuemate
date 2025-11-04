@@ -65,7 +65,7 @@ export default function EditAdDrawer({
       getAvailableBlocks(ad.id).then((data) => {
         setAvailableBlocks(data.availableBlocks);
         
-        // 根据广告的block_id找到对应的block_config_id
+        // 根据广告的 block_id 找到对应的 block_config_id
         let blockConfigId = '';
         if (ad.block_id) {
           const matchingBlock = data.availableBlocks.find(block => block.block_id === ad.block_id);
@@ -85,7 +85,7 @@ export default function EditAdDrawer({
         });
       }).catch((error: any) => {
         console.error('获取块配置失败:', error);
-        // 仍然设置基本数据，但block_config_id为空
+        // 仍然设置基本数据，但 block_config_id 为空
         setFormData({
           title: ad.title,
           description: ad.description,
@@ -160,7 +160,7 @@ export default function EditAdDrawer({
     }
   };
 
-  // 获取完整的图片URL
+  // 获取完整的图片 URL
   const getFullImageUrl = (imagePath: string) => {
     if (!imagePath) return '';
     if (imagePath.startsWith('http')) return imagePath;
@@ -335,7 +335,7 @@ export default function EditAdDrawer({
                     const selectedBlock = availableBlocks.find((b: BlockConfig) => b.id === formData.block_config_id);
                     return selectedBlock ? (
                       <div>
-                        <div>块ID: <span className="font-medium text-blue-600">{selectedBlock.block_id}</span></div>
+                        <div>块 ID: <span className="font-medium text-blue-600">{selectedBlock.block_id}</span></div>
                         <div>位置: ({selectedBlock.x}, {selectedBlock.y})</div>
                         <div>尺寸: {selectedBlock.width} × {selectedBlock.height}</div>
                         <div>类型: {selectedBlock.type === 'square' ? '正方形' : selectedBlock.type === 'horizontal' ? '横长方形' : '竖长方形'}</div>

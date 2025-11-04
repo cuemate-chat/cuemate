@@ -26,7 +26,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '32000',
@@ -55,7 +55,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '32000',
@@ -84,7 +84,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '64000',
@@ -113,7 +113,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '16000',
@@ -142,7 +142,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '16000',
@@ -171,7 +171,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '16000',
@@ -200,7 +200,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '16000',
@@ -219,7 +219,7 @@ const manifest: ProviderManifest = {
       key: 'base_url',
       label: 'API URL',
       type: 'text',
-      placeholder: '默认 https://api.lkeap.cloud.tencent.com/v1（OpenAI兼容格式）',
+      placeholder: '默认 https://api.lkeap.cloud.tencent.com/v1（OpenAI 兼容格式）',
       defaultValue: 'https://api.lkeap.cloud.tencent.com/v1',
     },
     {
@@ -227,7 +227,7 @@ const manifest: ProviderManifest = {
       label: 'API Key',
       required: true,
       type: 'password',
-      placeholder: '格式：sk-开头的API Key，需在知识引擎原子能力控制台获取',
+      placeholder: '格式：sk-开头的 API Key，需在知识引擎原子能力控制台获取',
     },
   ],
 };

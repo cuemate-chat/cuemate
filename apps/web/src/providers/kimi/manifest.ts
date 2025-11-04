@@ -26,7 +26,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '32768',
@@ -55,7 +55,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '16384',
@@ -84,7 +84,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '4096',
@@ -111,7 +111,7 @@ const manifest: ProviderManifest = {
       label: 'API Key',
       required: true,
       type: 'password',
-      placeholder: '格式：sk-开头的API Key，需在Kimi开放平台获取',
+      placeholder: '格式：sk-开头的 API Key，需在 Kimi 开放平台获取',
     },
   ],
 };

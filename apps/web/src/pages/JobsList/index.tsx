@@ -34,7 +34,7 @@ export default function JobsList() {
   const [uploadLoading, setUploadLoading] = useState(false);
   const [tempOptimizedResume, setTempOptimizedResume] = useState('');
   const [tempOriginalResume, setTempOriginalResume] = useState('');
-  // 计算中间可视区域高度：100vh - Header(56px) - Footer(48px) - Main上下内边距(48px)
+  // 计算中间可视区域高度：100vh - Header(56px) - Footer(48px) - Main 上下内边距(48px)
   const MAIN_HEIGHT = 'calc(100vh - 56px - 48px - 48px)';
 
   // 根据屏幕高度自适应文本域行数
@@ -43,7 +43,7 @@ export default function JobsList() {
       const viewportHeight = window.innerHeight;
       // 更细致的屏幕尺寸适配
       if (viewportHeight >= 1080) {
-        // 大屏幕：1080p及以上
+        // 大屏幕：1080p 及以上
         setAdaptiveRows({ desc: 14, resume: 15 });
       } else if (viewportHeight >= 900) {
         // 中大屏幕：900-1080px
@@ -52,7 +52,7 @@ export default function JobsList() {
         // 中屏幕：768-900px
         setAdaptiveRows({ desc: 8, resume: 9 });
       } else {
-        // 小屏幕：768px以下
+        // 小屏幕：768px 以下
         setAdaptiveRows({ desc: 7, resume: 8 });
       }
     };
@@ -169,7 +169,7 @@ export default function JobsList() {
       onOk: async () => {
         startLoading();
         try {
-          // 调用级联删除API
+          // 调用级联删除 API
           await deleteJob(selectedId);
           
           // 更新本地状态
@@ -215,7 +215,7 @@ export default function JobsList() {
       // 验证优化后简历的长度
       const originalLength = resumeContent.length;
       const optimizedLength = result.optimizedResume.length;
-      const minRequiredLength = Math.floor(originalLength * 0.8); // 至少80%的长度
+      const minRequiredLength = Math.floor(originalLength * 0.8); // 至少 80%的长度
       
       const newResult = {
         suggestions: result.suggestions,
@@ -467,7 +467,7 @@ export default function JobsList() {
       <FullScreenOverlay
         visible={optimizeLoading}
         title="正在优化简历"
-        subtitle="AI正在根据岗位要求优化您的简历，请稍候..."
+        subtitle="AI 正在根据岗位要求优化您的简历，请稍候..."
         type="loading"
       />
     </div>

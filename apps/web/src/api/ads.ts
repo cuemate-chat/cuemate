@@ -22,14 +22,14 @@ export interface PixelAd {
   description: string;
   link_url: string;
   image_path: string;
-  block_config_id?: string; // 块配置ID，用于编辑时的回显
-  block_id?: string; // 从block_configs表获取的block_id
-  x?: number; // 从block_configs表获取的位置信息
+  block_config_id?: string; // 块配置 ID，用于编辑时的回显
+  block_id?: string; // 从 block_configs 表获取的 block_id
+  x?: number; // 从 block_configs 表获取的位置信息
   y?: number;
-  width?: number; // 从block_configs表获取的尺寸信息
+  width?: number; // 从 block_configs 表获取的尺寸信息
   height?: number;
-  type?: string; // 从block_configs表获取的类型信息
-  price?: number; // 从base_prices表获取的价格信息
+  type?: string; // 从 block_configs 表获取的类型信息
+  price?: number; // 从 base_prices 表获取的价格信息
   status: 'active' | 'inactive' | 'expired';
   contact_info?: string;
   notes?: string;
@@ -44,7 +44,7 @@ export interface CreatePixelAdRequest {
   description: string;
   link_url: string;
   image_path: string;
-  block_config_id: string; // 块配置ID
+  block_config_id: string; // 块配置 ID
   contact_info: string;
   notes: string;
   expires_at: number;

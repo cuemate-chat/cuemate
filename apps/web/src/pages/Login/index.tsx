@@ -60,7 +60,7 @@ export default function Login() {
       message.success('登录成功');
       navigate(ROUTES.HOME, { replace: true });
     } catch (error) {
-      // HTTP客户端已经处理了错误提示，这里只设置本地错误状态
+      // HTTP 客户端已经处理了错误提示，这里只设置本地错误状态
       const errorMessage = error instanceof Error ? error.message : '账号或密码错误';
       setErrorMsg(errorMessage);
     } finally {

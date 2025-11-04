@@ -66,7 +66,7 @@ export default function OperationLogsList() {
     { value: '容器监控', label: '容器监控' },
     { value: '预置题库', label: '预置题库' },
     { value: '向量知识库', label: '向量知识库' },
-    { value: 'AI对话记录', label: 'AI对话记录' },
+    { value: 'AI 对话记录', label: 'AI 对话记录' },
     { value: '像素广告', label: '像素广告' },
     { value: '广告管理', label: '广告管理' },
     { value: 'License 管理', label: 'License 管理' },
@@ -143,7 +143,7 @@ export default function OperationLogsList() {
       ),
     },
     {
-      title: '来源IP',
+      title: '来源 IP',
       key: 'source_ip',
       width: '12%',
       render: (record: OperationLog) => (
@@ -477,11 +477,11 @@ export default function OperationLogsList() {
             <Button onClick={() => loadOperationLogs(true)} disabled={loading} className="h-[42px]">刷新</Button>
             <Button icon={<ArrowDownTrayIcon className="w-4 h-4" />} onClick={handleExport} className="h-[42px]">导出</Button>
             <Space.Compact>
-              <Popconfirm title="确定要删除7天前的记录吗？" onConfirm={() => handleDeleteBefore(7)}>
-                <Button danger className="h-[42px]">删除7天前</Button>
+              <Popconfirm title="确定要删除 7 天前的记录吗？" onConfirm={() => handleDeleteBefore(7)}>
+                <Button danger className="h-[42px]">删除 7 天前</Button>
               </Popconfirm>
-              <Popconfirm title="确定要删除30天前的记录吗？" onConfirm={() => handleDeleteBefore(30)}>
-                <Button danger className="h-[42px]">删除30天前</Button>
+              <Popconfirm title="确定要删除 30 天前的记录吗？" onConfirm={() => handleDeleteBefore(30)}>
+                <Button danger className="h-[42px]">删除 30 天前</Button>
               </Popconfirm>
             </Space.Compact>
           </div>

@@ -375,7 +375,7 @@ export default function AdsManagementList() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-900">
-                        <div className="text-xs text-slate-500">块ID</div>
+                        <div className="text-xs text-slate-500">块 ID</div>
                         <div className="font-medium text-blue-600">{ad.block_id || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-900">

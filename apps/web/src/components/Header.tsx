@@ -81,7 +81,7 @@ export default function Header() {
 
     loadUnreadCount();
 
-    // 每30秒刷新一次未读数量
+    // 每 30 秒刷新一次未读数量
     const interval = setInterval(loadUnreadCount, 30000);
     return () => clearInterval(interval);
   }, []);

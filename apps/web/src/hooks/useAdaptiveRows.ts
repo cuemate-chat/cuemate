@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 
 export interface AdaptiveRowsConfig {
-  small: number;   // 768px以下
+  small: number;   // 768px 以下
   medium: number;  // 768-900px
   large: number;   // 900-1080px
-  xlarge: number;  // 1080px及以上
+  xlarge: number;  // 1080px 及以上
 }
 
 /**
- * 自适应文本域行数Hook
+ * 自适应文本域行数 Hook
  * 根据屏幕高度自动计算合适的文本域行数
  */
 export function useAdaptiveRows(config: AdaptiveRowsConfig): number {
@@ -38,7 +38,7 @@ export function useAdaptiveRows(config: AdaptiveRowsConfig): number {
 }
 
 /**
- * 多字段自适应行数Hook
+ * 多字段自适应行数 Hook
  * 用于同时管理多个文本域的行数
  */
 export function useMultiAdaptiveRows<T extends Record<string, AdaptiveRowsConfig>>(

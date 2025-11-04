@@ -108,7 +108,7 @@ export async function request<T = any>(path: string, init: RequestInit = {}): Pr
     ...(init.headers as Record<string, string>),
   };
 
-  // 只有在没有自定义Content-Type且不是FormData时才设置默认的JSON Content-Type
+  // 只有在没有自定义 Content-Type 且不是 FormData 时才设置默认的 JSON Content-Type
   if (!headers['Content-Type'] && !(init.body instanceof FormData) && init.body) {
     headers['Content-Type'] = 'application/json';
   }
@@ -180,7 +180,7 @@ export const http = {
   },
 
   post: <T = any>(path: string, body?: any): Promise<T> => {
-    // 如果没有body，不设置Content-Type，让浏览器自动处理
+    // 如果没有 body，不设置 Content-Type，让浏览器自动处理
     const headers: Record<string, string> = {};
     if (body) {
       headers['Content-Type'] = 'application/json';

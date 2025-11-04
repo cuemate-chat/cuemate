@@ -1,6 +1,6 @@
 import { http } from './http';
 
-// AI对话记录接口类型定义
+// AI 对话记录接口类型定义
 export interface AIConversation {
   id: number;
   title: string;
@@ -19,7 +19,7 @@ export interface AIConversation {
   updated_at: number;
 }
 
-// AI消息接口类型定义
+// AI 消息接口类型定义
 export interface AIMessage {
   id: number;
   conversation_id: number;
@@ -34,7 +34,7 @@ export interface AIMessage {
   created_at: number;
 }
 
-// API响应类型
+// API 响应类型
 export interface AIConversationsResponse {
   items: AIConversation[];
   total: number;
@@ -68,7 +68,7 @@ export interface AIConversationParams {
   endTime?: number;
 }
 
-// 获取AI对话记录列表
+// 获取 AI 对话记录列表
 export const fetchAIConversations = async (
   params: AIConversationParams,
 ): Promise<AIConversationsResponse> => {
@@ -86,7 +86,7 @@ export const fetchAIConversations = async (
   return response;
 };
 
-// 获取单个AI对话详情（包含所有消息）
+// 获取单个 AI 对话详情（包含所有消息）
 export const fetchAIConversationDetail = async (
   conversationId: number,
 ): Promise<AIConversationDetailResponse> => {
@@ -94,18 +94,18 @@ export const fetchAIConversationDetail = async (
   return response;
 };
 
-// 删除AI对话记录
+// 删除 AI 对话记录
 export const deleteAIConversation = async (conversationId: number): Promise<void> => {
   await http.delete(`/ai/conversations/${conversationId}`);
 };
 
-// 获取AI对话统计信息
+// 获取 AI 对话统计信息
 export const fetchAIConversationStats = async (): Promise<AIConversationStats> => {
   const response = await http.get('/ai/conversations/stats');
   return response;
 };
 
-// 批量删除AI对话记录
+// 批量删除 AI 对话记录
 export const batchDeleteAIConversations = async (
   conversationIds: number[],
 ): Promise<{ deletedCount: number }> => {
@@ -115,7 +115,7 @@ export const batchDeleteAIConversations = async (
   return response;
 };
 
-// 按时间删除AI对话记录
+// 按时间删除 AI 对话记录
 export const deleteAIConversationsBefore = async (
   beforeTime: number,
 ): Promise<{ deletedCount: number }> => {

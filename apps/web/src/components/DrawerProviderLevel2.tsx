@@ -68,7 +68,7 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
   const getCurrentLevel = () => {
     // 检查当前有多少个 Drawer 在 DOM 中
     const drawers = document.querySelectorAll('.ant-drawer');
-    return Math.min(drawers.length + 1, 3); // 最多支持3级
+    return Math.min(drawers.length + 1, 3); // 最多支持 3 级
   };
 
   // 根据层级计算 z-index

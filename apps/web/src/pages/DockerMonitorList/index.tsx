@@ -187,7 +187,7 @@ export default function DockerMonitorList() {
 
   useEffect(() => {
     fetchContainers();
-    // 每30秒刷新一次
+    // 每 30 秒刷新一次
     const interval = setInterval(fetchContainers, 30000);
     return () => clearInterval(interval);
   }, []);

@@ -26,7 +26,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '65536',
@@ -55,7 +55,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '32768',
@@ -84,7 +84,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '16384',
@@ -113,7 +113,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -142,7 +142,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -171,7 +171,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -200,7 +200,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -229,7 +229,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -258,7 +258,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -287,7 +287,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -316,7 +316,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -345,7 +345,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -374,7 +374,7 @@ const manifest: ProviderManifest = {
           },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -401,7 +401,7 @@ const manifest: ProviderManifest = {
       label: 'API Key',
       required: true,
       type: 'password',
-      placeholder: '格式：sk-开头的32位字符，需在阿里云百炼平台获取',
+      placeholder: '格式：sk-开头的 32 位字符，需在阿里云百炼平台获取',
     },
   ],
 };

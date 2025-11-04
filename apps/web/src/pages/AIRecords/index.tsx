@@ -78,7 +78,7 @@ export default function AIRecordsList() {
       key: 'conversation',
       width: '30%',
       render: (record: AIConversation) => {
-        // 获取provider的图标内容用于显示
+        // 获取 provider 的图标内容用于显示
         const provider = findProvider(record.model_provider);
         const iconContent = provider?.icon;
         const iconSrc = iconContent ? `data:image/svg+xml;utf8,${encodeURIComponent(iconContent)}` : null;
@@ -181,7 +181,7 @@ export default function AIRecordsList() {
             <EyeIcon className="w-4 h-4" /> 详情
           </button>
           <Popconfirm
-            title="确定要删除这条AI对话记录吗？"
+            title="确定要删除这条 AI 对话记录吗？"
             description="删除后将无法恢复对话内容"
             onConfirm={() => handleDeleteSingle(record.id)}
             okText="确定"
@@ -196,7 +196,7 @@ export default function AIRecordsList() {
     },
   ];
 
-  // 加载AI对话记录
+  // 加载 AI 对话记录
   const loadAIConversations = async (showSuccessMessage: boolean = false) => {
     startLoading();
     try {
@@ -211,11 +211,11 @@ export default function AIRecordsList() {
       setTotal(response.total || 0);
 
       if (showSuccessMessage) {
-        message.success('已刷新AI对话记录');
+        message.success('已刷新 AI 对话记录');
       }
     } catch (error) {
-      console.error('加载AI对话记录失败：', error);
-      message.error('加载AI对话记录失败');
+      console.error('加载 AI 对话记录失败：', error);
+      message.error('加载 AI 对话记录失败');
       setConversations([]);
       setTotal(0);
     } finally {
@@ -263,7 +263,7 @@ export default function AIRecordsList() {
         const options = [
           { label: '全部模型', value: '' },
           ...response.list.map((model: any) => {
-            // 获取provider的图标内容
+            // 获取 provider 的图标内容
             const provider = findProvider(model.provider);
             const iconContent = provider?.icon;
             return {
@@ -362,7 +362,7 @@ export default function AIRecordsList() {
       {/* 页面标题 */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">AI 对话记录</h1>
-        <p className="text-gray-600 mt-1">查看和管理AI对话记录</p>
+        <p className="text-gray-600 mt-1">查看和管理 AI 对话记录</p>
       </div>
 
       {/* 统计面板 */}
@@ -448,7 +448,7 @@ export default function AIRecordsList() {
           <div className="bg-white p-4 rounded-lg shadow border">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">消耗Token</h3>
+                <h3 className="text-sm font-medium text-gray-500">消耗 Token</h3>
                 <p className="text-2xl font-bold text-purple-600">
                   {(stats?.totalTokens || 0).toLocaleString()}
                 </p>
@@ -534,8 +534,8 @@ export default function AIRecordsList() {
             emptyText: (
               <div className="flex flex-col items-center justify-center py-16 text-gray-500">
                 <ChatBubbleLeftRightIcon className="w-12 h-12 text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium mb-2">暂无AI对话记录</h3>
-                <p className="text-sm">当有AI对话时，记录会显示在这里</p>
+                <h3 className="text-lg font-medium mb-2">暂无 AI 对话记录</h3>
+                <p className="text-sm">当有 AI 对话时，记录会显示在这里</p>
               </div>
             )
           }}
@@ -559,7 +559,7 @@ export default function AIRecordsList() {
         />
       </div>
 
-      {/* AI对话详情侧拉弹框 */}
+      {/* AI 对话详情侧拉弹框 */}
       <AIConversationDetailDrawer
         open={detailDrawerOpen}
         onClose={() => {

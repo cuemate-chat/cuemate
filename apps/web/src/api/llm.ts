@@ -30,7 +30,7 @@ export async function optimizeResumeWithLLM(
   const modelParams: Record<string, any> = {};
   model_params?.forEach((param: any) => {
     const value = param.value;
-    // 尝试将字符串转换为数字（对于temperature、max_tokens等）
+    // 尝试将字符串转换为数字（对于 temperature、max_tokens 等）
     if (!isNaN(Number(value))) {
       modelParams[param.param_key] = Number(value);
     } else {
@@ -98,22 +98,22 @@ export async function optimizeResumeWithLLM(
 
   const llmResult = await llmResponse.json();
 
-  // LLM Router 返回的格式是 {content: "JSON字符串", usage: {...}, ...}
+  // LLM Router 返回的格式是 {content: "JSON 字符串", usage: {...}, ...}
   const content = llmResult.content;
 
   if (!content) {
     throw new Error('LLM Router 返回内容为空');
   }
 
-  // 尝试解析JSON格式的回复
+  // 尝试解析 JSON 格式的回复
   let result;
   try {
     // 解析 content 中的 JSON 字符串
     result = JSON.parse(content);
   } catch (e) {
-    // 如果不是JSON格式，则简单处理
+    // 如果不是 JSON 格式，则简单处理
     result = {
-      suggestions: '优化建议：AI返回的内容不是标准JSON格式',
+      suggestions: '优化建议：AI 返回的内容不是标准 JSON 格式',
       optimizedResume: content,
     };
   }

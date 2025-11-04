@@ -6,7 +6,7 @@ export interface PresetQuestion {
   answer: string;
   tag_id?: string | null;
   is_builtin: boolean;
-  synced_jobs: string[]; // 已同步的岗位ID列表
+  synced_jobs: string[]; // 已同步的岗位 ID 列表
   created_at: number;
   updated_at?: number;
 }

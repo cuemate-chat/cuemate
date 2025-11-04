@@ -31,24 +31,24 @@ interface AdBlock extends BlockConfig {
   pixelHeight: number;
 }
 
-// 获取图片URL的辅助函数
+// 获取图片 URL 的辅助函数
 const getImageUrl = (imagePath: string): string => {
-  // 如果是blob URL（模拟上传的图片），直接返回
+  // 如果是 blob URL（模拟上传的图片），直接返回
   if (imagePath.startsWith('blob:')) {
     return imagePath;
   }
   
-  // 如果是完整的HTTP URL，直接返回
+  // 如果是完整的 HTTP URL，直接返回
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
     return imagePath;
   }
   
-  // 如果是本地开发环境（端口5174），使用完整的API地址
+  // 如果是本地开发环境（端口 5174），使用完整的 API 地址
   if (window.location.port === '5174' || window.location.hostname === 'localhost') {
     return `${WEB_API_BASE}${imagePath}`;
   }
   
-  // 生产环境（nginx代理），直接使用相对路径
+  // 生产环境（nginx 代理），直接使用相对路径
   return imagePath;
 };
 
@@ -93,7 +93,7 @@ export default function AdsPixel() {
       setBlockConfigs(blockConfigsData);
       initializeAdBlocks(adsData, blockConfigsData);
     } catch (error) {
-      // HTTP客户端已经处理了错误提示，这里不再重复弹出
+      // HTTP 客户端已经处理了错误提示，这里不再重复弹出
       console.error('获取数据失败:', error);
     } finally {
       await endLoading();
@@ -125,12 +125,12 @@ export default function AdsPixel() {
           height: config.height,
           type: config.type,
           price: config.price,
-          expires_at: Date.now() + 24 * 60 * 60 * 1000, // 24小时后过期
+          expires_at: Date.now() + 24 * 60 * 60 * 1000, // 24 小时后过期
         } as PixelAd;
       }
       
       // 计算基于百分比的位置和大小
-      // 32列 = 100%宽度，20行 = 100%高度
+      // 32 列 = 100%宽度，20 行 = 100%高度
       const GRID_COLS = 32;
       const GRID_ROWS = 20;
       const leftPercent = (config.x / GRID_COLS) * 100;
@@ -184,7 +184,7 @@ export default function AdsPixel() {
   // 处理块筛选 - 照抄广告管理页面的逻辑
   const handleBlockFilter = (blockConfigId: string) => {
     setSelectedBlockFilter(blockConfigId);
-    // 根据选中的块配置ID找到对应的block_id进行高亮
+    // 根据选中的块配置 ID 找到对应的 block_id 进行高亮
     const selectedBlock = blockConfigs.find(b => b.id === blockConfigId);
     if (selectedBlock) {
       setHighlightedBlockId(selectedBlock.block_id);
@@ -326,7 +326,7 @@ export default function AdsPixel() {
 
   return (
     <div className={`h-screen flex flex-col bg-white ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-      {/* 添加炫酷的高亮动画CSS */}
+      {/* 添加炫酷的高亮动画 CSS */}
       <style>{`
         .highlight-glow {
           position: relative;
@@ -426,13 +426,13 @@ export default function AdsPixel() {
           className="w-full h-full relative flex items-center justify-center"
           style={{ cursor: 'default' }}
         >
-          {/* 广告块容器 - 16:10比例完全铺满画布容器，居中显示 */}
+          {/* 广告块容器 - 16:10 比例完全铺满画布容器，居中显示 */}
           <div
             className="relative"
             style={{
               width: '100%',
               height: '100%',
-              aspectRatio: '16/10', // 强制16:10比例
+              aspectRatio: '16/10', // 强制 16:10 比例
               maxWidth: '100%',
               maxHeight: '100%',
             }}
@@ -467,7 +467,7 @@ export default function AdsPixel() {
                       margin: 0,
                     } : blockStyle),
                     boxShadow: highlightedBlockId === block.block_id
-                      ? '0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 3px #fbbf24, 0 0 20px #fbbf24, 0 0 40px #fbbf24, inset 0 0 20px rgba(251, 191, 36, 0.2)' // 炫酷3D浮起 + 发光边框 + 内发光
+                      ? '0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 3px #fbbf24, 0 0 20px #fbbf24, 0 0 40px #fbbf24, inset 0 0 20px rgba(251, 191, 36, 0.2)' // 炫酷 3D 浮起 + 发光边框 + 内发光
                       : hoveredBlock?.id === block.id 
                         ? (block.ad && block.ad.image_path 
                             ? '0 8px 16px rgba(59, 130, 246, 0.3)' // 图片块悬停时轻微阴影
@@ -572,7 +572,7 @@ export default function AdsPixel() {
               {hoveredBlock.block_id}
             </div>
             <div className="text-xs text-purple-600 mt-1 font-medium">
-              块ID: {hoveredBlock.block_id}
+              块 ID: {hoveredBlock.block_id}
             </div>
             <div className="text-xs text-gray-600 mt-1">
               网格位置: {hoveredBlock.x}, {hoveredBlock.y} | 

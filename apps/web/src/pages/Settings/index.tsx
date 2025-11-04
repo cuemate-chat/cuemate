@@ -475,7 +475,7 @@ function PasswordEditor() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="relative">
           <input
-            placeholder="原密码（至少6位）"
+            placeholder="原密码（至少 6 位）"
             type={showOld ? 'text' : 'password'}
             disabled={!editing}
             className={`w-full rounded-lg border border-slate-300 px-3 pr-10 py-2 text-slate-900 ${!editing ? 'bg-slate-50' : ''}`}
@@ -495,7 +495,7 @@ function PasswordEditor() {
         </div>
         <div className="relative">
           <input
-            placeholder="新密码（至少6位）"
+            placeholder="新密码（至少 6 位）"
             type={showNew ? 'text' : 'password'}
             disabled={!editing}
             className={`w-full rounded-lg border border-slate-300 px-3 pr-10 py-2 text-slate-900 ${!editing ? 'bg-slate-50' : ''}`}

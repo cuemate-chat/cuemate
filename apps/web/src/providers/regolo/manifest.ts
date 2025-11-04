@@ -22,7 +22,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '4096',
@@ -43,7 +43,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -64,7 +64,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -85,7 +85,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -106,7 +106,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -127,7 +127,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -148,7 +148,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -169,7 +169,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -190,7 +190,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -211,7 +211,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -232,7 +232,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 1, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -255,7 +255,7 @@ const manifest: ProviderManifest = {
       label: 'API Key',
       required: true,
       type: 'password',
-      placeholder: '格式：Regolo平台的API Key，需在官网注册获取'
+      placeholder: '格式：Regolo 平台的 API Key，需在官网注册获取'
     },
   ]
 };

@@ -31,7 +31,7 @@ export function useLicense() {
   // 检查 license 是否有效
   const isValid = license && license.status === 'active';
 
-  // 检查是否即将过期（30天内）
+  // 检查是否即将过期（30 天内）
   const isExpiringSoon = license
     ? license.expireTime <= Date.now() + 30 * 24 * 60 * 60 * 1000
     : false;

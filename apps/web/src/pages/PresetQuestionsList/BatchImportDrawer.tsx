@@ -115,9 +115,9 @@ export default function BatchImportDrawer({
               <strong>CSV 格式要求：</strong>
             </div>
             <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded mb-4 font-mono">
-              问题,答案,标签ID<br/>
+              问题,答案,标签 ID<br/>
               "什么是微服务？","微服务是...","tag_001"<br/>
-              "Redis的使用场景","Redis主要用于...","tag_002"
+              "Redis 的使用场景","Redis 主要用于...","tag_002"
             </div>
             
             <div className="text-sm text-slate-600 mb-4">
@@ -126,7 +126,7 @@ export default function BatchImportDrawer({
             <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded mb-6 font-mono">
               [<br/>
               &nbsp;&nbsp;{"{"}"question": "什么是微服务？", "answer": "微服务是...", "tag_id": "tag_001"{"}"}<br/>
-              &nbsp;&nbsp;{"{"}"question": "Redis的使用场景", "answer": "Redis主要用于...", "tag_id": null{"}"}<br/>
+              &nbsp;&nbsp;{"{"}"question": "Redis 的使用场景", "answer": "Redis 主要用于...", "tag_id": null{"}"}<br/>
               ]
             </div>
 
@@ -162,7 +162,7 @@ export default function BatchImportDrawer({
                 <li>文件大小限制：最大 10MB</li>
                 <li>数量限制：单次最多导入 1000 个题目</li>
                 <li>重复检测：基于问题文本进行去重</li>
-                <li>标签ID：可选字段，需要先在系统中创建对应标签</li>
+                <li>标签 ID：可选字段，需要先在系统中创建对应标签</li>
               </ul>
             </div>
           </div>

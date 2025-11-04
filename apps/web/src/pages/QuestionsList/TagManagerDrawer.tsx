@@ -94,7 +94,7 @@ const TagManagerDrawer: React.FC<TagManagerDrawerProps> = ({
                   const v = editingName.trim();
                   if (!v) return;
                   if (v.length > 20) {
-                    globalMessage.warning('标签名称最多20个字');
+                    globalMessage.warning('标签名称最多 20 个字');
                     return;
                   }
                   setLoading(true);
@@ -176,7 +176,7 @@ const TagManagerDrawer: React.FC<TagManagerDrawerProps> = ({
     const v = newTagName.trim();
     if (!v) return;
     if (v.length > 20) {
-      globalMessage.warning('标签名称最多20个字');
+      globalMessage.warning('标签名称最多 20 个字');
       return;
     }
     setLoading(true);
@@ -204,7 +204,7 @@ const TagManagerDrawer: React.FC<TagManagerDrawerProps> = ({
             <div>
               <div className="text-sm mb-1">标签名称<span className="text-red-500"> *</span></div>
               <Input
-                placeholder="新建标签名称（不超过20个字）"
+                placeholder="新建标签名称（不超过 20 个字）"
                 value={newTagName}
                 maxLength={20}
                 onChange={(e) => {

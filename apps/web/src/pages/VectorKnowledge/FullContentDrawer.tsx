@@ -123,9 +123,9 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
             </div>
           </div>
 
-          {/* 文档ID */}
+          {/* 文档 ID */}
           <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded border">
-            <span className="font-medium">文档ID:</span> {document.id}
+            <span className="font-medium">文档 ID:</span> {document.id}
           </div>
         </div>
       </DrawerContent>

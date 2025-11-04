@@ -112,7 +112,7 @@ export default function EditPromptDrawer({
                 ))}
               </div>
               <div className="mt-2 text-xs text-amber-700">
-                提示：编辑时这些变量会显示为 [变量N:不可修改]，保存时会自动恢复为原始变量。
+                提示：编辑时这些变量会显示为 [变量 N:不可修改]，保存时会自动恢复为原始变量。
               </div>
             </div>
           )}

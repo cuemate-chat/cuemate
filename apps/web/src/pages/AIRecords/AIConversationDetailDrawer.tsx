@@ -60,10 +60,10 @@ export default function AIConversationDetailDrawer({
     return `${(ms / 1000).toFixed(2)}s`;
   };
 
-  // 渲染消息内容（支持markdown格式的基本解析）
+  // 渲染消息内容（支持 markdown 格式的基本解析）
   const renderMessageContent = (content: string, format: string) => {
     if (format === 'markdown') {
-      // 简单的markdown渲染（实际项目可以使用react-markdown）
+      // 简单的 markdown 渲染（实际项目可以使用 react-markdown）
       return (
         <div 
           className="prose prose-sm max-w-none"
@@ -151,7 +151,7 @@ export default function AIConversationDetailDrawer({
                   <span className="text-sm text-gray-700">{conversation.message_count} 条</span>
                 </div>
                 <div className="flex items-center py-2 border-b border-gray-100">
-                  <span className="w-28 text-sm font-medium text-gray-900 flex-shrink-0">Token使用</span>
+                  <span className="w-28 text-sm font-medium text-gray-900 flex-shrink-0">Token 使用</span>
                   <span className="text-sm text-gray-700">{conversation.token_used} tokens</span>
                 </div>
                 <div className="flex items-center py-2 border-b border-gray-100">
@@ -202,7 +202,7 @@ export default function AIConversationDetailDrawer({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm font-medium text-gray-900">
-                            {msg.message_type === 'user' ? '用户' : 'AI助手'}
+                            {msg.message_type === 'user' ? '用户' : 'AI 助手'}
                           </span>
                           <span className="text-xs text-gray-500">
                             {new Date(msg.created_at * 1000).toLocaleString('zh-CN')}

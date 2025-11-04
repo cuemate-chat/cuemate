@@ -22,7 +22,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -43,7 +43,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -64,7 +64,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -85,7 +85,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -106,7 +106,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -127,7 +127,7 @@ const manifest: ProviderManifest = {
           extra: { min: 0, max: 2, step: 0.1 },
         },
         {
-          label: '输出最大tokens',
+          label: '输出最大 tokens',
           param_key: 'max_tokens',
           ui_type: 'slider',
           value: '8192',
@@ -143,7 +143,7 @@ const manifest: ProviderManifest = {
       label: 'API URL',
       type: 'text',
       required: true,
-      placeholder: '默认 http://localhost:8000/v1（vLLM本地服务API地址）',
+      placeholder: '默认 http://localhost:8000/v1（vLLM 本地服务 API 地址）',
       defaultValue: 'http://localhost:8000/v1',
     },
     {
@@ -151,7 +151,7 @@ const manifest: ProviderManifest = {
       label: 'API Key',
       type: 'password',
       required: false,
-      placeholder: '可选，vLLM服务启动时配置了 --api-key 参数时填写'
+      placeholder: '可选，vLLM 服务启动时配置了 --api-key 参数时填写'
     },
   ]
 };

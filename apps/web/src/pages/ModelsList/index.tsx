@@ -266,7 +266,7 @@ export default function ModelsList() {
           credentials[f.key] = f.defaultValue;
         }
       });
-      // 获取provider的icon_url路径，用于存储到数据库
+      // 获取 provider 的 icon_url 路径，用于存储到数据库
       const providerIconUrl = provider?.icon_url ?? null;
 
       const payload: any = {

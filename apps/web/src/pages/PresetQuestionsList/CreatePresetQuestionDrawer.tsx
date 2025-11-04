@@ -35,7 +35,7 @@ export default function CreatePresetQuestionDrawer({
     const calculateRows = () => {
       const viewportHeight = window.innerHeight;
       if (viewportHeight >= 1080) {
-        // 大屏幕：1080p及以上
+        // 大屏幕：1080p 及以上
         setAdaptiveRows({ question: 10, answer: 20 });
       } else if (viewportHeight >= 900) {
         // 中大屏幕：900-1080px
@@ -44,7 +44,7 @@ export default function CreatePresetQuestionDrawer({
         // 中屏幕：768-900px
         setAdaptiveRows({ question: 6, answer: 12 });
       } else {
-        // 小屏幕：768px以下
+        // 小屏幕：768px 以下
         setAdaptiveRows({ question: 4, answer: 8 });
       }
     };

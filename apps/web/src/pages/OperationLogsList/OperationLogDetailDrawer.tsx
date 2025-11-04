@@ -46,7 +46,7 @@ export default function OperationLogDetailDrawer({ open, onClose, logItem }: Ope
                   <span className="text-sm text-gray-700">{logItem.type}</span>
                 </div>
                 <div className="flex items-start py-3 border-b border-gray-100">
-                  <span className="w-28 text-base font-black text-gray-900 flex-shrink-0 mt-0.5">资源ID</span>
+                  <span className="w-28 text-base font-black text-gray-900 flex-shrink-0 mt-0.5">资源 ID</span>
                   <span className="text-sm text-blue-700 font-mono bg-blue-50 px-2 py-1 rounded break-all">{logItem.resource_id}</span>
                 </div>
                 <div className="flex items-center py-3 border-b border-gray-100">
@@ -72,7 +72,7 @@ export default function OperationLogDetailDrawer({ open, onClose, logItem }: Ope
                   <span className="text-sm text-gray-700">{logItem.user_name} <span className="text-xs text-gray-500">({logItem.user_id})</span></span>
                 </div>
                 <div className="flex items-center py-3 border-b border-gray-100">
-                  <span className="w-28 text-base font-black text-gray-900 flex-shrink-0">来源IP</span>
+                  <span className="w-28 text-base font-black text-gray-900 flex-shrink-0">来源 IP</span>
                   <span className="text-sm text-green-700 font-mono bg-green-50 px-2 py-1 rounded">{logItem.source_ip}</span>
                 </div>
                 <div className="flex items-center py-3 border-b border-gray-100">
@@ -87,10 +87,10 @@ export default function OperationLogDetailDrawer({ open, onClose, logItem }: Ope
                 </div>
               </div>
 
-              {/* 请求URL */}
+              {/* 请求 URL */}
               <div className="py-3 border-b border-gray-100">
                 <div className="flex items-start">
-                  <span className="w-28 text-base font-black text-gray-900 flex-shrink-0 mt-0.5">请求URL</span>
+                  <span className="w-28 text-base font-black text-gray-900 flex-shrink-0 mt-0.5">请求 URL</span>
                   <span className="text-sm text-orange-700 font-mono bg-orange-50 px-2 py-1 rounded break-all">{logItem.request_url}</span>
                 </div>
               </div>

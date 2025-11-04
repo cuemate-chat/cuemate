@@ -40,7 +40,7 @@ export default function QuestionsList() {
     const calculateTextareaRows = () => {
       const viewportHeight = window.innerHeight;
       if (viewportHeight >= 1080) {
-        // 大屏幕：1080p及以上
+        // 大屏幕：1080p 及以上
         setAdaptiveTextareaRows(16);
       } else if (viewportHeight >= 900) {
         // 中大屏幕：900-1080px
@@ -49,7 +49,7 @@ export default function QuestionsList() {
         // 中屏幕：768-900px
         setAdaptiveTextareaRows(12);
       } else {
-        // 小屏幕：768px以下
+        // 小屏幕：768px 以下
         setAdaptiveTextareaRows(10);
       }
     };
