@@ -35,7 +35,7 @@ export class JobResumeService {
   async processJob(job: JobData): Promise<void> {
     try {
       // 将岗位信息分块
-      const jobContent = `岗位名称：${job.title}\n\n岗位描述：${job.description}`;
+      const jobContent = `岗位名称：${job.title}\n\n 岗位描述：${job.description}`;
       const chunks = await this.documentProcessor.splitText(jobContent);
 
       // 生成向量嵌入
@@ -83,7 +83,7 @@ export class JobResumeService {
   async processResume(resume: ResumeData): Promise<void> {
     try {
       // 将简历内容分块
-      const resumeContent = `简历标题：${resume.title}\n\n简历内容：${resume.content}`;
+      const resumeContent = `简历标题：${resume.title}\n\n 简历内容：${resume.content}`;
       const chunks = await this.documentProcessor.splitText(resumeContent);
 
       // 生成向量嵌入

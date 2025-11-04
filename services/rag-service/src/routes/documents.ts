@@ -218,7 +218,7 @@ export async function createDocumentRoutes(
     }
   });
 
-  // 搜索jobs集合
+  // 搜索 jobs 集合
   app.get('/search/jobs', async (request, reply) => {
     try {
       const { query, filter, k = 1000 } = request.query as any;
@@ -236,7 +236,7 @@ export async function createDocumentRoutes(
       const parsedFilter = parseFilter(filter);
       app.log.info({ parsedFilter }, 'Parsed filter for jobs');
 
-      // 只传递ChromaDB兼容的筛选条件
+      // 只传递 ChromaDB 兼容的筛选条件
       const chromaFilter: any = {};
       if (parsedFilter.tagId) chromaFilter.tagId = parsedFilter.tagId;
       if (parsedFilter.jobId) chromaFilter.jobId = parsedFilter.jobId;
@@ -266,7 +266,7 @@ export async function createDocumentRoutes(
       // 生成查询的嵌入向量
       const queryEmbedding = await deps.embeddingService.embed([query.trim()]);
 
-      // 搜索jobs集合
+      // 搜索 jobs 集合
       const searchResults = await deps.vectorStore.searchByEmbedding(
         queryEmbedding[0],
         k,
@@ -340,11 +340,11 @@ export async function createDocumentRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Search jobs failed');
-      return reply.status(500).send({ success: false, error: '搜索jobs失败' });
+      return reply.status(500).send({ success: false, error: '搜索 jobs 失败' });
     }
   });
 
-  // 搜索resumes集合
+  // 搜索 resumes 集合
   app.get('/search/resumes', async (request, reply) => {
     try {
       const { query, filter, k = 1000 } = request.query as any;
@@ -362,7 +362,7 @@ export async function createDocumentRoutes(
       const parsedFilter = parseFilter(filter);
       app.log.info({ parsedFilter }, 'Parsed filter for resumes');
 
-      // 只传递ChromaDB兼容的筛选条件
+      // 只传递 ChromaDB 兼容的筛选条件
       const chromaFilter: any = {};
       if (parsedFilter.tagId) chromaFilter.tagId = parsedFilter.tagId;
       if (parsedFilter.jobId) chromaFilter.jobId = parsedFilter.jobId;
@@ -454,11 +454,11 @@ export async function createDocumentRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Search resumes failed');
-      return reply.status(500).send({ success: false, error: '搜索resumes失败' });
+      return reply.status(500).send({ success: false, error: '搜索 resumes 失败' });
     }
   });
 
-  // 搜索questions集合
+  // 搜索 questions 集合
   app.get('/search/questions', async (request, reply) => {
     try {
       const { query, filter, k = 1000 } = request.query as any;
@@ -476,7 +476,7 @@ export async function createDocumentRoutes(
       const parsedFilter = parseFilter(filter);
       app.log.info({ parsedFilter }, 'Parsed filter for questions');
 
-      // 只传递ChromaDB兼容的筛选条件
+      // 只传递 ChromaDB 兼容的筛选条件
       const chromaFilter: any = {};
       if (parsedFilter.tagId) chromaFilter.tagId = parsedFilter.tagId;
       if (parsedFilter.jobId) chromaFilter.jobId = parsedFilter.jobId;
@@ -568,7 +568,7 @@ export async function createDocumentRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Search questions failed');
-      return reply.status(500).send({ success: false, error: '搜索questions失败' });
+      return reply.status(500).send({ success: false, error: '搜索 questions 失败' });
     }
   });
 
@@ -577,7 +577,7 @@ export async function createDocumentRoutes(
     const { docId } = (req as any).params as { docId: string };
 
     try {
-      // 根据文档ID前缀判断应该从哪个集合中查找
+      // 根据文档 ID 前缀判断应该从哪个集合中查找
       let targetCollection = deps.config.vectorStore.defaultCollection;
 
       if (docId.startsWith('job:')) {
@@ -612,7 +612,7 @@ export async function createDocumentRoutes(
       // 根据文档类型获取关联信息
       if (doc.metadata.type === 'jobs') {
         // 岗位信息：获取对应的简历和押题
-        // 使用文档元数据中的jobId来查找关联的简历和押题
+        // 使用文档元数据中的 jobId 来查找关联的简历和押题
         const jobId = doc.metadata.jobId;
 
         if (jobId) {
@@ -632,18 +632,18 @@ export async function createDocumentRoutes(
           );
           relatedData.questions = questions;
         } else {
-          // 如果没有jobId，返回空数组
+          // 如果没有 jobId，返回空数组
           relatedData.resumes = [];
           relatedData.questions = [];
         }
 
-        // 岗位本身作为jobs返回
+        // 岗位本身作为 jobs 返回
         relatedData.jobs = [doc];
       } else if (doc.metadata.type === 'resumes') {
         // 简历信息：获取对应的岗位和押题
         if (doc.metadata.jobId) {
           // 获取岗位信息
-          // 岗位文档的ID格式是 job:{jobId}，所以需要使用jobId来查找
+          // 岗位文档的 ID 格式是 job:{jobId}，所以需要使用 jobId 来查找
           const jobs = await deps.vectorStore.getAllDocuments(
             1000,
             { jobId: doc.metadata.jobId },
@@ -660,13 +660,13 @@ export async function createDocumentRoutes(
           relatedData.questions = questions;
         }
 
-        // 简历本身作为resumes返回
+        // 简历本身作为 resumes 返回
         relatedData.resumes = [doc];
       } else if (doc.metadata.type === 'questions') {
         // 押题信息：获取对应的岗位和简历
         if (doc.metadata.jobId) {
           // 获取岗位信息
-          // 岗位文档的ID格式是 job:{jobId}，所以需要使用jobId来查找
+          // 岗位文档的 ID 格式是 job:{jobId}，所以需要使用 jobId 来查找
           const jobs = await deps.vectorStore.getAllDocuments(
             1000,
             { jobId: doc.metadata.jobId },
@@ -683,7 +683,7 @@ export async function createDocumentRoutes(
           relatedData.resumes = resumes;
         }
 
-        // 押题本身作为questions返回
+        // 押题本身作为 questions 返回
         relatedData.questions = [doc];
       }
 

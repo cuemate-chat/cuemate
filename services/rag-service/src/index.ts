@@ -85,11 +85,11 @@ async function start() {
 
     // 打印成功启动信息
     printSuccessInfo('RAG Service', port, {
-      HTTP地址: `http://${host}:${port}`,
-      健康检查: `http://${host}:${port}/health`,
-      向量存储类型: config.vectorStore.type || 'chroma',
-      嵌入维度: config.embeddings.dimensions?.toString() || '1536',
-      Chroma地址: config.vectorStore.chromaPath || 'http://cuemate-chroma:8000',
+      'HTTP 地址': `http://${host}:${port}`,
+      '健康检查': `http://${host}:${port}/health`,
+      '向量存储类型': config.vectorStore.type || 'chroma',
+      '嵌入维度': config.embeddings.dimensions?.toString() || '1536',
+      'Chroma 地址': config.vectorStore.chromaPath || 'http://cuemate-chroma:8000',
     });
   } catch (err) {
     logger.error(err);

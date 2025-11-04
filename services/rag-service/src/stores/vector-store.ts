@@ -100,7 +100,7 @@ export class VectorStore {
     return matchedChars / queryChars.length; // 0~1
   }
 
-  /** 最终分数：字符门控 + 语义融合。无任一字符命中则置0；否则取 max(向量分数, 字符覆盖率) */
+  /** 最终分数：字符门控 + 语义融合。无任一字符命中则置 0；否则取 max(向量分数, 字符覆盖率) */
   private calcFinalScore(query: string, text: string, distance: number): number {
     // 向量距离映射到相似度（0~1）
     const vectorSim = 1 / (1 + (typeof distance === 'number' ? distance : 0));
@@ -201,7 +201,7 @@ export class VectorStore {
     );
 
     try {
-      // 如果没有传入向量，直接返回空结果，避免误报100%相关度
+      // 如果没有传入向量，直接返回空结果，避免误报 100%相关度
       if (!embedding || embedding.length === 0) {
         return [];
       }
@@ -209,7 +209,7 @@ export class VectorStore {
       // 获取集合中的文档总数
       const count = await (collection as any).count();
 
-      // 使用较小值作为n_results参数
+      // 使用较小值作为 n_results 参数
       const n_results = Math.min(topK, count);
 
       // Chroma v2：使用 include 数组声明需要的字段
@@ -390,7 +390,7 @@ export class VectorStore {
         const content = doc || '';
         const metadata = results.metadatas[i] || {};
 
-        // 如果没有查询词，返回相关度为1
+        // 如果没有查询词，返回相关度为 1
         return {
           id: results.ids[i],
           content,

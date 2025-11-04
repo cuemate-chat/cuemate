@@ -32,7 +32,7 @@ export async function createQuestionRoutes(
       const { question } = body;
 
       // 将面试押题信息分块
-      const questionContent = `题目：${question.title}\n\n答案：${question.description}`;
+      const questionContent = `题目：${question.title}\n\n 答案：${question.description}`;
       const chunks = await deps.documentProcessor.splitText(questionContent);
 
       // 生成向量嵌入
@@ -145,7 +145,7 @@ export async function createQuestionRoutes(
     }
   });
 
-  // 根据岗位ID获取相关的面试押题
+  // 根据岗位 ID 获取相关的面试押题
   app.get('/questions/by-job/:jobId', async (req) => {
     const { jobId } = (req as any).params as { jobId: string };
     const { topK } = (req as any).query as { topK?: string };
