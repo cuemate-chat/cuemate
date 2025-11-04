@@ -27,7 +27,7 @@ function getCurrentDir(): string {
 }
 
 /**
- * ES模块兼容的__dirname和__filename
+ * ES 模块兼容的__dirname 和__filename
  */
 export function getDirname(importMetaUrl: string): string {
   return dirname(fileURLToPath(importMetaUrl));
@@ -44,7 +44,7 @@ export function getProjectRoot(): string {
   // 在构建后，当前文件位于 dist/main/*.js
   // 需要回到项目根目录 desktop-client
   const currentDir = getCurrentDir();
-  // 从 dist/main 向上2级到 desktop-client 根目录
+  // 从 dist/main 向上 2 级到 desktop-client 根目录
   return join(currentDir, '../../');
 }
 
@@ -53,7 +53,7 @@ export function getProjectRoot(): string {
  */
 export function getMainDir(): string {
   const currentDir = getCurrentDir();
-  // 从 utils 向上1级到 main 目录
+  // 从 utils 向上 1 级到 main 目录
   return join(currentDir, '../');
 }
 
@@ -67,7 +67,7 @@ export function getPreloadPath(scriptName: string): string {
 }
 
 /**
- * 获取渲染进程HTML路径
+ * 获取渲染进程 HTML 路径
  */
 export function getRendererPath(htmlName: string): string {
   // Vite 构建后的 HTML 文件实际位于 dist/src/renderer/
@@ -77,18 +77,18 @@ export function getRendererPath(htmlName: string): string {
 }
 
 /**
- * 获取应用图标路径 (用于dock、任务栏等系统级显示)
+ * 获取应用图标路径 (用于 dock、任务栏等系统级显示)
  */
 export function getAppIconPath(): string {
   const isDevelopment = !app.isPackaged;
 
   if (process.platform === 'darwin') {
-    // macOS Tray图标必须使用PNG格式
+    // macOS Tray 图标必须使用 PNG 格式
     if (isDevelopment) {
       const projectRoot = getProjectRoot();
       return join(projectRoot, 'assets', 'logo-icon.png');
     } else {
-      // 生产环境：从打包的resources目录获取
+      // 生产环境：从打包的 resources 目录获取
       return join(app.getAppPath(), 'resources', 'logo-icon.png');
     }
   }

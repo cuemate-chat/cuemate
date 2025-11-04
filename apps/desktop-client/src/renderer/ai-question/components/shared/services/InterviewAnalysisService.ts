@@ -1,6 +1,6 @@
 /**
- * 面试AI分析服务
- * 处理面试（模拟面试和面试训练）结束后的AI分析、评分和报告生成
+ * 面试 AI 分析服务
+ * 处理面试（模拟面试和面试训练）结束后的 AI 分析、评分和报告生成
  */
 
 import { InterviewScore, InterviewInsight } from '../data/InterviewDataService';
@@ -24,7 +24,7 @@ export interface AnalysisRequest {
   candidateProfile?: any;
 }
 
-// AI分析结果接口
+// AI 分析结果接口
 export interface AnalysisResult {
   overallScore: number; // 总分（1-100）
   summary: string; // 总体评价
@@ -32,7 +32,7 @@ export interface AnalysisResult {
   cons: string; // 不足
   suggestions: string; // 改进建议
 
-  // 雷达图评分（1-10分）
+  // 雷达图评分（1-10 分）
   radarScores: {
     interactivity: number;    // 互动性
     confidence: number;       // 自信度
@@ -102,7 +102,7 @@ export class InterviewAnalysisService {
       await this.initAuth();
     }
     if (!this.token) {
-      throw new Error('用户未登录或token获取失败');
+      throw new Error('用户未登录或 token 获取失败');
     }
   }
 
@@ -123,7 +123,7 @@ export class InterviewAnalysisService {
       // 1. 准备分析数据
       const analysisData = this.prepareAnalysisData(request);
 
-      // 2. 调用AI进行分析
+      // 2. 调用 AI 进行分析
       const aiAnalysis = await this.performAIAnalysis(analysisData);
 
       // 3. 处理和格式化结果
@@ -169,7 +169,7 @@ export class InterviewAnalysisService {
   }
 
   /**
-   * 执行AI分析
+   * 执行 AI 分析
    */
   private async performAIAnalysis(analysisData: any): Promise<any> {
     const prompt = this.buildAnalysisPrompt(analysisData);
@@ -184,7 +184,7 @@ export class InterviewAnalysisService {
           messages: [
             {
               role: 'system',
-              content: '你是一位资深的HR专家和面试分析师，具有丰富的面试评估经验。请基于提供的面试训练数据进行专业分析。'
+              content: '你是一位资深的 HR 专家和面试分析师，具有丰富的面试评估经验。请基于提供的面试训练数据进行专业分析。'
             },
             {
               role: 'user',
@@ -198,26 +198,26 @@ export class InterviewAnalysisService {
       });
 
       if (!response.ok) {
-        throw new Error(`AI分析请求失败: ${response.status}`);
+        throw new Error(`AI 分析请求失败: ${response.status}`);
       }
 
       const result = await response.json();
       const content = result.choices?.[0]?.message?.content;
 
       if (!content) {
-        throw new Error('AI分析响应为空');
+        throw new Error('AI 分析响应为空');
       }
 
-      // 尝试解析JSON响应
+      // 尝试解析 JSON 响应
       try {
         return JSON.parse(content);
       } catch (parseError) {
-        // 如果不是JSON格式，尝试从文本中提取信息
+        // 如果不是 JSON 格式，尝试从文本中提取信息
         return this.parseTextAnalysis(content);
       }
 
     } catch (error) {
-      console.error('AI分析调用失败:', error);
+      console.error('AI 分析调用失败:', error);
       throw error;
     }
   }
@@ -235,10 +235,10 @@ export class InterviewAnalysisService {
 `)
       .join('\n');
 
-    return `请分析以下面试训练数据，并返回JSON格式的详细分析报告：
+    return `请分析以下面试训练数据，并返回 JSON 格式的详细分析报告：
 
 【面试基本信息】
-面试ID：${analysisData.interview.id}
+面试 ID：${analysisData.interview.id}
 面试时长：${Math.round(analysisData.interview.duration / 60)}分钟
 问题总数：${analysisData.interview.totalQuestions}
 回答总数：${analysisData.interview.totalAnswers}
@@ -247,14 +247,14 @@ export class InterviewAnalysisService {
 【问答对话记录】
 ${qaText}
 
-请返回以下JSON格式的分析结果：
+请返回以下 JSON 格式的分析结果：
 
 {
   "overallScore": 数字(1-100),
-  "summary": "总体评价（150-200字）",
-  "pros": "优点分析（100-150字）",
-  "cons": "不足分析（100-150字）",
-  "suggestions": "改进建议（150-200字）",
+  "summary": "总体评价（150-200 字）",
+  "pros": "优点分析（100-150 字）",
+  "cons": "不足分析（100-150 字）",
+  "suggestions": "改进建议（150-200 字）",
   "radarScores": {
     "interactivity": 数字(1-10),
     "confidence": 数字(1-10),
@@ -265,33 +265,33 @@ ${qaText}
   "insights": {
     "interviewerAnalysis": {
       "score": 数字(1-10),
-      "summary": "面试官分析（100字）",
+      "summary": "面试官分析（100 字）",
       "role": "面试官角色判断",
-      "mbti": "推测MBTI类型",
+      "mbti": "推测 MBTI 类型",
       "personality": "性格特点",
       "preference": "面试偏好"
     },
     "candidateAnalysis": {
-      "summary": "候选人表现分析（100字）",
-      "mbti": "推测MBTI类型",
+      "summary": "候选人表现分析（100 字）",
+      "mbti": "推测 MBTI 类型",
       "personality": "性格特点展现",
       "jobPreference": "职业倾向分析"
     },
     "strategies": {
-      "prepareDetails": "准备策略建议（80字）",
-      "businessUnderstanding": "业务理解建议（80字）",
-      "keepLogical": "逻辑表达建议（80字）"
+      "prepareDetails": "准备策略建议（80 字）",
+      "businessUnderstanding": "业务理解建议（80 字）",
+      "keepLogical": "逻辑表达建议（80 字）"
     }
   },
   "qaAnalysis": [
     {
-      "questionId": "问题ID",
+      "questionId": "问题 ID",
       "question": "问题内容",
       "answer": "回答内容",
       "score": 数字(1-10),
-      "feedback": "具体反馈（80字）",
-      "keyPoints": ["关键点1", "关键点2"],
-      "improvements": ["改进点1", "改进点2"]
+      "feedback": "具体反馈（80 字）",
+      "keyPoints": ["关键点 1", "关键点 2"],
+      "improvements": ["改进点 1", "改进点 2"]
     }
   ]
 }
@@ -303,14 +303,14 @@ ${qaText}
 4. 评估面试官的提问质量和风格
 5. 提供具体可行的改进建议
 6. 雷达图评分要客观公正
-7. 确保返回标准JSON格式`;
+7. 确保返回标准 JSON 格式`;
   }
 
   /**
    * 从文本中解析分析结果（备用方案）
    */
   private parseTextAnalysis(_text: string): any {
-    // 这是一个备用解析方案，当AI没有返回JSON时使用
+    // 这是一个备用解析方案，当 AI 没有返回 JSON 时使用
 
     return {
       overallScore: 75, // 默认分数
@@ -563,7 +563,7 @@ ${qaText}
     try {
       console.debug('开始完整的面试分析流程');
 
-      // 1. 执行AI分析
+      // 1. 执行 AI 分析
       const analysis = await this.analyzeInterview(request);
 
       // 2. 保存核心分析结果

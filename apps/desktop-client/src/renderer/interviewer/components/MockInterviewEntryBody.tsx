@@ -36,7 +36,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<'zh-CN' | 'zh-TW' | 'en-US'>('zh-CN');
 
-  // 使用VoiceState来控制下拉列表状态
+  // 使用 VoiceState 来控制下拉列表状态
   const voiceState = useVoiceState();
 
   // 音频设备状态
@@ -51,7 +51,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
   const [_interviewState, setInterviewState] = useState<InterviewState>(InterviewState.IDLE);
   const [isInitializing, setIsInitializing] = useState(false);
 
-  // 当前问题的暂存数据（等待所有数据齐全后一次性UPDATE）
+  // 当前问题的暂存数据（等待所有数据齐全后一次性 UPDATE）
   const currentQuestionData = useRef<{
     sequence: number;
     questionId?: string;
@@ -81,7 +81,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           currentQuestionData.current.candidateAnswer = candidateAnswer;
         }
 
-        // 触发状态机进入AI分析阶段
+        // 触发状态机进入 AI 分析阶段
         stateMachine.current.send({
           type: 'USER_FINISHED_SPEAKING',
           payload: { response: candidateAnswer }
@@ -173,7 +173,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         throw new Error('Piper TTS 不可用');
       }
 
-      // 使用混合语言TTS，无需指定语音模型
+      // 使用混合语言 TTS，无需指定语音模型
       const options = { outputDevice: selectedSpeaker };
       await (window as any).electronInterviewerAPI?.piperTTS?.speak?.(text, options);
 
@@ -207,7 +207,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     }
 
     if (!selectedModel) {
-      setErrorMessage('请先选择AI模型');
+      setErrorMessage('请先选择 AI 模型');
       setCurrentLine('');
       return;
     }
@@ -240,11 +240,11 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
 
       const response = await interviewService.createInterview(interviewData);
 
-      // 先清理旧的interviewId，再设置新的
+      // 先清理旧的 interviewId，再设置新的
       currentInterview.clear();
       currentInterview.set(response.id);
 
-      // 清空上一次面试的mockInterviewState
+      // 清空上一次面试的 mockInterviewState
       setMockInterviewState({
         aiMessage: '',
         speechText: '',
@@ -253,7 +253,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         isListening: false,
       });
 
-      // 设置voiceState的interviewId供右侧窗口和本窗口共同使用
+      // 设置 voiceState 的 interviewId 供右侧窗口和本窗口共同使用
       setVoiceState({ interviewId: response.id });
 
       // 获取押题题库
@@ -289,7 +289,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         },
       });
 
-      // 设置VoiceState
+      // 设置 VoiceState
       setVoiceState({
         mode: 'mock-interview',
         subState: 'mock-interview-recording',
@@ -307,7 +307,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       setCurrentLine('');
       setIsInitializing(false);
 
-      // 如果面试已创建，更新状态为idle（错误）
+      // 如果面试已创建，更新状态为 idle（错误）
       if (voiceState.interviewId) {
         try {
           await interviewService.updateInterview(voiceState.interviewId, {
@@ -371,7 +371,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
   const handlePauseInterview = async () => {
     if (!stateMachine.current) return;
 
-    // 从localStorage获取当前面试ID
+    // 从 localStorage 获取当前面试 ID
     const interviewId = currentInterview.get();
     if (!interviewId) return;
 
@@ -413,7 +413,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
   const handleResumeInterview = async () => {
     if (!stateMachine.current) return;
 
-    // 从localStorage获取当前面试ID
+    // 从 localStorage 获取当前面试 ID
     const interviewId = currentInterview.get();
     if (!interviewId) return;
 
@@ -465,7 +465,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
 
   const handleStopInterview = async () => {
     try {
-      // 从localStorage获取当前面试ID
+      // 从 localStorage 获取当前面试 ID
       const interviewId = currentInterview.get();
       if (!interviewId) {
         return;
@@ -486,7 +486,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       // 2. 获取 interview_reviews 记录
       const reviews = await mockInterviewService.getInterviewReviews(interviewId);
 
-      // 3. 判断是否有记录（至少有1条数据）
+      // 3. 判断是否有记录（至少有 1 条数据）
       if (!reviews || reviews.length === 0) {
         // 没有任何回答记录，直接完成
         setCurrentLine('面试已结束');
@@ -858,7 +858,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     setErrorMessage('');
 
     try {
-      // 构建初始化prompt（用于后续LLM调用）并获取配置
+      // 构建初始化 prompt（用于后续 LLM 调用）并获取配置
       const initPromptData = await promptService.buildInitPrompt(
         context.jobPosition,
         context.resume,
@@ -878,7 +878,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     }
   };
 
-  // AI思考阶段
+  // AI 思考阶段
   const handleAIThinking = async (context: any) => {
     setCurrentLine('面试官正在思考问题...');
     setErrorMessage('');
@@ -946,13 +946,13 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     }
   };
 
-  // AI说话阶段
+  // AI 说话阶段
   const handleAISpeaking = async (context: any) => {
     try {
       const question = context.currentQuestion;
       if (!question) throw new Error('No question to speak');
 
-      // 显示AI生成的问题
+      // 显示 AI 生成的问题
       setCurrentLine(question);
 
       // 检查是否已经创建过该问题的记录，避免重复创建
@@ -963,7 +963,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       }
 
       // 立即开始生成答案（异步，不等待）
-      // 答案生成会通过onAnswerGenerated流式更新aiMessage,不需要手动清空
+      // 答案生成会通过 onAnswerGenerated 流式更新 aiMessage,不需要手动清空
       generateAnswerInBackground(context);
 
       // 播放问题
@@ -992,7 +992,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
   };
 
 
-  // AI分析阶段
+  // AI 分析阶段
   const handleAIAnalyzing = async (context: any) => {
     setErrorMessage('');
 
@@ -1038,16 +1038,16 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           analysisResult = analysisResult.trim();
 
           try {
-            // 解析JSON结果
+            // 解析 JSON 结果
             const analysis = JSON.parse(analysisResult);
 
-            // 获取reviewId
+            // 获取 reviewId
             const questionState = interviewDataService.getQuestionState(context.currentQuestionIndex);
             if (!questionState?.reviewId) {
               throw new Error('Review ID not found');
             }
 
-            // 所有数据齐全，一次性UPDATE数据库
+            // 所有数据齐全，一次性 UPDATE 数据库
             await mockInterviewService.updateReview(questionState.reviewId, {
               question_id: questionData.questionId,
               question: questionData.question,
@@ -1147,7 +1147,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           onAnswerGenerated?.(referenceAnswer);
 
         } else {
-          // 流式输出：每个chunk都实时更新UI
+          // 流式输出：每个 chunk 都实时更新 UI
           referenceAnswer += chunk.content;
           onAnswerGenerated?.(referenceAnswer);
         }
@@ -1190,7 +1190,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       // 标记面试完成
       interviewDataService.markInterviewComplete();
 
-      // 从localStorage获取当前面试ID
+      // 从 localStorage 获取当前面试 ID
       const interviewId = currentInterview.get();
 
       // 更新数据库中的面试状态为 mock-interview-completed
@@ -1215,7 +1215,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     setCurrentLine('面试已完成！感谢您的参与。');
     setErrorMessage('');
 
-    // 从localStorage获取当前面试ID
+    // 从 localStorage 获取当前面试 ID
     const interviewId = currentInterview.get();
 
     // 异步生成面试报告(scores + insights),不阻塞用户
@@ -1228,7 +1228,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       });
     }
 
-    // 更新VoiceState,保留interviewId(退出窗口时再清理)
+    // 更新 VoiceState,保留 interviewId(退出窗口时再清理)
     setVoiceState({
       mode: 'mock-interview',
       subState: 'mock-interview-completed',
@@ -1242,10 +1242,10 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     setErrorMessage(errorMsg);
     setCurrentLine('');
 
-    // 从localStorage获取当前面试ID
+    // 从 localStorage 获取当前面试 ID
     const interviewId = currentInterview.get();
 
-    // 更新面试状态为idle（错误）并记录错误信息
+    // 更新面试状态为 idle（错误）并记录错误信息
     if (interviewId) {
       try {
         await interviewService.updateInterview(interviewId, {
@@ -1302,9 +1302,9 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           { role: 'user', content: scorePrompt }
         ]);
       } catch (error: any) {
-        // 如果token超限,尝试分批处理
+        // 如果 token 超限,尝试分批处理
         if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
-          // 分批处理:每批1个问题
+          // 分批处理:每批 1 个问题
           const batchSize = 1;
           const batches = [];
           for (let i = 0; i < reviews.length; i += batchSize) {
@@ -1367,7 +1367,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           { role: 'user', content: insightPrompt }
         ]);
       } catch (error: any) {
-        // 如果token超限,返回默认值
+        // 如果 token 超限,返回默认值
         if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
           insightData = {
             interviewer: { score: 0, summary: '', role: '', mbti: '', personality: '', preference: '' },

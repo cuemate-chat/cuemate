@@ -64,7 +64,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         setIsInterviewerWindowOpen(show);
       }
     } catch (error) {
-      console.error('切换Interviewer窗口失败:', error);
+      console.error('切换 Interviewer 窗口失败:', error);
     }
   };
 
@@ -87,7 +87,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
   };
 
   const handleDoneClick = () => {
-    // 完成并保存，回到idle状态
+    // 完成并保存，回到 idle 状态
     setIsInterviewerWindowOpen(false);
 
     // 直接回到语音识别状态
@@ -103,7 +103,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         await (window as any).electronAPI.toggleAIQuestion();
       }
     } catch (error) {
-      console.error('打开AI问题窗口失败:', error);
+      console.error('打开 AI 问题窗口失败:', error);
     }
   };
 
@@ -129,7 +129,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
       // 系统状态更新成功后，同步更新数据库中的用户设置
       try {
         await userSettingsService.updateSettings({
-          floating_window_visible: next ? 0 : 1  // 逻辑反转：穿透模式存0，交互模式存1
+          floating_window_visible: next ? 0 : 1  // 逻辑反转：穿透模式存 0，交互模式存 1
         });
       } catch (error) {
         console.error('更新穿透性设置失败:', error);
@@ -163,7 +163,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         // 优先从数据库读取用户设置
         const user = await userSettingsService.getCurrentUser();
         if (user && typeof user.floating_window_visible === 'number') {
-          const dbClickThrough = user.floating_window_visible === 0; // 逻辑反转：0表示穿透模式
+          const dbClickThrough = user.floating_window_visible === 0; // 逻辑反转：0 表示穿透模式
           setIsClickThrough(dbClickThrough);
 
           // 同步系统状态与数据库状态
@@ -216,7 +216,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
       {/* 语音识别按钮 - 多状态切换 */}
       <div className="voice-recognition-container">
         {(() => {
-          // 语音识别按钮在这些状态下不显示：recording, paused, playing状态
+          // 语音识别按钮在这些状态下不显示：recording, paused, playing 状态
           const shouldNotShow = vState.subState === 'mock-interview-recording' ||
             vState.subState === 'mock-interview-paused' ||
             vState.subState === 'mock-interview-playing' ||

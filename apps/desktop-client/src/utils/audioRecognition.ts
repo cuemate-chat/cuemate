@@ -8,8 +8,8 @@ export interface MicrophoneRecognitionOptions {
   onError?: (errorMessage: string) => void;
   onOpen?: () => void;
   onClose?: () => void;
-  echoCancellation?: boolean; // 启用回声消除，默认为true
-  noiseSuppression?: boolean; // 启用噪音抑制，默认为true
+  echoCancellation?: boolean; // 启用回声消除，默认为 true
+  noiseSuppression?: boolean; // 启用噪音抑制，默认为 true
 }
 
 export interface MicrophoneRecognitionController {
@@ -109,7 +109,7 @@ export async function startMicrophoneRecognition(
       const config = {
         chunk_size: [5, 10, 5],
         chunk_interval: 5,
-        wav_name: `${sessionId}_${Date.now()}`, // 使用sessionId和时间戳确保唯一性
+        wav_name: `${sessionId}_${Date.now()}`, // 使用 sessionId 和时间戳确保唯一性
         is_speaking: true,
         mode: 'online',
       };
@@ -162,7 +162,7 @@ export async function startMicrophoneRecognition(
           }
         }
       } catch (err) {
-        console.error('AudioRecognition WebSocket解析出错:', err);
+        console.error('AudioRecognition WebSocket 解析出错:', err);
       }
     };
 
@@ -260,7 +260,7 @@ export async function startSpeakerRecognition(
       const config = {
         chunk_size: [5, 10, 5],
         chunk_interval: 5,
-        wav_name: `${sessionId}_${Date.now()}`, // 使用sessionId和时间戳确保唯一性
+        wav_name: `${sessionId}_${Date.now()}`, // 使用 sessionId 和时间戳确保唯一性
         is_speaking: true,
         mode: 'online',
       };
@@ -316,7 +316,7 @@ export async function startSpeakerRecognition(
           const currentRecognizedText = data.text.trim();
 
           if (data.is_final) {
-            // 识别结果已确认，累加到finalizedText
+            // 识别结果已确认，累加到 finalizedText
             if (currentRecognizedText && !finalizedText.includes(currentRecognizedText)) {
               finalizedText = finalizedText
                 ? `${finalizedText} ${currentRecognizedText}`
@@ -325,7 +325,7 @@ export async function startSpeakerRecognition(
             }
             onText?.(finalizedText, true);
           } else {
-            // 临时识别结果，更新currentSessionText
+            // 临时识别结果，更新 currentSessionText
             currentSessionText = currentRecognizedText;
             const combinedText = finalizedText
               ? `${finalizedText} ${currentSessionText}`

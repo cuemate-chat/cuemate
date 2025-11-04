@@ -29,9 +29,9 @@ export function VoiceQAApp() {
   const [currentConversationStatus, setCurrentConversationStatus] = useState<'active' | 'completed' | 'error' | null>(null);
   const [sequenceNumber, setSequenceNumber] = useState(1);
   const [isInitializing, setIsInitializing] = useState(true);
-  const [heightPercentage, setHeightPercentage] = useState(75); // 默认75%
+  const [heightPercentage, setHeightPercentage] = useState(75); // 默认 75%
   
-  // 创建 ref 用于 VoiceQABody 实现复制AI回答的功能
+  // 创建 ref 用于 VoiceQABody 实现复制 AI 回答的功能
   const copyLastAIResponseRef = useRef<(() => Promise<void>) | null>(null);
 
   // 组件初始化时恢复最近对话和高度设置
@@ -52,7 +52,7 @@ export function VoiceQAApp() {
           await (window as any).electronAPI.setAIWindowHeight(percentage);
         }
       } else {
-        // 默认75%，同步到主进程
+        // 默认 75%，同步到主进程
         if ((window as any).electronAPI?.setAIWindowHeight) {
           await (window as any).electronAPI.setAIWindowHeight(75);
         }
@@ -187,7 +187,7 @@ export function VoiceQAApp() {
       setCurrentConversationStatus('active');
     }
     
-    // 添加用户消息到UI
+    // 添加用户消息到 UI
     const userMessage = {
       id: Date.now().toString(),
       type: 'user' as const,
@@ -199,7 +199,7 @@ export function VoiceQAApp() {
     await conversationService.saveMessage(conversationId, 'user', currentQuestion, currentSeq);
     currentSeq++;
     
-    // 创建AI消息占位符
+    // 创建 AI 消息占位符
     const aiMessageId = (Date.now() + 1).toString();
     const aiMessage = {
       id: aiMessageId,
@@ -217,8 +217,8 @@ export function VoiceQAApp() {
         [{ role: 'user', content: currentQuestion }],
         (chunk) => {
           if (chunk.error) {
-            console.error('AI调用出错:', chunk.error);
-            const errorMessage = `抱歉，AI调用出错了：${chunk.error}`;
+            console.error('AI 调用出错:', chunk.error);
+            const errorMessage = `抱歉，AI 调用出错了：${chunk.error}`;
             setMessages(prev => prev.map(msg => 
               msg.id === aiMessageId 
                 ? { ...msg, content: errorMessage }
@@ -243,14 +243,14 @@ export function VoiceQAApp() {
 
           if (chunk.finished) {
             
-            // 保存完整AI回答到数据库
+            // 保存完整 AI 回答到数据库
             if (aiResponseContent && conversationId) {
               conversationService.saveMessage(
                 conversationId,
                 'assistant',
                 aiResponseContent,
                 currentSeq,
-                0, // token数量暂时为0，后续可以计算
+                0, // token 数量暂时为 0，后续可以计算
                 Date.now() - startTime
               );
               setSequenceNumber(currentSeq + 1);
@@ -260,7 +260,7 @@ export function VoiceQAApp() {
             return;
           }
 
-          // 流式更新AI消息内容
+          // 流式更新 AI 消息内容
           if (chunk.content) {
             aiResponseContent += chunk.content;
             setMessages(prev => prev.map(msg => 
@@ -272,8 +272,8 @@ export function VoiceQAApp() {
         }
       );
     } catch (error) {
-      console.error('AI调用失败:', error);
-      const errorMessage = `AI调用失败：${(error as Error).message}`;
+      console.error('AI 调用失败:', error);
+      const errorMessage = `AI 调用失败：${(error as Error).message}`;
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
           ? { ...msg, content: errorMessage }
@@ -311,7 +311,7 @@ export function VoiceQAApp() {
         await (window as any).electronAPI.hideAIQuestion();
       }
     } catch (error) {
-      console.error('关闭AI问题窗口失败:', error);
+      console.error('关闭 AI 问题窗口失败:', error);
     }
   };
 

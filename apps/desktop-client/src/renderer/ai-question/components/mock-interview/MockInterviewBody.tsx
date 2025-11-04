@@ -4,7 +4,7 @@ import { RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface WindowBodyProps {
-  aiMessage?: string; // AI参考答案
+  aiMessage?: string; // AI 参考答案
   candidateAnswer?: string; // 用户回答
   isLoading: boolean;
 }
@@ -60,7 +60,7 @@ export function MockInterviewBody({ aiMessage, candidateAnswer, isLoading }: Win
           </div>
           <div className="ai-empty-title">等待面试开始</div>
           <div className="ai-empty-description">
-            AI参考答案和您的回答将在这里显示
+            AI 参考答案和您的回答将在这里显示
           </div>
         </div>
       ) : (

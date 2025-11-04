@@ -87,13 +87,13 @@ export class MainContentWindow {
       // 设置最小尺寸
       this.window.setMinimumSize(800, 600);
 
-      // 加载Web版CueMate
+      // 加载 Web 版 CueMate
       await this.window.loadURL('http://localhost');
 
       // 设置窗口事件监听
       this.setupEvents();
 
-      // 页面加载完成事件，无需记录info
+      // 页面加载完成事件，无需记录 info
       this.window.webContents.once('did-finish-load', () => {});
     } catch (error) {
       logger.error({ error }, '创建 main-content 窗口失败');

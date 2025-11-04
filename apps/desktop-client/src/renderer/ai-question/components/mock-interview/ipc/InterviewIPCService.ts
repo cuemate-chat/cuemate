@@ -1,12 +1,12 @@
 /**
  * 面试系统跨窗口通信服务
- * 负责协调AI问答窗口和控制栏窗口之间的数据同步
+ * 负责协调 AI 问答窗口和控制栏窗口之间的数据同步
  */
 
 import { InterviewState } from '../../shared/state/InterviewStateMachine';
 import { VoiceState } from '../../shared/voice/VoiceCoordinator';
 
-// IPC通信事件类型
+// IPC 通信事件类型
 export enum InterviewIPCEvents {
   // 面试状态相关
   INTERVIEW_STATE_CHANGED = 'interview:state-changed',
@@ -40,7 +40,7 @@ export enum InterviewIPCEvents {
   PROVIDE_CURRENT_STATE = 'interview:provide-current-state',
 }
 
-// IPC数据接口
+// IPC 数据接口
 export interface InterviewStateData {
   state: InterviewState;
   currentQuestion?: string;
@@ -123,7 +123,7 @@ export class InterviewIPCService {
     if (this.isInitialized) return;
 
     try {
-      // 监听所有面试相关的IPC事件
+      // 监听所有面试相关的 IPC 事件
       Object.values(InterviewIPCEvents).forEach((event) => {
         this.electronAPI.onInterviewEvent?.(event, (data: any) => {
           this.handleIncomingEvent(event, data);
@@ -288,7 +288,7 @@ export class InterviewIPCService {
     if (!this.isAvailable()) return false;
 
     try {
-      // 发送ping事件并等待响应
+      // 发送 ping 事件并等待响应
       return new Promise((resolve) => {
         const timeout = setTimeout(() => resolve(false), 1000);
 

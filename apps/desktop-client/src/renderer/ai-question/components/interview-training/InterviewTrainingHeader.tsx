@@ -45,7 +45,7 @@ export function InterviewTrainingHeader({ isLoading, onClose, onOpenHistory, hei
   const timerDuration = globalState.timerDuration || 0;
   const timerStarted = globalState.timerStarted || false;
 
-  // 格式化时间显示 (时:分:秒) - 复制自InterviewerWindowHeader
+  // 格式化时间显示 (时:分:秒) - 复制自 InterviewerWindowHeader
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);

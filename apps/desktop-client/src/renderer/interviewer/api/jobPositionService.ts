@@ -1,6 +1,6 @@
 /**
  * 岗位
- * 处理岗位相关的API调用
+ * 处理岗位相关的 API 调用
  */
 
 export interface JobPosition {
@@ -43,7 +43,7 @@ export class JobPositionService {
       await this.initAuth();
     }
     if (!this.token) {
-      throw new Error('用户未登录或token获取失败');
+      throw new Error('用户未登录或 token 获取失败');
     }
   }
 

@@ -6,7 +6,7 @@ import { useScrollFadeEffect } from '../../../hooks/useScrollFadeEffect';
 import { MessageData, ScrollFadeMessageList } from '../../../shared/components/ScrollFadeMessage';
 
 // 使用现代化的公共组件架构
-// 所有ScrollAnimation和渐变功能已提取为独立组件
+// 所有 ScrollAnimation 和渐变功能已提取为独立组件
 
 interface WindowBodyProps {
   messages: Array<{id: string, type: 'user' | 'ai', content: string}>;
@@ -19,7 +19,7 @@ interface WindowBodyProps {
 export function VoiceQABody({ messages, isLoading, onNewChat, onAskMore, onCopyLastAIResponse }: WindowBodyProps) {
   const messagesRef = useRef<HTMLDivElement>(null);
 
-  // 实现复制最近一次AI回答的逻辑
+  // 实现复制最近一次 AI 回答的逻辑
   const handleCopyLastAIResponse = async () => {
     try {
       const lastAIMessage = messages.filter(m => m.type === 'ai').pop();
@@ -27,7 +27,7 @@ export function VoiceQABody({ messages, isLoading, onNewChat, onAskMore, onCopyL
         await navigator.clipboard.writeText(lastAIMessage.content);
       }
     } catch (e) {
-      console.error('复制AI回答失败:', e);
+      console.error('复制 AI 回答失败:', e);
     }
   };
 
@@ -38,14 +38,14 @@ export function VoiceQABody({ messages, isLoading, onNewChat, onAskMore, onCopyL
     }
   }, [messages, onCopyLastAIResponse]);
 
-  // 转换消息格式为MessageData类型
+  // 转换消息格式为 MessageData 类型
   const messageData: MessageData[] = messages.map(msg => ({
     id: msg.id,
     type: msg.type,
     content: msg.content
   }));
 
-  // 使用滚动渐变效果Hook
+  // 使用滚动渐变效果 Hook
   useScrollFadeEffect(messagesRef, {
     fadeZoneHeight: 60,
     minAlpha: 0.5,

@@ -107,7 +107,7 @@ class PromptService {
       console.error('Failed to parse prompt extra config:', error);
     }
 
-    // 渲染模板,包含 totalQuestions 作为变量8
+    // 渲染模板,包含 totalQuestions 作为变量 8
     const content = this.renderTemplate(promptData.content, {
       jobPosition,
       resume,

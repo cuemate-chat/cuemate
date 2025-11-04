@@ -12,13 +12,13 @@ import { MainContentWindow } from './MainContentWindow.js';
 
 export class WindowManager {
   private controlBarWindow: ControlBarWindow;
-  private mainContentWindow!: MainContentWindow; // 在initialize中初始化
-  private aiQuestionWindow!: AIQuestionWindow; // 在initialize中初始化
+  private mainContentWindow!: MainContentWindow; // 在 initialize 中初始化
+  private aiQuestionWindow!: AIQuestionWindow; // 在 initialize 中初始化
   private webSocketClient: WebSocketClient;
   private isDevelopment: boolean;
   private appState: AppState;
-  private aiQuestionHistoryWindow!: AIQuestionHistoryWindow; // 在initialize中初始化
-  private interviewerWindow!: InterviewerWindow; // 在initialize中初始化
+  private aiQuestionHistoryWindow!: AIQuestionHistoryWindow; // 在 initialize 中初始化
+  private interviewerWindow!: InterviewerWindow; // 在 initialize 中初始化
   private windowStatesBeforeHide: {
     isMainContentVisible: boolean;
     isAIQuestionVisible: boolean;
@@ -32,7 +32,7 @@ export class WindowManager {
   };
   private hasEverBeenHidden: boolean = false;
 
-  private aiWindowHeightPercentage: number = 75; // 默认75%
+  private aiWindowHeightPercentage: number = 75; // 默认 75%
   private screenshotWatcher: ScreenshotWatcher | null = null;
 
   constructor(isDevelopment: boolean = false) {
@@ -66,7 +66,7 @@ export class WindowManager {
       // 2. 创建控制条窗口
       await this.controlBarWindow.create();
 
-      // 3. 创建子窗口，以control-bar作为父窗口
+      // 3. 创建子窗口，以 control-bar 作为父窗口
       const controlBarBrowserWindow = this.controlBarWindow.getBrowserWindow();
       this.aiQuestionWindow = new AIQuestionWindow(this.isDevelopment, controlBarBrowserWindow);
       this.aiQuestionHistoryWindow = new AIQuestionHistoryWindow(
@@ -75,13 +75,13 @@ export class WindowManager {
       );
       this.interviewerWindow = new InterviewerWindow(this.isDevelopment, controlBarBrowserWindow);
 
-      // 4. 创建AI问答窗口（初始隐藏）
+      // 4. 创建 AI 问答窗口（初始隐藏）
       await this.aiQuestionWindow.create();
 
-      // 5. 创建AI问答历史窗口（初始隐藏）
+      // 5. 创建 AI 问答历史窗口（初始隐藏）
       await this.aiQuestionHistoryWindow.create();
 
-      // 6. 创建Interviewer窗口（初始隐藏）
+      // 6. 创建 Interviewer 窗口（初始隐藏）
       await this.interviewerWindow.create();
 
       // 7. 设置控制条窗口关闭回调，隐藏所有子窗口
@@ -140,7 +140,7 @@ export class WindowManager {
   }
 
   /**
-   * 更新AI窗口尺寸
+   * 更新 AI 窗口尺寸
    */
   private updateAIWindowSize(): void {
     if (this.appState.isAIQuestionVisible) {
@@ -179,7 +179,7 @@ export class WindowManager {
       });
     }
 
-    // 监听 AI 问答窗口事件用于联动历史窗口和interviewer窗口定位
+    // 监听 AI 问答窗口事件用于联动历史窗口和 interviewer 窗口定位
     const aiWindow = this.aiQuestionWindow.getBrowserWindow();
     if (aiWindow) {
       const relayoutSideWindows = () => {
@@ -378,14 +378,14 @@ export class WindowManager {
   }
 
   /**
-   * 获取AI问答窗口实例
+   * 获取 AI 问答窗口实例
    */
   public getAIQuestionWindow(): AIQuestionWindow {
     return this.aiQuestionWindow;
   }
 
   /**
-   * 显示AI问答窗口
+   * 显示 AI 问答窗口
    */
   public showAIQuestion(): void {
     this.aiQuestionWindow.show();
@@ -393,7 +393,7 @@ export class WindowManager {
   }
 
   /**
-   * 隐藏AI问答窗口
+   * 隐藏 AI 问答窗口
    */
   public hideAIQuestion(): void {
     this.aiQuestionWindow.hide();
@@ -405,7 +405,7 @@ export class WindowManager {
   }
 
   /**
-   * 切换AI问答窗口显示状态
+   * 切换 AI 问答窗口显示状态
    */
   public toggleAIQuestion(): void {
     if (this.appState.isAIQuestionVisible) {
@@ -458,7 +458,7 @@ export class WindowManager {
     }
   }
 
-  // === Interviewer窗口相关 ===
+  // === Interviewer 窗口相关 ===
   public isInterviewerVisible(): boolean {
     const w = this.interviewerWindow.getBrowserWindow();
     return !!(w && w.isVisible());
@@ -502,7 +502,7 @@ export class WindowManager {
   }
 
   /**
-   * 设置AI窗口高度百分比
+   * 设置 AI 窗口高度百分比
    */
   public setAIWindowHeightPercentage(percentage: number): void {
     this.aiWindowHeightPercentage = percentage;
@@ -518,14 +518,14 @@ export class WindowManager {
   }
 
   /**
-   * 获取AI窗口高度百分比
+   * 获取 AI 窗口高度百分比
    */
   public getAIWindowHeightPercentage(): number {
     return this.aiWindowHeightPercentage;
   }
 
   /**
-   * 切换AI窗口模式
+   * 切换 AI 窗口模式
    */
   public switchToMode(mode: 'voice-qa' | 'mock-interview' | 'interview-training', jobId?: string): void {
     // 向 AI Question 窗口发送模式切换事件

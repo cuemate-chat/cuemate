@@ -28,7 +28,7 @@ export function InterviewerApp() {
           setCurrentSectionTitle('语音提问');
         }
 
-        // 设置选中的岗位ID
+        // 设置选中的岗位 ID
         if (jobId) {
           setSelectedJobId(jobId);
         }
@@ -48,7 +48,7 @@ export function InterviewerApp() {
     try {
       const api: any = (window as any).electronAPI;
       const off = api?.clickThrough?.onChanged?.((enabled: boolean) => {
-        // 直接在body上添加/移除class，这样所有元素都能感知到穿透状态
+        // 直接在 body 上添加/移除 class，这样所有元素都能感知到穿透状态
         if (enabled) {
           document.body.classList.add('click-through-mode');
         } else {
@@ -97,7 +97,7 @@ export function InterviewerApp() {
   };
 
   const handleBack = async () => {
-    // 返回上一页时不关闭右侧窗口，只是重置当前选择的section
+    // 返回上一页时不关闭右侧窗口，只是重置当前选择的 section
     setCurrentSectionTitle(null);
 
     // 只有在没有进行中的面试时才清除状态
@@ -112,7 +112,7 @@ export function InterviewerApp() {
         subState: 'idle',
         interviewId: undefined
       });
-      currentInterview.clear(); // 清理localStorage中的interviewId
+      currentInterview.clear(); // 清理 localStorage 中的 interviewId
     }
   };
 

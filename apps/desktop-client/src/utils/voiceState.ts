@@ -41,7 +41,7 @@ export interface VoiceState {
   timerDuration?: number; // 计时器时长（秒）
   timerStarted?: boolean; // 计时器是否已开始
   // 面试相关状态
-  interviewId?: string; // 当前面试ID
+  interviewId?: string; // 当前面试 ID
 }
 
 const STORAGE_KEY = 'cuemate.voiceState';
@@ -67,7 +67,7 @@ function shouldResetState(): boolean {
     const lastSessionTime = parseInt(lastSession);
     const timeDiff = currentSession - lastSessionTime;
 
-    // 如果距离上次会话超过5分钟，认为是新的应用会话，需要重置状态
+    // 如果距离上次会话超过 5 分钟，认为是新的应用会话，需要重置状态
     if (timeDiff > 5 * 60 * 1000) {
       localStorage.setItem(SESSION_KEY, currentSession.toString());
       return true;

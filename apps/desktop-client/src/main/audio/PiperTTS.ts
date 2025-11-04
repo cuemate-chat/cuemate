@@ -27,7 +27,7 @@ export class PiperTTS {
   private voices: Map<string, PiperVoice> = new Map();
 
   constructor() {
-    // 动态检测Python路径
+    // 动态检测 Python 路径
     this.pythonPath = this.findPythonPath();
 
     // 开发环境和生产环境的路径处理
@@ -48,34 +48,34 @@ export class PiperTTS {
   }
 
   /**
-   * 查找可用的Python路径，优先检查piper包是否可用
+   * 查找可用的 Python 路径，优先检查 piper 包是否可用
    */
   private findPythonPath(): string {
     const possiblePaths = [
       // pipx 虚拟环境路径 (最优先)
       path.join(require('os').homedir(), '.local', 'pipx', 'venvs', 'piper-tts', 'bin', 'python'),
       path.join(require('os').homedir(), '.local', 'pipx', 'venvs', 'piper-tts', 'bin', 'python3'),
-      // 打包的Python环境 (生产环境)
+      // 打包的 Python 环境 (生产环境)
       ...(app.isPackaged
         ? [
             path.join(process.resourcesPath, 'python', 'bin', 'python'),
             path.join(process.resourcesPath, 'python', 'bin', 'python3'),
           ]
         : []),
-      // 全局Python路径
+      // 全局 Python 路径
       'python3',
       'python',
-      // macOS常见路径
+      // macOS 常见路径
       '/usr/bin/python3',
       '/usr/local/bin/python3',
-      // Homebrew路径
+      // Homebrew 路径
       '/opt/homebrew/bin/python3',
     ];
 
     for (const pythonPath of possiblePaths) {
       try {
         if (fs.existsSync(pythonPath) || pythonPath === 'python' || pythonPath === 'python3') {
-          // 验证该Python环境是否有piper包
+          // 验证该 Python 环境是否有 piper 包
           if (this.validatePythonEnvironment(pythonPath)) {
             return pythonPath;
           }
@@ -85,12 +85,12 @@ export class PiperTTS {
       }
     }
 
-    logger.warn('未找到包含piper-tts的Python环境，使用默认python3');
+    logger.warn('未找到包含 piper-tts 的 Python 环境，使用默认 python3');
     return 'python3';
   }
 
   /**
-   * 验证Python环境是否包含piper包
+   * 验证 Python 环境是否包含 piper 包
    */
   private validatePythonEnvironment(pythonPath: string): boolean {
     try {
@@ -224,7 +224,7 @@ export class PiperTTS {
         this.wrapperScript,
         '--model',
         voice.modelPath,
-        '--output-raw', // 输出原始PCM数据
+        '--output-raw', // 输出原始 PCM 数据
         text,
       ];
 
@@ -265,7 +265,7 @@ export class PiperTTS {
   }
 
   /**
-   * 将PCM数据转换为WAV格式
+   * 将 PCM 数据转换为 WAV 格式
    */
   private pcmToWav(pcmData: Buffer, sampleRate: number = 22050): Buffer {
     const wavHeader = Buffer.alloc(44);
@@ -312,7 +312,7 @@ export class PiperTTS {
         playCommand = 'afplay';
         playArgs = [tempFile];
 
-        // 如果指定了设备，尝试使用 -d 参数（需要设备ID）
+        // 如果指定了设备，尝试使用 -d 参数（需要设备 ID）
         if (deviceId && deviceId !== 'default') {
           playArgs.unshift('-d', deviceId);
         }

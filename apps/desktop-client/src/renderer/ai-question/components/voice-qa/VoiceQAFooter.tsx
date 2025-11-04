@@ -159,14 +159,14 @@ export function VoiceQAFooter({
                 <button 
                   className="ai-copy-btn" 
                   onClick={onCopyLastAIResponse}
-                  title="复制最近一次AI回答"
+                  title="复制最近一次 AI 回答"
                 >
                   <Copy size={16} />
                 </button>
               </div>
             </Tooltip.Trigger>
             <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-              复制最近一次AI回答内容
+              复制最近一次 AI 回答内容
               <Tooltip.Arrow className="radix-tooltip-arrow" />
             </Tooltip.Content>
           </Tooltip.Root>

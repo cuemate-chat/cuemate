@@ -14,10 +14,10 @@ export function CloseButton({ showCloseButton }: CloseButtonProps) {
   // 关闭按钮功能
   const minimizeWindow = async () => {
     try {
-      // 使用 Electron API 隐藏所有浮动窗口，包括AI问答窗口
+      // 使用 Electron API 隐藏所有浮动窗口，包括 AI 问答窗口
       if ((window as any).electronAPI) {
         await (window as any).electronAPI.hideFloatingWindows();
-        // 同时隐藏AI问答窗口
+        // 同时隐藏 AI 问答窗口
         await (window as any).electronAPI.hideAIQuestion();
       }
     } catch (error) {

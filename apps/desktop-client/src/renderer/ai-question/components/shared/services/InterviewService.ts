@@ -77,7 +77,7 @@ export class InterviewService {
     if (result?.success && result.userData?.token) {
       return result.userData.token;
     }
-    throw new Error('用户未登录或token获取失败');
+    throw new Error('用户未登录或 token 获取失败');
   }
 
   private async getHeaders() {
@@ -222,7 +222,7 @@ export class InterviewService {
     threshold: number = 0.8,
   ): Promise<{ questionId?: string; question?: string; answer?: string; similarity?: number }> {
     try {
-      // 使用RAG服务在向量知识库中搜索相似问题
+      // 使用 RAG 服务在向量知识库中搜索相似问题
       const response = await fetch(`${this.ragServiceURL}/similarity/questions`, {
         method: 'POST',
         headers: {
@@ -236,7 +236,7 @@ export class InterviewService {
       });
 
       if (!response.ok) {
-        console.warn('RAG服务调用失败');
+        console.warn('RAG 服务调用失败');
         return {};
       }
 
@@ -255,7 +255,7 @@ export class InterviewService {
       // 没有匹配到，返回空对象
       return {};
     } catch (error) {
-      console.warn('RAG服务不可用:', error);
+      console.warn('RAG 服务不可用:', error);
       return {};
     }
   }

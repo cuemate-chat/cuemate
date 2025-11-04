@@ -132,7 +132,7 @@ const controlBarAPI = {
       'shortcut-triggered',
       'websocket-login-success', // WebSocket 登录成功事件
       'websocket-logout', // WebSocket 登出事件
-      'ask-ai-button-disabled', // 提问AI按钮禁用状态
+      'ask-ai-button-disabled', // 提问 AI 按钮禁用状态
       'main-app-show', // 主应用显示事件
       'main-app-hide', // 主应用隐藏事件
     ];

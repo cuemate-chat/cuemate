@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 export interface MockInterviewState {
   aiMessage: string;
   speechText: string;
-  candidateAnswer: string; // 用户提交的回答（用于跨窗口触发AI分析）
+  candidateAnswer: string; // 用户提交的回答（用于跨窗口触发 AI 分析）
   isLoading: boolean;
   isListening: boolean;
   isAutoMode: boolean; // 自动/手动模式

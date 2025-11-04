@@ -1,7 +1,7 @@
 /**
  * 面试训练音频服务管理器
  * 专注于系统音频监听和用户语音录制
- * 不包含TTS功能（因为面试训练不需要AI语音输出）
+ * 不包含 TTS 功能（因为面试训练不需要 AI 语音输出）
  */
 
 import { ErrorSeverity, ErrorType } from '../../shared/error/ErrorHandler';
@@ -54,7 +54,7 @@ export class TrainingAudioServiceManager extends EventTarget {
     this.voiceCoordinator = new VoiceCoordinator({
       silenceThreshold: 3000,
       volumeThreshold: 0.01,
-      ttsDelay: 0, // 训练模式不需要TTS延迟
+      ttsDelay: 0, // 训练模式不需要 TTS 延迟
       autoEndTimeout: 5000,
     });
 
@@ -126,7 +126,7 @@ export class TrainingAudioServiceManager extends EventTarget {
 
   private async initializeSystemAudioCapture(): Promise<void> {
     try {
-      // 这里应该调用系统音频捕获API
+      // 这里应该调用系统音频捕获 API
       // 目前使用模拟实现
       console.debug('初始化系统音频捕获...');
 
@@ -272,7 +272,7 @@ export class TrainingAudioServiceManager extends EventTarget {
   // 模拟面试官语音识别（从系统音频）
   async recognizeInterviewerSpeech(): Promise<string> {
     try {
-      // 这里应该调用ASR服务识别面试官的语音
+      // 这里应该调用 ASR 服务识别面试官的语音
       // 目前返回模拟结果
       const mockResponses = [
         '请介绍一下你的项目经验。',
@@ -337,11 +337,11 @@ export class TrainingAudioServiceManager extends EventTarget {
 
   // 获取当前语音状态
   getCurrentVoiceState(): VoiceState {
-    // VoiceCoordinator的getCurrentState方法可能不存在，使用默认值
+    // VoiceCoordinator 的 getCurrentState 方法可能不存在，使用默认值
     return VoiceState.IDLE;
   }
 
-  // 检查是否可以开始ASR
+  // 检查是否可以开始 ASR
   canStartASR(): boolean {
     return this.voiceCoordinator.canStartASR();
   }

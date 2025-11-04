@@ -20,7 +20,7 @@ export function InterviewerWindowHeader({
   const [duration, setDuration] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // 计时器逻辑 - 只在mock-interview和interview-training模式下工作
+  // 计时器逻辑 - 只在 mock-interview 和 interview-training 模式下工作
   useEffect(() => {
     let interval: NodeJS.Timeout;
     const isInterviewMode = globalState.mode === 'mock-interview' || globalState.mode === 'interview-training';
@@ -42,11 +42,11 @@ export function InterviewerWindowHeader({
     );
 
     if (shouldShowTimer) {
-      // 只在recording/playing状态下初始化计时器,completed/paused状态保持现有值
+      // 只在 recording/playing 状态下初始化计时器,completed/paused 状态保持现有值
       if (!hasStarted && shouldRunTimer) {
         setHasStarted(true);
-        setDuration(0); // 重新开始时重置时间为0
-        // 同步到全局状态(不设置interviewId，避免触发右侧窗口清空数据)
+        setDuration(0); // 重新开始时重置时间为 0
+        // 同步到全局状态(不设置 interviewId，避免触发右侧窗口清空数据)
         setVoiceState({ timerStarted: true, timerDuration: 0 });
       }
 
@@ -54,17 +54,17 @@ export function InterviewerWindowHeader({
         interval = setInterval(() => {
           setDuration(prev => {
             const newDuration = prev + 1;
-            // 同步到全局状态(不设置interviewId，避免触发右侧窗口清空数据)
+            // 同步到全局状态(不设置 interviewId，避免触发右侧窗口清空数据)
             setVoiceState({ timerDuration: newDuration });
             return newDuration;
           });
         }, 1000);
       }
     } else if (globalState.subState === 'idle' || !isInterviewMode) {
-      // idle状态或非面试模式时重置计时器
+      // idle 状态或非面试模式时重置计时器
       setHasStarted(false);
       setDuration(0);
-      // 同步到全局状态(不设置interviewId，避免触发右侧窗口清空数据)
+      // 同步到全局状态(不设置 interviewId，避免触发右侧窗口清空数据)
       setVoiceState({ timerStarted: false, timerDuration: 0 });
     }
 
@@ -152,7 +152,7 @@ export function InterviewerWindowHeader({
             </Tooltip.Trigger>
             <Tooltip.Portal>
               <Tooltip.Content className="radix-tooltip-content">
-                打开AI答案窗口
+                打开 AI 答案窗口
                 <Tooltip.Arrow className="radix-tooltip-arrow" />
               </Tooltip.Content>
             </Tooltip.Portal>

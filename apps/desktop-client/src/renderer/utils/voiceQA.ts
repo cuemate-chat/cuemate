@@ -127,7 +127,7 @@ export async function startVoiceQA(deviceId?: string, initialConfirmed?: string)
 
   const controller = await startMicrophoneRecognition({
     deviceId,
-    initialText: confirmedTextRef, // 传递初始文本给audioRecognition处理叠加
+    initialText: confirmedTextRef, // 传递初始文本给 audioRecognition 处理叠加
     onText: (text) => {
       const t = (text || '').trim();
       if (!t) return;

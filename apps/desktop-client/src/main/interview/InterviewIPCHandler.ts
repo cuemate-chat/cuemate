@@ -1,5 +1,5 @@
 /**
- * 面试系统主进程IPC处理器
+ * 面试系统主进程 IPC 处理器
  * 负责处理窗口间的消息转发和状态同步
  */
 
@@ -25,7 +25,7 @@ export class InterviewIPCHandler {
     if (this.isInitialized) return;
 
     try {
-      // 注册所有面试相关的IPC处理器
+      // 注册所有面试相关的 IPC 处理器
       this.registerEventHandlers();
       this.isInitialized = true;
       console.debug('Interview IPC Handler initialized successfully');
@@ -284,7 +284,7 @@ export class InterviewIPCHandler {
 
   // 清理方法
   destroy(): void {
-    // 移除所有IPC监听器
+    // 移除所有 IPC 监听器
     Object.values(InterviewIPCEvents).forEach(event => {
       ipcMain.removeAllListeners(`interview:${event}`);
     });

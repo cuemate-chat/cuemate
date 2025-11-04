@@ -4,7 +4,7 @@ export enum TrainingState {
   GENERATING_ANSWER = 'generating_answer', // 生成参考答案
   USER_LISTENING = 'user_listening', // 等待用户回答
   USER_SPEAKING = 'user_speaking', // 用户语音回答
-  AI_ANALYZING = 'ai_analyzing', // AI分析用户回答
+  AI_ANALYZING = 'ai_analyzing', // AI 分析用户回答
   ROUND_COMPLETE = 'round_complete', // 本轮完成
   INTERVIEW_ENDING = 'interview_ending', // 面试结束中
   GENERATING_REPORT = 'generating_report', // 生成面试报告
@@ -19,7 +19,7 @@ export interface TrainingContext {
   currentQuestionIndex: number;
   totalQuestions: number;
   currentQuestion: string; // 面试官的问题(从扬声器识别)
-  referenceAnswer: string; // AI生成的参考答案
+  referenceAnswer: string; // AI 生成的参考答案
   userResponse: string; // 用户的回答
   conversationHistory: any[];
   errorMessage?: string;

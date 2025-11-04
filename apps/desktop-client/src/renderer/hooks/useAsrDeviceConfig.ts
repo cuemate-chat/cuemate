@@ -4,7 +4,7 @@ export interface AsrConfig {
   id: number;
   name: string;
 
-  // FunASR WebSocket配置
+  // FunASR WebSocket 配置
   funasr_host: string;
   funasr_port: number;
   funasr_chunk_interval: number;
@@ -14,14 +14,14 @@ export interface AsrConfig {
   funasr_mode: 'online' | 'offline' | '2pass';
   funasr_sample_rate: number;
 
-  // AudioTee配置
+  // AudioTee 配置
   audiotee_sample_rate: 8000 | 16000 | 22050 | 24000 | 32000 | 44100 | 48000;
   audiotee_chunk_duration: number;
   audiotee_include_processes: string;
   audiotee_exclude_processes: string;
   audiotee_mute_processes: boolean;
 
-  // PiperTTS配置
+  // PiperTTS 配置
   piper_default_language: 'zh-CN' | 'en-US';
   piper_speech_speed: number;
   piper_python_path: string;

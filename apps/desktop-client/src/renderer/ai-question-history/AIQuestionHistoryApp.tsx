@@ -11,7 +11,7 @@ export function AIQuestionHistoryApp() {
     try {
       const api: any = (window as any).electronHistoryAPI;
       const off = api?.clickThrough?.onChanged?.((enabled: boolean) => {
-        // 直接在body上添加/移除class，这样所有元素都能感知到穿透状态
+        // 直接在 body 上添加/移除 class，这样所有元素都能感知到穿透状态
         if (enabled) {
           document.body.classList.add('click-through-mode');
         } else {

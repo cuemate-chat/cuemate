@@ -1,13 +1,13 @@
 /**
- * 当前面试ID管理工具
- * 使用localStorage存储,所有窗口共享,避免React闭包问题
+ * 当前面试 ID 管理工具
+ * 使用 localStorage 存储,所有窗口共享,避免 React 闭包问题
  */
 
 const CURRENT_INTERVIEW_KEY = 'current-interview-id';
 
 export const currentInterview = {
   /**
-   * 设置当前面试ID
+   * 设置当前面试 ID
    */
   set(interviewId: string | undefined): void {
     if (interviewId) {
@@ -18,7 +18,7 @@ export const currentInterview = {
   },
 
   /**
-   * 获取当前面试ID
+   * 获取当前面试 ID
    */
   get(): string | undefined {
     const id = localStorage.getItem(CURRENT_INTERVIEW_KEY);
@@ -26,7 +26,7 @@ export const currentInterview = {
   },
 
   /**
-   * 清除当前面试ID
+   * 清除当前面试 ID
    */
   clear(): void {
     localStorage.removeItem(CURRENT_INTERVIEW_KEY);

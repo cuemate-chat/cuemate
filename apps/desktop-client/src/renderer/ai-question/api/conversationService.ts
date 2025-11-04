@@ -1,5 +1,5 @@
 /**
- * AI对话数据持久化服务
+ * AI 对话数据持久化服务
  */
 
 interface ConversationData {
@@ -66,7 +66,7 @@ export class ConversationService {
       await this.initUserData();
     }
     if (!this.token) {
-      throw new Error('用户未登录或token获取失败');
+      throw new Error('用户未登录或 token 获取失败');
     }
   }
 
@@ -141,10 +141,10 @@ export class ConversationService {
       return null;
     }
 
-    // 处理model_params数组转换为对象
+    // 处理 model_params 数组转换为对象
     let modelConfig = {};
     if (this.userData.model_params && Array.isArray(this.userData.model_params)) {
-      // 将model_params数组转换为key-value对象
+      // 将 model_params 数组转换为 key-value 对象
       modelConfig = this.userData.model_params.reduce((config: any, param: any) => {
         if (param.param_key && param.value !== undefined) {
           config[param.param_key] = param.value;

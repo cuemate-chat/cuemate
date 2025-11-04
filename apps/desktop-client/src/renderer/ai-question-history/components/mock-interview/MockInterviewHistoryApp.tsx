@@ -14,7 +14,7 @@ export function MockInterviewHistoryApp() {
   const [filteredReviews, setFilteredReviews] = useState<InterviewReview[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // 从VoiceState获取当前面试ID
+  // 从 VoiceState 获取当前面试 ID
   const voiceState = useVoiceState();
   const interviewId = voiceState.interviewId;
 

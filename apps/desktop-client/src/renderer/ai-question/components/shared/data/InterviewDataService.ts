@@ -83,8 +83,8 @@ export class InterviewDataService {
   }
 
   /**
-   * 创建问题记录（AI提问阶段）
-   * 只创建最基本的记录，其他字段后续一次性UPDATE
+   * 创建问题记录（AI 提问阶段）
+   * 只创建最基本的记录，其他字段后续一次性 UPDATE
    */
   async createQuestionRecord(sequence: number, askedQuestion: string): Promise<string> {
     if (!this.dataState) {

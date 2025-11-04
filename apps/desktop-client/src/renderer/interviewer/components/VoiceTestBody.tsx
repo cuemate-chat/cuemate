@@ -25,7 +25,7 @@ export function VoiceTestBody() {
   const micControllerRef = useRef<MicrophoneRecognitionController | null>(null);
   const speakerControllerRef = useRef<SpeakerRecognitionController | null>(null);
 
-  // 使用VoiceState来控制下拉列表状态
+  // 使用 VoiceState 来控制下拉列表状态
   const voiceState = useVoiceState();
 
   useEffect(() => {
@@ -236,7 +236,7 @@ export function VoiceTestBody() {
           if (hasRecognitionResult) setSpeakerStatus('success');
           else {
             setSpeakerStatus('failed');
-            setSpeakerRecognitionResult(prev => ({ ...prev, error: '60秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务', timestamp: Date.now() }));
+            setSpeakerRecognitionResult(prev => ({ ...prev, error: '60 秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务', timestamp: Date.now() }));
           }
         });
       }, 60000);

@@ -194,7 +194,7 @@ async function buildAll(watchMode = false) {
     
     // 监听 Ctrl+C 退出
     process.on('SIGINT', async () => {
-      console.debug('\n正在停止构建监听...');
+      console.debug('\n 正在停止构建监听...');
       try {
         await Promise.all(contexts.flat().filter(Boolean).map(ctx => ctx.dispose?.()));
         console.debug('构建监听已停止');

@@ -54,7 +54,7 @@ export function MockInterviewHistoryBody({
 
     loadReviews();
 
-    // 设置5秒自动刷新
+    // 设置 5 秒自动刷新
     const refreshInterval = setInterval(() => {
       loadReviews();
     }, 5000);
@@ -72,7 +72,7 @@ export function MockInterviewHistoryBody({
   const truncateText = (text: string | undefined, maxLines: number = 2) => {
     if (!text) return '';
     const words = text.split('');
-    const maxChars = maxLines * 40; // 假设每行约40个字符
+    const maxChars = maxLines * 40; // 假设每行约 40 个字符
     if (words.length <= maxChars) return text;
     return text.substring(0, maxChars) + '...';
   };

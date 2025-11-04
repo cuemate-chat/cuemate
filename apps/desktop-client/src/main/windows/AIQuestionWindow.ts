@@ -5,13 +5,13 @@ import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/pat
 
 /**
  * AI 问答窗口 - 透明的悬浮窗口
- * 用于显示AI问答界面，类似ControlBarWindow的透明悬浮设计
+ * 用于显示 AI 问答界面，类似 ControlBarWindow 的透明悬浮设计
  */
 export class AIQuestionWindow {
   private window: BrowserWindow | null = null;
   private isDevelopment: boolean;
   private parentWindow: BrowserWindow | null = null;
-  private heightPercentage: number = 75; // 默认75%
+  private heightPercentage: number = 75; // 默认 75%
 
   private readonly config: WindowConfig = {
     id: 'ai-question',
@@ -37,17 +37,17 @@ export class AIQuestionWindow {
   }
 
   /**
-   * 计算AI问答窗口的动态尺寸
+   * 计算 AI 问答窗口的动态尺寸
    */
   private calculateWindowSize(): { width: number; height: number } {
     const primaryDisplay = screen.getPrimaryDisplay();
     const { width: screenWidth, height: screenHeight } = primaryDisplay.workArea;
 
-    // ControlBar固定尺寸和位置
+    // ControlBar 固定尺寸和位置
     const controlBarHeight = 100;
     const controlBarY = 10;
 
-    // 动态计算AI窗口尺寸
+    // 动态计算 AI 窗口尺寸
     const aiWidth = Math.floor(screenWidth * 0.46);
     const availableHeight = screenHeight - controlBarHeight - controlBarY;
     const aiHeight = Math.floor(availableHeight * (this.heightPercentage / 100));
@@ -55,8 +55,8 @@ export class AIQuestionWindow {
     // 设置最小尺寸限制
     const minWidth = 400;
     const minHeight = 300;
-    const maxWidth = Math.floor(screenWidth * 0.8); // 最大不超过屏幕80%
-    const maxHeight = Math.floor(screenHeight * 0.9); // 最大不超过屏幕90%
+    const maxWidth = Math.floor(screenWidth * 0.8); // 最大不超过屏幕 80%
+    const maxHeight = Math.floor(screenHeight * 0.9); // 最大不超过屏幕 90%
 
     return {
       width: Math.max(minWidth, Math.min(aiWidth, maxWidth)),
@@ -65,7 +65,7 @@ export class AIQuestionWindow {
   }
 
   /**
-   * 创建AI问答窗口
+   * 创建 AI 问答窗口
    */
   public async create(): Promise<void> {
     if (this.window) {
@@ -156,7 +156,7 @@ export class AIQuestionWindow {
   }
 
   /**
-   * 显示AI问答窗口
+   * 显示 AI 问答窗口
    */
   public show(): void {
     if (!this.window) {
@@ -191,7 +191,7 @@ export class AIQuestionWindow {
   }
 
   /**
-   * 隐藏AI问答窗口
+   * 隐藏 AI 问答窗口
    */
   public hide(): void {
     if (!this.window) {
@@ -207,7 +207,7 @@ export class AIQuestionWindow {
   }
 
   /**
-   * 切换AI问答窗口显示状态
+   * 切换 AI 问答窗口显示状态
    */
   public toggle(): void {
     if (!this.window) {

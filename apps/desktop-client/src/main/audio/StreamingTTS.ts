@@ -20,8 +20,8 @@ export class StreamingTTS {
   constructor(options: StreamingTTSOptions = {}) {
     this.piperTTS = new PiperTTS();
     this.options = {
-      chunkSize: options.chunkSize || 5, // 每5个中文字符为一块
-      bufferSize: options.bufferSize || 2, // 保持2个音频块的缓冲
+      chunkSize: options.chunkSize || 5, // 每 5 个中文字符为一块
+      bufferSize: options.bufferSize || 2, // 保持 2 个音频块的缓冲
       onAudioChunk: options.onAudioChunk || (() => {}),
       onComplete: options.onComplete || (() => {}),
       onError: options.onError || (() => {}),
@@ -65,7 +65,7 @@ export class StreamingTTS {
   }
 
   /**
-   * 将文本分割成适合TTS的块
+   * 将文本分割成适合 TTS 的块
    * 针对中文优化，优先按标点符号分割，再按字符长度切分
    */
   private splitTextIntoChunks(text: string): string[] {
@@ -91,7 +91,7 @@ export class StreamingTTS {
         continue;
       }
 
-      // 计算中文字符长度（中文算1个字符，英文/数字算0.5个字符）
+      // 计算中文字符长度（中文算 1 个字符，英文/数字算 0.5 个字符）
       const currentLength = this.getChineseLength(currentChunk);
       const sentenceLength = this.getChineseLength(sentence);
 
@@ -114,7 +114,7 @@ export class StreamingTTS {
   }
 
   /**
-   * 计算中文长度（中文字符按1计算，英文/数字按0.5计算）
+   * 计算中文长度（中文字符按 1 计算，英文/数字按 0.5 计算）
    */
   private getChineseLength(text: string): number {
     let length = 0;
@@ -283,22 +283,22 @@ export class StreamingTTS {
   }
 
   /**
-   * 创建面试场景优化的流式TTS实例
+   * 创建面试场景优化的流式 TTS 实例
    */
   static createForInterview(options: Partial<StreamingTTSOptions> = {}): StreamingTTS {
     return new StreamingTTS({
-      chunkSize: 3,  // 面试场景：每3个中文字符一块，适合短问题
+      chunkSize: 3,  // 面试场景：每 3 个中文字符一块，适合短问题
       bufferSize: 1, // 最小缓冲，降低延迟
       ...options
     });
   }
 
   /**
-   * 创建长文本场景优化的流式TTS实例
+   * 创建长文本场景优化的流式 TTS 实例
    */
   static createForLongText(options: Partial<StreamingTTSOptions> = {}): StreamingTTS {
     return new StreamingTTS({
-      chunkSize: 8,  // 长文本：每8个中文字符一块
+      chunkSize: 8,  // 长文本：每 8 个中文字符一块
       bufferSize: 3, // 较大缓冲，保证连贯性
       ...options
     });

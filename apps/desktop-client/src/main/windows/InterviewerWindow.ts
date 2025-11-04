@@ -11,7 +11,7 @@ export class InterviewerWindow {
   private readonly config: WindowConfig = {
     id: 'interviewer',
     label: 'interviewer',
-    width: 100, // 实际宽度由 WindowManager 按"左侧10px+剩余70%"动态设置
+    width: 100, // 实际宽度由 WindowManager 按"左侧 10px+剩余 70%"动态设置
     height: 100, // 实际高度由 WindowManager 同步 AI 窗口高度
     alwaysOnTop: true,
     frame: false,

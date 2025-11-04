@@ -125,7 +125,7 @@ export class ErrorHandler extends EventTarget {
     };
   }
 
-  // 判断是否为ErrorInfo对象
+  // 判断是否为 ErrorInfo 对象
   private isErrorInfo(obj: any): obj is ErrorInfo {
     return obj && typeof obj === 'object' && 'type' in obj && 'severity' in obj;
   }
@@ -248,7 +248,7 @@ export class ErrorHandler extends EventTarget {
     };
   }
 
-  // 处理ASR连接错误
+  // 处理 ASR 连接错误
   private handleASRError(_errorInfo: ErrorInfo): ErrorHandlingResult {
     const retryKey = 'asr_connection';
     const attempts = this.retryAttempts.get(retryKey) || 0;
@@ -257,7 +257,7 @@ export class ErrorHandler extends EventTarget {
       this.retryAttempts.set(retryKey, attempts + 1);
       return {
         handled: true,
-        message: `ASR服务连接失败，正在重试 (${attempts + 1}/${this.maxRetryAttempts})`,
+        message: `ASR 服务连接失败，正在重试 (${attempts + 1}/${this.maxRetryAttempts})`,
         shouldRetry: true,
         retryDelay: Math.min(1000 * Math.pow(2, attempts), 5000) // 指数退避
       };
@@ -265,10 +265,10 @@ export class ErrorHandler extends EventTarget {
 
     return {
       handled: true,
-      message: 'ASR语音识别服务不可用，请检查服务状态或使用文字输入',
+      message: 'ASR 语音识别服务不可用，请检查服务状态或使用文字输入',
       recoveryActions: [
         {
-          label: '重新连接ASR服务',
+          label: '重新连接 ASR 服务',
           action: () => {
             this.retryAttempts.delete(retryKey);
             this.dispatchEvent(new CustomEvent('retryASRConnection'));
@@ -285,14 +285,14 @@ export class ErrorHandler extends EventTarget {
     };
   }
 
-  // 处理TTS错误
+  // 处理 TTS 错误
   private handleTTSError(_errorInfo: ErrorInfo): ErrorHandlingResult {
     return {
       handled: true,
-      message: 'TTS语音合成服务不可用，将使用文字显示',
+      message: 'TTS 语音合成服务不可用，将使用文字显示',
       recoveryActions: [
         {
-          label: '重试TTS服务',
+          label: '重试 TTS 服务',
           action: () => {
             this.dispatchEvent(new CustomEvent('retryTTS'));
           }

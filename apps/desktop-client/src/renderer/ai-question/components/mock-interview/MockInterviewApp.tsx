@@ -13,13 +13,13 @@ export function MockInterviewApp() {
   // 使用跨窗口状态管理
   const mockInterviewState = useMockInterviewState();
 
-  // 从voiceState获取当前面试ID
+  // 从 voiceState 获取当前面试 ID
   const voiceState = useVoiceState();
   const interviewId = voiceState.interviewId;
 
   // 组件初始化时清理状态
   useEffect(() => {
-    // 如果没有interviewId,清理所有状态(应用重启场景)
+    // 如果没有 interviewId,清理所有状态(应用重启场景)
     if (!interviewId) {
       setMockInterviewState({
         aiMessage: '',
@@ -48,7 +48,7 @@ export function MockInterviewApp() {
     }
   }, [interviewId]);
 
-  // 只有存在interviewId才显示数据,否则显示空白
+  // 只有存在 interviewId 才显示数据,否则显示空白
   const aiMessage = interviewId ? mockInterviewState.aiMessage : '';
   const speechText = interviewId ? mockInterviewState.speechText : '';
   const candidateAnswer = interviewId ? mockInterviewState.candidateAnswer : '';
@@ -100,7 +100,7 @@ export function MockInterviewApp() {
         await (window as any).electronAPI.hideAIQuestion();
       }
     } catch (error) {
-      console.error('关闭AI问题窗口失败:', error);
+      console.error('关闭 AI 问题窗口失败:', error);
     }
   };
 
@@ -120,7 +120,7 @@ export function MockInterviewApp() {
 
   // 处理用户回答完成（手动点击或自动检测）
   const handleResponseComplete = async () => {
-    // 检查文本长度，至少需要5个字符才触发
+    // 检查文本长度，至少需要 5 个字符才触发
     if (speechText.length <= 5) {
       return;
     }
@@ -147,7 +147,7 @@ export function MockInterviewApp() {
           interviewState={interviewState}
         />
 
-        {/* Body - AI答案展示区域 */}
+        {/* Body - AI 答案展示区域 */}
         <MockInterviewBody
           aiMessage={aiMessage}
           candidateAnswer={candidateAnswer}

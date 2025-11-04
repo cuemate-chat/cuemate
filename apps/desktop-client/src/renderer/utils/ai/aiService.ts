@@ -1,12 +1,12 @@
 /**
  * AI 服务调用工具
- * 基于web版本的LLM Router调用逻辑适配到desktop
+ * 基于 web 版本的 LLM Router 调用逻辑适配到 desktop
  */
 
 export interface ModelConfig {
   provider: string;
   model_name: string;
-  credentials: string; // JSON字符串
+  credentials: string; // JSON 字符串
 }
 
 export interface ModelParam {
@@ -48,11 +48,11 @@ class AIService {
 
   /**
    * 获取用户数据
-   * 从electron存储中获取用户的大模型配置信息
+   * 从 electron 存储中获取用户的大模型配置信息
    */
   async getUserData(): Promise<UserData | null> {
     try {
-      // 通过electron API获取用户数据
+      // 通过 electron API 获取用户数据
       if ((window as any).electronAPI && (window as any).electronAPI.getUserData) {
         const result = await (window as any).electronAPI.getUserData();
         return result.success ? result.userData : null;
@@ -66,7 +66,7 @@ class AIService {
   }
 
   /**
-   * 一次性调用AI (非流式)
+   * 一次性调用 AI (非流式)
    */
   async callAI(messages: ChatMessage[]): Promise<string> {
     const userData = await this.getUserData();
@@ -76,10 +76,10 @@ class AIService {
 
     const { model, model_params } = userData;
 
-    // 构建credentials
+    // 构建 credentials
     const finalCredentials = model.credentials ? JSON.parse(model.credentials) : {};
 
-    // 处理model_params
+    // 处理 model_params
     const finalModelParams =
       model_params?.map((param) => ({
         param_key: param.param_key,
@@ -102,16 +102,16 @@ class AIService {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`AI调用失败: ${response.status} - ${errorText}`);
+      throw new Error(`AI 调用失败: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
-    return result.content || '抱歉，AI没有返回内容';
+    return result.content || '抱歉，AI 没有返回内容';
   }
 
   /**
-   * 调用AI并返回JSON对象
-   * 保证返回的一定是有效的JSON,如果解析失败会返回空对象并打印错误日志,不会中断流程
+   * 调用 AI 并返回 JSON 对象
+   * 保证返回的一定是有效的 JSON,如果解析失败会返回空对象并打印错误日志,不会中断流程
    */
   async callAIForJson(messages: ChatMessage[]): Promise<any> {
     const content = await this.callAI(messages);
@@ -120,25 +120,25 @@ class AIService {
     try {
       return JSON.parse(content);
     } catch (e) {
-      // 尝试从响应中提取JSON部分(去除markdown代码块标记等)
+      // 尝试从响应中提取 JSON 部分(去除 markdown 代码块标记等)
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         try {
           return JSON.parse(jsonMatch[0]);
         } catch (e2) {
-          // 提取的内容也不是有效JSON
+          // 提取的内容也不是有效 JSON
         }
       }
 
       // 无法解析,打印错误日志但返回空对象,不中断流程
-      console.error('AI返回的不是有效的JSON格式,将返回空对象。原始内容:', content);
+      console.error('AI 返回的不是有效的 JSON 格式,将返回空对象。原始内容:', content);
       return {};
     }
   }
 
   /**
-   * 流式调用AI
-   * 实现类似ChatGPT的实时输出效果
+   * 流式调用 AI
+   * 实现类似 ChatGPT 的实时输出效果
    */
   async callAIStream(
     messages: ChatMessage[],
@@ -177,7 +177,7 @@ class AIService {
         onChunk({
           content: '',
           finished: true,
-          error: `AI调用失败: ${response.status} - ${errorText}`,
+          error: `AI 调用失败: ${response.status} - ${errorText}`,
         });
         return;
       }
@@ -187,7 +187,7 @@ class AIService {
       if (!contentType.includes('text/event-stream') && !contentType.includes('application/json')) {
         // 回退到普通调用
         const result = await response.json();
-        const content = result.content || '抱歉，AI没有返回内容';
+        const content = result.content || '抱歉，AI 没有返回内容';
 
         // 模拟流式输出效果
         await this.simulateStreamOutput(content, onChunk);
@@ -195,12 +195,12 @@ class AIService {
       }
 
       if (contentType.includes('text/event-stream')) {
-        // 处理SSE流
+        // 处理 SSE 流
         await this.handleSSEStream(response, onChunk);
       } else {
-        // 普通JSON响应，模拟流式输出
+        // 普通 JSON 响应，模拟流式输出
         const result = await response.json();
-        const content = result.content || '抱歉，AI没有返回内容';
+        const content = result.content || '抱歉，AI 没有返回内容';
         await this.simulateStreamOutput(content, onChunk);
       }
     } catch (error) {
@@ -213,7 +213,7 @@ class AIService {
   }
 
   /**
-   * 使用自定义模型调用AI流式接口（用于面试场景）
+   * 使用自定义模型调用 AI 流式接口（用于面试场景）
    * @param messages 消息列表
    * @param customModel 自定义模型配置
    * @param customModelParams 自定义模型参数
@@ -252,7 +252,7 @@ class AIService {
         onChunk({
           content: '',
           finished: true,
-          error: `AI调用失败: ${response.status} - ${errorText}`,
+          error: `AI 调用失败: ${response.status} - ${errorText}`,
         });
         return;
       }
@@ -260,7 +260,7 @@ class AIService {
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('text/event-stream') && !contentType.includes('application/json')) {
         const result = await response.json();
-        const content = result.content || '抱歉，AI没有返回内容';
+        const content = result.content || '抱歉，AI 没有返回内容';
         await this.simulateStreamOutput(content, onChunk);
         return;
       }
@@ -269,7 +269,7 @@ class AIService {
         await this.handleSSEStream(response, onChunk);
       } else {
         const result = await response.json();
-        const content = result.content || '抱歉，AI没有返回内容';
+        const content = result.content || '抱歉，AI 没有返回内容';
         await this.simulateStreamOutput(content, onChunk);
       }
     } catch (error) {
@@ -282,7 +282,7 @@ class AIService {
   }
 
   /**
-   * 处理Server-Sent Events流
+   * 处理 Server-Sent Events 流
    */
   private async handleSSEStream(
     response: Response,
@@ -324,7 +324,7 @@ class AIService {
                 onChunk({ content, finished: false });
               }
             } catch (e) {
-              console.warn('解析SSE数据失败:', data);
+              console.warn('解析 SSE 数据失败:', data);
             }
           }
         }
@@ -354,13 +354,13 @@ class AIService {
       });
 
       // 动态延迟：标点符号后停顿久一点，营造思考效果
-      let delay = 30; // 基础延迟30ms
+      let delay = 30; // 基础延迟 30ms
       if (['。', '！', '？', '.', '!', '?'].includes(words[i])) {
-        delay = 200; // 句子结束停顿200ms
+        delay = 200; // 句子结束停顿 200ms
       } else if (['，', '、', ',', ';', ':'].includes(words[i])) {
-        delay = 100; // 逗号等停顿100ms
+        delay = 100; // 逗号等停顿 100ms
       } else if (words[i] === '\n') {
-        delay = 150; // 换行停顿150ms
+        delay = 150; // 换行停顿 150ms
       }
 
       await new Promise((resolve) => setTimeout(resolve, delay));

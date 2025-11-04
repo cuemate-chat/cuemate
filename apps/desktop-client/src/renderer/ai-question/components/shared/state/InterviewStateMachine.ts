@@ -1,11 +1,11 @@
 export enum InterviewState {
   IDLE = 'idle', // 空闲状态
   INITIALIZING = 'initializing', // 初始化面试信息
-  AI_THINKING = 'ai_thinking', // AI分析信息生成问题
-  AI_SPEAKING = 'ai_speaking', // AI语音提问
+  AI_THINKING = 'ai_thinking', // AI 分析信息生成问题
+  AI_SPEAKING = 'ai_speaking', // AI 语音提问
   USER_LISTENING = 'user_listening', // 等待用户回答
   USER_SPEAKING = 'user_speaking', // 用户语音回答
-  AI_ANALYZING = 'ai_analyzing', // AI分析用户回答
+  AI_ANALYZING = 'ai_analyzing', // AI 分析用户回答
   GENERATING_ANSWER = 'generating_answer', // 生成参考答案
   ROUND_COMPLETE = 'round_complete', // 本轮完成
   INTERVIEW_ENDING = 'interview_ending', // 面试结束中
@@ -106,7 +106,7 @@ export class InterviewStateMachine {
       resume: null,
       questionsBank: [],
       currentQuestionIndex: 0,
-      totalQuestions: 10, // 默认10个问题
+      totalQuestions: 10, // 默认 10 个问题
       currentQuestion: '',
       currentAnswer: '',
       userResponse: '',
@@ -289,8 +289,8 @@ export class InterviewStateMachine {
     const descriptions: Record<InterviewState, string> = {
       [InterviewState.IDLE]: '等待开始面试',
       [InterviewState.INITIALIZING]: '正在初始化面试信息...',
-      [InterviewState.AI_THINKING]: 'AI面试官正在思考问题...',
-      [InterviewState.AI_SPEAKING]: 'AI面试官正在提问...',
+      [InterviewState.AI_THINKING]: 'AI 面试官正在思考问题...',
+      [InterviewState.AI_SPEAKING]: 'AI 面试官正在提问...',
       [InterviewState.GENERATING_ANSWER]: '正在生成参考答案...',
       [InterviewState.USER_LISTENING]: '等待您的回答',
       [InterviewState.USER_SPEAKING]: '正在录制您的回答...',
@@ -307,8 +307,8 @@ export class InterviewStateMachine {
 
   // 检查是否应该结束面试
   shouldEndInterview(): boolean {
-    // currentQuestionIndex 从0开始,所以第1个问题是index=0
-    // 如果 totalQuestions=1,那么index=0时就是最后一个问题
+    // currentQuestionIndex 从 0 开始,所以第 1 个问题是 index=0
+    // 如果 totalQuestions=1,那么 index=0 时就是最后一个问题
     return this.context.currentQuestionIndex + 1 >= this.context.totalQuestions;
   }
 

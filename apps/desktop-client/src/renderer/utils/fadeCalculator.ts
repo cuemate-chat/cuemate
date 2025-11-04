@@ -4,13 +4,13 @@
  */
 
 export interface FadeConfig {
-  /** 渐变区域高度，默认60px */
+  /** 渐变区域高度，默认 60px */
   fadeZoneHeight?: number;
-  /** 最小透明度，默认0.5 */
+  /** 最小透明度，默认 0.5 */
   minAlpha?: number;
-  /** 渐变步长，默认10px */
+  /** 渐变步长，默认 10px */
   stepSize?: number;
-  /** 每步透明度递减值，默认0.1 */
+  /** 每步透明度递减值，默认 0.1 */
   alphaStep?: number;
 }
 

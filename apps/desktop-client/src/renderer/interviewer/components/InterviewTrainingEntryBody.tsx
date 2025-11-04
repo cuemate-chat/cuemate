@@ -85,7 +85,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     }
   }, [trainingState.candidateAnswer]);
 
-  // 自动模式：检测面试官问题完成（5秒静音 + >=5字）
+  // 自动模式：检测面试官问题完成（5 秒静音 + >=5 字）
   useEffect(() => {
     if (!trainingState.isAutoMode) return;
     if (voiceState.subState !== 'interview-training-recording') return;
@@ -96,7 +96,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       const silenceDuration = now - trainingState.lastInterviewerSpeechTime;
       const question = trainingState.interviewerQuestion.trim();
 
-      // 检查: 5秒静音 + 至少5个字符
+      // 检查: 5 秒静音 + 至少 5 个字符
       if (silenceDuration >= 5000 && question.length >= 5 && trainingState.lastInterviewerSpeechTime > 0) {
         handleAutoQuestionDetected(question);
       }
@@ -250,11 +250,11 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         isLoading: true,
       });
 
-      // 如果状态机未初始化,创建并送入AI_THINKING以外的起点
+      // 如果状态机未初始化,创建并送入 AI_THINKING 以外的起点
       if (!stateMachine.current) {
         const interviewId = currentInterview.get();
         if (!interviewId) {
-          throw new Error('面试ID不存在');
+          throw new Error('面试 ID 不存在');
         }
 
         const initialContext = {
@@ -304,7 +304,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   // 处理自动模式下的问题检测
   const handleAutoQuestionDetected = async (question: string) => {
     try {
-      // 1. 如果有上一轮的review ID,先保存并分析上一轮
+      // 1. 如果有上一轮的 review ID,先保存并分析上一轮
       if (trainingState.currentRoundReviewId) {
         await saveAndAnalyzePreviousRound(trainingState.currentRoundReviewId);
       }
@@ -315,7 +315,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         lastInterviewerSpeechTime: 0, // 重置时间戳
       });
 
-      // 3. 设置为AI生成阶段
+      // 3. 设置为 AI 生成阶段
       setCurrentLine(question);
       setInterviewTrainingState({
         currentPhase: 'ai-generating',
@@ -325,7 +325,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       // 4. 创建新的 review 记录
       const interviewId = currentInterview.get();
       if (!interviewId) {
-        throw new Error('面试ID不存在');
+        throw new Error('面试 ID 不存在');
       }
 
       // 如果状态机未初始化,创建状态机
@@ -422,7 +422,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     }
 
     if (!selectedModel) {
-      setErrorMessage('请先选择AI模型');
+      setErrorMessage('请先选择 AI 模型');
       setCurrentLine('');
       return;
     }
@@ -1017,7 +1017,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     setErrorMessage('');
   };
 
-  // AI分析阶段
+  // AI 分析阶段
   const handleAIAnalyzing = async (context: any) => {
     setErrorMessage('');
 

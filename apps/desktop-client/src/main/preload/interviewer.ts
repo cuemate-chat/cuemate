@@ -2,11 +2,11 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { FrontendLogMessage } from '../../shared/types.js';
 
 /**
- * Interviewer窗口预加载脚本
- * 为Interviewer窗口的渲染进程安全地暴露主进程 API
+ * Interviewer 窗口预加载脚本
+ * 为 Interviewer 窗口的渲染进程安全地暴露主进程 API
  */
 
-// 定义Interviewer窗口可用的 API
+// 定义 Interviewer 窗口可用的 API
 const interviewerAPI = {
   // === 窗口管理 API ===
   showInterviewer: () => ipcRenderer.invoke('show-interviewer'),
@@ -106,7 +106,7 @@ const interviewerAPI = {
     if (allowedChannels.includes(channel)) {
       ipcRenderer.on(channel, (_event, ...args) => callback(...args));
     } else {
-      console.warn(`Interviewer窗口不允许监听频道: ${channel}`);
+      console.warn(`Interviewer 窗口不允许监听频道: ${channel}`);
     }
   },
 

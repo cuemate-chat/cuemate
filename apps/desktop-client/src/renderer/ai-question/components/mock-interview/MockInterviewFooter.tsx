@@ -6,7 +6,7 @@ import { setMockInterviewState, useMockInterviewState } from '../../../utils/moc
 import { VoiceCoordinator } from '../shared/voice/VoiceCoordinator';
 
 interface WindowFooterProps {
-  interviewId?: string; // 当前面试ID
+  interviewId?: string; // 当前面试 ID
   onResponseComplete: () => void; // 回答完毕回调
   className?: string;
 }
@@ -34,7 +34,7 @@ export function MockInterviewFooter({
   // 使用跨窗口状态
   const mockInterviewState = useMockInterviewState();
 
-  // 只有存在interviewId才显示数据,否则显示空白
+  // 只有存在 interviewId 才显示数据,否则显示空白
   const speechText = interviewId ? mockInterviewState.speechText : '';
   const isLoading = interviewId ? mockInterviewState.isLoading : false;
   const isListening = interviewId ? mockInterviewState.isListening : false;
@@ -62,7 +62,7 @@ export function MockInterviewFooter({
         // 监听用户说话结束(自动模式)
         voiceCoordinator.current.addEventListener('userFinishedSpeaking', ((_event: CustomEvent) => {
           if (isAutoMode) {
-            // 自动模式下,静音5秒后自动触发回答完成
+            // 自动模式下,静音 5 秒后自动触发回答完成
             onResponseComplete();
             // 停止监听,保留 speechText 供状态机使用
             setMockInterviewState({ isListening: false });
@@ -95,7 +95,7 @@ export function MockInterviewFooter({
     const startRecognition = async () => {
       if (isListening && !recognitionController.current) {
         try {
-          // 获取麦克风设备ID
+          // 获取麦克风设备 ID
           const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
           const res = await api?.asrConfig?.get?.();
           const micDeviceId = res?.config?.microphone_device_id;

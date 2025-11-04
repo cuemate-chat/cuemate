@@ -76,7 +76,7 @@ class CueMateApp {
       try {
         // 在 macOS 上隐藏 Dock 图标但保留菜单栏
         if (process.platform === 'darwin') {
-          // 保持regular模式以确保菜单栏显示，只隐藏dock图标
+          // 保持 regular 模式以确保菜单栏显示，只隐藏 dock 图标
           app.dock.hide();
         }
 
@@ -94,7 +94,7 @@ class CueMateApp {
         logger.warn({ error }, '设置应用图标失败');
       }
 
-      // 设置全局快捷键（必须在app ready之后）
+      // 设置全局快捷键（必须在 app ready 之后）
       setupGlobalShortcuts(this.windowManager);
 
       // 初始化窗口管理器

@@ -1,6 +1,6 @@
 /**
  * 大模型管理服务
- * 处理大模型相关的API调用
+ * 处理大模型相关的 API 调用
  */
 
 export interface Model {
@@ -34,7 +34,7 @@ export class ModelService {
     if (result?.success && result.userData?.token) {
       return result.userData.token;
     }
-    throw new Error('用户未登录或token获取失败');
+    throw new Error('用户未登录或 token 获取失败');
   }
 
   private async getHeaders() {

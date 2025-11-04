@@ -1,5 +1,5 @@
 /**
- * AI对话历史记录服务
+ * AI 对话历史记录服务
  */
 
 export interface ConversationHistoryItem {
@@ -87,7 +87,7 @@ export class ConversationHistoryService {
       await this.initUserData();
     }
     if (!this.token) {
-      throw new Error('用户未登录或token获取失败');
+      throw new Error('用户未登录或 token 获取失败');
     }
   }
 
@@ -115,7 +115,7 @@ export class ConversationHistoryService {
         limit: limit.toString(),
       });
 
-      // 只有当status不是'all'时才添加status参数
+      // 只有当 status 不是'all'时才添加 status 参数
       if (status && status !== 'all') {
         params.append('status', status);
       }
@@ -201,7 +201,7 @@ export class ConversationHistoryService {
   }
 
   /**
-   * 停止对话（将状态改为completed）
+   * 停止对话（将状态改为 completed）
    */
   async stopConversation(conversationId: number): Promise<boolean> {
     await this.ensureAuth();
@@ -256,7 +256,7 @@ export class ConversationHistoryService {
    * 格式化时间显示
    */
   formatTime(timestamp: number): string {
-    const date = new Date(timestamp * 1000); // 假设timestamp是秒级时间戳
+    const date = new Date(timestamp * 1000); // 假设 timestamp 是秒级时间戳
 
     // 显示完整的年月日时分秒
     return date.toLocaleString('zh-CN', {

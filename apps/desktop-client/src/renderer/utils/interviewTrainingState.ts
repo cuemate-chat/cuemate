@@ -3,14 +3,14 @@ import { useEffect, useState } from 'react';
 // 面试训练阶段状态
 export type TrainingPhase =
   | 'listening-interviewer'  // 监听面试官（扬声器）
-  | 'ai-generating'          // AI生成答案中
+  | 'ai-generating'          // AI 生成答案中
   | 'listening-candidate';   // 监听面试者（麦克风）
 
 // 跨窗口共享的面试训练状态
 export interface InterviewTrainingState {
   aiMessage: string;
   speechText: string;
-  candidateAnswer: string; // 用户提交的回答（用于跨窗口触发AI分析）
+  candidateAnswer: string; // 用户提交的回答（用于跨窗口触发 AI 分析）
   interviewerQuestion: string; // 面试官问题（从扬声器识别）
   isLoading: boolean;
   isListening: boolean;
@@ -18,7 +18,7 @@ export interface InterviewTrainingState {
   currentPhase?: TrainingPhase; // 当前阶段
   interviewState?: string; // 面试状态机状态
   lastInterviewerSpeechTime: number; // 面试官最后一次说话时间
-  currentRoundReviewId: string | null; // 当前轮次的评审ID
+  currentRoundReviewId: string | null; // 当前轮次的评审 ID
   updatedAt: number;
 }
 

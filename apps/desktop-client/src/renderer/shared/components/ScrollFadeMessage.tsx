@@ -157,7 +157,7 @@ ScrollFadeMessageList.displayName = 'ScrollFadeMessageList';
  * 预设消息组件
  */
 
-/** AI问答消息组件 */
+/** AI 问答消息组件 */
 export const AIQuestionMessage: React.FC<Omit<ScrollFadeMessageProps, 'renderOptions'>> = (props) => (
   <ScrollFadeMessage
     {...props}
@@ -246,7 +246,7 @@ export const withScrollFade = <P extends object>(
     const { fadeConfig, ...componentProps } = props;
     
     // 这里可以添加渐变相关的逻辑
-    // 实际的渐变效果由useScrollFadeEffect Hook处理
+    // 实际的渐变效果由 useScrollFadeEffect Hook 处理
     
     return <Component {...(componentProps as P)} ref={ref} />;
   });

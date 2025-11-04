@@ -2,11 +2,11 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { FrontendLogMessage } from '../../shared/types.js';
 
 /**
- * AI问答窗口预加载脚本
- * 为AI问答窗口的渲染进程安全地暴露主进程 API
+ * AI 问答窗口预加载脚本
+ * 为 AI 问答窗口的渲染进程安全地暴露主进程 API
  */
 
-// 定义AI问答窗口可用的 API
+// 定义 AI 问答窗口可用的 API
 const aiQuestionAPI = {
   // === 窗口管理 API ===
   showAIQuestion: () => ipcRenderer.invoke('show-ai-question'),
@@ -93,7 +93,7 @@ const aiQuestionAPI = {
 
   // === TTS API ===
   tts: {
-    // 检查TTS是否可用
+    // 检查 TTS 是否可用
     isAvailable: () => ipcRenderer.invoke('piper-is-available'),
     // 获取可用语音模型
     getVoices: () => ipcRenderer.invoke('piper-get-voices'),

@@ -1,5 +1,5 @@
 /**
- * 滚动渐变效果Hook
+ * 滚动渐变效果 Hook
  * 提供高度可配置的滚动渐变功能
  */
 
@@ -12,15 +12,15 @@ import {
 } from '../utils/fadeCalculator';
 
 export interface ScrollFadeConfig extends FadeConfig {
-  /** AI消息选择器，默认'.ai-message-ai .message-line' */
+  /** AI 消息选择器，默认'.ai-message-ai .message-line' */
   aiSelector?: string;
-  /** User消息选择器，默认'.ai-message-user .ai-message-content' */
+  /** User 消息选择器，默认'.ai-message-user .ai-message-content' */
   userSelector?: string;
-  /** User消息第一行选择器，默认'.message-line[data-line="0"]' */
+  /** User 消息第一行选择器，默认'.message-line[data-line="0"]' */
   userFirstLineSelector?: string;
-  /** 是否启用AI消息渐变，默认true */
+  /** 是否启用 AI 消息渐变，默认 true */
   enableAiFade?: boolean;
-  /** 是否启用User消息渐变，默认true */
+  /** 是否启用 User 消息渐变，默认 true */
   enableUserFade?: boolean;
   /** 过渡动画时间，默认'0.1s ease' */
   transition?: string;
@@ -34,10 +34,10 @@ export interface UserMessageStrategy {
 }
 
 /**
- * 滚动渐变效果Hook
+ * 滚动渐变效果 Hook
  * @param containerRef 容器引用
  * @param config 配置选项
- * @returns 无返回值，直接操作DOM
+ * @returns 无返回值，直接操作 DOM
  */
 export const useScrollFadeEffect = (
   containerRef: RefObject<HTMLElement>,
@@ -61,7 +61,7 @@ export const useScrollFadeEffect = (
     if (!container) return;
 
     const handleScroll = () => {
-      // 处理AI消息行级别渐变
+      // 处理 AI 消息行级别渐变
       if (enableAiFade) {
         const aiLines = container.querySelectorAll(aiSelector);
         aiLines.forEach((lineEl) => {
@@ -89,7 +89,7 @@ export const useScrollFadeEffect = (
         });
       }
 
-      // 处理User消息智能渐变
+      // 处理 User 消息智能渐变
       if (enableUserFade) {
         const userMessages = container.querySelectorAll(userSelector);
         userMessages.forEach((messageEl) => {
@@ -167,7 +167,7 @@ export const useScrollFadeEffect = (
 };
 
 /**
- * 简化版滚动渐变Hook - 只处理行级别渐变
+ * 简化版滚动渐变 Hook - 只处理行级别渐变
  * @param containerRef 容器引用
  * @param selector 元素选择器
  * @param config 配置选项

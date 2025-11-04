@@ -2,8 +2,8 @@
 class SpeakerPCMProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    // 增加缓冲区大小以积累约1秒的音频数据
-    // 16000 Hz * 1秒 = 16000 样本，向上取整到 16384
+    // 增加缓冲区大小以积累约 1 秒的音频数据
+    // 16000 Hz * 1 秒 = 16000 样本，向上取整到 16384
     this.bufferSize = 16384;
     this.buffer = new Int16Array(this.bufferSize);
     this.bufferIndex = 0;
@@ -43,8 +43,8 @@ class SpeakerPCMProcessor extends AudioWorkletProcessor {
 
         // 只有当有足够的非零样本时才发送（避免发送纯静音）
         const nonZeroRatio = nonZeroCount / this.bufferSize;
-        if (nonZeroRatio > 0.01 && maxValue > 100) { // 至少1%的非零样本且最大值超过阈值
-          // 发送PCM数据到主线程
+        if (nonZeroRatio > 0.01 && maxValue > 100) { // 至少 1%的非零样本且最大值超过阈值
+          // 发送 PCM 数据到主线程
           this.port.postMessage({
             type: 'audiodata',
             data: this.buffer.buffer.slice()

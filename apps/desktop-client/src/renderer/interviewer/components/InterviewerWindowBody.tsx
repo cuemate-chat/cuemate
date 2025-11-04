@@ -54,7 +54,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard, selectedJobI
         (window as any).electronAPI.setAskAIButtonDisabled(isInterviewerModeSelected);
       }
     } catch (error) {
-      console.error('通知control-bar更新按钮状态失败:', error);
+      console.error('通知 control-bar 更新按钮状态失败:', error);
     }
   }, [selectedCard]);
 
@@ -101,8 +101,8 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard, selectedJobI
   const handleCardClick = (cardTitle: string) => {
     // 点击模拟面试或面试训练卡片时,清除之前的 interviewId
     if (cardTitle === '模拟面试' || cardTitle === '面试训练') {
-      currentInterview.clear(); // 清理localStorage中的interviewId
-      setVoiceState({ interviewId: undefined }); // 清理VoiceState中的interviewId
+      currentInterview.clear(); // 清理 localStorage 中的 interviewId
+      setVoiceState({ interviewId: undefined }); // 清理 VoiceState 中的 interviewId
     }
     onSelectCard(cardTitle);
   };

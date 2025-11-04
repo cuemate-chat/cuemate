@@ -56,7 +56,7 @@ export class UserSettingsService {
       await this.initAuth();
     }
     if (!this.token) {
-      throw new Error('用户未登录或token获取失败');
+      throw new Error('用户未登录或 token 获取失败');
     }
   }
 

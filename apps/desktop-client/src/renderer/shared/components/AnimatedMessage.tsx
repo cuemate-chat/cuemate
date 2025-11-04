@@ -1,6 +1,6 @@
 /**
  * 动画消息组件
- * 封装ScrollAnimation的标准化配置
+ * 封装 ScrollAnimation 的标准化配置
  */
 
 import React from 'react';
@@ -13,17 +13,17 @@ export interface AnimatedMessageProps {
   index: number;
   /** 动画类型，默认'animate__fadeInUp' */
   animationType?: string;
-  /** 动画持续时间，默认0.6秒 */
+  /** 动画持续时间，默认 0.6 秒 */
   duration?: number;
-  /** 每个消息的延迟间隔，默认30ms */
+  /** 每个消息的延迟间隔，默认 30ms */
   delayStep?: number;
-  /** 最大延迟时间，默认500ms */
+  /** 最大延迟时间，默认 500ms */
   maxDelay?: number;
-  /** 触发偏移量，默认0 */
+  /** 触发偏移量，默认 0 */
   offset?: number;
-  /** 是否只动画一次，默认true */
+  /** 是否只动画一次，默认 true */
   animateOnce?: boolean;
-  /** 是否初始可见，默认true */
+  /** 是否初始可见，默认 true */
   initiallyVisible?: boolean;
   /** 自定义类名 */
   className?: string;

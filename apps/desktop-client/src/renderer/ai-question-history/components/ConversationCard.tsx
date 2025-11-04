@@ -194,7 +194,7 @@ export function ConversationCard({
             </Tooltip.Trigger>
             <Tooltip.Portal>
               <Tooltip.Content className="radix-tooltip-content">
-                总消息数: {conversation.message_count} 条（用户和AI各 {conversation.message_count/2} 条）
+                总消息数: {conversation.message_count} 条（用户和 AI 各 {conversation.message_count/2} 条）
                 <Tooltip.Arrow className="radix-tooltip-arrow" />
               </Tooltip.Content>
             </Tooltip.Portal>
@@ -207,7 +207,7 @@ export function ConversationCard({
             </Tooltip.Trigger>
             <Tooltip.Portal>
               <Tooltip.Content className="radix-tooltip-content">
-                消耗Token数量: {conversation.token_used}
+                消耗 Token 数量: {conversation.token_used}
                 <Tooltip.Arrow className="radix-tooltip-arrow" />
               </Tooltip.Content>
             </Tooltip.Portal>

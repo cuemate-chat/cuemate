@@ -45,7 +45,7 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
     {
       accelerator: 'CommandOrControl+Shift+H',
       callback: () => {
-        // 隐藏浮动窗口和主内容窗口，但不影响AI问答窗口的独立状态
+        // 隐藏浮动窗口和主内容窗口，但不影响 AI 问答窗口的独立状态
         windowManager.hideFloatingWindows();
         windowManager.hideMainContent();
       },

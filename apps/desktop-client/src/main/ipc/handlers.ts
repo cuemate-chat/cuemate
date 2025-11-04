@@ -30,7 +30,7 @@ function formatTimeString(date: Date): string {
  * command 系统，处理前端和后端之间的通信
  */
 export function setupIPC(windowManager: WindowManager): void {
-  // 全局缓存用户数据和token
+  // 全局缓存用户数据和 token
   let cachedUserData: any = null;
   let cachedToken: string | null = null;
   // 全局缓存 ASR 配置
@@ -225,14 +225,14 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   /**
-   * 设置AI窗口高度百分比
+   * 设置 AI 窗口高度百分比
    */
   ipcMain.handle('set-ai-window-height', async (_event, percentage: number) => {
     try {
       windowManager.setAIWindowHeightPercentage(percentage);
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 设置AI窗口高度失败');
+      logger.error({ error }, 'IPC: 设置 AI 窗口高度失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -283,20 +283,20 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   /**
-   * 获取AI窗口高度百分比
+   * 获取 AI 窗口高度百分比
    */
   ipcMain.handle('get-ai-window-height', async () => {
     try {
       const percentage = windowManager.getAIWindowHeightPercentage();
       return { success: true, percentage };
     } catch (error) {
-      logger.error({ error }, 'IPC: 获取AI窗口高度失败');
+      logger.error({ error }, 'IPC: 获取 AI 窗口高度失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 
   /**
-   * 切换AI窗口模式
+   * 切换 AI 窗口模式
    */
   ipcMain.handle(
     'switch-to-mode',
@@ -305,7 +305,7 @@ export function setupIPC(windowManager: WindowManager): void {
         windowManager.switchToMode(mode);
         return { success: true };
       } catch (error) {
-        logger.error({ error }, 'IPC: 切换AI窗口模式失败');
+        logger.error({ error }, 'IPC: 切换 AI 窗口模式失败');
         return { success: false, error: error instanceof Error ? error.message : String(error) };
       }
     },
@@ -319,7 +319,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.setAskAIButtonDisabled(disabled);
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 设置提问AI按钮禁用状态失败');
+      logger.error({ error }, 'IPC: 设置提问 AI 按钮禁用状态失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -390,40 +390,40 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   /**
-   * 显示AI问答窗口
+   * 显示 AI 问答窗口
    */
   ipcMain.handle('show-ai-question', async () => {
     try {
       windowManager.showAIQuestion();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 显示AI问答窗口失败');
+      logger.error({ error }, 'IPC: 显示 AI 问答窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 
   /**
-   * 隐藏AI问答窗口
+   * 隐藏 AI 问答窗口
    */
   ipcMain.handle('hide-ai-question', async () => {
     try {
       windowManager.hideAIQuestion();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 隐藏AI问答窗口失败');
+      logger.error({ error }, 'IPC: 隐藏 AI 问答窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 
   /**
-   * 切换AI问答窗口显示状态
+   * 切换 AI 问答窗口显示状态
    */
   ipcMain.handle('toggle-ai-question', async () => {
     try {
       windowManager.toggleAIQuestion();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 切换AI问答窗口失败');
+      logger.error({ error }, 'IPC: 切换 AI 问答窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -434,7 +434,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.showAIQuestionHistoryNextToAI();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 显示AI问答历史窗口失败');
+      logger.error({ error }, 'IPC: 显示 AI 问答历史窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -444,7 +444,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.hideAIQuestionHistory();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 隐藏AI问答历史窗口失败');
+      logger.error({ error }, 'IPC: 隐藏 AI 问答历史窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -454,18 +454,18 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.toggleAIQuestionHistoryNextToAI();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 切换AI问答历史窗口失败');
+      logger.error({ error }, 'IPC: 切换 AI 问答历史窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 
-  // Interviewer窗口相关 IPC
+  // Interviewer 窗口相关 IPC
   ipcMain.handle('show-interviewer', async () => {
     try {
       windowManager.showInterviewerNextToAI();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 显示Interviewer窗口失败');
+      logger.error({ error }, 'IPC: 显示 Interviewer 窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -475,7 +475,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.hideInterviewer();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 隐藏Interviewer窗口失败');
+      logger.error({ error }, 'IPC: 隐藏 Interviewer 窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -485,7 +485,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.toggleInterviewerNextToAI();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 切换Interviewer窗口失败');
+      logger.error({ error }, 'IPC: 切换 Interviewer 窗口失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -625,7 +625,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('check-login-status', async () => {
     const maxRetries = 3;
-    const retryDelay = 3000; // 3秒
+    const retryDelay = 3000; // 3 秒
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -668,7 +668,7 @@ export function setupIPC(windowManager: WindowManager): void {
         if (response.ok) {
           const data = await response.json();
 
-          // 缓存用户数据和token到全局变量
+          // 缓存用户数据和 token 到全局变量
           if (data.isLoggedIn && data.user) {
             cachedUserData = data.user;
             cachedToken = data.token;
@@ -686,7 +686,7 @@ export function setupIPC(windowManager: WindowManager): void {
         } else if (response.status === 401) {
           logger.info('IPC: 用户未登录');
           cachedUserData = null; // 清空缓存
-          cachedToken = null; // 清空token缓存
+          cachedToken = null; // 清空 token 缓存
           return {
             success: true,
             isLoggedIn: false,
@@ -934,23 +934,23 @@ export function setupIPC(windowManager: WindowManager): void {
   );
 
   /**
-   * 加载对话到AI问答窗口
+   * 加载对话到 AI 问答窗口
    */
   ipcMain.handle('load-conversation', async (_event, conversationData: any) => {
     try {
       logger.info('IPC: 收到加载对话命令', conversationData);
 
-      // 获取AI问答窗口实例
+      // 获取 AI 问答窗口实例
       const aiQuestionWindow = windowManager.getAIQuestionWindow();
       const browserWindow = aiQuestionWindow.getBrowserWindow();
       if (browserWindow) {
-        // 发送对话数据到AI问答窗口
+        // 发送对话数据到 AI 问答窗口
         browserWindow.webContents.send('load-conversation-data', conversationData);
-        logger.info('IPC: 对话数据已发送到AI问答窗口');
+        logger.info('IPC: 对话数据已发送到 AI 问答窗口');
         return { success: true };
       } else {
-        logger.warn('IPC: AI问答窗口未找到或未创建');
-        return { success: false, error: 'AI问答窗口未找到' };
+        logger.warn('IPC: AI 问答窗口未找到或未创建');
+        return { success: false, error: 'AI 问答窗口未找到' };
       }
     } catch (error) {
       logger.error({ error }, 'IPC: 加载对话失败');
@@ -1059,7 +1059,7 @@ export function setupIPC(windowManager: WindowManager): void {
   let micAsrWebSocket: WebSocket | null = null;
 
   /**
-   * 麦克风测试 - 30秒采集 + 真实 ASR 识别
+   * 麦克风测试 - 30 秒采集 + 真实 ASR 识别
    */
   ipcMain.handle('mic-test-start', async (event, _options?: { deviceId?: string }) => {
     try {
@@ -1238,14 +1238,14 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   /**
-   * 保存音频文件到data目录
+   * 保存音频文件到 data 目录
    */
   ipcMain.handle('save-audio-file', async (_event, audioData: Uint8Array, fileName: string) => {
     try {
       const fs = require('fs');
       const path = require('path');
 
-      // 创建data目录（如果不存在）
+      // 创建 data 目录（如果不存在）
       const dataDir = path.join(process.cwd(), 'data', 'audio-debug');
       if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });

@@ -1,6 +1,6 @@
 /**
  * 消息内容渲染工具函数
- * 支持Markdown解析和行级别拆分
+ * 支持 Markdown 解析和行级别拆分
  */
 
 import React from 'react';
@@ -12,18 +12,18 @@ export interface ParsedContent {
 }
 
 export interface LineRenderOptions {
-  /** 行级别CSS类名，默认'message-line' */
+  /** 行级别 CSS 类名，默认'message-line' */
   lineClassName?: string;
   /** 行级别样式 */
   lineStyle?: React.CSSProperties;
-  /** 代码块CSS类名，默认'ai-code-block' */
+  /** 代码块 CSS 类名，默认'ai-code-block' */
   codeBlockClassName?: string;
-  /** 内联代码CSS类名，默认'ai-inline-code' */
+  /** 内联代码 CSS 类名，默认'ai-inline-code' */
   inlineCodeClassName?: string;
 }
 
 /**
- * 解析Markdown格式的代码块
+ * 解析 Markdown 格式的代码块
  * @param text 原始文本
  * @returns 解析后的内容数组
  */
@@ -71,7 +71,7 @@ export const parseMarkdown = (text: string): ParsedContent[] => {
  * @param partIndex 部分索引
  * @param lineIndex 行索引
  * @param inlineCodeClassName 内联代码类名
- * @returns 处理后的React元素数组
+ * @returns 处理后的 React 元素数组
  */
 export const processInlineCode = (
   lineText: string,
@@ -112,10 +112,10 @@ export const processInlineCode = (
 };
 
 /**
- * 将内容按行拆分并渲染为React元素
+ * 将内容按行拆分并渲染为 React 元素
  * @param content 原始文本内容
  * @param options 渲染选项
- * @returns React元素数组
+ * @returns React 元素数组
  */
 export const renderContentByLines = (
   content: string,
@@ -174,10 +174,10 @@ export const renderContentByLines = (
 };
 
 /**
- * 快速渲染简单文本（不支持Markdown）
+ * 快速渲染简单文本（不支持 Markdown）
  * @param content 文本内容
  * @param options 渲染选项
- * @returns React元素数组
+ * @returns React 元素数组
  */
 export const renderSimpleTextByLines = (
   content: string,

@@ -1,7 +1,7 @@
 export interface VoiceCoordinatorConfig {
   silenceThreshold: number; // 静音阈值 (毫秒)
   volumeThreshold: number; // 音量阈值 (0-1)
-  ttsDelay: number; // TTS结束后延迟启用ASR的时间 (毫秒)
+  ttsDelay: number; // TTS 结束后延迟启用 ASR 的时间 (毫秒)
   autoEndTimeout: number; // 自动结束录音超时时间 (毫秒)
 }
 
@@ -12,8 +12,8 @@ export interface AudioLevelData {
 
 export enum VoiceState {
   IDLE = 'idle', // 空闲状态
-  TTS_PLAYING = 'tts_playing', // TTS正在播放
-  ASR_LISTENING = 'asr_listening', // ASR正在监听
+  TTS_PLAYING = 'tts_playing', // TTS 正在播放
+  ASR_LISTENING = 'asr_listening', // ASR 正在监听
   USER_SPEAKING = 'user_speaking', // 用户正在说话
   PROCESSING = 'processing', // 处理中
 }
@@ -32,10 +32,10 @@ export class VoiceCoordinator extends EventTarget {
     super();
 
     this.config = {
-      silenceThreshold: 3000, // 3秒静音
+      silenceThreshold: 3000, // 3 秒静音
       volumeThreshold: 0.01, // 音量阈值
-      ttsDelay: 500, // TTS结束后500ms再启用ASR
-      autoEndTimeout: 5000, // 5秒自动结束
+      ttsDelay: 500, // TTS 结束后 500ms 再启用 ASR
+      autoEndTimeout: 5000, // 5 秒自动结束
       ...config,
     };
   }
@@ -77,7 +77,7 @@ export class VoiceCoordinator extends EventTarget {
     }
   }
 
-  // 开始TTS播放
+  // 开始 TTS 播放
   startTTS(): void {
     if (this.currentState === VoiceState.TTS_PLAYING) {
       console.warn('TTS is already playing');
@@ -91,7 +91,7 @@ export class VoiceCoordinator extends EventTarget {
     this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
   }
 
-  // TTS播放完成
+  // TTS 播放完成
   onTTSComplete(): void {
     if (this.currentState !== VoiceState.TTS_PLAYING) {
       console.warn('TTS complete but not in TTS_PLAYING state');
@@ -100,7 +100,7 @@ export class VoiceCoordinator extends EventTarget {
 
     this.currentState = VoiceState.PROCESSING;
 
-    // 延迟启用ASR，避免TTS尾音干扰
+    // 延迟启用 ASR，避免 TTS 尾音干扰
     setTimeout(() => {
       if (this.currentState === VoiceState.PROCESSING) {
         this.startASRListening();
@@ -110,7 +110,7 @@ export class VoiceCoordinator extends EventTarget {
     this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
   }
 
-  // 开始ASR监听
+  // 开始 ASR 监听
   startASRListening(): void {
     if (this.currentState === VoiceState.ASR_LISTENING) {
       console.warn('ASR is already listening');
@@ -125,7 +125,7 @@ export class VoiceCoordinator extends EventTarget {
     this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
   }
 
-  // 停止ASR监听
+  // 停止 ASR 监听
   stopASRListening(): void {
     if (
       this.currentState === VoiceState.ASR_LISTENING ||
@@ -182,7 +182,7 @@ export class VoiceCoordinator extends EventTarget {
 
       // 处理语音活动检测
       this.handleVoiceActivity(volume, timestamp);
-    }, 100); // 每100ms检测一次
+    }, 100); // 每 100ms 检测一次
   }
 
   // 计算音量级别
@@ -191,7 +191,7 @@ export class VoiceCoordinator extends EventTarget {
     for (let i = 0; i < dataArray.length; i++) {
       sum += dataArray[i];
     }
-    return sum / dataArray.length / 255; // 标准化到0-1
+    return sum / dataArray.length / 255; // 标准化到 0-1
   }
 
   // 处理语音活动检测
@@ -264,12 +264,12 @@ export class VoiceCoordinator extends EventTarget {
     this.dispatchEvent(new CustomEvent('configUpdated', { detail: this.config }));
   }
 
-  // 检查是否可以开始ASR
+  // 检查是否可以开始 ASR
   canStartASR(): boolean {
     return this.currentState === VoiceState.IDLE || this.currentState === VoiceState.PROCESSING;
   }
 
-  // 检查是否可以开始TTS
+  // 检查是否可以开始 TTS
   canStartTTS(): boolean {
     return this.currentState !== VoiceState.TTS_PLAYING;
   }
@@ -278,7 +278,7 @@ export class VoiceCoordinator extends EventTarget {
   getStateDescription(): string {
     const descriptions: Record<VoiceState, string> = {
       [VoiceState.IDLE]: '空闲',
-      [VoiceState.TTS_PLAYING]: 'AI正在说话',
+      [VoiceState.TTS_PLAYING]: 'AI 正在说话',
       [VoiceState.ASR_LISTENING]: '等待您说话',
       [VoiceState.USER_SPEAKING]: '正在录制',
       [VoiceState.PROCESSING]: '处理中',

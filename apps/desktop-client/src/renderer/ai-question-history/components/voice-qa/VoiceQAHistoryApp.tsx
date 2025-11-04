@@ -21,7 +21,7 @@ export function VoiceQAHistoryApp() {
   const loadAllConversations = useCallback(async () => {
     try {
       setIsLoading(true);
-      // 加载大量数据，假设最多1000条
+      // 加载大量数据，假设最多 1000 条
       const result = await conversationHistoryService.getConversationHistory(
         1, 
         1000, 
@@ -90,13 +90,13 @@ export function VoiceQAHistoryApp() {
   const handleSearch = useCallback((value: string) => {
     setSearchValue(value);
     setCurrentPage(1); // 重置到第一页
-    // 不需要await，因为useEffect会处理过滤
+    // 不需要 await，因为 useEffect 会处理过滤
   }, []);
 
   // 页码变化处理
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-    // 不需要await，因为useEffect会处理过滤
+    // 不需要 await，因为 useEffect 会处理过滤
   }, []);
 
   // 刷新数据
@@ -112,7 +112,7 @@ export function VoiceQAHistoryApp() {
       // 获取对话详情
       const detail: ConversationDetailResponse = await conversationHistoryService.getConversationDetail(conversation.id);
       
-      // 发送消息给AI问答窗口
+      // 发送消息给 AI 问答窗口
       if ((window as any).electronHistoryAPI?.loadConversation) {
         const messages = detail.messages.map(msg => ({
           id: msg.id.toString(),
@@ -127,7 +127,7 @@ export function VoiceQAHistoryApp() {
         });
       }
       
-      // 显示AI问答窗口
+      // 显示 AI 问答窗口
       if ((window as any).electronHistoryAPI?.showAIQuestion) {
         await (window as any).electronHistoryAPI.showAIQuestion();
       }

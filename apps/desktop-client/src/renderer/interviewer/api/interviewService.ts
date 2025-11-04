@@ -1,6 +1,6 @@
 /**
  * 面试管理服务
- * 处理面试相关的API调用
+ * 处理面试相关的 API 调用
  */
 
 export type InterviewStatus =
@@ -74,7 +74,7 @@ export class InterviewService {
       await this.initAuth();
     }
     if (!this.token) {
-      throw new Error('用户未登录或token获取失败');
+      throw new Error('用户未登录或 token 获取失败');
     }
   }
 
