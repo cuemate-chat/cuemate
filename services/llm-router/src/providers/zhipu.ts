@@ -20,7 +20,7 @@ export class ZhipuProvider extends BaseLLMProvider {
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
     const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
 
-    // 解析其他动态参数，智谱AI可能有特定的参数
+    // 解析其他动态参数，智谱 AI 可能有特定的参数
     const additionalParams: any = {};
     config.model_params.forEach(param => {
       if (!['temperature', 'max_tokens'].includes(param.param_key)) {

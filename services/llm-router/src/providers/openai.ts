@@ -113,7 +113,7 @@ export class OpenAIProvider extends BaseLLMProvider {
     });
 
     try {
-      // 先尝试列出模型（快速检查API连接性）
+      // 先尝试列出模型（快速检查 API 连接性）
       try {
         await client.models.list();
       } catch {}

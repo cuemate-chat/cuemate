@@ -124,11 +124,11 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         messages: [
           {
             role: 'system',
-            content: '你是一个专业的面试助手。根据问题生成3-5个核心要点，每个要点不超过20字。',
+            content: '你是一个专业的面试助手。根据问题生成 3-5 个核心要点，每个要点不超过 20 字。',
           },
           {
             role: 'user',
-            content: context ? `背景：${context}\n\n问题：${text}` : text,
+            content: context ? `背景：${context}\n\n 问题：${text}` : text,
           },
         ],
         temperature: 0.3,

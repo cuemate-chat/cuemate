@@ -30,7 +30,7 @@ const configSchema = z.object({
     maxContextLength: z.number().default(4000),
     responseFormats: z.object({
       concise: z.string().default('用一句话简洁回答'),
-      points: z.string().default('列出3-5个要点'),
+      points: z.string().default('列出 3-5 个要点'),
       detailed: z.string().default('提供详细的回答'),
     }),
   }),
@@ -111,7 +111,7 @@ export const config = configSchema.parse({
     maxContextLength: 4000,
     responseFormats: {
       concise: '用一句话简洁回答',
-      points: '列出3-5个要点',
+      points: '列出 3-5 个要点',
       detailed: '提供详细的回答',
     },
   },
