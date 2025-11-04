@@ -283,14 +283,14 @@ export function registerJobRoutes(app: FastifyInstance) {
   // 删除岗位 DELETE /jobs/:id（级联删除简历、押题、向量库数据）
   app.delete('/jobs/:id', async (req, reply) => {
     try {
-      // 1. JWT验证
+      // 1. JWT 验证
       let payload;
       try {
         payload = await req.jwtVerify();
         app.log.info(`User ${payload.uid} attempting to delete job`);
       } catch (jwtError: any) {
         app.log.error({ err: jwtError }, 'JWT verification failed');
-        return reply.code(401).send(buildPrefixedError('JWT验证失败', jwtError, 401));
+        return reply.code(401).send(buildPrefixedError('JWT 验证失败', jwtError, 401));
       }
 
       // 2. 参数验证
@@ -299,7 +299,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         app.log.error('Job ID is missing from request params');
         return reply
           .code(400)
-          .send(buildPrefixedError('岗位删除失败', new Error('岗位ID不能为空'), 400));
+          .send(buildPrefixedError('岗位删除失败', new Error('岗位 ID 不能为空'), 400));
       }
 
       app.log.info(`Starting cascading delete for job ${id} by user ${payload.uid}`);
@@ -356,7 +356,7 @@ export function registerJobRoutes(app: FastifyInstance) {
       try {
         app.log.info(`Attempting to delete vector data for job ${id} from ${getRagServiceUrl()}`);
 
-        // 使用RAG服务的deleteJobData方法删除所有相关向量数据
+        // 使用 RAG 服务的 deleteJobData 方法删除所有相关向量数据
         const response = await fetch(
           getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_DELETE}/${id}`),
           {
@@ -397,7 +397,7 @@ export function registerJobRoutes(app: FastifyInstance) {
       };
     } catch (err: any) {
       app.log.error({ err }, '删除岗位失败');
-      // 不要返回401，除非确实是认证问题
+      // 不要返回 401，除非确实是认证问题
       return reply.code(500).send(buildPrefixedError('删除岗位失败', err, 500));
     }
   });
@@ -416,7 +416,7 @@ export function registerJobRoutes(app: FastifyInstance) {
           })
           .parse(req.body);
 
-        // 从用户表获取选中的模型ID
+        // 从用户表获取选中的模型 ID
         const user = app.db
           .prepare('SELECT selected_model_id FROM users WHERE id = ?')
           .get(payload.uid);
@@ -441,7 +441,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         const params: Record<string, any> = {};
         modelParams.forEach((param: any) => {
           const value = param.value;
-          // 尝试将字符串转换为数字（对于temperature、max_tokens等）
+          // 尝试将字符串转换为数字（对于 temperature、max_tokens 等）
           if (!isNaN(Number(value))) {
             params[param.param_key] = Number(value);
           } else {
@@ -482,7 +482,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         const baseUrl = (credentials.base_url || credentials.baseUrl || '').replace(/\/+$/, '');
         const apiKey = credentials.api_key || credentials.apiKey;
 
-        // 检查baseUrl是否已经包含v1
+        // 检查 baseUrl 是否已经包含 v1
         let requestUrl = '';
         if (baseUrl.endsWith('/v1')) {
           requestUrl = `${baseUrl}/chat/completions`;
@@ -506,7 +506,7 @@ export function registerJobRoutes(app: FastifyInstance) {
             ],
             // 使用用户配置的参数，如果没有配置则使用默认值
             temperature: params.temperature || 0.7,
-            max_tokens: Math.max(params.max_tokens || 4000, 4000), // 确保至少4000个token
+            max_tokens: Math.max(params.max_tokens || 4000, 4000), // 确保至少 4000 个 token
             // 添加其他可能的参数
             ...(params.top_p && { top_p: params.top_p }),
             ...(params.frequency_penalty && { frequency_penalty: params.frequency_penalty }),
@@ -531,12 +531,12 @@ export function registerJobRoutes(app: FastifyInstance) {
             .send(buildPrefixedError('简历优化失败', new Error('大模型返回内容为空'), 500));
         }
 
-        // 尝试解析JSON格式的回复
+        // 尝试解析 JSON 格式的回复
         let result;
         try {
           result = JSON.parse(content);
         } catch (e) {
-          // 如果不是JSON格式，则简单处理
+          // 如果不是 JSON 格式，则简单处理
           result = {
             suggestions: '优化建议：' + content.substring(0, 500),
             optimizedResume: content,
@@ -546,7 +546,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         // 验证优化后简历的长度
         const originalLength = body.resumeContent.length;
         const optimizedLength = (result.optimizedResume || content).length;
-        const minRequiredLength = Math.floor(originalLength * 0.8); // 至少80%的长度
+        const minRequiredLength = Math.floor(originalLength * 0.8); // 至少 80%的长度
 
         if (optimizedLength < minRequiredLength) {
           app.log.warn(
@@ -558,7 +558,7 @@ export function registerJobRoutes(app: FastifyInstance) {
             success: true,
             suggestions:
               (result.suggestions || '暂无具体建议') +
-              '\n\n⚠️ 注意：AI生成的简历内容相对较短，建议您在优化后的基础上补充更多详细信息。',
+              '\n\n⚠️ 注意：AI 生成的简历内容相对较短，建议您在优化后的基础上补充更多详细信息。',
             optimizedResume: result.optimizedResume || content,
             warning: `优化后的简历较短（${optimizedLength}字），建议在此基础上补充更多详细信息。原简历${originalLength}字。`,
           };

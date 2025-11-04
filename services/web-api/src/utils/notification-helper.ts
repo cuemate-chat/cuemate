@@ -4,7 +4,7 @@
  */
 
 /**
- * 根据资源ID删除相关通知
+ * 根据资源 ID 删除相关通知
  */
 export function deleteNotificationsByResourceId(db: any, resourceId: string): number {
   const result = db.prepare('DELETE FROM user_notifications WHERE resource_id = ?').run(resourceId);

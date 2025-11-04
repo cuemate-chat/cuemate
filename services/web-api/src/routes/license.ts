@@ -180,7 +180,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
           resourceId: licenseId,
           resourceName: `${license.corporation}_${license.edition}`,
           operation: OperationType.CREATE,
-          message: `上传License文件: ${license.corporation} (${license.edition})`,
+          message: `上传 License 文件: ${license.corporation} (${license.edition})`,
           status: 'success',
           userId: payload.uid
         });
@@ -283,7 +283,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
           resourceId: licenseId,
           resourceName: `${license.corporation}_${license.edition}`,
           operation: OperationType.CREATE,
-          message: `上传License文本: ${license.corporation} (${license.edition})`,
+          message: `上传 License 文本: ${license.corporation} (${license.edition})`,
           status: 'success',
           userId: payload.uid
         });
@@ -376,7 +376,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
 
         const params = z.object({ id: z.string() }).parse(req.params);
 
-        // 先获取license信息用于日志记录
+        // 先获取 license 信息用于日志记录
         const existingLicense = (app as any).db.prepare('SELECT * FROM licenses WHERE id = ?').get(params.id);
         
         const result = (app as any).db.prepare('DELETE FROM licenses WHERE id = ?').run(params.id);
@@ -392,7 +392,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
           resourceId: params.id,
           resourceName: existingLicense ? `${existingLicense.corporation}_${existingLicense.edition}` : 'License',
           operation: OperationType.DELETE,
-          message: `删除License: ${existingLicense ? existingLicense.corporation : 'Unknown'}`,
+          message: `删除 License: ${existingLicense ? existingLicense.corporation : 'Unknown'}`,
           status: 'success',
           userId: payload.uid
         });
@@ -456,7 +456,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
 
         const db = (app as any).db;
 
-        // 准备检查ID是否存在的语句
+        // 准备检查 ID 是否存在的语句
         const checkExistsStmt = db.prepare(
           'SELECT COUNT(*) as count FROM preset_questions WHERE id = ?',
         );
@@ -471,37 +471,37 @@ export function registerLicenseRoutes(app: FastifyInstance) {
               ) {
                 totalAttempted++;
 
-                // 提取ID字段值
+                // 提取 ID 字段值
                 const idMatch = statement.match(/VALUES\s*\(\s*'([^']+)'/i);
                 if (!idMatch) {
-                  app.log.warn({ statement: statement.substring(0, 100) }, '无法从语句中提取ID');
+                  app.log.warn({ statement: statement.substring(0, 100) }, '无法从语句中提取 ID');
                   continue;
                 }
 
                 const id = idMatch[1];
 
-                // 检查ID是否已存在
+                // 检查 ID 是否已存在
                 const existsResult = checkExistsStmt.get(id);
                 if (existsResult && existsResult.count > 0) {
                   existingCount++;
-                  app.log.info(`题库ID ${id} 已存在，跳过插入`);
+                  app.log.info(`题库 ID ${id} 已存在，跳过插入`);
                   continue;
                 }
 
-                // ID不存在，执行插入
+                // ID 不存在，执行插入
                 try {
                   const result = db.prepare(statement).run();
                   if (result.changes > 0) {
                     insertedCount++;
-                    app.log.info(`成功插入题库ID: ${id}`);
+                    app.log.info(`成功插入题库 ID: ${id}`);
                   }
                 } catch (insertError: any) {
                   // 如果是唯一性约束错误，也算作已存在
                   if (insertError.message && insertError.message.includes('UNIQUE')) {
                     existingCount++;
-                    app.log.info(`题库ID ${id} 插入时发现重复，算作已存在`);
+                    app.log.info(`题库 ID ${id} 插入时发现重复，算作已存在`);
                   } else {
-                    app.log.error({ err: insertError }, `插入题库ID ${id} 失败`);
+                    app.log.error({ err: insertError }, `插入题库 ID ${id} 失败`);
                     throw insertError;
                   }
                 }

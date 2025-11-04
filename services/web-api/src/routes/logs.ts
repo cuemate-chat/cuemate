@@ -86,7 +86,7 @@ export function registerLogRoutes(app: FastifyInstance) {
           try {
             const stat = fs.statSync(filePath);
             if (!stat.isFile()) continue;
-            // 过滤掉空文件（大小为0）
+            // 过滤掉空文件（大小为 0）
             if (stat.size === 0) continue;
             candidates.push({
               level: lvl,
@@ -178,7 +178,7 @@ export function registerLogRoutes(app: FastifyInstance) {
     });
 
     try {
-      // 从query参数获取，因为前端使用GET方式传递参数
+      // 从 query 参数获取，因为前端使用 GET 方式传递参数
       const query = (req as any).query || {};
       (req as any).log.debug({ query }, 'clear-log-query-params');
 
@@ -253,7 +253,7 @@ export function registerLogRoutes(app: FastifyInstance) {
     });
 
     try {
-      // 从query参数获取
+      // 从 query 参数获取
       const query = (req as any).query || {};
       (req as any).log.debug({ query }, 'delete-log-query-params');
 

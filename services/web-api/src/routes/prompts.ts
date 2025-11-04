@@ -39,7 +39,7 @@ export function registerPromptRoutes(app: FastifyInstance) {
 
   // 新增 prompt
   const createSchema = z.object({
-    id: z.string().min(1, 'ID不能为空'),
+    id: z.string().min(1, 'ID 不能为空'),
     content: z.string().min(1, '内容不能为空'),
     description: z.string().optional(),
     variables: z.string().optional(),

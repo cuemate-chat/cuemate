@@ -8,13 +8,13 @@ import { OperationType } from '../utils/operation-logger.js';
 
 // 广告数据验证模式
 const pixelAdSchema = z.object({
-  title: z.string().min(1, '广告标题不能为空').max(100, '广告标题不能超过100字符'),
-  description: z.string().min(1, '广告描述不能为空').max(500, '广告描述不能超过500字符'),
-  link_url: z.string().url('请输入有效的URL').max(1000, 'URL不能超过1000字符'),
-  image_path: z.string().min(1, '图片路径不能为空').max(500, '图片路径不能超过500字符'),
-  block_config_id: z.string().min(1, '必须选择一个广告块').max(10, '块ID不能超过10字符'),
-  contact_info: z.string().max(200, '联系信息不能超过200字符').optional(),
-  notes: z.string().max(500, '备注不能超过500字符').optional(),
+  title: z.string().min(1, '广告标题不能为空').max(100, '广告标题不能超过 100 字符'),
+  description: z.string().min(1, '广告描述不能为空').max(500, '广告描述不能超过 500 字符'),
+  link_url: z.string().url('请输入有效的 URL').max(1000, 'URL 不能超过 1000 字符'),
+  image_path: z.string().min(1, '图片路径不能为空').max(500, '图片路径不能超过 500 字符'),
+  block_config_id: z.string().min(1, '必须选择一个广告块').max(10, '块 ID 不能超过 10 字符'),
+  contact_info: z.string().max(200, '联系信息不能超过 200 字符').optional(),
+  notes: z.string().max(500, '备注不能超过 500 字符').optional(),
   expires_at: z.number().int().min(Date.now(), '过期时间不能早于当前时间'),
 });
 
@@ -317,7 +317,7 @@ export function registerAdsRoutes(app: FastifyInstance) {
             'active',
             data.contact_info || '',
             data.notes || '',
-            payload.uid, // 从JWT获取用户ID
+            payload.uid, // 从 JWT 获取用户 ID
             data.block_config_id,
             now,
             data.expires_at,

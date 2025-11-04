@@ -29,7 +29,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
         );
         const offset = (page - 1) * pageSize;
 
-        // 构造where条件
+        // 构造 where 条件
         const where: string[] = [];
         const args: any[] = [];
 
@@ -431,7 +431,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
                 .run(JSON.stringify(syncedJobs), preset.id);
             }
 
-            // 同步到向量库（类似interview-questions的逻辑）
+            // 同步到向量库（类似 interview-questions 的逻辑）
             try {
               // 获取标签名称
               let tagName = null;
@@ -563,7 +563,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
             importedCount++;
           } catch (error: any) {
             errors.push(`第${index + 1}行: ${error.message}`);
-            if (errors.length > 10) break; // 最多记录10个错误
+            if (errors.length > 10) break; // 最多记录 10 个错误
           }
         }
 

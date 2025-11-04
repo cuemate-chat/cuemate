@@ -10,18 +10,18 @@ export function registerReviewRoutes(app: FastifyInstance) {
   // =================== interviews 表 ===================
   // 字段含义：
   // - id: 面试记录唯一标识
-  // - job_id: 关联的岗位ID (外键)
-  // - user_id: 关联的用户ID (外键)
+  // - job_id: 关联的岗位 ID (外键)
+  // - user_id: 关联的用户 ID (外键)
   // - theme: 界面主题设置 ('light','dark','system')
   // - locale: 语言设置 (如 'zh-CN', 'en-US')
   // - timezone: 时区设置 (如 'Asia/Shanghai')
   // - started_at: 面试开始时间戳 (毫秒)
   // - ended_at: 面试结束时间戳 (毫秒, 可选)
-  // - selected_model_id: 用户选择的AI模型ID
+  // - selected_model_id: 用户选择的 AI 模型 ID
   // - job_title: 岗位标题 (快照数据)
   // - job_content: 岗位描述内容 (快照数据)
   // - question_count: 面试题目数量
-  // - resumes_id: 关联简历ID
+  // - resumes_id: 关联简历 ID
   // - resumes_title: 简历标题 (快照数据)
   // - resumes_content: 简历内容 (快照数据)
   // - duration: 面试持续时长 (秒)
@@ -239,11 +239,11 @@ export function registerReviewRoutes(app: FastifyInstance) {
             timezone,
             body.jobTitle || null,
             body.jobContent || null,
-            0, // question_count 初始化为0,update时自动统计
+            0, // question_count 初始化为 0,update 时自动统计
             body.resumesId || null,
             body.resumesTitle || null,
             body.resumesContent || null,
-            0, // duration初始化为0
+            0, // duration 初始化为 0
             body.interviewType,
             body.status || 'active',
             body.message || null,
@@ -304,7 +304,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
           .get(id, payload.uid);
         if (!own) return reply.code(404).send({ error: '不存在或无权限' });
 
-        // 构建动态更新SQL
+        // 构建动态更新 SQL
         const updateFields = [];
         const updateValues = [];
 
@@ -349,7 +349,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
           updateValues.push(body.message);
         }
 
-        // 如果状态变更为completed,自动设置ended_at为当前时间
+        // 如果状态变更为 completed,自动设置 ended_at 为当前时间
         if (body.status === 'mock-interview-completed' || body.status === 'interview-training-completed') {
           updateFields.push('ended_at = ?');
           updateValues.push(Date.now());
@@ -362,7 +362,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
             .run(...updateValues);
         }
 
-        // 自动统计并更新question_count
+        // 自动统计并更新 question_count
         const reviewCountRow = (app as any).db
           .prepare('SELECT COUNT(1) as cnt FROM interview_reviews WHERE interview_id = ?')
           .get(id);

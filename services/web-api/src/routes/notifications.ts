@@ -330,7 +330,7 @@ export function registerNotificationRoutes(app: FastifyInstance) {
  * 包括许可证到期和广告到期提醒
  *
  * 逻辑:
- * 1. 即将到期(30天内/7天内): 每24小时发送一次提醒
+ * 1. 即将到期(30 天内/7 天内): 每 24 小时发送一次提醒
  * 2. 已经过期: 每天发送一次提醒,直到用户续费或删除
  */
 async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
@@ -339,7 +339,7 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
 
   // 1. 检查许可证
   try {
-    // 1.1 检查即将到期的许可证 (30天内到期,但还没过期)
+    // 1.1 检查即将到期的许可证 (30 天内到期,但还没过期)
     const expiringLicenses = db
       .prepare(`
         SELECT id, edition, expire_time, apply_user
@@ -353,7 +353,7 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
     for (const license of expiringLicenses) {
       const daysRemaining = Math.floor((license.expire_time - now) / dayMs);
 
-      // 检查24小时内是否已经创建过通知
+      // 检查 24 小时内是否已经创建过通知
       const existingNotification = db
         .prepare(`
           SELECT id FROM user_notifications
@@ -385,7 +385,7 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
       .all(now);
 
     for (const license of expiredLicenses) {
-      // 检查24小时内是否已经创建过通知
+      // 检查 24 小时内是否已经创建过通知
       const existingNotification = db
         .prepare(`
           SELECT id FROM user_notifications
@@ -410,7 +410,7 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
 
   // 2. 检查广告
   try {
-    // 2.1 检查即将到期的广告 (7天内到期,但还没过期)
+    // 2.1 检查即将到期的广告 (7 天内到期,但还没过期)
     const expiringAds = db
       .prepare(`
         SELECT id, title, expires_at, user_id
@@ -424,7 +424,7 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
     for (const ad of expiringAds) {
       const daysRemaining = Math.floor((ad.expires_at - now) / dayMs);
 
-      // 检查24小时内是否已经创建过通知
+      // 检查 24 小时内是否已经创建过通知
       const existingNotification = db
         .prepare(`
           SELECT id FROM user_notifications
@@ -445,7 +445,7 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
       }
     }
 
-    // 2.2 检查已经过期的广告 (过期的广告直接下线,不再发送通知,只标记状态为expired)
+    // 2.2 检查已经过期的广告 (过期的广告直接下线,不再发送通知,只标记状态为 expired)
     const expiredAds = db
       .prepare(`
         SELECT id

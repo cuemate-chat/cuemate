@@ -132,10 +132,10 @@ async function start() {
 
   // 打印成功启动信息
   printSuccessInfo('Web API', port, {
-    HTTP地址: `http://${host}:${port}`,
-    WebSocket地址: `ws://${host}:${port}`,
-    健康检查: `http://${host}:${port}/health`,
-    WebSocket状态: `http://${host}:${port}/ws/status`,
+    'HTTP 地址': `http://${host}:${port}`,
+    'WebSocket 地址': `ws://${host}:${port}`,
+    '健康检查': `http://${host}:${port}/health`,
+    'WebSocket 状态': `http://${host}:${port}/ws/status`,
   });
 }
 

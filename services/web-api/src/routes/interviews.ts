@@ -10,15 +10,15 @@ export function registerInterviewRoutes(app: FastifyInstance) {
   // =================== interview_scores 表 ===================
   // 字段含义：
   // - id: 评分记录唯一标识
-  // - interview_id: 关联的面试ID (外键, UNIQUE)
-  // - total_score: 综合评分 (0-100分)
+  // - interview_id: 关联的面试 ID (外键, UNIQUE)
+  // - total_score: 综合评分 (0-100 分)
   // - duration_sec: 面试持续时间(秒)
   // - num_questions: 面试问题数量
   // - overall_summary: 整体总结文本
   // - pros: 整体优点评价
   // - cons: 整体缺点评价
   // - suggestions: 整体改进建议
-  // - radar_*: 5维雷达评分 (0-100分)
+  // - radar_*: 5 维雷达评分 (0-100 分)
   //   * radar_interactivity: 互动性评分
   //   * radar_confidence: 自信度评分
   //   * radar_professionalism: 专业性评分
@@ -162,7 +162,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           .get(id, payload.uid);
         if (!scoreRecord) return reply.code(404).send({ error: '评分记录不存在或无权限' });
 
-        // 构建动态更新SQL
+        // 构建动态更新 SQL
         const updateFields = [];
         const updateValues = [];
 
@@ -243,10 +243,10 @@ export function registerInterviewRoutes(app: FastifyInstance) {
   // =================== interview_reviews 表 ===================
   // 字段含义：
   // - id: 复盘条目唯一标识
-  // - interview_id: 关联的面试ID (外键)
+  // - interview_id: 关联的面试 ID (外键)
   // - note_type: 条目类型 (实际使用: 'interview_qa','summary' 等)
   // - content: 主要内容文本
-  // - question_id: 关联的面试题ID (可选)
+  // - question_id: 关联的面试题 ID (可选)
   // - question: 备份的问题文本
   // - answer: 备份的答案文本
   // - asked_question: 实际提问的问题文本
@@ -445,7 +445,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           .get(id, payload.uid);
         if (!reviewRecord) return reply.code(404).send({ error: '复盘条目不存在或无权限' });
 
-        // 构建动态更新SQL
+        // 构建动态更新 SQL
         const updateFields = [];
         const updateValues = [];
 
@@ -530,15 +530,15 @@ export function registerInterviewRoutes(app: FastifyInstance) {
   // =================== interview_insights 表 ===================
   // 字段含义：
   // - id: 剖析记录唯一标识
-  // - interview_id: 关联的面试ID (外键)
-  // - interviewer_score: 面试官给出的契合度评分 (0-100分)
+  // - interview_id: 关联的面试 ID (外键)
+  // - interviewer_score: 面试官给出的契合度评分 (0-100 分)
   // - interviewer_summary: 面试官对候选人的整体总结
-  // - interviewer_role: 面试官角色分析 (如"技术专家"、"团队Leader"等)
-  // - interviewer_mbti: 面试官的MBTI性格类型
+  // - interviewer_role: 面试官角色分析 (如"技术专家"、"团队 Leader"等)
+  // - interviewer_mbti: 面试官的 MBTI 性格类型
   // - interviewer_personality: 面试官的个人特质描述
   // - interviewer_preference: 面试官对候选人的偏好/要求
   // - candidate_summary: 对候选人的总结分析
-  // - candidate_mbti: 候选人的MBTI性格类型
+  // - candidate_mbti: 候选人的 MBTI 性格类型
   // - candidate_personality: 候选人的个人特质描述
   // - candidate_job_preference: 候选人的求职偏好
   // - strategy_prepare_details: 沟通策略-提前准备技术细节的建议
@@ -666,7 +666,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           .get(id, payload.uid);
         if (!insightRecord) return reply.code(404).send({ error: '剖析记录不存在或无权限' });
 
-        // 构建动态更新SQL
+        // 构建动态更新 SQL
         const updateFields = [];
         const updateValues = [];
 

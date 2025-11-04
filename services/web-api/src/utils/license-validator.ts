@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 
-// License 常量 (与license.ts保持一致)
+// License 常量 (与 license.ts 保持一致)
 const SECRET_KEY = 'CueMateService16';
 const IV = '1QALXsP2GEdCvfR4';
 
@@ -83,12 +83,12 @@ function validateLicenseKey(licenseKey: string): LicenseResponse {
   }
 }
 
-// 启动时验证所有License
+// 启动时验证所有 License
 export async function validateLicenseAtStartup(db: any, logger: any): Promise<void> {
   try {
     const now = Date.now();
 
-    // 获取所有状态为active的License
+    // 获取所有状态为 active 的 License
     const licenses = db.prepare('SELECT * FROM licenses WHERE status = ?').all('active');
 
     if (!licenses || licenses.length === 0) {
@@ -102,39 +102,39 @@ export async function validateLicenseAtStartup(db: any, logger: any): Promise<vo
 
     for (const license of licenses) {
       try {
-        // 验证License key
+        // 验证 License key
         const validationResult = validateLicenseKey(license.license_key);
 
         if (validationResult.status === LicenseStatus.Success) {
-          // License验证成功，检查是否与数据库时间一致
+          // License 验证成功，检查是否与数据库时间一致
           const dbExpireTime = license.expire_time;
           const currentTime = now;
 
           if (currentTime > dbExpireTime) {
-            // 数据库记录显示已过期，更新状态为expired
+            // 数据库记录显示已过期，更新状态为 expired
             db.prepare('UPDATE licenses SET status = ? WHERE id = ?').run('expired', license.id);
             expiredCount++;
             // 降噪：改为 warn，仅保留必要信息
             logger.warn(`License ${license.id} 已过期，状态已更新为 expired`);
           } else {
-            // License有效
+            // License 有效
             validCount++;
             // 降噪：成功不再打 info，避免批量刷屏
             logger.debug(`License ${license.id} 验证成功`);
           }
         } else if (validationResult.status === LicenseStatus.Expired) {
-          // License key验证显示已过期，更新状态
+          // License key 验证显示已过期，更新状态
           db.prepare('UPDATE licenses SET status = ? WHERE id = ?').run('expired', license.id);
           expiredCount++;
-          logger.warn(`License ${license.id} key验证显示已过期，状态已更新为 expired`);
+          logger.warn(`License ${license.id} key 验证显示已过期，状态已更新为 expired`);
         } else {
-          // License验证失败，更新状态为invalid
+          // License 验证失败，更新状态为 invalid
           db.prepare('UPDATE licenses SET status = ? WHERE id = ?').run('invalid', license.id);
           invalidCount++;
           logger.warn(`License ${license.id} 验证失败: ${validationResult.message}`);
         }
       } catch (error: any) {
-        // 验证过程出错，标记为invalid
+        // 验证过程出错，标记为 invalid
         db.prepare('UPDATE licenses SET status = ? WHERE id = ?').run('invalid', license.id);
         invalidCount++;
         logger.error({ err: error }, `License ${license.id} 验证过程出错`);

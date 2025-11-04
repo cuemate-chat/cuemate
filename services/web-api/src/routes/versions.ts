@@ -39,7 +39,7 @@ async function checkAndNotifyNewVersion(db: any, userId: string, latestVersion: 
 
     // 比较版本号，如果最新版本大于当前版本
     if (compareVersions(latestVersion.version, currentVersion)) {
-      // 检查24小时内是否已经创建过该版本的通知
+      // 检查 24 小时内是否已经创建过该版本的通知
       const existingNotification = db
         .prepare(
           `

@@ -89,7 +89,7 @@ export const OPERATION_MAPPING = {
     menu: MenuType.INTERVIEW_REVIEW,
     type: ResourceType.REVIEW,
   },
-  // ASR设置
+  // ASR 设置
   ASR: {
     menu: MenuType.VOICE_SETTINGS,
     type: ResourceType.ASR_CONFIG,
@@ -114,14 +114,14 @@ export const OPERATION_MAPPING = {
     menu: MenuType.ACCOUNT_SETTINGS,
     type: ResourceType.SYSTEM,
   },
-  // AI对话
+  // AI 对话
   AI_CONVERSATION: {
-    menu: 'AI对话',
+    menu: 'AI 对话',
     type: 'ai_conversation',
   },
-  // Prompt管理
+  // Prompt 管理
   PROMPT: {
-    menu: 'Prompt管理',
+    menu: 'Prompt 管理',
     type: 'prompt',
   },
 } as const;

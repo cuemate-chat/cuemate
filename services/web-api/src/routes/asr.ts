@@ -7,7 +7,7 @@ import { OperationType } from '../utils/operation-logger.js';
 const configSchema = z.object({
   name: z.string().min(1).max(50).default('ASR-Gateway'),
 
-  // FunASR WebSocket配置
+  // FunASR WebSocket 配置
   funasr_host: z.string().min(1).default('localhost'),
   funasr_port: z.number().min(1).max(65535).default(10095),
   funasr_chunk_interval: z.number().min(1).max(20).default(5),
@@ -17,14 +17,14 @@ const configSchema = z.object({
   funasr_mode: z.enum(['online', 'offline', '2pass']).default('online'),
   funasr_sample_rate: z.number().min(8000).max(48000).default(16000),
 
-  // AudioTee配置
+  // AudioTee 配置
   audiotee_sample_rate: z.union([z.literal(8000), z.literal(16000), z.literal(22050), z.literal(24000), z.literal(32000), z.literal(44100), z.literal(48000)]).default(16000),
   audiotee_chunk_duration: z.number().min(0.1).max(2.0).default(0.2),
   audiotee_include_processes: z.string().default('[]'),
   audiotee_exclude_processes: z.string().default('[]'),
   audiotee_mute_processes: z.boolean().default(false),
 
-  // PiperTTS配置
+  // PiperTTS 配置
   piper_default_language: z.enum(['zh-CN', 'en-US']).default('zh-CN'),
   piper_speech_speed: z.number().min(0.5).max(2.0).default(1.0),
   piper_python_path: z.string().default('python3'),
@@ -48,7 +48,7 @@ export function registerAsrRoutes(app: FastifyInstance) {
     const stmt = (app as any).db.prepare('SELECT * FROM asr_config WHERE id = 1');
     const rawConfig = stmt.get();
 
-    // 将SQLite中的0/1转换为布尔值
+    // 将 SQLite 中的 0/1 转换为布尔值
     const config = rawConfig
       ? {
           ...rawConfig,
@@ -56,17 +56,17 @@ export function registerAsrRoutes(app: FastifyInstance) {
         }
       : null;
 
-    // 检查请求来源，判断如何返回WebSocket地址
+    // 检查请求来源，判断如何返回 WebSocket 地址
     const host = req.headers.host || 'localhost:3001';
     const isDockerEnvironment = process.env.NODE_ENV === 'production';
 
-    // 根据请求来源返回正确的WebSocket地址
+    // 根据请求来源返回正确的 WebSocket 地址
     const getWebSocketUrl = (port: number) => {
-      // 如果是从浏览器访问，始终返回localhost地址
+      // 如果是从浏览器访问，始终返回 localhost 地址
       if (host.includes('localhost') || host.includes('127.0.0.1')) {
         return `ws://localhost:${port}/asr`;
       } else if (isDockerEnvironment) {
-        // 如果是生产环境且不是localhost访问，返回实际主机地址
+        // 如果是生产环境且不是 localhost 访问，返回实际主机地址
         const hostname = host.split(':')[0];
         return `ws://${hostname}:${port}/asr`;
       } else {
@@ -144,15 +144,15 @@ export function registerAsrRoutes(app: FastifyInstance) {
         await logOperation(app, req, {
           ...OPERATION_MAPPING.ASR,
           resourceId: '1',
-          resourceName: 'ASR配置',
+          resourceName: 'ASR 配置',
           operation: OperationType.UPDATE,
-          message: `更新ASR配置: ${newConfig.name}`,
+          message: `更新 ASR 配置: ${newConfig.name}`,
           status: 'success',
           userId: payload.uid
         });
       } catch (authError) {
-        // ASR配置更新不需要认证，但如果有认证信息就记录操作日志
-        app.log.info('ASR配置更新未记录操作日志（无认证信息）');
+        // ASR 配置更新不需要认证，但如果有认证信息就记录操作日志
+        app.log.info('ASR 配置更新未记录操作日志（无认证信息）');
       }
 
       return {

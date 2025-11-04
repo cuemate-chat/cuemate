@@ -37,7 +37,7 @@ const updateConversationSchema = z.object({
 });
 
 export function registerAIConversationRoutes(app: FastifyInstance) {
-  // 获取AI对话统计信息
+  // 获取 AI 对话统计信息
   app.get(
     '/ai/conversations/stats',
     withErrorLogging(app.log as any, 'ai-conversations.stats', async (req, reply) => {
@@ -73,7 +73,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           )
           .get(payload.uid);
 
-        // 获取今天的提问数（user消息）
+        // 获取今天的提问数（user 消息）
         const todayQuestionsStats = (app as any).db
           .prepare(
             `
@@ -88,7 +88,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           )
           .get(payload.uid);
 
-        // 获取总提问数（user消息）
+        // 获取总提问数（user 消息）
         const totalQuestionsStats = (app as any).db
           .prepare(
             `
@@ -102,7 +102,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           )
           .get(payload.uid);
 
-        // 获取失败对话数（error状态 + 有错误消息的对话）
+        // 获取失败对话数（error 状态 + 有错误消息的对话）
         const failedStats = (app as any).db
           .prepare(
             `
@@ -133,7 +133,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           operation: 'view',
           resourceId: undefined,
           resourceName: undefined,
-          message: `获取AI对话统计信息`,
+          message: `获取 AI 对话统计信息`,
           userId: payload.uid,
           userName: payload.username,
         });
@@ -145,7 +145,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
     }),
   );
 
-  // 获取用户的AI对话列表
+  // 获取用户的 AI 对话列表
   app.get(
     '/ai/conversations',
     withErrorLogging(app.log as any, 'ai-conversations.list', async (req, reply) => {
@@ -170,7 +170,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           params.push(status);
         }
 
-        // 模型ID筛选
+        // 模型 ID 筛选
         if (model_id && model_id !== '') {
           whereClause += ' AND model_id = ?';
           params.push(model_id);
@@ -221,14 +221,14 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           operation: 'view',
           resourceId: undefined,
           resourceName: undefined,
-          message: `获取AI对话列表，共${total}条记录`,
+          message: `获取 AI 对话列表，共${total}条记录`,
           userId: payload.uid,
           userName: payload.username,
         });
 
         return { items: rows, total };
       } catch (err) {
-        return reply.code(401).send(buildPrefixedError('获取AI对话列表失败', err, 401));
+        return reply.code(401).send(buildPrefixedError('获取 AI 对话列表失败', err, 401));
       }
     }),
   );
@@ -266,7 +266,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           )
           .all(id);
 
-        // 解析JSON字段
+        // 解析 JSON 字段
         if (conversation.model_config) {
           try {
             conversation.model_config = JSON.parse(conversation.model_config);
@@ -302,7 +302,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
     }),
   );
 
-  // 创建新的AI对话会话
+  // 创建新的 AI 对话会话
   app.post(
     '/ai/conversations',
     withErrorLogging(app.log as any, 'ai-conversations.create', async (req, reply) => {
@@ -339,17 +339,17 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           operation: 'create',
           resourceId: result.lastInsertRowid.toString(),
           resourceName: validatedData.title,
-          message: `创建AI对话会话`,
+          message: `创建 AI 对话会话`,
           userId: payload.uid,
           userName: payload.username,
         });
 
-        return { id: result.lastInsertRowid, message: 'AI对话会话创建成功' };
+        return { id: result.lastInsertRowid, message: 'AI 对话会话创建成功' };
       } catch (err) {
         if (err instanceof z.ZodError) {
           return reply.code(400).send(buildPrefixedError('请求参数错误', err.errors, 400));
         }
-        return reply.code(500).send(buildPrefixedError('创建AI对话会话失败', err, 500));
+        return reply.code(500).send(buildPrefixedError('创建 AI 对话会话失败', err, 500));
       }
     }),
   );
@@ -513,7 +513,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
     }),
   );
 
-  // 停止对话（将状态改为completed）
+  // 停止对话（将状态改为 completed）
   app.patch(
     '/ai/conversations/:id/stop',
     withErrorLogging(app.log as any, 'ai-conversations.stop', async (req, reply) => {
@@ -531,7 +531,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           return reply.code(404).send(buildPrefixedError('对话不存在', null, 404));
         }
 
-        // 只允许将状态改为completed
+        // 只允许将状态改为 completed
         if (status !== 'completed') {
           return reply.code(400).send(buildPrefixedError('只能将对话状态改为已完成', null, 400));
         }
@@ -632,7 +632,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
     }),
   );
 
-  // 批量删除AI对话记录
+  // 批量删除 AI 对话记录
   app.post(
     '/ai/conversations/batch-delete',
     withErrorLogging(app.log as any, 'ai-conversations.batch-delete', async (req, reply) => {
@@ -641,7 +641,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
         const { conversation_ids } = req.body as any;
 
         if (!Array.isArray(conversation_ids) || conversation_ids.length === 0) {
-          return reply.code(400).send(buildPrefixedError('对话ID列表不能为空', null, 400));
+          return reply.code(400).send(buildPrefixedError('对话 ID 列表不能为空', null, 400));
         }
 
         // 验证所有对话都属于当前用户
@@ -684,7 +684,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
     }),
   );
 
-  // 按时间删除AI对话记录
+  // 按时间删除 AI 对话记录
   app.post(
     '/ai/conversations/delete-before',
     withErrorLogging(app.log as any, 'ai-conversations.delete-before', async (req, reply) => {

@@ -27,11 +27,11 @@ export function registerFileRoutes(app: FastifyInstance) {
   // 图片上传路由
   app.post('/files/upload-image', async (req: any, reply) => {
     try {
-      // JWT认证检查
+      // JWT 认证检查
       try {
         await req.jwtVerify();
       } catch (jwtError: any) {
-        app.log.warn({ err: jwtError }, 'JWT认证失败');
+        app.log.warn({ err: jwtError }, 'JWT 认证失败');
         return reply.code(401).send(buildPrefixedError('图片上传失败', jwtError, 401));
       }
 
@@ -112,14 +112,14 @@ export function registerFileRoutes(app: FastifyInstance) {
   });
 
   app.post('/files/extract-text', async (req: any, reply) => {
-    let text = ''; // 在函数开始就声明text变量
+    let text = ''; // 在函数开始就声明 text 变量
 
     try {
-      // JWT认证检查
+      // JWT 认证检查
       try {
         await req.jwtVerify();
       } catch (jwtError: any) {
-        app.log.warn({ err: jwtError }, 'JWT认证失败');
+        app.log.warn({ err: jwtError }, 'JWT 认证失败');
         return reply.code(401).send(buildPrefixedError('文件解析失败', jwtError, 401));
       }
 
@@ -138,19 +138,19 @@ export function registerFileRoutes(app: FastifyInstance) {
       app.log.info({ filename, mimetype, size: file.file.bytesRead }, '开始解析文件');
 
       const buf = await streamToBuffer(file.file);
-      app.log.info({ filename, bufferSize: buf.length }, '文件已转换为Buffer');
+      app.log.info({ filename, bufferSize: buf.length }, '文件已转换为 Buffer');
 
-      // 支持PDF、DOC、DOCX和纯文本文件
+      // 支持 PDF、DOC、DOCX 和纯文本文件
       if (mimetype === 'application/pdf' || lower.endsWith('.pdf')) {
         try {
-          // 检查PDF文件头
+          // 检查 PDF 文件头
           if (buf.length < 4 || buf.toString('ascii', 0, 4) !== '%PDF') {
-            throw new Error('无效的PDF文件格式');
+            throw new Error('无效的 PDF 文件格式');
           }
 
-          app.log.info({ filename, bufferSize: buf.length, pdfHeader: '%PDF' }, '开始解析PDF文件');
+          app.log.info({ filename, bufferSize: buf.length, pdfHeader: '%PDF' }, '开始解析 PDF 文件');
 
-          // 使用pdf2json解析PDF
+          // 使用 pdf2json 解析 PDF
           const PDFParser = (await import('pdf2json')).default;
 
           return new Promise((resolve, reject) => {
@@ -177,33 +177,33 @@ export function registerFileRoutes(app: FastifyInstance) {
                 if (text && text.length > 5) {
                   app.log.info(
                     { filename, textLength: text.length, pages: pages.length },
-                    'PDF解析完成（使用pdf2json）',
+                    'PDF 解析完成（使用 pdf2json）',
                   );
                   resolve({ text });
                 } else {
-                  reject(new Error('pdf2json提取的文本内容过少'));
+                  reject(new Error('pdf2json 提取的文本内容过少'));
                 }
               } catch (parseError: any) {
-                reject(new Error(`pdf2json解析失败：${parseError.message}`));
+                reject(new Error(`pdf2json 解析失败：${parseError.message}`));
               }
             });
 
             pdfParser.on('pdfParser_dataError', (err: any) => {
-              reject(new Error(`pdf2json数据错误：${err.message}`));
+              reject(new Error(`pdf2json 数据错误：${err.message}`));
             });
 
-            // 解析PDF buffer
+            // 解析 PDF buffer
             pdfParser.parseBuffer(buf);
           });
         } catch (pdfError: any) {
-          app.log.error({ err: pdfError, filename, errorMessage: pdfError.message }, 'PDF解析失败');
+          app.log.error({ err: pdfError, filename, errorMessage: pdfError.message }, 'PDF 解析失败');
 
-          let errorMessage = 'PDF文件解析失败';
-          if (pdfError.message?.includes('无效的PDF文件格式')) {
-            errorMessage += '：文件格式无效，请确保上传的是有效的PDF文件';
+          let errorMessage = 'PDF 文件解析失败';
+          if (pdfError.message?.includes('无效的 PDF 文件格式')) {
+            errorMessage += '：文件格式无效，请确保上传的是有效的 PDF 文件';
           } else if (pdfError.message?.includes('文本内容过少')) {
             errorMessage +=
-              '：可能是图片PDF或扫描版PDF，建议转换为可编辑的PDF或直接复制粘贴文本内容';
+              '：可能是图片 PDF 或扫描版 PDF，建议转换为可编辑的 PDF 或直接复制粘贴文本内容';
           } else {
             errorMessage += `：${pdfError.message}`;
           }
@@ -215,19 +215,19 @@ export function registerFileRoutes(app: FastifyInstance) {
         lower.endsWith('.docx')
       ) {
         try {
-          app.log.info({ filename, bufferSize: buf.length }, '开始解析DOCX文件');
+          app.log.info({ filename, bufferSize: buf.length }, '开始解析 DOCX 文件');
           const res = await mammoth.extractRawText({ buffer: buf });
           text = (res.value || '').trim();
-          app.log.info({ filename, textLength: text.length }, 'DOCX解析完成');
+          app.log.info({ filename, textLength: text.length }, 'DOCX 解析完成');
         } catch (docxError: any) {
-          app.log.error({ err: docxError, filename }, 'DOCX解析失败');
+          app.log.error({ err: docxError, filename }, 'DOCX 解析失败');
           return reply
             .code(422)
             .send(
               buildPrefixedError(
                 '文件解析失败',
                 new Error(
-                  `DOCX文件解析失败：${docxError.message || '文件可能已损坏'}。请检查文件完整性或直接复制粘贴文本内容。`,
+                  `DOCX 文件解析失败：${docxError.message || '文件可能已损坏'}。请检查文件完整性或直接复制粘贴文本内容。`,
                 ),
                 422,
               ),
@@ -235,17 +235,17 @@ export function registerFileRoutes(app: FastifyInstance) {
         }
       } else if (mimetype === 'application/msword' || lower.endsWith('.doc')) {
         try {
-          app.log.info({ filename, bufferSize: buf.length }, '开始解析DOC文件');
-          // .doc文件使用mammoth解析（注意：对老版本DOC文件支持有限）
+          app.log.info({ filename, bufferSize: buf.length }, '开始解析 DOC 文件');
+          // .doc 文件使用 mammoth 解析（注意：对老版本 DOC 文件支持有限）
           const res = await mammoth.extractRawText({ buffer: buf });
           text = (res.value || '').trim();
-          app.log.info({ filename, textLength: text.length }, 'DOC解析完成');
+          app.log.info({ filename, textLength: text.length }, 'DOC 解析完成');
 
-          // 如果解析结果为空或很短，可能是老版本DOC文件
+          // 如果解析结果为空或很短，可能是老版本 DOC 文件
           if (!text || text.length < 10) {
             app.log.warn(
               { filename, textLength: text.length },
-              'DOC文件解析结果较短，可能是格式兼容性问题',
+              'DOC 文件解析结果较短，可能是格式兼容性问题',
             );
             return reply
               .code(422)
@@ -253,14 +253,14 @@ export function registerFileRoutes(app: FastifyInstance) {
                 buildPrefixedError(
                   '文件解析失败',
                   new Error(
-                    '此DOC文件可能是较老的格式（如DOC 97-2003），将文件另存为DOCX格式后重新上传，或直接复制粘贴文本内容',
+                    '此 DOC 文件可能是较老的格式（如 DOC 97-2003），将文件另存为 DOCX 格式后重新上传，或直接复制粘贴文本内容',
                   ),
                   422,
                 ),
               );
           }
         } catch (docError: any) {
-          app.log.error({ err: docError, filename }, 'DOC解析失败');
+          app.log.error({ err: docError, filename }, 'DOC 解析失败');
           // 检查是否是格式兼容性问题
           if (docError.message && docError.message.includes('zip')) {
             return reply
@@ -269,7 +269,7 @@ export function registerFileRoutes(app: FastifyInstance) {
                 buildPrefixedError(
                   '文件解析失败',
                   new Error(
-                    '此DOC文件格式较老（如DOC 97-2003），无法自动解析。请将文件另存为DOCX格式后重新上传，或直接复制粘贴文本内容',
+                    '此 DOC 文件格式较老（如 DOC 97-2003），无法自动解析。请将文件另存为 DOCX 格式后重新上传，或直接复制粘贴文本内容',
                   ),
                   422,
                 ),
@@ -281,7 +281,7 @@ export function registerFileRoutes(app: FastifyInstance) {
               buildPrefixedError(
                 '文件解析失败',
                 new Error(
-                  `DOC文件解析失败：${docError.message || '文件可能已损坏或格式过旧'}。建议转换为DOCX格式或直接复制粘贴文本内容。`,
+                  `DOC 文件解析失败：${docError.message || '文件可能已损坏或格式过旧'}。建议转换为 DOCX 格式或直接复制粘贴文本内容。`,
                 ),
                 422,
               ),
@@ -294,7 +294,7 @@ export function registerFileRoutes(app: FastifyInstance) {
             buildPrefixedError(
               '文件解析失败',
               new Error(
-                `不支持的文件类型：${mimetype || '未知格式'} (${filename})。仅支持PDF、DOC和DOCX格式的简历文件。`,
+                `不支持的文件类型：${mimetype || '未知格式'} (${filename})。仅支持 PDF、DOC 和 DOCX 格式的简历文件。`,
               ),
               415,
             ),
@@ -331,7 +331,7 @@ export function registerFileRoutes(app: FastifyInstance) {
       
       return { text };
     } catch (err: any) {
-      app.log.error({ err }, 'extract-text处理失败');
+      app.log.error({ err }, 'extract-text 处理失败');
 
       // 根据错误类型返回更友好的错误信息
       if (err?.code === 'ENOENT') {
@@ -348,7 +348,7 @@ export function registerFileRoutes(app: FastifyInstance) {
         return reply
           .code(413)
           .send(
-            buildPrefixedError('文件解析失败', new Error('文件过大，请选择小于10MB的文件'), 413),
+            buildPrefixedError('文件解析失败', new Error('文件过大，请选择小于 10MB 的文件'), 413),
           );
       } else if (err?.message?.includes('multipart')) {
         return reply

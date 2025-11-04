@@ -9,7 +9,7 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
     '/operation-logs',
     withErrorLogging(app.log as any, 'operation-logs.list', async (req, reply) => {
       try {
-        // JWT验证，确保用户已登录
+        // JWT 验证，确保用户已登录
         await (req as any).jwtVerify();
 
         const query = (req as any).query || {};
@@ -102,7 +102,7 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
     '/operation-logs/:id',
     withErrorLogging(app.log as any, 'operation-logs.detail', async (req, reply) => {
       try {
-        // JWT验证
+        // JWT 验证
         await (req as any).jwtVerify();
 
         const id = (req.params as any).id;
@@ -124,7 +124,7 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
     '/operation-logs/:id',
     withErrorLogging(app.log as any, 'operation-logs.delete', async (req, reply) => {
       try {
-        // JWT验证
+        // JWT 验证
         await (req as any).jwtVerify();
 
         const id = (req.params as any).id;
@@ -146,7 +146,7 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
     '/operation-logs',
     withErrorLogging(app.log as any, 'operation-logs.batch-delete', async (req, reply) => {
       try {
-        // JWT验证
+        // JWT 验证
         const payload = await (req as any).jwtVerify();
 
         // 简单权限检查：这里可以根据实际需求添加更复杂的权限验证
@@ -174,7 +174,7 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
         let deletedCount = 0;
 
         if (body.ids && body.ids.length > 0) {
-          // 按ID批量删除
+          // 按 ID 批量删除
           const placeholders = body.ids.map(() => '?').join(',');
           const result = (app as any).db
             .prepare(`DELETE FROM operation_logs WHERE id IN (${placeholders})`)
@@ -224,20 +224,20 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
     }),
   );
 
-  // 获取操作统计信息（卡片：今日00:00起至当前；同时保留历史聚合）
+  // 获取操作统计信息（卡片：今日 00:00 起至当前；同时保留历史聚合）
   app.get(
     '/operation-logs/stats',
     withErrorLogging(app.log as any, 'operation-logs.stats', async (req, reply) => {
       try {
-        // JWT验证
+        // JWT 验证
         await (req as any).jwtVerify();
 
         const query = (req as any).query || {};
-        const { days = 7 } = query; // 默认统计最近7天
+        const { days = 7 } = query; // 默认统计最近 7 天
 
         const daySeconds = 24 * 60 * 60;
         const startTime = Math.floor(Date.now() / 1000) - Number(days) * daySeconds;
-        // 今日00:00（本地时区）起始时间
+        // 今日 00:00（本地时区）起始时间
         const d = new Date();
         d.setHours(0, 0, 0, 0);
         const todayStart = Math.floor(d.getTime() / 1000);
@@ -308,7 +308,7 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
           .all(startTime);
 
         // 今日指标与全量指标
-        // 今日操作总数（从今天00:00起）
+        // 今日操作总数（从今天 00:00 起）
         const todayTotal =
           (app as any).db
             .prepare(`SELECT COUNT(*) as count FROM operation_logs WHERE time >= ?`)
@@ -352,12 +352,12 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
     }),
   );
 
-  // 导出操作记录（CSV格式）
+  // 导出操作记录（CSV 格式）
   app.get(
     '/operation-logs/export',
     withErrorLogging(app.log as any, 'operation-logs.export', async (req, reply) => {
       try {
-        // JWT验证
+        // JWT 验证
         await (req as any).jwtVerify();
 
         const query = (req as any).query || {};
@@ -381,21 +381,21 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
         const records = (app as any).db.prepare(sql).all(...args);
 
         if (format === 'csv') {
-          // 生成CSV格式
+          // 生成 CSV 格式
           const headers = [
             'ID',
             '操作菜单',
             '资源类型',
-            '资源ID',
+            '资源 ID',
             '资源名称',
             '操作类型',
             '操作时间',
             '操作信息',
-            '来源IP',
-            '用户ID',
+            '来源 IP',
+            '用户 ID',
             '用户名',
             '请求方法',
-            '请求URL',
+            '请求 URL',
             '状态',
             '错误信息',
             '创建时间',
@@ -433,7 +433,7 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
 
           reply.header('Content-Type', 'text/csv; charset=utf-8');
           reply.header('Content-Disposition', `attachment; filename="${filename}"`);
-          return '\ufeff' + csv; // 添加BOM以支持中文
+          return '\ufeff' + csv; // 添加 BOM 以支持中文
         }
 
         return { records };

@@ -169,7 +169,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
           .get();
 
         if (loggedInUser) {
-          // 为已登录用户生成JWT token
+          // 为已登录用户生成 JWT token
           const token = app.jwt.sign({
             uid: loggedInUser.id,
             email: loggedInUser.email,

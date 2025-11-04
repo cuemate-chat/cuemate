@@ -113,7 +113,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
   app.post(
     '/vectors/sync-all',
     withErrorLogging(app.log as any, 'vectors.sync-all', async (req, reply) => {
-      // JWT验证
+      // JWT 验证
       let payload;
       try {
         payload = await (req as any).jwtVerify();
@@ -137,7 +137,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
       }
 
       try {
-        // 首先检查RAG服务是否可用
+        // 首先检查 RAG 服务是否可用
         try {
           const healthResponse = await fetch(
             getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.HEALTH),
@@ -153,7 +153,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
               .code(503)
               .send(
                 buildPrefixedError(
-                  'RAG服务不可用，请检查服务是否正常运行',
+                  'RAG 服务不可用，请检查服务是否正常运行',
                   new Error(`Health check failed with status ${healthResponse.status}`),
                   503,
                 ),
@@ -165,7 +165,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
           app.log.error({ err: healthError }, 'RAG service health check error');
           return reply
             .code(503)
-            .send(buildPrefixedError('RAG服务连接失败，请检查服务是否正常运行', healthError, 503));
+            .send(buildPrefixedError('RAG 服务连接失败，请检查服务是否正常运行', healthError, 503));
         }
 
         const processOneJob = async (job: any) => {
@@ -406,7 +406,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
       try {
         app.log.info('Clean-all endpoint called');
 
-        // JWT验证
+        // JWT 验证
         let payload;
         try {
           payload = await (req as any).jwtVerify();
@@ -420,7 +420,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
 
         app.log.info(`Starting clean-all for user ${payload.uid}`);
 
-        // 首先检查RAG服务是否可用
+        // 首先检查 RAG 服务是否可用
         try {
           const healthResponse = await fetch(
             getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.HEALTH),
@@ -436,7 +436,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
               .code(503)
               .send(
                 buildPrefixedError(
-                  'RAG服务不可用，请检查服务是否正常运行',
+                  'RAG 服务不可用，请检查服务是否正常运行',
                   new Error(`Health check failed with status ${healthResponse.status}`),
                   503,
                 ),
@@ -449,10 +449,10 @@ export function registerVectorRoutes(app: FastifyInstance) {
           app.log.error({ err: healthError }, 'RAG service health check error');
           return reply
             .code(503)
-            .send(buildPrefixedError('RAG服务连接失败，请检查服务是否正常运行', healthError, 503));
+            .send(buildPrefixedError('RAG 服务连接失败，请检查服务是否正常运行', healthError, 503));
         }
 
-        // 调用RAG服务清空所有向量数据
+        // 调用 RAG 服务清空所有向量数据
         try {
           const ragResponse = await fetch(
             getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.CLEAN_ALL),
@@ -469,13 +469,13 @@ export function registerVectorRoutes(app: FastifyInstance) {
             app.log.error(`RAG service clean-all failed: ${ragResponse.status} ${errorText}`);
             return reply
               .code(500)
-              .send(buildPrefixedError('RAG服务清空失败', new Error(errorText), 500));
+              .send(buildPrefixedError('RAG 服务清空失败', new Error(errorText), 500));
           }
 
           const result = (await ragResponse.json()) as any;
           app.log.info({ data: result }, 'RAG service response');
 
-          // 更新数据库中的vector_status为0
+          // 更新数据库中的 vector_status 为 0
           if (result.success) {
             try {
               app.log.info('Updating database vector_status...');
@@ -518,7 +518,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
           reply.send(result);
         } catch (fetchError: any) {
           app.log.error({ err: fetchError }, 'Fetch to RAG service failed');
-          return reply.code(500).send(buildPrefixedError('调用RAG服务失败', fetchError, 500));
+          return reply.code(500).send(buildPrefixedError('调用 RAG 服务失败', fetchError, 500));
         }
       } catch (err: any) {
         app.log.error({ err }, 'Clean-all failed');

@@ -1,6 +1,6 @@
 /**
  * 外部服务配置
- * 统一管理所有微服务的URL配置，避免硬编码
+ * 统一管理所有微服务的 URL 配置，避免硬编码
  */
 
 export const SERVICE_CONFIG = {
@@ -29,7 +29,7 @@ export const SERVICE_CONFIG = {
 } as const;
 
 /**
- * 获取完整的服务URL
+ * 获取完整的服务 URL
  */
 export function getServiceUrl(service: keyof typeof SERVICE_CONFIG, endpoint?: string): string {
   const serviceConfig = SERVICE_CONFIG[service];
@@ -40,14 +40,14 @@ export function getServiceUrl(service: keyof typeof SERVICE_CONFIG, endpoint?: s
 }
 
 /**
- * 获取LLM Router的完整URL
+ * 获取 LLM Router 的完整 URL
  */
 export function getLlmRouterUrl(endpoint?: string): string {
   return getServiceUrl('LLM_ROUTER', endpoint);
 }
 
 /**
- * 获取RAG Service的完整URL
+ * 获取 RAG Service 的完整 URL
  */
 export function getRagServiceUrl(endpoint?: string): string {
   return getServiceUrl('RAG_SERVICE', endpoint);

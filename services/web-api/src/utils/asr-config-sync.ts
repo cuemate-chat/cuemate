@@ -12,8 +12,8 @@ export interface ASRConfigSyncResult {
 }
 
 /**
- * 独立的ASR配置同步方法
- * 从数据库读取配置并同步到所有ASR服务
+ * 独立的 ASR 配置同步方法
+ * 从数据库读取配置并同步到所有 ASR 服务
  */
 export async function syncASRConfig(app: FastifyInstance): Promise<ASRConfigSyncResult> {
   try {
@@ -24,7 +24,7 @@ export async function syncASRConfig(app: FastifyInstance): Promise<ASRConfigSync
     if (!rawConfig) {
       return {
         success: false,
-        message: '数据库中未找到ASR配置',
+        message: '数据库中未找到 ASR 配置',
         syncResults: []
       };
     }
@@ -40,7 +40,7 @@ export async function syncASRConfig(app: FastifyInstance): Promise<ASRConfigSync
       never_fire: Boolean(rawConfig.never_fire),
     };
 
-    // 3. 构建WhisperLiveKit配置
+    // 3. 构建 WhisperLiveKit 配置
     const whisperConfig = {
       diarization: config.diarization,
       punctuation_split: config.punctuation_split,
@@ -69,7 +69,7 @@ export async function syncASRConfig(app: FastifyInstance): Promise<ASRConfigSync
       diarization_backend: config.diarization_backend,
     };
 
-    // 4. 同步配置到ASR服务
+    // 4. 同步配置到 ASR 服务
     const asrServiceUrls = [
       'http://cuemate-asr:10095',
     ];
@@ -84,7 +84,7 @@ export async function syncASRConfig(app: FastifyInstance): Promise<ASRConfigSync
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(whisperConfig),
-          signal: AbortSignal.timeout(5000), // 5秒超时
+          signal: AbortSignal.timeout(5000), // 5 秒超时
         });
 
         if (response.ok) {
@@ -94,7 +94,7 @@ export async function syncASRConfig(app: FastifyInstance): Promise<ASRConfigSync
             success: true,
             result: result,
           });
-          app.log.info(`ASR配置同步到 ${serviceUrl} 成功`);
+          app.log.info(`ASR 配置同步到 ${serviceUrl} 成功`);
         } else {
           const error = await response.text();
           syncResults.push({
@@ -102,7 +102,7 @@ export async function syncASRConfig(app: FastifyInstance): Promise<ASRConfigSync
             success: false,
             error: error,
           });
-          app.log.warn(`ASR配置同步到 ${serviceUrl} 失败: ${error}`);
+          app.log.warn(`ASR 配置同步到 ${serviceUrl} 失败: ${error}`);
         }
       } catch (error: any) {
         syncResults.push({
@@ -110,7 +110,7 @@ export async function syncASRConfig(app: FastifyInstance): Promise<ASRConfigSync
           success: false,
           error: error.message,
         });
-        app.log.error(`连接ASR服务 ${serviceUrl} 失败: ${error.message}`);
+        app.log.error(`连接 ASR 服务 ${serviceUrl} 失败: ${error.message}`);
       }
     }
 
@@ -127,7 +127,7 @@ export async function syncASRConfig(app: FastifyInstance): Promise<ASRConfigSync
     };
 
   } catch (error: any) {
-    app.log.error('ASR配置同步过程中发生错误:', error);
+    app.log.error('ASR 配置同步过程中发生错误:', error);
     return {
       success: false,
       message: `配置同步失败: ${error.message}`,
@@ -147,21 +147,21 @@ export async function syncASRConfigWithRetry(
   let lastResult: ASRConfigSyncResult | null = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    app.log.info(`ASR配置同步尝试 ${attempt}/${maxRetries}`);
+    app.log.info(`ASR 配置同步尝试 ${attempt}/${maxRetries}`);
 
     lastResult = await syncASRConfig(app);
 
     if (lastResult.success) {
-      app.log.info(`ASR配置同步成功 (第${attempt}次尝试)`);
+      app.log.info(`ASR 配置同步成功 (第${attempt}次尝试)`);
       return lastResult;
     }
 
     if (attempt < maxRetries) {
-      app.log.warn(`ASR配置同步失败，${retryDelay}ms后重试...`);
+      app.log.warn(`ASR 配置同步失败，${retryDelay}ms 后重试...`);
       await new Promise(resolve => setTimeout(resolve, retryDelay));
     }
   }
 
-  app.log.error(`ASR配置同步最终失败，已重试${maxRetries}次`);
+  app.log.error(`ASR 配置同步最终失败，已重试${maxRetries}次`);
   return lastResult!;
 }

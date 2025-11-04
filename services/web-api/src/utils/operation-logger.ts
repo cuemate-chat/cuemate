@@ -1,9 +1,9 @@
 import type { FastifyRequest } from 'fastify';
 
 export interface OperationLogData {
-  menu: string; // 操作菜单：用户管理/模型管理/ASR设置等
-  type: string; // 资源类型：user/model/asr_config/job等
-  resourceId?: string; // 资源ID
+  menu: string; // 操作菜单：用户管理/模型管理/ASR 设置等
+  type: string; // 资源类型：user/model/asr_config/job 等
+  resourceId?: string; // 资源 ID
   resourceName?: string; // 资源名称
   operation:
     | 'login'
@@ -19,7 +19,7 @@ export interface OperationLogData {
   message?: string; // 操作信息
   status?: 'success' | 'failed'; // 操作状态
   errorMessage?: string; // 错误信息
-  userId?: string; // 操作用户ID
+  userId?: string; // 操作用户 ID
   userName?: string; // 操作用户名
 }
 
@@ -128,16 +128,16 @@ export class OperationLogger {
   }
 
   /**
-   * 获取客户端真实IP
+   * 获取客户端真实 IP
    */
   private getClientIp(req: FastifyRequest): string {
-    // 尝试从各种请求头中获取真实IP
+    // 尝试从各种请求头中获取真实 IP
     const forwarded = req.headers['x-forwarded-for'];
     const realIp = req.headers['x-real-ip'];
     const clientIp = req.headers['x-client-ip'];
 
     if (typeof forwarded === 'string') {
-      // X-Forwarded-For 可能包含多个IP，取第一个
+      // X-Forwarded-For 可能包含多个 IP，取第一个
       return forwarded.split(',')[0].trim();
     }
 
@@ -149,7 +149,7 @@ export class OperationLogger {
       return clientIp;
     }
 
-    // 默认使用连接IP
+    // 默认使用连接 IP
     return req.ip || req.socket?.remoteAddress || 'unknown';
   }
 }
@@ -188,7 +188,7 @@ export const MenuType = {
   CONTAINER_MONITORING: '容器监控',
   PRESET_QUESTION_BANK: '预置题库',
   VECTOR_KNOWLEDGE_BASE: '向量知识库',
-  AI_CONVERSATION_LOGS: 'AI对话记录',
+  AI_CONVERSATION_LOGS: 'AI 对话记录',
   PIXEL_ADS: '像素广告',
   ADS_MANAGEMENT: '广告管理',
   LICENSE_MANAGEMENT: 'License 管理',

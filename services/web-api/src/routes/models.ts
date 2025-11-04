@@ -155,8 +155,8 @@ export function registerModelRoutes(app: FastifyInstance) {
       // 发送模型添加通知 (仅针对新增模型)
       if (!isUpdate) {
         try {
-          // 获取用户ID (如果是管理员操作,通知所有用户或特定用户)
-          // 这里简化处理,通知系统管理员(假设uid为admin或第一个用户)
+          // 获取用户 ID (如果是管理员操作,通知所有用户或特定用户)
+          // 这里简化处理,通知系统管理员(假设 uid 为 admin 或第一个用户)
           const adminUser = (app as any).db
             .prepare('SELECT id FROM users ORDER BY created_at ASC LIMIT 1')
             .get();
@@ -381,12 +381,12 @@ async function testModelConnectivityInternal(app: FastifyInstance, modelId: stri
     }
   }
 
-  // 构建请求体 - 按照llm-router期望的格式
+  // 构建请求体 - 按照 llm-router 期望的格式
   const requestBody = {
     provider: model.provider,
     model_name: model.model_name,
     mode: 'both',
-    // 直接传递所有凭证字段，llm-router会自动处理字段名映射
+    // 直接传递所有凭证字段，llm-router 会自动处理字段名映射
     ...Object.fromEntries(
       Object.entries(creds).filter(([_, value]) => value !== undefined && value !== null),
     ),
@@ -401,7 +401,7 @@ async function testModelConnectivityInternal(app: FastifyInstance, modelId: stri
     model_name: model.model_name,
     credentials: creds,
     requestBody 
-  }, '发送给llm-router的请求体');
+  }, '发送给 llm-router 的请求体');
 
   const res = await fetch(getLlmRouterUrl(SERVICE_CONFIG.LLM_ROUTER.ENDPOINTS.PROBE), {
     method: 'POST',
