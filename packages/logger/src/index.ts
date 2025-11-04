@@ -46,7 +46,7 @@ export function createLogger(options: CreateLoggerOptions) {
     options: { baseDir, service: options.service },
   });
 
-  // 在开发环境或明确要求时添加pretty输出
+  // 在开发环境或明确要求时添加 pretty 输出
   if (isDevelopment && options.pretty) {
     transports.push({
       target: 'pino-pretty',
@@ -58,7 +58,7 @@ export function createLogger(options: CreateLoggerOptions) {
     });
   }
 
-  // 在生产环境（Docker容器）中，添加控制台输出
+  // 在生产环境（Docker 容器）中，添加控制台输出
   if (!isDevelopment) {
     transports.push({
       target: 'pino/file',

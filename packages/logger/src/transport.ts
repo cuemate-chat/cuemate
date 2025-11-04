@@ -87,7 +87,7 @@ export default async function transport(options: TransportOptions = {}) {
         ws = fs.createWriteStream(filePath, { flags: 'a' });
         streams.set(key, ws);
       } catch (error) {
-        // 如果创建失败，返回文件路径让prependLine处理
+        // 如果创建失败，返回文件路径让 prependLine 处理
         return resolveLogPath(baseDir, level, service, dateStr);
       }
     }
