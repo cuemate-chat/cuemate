@@ -87,6 +87,7 @@ services:
       - LLM_HOST=0.0.0.0
       - PRIMARY_LLM_PROVIDER=openai
       - ROUTING_STRATEGY=primary-fallback
+      - CUEMATE_LOG_DIR=/opt/cuemate/logs
       - TZ=Asia/Shanghai
     volumes:
       - ../../data/logs:/opt/cuemate/logs
@@ -113,6 +114,7 @@ services:
       - RAG_HOST=0.0.0.0
       - VECTOR_STORE_TYPE=chroma
       - CHROMA_PATH=http://cuemate-chroma:8000
+      - CUEMATE_LOG_DIR=/opt/cuemate/logs
       - TZ=Asia/Shanghai
     volumes:
       - chroma_data:/opt/cuemate/chroma_data
