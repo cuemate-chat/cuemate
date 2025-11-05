@@ -23,7 +23,7 @@ const STORAGE_KEY = 'cuemate_statistics';
 const STORAGE_TIMESTAMP_KEY = 'cuemate_statistics_timestamp';
 
 // 统计数据 API 基础 URL
-const STATISTICS_API_URL = 'https://stats.cuemate.chat/api/v1/statistics/summary';
+const STATISTICS_API_URL = 'http://stats.cuemate.chat/api/v1/statistics/summary';
 
 /**
  * 从 localStorage 获取缓存的统计数据
