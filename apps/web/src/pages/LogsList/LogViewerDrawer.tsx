@@ -16,9 +16,8 @@ interface LogViewerDrawerProps {
 // 项目中文名称映射
 const serviceNameMap: Record<string, string> = {
   'web-api': '后端 API 服务',
-  'llm-router': '大模型路由',
-  'rag-service': 'RAG 知识服务',
-  'cuemate-asr': '语音识别服务',
+  'llm-router': 'LLM 大模型路由',
+  'rag-service': 'RAG 向量知识库',
   'desktop-client': '桌面客户端',
 };
 

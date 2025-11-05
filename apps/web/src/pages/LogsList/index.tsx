@@ -173,16 +173,22 @@ export default function LogsList() {
   // 项目中文名称映射
   const serviceNameMap: Record<string, string> = {
     'web-api': '后端 API 服务',
-    'llm-router': '大模型路由',
+    'llm-router': '大模型路由服务',
     'rag-service': 'RAG 知识库服务',
-    'cuemate-asr': '语音识别服务',
     'desktop-client': '桌面客户端',
   };
 
+  const loadServices = async () => {
+    try {
+      const res = await fetchLogServices();
+      setServices(res.services);
+    } catch (err) {
+      console.error('加载服务列表失败：', err);
+    }
+  };
+
   useEffect(() => {
-    fetchLogServices()
-      .then((res) => setServices(res.services))
-      .catch(() => {});
+    loadServices();
   }, []);
 
   const loadLogs = async () => {
@@ -331,7 +337,10 @@ export default function LogsList() {
             清理今日日志
           </button>
           <button
-            onClick={loadLogs}
+            onClick={() => {
+              loadServices();
+              loadLogs();
+            }}
             disabled={loading}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
