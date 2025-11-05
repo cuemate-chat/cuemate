@@ -14,12 +14,14 @@ import { useNavigate } from 'react-router-dom';
 import { listJobs } from '../../api/jobs';
 import PageLoading from '../../components/PageLoading';
 import { useLoading } from '../../hooks/useLoading';
+import { useStatistics } from '../../hooks/useStatistics';
 import { webSocketService } from '../../services/webSocketService';
 
 export default function Home() {
   const [jobs, setJobs] = useState<Array<{ id: string; title: string }>>([]);
   const [currentJob, setCurrentJob] = useState<string | undefined>(undefined);
   const { loading, start: startLoading, end: endLoading } = useLoading();
+  const { statistics } = useStatistics();
   const navigate = useNavigate();
 
   // 检查并打开面试窗口
@@ -148,9 +150,9 @@ export default function Home() {
                     <div className="mx-auto mb-2 sm:mb-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg">
                       <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <div className="text-blue-600 text-xl sm:text-2xl font-bold mb-1">100+</div>
+                    <div className="text-blue-600 text-xl sm:text-2xl font-bold mb-1">{statistics.offers_count}+</div>
                     <div className="text-slate-700 font-medium text-xs sm:text-sm">收到的 Offer 数量</div>
-                    <div className="text-slate-500 text-xs mt-1">平均成功率 85%</div>
+                    <div className="text-slate-500 text-xs mt-1">平均成功率 {statistics.success_rate}</div>
                   </div>
                 </div>
                 
@@ -160,9 +162,9 @@ export default function Home() {
                     <div className="mx-auto mb-2 sm:mb-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white shadow-lg">
                       <ChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <div className="text-green-600 text-xl sm:text-2xl font-bold mb-1">860+</div>
+                    <div className="text-green-600 text-xl sm:text-2xl font-bold mb-1">{statistics.mock_interviews}+</div>
                     <div className="text-slate-700 font-medium text-xs sm:text-sm">通过的模拟次数</div>
-                    <div className="text-slate-500 text-xs mt-1">累计练习时长 2000+ 小时</div>
+                    <div className="text-slate-500 text-xs mt-1">累计练习时长 {statistics.practice_hours}+ 小时</div>
                   </div>
                 </div>
                 
@@ -172,7 +174,7 @@ export default function Home() {
                     <div className="mx-auto mb-2 sm:mb-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
                       <BuildingOffice2Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <div className="text-purple-600 text-xl sm:text-2xl font-bold mb-1">75+</div>
+                    <div className="text-purple-600 text-xl sm:text-2xl font-bold mb-1">{statistics.companies_joined}+</div>
                     <div className="text-slate-700 font-medium text-xs sm:text-sm">成功入职的公司数量</div>
                     <div className="text-slate-500 text-xs mt-1">涵盖各行业、各岗位</div>
                   </div>
