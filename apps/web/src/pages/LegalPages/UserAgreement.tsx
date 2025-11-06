@@ -95,7 +95,7 @@ export default function UserAgreement() {
           本协议受中华人民共和国法律管辖。因本协议产生的争议，由本服务运营地有管辖权的人民法院诉讼解决。
         </p>
 
-        <p className="text-sm text-slate-600">联系邮箱：support@cuemate.app（用于反馈与沟通）</p>
+        <p className="text-sm text-slate-600">联系邮箱：nuneatonhydroplane@gmail.com（用于反馈与沟通）</p>
       </div>
     </div>
   );

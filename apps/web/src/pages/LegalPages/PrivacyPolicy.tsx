@@ -81,7 +81,7 @@ export default function PrivacyPolicy() {
         </p>
 
         <p className="text-sm text-slate-600">
-          联系邮箱：privacy@cuemate.app（用于隐私问题与数据请求）
+          联系邮箱：nuneatonhydroplane@gmail.com（用于隐私问题与数据请求）
         </p>
       </div>
     </div>
