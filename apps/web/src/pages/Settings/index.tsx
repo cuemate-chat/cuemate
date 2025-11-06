@@ -108,16 +108,16 @@ export default function Settings() {
   return (
     <div className="space-y-6">
       {/* 系统偏好设置 */}
-      <section className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        <header className="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
-          <Cog6ToothIcon className="w-5 h-5 text-slate-700" />
-          <h2 className="text-slate-900 font-semibold">系统偏好设置</h2>
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
+        <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
+          <Cog6ToothIcon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+          <h2 className="text-slate-900 dark:text-slate-100 font-semibold">系统偏好设置</h2>
         </header>
-        <div className="divide-y divide-slate-200">
+        <div className="divide-y divide-slate-200 dark:divide-slate-700">
           {/* 语言 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="flex items-center gap-2 text-slate-800 font-medium">
-              <GlobeAltIcon className="w-5 h-5 text-slate-600" />
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-medium">
+              <GlobeAltIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               <span>语言</span>
             </div>
             <div className="md:col-span-2">
@@ -136,45 +136,45 @@ export default function Settings() {
                   dropdownStyle={{ padding: 0 }}
                 />
               </div>
-              <p className="text-xs text-slate-600 mt-2">选择界面显示语言</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">选择界面显示语言</p>
             </div>
           </div>
 
           {/* 主题 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="flex items-center gap-2 text-slate-800 font-medium">
-              <PaintBrushIcon className="w-5 h-5 text-slate-600" />
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-medium">
+              <PaintBrushIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               <span>主题</span>
             </div>
             <div className="md:col-span-2">
-              <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden bg-white shadow-sm">
+              <div className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 overflow-hidden bg-white dark:bg-slate-700 shadow-sm">
                 <button
-                  className={`px-4 py-2 text-sm ${form.theme === 'light' ? 'bg-blue-50 text-blue-700' : 'text-slate-800 hover:bg-slate-50'}`}
+                  className={`px-4 py-2 text-sm ${form.theme === 'light' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
                   onClick={() => setForm((f) => ({ ...f, theme: 'light' }))}
                 >
                   浅色
                 </button>
                 <button
-                  className={`px-4 py-2 text-sm border-l border-slate-300 ${form.theme === 'dark' ? 'bg-blue-50 text-blue-700' : 'text-slate-800 hover:bg-slate-50'}`}
+                  className={`px-4 py-2 text-sm border-l border-slate-300 dark:border-slate-600 ${form.theme === 'dark' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
                   onClick={() => setForm((f) => ({ ...f, theme: 'dark' }))}
                 >
                   深色
                 </button>
                 <button
-                  className={`px-4 py-2 text-sm border-l border-slate-300 ${form.theme === 'system' ? 'bg-blue-50 text-blue-700' : 'text-slate-800 hover:bg-slate-50'}`}
+                  className={`px-4 py-2 text-sm border-l border-slate-300 dark:border-slate-600 ${form.theme === 'system' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
                   onClick={() => setForm((f) => ({ ...f, theme: 'system' }))}
                 >
                   自动
                 </button>
               </div>
-              <p className="text-xs text-slate-600 mt-2">切换浅色/深色或跟随系统</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">切换浅色/深色或跟随系统</p>
             </div>
           </div>
 
           {/* 时区 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="flex items-center gap-2 text-slate-800 font-medium">
-              <ClockIcon className="w-5 h-5 text-slate-600" />
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-medium">
+              <ClockIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               <span>时区</span>
             </div>
             <div className="md:col-span-2">
@@ -195,32 +195,32 @@ export default function Settings() {
                   dropdownStyle={{ padding: 0 }}
                 />
               </div>
-              <p className="text-xs text-slate-600 mt-2">设置显示的时区</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">设置显示的时区</p>
             </div>
           </div>
 
           {/* 版本号 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="flex items-center gap-2 text-slate-800 font-medium">
-              <InformationCircleIcon className="w-5 h-5 text-slate-600" />
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-medium">
+              <InformationCircleIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               <span>软件版本</span>
             </div>
             <div className="md:col-span-2">
               <input
                 value={form.version || 'v0.1.0'}
                 disabled
-                className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
               />
             </div>
           </div>
 
           {/* 当前绑定模型 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="flex items-center gap-2 text-slate-800 font-medium">
-              <CubeIcon className="w-5 h-5 text-slate-600" />
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-medium">
+              <CubeIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               <span>大模型供应商</span>
             </div>
-            
+
             <div className="md:col-span-2">
               <div className="w-full">
                 <AntSelect
@@ -232,7 +232,7 @@ export default function Settings() {
                   style={{ height: 40 }}
                 />
               </div>
-              <p className="text-xs text-slate-600 mt-2">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
                 为当前账号绑定一个模型。选择后点击页面底部"保存"按钮生效。你也可以前往"模型设置"页面管理模型。
               </p>
             </div>
@@ -240,16 +240,16 @@ export default function Settings() {
 
           {/* 政策协议 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="flex items-center gap-2 text-slate-800 font-medium">
-              <DocumentTextIcon className="w-5 h-5 text-slate-600" />
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-medium">
+              <DocumentTextIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               <span>政策协议</span>
             </div>
             <div className="md:col-span-2">
               <div className="flex items-center gap-4 text-sm">
-                <a className="text-blue-700 hover:underline" href="/legal/user-agreement">
+                <a className="text-blue-700 dark:text-blue-400 hover:underline" href="/legal/user-agreement">
                   用户协议
                 </a>
-                <a className="text-blue-700 hover:underline" href="/legal/privacy">
+                <a className="text-blue-700 dark:text-blue-400 hover:underline" href="/legal/privacy">
                   隐私政策
                 </a>
               </div>
@@ -259,41 +259,41 @@ export default function Settings() {
       </section>
 
       {/* 悬浮窗设置 */}
-      <section className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        <header className="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
-          <WindowIcon className="w-5 h-5 text-slate-700" />
-          <h2 className="text-slate-900 font-semibold">悬浮窗设置</h2>
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
+        <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
+          <WindowIcon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+          <h2 className="text-slate-900 dark:text-slate-100 font-semibold">悬浮窗设置</h2>
         </header>
-        <div className="divide-y divide-slate-200">
+        <div className="divide-y divide-slate-200 dark:divide-slate-700">
           {/* 点击穿透模式 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="flex items-center gap-2 text-slate-800 font-medium">
-              <CursorArrowRaysIcon className="w-5 h-5 text-slate-600" />
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-medium">
+              <CursorArrowRaysIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               <span>点击穿透</span>
             </div>
             <div className="md:col-span-2">
-              <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden bg-white shadow-sm">
+              <div className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 overflow-hidden bg-white dark:bg-slate-700 shadow-sm">
                 <button
-                  className={`px-4 py-2 text-sm ${form.floating_window_visible === 1 ? 'bg-blue-50 text-blue-700' : 'text-slate-800 hover:bg-slate-50'}`}
+                  className={`px-4 py-2 text-sm ${form.floating_window_visible === 1 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
                   onClick={() => setForm((f) => ({ ...f, floating_window_visible: 1 }))}
                 >
                   交互模式
                 </button>
                 <button
-                  className={`px-4 py-2 text-sm border-l border-slate-300 ${form.floating_window_visible === 0 ? 'bg-blue-50 text-blue-700' : 'text-slate-800 hover:bg-slate-50'}`}
+                  className={`px-4 py-2 text-sm border-l border-slate-300 dark:border-slate-600 ${form.floating_window_visible === 0 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
                   onClick={() => setForm((f) => ({ ...f, floating_window_visible: 0 }))}
                 >
                   穿透模式
                 </button>
               </div>
-              <p className="text-xs text-slate-600 mt-2">穿透模式下窗口依然可见，但鼠标点击会穿透到下层应用，快捷键 ⌘⇧CM 切换</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">穿透模式下窗口依然可见，但鼠标点击会穿透到下层应用，快捷键 ⌘⇧CM 切换</p>
             </div>
           </div>
 
           {/* 悬浮窗口高度 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="flex items-center gap-2 text-slate-800 font-medium">
-              <ArrowsPointingOutIcon className="w-5 h-5 text-slate-600" />
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-medium">
+              <ArrowsPointingOutIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               <span>窗口高度</span>
             </div>
             <div className="md:col-span-2">
@@ -311,72 +311,72 @@ export default function Settings() {
                   style={{ height: 40 }}
                 />
               </div>
-              <p className="text-xs text-slate-600 mt-2">设置桌面应用悬浮窗口的屏幕高度占比</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">设置桌面应用悬浮窗口的屏幕高度占比</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* 账户信息 */}
-      <section className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        <header className="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
-          <UserCircleIcon className="w-5 h-5 text-slate-700" />
-          <h2 className="text-slate-900 font-semibold">账户信息</h2>
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
+        <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
+          <UserCircleIcon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+          <h2 className="text-slate-900 dark:text-slate-100 font-semibold">账户信息</h2>
         </header>
-        <div className="divide-y divide-slate-200">
+        <div className="divide-y divide-slate-200 dark:divide-slate-700">
           {/* ID */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="text-slate-800 font-medium">ID</div>
+            <div className="text-slate-800 dark:text-slate-200 font-medium">ID</div>
             <div className="md:col-span-2">
               <input
                 value={form.id}
                 disabled
-                className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
               />
             </div>
           </div>
           {/* 用户名 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="text-slate-800 font-medium">用户名</div>
+            <div className="text-slate-800 dark:text-slate-200 font-medium">用户名</div>
             <div className="md:col-span-2">
               <input
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
               />
             </div>
           </div>
           {/* 邮箱 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="text-slate-800 font-medium">邮箱</div>
+            <div className="text-slate-800 dark:text-slate-200 font-medium">邮箱</div>
             <div className="md:col-span-2">
               <input
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
               />
             </div>
           </div>
           {/* 创建时间 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="text-slate-800 font-medium">创建时间</div>
+            <div className="text-slate-800 dark:text-slate-200 font-medium">创建时间</div>
             <div className="md:col-span-2">
               <input
                 value={form.created_at ? new Date(form.created_at).toLocaleString() : ''}
                 disabled
-                className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
               />
             </div>
           </div>
           {/* 密码修改 */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div className="text-slate-800 font-medium">密码</div>
+            <div className="text-slate-800 dark:text-slate-200 font-medium">密码</div>
             <div className="md:col-span-2">
               <PasswordEditor />
             </div>
           </div>
         </div>
-        <div className="px-6 py-6 border-t border-slate-200 flex justify-center bg-slate-50 gap-3">
+        <div className="px-6 py-6 border-t border-slate-200 dark:border-slate-700 flex justify-center bg-slate-50 dark:bg-slate-800/50 gap-3">
           <Button
             disabled={loading}
             onClick={() => {
@@ -423,7 +423,7 @@ export default function Settings() {
                 floating_window_visible: form.floating_window_visible,
                 floating_window_height: form.floating_window_height,
               };
-              
+
               // 直接复用 onSave 逻辑
               (async () => {
                 startSaving();
@@ -478,19 +478,19 @@ function PasswordEditor() {
             placeholder="原密码（至少 6 位）"
             type={showOld ? 'text' : 'password'}
             disabled={!editing}
-            className={`w-full rounded-lg border border-slate-300 px-3 pr-10 py-2 text-slate-900 ${!editing ? 'bg-slate-50' : ''}`}
+            className={`w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 pr-10 py-2 text-slate-900 dark:text-slate-100 ${!editing ? 'bg-slate-50 dark:bg-slate-700' : 'bg-white dark:bg-slate-700'}`}
             value={oldPwd}
             onChange={(e) => setOldPwd(e.target.value)}
           />
           <button
             type="button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             onClick={() => setShowOld((v) => !v)}
           >
             {showOld ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
           </button>
           {editing && oldPwd.length > 0 && oldPwd.length < 6 && (
-            <p className="mt-1 text-xs text-red-600">原密码长度至少 6 位</p>
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">原密码长度至少 6 位</p>
           )}
         </div>
         <div className="relative">
@@ -498,25 +498,25 @@ function PasswordEditor() {
             placeholder="新密码（至少 6 位）"
             type={showNew ? 'text' : 'password'}
             disabled={!editing}
-            className={`w-full rounded-lg border border-slate-300 px-3 pr-10 py-2 text-slate-900 ${!editing ? 'bg-slate-50' : ''}`}
+            className={`w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 pr-10 py-2 text-slate-900 dark:text-slate-100 ${!editing ? 'bg-slate-50 dark:bg-slate-700' : 'bg-white dark:bg-slate-700'}`}
             value={newPwd}
             onChange={(e) => setNewPwd(e.target.value)}
           />
           <button
             type="button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             onClick={() => setShowNew((v) => !v)}
           >
             {showNew ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
           </button>
           {editing && newPwd.length > 0 && newPwd.length < 6 && (
-            <p className="mt-1 text-xs text-red-600">新密码长度至少 6 位</p>
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">新密码长度至少 6 位</p>
           )}
         </div>
       </div>
       <div className="flex items-center gap-3">
         <button
-          className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm"
+          className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-sm"
           onClick={() => {
             if (!editing) {
               setEditing(true);
@@ -538,8 +538,8 @@ function PasswordEditor() {
           {editing ? '保存密码' : '修改密码'}
         </button>
         {editing && (
-          <span className="text-xs text-slate-600">
-            不少于 6 位。保存密码后，再点击页面底部“保存”应用其他设置
+          <span className="text-xs text-slate-600 dark:text-slate-400">
+            不少于 6 位。保存密码后，再点击页面底部"保存"应用其他设置
           </span>
         )}
       </div>
