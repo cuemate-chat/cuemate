@@ -308,3 +308,94 @@ make format            # 代码格式化
 make clean             # 清理所有构建产物
 make docker-clean      # 清理 Docker 数据（慎用）
 ```
+
+## 功能使用指南
+
+### 简历优化功能
+
+简历优化功能帮助你根据岗位描述智能优化简历内容，支持多轮迭代优化。
+
+#### 功能入口
+
+在 Web 前端（http://localhost）登录后：
+1. 进入「岗位列表」页面
+2. 选择或创建一个岗位
+3. 点击页面右上角的「简历优化」按钮
+
+![岗位列表页面](./images/jobs-list-placeholder.png)
+
+#### 使用流程
+
+**1. 查看优化记录列表**
+
+点击「简历优化」按钮后，会打开简历优化记录列表（一级弹框）：
+- 显示该岗位的所有历史优化记录
+- 每条记录包含：状态、优化次数、字数统计、时间等信息
+- 点击「新建优化简历」创建新的优化记录
+- 点击任意记录查看详情
+
+![简历优化列表](./images/resume-optimization-list-placeholder.png)
+
+**2. 查看优化详情**
+
+点击某条优化记录后，打开详情页面（二级弹框）：
+- **优化建议区域**：展示 AI 给出的优化建议
+- **内容对比区域**：
+  - **差异对比模式**：高亮显示优化前后的差异
+    - 红色：删除的内容
+    - 绿色：新增的内容
+    - 黄色：修改的词语
+  - **编辑模式**：可以手动编辑优化前后的内容
+- **操作按钮**：
+  - 「应用此版本」：将选中版本应用到当前岗位简历
+  - 「新建简历优化」：基于当前优化后的简历再次优化
+
+![简历优化详情 - 差异对比](./images/resume-optimization-detail-diff-placeholder.png)
+
+![简历优化详情 - 编辑模式](./images/resume-optimization-detail-edit-placeholder.png)
+
+**3. 多轮迭代优化**
+
+如果觉得当前优化结果还不够完美，可以点击右上角的「新建简历优化」按钮：
+1. 系统会将当前「优化后」的简历作为新的「优化前」简历
+2. 调用 LLM 进行新一轮优化
+3. 生成新的优化记录
+4. 自动刷新列表并显示最新记录
+
+这样可以不断迭代，逐步完善简历内容。
+
+![多轮优化流程](./images/resume-optimization-iteration-placeholder.png)
+
+#### 数据存储
+
+所有简历优化记录都保存在 SQLite 数据库中（`~/data/sqlite/cuemate.db`），包括：
+- 优化前简历内容
+- 优化后简历内容
+- AI 优化建议
+- 使用的模型信息
+- 优化时间、状态等元数据
+
+数据库表结构参见：`packages/data-sqlite/src/migrations/021_create_resume_optimizations.ts`
+
+#### API 接口
+
+前端调用以下 API 实现简历优化功能：
+
+```typescript
+// 获取岗位的简历优化记录列表
+GET /jobs/:jobId/resume-optimizations
+
+// 获取单个优化记录详情
+GET /resume-optimizations/:id
+
+// 创建新的优化记录
+POST /jobs/:jobId/resume-optimizations
+
+// 更新优化记录
+PUT /resume-optimizations/:id
+
+// 调用 LLM 优化简历
+POST /jobs/optimize-resume
+```
+
+详细实现参见：`services/web-api/src/routes/jobs.ts`
