@@ -101,7 +101,7 @@ const DocumentDetailDrawer: React.FC<DocumentDetailDrawerProps> = ({
       <DrawerContent>
         <div className="space-y-6">
           {/* 顶部标签 */}
-          <div className="border-b border-gray-200">
+          <div className="border-b border-gray-200 dark:border-slate-700">
             <nav className="-mb-px flex space-x-8">
               {(() => {
                 const type = document.metadata.type;
@@ -145,8 +145,8 @@ const DocumentDetailDrawer: React.FC<DocumentDetailDrawerProps> = ({
                     onClick={() => setActiveTab(t.key)}
                     className={`py-2 px-1 border-b-2 font-medium text-sm ${
                       activeTab === t.key
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'
                     }`}
                   >
                     {t.label}
@@ -162,24 +162,24 @@ const DocumentDetailDrawer: React.FC<DocumentDetailDrawerProps> = ({
               {/* 文档基本信息 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="md:col-span-2">
-                  <span className="font-medium text-gray-700">ID:</span>
-                  <span className="ml-2 text-gray-900 break-all">{document.id}</span>
+                  <span className="font-medium text-gray-700 dark:text-slate-200">ID:</span>
+                  <span className="ml-2 text-gray-900 dark:text-slate-100 break-all">{document.id}</span>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">类型:</span>
-                  <span className="ml-2 text-gray-900">
+                  <span className="font-medium text-gray-700 dark:text-slate-200">类型:</span>
+                  <span className="ml-2 text-gray-900 dark:text-slate-100">
                     {getTypeDisplayName(document.metadata.type || '')}
                   </span>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">来源:</span>
-                  <span className="ml-2 text-gray-900">
+                  <span className="font-medium text-gray-700 dark:text-slate-200">来源:</span>
+                  <span className="ml-2 text-gray-900 dark:text-slate-100">
                     {getSourceDisplayName(document.metadata.source || '')}
                   </span>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">创建时间:</span>
-                  <span className="ml-2 text-gray-900">
+                  <span className="font-medium text-gray-700 dark:text-slate-200">创建时间:</span>
+                  <span className="ml-2 text-gray-900 dark:text-slate-100">
                     {document.metadata.timestamp || document.metadata.createdAt
                       ? formatDate(
                           document.metadata.createdAt ||
@@ -190,22 +190,22 @@ const DocumentDetailDrawer: React.FC<DocumentDetailDrawerProps> = ({
                 </div>
                 {document.metadata.title && (
                   <div className="md:col-span-2">
-                    <span className="font-medium text-gray-700">标题:</span>
-                    <span className="ml-2 text-gray-900">{document.metadata.title}</span>
+                    <span className="font-medium text-gray-700 dark:text-slate-200">标题:</span>
+                    <span className="ml-2 text-gray-900 dark:text-slate-100">{document.metadata.title}</span>
                   </div>
                 )}
                 {document.metadata.tagName && (
                   <div>
-                    <span className="font-medium text-gray-700">标签:</span>
-                    <span className="ml-2 text-gray-900">{document.metadata.tagName}</span>
+                    <span className="font-medium text-gray-700 dark:text-slate-200">标签:</span>
+                    <span className="ml-2 text-gray-900 dark:text-slate-100">{document.metadata.tagName}</span>
                   </div>
                 )}
               </div>
 
               {/* 文档内容 */}
               <div>
-                <div className="font-medium text-gray-700 mb-2">内容:</div>
-                <div className="bg-gray-50 p-4 rounded-md text-sm text-gray-900 whitespace-pre-wrap max-h-96 overflow-y-auto">
+                <div className="font-medium text-gray-700 dark:text-slate-200 mb-2">内容:</div>
+                <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-md text-sm text-gray-900 dark:text-slate-100 whitespace-pre-wrap max-h-96 overflow-y-auto">
                   {document.content}
                 </div>
               </div>
@@ -216,21 +216,21 @@ const DocumentDetailDrawer: React.FC<DocumentDetailDrawerProps> = ({
           {activeTab === 'resumes' && (
             <div className="space-y-4">
               {relatedData?.resumes && relatedData.resumes.length > 0 ? (
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
-                    <h4 className="font-medium text-slate-900">
+                <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                  <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100">
                       {relatedData.resumes[0].metadata.title || '简历标题'}
                     </h4>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
                       ID: {relatedData.resumes[0].id}
                     </span>
                   </div>
-                  <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-96 overflow-y-auto">
+                  <div className="p-4 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap max-h-96 overflow-y-auto">
                     {relatedData.resumes[0].content}
                   </div>
                 </div>
               ) : (
-                <div className="text-center text-gray-500 py-8">暂无相关简历信息</div>
+                <div className="text-center text-gray-500 dark:text-slate-400 py-8">暂无相关简历信息</div>
               )}
             </div>
           )}
@@ -240,7 +240,7 @@ const DocumentDetailDrawer: React.FC<DocumentDetailDrawerProps> = ({
             <div className="space-y-4">
               {relatedData?.questions && relatedData.questions.length > 0 ? (
                 relatedData.questions.map((question, index) => (
-                  <div key={question.id} className="border rounded-lg p-4 relative">
+                  <div key={question.id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 relative">
                     {/* 左上角序号 */}
                     <div className="absolute left-0 top-0">
                       <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
@@ -249,23 +249,23 @@ const DocumentDetailDrawer: React.FC<DocumentDetailDrawerProps> = ({
                       <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
                     </div>
                     <div className="flex justify-between items-start mb-2 ml-6">
-                      <h4 className="font-medium text-gray-900">
+                      <h4 className="font-medium text-gray-900 dark:text-slate-100">
                         {question.metadata.title || '押题标题'}
                       </h4>
-                      <span className="text-xs text-gray-500">ID: {question.id}</span>
+                      <span className="text-xs text-gray-500 dark:text-slate-400">ID: {question.id}</span>
                     </div>
-                    <div className="text-sm text-gray-600 mb-2 ml-6">
+                    <div className="text-sm text-gray-600 dark:text-slate-300 mb-2 ml-6">
                       {question.metadata.tagName && (
                         <span className="font-medium">标签: {question.metadata.tagName}</span>
                       )}
                     </div>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-80 overflow-y-auto ml-6">
+                    <div className="text-sm text-gray-700 dark:text-slate-200 whitespace-pre-wrap max-h-80 overflow-y-auto ml-6">
                       {question.content}
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center text-gray-500 py-8">暂无相关押题信息</div>
+                <div className="text-center text-gray-500 dark:text-slate-400 py-8">暂无相关押题信息</div>
               )}
             </div>
           )}
@@ -274,19 +274,19 @@ const DocumentDetailDrawer: React.FC<DocumentDetailDrawerProps> = ({
           {activeTab === 'jobs' && (
             <div className="space-y-4">
               {relatedData?.jobs && relatedData.jobs.length > 0 ? (
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
-                    <h4 className="font-medium text-slate-900">
+                <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                  <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100">
                       {relatedData.jobs[0].metadata.title || '岗位标题'}
                     </h4>
-                    <span className="text-xs text-slate-500">ID: {relatedData.jobs[0].id}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">ID: {relatedData.jobs[0].id}</span>
                   </div>
-                  <div className="p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-96 overflow-y-auto">
+                  <div className="p-4 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap max-h-96 overflow-y-auto">
                     {relatedData.jobs[0].content}
                   </div>
                 </div>
               ) : (
-                <div className="text-center text-gray-500 py-8">暂无相关岗位信息</div>
+                <div className="text-center text-gray-500 dark:text-slate-400 py-8">暂无相关岗位信息</div>
               )}
             </div>
           )}

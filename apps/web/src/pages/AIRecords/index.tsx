@@ -68,7 +68,7 @@ export default function AIRecordsList() {
       key: 'index',
       width: '5%',
       render: (_value: any, _record: any, index: number) => (
-        <div className="text-center">
+        <div className="text-center text-gray-900 dark:text-slate-100">
           {(page - 1) * pageSize + index + 1}
         </div>
       ),
@@ -82,20 +82,20 @@ export default function AIRecordsList() {
         const provider = findProvider(record.model_provider);
         const iconContent = provider?.icon;
         const iconSrc = iconContent ? `data:image/svg+xml;utf8,${encodeURIComponent(iconContent)}` : null;
-        
+
         return (
           <div className="flex flex-col">
             <div className="flex items-center gap-2 mb-1">
-              <ChatBubbleLeftRightIcon className="w-4 h-4 text-blue-500" />
-              <span className="text-sm font-medium text-gray-900 truncate">
+              <ChatBubbleLeftRightIcon className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+              <span className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate">
                 {record.title}
               </span>
             </div>
-            <div className="flex flex-col gap-1 text-sm text-gray-500">
+            <div className="flex flex-col gap-1 text-sm text-gray-500 dark:text-slate-200">
               <div className="flex items-center gap-2">
                 {iconSrc && (
-                  <img 
-                    src={iconSrc} 
+                  <img
+                    src={iconSrc}
                     alt={record.model_provider}
                     className="w-4 h-4 rounded flex-shrink-0"
                     onError={(e) => {
@@ -129,10 +129,10 @@ export default function AIRecordsList() {
       width: '12%',
       render: (record: AIConversation) => (
         <div className="flex flex-col">
-          <div className="text-sm text-gray-900">
+          <div className="text-sm text-gray-900 dark:text-slate-100">
             {record.message_count} 条对话
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500 dark:text-slate-200">
             {record.token_used} tokens
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function AIRecordsList() {
       key: 'created_at',
       width: '15%',
       render: (record: AIConversation) => (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-gray-900 dark:text-slate-100">
           {dayjs(record.created_at * 1000).format('YYYY-MM-DD HH:mm:ss')}
         </div>
       ),
@@ -153,7 +153,7 @@ export default function AIRecordsList() {
       key: 'updated_at',
       width: '15%',
       render: (record: AIConversation) => (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-gray-900 dark:text-slate-100">
           {dayjs(record.updated_at * 1000).format('YYYY-MM-DD HH:mm:ss')}
         </div>
       ),
@@ -175,7 +175,7 @@ export default function AIRecordsList() {
       render: (record: AIConversation) => (
         <div className="flex items-center gap-2">
           <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
             onClick={() => openDetailDrawer(record)}
           >
             <EyeIcon className="w-4 h-4" /> 详情
@@ -187,7 +187,7 @@ export default function AIRecordsList() {
             okText="确定"
             cancelText="取消"
           >
-            <button className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 transition-colors">
+            <button className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-300 dark:hover:border-red-600 transition-colors">
               <TrashIcon className="w-4 h-4" /> 删除
             </button>
           </Popconfirm>
@@ -323,13 +323,13 @@ export default function AIRecordsList() {
     const baseClass = 'px-2 py-1 rounded-full text-xs font-medium';
     switch (status) {
       case 'active':
-        return `${baseClass} bg-blue-100 text-blue-800`;
+        return `${baseClass} bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200`;
       case 'completed':
-        return `${baseClass} bg-green-100 text-green-800`;
+        return `${baseClass} bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200`;
       case 'error':
-        return `${baseClass} bg-red-100 text-red-800`;
+        return `${baseClass} bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200`;
       default:
-        return `${baseClass} bg-gray-100 text-gray-800`;
+        return `${baseClass} bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200`;
     }
   };
 
@@ -361,109 +361,109 @@ export default function AIRecordsList() {
     <div className="p-6 space-y-6">
       {/* 页面标题 */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">AI 对话记录</h1>
-        <p className="text-gray-600 mt-1">查看和管理 AI 对话记录</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">AI 对话记录</h1>
+        <p className="text-gray-600 dark:text-slate-200 mt-1">查看和管理 AI 对话记录</p>
       </div>
 
       {/* 统计面板 */}
       {(
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">今天对话数</h3>
-                <p className="text-2xl font-bold text-blue-600">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">今天对话数</h3>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {stats?.todayConversations || 0}
                 </p>
               </div>
-              <CalendarDaysIcon className="w-8 h-8 text-blue-500" />
+              <CalendarDaysIcon className="w-8 h-8 text-blue-500 dark:text-blue-400" />
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">今天提问数</h3>
-                <p className="text-2xl font-bold text-indigo-600">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">今天提问数</h3>
+                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                   {stats?.todayQuestions || 0}
                 </p>
               </div>
-              <QuestionMarkCircleIcon className="w-8 h-8 text-indigo-500" />
+              <QuestionMarkCircleIcon className="w-8 h-8 text-indigo-500 dark:text-indigo-400" />
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">总对话数</h3>
-                <p className="text-2xl font-bold text-green-600">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">总对话数</h3>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {stats?.total || 0}
                 </p>
               </div>
-              <ChatBubbleLeftRightIcon className="w-8 h-8 text-green-500" />
+              <ChatBubbleLeftRightIcon className="w-8 h-8 text-green-500 dark:text-green-400" />
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">总提问数</h3>
-                <p className="text-2xl font-bold text-cyan-600">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">总提问数</h3>
+                <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
                   {stats?.totalQuestions || 0}
                 </p>
               </div>
-              <HashtagIcon className="w-8 h-8 text-cyan-500" />
+              <HashtagIcon className="w-8 h-8 text-cyan-500 dark:text-cyan-400" />
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">进行中</h3>
-                <p className="text-2xl font-bold text-orange-600">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">进行中</h3>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                   {stats?.active || 0}
                 </p>
               </div>
-              <PlayIcon className="w-8 h-8 text-orange-500" />
+              <PlayIcon className="w-8 h-8 text-orange-500 dark:text-orange-400" />
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">已完成</h3>
-                <p className="text-2xl font-bold text-emerald-600">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">已完成</h3>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                   {stats?.completed || 0}
                 </p>
               </div>
-              <CheckCircleIcon className="w-8 h-8 text-emerald-500" />
+              <CheckCircleIcon className="w-8 h-8 text-emerald-500 dark:text-emerald-400" />
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">失败对话数</h3>
-                <p className="text-2xl font-bold text-red-600">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">失败对话数</h3>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {stats?.failedConversations || 0}
                 </p>
               </div>
-              <XCircleIcon className="w-8 h-8 text-red-500" />
+              <XCircleIcon className="w-8 h-8 text-red-500 dark:text-red-400" />
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">消耗 Token</h3>
-                <p className="text-2xl font-bold text-purple-600">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">消耗 Token</h3>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {(stats?.totalTokens || 0).toLocaleString()}
                 </p>
               </div>
-              <ExclamationTriangleIcon className="w-8 h-8 text-purple-500" />
+              <ExclamationTriangleIcon className="w-8 h-8 text-purple-500 dark:text-purple-400" />
             </div>
           </div>
         </div>
       )}
 
       {/* 筛选区域 */}
-      <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">状态</label>
             <Select
               value={filters.status}
               onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
@@ -474,7 +474,7 @@ export default function AIRecordsList() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">模型供应商</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">模型供应商</label>
             <Select
               value={filters.model_id}
               onChange={(value) => setFilters(prev => ({ ...prev, model_id: value }))}
@@ -487,8 +487,8 @@ export default function AIRecordsList() {
                 <Select.Option key={option.value} value={option.value} label={option.label}>
                   <div className="flex items-center gap-2 py-1">
                     {option.icon && (
-                      <img 
-                        src={option.icon} 
+                      <img
+                        src={option.icon}
                         alt=""
                         className="w-4 h-4 rounded flex-shrink-0"
                         onError={(e) => {
@@ -503,12 +503,12 @@ export default function AIRecordsList() {
             </Select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">关键词</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">关键词</label>
             <input
               type="text"
               value={filters.keyword}
               onChange={(e) => setFilters(prev => ({ ...prev, keyword: e.target.value }))}
-              className="w-full px-3 py-2 h-[42px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 h-[42px] border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="搜索对话标题或模型名称"
             />
           </div>
@@ -521,7 +521,7 @@ export default function AIRecordsList() {
       </div>
 
       {/* 表格区域 */}
-      <div className="bg-white rounded-lg shadow border overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow border dark:border-slate-700 overflow-hidden">
         <Table
           columns={columns}
           dataSource={conversations}
@@ -532,10 +532,10 @@ export default function AIRecordsList() {
           size="middle"
           locale={{
             emptyText: (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-                <ChatBubbleLeftRightIcon className="w-12 h-12 text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium mb-2">暂无 AI 对话记录</h3>
-                <p className="text-sm">当有 AI 对话时，记录会显示在这里</p>
+              <div className="flex flex-col items-center justify-center py-16 text-gray-500 dark:text-slate-200">
+                <ChatBubbleLeftRightIcon className="w-12 h-12 text-gray-300 dark:text-slate-500 mb-4" />
+                <h3 className="text-lg font-medium mb-2 dark:text-slate-100">暂无 AI 对话记录</h3>
+                <p className="text-sm dark:text-slate-200">当有 AI 对话时，记录会显示在这里</p>
               </div>
             )
           }}
@@ -544,11 +544,11 @@ export default function AIRecordsList() {
 
       {/* 分页组件 */}
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500">共 {total} 条</div>
-        <PaginationBar 
-          page={page} 
-          pageSize={pageSize} 
-          total={total} 
+        <div className="text-slate-500 dark:text-slate-200">共 {total} 条</div>
+        <PaginationBar
+          page={page}
+          pageSize={pageSize}
+          total={total}
           onChange={(p: number) => setPage(p)}
           onPageSizeChange={(_: number, size: number) => {
             setPageSize(size);

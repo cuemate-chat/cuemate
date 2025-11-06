@@ -585,6 +585,7 @@ export default function VectorKnowledge() {
                               searchDocuments({ createdFrom: ts });
                             }}
                             style={{ height: '42px' }}
+                            className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                           />
                           <Input
                             type="date"
@@ -600,6 +601,7 @@ export default function VectorKnowledge() {
                               searchDocuments({ createdTo: ts });
                             }}
                             style={{ height: '42px' }}
+                            className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                           />
                         </div>
                       </div>
@@ -627,6 +629,7 @@ export default function VectorKnowledge() {
                               searchDocuments({ createdFrom: ts });
                             }}
                             style={{ height: '42px' }}
+                            className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                           />
                           <Input
                             type="date"
@@ -642,6 +645,7 @@ export default function VectorKnowledge() {
                               searchDocuments({ createdTo: ts });
                             }}
                             style={{ height: '42px' }}
+                            className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                           />
                         </div>
                       </div>
@@ -682,6 +686,7 @@ export default function VectorKnowledge() {
                             searchDocuments({ createdFrom: ts });
                           }}
                           style={{ height: '42px' }}
+                          className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                         />
                       </div>
                       <div>
@@ -700,6 +705,7 @@ export default function VectorKnowledge() {
                             searchDocuments({ createdTo: ts });
                           }}
                           style={{ height: '42px' }}
+                          className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
                         />
                       </div>
                     </>
