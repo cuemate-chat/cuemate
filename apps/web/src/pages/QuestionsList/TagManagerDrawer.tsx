@@ -202,7 +202,7 @@ const TagManagerDrawer: React.FC<TagManagerDrawerProps> = ({
         <div className="space-y-4">
           <div className="flex gap-2 items-end">
             <div>
-              <div className="text-sm mb-1">标签名称<span className="text-red-500"> *</span></div>
+              <div className="text-sm mb-1 dark:text-slate-200">标签名称<span className="text-red-500 dark:text-red-400"> *</span></div>
               <Input
                 placeholder="新建标签名称（不超过 20 个字）"
                 value={newTagName}
@@ -224,8 +224,8 @@ const TagManagerDrawer: React.FC<TagManagerDrawerProps> = ({
           </div>
           
           {/* 表格，支持编辑/删除与序号显示 */}
-          <div className="border border-slate-200 rounded-lg overflow-hidden">
-            <div className="p-2">
+          <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+            <div className="p-2 dark:bg-slate-800">
               <Input
                 placeholder="搜索标签名（模糊匹配）"
                 value={search}

@@ -90,15 +90,15 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       <DrawerContent>
         {current && (
           <div className="space-y-4 h-[70vh] flex flex-col">
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
               创建时间：{dayjs(current.created_at).format('YYYY-MM-DD HH:mm')}{' '}
-              <span className="ml-3 text-red-500">
+              <span className="ml-3 text-red-500 dark:text-red-400">
                 {current.vector_status ? '已同步到向量库' : '未同步到向量库，保存后自动同步'}
               </span>
             </div>
-            
+
             <div>
-              <div className="text-sm mb-1">标签<span className="text-red-500"> *</span></div>
+              <div className="text-sm mb-1 dark:text-slate-200">标签<span className="text-red-500 dark:text-red-400"> *</span></div>
               <Select
                 allowClear
                 placeholder="选择标签"
@@ -113,7 +113,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
             </div>
             
             <div>
-              <div className="text-sm mb-1">问题<span className="text-red-500"> *</span></div>
+              <div className="text-sm mb-1 dark:text-slate-200">问题<span className="text-red-500 dark:text-red-400"> *</span></div>
               <Input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
@@ -122,7 +122,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
             </div>
             
             <div className="flex-1 min-h-0 flex flex-col">
-              <div className="text-sm mb-1">问题描述<span className="text-red-500"> *</span></div>
+              <div className="text-sm mb-1 dark:text-slate-200">问题描述<span className="text-red-500 dark:text-red-400"> *</span></div>
               <Input.TextArea
                 rows={adaptiveTextareaRows}
                 value={editDesc}

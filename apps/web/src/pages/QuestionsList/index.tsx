@@ -287,42 +287,42 @@ export default function QuestionsList() {
               }}
               title="点击查看面试押题"
               className={`relative w-full text-left pl-10 pr-12 py-3 rounded-lg border transition-all duration-200 group ${
-                jobId === it.id 
-                  ? 'border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm' 
-                  : 'border-slate-200 hover:border-blue-300 hover:bg-gradient-to-r hover:from-slate-50 hover:to-blue-50'
+                jobId === it.id
+                  ? 'border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:border-blue-600 dark:from-blue-950 dark:to-indigo-950 shadow-sm'
+                  : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-gradient-to-r hover:from-slate-50 hover:to-blue-50 dark:hover:from-slate-800 dark:hover:to-blue-950'
               }`}
             >
               <div className={`absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200 ${
-                jobId === it.id 
-                  ? 'bg-blue-500 text-white shadow-lg' 
-                  : 'bg-slate-200 text-slate-600 group-hover:bg-blue-400 group-hover:text-white'
+                jobId === it.id
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 group-hover:bg-blue-400 group-hover:text-white'
               }`}>
                 {idx + 1}
               </div>
               <div className={`font-medium transition-colors duration-200 ${
-                jobId === it.id ? 'text-blue-700' : 'text-slate-800 group-hover:text-blue-700'
+                jobId === it.id ? 'text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200 group-hover:text-blue-700 dark:group-hover:text-blue-300'
               }`}>
                 {it.title}
               </div>
               {/* 押题数量标识 */}
               <div className={`absolute right-3 top-1/2 -translate-y-1/2 min-w-[20px] h-5 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200 ${
                 (it.question_count || 0) > 0
-                  ? jobId === it.id 
-                    ? 'bg-orange-500 text-white' 
+                  ? jobId === it.id
+                    ? 'bg-orange-500 text-white'
                     : 'bg-orange-400 text-white group-hover:bg-orange-500'
                   : jobId === it.id
-                    ? 'bg-slate-300 text-slate-600'
-                    : 'bg-slate-200 text-slate-500 group-hover:bg-slate-300'
+                    ? 'bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
+                    : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 group-hover:bg-slate-300 dark:group-hover:bg-slate-600'
               }`}>
                 {it.question_count || 0}
               </div>
             </button>
           ))}
           {!jobs.length && (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-slate-500 dark:text-slate-300">
               <div className="text-2xl mb-2">📋</div>
               <div className="text-sm">暂无岗位</div>
-              <div className="text-xs text-slate-400 mt-1">请先创建岗位</div>
+              <div className="text-xs text-slate-400 dark:text-slate-300 mt-1">请先创建岗位</div>
             </div>
           )}
         </div>
@@ -356,6 +356,7 @@ export default function QuestionsList() {
                 onPressEnter={applyFilters}
                 allowClear
                 style={{ width: 160 }}
+                className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:[&_input]:bg-slate-700 dark:[&_input]:text-slate-100 dark:[&_input::placeholder]:text-slate-400"
               />
               <Input
                 placeholder="按描述"
@@ -369,6 +370,7 @@ export default function QuestionsList() {
                 onPressEnter={applyFilters}
                 allowClear
                 style={{ width: 160 }}
+                className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:[&_input]:bg-slate-700 dark:[&_input]:text-slate-100 dark:[&_input::placeholder]:text-slate-400"
               />
               <Select
                 placeholder="按标签"
@@ -430,14 +432,14 @@ export default function QuestionsList() {
                       </div>
                     </div>
                     {/* 分割线 */}
-                    <div className="my-2 border-t border-slate-200"></div>
+                    <div className="my-2 border-t border-slate-200 dark:border-slate-700"></div>
                     <div
-                      className="text-sm text-slate-600 dark:text-slate-400 mt-2 line-clamp-4 break-words leading-5 min-h-[5rem]"
+                      className="text-sm text-slate-600 dark:text-slate-300 mt-2 line-clamp-4 break-words leading-5 min-h-[5rem]"
                       title={it.description}
                     >
                       {it.description}
                     </div>
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-400 dark:text-slate-300">
                       <span className="flex-1 mr-2 truncate">{dayjs(it.created_at).format('YYYY-MM-DD HH:mm')}</span>
                       <div className="flex items-center gap-1 shrink-0">
                         <button
@@ -445,7 +447,7 @@ export default function QuestionsList() {
                           className="w-6 h-6 flex items-center justify-center rounded bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                           title="编辑"
                         >
-                          <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3 h-3 text-gray-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                         </button>
@@ -476,7 +478,7 @@ export default function QuestionsList() {
                           className="w-6 h-6 flex items-center justify-center rounded bg-red-100 dark:bg-slate-700 hover:bg-red-200 dark:hover:bg-slate-600 transition-colors"
                           title="删除"
                         >
-                          <svg className="w-3 h-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3 h-3 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         </button>
@@ -485,7 +487,7 @@ export default function QuestionsList() {
                   </Card>
                 ))}
               </div>
-              <div className="mt-4 flex items-center justify-end gap-3 text-sm text-slate-500">
+              <div className="mt-4 flex items-center justify-end gap-3 text-sm text-slate-500 dark:text-slate-300">
                 <PaginationBar
                   page={page}
                   pageSize={pageSize}
