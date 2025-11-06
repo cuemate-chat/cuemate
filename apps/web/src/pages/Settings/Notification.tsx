@@ -394,8 +394,8 @@ export default function NotificationPage() {
       {/* 标题栏 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">站内信</h1>
-          <p className="text-sm text-slate-600 mt-1">查看系统通知和任务提醒</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">站内信</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">查看系统通知和任务提醒</p>
         </div>
         <div className="flex items-center gap-3">
           <Button onClick={() => loadNotifications(true)}>刷新</Button>
@@ -413,28 +413,28 @@ export default function NotificationPage() {
           <div
             key={stat.key}
             onClick={() => handleCardClick(stat.key)}
-            className={`bg-white rounded-lg border-2 p-4 cursor-pointer transition-all hover:shadow-md ${
-              filterCategory === stat.key ? 'border-blue-500 shadow-md' : 'border-slate-200'
+            className={`bg-white dark:bg-slate-800 rounded-lg border-2 p-4 cursor-pointer transition-all hover:shadow-md ${
+              filterCategory === stat.key ? 'border-blue-500 shadow-md' : 'border-slate-200 dark:border-slate-700'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-slate-600">{stat.label}</span>
+              <span className="text-sm text-slate-600 dark:text-slate-300">{stat.label}</span>
               <div
                 className={`w-10 h-10 ${stat.color} rounded-lg flex items-center justify-center text-white`}
               >
                 {getIcon(stat.iconType, 'w-6 h-6')}
               </div>
             </div>
-            <div className={`text-2xl font-bold ${stat.textColor}`}>{stat.count}</div>
+            <div className={`text-2xl font-bold ${stat.textColor} dark:text-slate-100`}>{stat.count}</div>
           </div>
         ))}
       </div>
 
       {/* 筛选条件 */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
         <div className="grid grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">优先级</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">优先级</label>
             <Select
               value={filterPriority}
               onChange={(value) => {
@@ -454,7 +454,7 @@ export default function NotificationPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">时间段</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">时间段</label>
             <RangePicker
               value={dateRange}
               onChange={(dates) => {
@@ -468,7 +468,7 @@ export default function NotificationPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">关键词</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">关键词</label>
             <input
               type="text"
               value={searchKeyword}
@@ -477,12 +477,12 @@ export default function NotificationPage() {
                 setCurrentPage(1);
               }}
               placeholder="搜索标题、内容"
-              className="w-full h-10 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-10 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-900 dark:text-slate-100"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">排序方式</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">排序方式</label>
             <div className="flex items-center gap-2">
               <Select
                 value={sortBy}
@@ -509,9 +509,9 @@ export default function NotificationPage() {
       </div>
 
       {/* 通知列表容器 */}
-      <div className="bg-white rounded-lg border border-slate-200">
+      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
         {/* Tab 标签页 - 作为列表的表头 */}
-        <div className="border-b border-slate-200 px-4">
+        <div className="border-b border-slate-200 dark:border-slate-700 px-4">
           <Tabs
             activeKey={activeTab}
             onChange={(key) => {
@@ -530,7 +530,7 @@ export default function NotificationPage() {
             <Empty description="暂无通知" />
           </div>
         ) : (
-          <div className="divide-y divide-slate-200">
+          <div className="divide-y divide-slate-200 dark:divide-slate-700">
             {paginatedNotifications.map((notification) => {
               const typeInfo = getNotificationTypeInfo(notification.type);
               const priorityInfo = getPriorityInfo(notification.priority);
@@ -539,14 +539,14 @@ export default function NotificationPage() {
                 <div
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`p-5 cursor-pointer transition-all duration-200 hover:bg-slate-50 ${
-                    notification.is_read === 0 ? 'bg-blue-50/30' : ''
+                  className={`p-5 cursor-pointer transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-700 ${
+                    notification.is_read === 0 ? 'bg-blue-50/30 dark:bg-blue-900/20' : ''
                   }`}
                 >
                   <div className="flex items-start gap-4">
                     {/* 图标 */}
-                    <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-gradient-to-br from-slate-100 to-slate-200">
-                      {getIcon(typeInfo.iconType, 'w-6 h-6 text-slate-700')}
+                    <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600">
+                      {getIcon(typeInfo.iconType, 'w-6 h-6 text-slate-700 dark:text-slate-200')}
                     </div>
 
                     {/* 内容 */}
@@ -555,7 +555,7 @@ export default function NotificationPage() {
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3
-                            className={`text-base font-semibold ${notification.is_read === 0 ? 'text-slate-900' : 'text-slate-700'}`}
+                            className={`text-base font-semibold ${notification.is_read === 0 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-200'}`}
                           >
                             {notification.title}
                           </h3>
@@ -577,7 +577,7 @@ export default function NotificationPage() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={(e) => handleToggleStar(notification, e)}
-                            className="flex-shrink-0 text-slate-400 hover:text-yellow-500 transition-colors"
+                            className="flex-shrink-0 text-slate-400 dark:text-slate-300 hover:text-yellow-500 transition-colors"
                           >
                             {notification.is_starred ? (
                               <StarSolid className="w-5 h-5 text-yellow-500" />
@@ -587,7 +587,7 @@ export default function NotificationPage() {
                           </button>
                           <button
                             onClick={(e) => handleDeleteNotification(notification, e)}
-                            className="flex-shrink-0 text-slate-400 hover:text-red-500 transition-colors"
+                            className="flex-shrink-0 text-slate-400 dark:text-slate-300 hover:text-red-500 transition-colors"
                           >
                             <TrashIcon className="w-5 h-5" />
                           </button>
@@ -595,7 +595,7 @@ export default function NotificationPage() {
                       </div>
 
                       {/* 内容 */}
-                      <p className="text-sm text-slate-600 mb-3">
+                      <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
                         {notification.summary || notification.content}
                       </p>
 
@@ -610,10 +610,10 @@ export default function NotificationPage() {
                           <span className={`${priorityInfo.color} font-medium`}>
                             {priorityInfo.label}
                           </span>
-                          <span className="text-slate-500">{formatTime(notification.created_at)}</span>
+                          <span className="text-slate-500 dark:text-slate-300">{formatTime(notification.created_at)}</span>
                         </div>
                         {notification.action_text && (
-                          <span className="text-xs text-blue-600 font-medium">
+                          <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
                             {notification.action_text} →
                           </span>
                         )}
@@ -629,7 +629,7 @@ export default function NotificationPage() {
 
       {/* 外部分页组件 */}
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500">共 {filteredNotifications.length} 条</div>
+        <div className="text-slate-500 dark:text-slate-300">共 {filteredNotifications.length} 条</div>
         <PaginationBar
           page={currentPage}
           pageSize={pageSize}

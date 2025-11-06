@@ -167,7 +167,7 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
       <DrawerContent>
         <div className="h-full flex flex-col">
         {/* 工具栏 */}
-        <div className="px-6 py-3 border-b border-slate-200 bg-slate-50">
+        <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -177,13 +177,13 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
                   onChange={handleSelectAll}
                   className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                   全选 ({selectedLines.size}/{logContent?.lines.length || 0})
                 </span>
               </label>
             </div>
             <div className="flex items-center gap-3">
-              <div className="text-sm text-slate-600">
+              <div className="text-sm text-slate-600 dark:text-slate-300">
                 已选择 {selectedLines.size} 行
               </div>
               <button
@@ -191,7 +191,7 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
                 disabled={selectedLines.size === 0}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   selectedLines.size === 0
-                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
                 }`}
               >
@@ -199,7 +199,7 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
               </button>
               <button
                 onClick={copyAllLogs}
-                className="px-4 py-2 text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium transition-all"
+                className="px-4 py-2 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-800 text-sm font-medium transition-all"
               >
                 复制全部
               </button>
@@ -213,23 +213,23 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                <div className="text-slate-600">加载日志内容中...</div>
+                <div className="text-slate-600 dark:text-slate-300">加载日志内容中...</div>
               </div>
             </div>
           ) : logContent ? (
-            <div className="h-full overflow-y-auto bg-slate-50">
+            <div className="h-full overflow-y-auto bg-slate-50 dark:bg-slate-900">
               <div className="p-4 space-y-1">
                 {logContent.lines.map((line, index) => {
                   const isSelected = selectedLines.has(index);
                   const isJson = line.trim().startsWith('{') || line.trim().startsWith('[');
-                  
+
                   return (
                     <div
                       key={index}
                       className={`group relative p-3 rounded-lg border transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-blue-50 border-blue-200 shadow-sm'
-                          : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 shadow-sm'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                       }`}
                       onClick={() => handleLineSelect(index)}
                     >
@@ -243,29 +243,29 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
-                      
+
                       {/* 行号 */}
-                      <div className="absolute left-10 top-3 text-xs text-slate-400 font-mono">
+                      <div className="absolute left-10 top-3 text-xs text-slate-400 dark:text-slate-500 font-mono">
                         {index + 1}
                       </div>
-                      
+
                       {/* 日志内容 */}
                       <div className="ml-16">
                         {isJson ? (
-                          <pre className="text-xs font-mono text-slate-800 whitespace-pre-wrap break-words">
+                          <pre className="text-xs font-mono text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
                             {line}
                           </pre>
                         ) : (
-                          <div className="text-sm text-slate-700 font-mono leading-relaxed">
+                          <div className="text-sm text-slate-700 dark:text-slate-200 font-mono leading-relaxed">
                             {line}
                           </div>
                         )}
                       </div>
-                      
+
                       {/* 悬停时的选择提示 */}
                       {!isSelected && (
-                        <div className="absolute inset-0 bg-blue-50 border-2 border-blue-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
-                          <span className="text-blue-600 text-xs font-medium">点击选择</span>
+                        <div className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
+                          <span className="text-blue-600 dark:text-blue-400 text-xs font-medium">点击选择</span>
                         </div>
                       )}
                     </div>
@@ -275,7 +275,7 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
             </div>
           ) : (
             <div className="h-full flex items-center justify-center">
-              <div className="text-center text-slate-500">
+              <div className="text-center text-slate-500 dark:text-slate-400">
                 <div className="text-lg mb-2">📄</div>
                 <div>暂无日志内容</div>
               </div>

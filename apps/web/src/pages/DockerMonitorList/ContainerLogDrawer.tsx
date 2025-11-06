@@ -60,17 +60,17 @@ export default function ContainerLogDrawer({ open, onClose, container }: Contain
   const getStatusColor = (state: string) => {
     switch (state) {
       case 'running':
-        return 'text-green-600 bg-green-50 border-green-200';
+        return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200';
       case 'stopped':
         return 'text-orange-600 bg-orange-50 border-orange-200';
       case 'exited':
         return 'text-red-600 bg-red-50 border-red-200';
       case 'created':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
+        return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-200';
       case 'paused':
         return 'text-purple-600 bg-purple-50 border-purple-200';
       default:
-        return 'text-gray-600 bg-gray-50 border-gray-200';
+        return 'text-gray-600 bg-gray-50 dark:bg-gray-800 border-gray-200';
     }
   };
 
@@ -131,34 +131,34 @@ export default function ContainerLogDrawer({ open, onClose, container }: Contain
         {container && (
           <div className="space-y-6">
             {/* 容器信息 */}
-            <div className="bg-white rounded-lg border p-6">
+            <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="flex items-center py-3 border-b border-gray-100">
-                    <span className="w-28 text-base font-black text-gray-900 flex-shrink-0">容器名称</span>
-                    <span className="text-sm text-gray-700 font-medium">{container.name}</span>
+                  <div className="flex items-center py-3 border-b border-gray-100 dark:border-slate-700">
+                    <span className="w-28 text-base font-black text-gray-900 dark:text-slate-100 flex-shrink-0">容器名称</span>
+                    <span className="text-sm text-gray-700 dark:text-slate-200 font-medium">{container.name}</span>
                   </div>
-                  <div className="flex items-center py-3 border-b border-gray-100">
-                    <span className="w-28 text-base font-black text-gray-900 flex-shrink-0">运行状态</span>
+                  <div className="flex items-center py-3 border-b border-gray-100 dark:border-slate-700">
+                    <span className="w-28 text-base font-black text-gray-900 dark:text-slate-100 flex-shrink-0">运行状态</span>
                     <span className={`text-sm px-2 py-1 rounded border ${getStatusColor(container.state)}`}>
                       {getStatusText(container.state)}
                     </span>
                   </div>
-                  <div className="flex items-center py-3 border-b border-gray-100">
-                    <span className="w-28 text-base font-black text-gray-900 flex-shrink-0">镜像</span>
-                    <span className="text-sm text-blue-700 font-mono bg-blue-50 px-2 py-1 rounded">{container.image}</span>
+                  <div className="flex items-center py-3 border-b border-gray-100 dark:border-slate-700">
+                    <span className="w-28 text-base font-black text-gray-900 dark:text-slate-100 flex-shrink-0">镜像</span>
+                    <span className="text-sm text-blue-700 dark:text-blue-300 font-mono bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">{container.image}</span>
                   </div>
-                  <div className="flex items-center py-3 border-b border-gray-100">
-                    <span className="w-28 text-base font-black text-gray-900 flex-shrink-0">大小</span>
-                    <span className="text-sm text-gray-700">{container.size}</span>
+                  <div className="flex items-center py-3 border-b border-gray-100 dark:border-slate-700">
+                    <span className="w-28 text-base font-black text-gray-900 dark:text-slate-100 flex-shrink-0">大小</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-200">{container.size}</span>
                   </div>
-                  <div className="flex items-center py-3 border-b border-gray-100">
-                    <span className="w-28 text-base font-black text-gray-900 flex-shrink-0">状态</span>
-                    <span className="text-sm text-gray-700">{container.status}</span>
+                  <div className="flex items-center py-3 border-b border-gray-100 dark:border-slate-700">
+                    <span className="w-28 text-base font-black text-gray-900 dark:text-slate-100 flex-shrink-0">状态</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-200">{container.status}</span>
                   </div>
-                  <div className="flex items-center py-3 border-b border-gray-100">
-                    <span className="w-28 text-base font-black text-gray-900 flex-shrink-0">创建时间</span>
-                    <span className="text-sm text-gray-700">
+                  <div className="flex items-center py-3 border-b border-gray-100 dark:border-slate-700">
+                    <span className="w-28 text-base font-black text-gray-900 dark:text-slate-100 flex-shrink-0">创建时间</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-200">
                       {new Date(container.created).toLocaleString('zh-CN')}
                     </span>
                   </div>
@@ -166,12 +166,12 @@ export default function ContainerLogDrawer({ open, onClose, container }: Contain
 
                 {/* 端口信息 */}
                 {container.ports && container.ports.length > 0 && (
-                  <div className="py-3 border-b border-gray-100">
+                  <div className="py-3 border-b border-gray-100 dark:border-slate-700">
                     <div className="flex items-start">
-                      <span className="w-28 text-base font-black text-gray-900 flex-shrink-0 mt-0.5">端口</span>
+                      <span className="w-28 text-base font-black text-gray-900 dark:text-slate-100 flex-shrink-0 mt-0.5">端口</span>
                       <div className="flex flex-wrap gap-2">
                         {container.ports.map((port, index) => (
-                          <span key={index} className="text-sm text-green-700 font-mono bg-green-50 px-2 py-1 rounded border border-green-200">
+                          <span key={index} className="text-sm text-green-700 dark:text-green-300 font-mono bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded border border-green-200 dark:border-green-800">
                             {port}
                           </span>
                         ))}
@@ -183,7 +183,7 @@ export default function ContainerLogDrawer({ open, onClose, container }: Contain
             </div>
 
             {/* 日志内容 - 直接使用 LogViewer */}
-            <div className="bg-white rounded-lg border" style={{ height: '400px' }}>
+            <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700" style={{ height: '400px' }}>
               <LogViewer
                 title={`容器日志 - ${container?.name}`}
                 logs={logs}

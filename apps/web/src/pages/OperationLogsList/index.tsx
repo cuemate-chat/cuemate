@@ -115,7 +115,7 @@ export default function OperationLogsList() {
               {record.operation}
             </span>
           </div>
-          <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <div className="text-sm text-slate-500 dark:text-slate-200 mt-1">
             {record.message || record.resource_name}
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function OperationLogsList() {
       render: (record: OperationLog) => (
         <div>
           <div className="text-sm text-slate-900 dark:text-slate-100">{record.user_name || '未知用户'}</div>
-          <div className="text-sm text-slate-500 dark:text-slate-400">{record.user_id}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-200">{record.user_id}</div>
         </div>
       ),
     },
@@ -352,7 +352,7 @@ export default function OperationLogsList() {
       {/* 页面标题 */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">操作记录</h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-1">查看用户操作记录和系统审计信息</p>
+        <p className="text-slate-600 dark:text-slate-200 mt-1">查看用户操作记录和系统审计信息</p>
       </div>
 
       {/* 统计面板 */}
@@ -361,7 +361,7 @@ export default function OperationLogsList() {
           <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">今日操作总数</h3>
+                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-200">今日操作总数</h3>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {stats.todayTotal}
                 </p>
@@ -372,7 +372,7 @@ export default function OperationLogsList() {
           <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">成功操作数</h3>
+                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-200">成功操作数</h3>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {stats.todaySuccess}
                 </p>
@@ -383,7 +383,7 @@ export default function OperationLogsList() {
           <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">失败操作数</h3>
+                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-200">失败操作数</h3>
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {stats.todayFailed}
                 </p>
@@ -394,7 +394,7 @@ export default function OperationLogsList() {
           <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">今日面试次数</h3>
+                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-200">今日面试次数</h3>
                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {stats.interviewCount}
                 </p>
@@ -503,7 +503,7 @@ export default function OperationLogsList() {
 
       {/* 外部分页组件 */}
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500 dark:text-slate-400">共 {total} 条</div>
+        <div className="text-slate-500 dark:text-slate-200">共 {total} 条</div>
         <PaginationBar 
           page={page} 
           pageSize={pageSize} 

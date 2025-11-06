@@ -351,7 +351,7 @@ export default function LogsList() {
 
       <div className="flex flex-wrap gap-4 items-end mb-4">
         <div className="flex flex-col">
-          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">项目</label>
+          <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">项目</label>
           <Select
             value={service || undefined}
             onChange={(v) => {
@@ -368,7 +368,7 @@ export default function LogsList() {
           />
         </div>
         <div className="flex flex-col">
-          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">级别</label>
+          <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">级别</label>
           <Select
             value={level || undefined}
             onChange={(v) => {
@@ -385,7 +385,7 @@ export default function LogsList() {
           />
         </div>
         <div className="flex flex-col">
-          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">日期</label>
+          <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">日期</label>
           <DatePicker
             value={date ? dayjs(date) : null}
             onChange={(d) => {
@@ -399,7 +399,7 @@ export default function LogsList() {
       </div>
 
       {/* Ant Design Table 自适应表格 */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 border border-slate-200 dark:border-slate-700 overflow-hidden dark:[&_.ant-table]:bg-slate-800 dark:[&_.ant-table-thead>tr>th]:bg-slate-700 dark:[&_.ant-table-thead>tr>th]:text-slate-100 dark:[&_.ant-table-thead>tr>th]:border-slate-600 dark:[&_.ant-table-tbody>tr>td]:bg-slate-800 dark:[&_.ant-table-tbody>tr>td]:text-slate-100 dark:[&_.ant-table-tbody>tr>td]:border-slate-700 dark:[&_.ant-table-tbody>tr:hover>td]:bg-slate-700">
         <Table
           columns={columns}
           dataSource={items}
@@ -413,7 +413,7 @@ export default function LogsList() {
 
       {/* 外部分页组件 */}
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500 dark:text-slate-400">共 {total} 条</div>
+        <div className="text-slate-600 dark:text-slate-300">共 {total} 条</div>
         <PaginationBar 
           page={page} 
           pageSize={pageSize} 

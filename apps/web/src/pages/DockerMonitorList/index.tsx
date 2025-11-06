@@ -84,7 +84,7 @@ export default function DockerMonitorList() {
       key: 'index',
       width: '8%',
       render: (_value: any, _record: any, index: number) => (
-        <div className="text-center">
+        <div className="text-center text-slate-900 dark:text-slate-100">
           {(page - 1) * pageSize + index + 1}
         </div>
       ),
@@ -142,7 +142,7 @@ export default function DockerMonitorList() {
             </span>
           ))}
           {ports.length > 2 && (
-            <span className="text-xs text-gray-500 dark:text-slate-400">+{ports.length - 2}</span>
+            <span className="text-xs text-gray-500 dark:text-slate-300">+{ports.length - 2}</span>
           )}
         </div>
       )
@@ -217,35 +217,38 @@ export default function DockerMonitorList() {
       {/* 页面标题 */}
       <div>
         <Title level={2} className="text-slate-900 dark:text-slate-100">Docker 容器监控</Title>
-        <Text type="secondary" className="text-slate-600 dark:text-slate-400">监控本地 Docker 容器的运行状态和日志</Text>
+        <Text type="secondary" className="text-slate-600 dark:text-slate-300">监控本地 Docker 容器的运行状态和日志</Text>
       </div>
 
       {/* 统计卡片 */}
       <Row gutter={16}>
         <Col xs={24} sm={8}>
-          <Card>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
             <Statistic
-              title="总容器数"
+              title={<span className="text-slate-600 dark:text-slate-300">总容器数</span>}
               value={totalCount}
               valueStyle={{ color: '#1890ff' }}
+              className="dark:[&_.ant-statistic-content]:text-blue-400"
             />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
             <Statistic
-              title="运行中"
+              title={<span className="text-slate-600 dark:text-slate-300">运行中</span>}
               value={runningCount}
               valueStyle={{ color: '#52c41a' }}
+              className="dark:[&_.ant-statistic-content]:text-green-400"
             />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
             <Statistic
-              title="已停止"
+              title={<span className="text-slate-600 dark:text-slate-300">已停止</span>}
               value={stoppedCount}
               valueStyle={{ color: '#faad14' }}
+              className="dark:[&_.ant-statistic-content]:text-orange-400"
             />
           </Card>
         </Col>
@@ -253,7 +256,8 @@ export default function DockerMonitorList() {
 
       {/* 容器列表 */}
       <Card
-        title="容器列表"
+        title={<span className="text-slate-900 dark:text-slate-100">容器列表</span>}
+        className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
         extra={
           <Button
             type="primary"
@@ -265,7 +269,7 @@ export default function DockerMonitorList() {
           </Button>
         }
       >
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto dark:[&_.ant-table]:bg-slate-800 dark:[&_.ant-table-thead>tr>th]:bg-slate-700 dark:[&_.ant-table-thead>tr>th]:text-slate-100 dark:[&_.ant-table-thead>tr>th]:border-slate-600 dark:[&_.ant-table-tbody>tr>td]:bg-slate-800 dark:[&_.ant-table-tbody>tr>td]:text-slate-100 dark:[&_.ant-table-tbody>tr>td]:border-slate-700 dark:[&_.ant-table-tbody>tr:hover>td]:bg-slate-700">
           <Table
             columns={columns}
             dataSource={paginatedContainers}
@@ -280,11 +284,11 @@ export default function DockerMonitorList() {
 
       {/* 外部分页组件 */}
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500 dark:text-slate-400">共 {totalCount} 条</div>
-        <PaginationBar 
-          page={page} 
-          pageSize={pageSize} 
-          total={totalCount} 
+        <div className="text-slate-500 dark:text-slate-300">共 {totalCount} 条</div>
+        <PaginationBar
+          page={page}
+          pageSize={pageSize}
+          total={totalCount}
           onChange={(p: number) => setPage(p)}
           onPageSizeChange={(_: number, size: number) => {
             setPageSize(size);
