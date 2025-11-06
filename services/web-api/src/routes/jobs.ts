@@ -402,6 +402,194 @@ export function registerJobRoutes(app: FastifyInstance) {
     }
   });
 
+  // 获取岗位的简历优化记录列表 GET /jobs/:jobId/resume-optimizations
+  app.get('/jobs/:jobId/resume-optimizations', async (req, reply) => {
+    try {
+      const payload = await req.jwtVerify();
+      const jobId = (req.params as any)?.jobId as string;
+
+      // 检查岗位是否存在且属于当前用户
+      const job = app.db
+        .prepare('SELECT id FROM jobs WHERE id = ? AND user_id = ?')
+        .get(jobId, payload.uid);
+
+      if (!job) {
+        return reply.code(404).send({ error: '岗位不存在' });
+      }
+
+      // 获取简历优化记录列表
+      const optimizations = app.db
+        .prepare(
+          `SELECT id, created_at, updated_at, status, original_resume, original_word_count,
+                  optimized_resume, optimized_word_count, model_id, model_name, suggestion,
+                  optimization_count, error_message
+           FROM resume_optimizations
+           WHERE job_id = ? AND user_id = ?
+           ORDER BY created_at DESC`
+        )
+        .all(jobId, payload.uid);
+
+      return { items: optimizations };
+    } catch (err: any) {
+      app.log.error({ err }, '获取简历优化记录列表失败');
+      return reply.code(500).send(buildPrefixedError('获取简历优化记录列表失败', err, 500));
+    }
+  });
+
+  // 获取单个简历优化记录详情 GET /resume-optimizations/:id
+  app.get('/resume-optimizations/:id', async (req, reply) => {
+    try {
+      const payload = await req.jwtVerify();
+      const id = (req.params as any)?.id as string;
+
+      // 获取简历优化记录
+      const optimization = app.db
+        .prepare(
+          `SELECT id, created_at, updated_at, status, original_resume, original_word_count,
+                  optimized_resume, optimized_word_count, model_id, model_name, suggestion,
+                  optimization_count, error_message, job_id
+           FROM resume_optimizations
+           WHERE id = ? AND user_id = ?`
+        )
+        .get(id, payload.uid);
+
+      if (!optimization) {
+        return reply.code(404).send({ error: '简历优化记录不存在' });
+      }
+
+      return { optimization };
+    } catch (err: any) {
+      app.log.error({ err }, '获取简历优化记录详情失败');
+      return reply.code(500).send(buildPrefixedError('获取简历优化记录详情失败', err, 500));
+    }
+  });
+
+  // 创建新的简历优化记录 POST /jobs/:jobId/resume-optimizations
+  app.post('/jobs/:jobId/resume-optimizations', async (req, reply) => {
+    try {
+      const payload = await req.jwtVerify();
+      const jobId = (req.params as any)?.jobId as string;
+      const body = z.object({
+        originalResume: z.string().min(1),
+        optimizedResume: z.string().optional(),
+        suggestion: z.string().optional(),
+        modelId: z.string().optional(),
+        modelName: z.string().optional(),
+        status: z.enum(['pending', 'processing', 'completed', 'failed']).default('pending'),
+        errorMessage: z.string().optional(),
+      }).parse(req.body);
+
+      // 检查岗位是否存在且属于当前用户
+      const job = app.db
+        .prepare('SELECT id FROM jobs WHERE id = ? AND user_id = ?')
+        .get(jobId, payload.uid);
+
+      if (!job) {
+        return reply.code(404).send({ error: '岗位不存在' });
+      }
+
+      const optimizationId = randomUUID();
+      const originalWordCount = body.originalResume.length;
+      const optimizedWordCount = body.optimizedResume?.length || 0;
+
+      // 插入简历优化记录
+      app.db
+        .prepare(
+          `INSERT INTO resume_optimizations
+           (id, user_id, job_id, status, original_resume, original_word_count,
+            optimized_resume, optimized_word_count, model_id, model_name, suggestion,
+            optimization_count, error_message, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))`
+        )
+        .run(
+          optimizationId,
+          payload.uid,
+          jobId,
+          body.status,
+          body.originalResume,
+          originalWordCount,
+          body.optimizedResume || null,
+          optimizedWordCount,
+          body.modelId || null,
+          body.modelName || null,
+          body.suggestion || null,
+          body.errorMessage || null
+        );
+
+      return {
+        optimizationId,
+        message: '简历优化记录创建成功'
+      };
+    } catch (err: any) {
+      app.log.error({ err }, '创建简历优化记录失败');
+      if (err.name === 'ZodError') {
+        return reply.code(400).send(buildPrefixedError('创建简历优化记录失败', err, 400));
+      }
+      return reply.code(500).send(buildPrefixedError('创建简历优化记录失败', err, 500));
+    }
+  });
+
+  // 更新简历优化记录 PUT /resume-optimizations/:id
+  app.put('/resume-optimizations/:id', async (req, reply) => {
+    try {
+      const payload = await req.jwtVerify();
+      const id = (req.params as any)?.id as string;
+      const body = z.object({
+        optimizedResume: z.string().optional(),
+        suggestion: z.string().optional(),
+        status: z.enum(['pending', 'processing', 'completed', 'failed']).optional(),
+        errorMessage: z.string().optional(),
+      }).parse(req.body);
+
+      // 检查记录是否存在且属于当前用户
+      const existing = app.db
+        .prepare('SELECT id, optimization_count FROM resume_optimizations WHERE id = ? AND user_id = ?')
+        .get(id, payload.uid);
+
+      if (!existing) {
+        return reply.code(404).send({ error: '简历优化记录不存在' });
+      }
+
+      const optimizedWordCount = body.optimizedResume?.length || 0;
+      const newOptimizationCount = existing.optimization_count + 1;
+
+      // 更新简历优化记录
+      app.db
+        .prepare(
+          `UPDATE resume_optimizations
+           SET optimized_resume = COALESCE(?, optimized_resume),
+               optimized_word_count = ?,
+               suggestion = COALESCE(?, suggestion),
+               status = COALESCE(?, status),
+               error_message = COALESCE(?, error_message),
+               optimization_count = ?,
+               updated_at = datetime('now', 'localtime')
+           WHERE id = ? AND user_id = ?`
+        )
+        .run(
+          body.optimizedResume || null,
+          optimizedWordCount,
+          body.suggestion || null,
+          body.status || null,
+          body.errorMessage || null,
+          newOptimizationCount,
+          id,
+          payload.uid
+        );
+
+      return {
+        success: true,
+        message: '简历优化记录更新成功'
+      };
+    } catch (err: any) {
+      app.log.error({ err }, '更新简历优化记录失败');
+      if (err.name === 'ZodError') {
+        return reply.code(400).send(buildPrefixedError('更新简历优化记录失败', err, 400));
+      }
+      return reply.code(500).send(buildPrefixedError('更新简历优化记录失败', err, 500));
+    }
+  });
+
   // 简历优化接口
   app.post(
     '/jobs/optimize-resume',

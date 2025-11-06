@@ -18,6 +18,7 @@ import { up as up17, version as v17 } from './017_alter_asr_config.js';
 import { up as up18, version as v18 } from './018_alter_interviews.js';
 import { up as up19, version as v19 } from './019_create_prompts.js';
 import { up as up20, version as v20 } from './020_create_user_notifications.js';
+import { up as up21, version as v21 } from './021_create_resume_optimizations.js';
 
 export interface Migration {
   version: number;
@@ -46,4 +47,5 @@ export const migrations: Migration[] = [
   { version: v18, name: '018_alter_interviews', up: up18 },
   { version: v19, name: '019_create_prompts', up: up19 },
   { version: v20, name: '020_create_user_notifications', up: up20 },
+  { version: v21, name: '021_create_resume_optimizations', up: up21 },
 ];
