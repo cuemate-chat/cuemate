@@ -40,16 +40,16 @@ export default function Header() {
   const desktopLinkCls = (key: string) =>
     `flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-[6px] rounded-lg transition-all duration-200 text-xs sm:text-sm whitespace-nowrap ${
       activeKey === key
-        ? 'bg-[rgba(59,130,246,0.12)] text-[#1d4ed8] font-medium shadow-sm'
-        : 'text-[#3b82f6] hover:text-[#1d4ed8] hover:bg-[rgba(59,130,246,0.08)]'
+        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium shadow-sm'
+        : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20'
     }`;
 
   // 移动端链接样式
   const mobileLinkCls = (key: string) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-base ${
       activeKey === key
-        ? 'bg-[rgba(59,130,246,0.12)] text-[#1d4ed8] font-medium shadow-sm'
-        : 'text-[#3b82f6] hover:text-[#1d4ed8] hover:bg-[rgba(59,130,246,0.08)]'
+        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium shadow-sm'
+        : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20'
     }`;
 
   const navigationItems = [
@@ -130,7 +130,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="h-14 px-3 sm:px-6 flex items-center justify-between border-b border-slate-200 bg-[#e5eefc] text-[#3b82f6] sticky top-0 z-[2000]">
+      <header className="h-14 px-3 sm:px-6 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400 sticky top-0 z-[2000]">
         {/* Logo 区域 */}
         <div className="flex items-center flex-shrink-0">
           <img src={Logo} alt="CueMate" className="h-6 sm:h-8 bg-transparent" />
@@ -171,7 +171,7 @@ export default function Header() {
           <Badge count={unreadCount} offset={[-5, 5]} showZero={false}>
             <button
               onClick={() => navigate('/settings/notification')}
-              className="p-2 rounded-lg text-[#3b82f6] hover:bg-[rgba(59,130,246,0.08)] transition-colors"
+              className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               title="站内信"
             >
               <BellIcon className="w-5 h-5" />
@@ -185,7 +185,7 @@ export default function Header() {
           
           {/* 移动端菜单按钮 */}
           <button
-            className="md:hidden p-2 rounded-lg text-[#3b82f6] hover:bg-[rgba(59,130,246,0.08)] transition-colors"
+            className="md:hidden p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -199,7 +199,7 @@ export default function Header() {
 
       {/* 移动端下拉菜单 */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#e5eefc] border-b border-slate-200 shadow-lg z-[1999]">
+        <div className="md:hidden bg-blue-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-lg z-[1999]">
           <nav className="px-4 py-3 space-y-1">
             {navigationItems.map(({ to, icon: Icon, label }) => (
               <Link
