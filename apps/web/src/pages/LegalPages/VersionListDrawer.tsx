@@ -64,8 +64,8 @@ export default function VersionListDrawer({
             <ClockIcon className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">版本历史</h2>
-            <p className="text-xs text-slate-600">共 {versions.length} 个版本</p>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">版本历史</h2>
+            <p className="text-xs text-slate-600 dark:text-slate-300">共 {versions.length} 个版本</p>
           </div>
         </div>
       </DrawerHeader>
@@ -73,10 +73,10 @@ export default function VersionListDrawer({
           {loading ? (
             <div className="flex flex-col items-center justify-center h-full">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
-              <span className="text-slate-600">加载版本信息中...</span>
+              <span className="text-slate-600 dark:text-slate-300">加载版本信息中...</span>
             </div>
           ) : versions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500">
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400">
               <ClockIcon className="w-16 h-16 mb-4 text-slate-300" />
               <p className="text-lg font-medium">暂无版本信息</p>
               <p className="text-sm mt-2">版本信息将在发布后显示</p>
@@ -91,7 +91,7 @@ export default function VersionListDrawer({
                   <div
                     key={version.version}
                     onClick={() => onSelectVersion(version)}
-                    className="group relative bg-white border border-slate-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer"
+                    className="group relative bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer"
                   >
                     {/* 最新版本角标 */}
                     {isLatest && (
@@ -106,14 +106,14 @@ export default function VersionListDrawer({
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <TagIcon className="w-6 h-6 text-blue-500 group-hover:text-blue-600 transition-colors" />
-                        <span className="text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                        <span className="text-2xl font-bold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition-colors">
                           {version.version}
                         </span>
                         {isLatest && (
                           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-sm text-slate-500">
+                      <div className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
                         <ClockIcon className="w-4 h-4" />
                         <span>{formatDate(version.create_time)}</span>
                       </div>
@@ -122,31 +122,31 @@ export default function VersionListDrawer({
                     {/* 版本名称 */}
                     <div className="mb-3 flex items-center gap-2">
                       <CubeIcon className="w-5 h-5 text-slate-500 group-hover:text-blue-500 transition-colors" />
-                      <span className="text-base font-medium text-slate-700">{version.name}</span>
+                      <span className="text-base font-medium text-slate-700 dark:text-slate-200">{version.name}</span>
                     </div>
 
                     {/* 更新统计标签 */}
                     <div className="flex items-center gap-2 flex-wrap">
                       {stats.feat > 0 && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
                           <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
                           {stats.feat} 个新功能
                         </span>
                       )}
                       {stats.fix > 0 && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-700 text-xs font-medium rounded-full">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs font-medium rounded-full">
                           <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
                           {stats.fix} 个修复
                         </span>
                       )}
                       {stats.refactor > 0 && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full">
                           <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
                           {stats.refactor} 个优化
                         </span>
                       )}
                       {stats.other > 0 && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-50 text-slate-700 text-xs font-medium rounded-full">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-full">
                           <span className="w-1.5 h-1.5 bg-slate-500 rounded-full"></span>
                           {stats.other} 个其他
                         </span>

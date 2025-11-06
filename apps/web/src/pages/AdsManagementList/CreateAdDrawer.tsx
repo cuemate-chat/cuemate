@@ -316,13 +316,13 @@ export default function CreateAdDrawer({
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 块信息
               </label>
-              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-700">
+              <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm text-slate-700 dark:text-slate-200">
                 {formData.block_config_id ? (
                   (() => {
                     const selectedBlock = availableBlocks.find((b: BlockConfig) => b.id === formData.block_config_id);
                     return selectedBlock ? (
                       <div>
-                        <div>块 ID: <span className="font-medium text-blue-600">{selectedBlock.block_id}</span></div>
+                        <div>块 ID: <span className="font-medium text-blue-600 dark:text-blue-400">{selectedBlock.block_id}</span></div>
                         <div>位置: ({selectedBlock.x}, {selectedBlock.y})</div>
                         <div>尺寸: {selectedBlock.width} × {selectedBlock.height}</div>
                         <div>类型: {selectedBlock.type === 'square' ? '正方形' : selectedBlock.type === 'horizontal' ? '横长方形' : '竖长方形'}</div>

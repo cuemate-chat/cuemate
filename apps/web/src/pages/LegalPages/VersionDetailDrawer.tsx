@@ -62,34 +62,34 @@ export default function VersionDetailDrawer({
       <DrawerHeader>
         <div className="flex items-center gap-2">
           <button
-            className="text-[#1d4ed8] hover:text-[#2563eb] hover:underline transition-colors"
+            className="text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline transition-colors"
             onClick={onBack}
           >
             返回版本列表
           </button>
-          <span className="text-slate-400">→</span>
-          <span className="font-medium">{version.version} 版本详情</span>
+          <span className="text-slate-400 dark:text-slate-500">→</span>
+          <span className="font-medium text-slate-900 dark:text-slate-100">{version.version} 版本详情</span>
         </div>
       </DrawerHeader>
 
       <DrawerContent>
         <div className="space-y-6">
           {/* 版本信息卡片 */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200/50">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200/50 dark:border-blue-800/50">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-3xl font-bold text-slate-900">{version.version}</span>
-                  <div className="px-3 py-1 bg-white/80 rounded-full">
-                    <span className="text-sm font-medium text-blue-600">正式版本</span>
+                  <span className="text-3xl font-bold text-slate-900 dark:text-slate-100">{version.version}</span>
+                  <div className="px-3 py-1 bg-white/80 dark:bg-slate-700/80 rounded-full">
+                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">正式版本</span>
                   </div>
                 </div>
-                <p className="text-lg font-medium text-slate-700 mb-3">{version.name}</p>
+                <p className="text-lg font-medium text-slate-700 dark:text-slate-200 mb-3">{version.name}</p>
               </div>
             </div>
 
             <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-slate-600">
+              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -97,7 +97,7 @@ export default function VersionDetailDrawer({
               </div>
 
               {version.build_id && (
-                <div className="flex items-center gap-2 text-slate-600">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
@@ -106,14 +106,14 @@ export default function VersionDetailDrawer({
               )}
 
               {version.platforms && version.platforms.length > 0 && (
-                <div className="flex items-start gap-2 text-slate-600">
+                <div className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
                   <svg className="w-4 h-4 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   <div className="flex flex-wrap gap-1">
                     <span>支持平台:</span>
                     {version.platforms.map((platform) => (
-                      <span key={platform} className="px-2 py-0.5 bg-white/60 text-blue-700 rounded">
+                      <span key={platform} className="px-2 py-0.5 bg-white/60 dark:bg-slate-700/60 text-blue-700 dark:text-blue-300 rounded">
                         {platform}
                       </span>
                     ))}
@@ -125,8 +125,8 @@ export default function VersionDetailDrawer({
 
           {/* 更新内容 */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-              <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               更新内容
@@ -155,21 +155,21 @@ export default function VersionDetailDrawer({
                             <span className="w-2 h-2 bg-current rounded-full"></span>
                             {typeInfo.label}
                           </span>
-                          <span className="text-sm text-slate-500">({changes.length})</span>
+                          <span className="text-sm text-slate-500 dark:text-slate-400">({changes.length})</span>
                         </div>
 
                         {/* 变更列表 */}
                         <div className="space-y-2 pl-4">
                           {changes.map((change, idx) => (
-                            <div key={idx} className="flex items-start gap-3 p-3 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors">
-                              <div className="flex-shrink-0 w-1.5 h-1.5 bg-slate-400 rounded-full mt-2"></div>
+                            <div key={idx} className="flex items-start gap-3 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                              <div className="flex-shrink-0 w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full mt-2"></div>
                               <div className="flex-1 min-w-0">
                                 {change.scope && (
-                                  <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 text-xs font-medium rounded mb-1">
+                                  <span className="inline-block px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium rounded mb-1">
                                     {change.scope}
                                   </span>
                                 )}
-                                <p className="text-sm text-slate-700 leading-relaxed">{change.message}</p>
+                                <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">{change.message}</p>
                               </div>
                             </div>
                           ))}
@@ -179,7 +179,7 @@ export default function VersionDetailDrawer({
                   })}
               </div>
             ) : (
-              <div className="text-center py-8 text-slate-500">
+              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                 <p>暂无更新内容</p>
               </div>
             )}
@@ -187,12 +187,12 @@ export default function VersionDetailDrawer({
 
           {/* 更新日志链接 */}
           {version.changelog_url && (
-            <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
               <a
                 href={version.changelog_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between text-blue-600 hover:text-blue-700 transition-colors group"
+                className="flex items-center justify-between text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors group"
               >
                 <div className="flex items-center gap-2">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -209,18 +209,18 @@ export default function VersionDetailDrawer({
 
           {/* 依赖版本 */}
           {version.dependencies && Object.keys(version.dependencies).length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
                 依赖版本
               </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {Object.entries(version.dependencies).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between p-2 bg-slate-50 rounded">
-                    <span className="text-slate-600 font-medium">{key}</span>
-                    <span className="text-slate-800 font-mono text-xs">{value}</span>
+                  <div key={key} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700 rounded">
+                    <span className="text-slate-600 dark:text-slate-300 font-medium">{key}</span>
+                    <span className="text-slate-800 dark:text-slate-200 font-mono text-xs">{value}</span>
                   </div>
                 ))}
               </div>
@@ -229,23 +229,23 @@ export default function VersionDetailDrawer({
 
           {/* 文件校验信息 */}
           {version.checksum && version.checksum.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
                 文件校验
               </h3>
               <div className="space-y-3">
                 {version.checksum.map((item, index) => (
-                  <div key={index} className="p-3 bg-slate-50 rounded-lg space-y-2 text-sm">
+                  <div key={index} className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-500 font-medium">文件名:</span>
-                      <span className="text-slate-800 font-mono text-xs">{item.file}</span>
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">文件名:</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-mono text-xs">{item.file}</span>
                     </div>
                     <div className="flex items-start gap-2">
-                      <span className="text-slate-500 font-medium shrink-0">SHA256:</span>
-                      <span className="text-slate-800 font-mono text-xs break-all">{item.sha256}</span>
+                      <span className="text-slate-500 dark:text-slate-400 font-medium shrink-0">SHA256:</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-mono text-xs break-all">{item.sha256}</span>
                     </div>
                   </div>
                 ))}
@@ -255,32 +255,32 @@ export default function VersionDetailDrawer({
 
           {/* 维护者信息 */}
           {version.maintainer && (
-            <div className="bg-white border border-slate-200 rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 维护者信息
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-500 min-w-16">姓名:</span>
-                  <span className="text-slate-800">{version.maintainer.name}</span>
+                  <span className="text-slate-500 dark:text-slate-400 min-w-16">姓名:</span>
+                  <span className="text-slate-800 dark:text-slate-200">{version.maintainer.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-500 min-w-16">邮箱:</span>
-                  <a href={`mailto:${version.maintainer.email}`} className="text-blue-600 hover:underline">
+                  <span className="text-slate-500 dark:text-slate-400 min-w-16">邮箱:</span>
+                  <a href={`mailto:${version.maintainer.email}`} className="text-blue-600 dark:text-blue-400 hover:underline">
                     {version.maintainer.email}
                   </a>
                 </div>
                 {version.maintainer.github && (
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-500 min-w-16">GitHub:</span>
+                    <span className="text-slate-500 dark:text-slate-400 min-w-16">GitHub:</span>
                     <a
                       href={version.maintainer.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       {version.maintainer.github}
                     </a>
@@ -288,14 +288,14 @@ export default function VersionDetailDrawer({
                 )}
                 {version.maintainer.tm && (
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-500 min-w-16">TM:</span>
-                    <span className="text-slate-800">{version.maintainer.tm}</span>
+                    <span className="text-slate-500 dark:text-slate-400 min-w-16">TM:</span>
+                    <span className="text-slate-800 dark:text-slate-200">{version.maintainer.tm}</span>
                   </div>
                 )}
                 {version.maintainer.vx && (
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-500 min-w-16">VX:</span>
-                    <span className="text-slate-800">{version.maintainer.vx}</span>
+                    <span className="text-slate-500 dark:text-slate-400 min-w-16">VX:</span>
+                    <span className="text-slate-800 dark:text-slate-200">{version.maintainer.vx}</span>
                   </div>
                 )}
               </div>
@@ -303,14 +303,14 @@ export default function VersionDetailDrawer({
           )}
 
           {/* 提示信息 */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center mt-0.5">
                 <span className="text-white text-xs font-bold">!</span>
               </div>
               <div className="flex-1">
-                <h4 className="text-sm font-semibold text-amber-800 mb-1">更新提示</h4>
-                <p className="text-sm text-amber-700">
+                <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">更新提示</h4>
+                <p className="text-sm text-amber-700 dark:text-amber-200">
                   更新前请确保已备份重要数据,更新过程可能需要几分钟时间,请耐心等待。
                 </p>
               </div>

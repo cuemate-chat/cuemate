@@ -25,14 +25,14 @@ const UploadResumeDrawer: React.FC<UploadResumeDrawerProps> = ({
     >
       <DrawerHeader>
         <div className="flex items-center gap-2">
-          <DocumentTextIcon className="w-5 h-5 text-blue-600" />
+          <DocumentTextIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           <span>上传简历文件</span>
         </div>
       </DrawerHeader>
       <DrawerContent>
         <div className="space-y-6">
           {/* 功能说明 */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <CloudArrowUpIcon className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
               <div>
@@ -54,7 +54,7 @@ const UploadResumeDrawer: React.FC<UploadResumeDrawerProps> = ({
               accept=".pdf,.doc,.docx"
               beforeUpload={onFileUpload}
               showUploadList={false}
-              className="!border-2 !border-dashed !border-gray-300 hover:!border-blue-400 !bg-gray-50 hover:!bg-blue-50 !rounded-lg !p-8 transition-all duration-200"
+              className="!border-2 !border-dashed !border-gray-300 hover:!border-blue-400 !bg-gray-50 dark:bg-gray-800 hover:!bg-blue-50 dark:bg-blue-900/20 !rounded-lg !p-8 transition-all duration-200"
               disabled={uploadLoading}
             >
               <div className="flex flex-col items-center justify-center py-6">
@@ -83,37 +83,37 @@ const UploadResumeDrawer: React.FC<UploadResumeDrawerProps> = ({
 
           {/* 支持格式说明 */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="w-8 h-8 bg-red-100 rounded flex items-center justify-center">
                 <DocumentTextIcon className="w-4 h-4 text-red-600" />
               </div>
               <div className="text-sm">
-                <div className="font-medium text-gray-700">PDF 格式</div>
-                <div className="text-xs text-gray-500">推荐使用</div>
+                <div className="font-medium text-gray-700 dark:text-gray-200">PDF 格式</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">推荐使用</div>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                <DocumentTextIcon className="w-4 h-4 text-blue-600" />
+                <DocumentTextIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="text-sm">
-                <div className="font-medium text-gray-700">Word 格式</div>
-                <div className="text-xs text-gray-500">DOC/DOCX</div>
+                <div className="font-medium text-gray-700 dark:text-gray-200">Word 格式</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">DOC/DOCX</div>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
                 <CheckCircleIcon className="w-4 h-4 text-green-600" />
               </div>
               <div className="text-sm">
-                <div className="font-medium text-gray-700">自动解析</div>
-                <div className="text-xs text-gray-500">智能填充</div>
+                <div className="font-medium text-gray-700 dark:text-gray-200">自动解析</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">智能填充</div>
               </div>
             </div>
           </div>
 
           {/* 注意事项 */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div>

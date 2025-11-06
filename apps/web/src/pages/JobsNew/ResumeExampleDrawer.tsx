@@ -61,7 +61,7 @@ const ResumeExampleDrawer: React.FC<ResumeExampleDrawerProps> = ({
               key: 'base',
               label: '基本信息',
               children: (
-                <div className="space-y-1 text-sm text-slate-700">
+                <div className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                   <div>姓名：张三</div>
                   <div>电话：1xxxxxxxxxx</div>
                   <div>邮箱：xxx@xxx.com</div>
@@ -74,7 +74,7 @@ const ResumeExampleDrawer: React.FC<ResumeExampleDrawerProps> = ({
               key: 'edu-work',
               label: '教育与工作',
               children: (
-                <div className="text-sm text-slate-700 space-y-3">
+                <div className="text-sm text-slate-700 dark:text-white space-y-3">
                   <div>教育背景：2018.09 - 2022.06  xxx 大学  xxx 学院  xxx 专业  本科  GPA：xxx/4.0  排名：Top xx%</div>
                   <div>
                     工作经历：
@@ -102,7 +102,7 @@ const ResumeExampleDrawer: React.FC<ResumeExampleDrawerProps> = ({
               key: 'proj-skill',
               label: '项目与技能',
               children: (
-                <div className="text-sm text-slate-700 space-y-3">
+                <div className="text-sm text-slate-700 dark:text-white space-y-3">
                   <div>
                     项目经历：
                     <div className="mt-1 pl-4 space-y-2">
@@ -135,7 +135,7 @@ const ResumeExampleDrawer: React.FC<ResumeExampleDrawerProps> = ({
         />
         <div className="mt-4">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs text-slate-500">完整示例（可复制）</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">完整示例（可复制）</div>
             <div className="flex items-center gap-2">
               <Button size="small" onClick={onApplySample}>一键带入当前简历</Button>
               {canUndo && (

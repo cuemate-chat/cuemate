@@ -105,7 +105,7 @@ export default function MockUploadDrawer({
                 <EyeIcon className="w-4 h-4" />
                 块信息
               </label>
-              <div className="bg-gray-50 dark:bg-slate-900/30 p-4 rounded-lg text-sm text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 space-y-2">
+              <div className="bg-gray-50 dark:bg-gray-800 dark:bg-slate-900/30 p-4 rounded-lg text-sm text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-gray-700 dark:border-slate-700 space-y-2">
                 <div className="flex justify-between">
                   <span>网格位置:</span>
                   <span className="font-medium">{selectedBlock.x}, {selectedBlock.y}</span>
@@ -136,7 +136,7 @@ export default function MockUploadDrawer({
                 上传文件
               </label>
               <div
-                className="border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-lg p-6 text-center bg-gray-50 dark:bg-slate-900/30 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer"
+                className="border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-800 dark:bg-slate-900/30 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 transition-colors cursor-pointer"
                 onDrop={handleFileDrop}
                 onDragOver={handleDragOver}
                 onClick={() => document.getElementById('mock-file-upload')?.click()}
@@ -171,7 +171,7 @@ export default function MockUploadDrawer({
             </div>
 
             {/* 上传说明 */}
-            <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 dark:border-blue-700 rounded-lg p-4">
               <div className="text-sm text-blue-700 dark:text-blue-400">
                 <div className="font-medium mb-2">📝 模拟上传说明：</div>
                 <ul className="space-y-1 text-xs">

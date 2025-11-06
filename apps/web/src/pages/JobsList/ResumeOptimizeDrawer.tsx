@@ -31,6 +31,9 @@ const ResumeOptimizeDrawer: React.FC<ResumeOptimizeDrawerProps> = ({
 }) => {
   const [viewMode, setViewMode] = useState<'diff' | 'edit'>('diff');
 
+  // 检测深色模式
+  const isDarkMode = document.documentElement.classList.contains('dark');
+
   // 格式化优化建议：如果没有换行符但有编号，自动添加换行
   const formatSuggestions = (text: string): string => {
     if (!text) return '';
@@ -56,9 +59,9 @@ const ResumeOptimizeDrawer: React.FC<ResumeOptimizeDrawerProps> = ({
           <div className="space-y-4 h-[70vh] flex flex-col">
             {/* 优化建议 */}
             <div className="flex-shrink-0">
-              <h3 className="text-sm font-medium text-slate-900 mb-2">优化建议</h3>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
-                <div className="text-sm text-gray-700 whitespace-pre-wrap">
+              <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">优化建议</h3>
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 max-h-48 overflow-y-auto">
+                <div className="text-sm text-gray-700 dark:text-slate-200 whitespace-pre-wrap">
                   {formatSuggestions(optimizeResult.suggestions)}
                 </div>
               </div>
@@ -67,7 +70,7 @@ const ResumeOptimizeDrawer: React.FC<ResumeOptimizeDrawerProps> = ({
             {/* 对比内容 */}
             <div className="flex-1 min-h-0">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-slate-900">内容对比</h3>
+                <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">内容对比</h3>
                 <div className="flex gap-2">
                   <Button 
                     size="small" 
@@ -88,35 +91,35 @@ const ResumeOptimizeDrawer: React.FC<ResumeOptimizeDrawerProps> = ({
               
               {/* 颜色说明提示 - 只在差异对比模式显示 */}
               {viewMode === 'diff' && (
-                <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="text-xs text-gray-600 mb-2 font-medium">颜色说明：</div>
+                <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <div className="text-xs text-gray-600 dark:text-slate-200 mb-2 font-medium">颜色说明：</div>
                   <div className="flex flex-wrap gap-4 text-xs">
                     <div className="flex items-center gap-1">
-                      <span className="w-3 h-3 bg-red-100 border border-red-300 rounded"></span>
-                      <span className="text-red-600">红色背景</span>
-                      <span className="text-gray-500">- 删除的内容</span>
+                      <span className="w-3 h-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded"></span>
+                      <span className="text-red-600 dark:text-red-400">红色背景</span>
+                      <span className="text-gray-500 dark:text-slate-300">- 删除的内容</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className="w-3 h-3 bg-green-100 border border-green-300 rounded"></span>
-                      <span className="text-green-600">绿色背景</span>
-                      <span className="text-gray-500">- 新增的内容</span>
+                      <span className="w-3 h-3 bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700 rounded"></span>
+                      <span className="text-green-600 dark:text-green-400">绿色背景</span>
+                      <span className="text-gray-500 dark:text-slate-300">- 新增的内容</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className="w-3 h-3 bg-yellow-100 border border-yellow-300 rounded"></span>
-                      <span className="text-yellow-600">黄色背景</span>
-                      <span className="text-gray-500">- 修改的词语</span>
+                      <span className="w-3 h-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 rounded"></span>
+                      <span className="text-yellow-600 dark:text-yellow-400">黄色背景</span>
+                      <span className="text-gray-500 dark:text-slate-300">- 修改的词语</span>
                     </div>
                   </div>
                 </div>
               )}
               
               {viewMode === 'diff' ? (
-                <div className="h-full border border-gray-200 rounded-lg flex flex-col">
+                <div className="h-full border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
                   {/* 固定标题栏 */}
-                  <div className="flex-shrink-0 flex items-center justify-center bg-gray-50 border-b border-gray-200 py-2">
+                  <div className="flex-shrink-0 flex items-center justify-center bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-2">
                     <div className="grid grid-cols-2 gap-4 w-full px-4">
-                      <div className="text-sm font-medium text-gray-700 text-center">优化前</div>
-                      <div className="text-sm font-medium text-gray-700 text-center">优化后</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-slate-200 text-center">优化前</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-slate-200 text-center">优化后</div>
                     </div>
                   </div>
                   {/* 可滚动内容区域 */}
@@ -126,7 +129,7 @@ const ResumeOptimizeDrawer: React.FC<ResumeOptimizeDrawerProps> = ({
                       newValue={tempOptimizedResume}
                       splitView={true}
                       showDiffOnly={false}
-                      useDarkTheme={false}
+                      useDarkTheme={isDarkMode}
                       leftTitle=""
                       rightTitle=""
                       styles={{
@@ -136,16 +139,16 @@ const ResumeOptimizeDrawer: React.FC<ResumeOptimizeDrawerProps> = ({
                           overflow: 'auto'
                         },
                         diffRemoved: {
-                          backgroundColor: '#fee2e2',
-                          color: '#dc2626'
+                          backgroundColor: isDarkMode ? '#450a0a' : '#fee2e2',
+                          color: isDarkMode ? '#fca5a5' : '#dc2626'
                         },
                         diffAdded: {
-                          backgroundColor: '#dcfce7',
-                          color: '#16a34a'
+                          backgroundColor: isDarkMode ? '#052e16' : '#dcfce7',
+                          color: isDarkMode ? '#86efac' : '#16a34a'
                         },
                         wordDiff: {
-                          backgroundColor: '#fef3c7',
-                          color: '#d97706'
+                          backgroundColor: isDarkMode ? '#713f12' : '#fef3c7',
+                          color: isDarkMode ? '#fcd34d' : '#d97706'
                         }
                       }}
                     />
@@ -185,9 +188,9 @@ const ResumeOptimizeDrawer: React.FC<ResumeOptimizeDrawerProps> = ({
                       <Input.TextArea
                         value={tempOriginalResume}
                         onChange={(e) => onTempOriginalChange(e.target.value)}
-                        className="flex-1 min-h-0"
+                        className="flex-1 min-h-0 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
                         placeholder="优化前的简历内容"
-                        style={{ 
+                        style={{
                           height: '100%',
                           resize: 'none'
                         }}
@@ -230,9 +233,9 @@ const ResumeOptimizeDrawer: React.FC<ResumeOptimizeDrawerProps> = ({
                       <Input.TextArea
                         value={tempOptimizedResume}
                         onChange={(e) => onTempOptimizedChange(e.target.value)}
-                        className="flex-1 min-h-0"
+                        className="flex-1 min-h-0 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
                         placeholder="优化后的简历内容"
-                        style={{ 
+                        style={{
                           height: '100%',
                           resize: 'none'
                         }}

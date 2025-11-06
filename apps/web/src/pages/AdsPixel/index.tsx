@@ -325,7 +325,7 @@ export default function AdsPixel() {
   }
 
   return (
-    <div className={`h-screen flex flex-col bg-white dark:bg-slate-800 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+    <div className={`h-screen flex flex-col bg-white dark:bg-slate-900 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
       {/* 添加炫酷的高亮动画 CSS */}
       <style>{`
         .highlight-glow {
@@ -420,7 +420,7 @@ export default function AdsPixel() {
       )}
 
       {/* 画布容器 - 铺满屏幕 */}
-      <div className="flex-1 relative overflow-hidden bg-white dark:bg-slate-800">
+      <div className="flex-1 relative overflow-hidden bg-white dark:bg-slate-900">
         <div
           ref={containerRef}
           className="w-full h-full relative flex items-center justify-center"
@@ -566,7 +566,7 @@ export default function AdsPixel() {
 
         {/* 悬停信息面板 */}
         {hoveredBlock && (
-          <div className="absolute top-4 left-4 bg-white dark:bg-slate-800 bg-opacity-95 backdrop-blur-sm p-4 rounded-lg shadow-xl text-sm max-w-xs z-30 border border-gray-200 dark:border-slate-700">
+          <div className="absolute top-4 left-4 bg-white dark:bg-slate-900 bg-opacity-95 backdrop-blur-sm p-4 rounded-lg shadow-xl text-sm max-w-xs z-30 border border-gray-200 dark:border-slate-700">
             <div className="font-semibold text-gray-900 dark:text-slate-100 text-lg flex items-center gap-2">
               <PhotoIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               {hoveredBlock.block_id}
@@ -611,7 +611,7 @@ export default function AdsPixel() {
         )}
 
         {/* 操作指南 - 悬浮在最顶层，可折叠 */}
-        <div className="absolute bottom-4 left-4 bg-white dark:bg-slate-800 bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 transition-all duration-300 z-[9996]">
+        <div className="absolute bottom-4 left-4 bg-white dark:bg-slate-900 bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 transition-all duration-300 z-[9996]">
           <div className="flex items-center justify-between p-2 cursor-pointer" onClick={() => setIsControlsCollapsed(!isControlsCollapsed)}>
             <div className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
               <ComputerDesktopIcon className="w-4 h-4" />
@@ -646,7 +646,7 @@ export default function AdsPixel() {
         </div>
 
         {/* 状态图例 - 悬浮在最顶层，可折叠 */}
-        <div className="absolute bottom-4 right-4 bg-white dark:bg-slate-800 bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs border border-gray-200 dark:border-slate-700 transition-all duration-300 z-[9996]">
+        <div className="absolute bottom-4 right-4 bg-white dark:bg-slate-900 bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs border border-gray-200 dark:border-slate-700 transition-all duration-300 z-[9996]">
           <div className="flex items-center justify-between p-2 cursor-pointer" onClick={() => setIsLegendCollapsed(!isLegendCollapsed)}>
             <div className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
               <PaintBrushIcon className="w-4 h-4" />
