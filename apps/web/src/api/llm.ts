@@ -47,10 +47,15 @@ export async function optimizeResumeWithLLM(
     const varNames = Object.keys(vars);
     const varValues = Object.values(vars);
     try {
-      const func = new Function(...varNames, `return \`${tmpl}\`;`);
+      // 转义模板中的特殊字符，防止在 new Function 中出错
+      const escapedTmpl = tmpl
+        .replace(/\\/g, '\\\\')  // 转义反斜杠
+        .replace(/`/g, '\\`')    // 转义反引号
+        .replace(/\$/g, '\\$');  // 转义美元符号
+
+      const func = new Function(...varNames, `return \`${escapedTmpl}\`;`);
       return func(...varValues);
     } catch (error) {
-      console.error('Failed to render template:', error);
       throw new Error('Failed to render prompt template');
     }
   };
@@ -105,21 +110,66 @@ export async function optimizeResumeWithLLM(
     throw new Error('LLM Router 返回内容为空');
   }
 
-  // 尝试解析 JSON 格式的回复
+  // 清理 markdown 代码块标记
+  let cleanContent = content
+    .trim()
+    .replace(/```json\s*/g, '')
+    .replace(/```\s*/g, '')
+    .trim();
+
+  // 提取 JSON 对象
+  const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('AI 返回格式错误：无法找到有效的 JSON 对象');
+  }
+
   let result;
   try {
-    // 解析 content 中的 JSON 字符串
-    result = JSON.parse(content);
+    result = JSON.parse(jsonMatch[0]);
   } catch (e) {
-    // 如果不是 JSON 格式，则简单处理
-    result = {
-      suggestions: '优化建议：AI 返回的内容不是标准 JSON 格式',
-      optimizedResume: content,
-    };
+    throw new Error(`AI 返回格式错误：JSON 解析失败。原因：${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  // 验证返回的结果格式
+  if (!result || typeof result !== 'object') {
+    throw new Error('AI 返回格式错误：解析后的结果不是对象');
+  }
+
+  if (!result.suggestions || !result.optimizedResume) {
+    const missing = [];
+    if (!result.suggestions) missing.push('suggestions');
+    if (!result.optimizedResume) missing.push('optimizedResume');
+    throw new Error(`AI 返回格式错误：缺少必需字段 ${missing.join(', ')}`);
+  }
+
+  // 处理 suggestions：如果是数组，转换为字符串
+  let suggestions = '暂无具体建议';
+  if (result.suggestions) {
+    if (Array.isArray(result.suggestions)) {
+      suggestions = result.suggestions.join('\n');
+    } else if (typeof result.suggestions === 'string') {
+      suggestions = result.suggestions;
+    } else {
+      suggestions = '提示：AI 返回的优化建议格式不正确';
+    }
+  }
+
+  // 返回结果，确保 optimizedResume 也清理了 markdown 标记
+  let optimizedResume = result.optimizedResume || '';
+
+  // 再次清理 optimizedResume 中可能存在的 markdown 标记
+  if (typeof optimizedResume === 'string') {
+    optimizedResume = optimizedResume
+      .replace(/^```json\s*/gm, '')
+      .replace(/^```\s*/gm, '')
+      .replace(/```\s*$/gm, '')
+      .trim();
+  } else {
+    throw new Error(`AI 返回格式错误：optimizedResume 不是字符串类型（实际类型：${typeof optimizedResume}）`);
   }
 
   return {
-    suggestions: result.suggestions || '暂无具体建议',
-    optimizedResume: result.optimizedResume || content,
+    suggestions: suggestions,
+    optimizedResume: optimizedResume,
   };
 }

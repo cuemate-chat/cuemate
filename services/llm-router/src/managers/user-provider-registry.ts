@@ -13,8 +13,8 @@ import { OpenAIProvider } from '../providers/openai.js';
 import { QwenProvider } from '../providers/qwen.js';
 import { RegoloProvider } from '../providers/regolo.js';
 import { SiliconFlowProvider } from '../providers/siliconflow.js';
-import { TencentProvider } from '../providers/tencent.js';
 import { TencentCloudProvider } from '../providers/tencent-cloud.js';
+import { TencentProvider } from '../providers/tencent.js';
 import { VllmProvider } from '../providers/vllm.js';
 import { VolcEngineProvider } from '../providers/volcengine.js';
 import { XfProvider } from '../providers/xf.js';
@@ -66,16 +66,6 @@ export class UserProviderRegistry {
     }
     const data = (await res.json().catch(() => undefined)) as UserModelResponse | undefined;
     if (!data?.model) return undefined;
-    // parseCredentials 函数现在不再需要，因为使用 RuntimeConfig
-    // const parseCredentials = (raw: any): Record<string, any> => {
-    //   try {
-    //     const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    //     if (obj && typeof obj === 'object') return obj as Record<string, any>;
-    //   } catch {}
-    //   return {};
-    // };
-
-    // 现在使用 RuntimeConfig，不再需要在构造时传递这些参数
     const providerId = (data.model.provider || '').toLowerCase();
 
     let p: BaseLLMProvider | undefined;
@@ -122,11 +112,9 @@ export class UserProviderRegistry {
       case 'moonshot':
         p = new MoonshotProvider();
         break;
-      case 'bedrock':
       case 'aws-bedrock':
         p = new BedrockProvider();
         break;
-      case 'aliyun':
       case 'aliyun-bailian':
         p = new AliyunProvider();
         break;
@@ -134,7 +122,6 @@ export class UserProviderRegistry {
         p = new TencentCloudProvider();
         break;
       case 'xf':
-      case 'iflytek':
         p = new XfProvider();
         break;
       case 'xinference':

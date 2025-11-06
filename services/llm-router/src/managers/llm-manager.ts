@@ -85,7 +85,7 @@ export class LLMManager extends EventEmitter {
     providers.set('volcengine', new VolcEngineProvider());
     providers.set('zhipu', new ZhipuProvider());
     providers.set('bedrock', new BedrockProvider());
-    providers.set('aliyun', new AliyunProvider());
+    providers.set('aliyun-bailian', new AliyunProvider());
     providers.set('tencent-cloud', new TencentCloudProvider());
     providers.set('xf', new XfProvider());
     providers.set('xinference', new XinferenceProvider());

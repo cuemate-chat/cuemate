@@ -16,7 +16,7 @@ export class XfProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || defaultBaseUrl;
 
     if (!apiKey) {
-      throw new Error('iFlytek Spark API key is required');
+      throw new Error('讯飞星火 API key is required');
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.5;
@@ -55,7 +55,7 @@ export class XfProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'iFlytek Spark completion failed:');
+      logger.error({ err: error }, '讯飞星火 completion failed:');
       throw error;
     }
   }
@@ -69,7 +69,7 @@ export class XfProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || defaultBaseUrl;
 
     if (!apiKey) {
-      throw new Error('iFlytek Spark API key is required');
+      throw new Error('讯飞星火 API key is required');
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.5;
@@ -96,7 +96,7 @@ export class XfProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'iFlytek Spark stream failed:');
+      logger.error({ err: error }, '讯飞星火 stream failed:');
       throw error;
     }
   }
@@ -110,7 +110,7 @@ export class XfProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || defaultBaseUrl;
 
     if (!apiKey) {
-      throw new Error('iFlytek Spark API key is required');
+      throw new Error('讯飞星火 API key is required');
     }
 
     const client = new OpenAI({
@@ -127,7 +127,7 @@ export class XfProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, `iFlytek Spark health check failed for model ${config.model}:`);
+      logger.error({ err: error }, `讯飞星火 health check failed for model ${config.model}:`);
       throw error;
     }
   }

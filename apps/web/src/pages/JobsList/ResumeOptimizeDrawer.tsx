@@ -31,6 +31,19 @@ const ResumeOptimizeDrawer: React.FC<ResumeOptimizeDrawerProps> = ({
 }) => {
   const [viewMode, setViewMode] = useState<'diff' | 'edit'>('diff');
 
+  // 格式化优化建议：如果没有换行符但有编号，自动添加换行
+  const formatSuggestions = (text: string): string => {
+    if (!text) return '';
+
+    // 如果已经有换行符，直接返回
+    if (text.includes('\n')) return text;
+
+    // 检测 "数字." 或 "数字、" 格式的编号，在前面添加换行
+    return text
+      .replace(/(\d+[.、])/g, '\n$1')
+      .trim();
+  };
+
   return (
     <DrawerProvider
       open={open}
@@ -46,7 +59,7 @@ const ResumeOptimizeDrawer: React.FC<ResumeOptimizeDrawerProps> = ({
               <h3 className="text-sm font-medium text-slate-900 mb-2">优化建议</h3>
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
                 <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {optimizeResult.suggestions}
+                  {formatSuggestions(optimizeResult.suggestions)}
                 </div>
               </div>
             </div>

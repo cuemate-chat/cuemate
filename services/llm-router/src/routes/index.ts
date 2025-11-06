@@ -14,8 +14,8 @@ import { OpenAIProvider } from '../providers/openai.js';
 import { QwenProvider } from '../providers/qwen.js';
 import { RegoloProvider } from '../providers/regolo.js';
 import { SiliconFlowProvider } from '../providers/siliconflow.js';
-import { TencentProvider } from '../providers/tencent.js';
 import { TencentCloudProvider } from '../providers/tencent-cloud.js';
+import { TencentProvider } from '../providers/tencent.js';
 import { VllmProvider } from '../providers/vllm.js';
 import { VolcEngineProvider } from '../providers/volcengine.js';
 import { XfProvider } from '../providers/xf.js';
@@ -101,7 +101,9 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       } catch (streamError) {
         logger.error({ err: streamError }, 'Stream processing failed');
         // Headers already sent, write error as SSE event
-        reply.raw.write(`data: ${JSON.stringify({ error: streamError instanceof Error ? streamError.message : 'Stream failed' })}\n\n`);
+        reply.raw.write(
+          `data: ${JSON.stringify({ error: streamError instanceof Error ? streamError.message : 'Stream failed' })}\n\n`,
+        );
         reply.raw.end();
       }
       return;
@@ -109,7 +111,10 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       logger.error({ err: error }, 'Stream request failed');
       // Only send error response if headers not yet sent
       if (!reply.raw.headersSent) {
-        return reply.code(500).send({ error: 'Stream failed', message: error instanceof Error ? error.message : String(error) });
+        return reply.code(500).send({
+          error: 'Stream failed',
+          message: error instanceof Error ? error.message : String(error),
+        });
       }
       reply.raw.end();
     }
@@ -271,7 +276,6 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         case 'aws-bedrock':
           provider = new BedrockProvider();
           break;
-        case 'aliyun':
         case 'aliyun-bailian':
           provider = new AliyunProvider();
           break;
@@ -279,7 +283,6 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
           provider = new TencentCloudProvider();
           break;
         case 'xf':
-        case 'iflytek':
           provider = new XfProvider();
           break;
         case 'xinference':
@@ -291,7 +294,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         default:
           return reply.code(400).send({
             ok: false,
-            error: `Unknown provider: ${providerId}. Please use one of: openai, anthropic, azure-openai, ollama, deepseek, kimi, gemini, qwen, zhipu, siliconflow, tencent, volcengine, vllm, moonshot, bedrock, aliyun, tencent-cloud, xf, xinference, regolo`
+            error: `Unknown provider: ${providerId}. Please use one of: openai, anthropic, azure-openai, ollama, deepseek, kimi, gemini, qwen, zhipu, siliconflow, tencent, volcengine, vllm, moonshot, bedrock, aliyun-bailian, tencent-cloud, xf, xinference, regolo`,
           });
       }
 

@@ -2,7 +2,7 @@ import Icon from '../../assets/llm/xf_icon_svg?raw';
 import { ProviderManifest } from '../types';
 
 const manifest: ProviderManifest = {
-  id: 'iflytek',
+  id: 'xf',
   name: '讯飞星火',
   scope: 'public',
   kind: 'llm',
