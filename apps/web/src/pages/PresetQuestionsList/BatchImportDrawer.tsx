@@ -103,27 +103,27 @@ export default function BatchImportDrawer({
 
       <DrawerContent>
         <div className="space-y-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="text-blue-800 font-medium mb-2">支持格式</div>
-            <div className="text-blue-700 text-sm">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="text-blue-800 dark:text-blue-300 font-medium mb-2">支持格式</div>
+            <div className="text-blue-700 dark:text-blue-400 text-sm">
               支持导入 CSV 或 JSON 格式文件
             </div>
           </div>
-          
-          <div className="border border-dashed border-slate-300 rounded-lg p-6">
-            <div className="text-sm text-slate-600 mb-4">
+
+          <div className="border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-6">
+            <div className="text-sm text-slate-600 dark:text-slate-300 mb-4">
               <strong>CSV 格式要求：</strong>
             </div>
-            <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded mb-4 font-mono">
+            <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded mb-4 font-mono">
               问题,答案,标签 ID<br/>
               "什么是微服务？","微服务是...","tag_001"<br/>
               "Redis 的使用场景","Redis 主要用于...","tag_002"
             </div>
             
-            <div className="text-sm text-slate-600 mb-4">
+            <div className="text-sm text-slate-600 dark:text-slate-300 mb-4">
               <strong>JSON 格式要求：</strong>
             </div>
-            <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded mb-6 font-mono">
+            <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded mb-6 font-mono">
               [<br/>
               &nbsp;&nbsp;{"{"}"question": "什么是微服务？", "answer": "微服务是...", "tag_id": "tag_001"{"}"}<br/>
               &nbsp;&nbsp;{"{"}"question": "Redis 的使用场景", "answer": "Redis 主要用于...", "tag_id": null{"}"}<br/>
@@ -155,8 +155,8 @@ export default function BatchImportDrawer({
             </Checkbox>
           </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="text-yellow-800 text-sm">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+            <div className="text-yellow-800 dark:text-yellow-300 text-sm">
               <div className="font-medium mb-2">导入说明：</div>
               <ul className="list-disc list-inside space-y-1">
                 <li>文件大小限制：最大 10MB</li>

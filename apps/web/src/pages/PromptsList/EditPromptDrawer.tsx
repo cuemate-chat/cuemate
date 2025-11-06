@@ -2,6 +2,7 @@ import { Button, Input } from 'antd';
 import { useEffect, useState } from 'react';
 import { Prompt } from '../../api/prompts';
 import DrawerProvider, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProvider';
+import { message } from '../../components/Message';
 
 const { TextArea } = Input;
 
@@ -60,6 +61,8 @@ export default function EditPromptDrawer({
 
   const handleReset = () => {
     setEditedContent(displayContent);
+    setExtra(prompt?.extra || '');
+    message.success('已重置为初始内容');
   };
 
   if (!prompt) return null;
@@ -71,17 +74,17 @@ export default function EditPromptDrawer({
       <DrawerContent>
         <div className="space-y-6">
           {/* 基本信息 */}
-          <div className="bg-slate-50 p-4 rounded-lg space-y-2">
+          <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-600">ID:</span>
-              <span className="font-mono text-sm text-blue-600">{prompt.id}</span>
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">ID:</span>
+              <span className="font-mono text-sm text-blue-600 dark:text-blue-400">{prompt.id}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-600">描述:</span>
-              <span className="text-sm">{prompt.description}</span>
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">描述:</span>
+              <span className="text-sm text-slate-900 dark:text-white">{prompt.description}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-600">来源:</span>
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">来源:</span>
               <span
                 className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                   prompt.source === 'desktop'
@@ -96,7 +99,7 @@ export default function EditPromptDrawer({
 
           {/* 变量列表 */}
           {variables.length > 0 && (
-            <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+            <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200">
               <div className="text-sm font-medium text-amber-800 mb-2">
                 模板变量（不可修改）
               </div>
@@ -119,7 +122,7 @@ export default function EditPromptDrawer({
 
           {/* 编辑区域 */}
           <div>
-            <div className="text-sm mb-2 font-medium text-slate-700">
+            <div className="text-sm mb-2 font-medium text-slate-700 dark:text-slate-200">
               Prompt 内容 <span className="text-red-500">*</span>
             </div>
             <TextArea
@@ -135,7 +138,7 @@ export default function EditPromptDrawer({
 
           {/* Extra 配置 */}
           <div>
-            <div className="text-sm mb-2 font-medium text-slate-700">
+            <div className="text-sm mb-2 font-medium text-slate-700 dark:text-slate-200">
               Extra 配置（选填）
             </div>
             <TextArea
@@ -146,18 +149,18 @@ export default function EditPromptDrawer({
               className="font-mono text-xs"
               maxLength={1000}
             />
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               用于存储额外的配置参数（JSON 格式），如面试问题数量等
             </div>
           </div>
 
           {/* 历史记录 */}
           {prompt.history_pre && (
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-              <div className="text-sm font-medium text-slate-700 mb-2">
+            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="text-sm font-medium text-slate-700 dark:text-white mb-2">
                 上一版本内容（仅供参考）
               </div>
-              <pre className="text-xs text-slate-600 whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">
+              <pre className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">
                 {prompt.history_pre}
               </pre>
             </div>

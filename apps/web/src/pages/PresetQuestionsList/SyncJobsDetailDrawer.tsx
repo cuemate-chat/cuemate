@@ -23,7 +23,7 @@ export default function SyncJobsDetailDrawer({
       <DrawerHeader>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" clipRule="evenodd" />
             </svg>
           </div>
@@ -63,7 +63,7 @@ export default function SyncJobsDetailDrawer({
               {syncJobs.map((job, index) => (
                 <div 
                   key={job.id} 
-                  className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors duration-200"
+                  className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 transition-colors duration-200"
                 >
                   {/* 序号 */}
                   <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0">
@@ -73,7 +73,7 @@ export default function SyncJobsDetailDrawer({
                   {/* 岗位信息 */}
                   <div className="flex-1 min-w-0">
                     <div className="text-slate-800 font-medium truncate">{job.title}</div>
-                    <div className="text-xs text-slate-500">ID: {job.id}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">ID: {job.id}</div>
                   </div>
                   
                   {/* 状态图标 */}
@@ -88,7 +88,7 @@ export default function SyncJobsDetailDrawer({
           </div>
 
           {/* 底部说明 */}
-          <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 border border-slate-200">
             <div className="text-xs text-slate-600 text-center">
               <LightbulbIcon className="w-4 h-4 inline mr-1" />
               此题目已成功同步到上述岗位的面试题库中，面试官可以在对应岗位的面试押题中查看和使用

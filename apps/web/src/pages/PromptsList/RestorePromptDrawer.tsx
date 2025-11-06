@@ -59,11 +59,11 @@ export default function RestorePromptDrawer({
         <div className="space-y-6">
           {/* 当前版本 */}
           <div>
-            <div className="text-sm font-medium text-slate-700 mb-2">
+            <div className="text-sm font-medium text-slate-700 dark:text-white mb-2">
               当前版本
             </div>
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-              <pre className="text-xs text-slate-600 whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
+            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+              <pre className="text-xs text-slate-600 dark:text-white whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
                 {prompt.content}
               </pre>
             </div>
@@ -71,17 +71,17 @@ export default function RestorePromptDrawer({
 
           {/* 上一版本 */}
           <div>
-            <div className="text-sm font-medium text-slate-700 mb-2">
+            <div className="text-sm font-medium text-slate-700 dark:text-white mb-2">
               上一版本内容
             </div>
             {prompt.history_pre ? (
-              <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
-                <pre className="text-xs text-amber-900 whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                <pre className="text-xs text-amber-900 dark:text-white whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
                   {prompt.history_pre}
                 </pre>
               </div>
             ) : (
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-center">
+              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
                 <span className="text-sm text-slate-400">暂无历史版本</span>
               </div>
             )}
@@ -89,18 +89,18 @@ export default function RestorePromptDrawer({
 
           {/* 默认值 */}
           <div>
-            <div className="text-sm font-medium text-slate-700 mb-2">
+            <div className="text-sm font-medium text-slate-700 dark:text-white mb-2">
               默认值内容
             </div>
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <pre className="text-xs text-blue-900 whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+              <pre className="text-xs text-blue-900 dark:text-white whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
                 {prompt.default_content}
               </pre>
             </div>
           </div>
 
           {/* 提示信息 */}
-          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200">
             <div className="text-sm font-medium text-yellow-800 mb-2">
               注意事项
             </div>

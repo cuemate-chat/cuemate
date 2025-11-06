@@ -42,7 +42,7 @@ export default function PromptsList() {
       key: 'index',
       width: '8%',
       render: (_value: any, _record: any, index: number) => (
-        <div className="text-center">{(page - 1) * pageSize + index + 1}</div>
+        <div className="text-center text-slate-800 dark:text-slate-100">{(page - 1) * pageSize + index + 1}</div>
       ),
     },
     {
@@ -59,6 +59,9 @@ export default function PromptsList() {
       dataIndex: 'description',
       key: 'description',
       width: '15%',
+      render: (description: string) => (
+        <span className="text-slate-800 dark:text-slate-100">{description}</span>
+      ),
     },
     {
       title: '来源',
@@ -98,7 +101,7 @@ export default function PromptsList() {
             </div>
           );
         } catch {
-          return <span className="text-slate-400 dark:text-slate-500">-</span>;
+          return <span className="text-slate-600 dark:text-slate-200">-</span>;
         }
       },
     },
@@ -121,7 +124,7 @@ export default function PromptsList() {
             <ArrowPathIcon className="w-4 h-4" /> 恢复
           </button>
           <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md cursor-not-allowed"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-slate-500 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md cursor-not-allowed opacity-50"
             disabled
           >
             <TrashIcon className="w-4 h-4" /> 删除
@@ -245,7 +248,7 @@ export default function PromptsList() {
 
       <div className="flex flex-wrap gap-4 items-end mb-4">
         <div className="flex flex-col">
-          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">来源</label>
+          <label className="block text-xs text-slate-600 dark:text-slate-200 mb-1">来源</label>
           <Select
             value={sourceFilter || undefined}
             onChange={(v) => {
@@ -277,7 +280,7 @@ export default function PromptsList() {
       </div>
 
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500 dark:text-slate-400">共 {total} 条</div>
+        <div className="text-slate-600 dark:text-slate-200">共 {total} 条</div>
         <PaginationBar
           page={page}
           pageSize={pageSize}

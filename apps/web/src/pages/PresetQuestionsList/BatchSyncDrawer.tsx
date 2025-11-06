@@ -66,15 +66,15 @@ export default function BatchSyncDrawer({
 
       <DrawerContent>
         <div className="space-y-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="text-blue-800 font-medium mb-2">同步信息</div>
-            <div className="text-blue-700 text-sm">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="text-blue-800 dark:text-blue-300 font-medium mb-2">同步信息</div>
+            <div className="text-blue-700 dark:text-blue-400 text-sm">
               已选择 <span className="font-semibold">{selectedIds.length}</span> 个题目进行同步
             </div>
           </div>
 
           <div>
-            <div className="text-sm mb-2 font-medium text-slate-700">选择目标岗位<span className="text-red-500"> *</span></div>
+            <div className="text-sm mb-2 font-medium text-slate-700 dark:text-slate-200">选择目标岗位<span className="text-red-500 dark:text-red-400"> *</span></div>
             <Select
               placeholder="请选择要同步到的岗位"
               value={syncJobId}
@@ -86,8 +86,8 @@ export default function BatchSyncDrawer({
             />
           </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="text-yellow-800 text-sm">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+            <div className="text-yellow-800 dark:text-yellow-300 text-sm">
               <div className="font-medium mb-1">注意事项：</div>
               <ul className="list-disc list-inside space-y-1">
                 <li>重复的题目将被自动跳过，不会重复添加</li>

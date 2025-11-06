@@ -236,6 +236,7 @@ export default function PresetQuestionsList() {
               }}
               allowClear
               style={{ width: 140 }}
+              className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:[&_input]:bg-slate-700 dark:[&_input]:text-slate-100 dark:[&_input::placeholder]:text-slate-400"
             />
             <Input
               placeholder="按答案搜索"
@@ -246,6 +247,7 @@ export default function PresetQuestionsList() {
               }}
               allowClear
               style={{ width: 140 }}
+              className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:[&_input]:bg-slate-700 dark:[&_input]:text-slate-100 dark:[&_input::placeholder]:text-slate-400"
             />
             <Select
               placeholder="按标签筛选"

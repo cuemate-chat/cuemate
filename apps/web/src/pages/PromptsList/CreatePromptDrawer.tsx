@@ -66,7 +66,7 @@ export default function CreatePromptDrawer({
         <div className="space-y-6">
           {/* ID 输入 */}
           <div>
-            <div className="text-sm mb-2 font-medium text-slate-700">
+            <div className="text-sm mb-2 font-medium text-slate-700 dark:text-slate-200">
               Prompt ID <span className="text-red-500">*</span>
             </div>
             <Input
@@ -76,14 +76,14 @@ export default function CreatePromptDrawer({
               className="font-mono"
               style={{ height: 40 }}
             />
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               ID 必须唯一，建议使用驼峰命名
             </div>
           </div>
 
           {/* 描述输入 */}
           <div>
-            <div className="text-sm mb-2 font-medium text-slate-700">描述</div>
+            <div className="text-sm mb-2 font-medium text-slate-700 dark:text-slate-200">描述</div>
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -94,7 +94,7 @@ export default function CreatePromptDrawer({
 
           {/* 来源选择 */}
           <div>
-            <div className="text-sm mb-2 font-medium text-slate-700">
+            <div className="text-sm mb-2 font-medium text-slate-700 dark:text-slate-200">
               来源 <span className="text-red-500">*</span>
             </div>
             <Select
@@ -110,7 +110,7 @@ export default function CreatePromptDrawer({
 
           {/* 内容输入 */}
           <div>
-            <div className="text-sm mb-2 font-medium text-slate-700">
+            <div className="text-sm mb-2 font-medium text-slate-700 dark:text-slate-200">
               Prompt 内容 <span className="text-red-500">*</span>
             </div>
             <TextArea
@@ -125,7 +125,7 @@ export default function CreatePromptDrawer({
           </div>
 
           {/* 提示信息 */}
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200">
             <div className="text-sm font-medium text-blue-800 mb-2">
               模板变量使用说明
             </div>

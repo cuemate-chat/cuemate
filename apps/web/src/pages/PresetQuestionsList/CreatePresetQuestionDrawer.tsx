@@ -95,7 +95,7 @@ export default function CreatePresetQuestionDrawer({
       <DrawerContent>
         <div className="space-y-6">
           <div>
-            <div className="text-sm mb-2 font-medium text-slate-700">标签<span className="text-red-500"> *</span></div>
+            <div className="text-sm mb-2 font-medium text-slate-700 dark:text-slate-200">标签<span className="text-red-500 dark:text-red-400"> *</span></div>
             <Select
               placeholder="选择标签"
               value={newTagId}
@@ -110,7 +110,7 @@ export default function CreatePresetQuestionDrawer({
           </div>
 
           <div>
-            <div className="text-sm mb-2 font-medium text-slate-700">问题<span className="text-red-500"> *</span></div>
+            <div className="text-sm mb-2 font-medium text-slate-700 dark:text-slate-200">问题<span className="text-red-500 dark:text-red-400"> *</span></div>
             <TextArea
               value={newQuestion}
               onChange={(e) => setNewQuestion(e.target.value)}
@@ -122,7 +122,7 @@ export default function CreatePresetQuestionDrawer({
           </div>
 
           <div>
-            <div className="text-sm mb-2 font-medium text-slate-700">答案<span className="text-red-500"> *</span></div>
+            <div className="text-sm mb-2 font-medium text-slate-700 dark:text-slate-200">答案<span className="text-red-500 dark:text-red-400"> *</span></div>
             <TextArea
               value={newAnswer}
               onChange={(e) => setNewAnswer(e.target.value)}
