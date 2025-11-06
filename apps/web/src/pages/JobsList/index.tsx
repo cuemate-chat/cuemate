@@ -314,9 +314,9 @@ export default function JobsList() {
             </button>
           ))}
           {!items.length && (
-            <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+            <div className="text-center py-8 text-slate-500 dark:text-slate-300">
               <div className="text-sm">暂无岗位</div>
-              <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">请先创建岗位</div>
+              <div className="text-xs text-slate-400 dark:text-slate-300 mt-1">请先创建岗位</div>
             </div>
           )}
         </div>
@@ -332,6 +332,7 @@ export default function JobsList() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={!selectedId}
+                className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
               />
             </div>
             <div>
@@ -342,8 +343,9 @@ export default function JobsList() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={!selectedId}
+                className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
               />
-              <div className="text-right text-xs text-slate-500 dark:text-slate-400">{description.length} / 5000</div>
+              <div className="text-right text-xs text-slate-500 dark:text-slate-300">{description.length} / 5000</div>
             </div>
             <div>
               <div className="text-sm text-slate-600 dark:text-slate-300 mb-1">简历信息（文本）<span className="text-red-500 dark:text-red-400"> *</span></div>
@@ -354,8 +356,9 @@ export default function JobsList() {
                 onChange={(e) => setResumeContent(e.target.value)}
                 placeholder="简历正文"
                 disabled={!selectedId}
+                className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
               />
-              <div className="text-right text-xs text-slate-500 dark:text-slate-400">{resumeContent.length} / 20000</div>
+              <div className="text-right text-xs text-slate-500 dark:text-slate-300">{resumeContent.length} / 20000</div>
             </div>
           </div>
 

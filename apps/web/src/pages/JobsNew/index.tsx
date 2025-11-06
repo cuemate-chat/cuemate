@@ -214,7 +214,7 @@ export default function JobsNew() {
 
   return (
     <div className="bg-transparent">
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
         <Steps
           current={current}
           items={[{ title: '填写岗位信息' }, { title: '选择简历' }, { title: '准备完成' }]}
@@ -235,20 +235,21 @@ export default function JobsNew() {
                   <button
                     key={ex.name}
                     onClick={() => fillExample(ex)}
-                    className="w-full text-left px-4 py-3 rounded-lg border border-slate-200 
-                               hover:border-blue-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 
-                               transition-all duration-200 group transform hover:scale-[1.02] 
+                    className="w-full text-left px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700
+                               hover:border-blue-300 dark:hover:border-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50
+                               dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30
+                               transition-all duration-200 group transform hover:scale-[1.02]
                                active:scale-[0.98]"
                     title="点击填充到表单"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600
                                       flex items-center justify-center text-white text-sm font-medium
                                       group-hover:shadow-lg transition-all duration-200">
                         {index + 1}
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium text-slate-800 group-hover:text-blue-700 transition-colors">
+                        <div className="font-medium text-slate-800 dark:text-slate-100 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">
                           {ex.name}
                         </div>
                       </div>
@@ -262,25 +263,27 @@ export default function JobsNew() {
             <div className="flex-1 min-w-0">
               <div className="space-y-4">
                 <div>
-                  <div className="text-sm text-slate-600 mb-1">岗位名称<span className="text-red-500"> *</span></div>
+                  <div className="text-sm text-slate-600 dark:text-slate-200 mb-1">岗位名称<span className="text-red-500"> *</span></div>
                   <Input
                     maxLength={200}
                     placeholder="请输入岗位名称"
                     value={jobName}
                     onChange={(e) => setJobName(e.target.value)}
                     size="large"
+                    className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
                   />
                 </div>
                 <div>
-                  <div className="text-sm text-slate-600 mb-1">岗位描述<span className="text-red-500"> *</span></div>
+                  <div className="text-sm text-slate-600 dark:text-slate-200 mb-1">岗位描述<span className="text-red-500"> *</span></div>
                   <TextArea
                     maxLength={5000}
                     placeholder="请描述岗位职责、任职要求等，AI 将根据描述生成模拟面试题与流程"
                     value={jobDesc}
                     onChange={(e) => setJobDesc(e.target.value)}
                     rows={adaptiveRows.desc}
+                    className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
                   />
-                  <div className="text-right text-xs text-slate-500">{jobDesc.length} / 5000</div>
+                  <div className="text-right text-xs text-slate-500 dark:text-slate-300">{jobDesc.length} / 5000</div>
                 </div>
               </div>
             </div>
@@ -289,7 +292,7 @@ export default function JobsNew() {
 
         {current === 1 && (
           <div className="mt-6 grid grid-cols-1 gap-6">
-            <div className="rounded-lg border border-dashed border-slate-300">
+            <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600">
               <Upload.Dragger
                 name="resume"
                 multiple={false}
@@ -364,15 +367,16 @@ export default function JobsNew() {
               </Upload.Dragger>
             </div>
             <div>
-              <div className="text-sm text-slate-600 mb-1">简历文本<span className="text-red-500"> *</span></div>
+              <div className="text-sm text-slate-600 dark:text-slate-200 mb-1">简历文本<span className="text-red-500"> *</span></div>
               <TextArea
                 maxLength={20000}
                 rows={adaptiveRows.resume}
                 placeholder="可直接粘贴你的简历到这里，特别是遇到解析失败的时候"
                 value={resumeText}
                 onChange={(e) => setResumeText(e.target.value)}
+                className="dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400"
               />
-              <div className="text-right text-xs text-slate-500">{resumeText.length} / 20000</div>
+              <div className="text-right text-xs text-slate-500 dark:text-slate-300">{resumeText.length} / 20000</div>
             </div>
           </div>
         )}
@@ -383,19 +387,19 @@ export default function JobsNew() {
               <img src={image} alt="illustration" className="w-full h-auto object-contain" />
             </div>
             <div className="w-full max-w-xl mx-auto">
-              <div className="h-2 bg-slate-200 rounded overflow-hidden">
+              <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded overflow-hidden">
                 <div
                   className="h-full bg-blue-500 transition-all duration-200"
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <div className="mt-2 text-center text-sm text-slate-600">{progress}%</div>
+              <div className="mt-2 text-center text-sm text-slate-600 dark:text-slate-200">{progress}%</div>
             </div>
             <div className="text-center mt-4">
-              <div className="text-xl font-semibold mb-2">
+              <div className="text-xl font-semibold dark:text-slate-100 mb-2">
                 {progress >= 100 ? '准备完成' : '准备中…'}
               </div>
-              <div className="text-slate-600">
+              <div className="text-slate-600 dark:text-slate-200">
                 {progress >= 100
                   ? '已生成面试岗位，模拟面试试一番，熟悉熟悉流程吧！'
                   : '正在上传简历并写入岗位信息…'}

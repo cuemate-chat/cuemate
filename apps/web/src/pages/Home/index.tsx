@@ -105,12 +105,12 @@ export default function Home() {
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
                 你的<span className="text-blue-600 dark:text-blue-400"> 专属 </span> AI 面试教练
               </h1>
-              <p className="mt-3 sm:mt-4 text-slate-600 dark:text-slate-400 text-sm sm:text-base md:text-lg max-w-3xl mx-auto leading-relaxed">
+              <p className="mt-3 sm:mt-4 text-slate-600 dark:text-slate-200 text-sm sm:text-base md:text-lg max-w-3xl mx-auto leading-relaxed">
                 面试过程中实时提供专业建议，帮助构建清晰有逻辑的回答框架，面试成功率显著提升
               </p>
 
               <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-                <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">当前岗位：</span>
+                <span className="text-slate-600 dark:text-slate-200 text-sm sm:text-base">当前岗位：</span>
                 <Select
                   className="w-[180px] sm:w-[200px]"
                   value={currentJob}
@@ -151,8 +151,8 @@ export default function Home() {
                       <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
                     <div className="text-blue-600 dark:text-blue-400 text-xl sm:text-2xl font-bold mb-1">{statistics.offers_count}+</div>
-                    <div className="text-slate-700 dark:text-slate-300 font-medium text-xs sm:text-sm">收到的 Offer 数量</div>
-                    <div className="text-slate-500 dark:text-slate-400 text-xs mt-1">平均成功率 {statistics.success_rate}</div>
+                    <div className="text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm">收到的 Offer 数量</div>
+                    <div className="text-slate-500 dark:text-slate-300 text-xs mt-1">平均成功率 {statistics.success_rate}</div>
                   </div>
                 </div>
 
@@ -163,8 +163,8 @@ export default function Home() {
                       <ChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
                     <div className="text-green-600 dark:text-green-400 text-xl sm:text-2xl font-bold mb-1">{statistics.mock_interviews}+</div>
-                    <div className="text-slate-700 dark:text-slate-300 font-medium text-xs sm:text-sm">通过的模拟次数</div>
-                    <div className="text-slate-500 dark:text-slate-400 text-xs mt-1">累计练习时长 {statistics.practice_hours}+ 小时</div>
+                    <div className="text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm">通过的模拟次数</div>
+                    <div className="text-slate-500 dark:text-slate-300 text-xs mt-1">累计练习时长 {statistics.practice_hours}+ 小时</div>
                   </div>
                 </div>
 
@@ -175,8 +175,8 @@ export default function Home() {
                       <BuildingOffice2Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
                     <div className="text-purple-600 dark:text-purple-400 text-xl sm:text-2xl font-bold mb-1">{statistics.companies_joined}+</div>
-                    <div className="text-slate-700 dark:text-slate-300 font-medium text-xs sm:text-sm">成功入职的公司数量</div>
-                    <div className="text-slate-500 dark:text-slate-400 text-xs mt-1">涵盖各行业、各岗位</div>
+                    <div className="text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm">成功入职的公司数量</div>
+                    <div className="text-slate-500 dark:text-slate-300 text-xs mt-1">涵盖各行业、各岗位</div>
                   </div>
                 </div>
               </div>
@@ -197,12 +197,12 @@ export default function Home() {
                     </div>
                     <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">岗位定制</div>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-xs sm:text-sm">
+                  <p className="text-slate-600 dark:text-slate-200 leading-relaxed text-xs sm:text-sm">
                     基于岗位 JD 自动生成面试题与评分维度，覆盖通用与专项能力。
                   </p>
                   <div className="mt-2 sm:mt-3 flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">智能解析 JD</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-300">智能解析 JD</span>
                   </div>
                 </div>
               </div>
@@ -216,12 +216,12 @@ export default function Home() {
                     </div>
                     <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">实时建议</div>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-xs sm:text-sm">
+                  <p className="text-slate-600 dark:text-slate-200 leading-relaxed text-xs sm:text-sm">
                     面试过程中实时纠错与引导，强化 STAR/SCQA 结构，提升表达与逻辑。
                   </p>
                   <div className="mt-2 sm:mt-3 flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-teal-400"></div>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">AI 实时指导</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-300">AI 实时指导</span>
                   </div>
                 </div>
               </div>
@@ -235,12 +235,12 @@ export default function Home() {
                     </div>
                     <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">复盘成长</div>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-xs sm:text-sm">
+                  <p className="text-slate-600 dark:text-slate-200 leading-relaxed text-xs sm:text-sm">
                     关键问题复盘、亮点与改进建议沉淀为个人题库，持续提升。
                   </p>
                   <div className="mt-2 sm:mt-3 flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-rose-400"></div>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">持续优化</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-300">持续优化</span>
                   </div>
                 </div>
               </div>

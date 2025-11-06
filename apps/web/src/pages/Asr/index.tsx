@@ -177,11 +177,11 @@ export default function AsrSettings() {
       {/* 页面标题 */}
       <header>
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-2xl font-semibold text-slate-900">语音识别设置</h1>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">语音识别设置</h1>
         </div>
       </header>
 
-      <Card>
+      <Card className="dark:bg-slate-800 dark:border-slate-700">
         <Form
           form={form}
           layout="vertical"
@@ -198,7 +198,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="microphone_device_id"
-                        label={<span>麦克风音源</span>}
+                        label={<span className="dark:text-slate-300">麦克风音源</span>}
                         rules={[{ required: true, message: '请选择麦克风设备' }]}
                       >
                         <Select
@@ -219,7 +219,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="microphone_device_name"
-                        label="麦克风设备名称"
+                        label={<span className="dark:text-slate-300">麦克风设备名称</span>}
                       >
                         <Input placeholder="默认麦克风" disabled />
                       </Form.Item>
@@ -228,7 +228,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="speaker_device_id"
-                        label={<span>扬声器音源</span>}
+                        label={<span className="dark:text-slate-300">扬声器音源</span>}
                         rules={[{ required: true, message: '请选择扬声器设备' }]}
                       >
                         <Select
@@ -249,7 +249,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="speaker_device_name"
-                        label="扬声器设备名称"
+                        label={<span className="dark:text-slate-300">扬声器设备名称</span>}
                       >
                         <Input placeholder="默认扬声器" disabled />
                       </Form.Item>
@@ -265,7 +265,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="name"
-                        label="配置名称"
+                        label={<span className="dark:text-slate-300">配置名称</span>}
                         rules={[{ required: true, message: '请输入配置名称' }]}
                       >
                         <Input placeholder="ASR-Gateway" />
@@ -273,7 +273,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="funasr_host"
-                        label="FunASR 主机地址"
+                        label={<span className="dark:text-slate-300">FunASR 主机地址</span>}
                         rules={[{ required: true, message: '请输入主机地址' }]}
                       >
                         <Input placeholder="localhost" />
@@ -283,7 +283,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="funasr_port"
-                        label="FunASR 端口"
+                        label={<span className="dark:text-slate-300">FunASR 端口</span>}
                         rules={[{ required: true, message: '请输入端口' }]}
                       >
                         <InputNumber
@@ -296,7 +296,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="funasr_mode"
-                        label="识别模式"
+                        label={<span className="dark:text-slate-300">识别模式</span>}
                         rules={[{ required: true, message: '请选择识别模式' }]}
                       >
                         <Select placeholder="选择模式">
@@ -310,7 +310,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="funasr_sample_rate"
-                        label="采样率 (Hz)"
+                        label={<span className="dark:text-slate-300">采样率 (Hz)</span>}
                         rules={[{ required: true, message: '请输入采样率' }]}
                       >
                         <InputNumber
@@ -324,7 +324,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="funasr_chunk_interval"
-                        label="音频块间隔"
+                        label={<span className="dark:text-slate-300">音频块间隔</span>}
                       >
                         <InputNumber
                           min={1}
@@ -338,7 +338,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-3 gap-4">
                       <Form.Item
                         name="funasr_chunk_size_start"
-                        label="起始块大小"
+                        label={<span className="dark:text-slate-300">起始块大小</span>}
                       >
                         <InputNumber
                           min={1}
@@ -350,7 +350,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="funasr_chunk_size_middle"
-                        label="中间块大小"
+                        label={<span className="dark:text-slate-300">中间块大小</span>}
                       >
                         <InputNumber
                           min={1}
@@ -362,7 +362,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="funasr_chunk_size_end"
-                        label="结束块大小"
+                        label={<span className="dark:text-slate-300">结束块大小</span>}
                       >
                         <InputNumber
                           min={1}
@@ -383,7 +383,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="audiotee_sample_rate"
-                        label="AudioTee 采样率"
+                        label={<span className="dark:text-slate-300">AudioTee 采样率</span>}
                         rules={[{ required: true, message: '请选择采样率' }]}
                       >
                         <Select placeholder="选择采样率">
@@ -399,7 +399,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="audiotee_chunk_duration"
-                        label="音频块时长 (秒)"
+                        label={<span className="dark:text-slate-300">音频块时长 (秒)</span>}
                       >
                         <InputNumber
                           min={0.1}
@@ -414,7 +414,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="audiotee_include_processes"
-                        label="包含进程列表 (JSON)"
+                        label={<span className="dark:text-slate-300">包含进程列表 (JSON)</span>}
                       >
                         <Input.TextArea
                           placeholder='["1234", "5678"]'
@@ -424,7 +424,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="audiotee_exclude_processes"
-                        label="排除进程列表 (JSON)"
+                        label={<span className="dark:text-slate-300">排除进程列表 (JSON)</span>}
                       >
                         <Input.TextArea
                           placeholder='["9999"]'
@@ -437,7 +437,7 @@ export default function AsrSettings() {
                       <Form.Item
                         name="audiotee_mute_processes"
                         valuePropName="checked"
-                        label="静音被捕获的进程"
+                        label={<span className="dark:text-slate-300">静音被捕获的进程</span>}
                       >
                         <Switch />
                       </Form.Item>
@@ -453,7 +453,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="piper_default_language"
-                        label="默认语言"
+                        label={<span className="dark:text-slate-300">默认语言</span>}
                         rules={[{ required: true, message: '请选择默认语言' }]}
                       >
                         <Select placeholder="选择语言">
@@ -464,7 +464,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="piper_speech_speed"
-                        label="语音速度"
+                        label={<span className="dark:text-slate-300">语音速度</span>}
                       >
                         <InputNumber
                           min={0.5}
@@ -479,7 +479,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-1 gap-4">
                       <Form.Item
                         name="piper_python_path"
-                        label="Python 可执行文件路径"
+                        label={<span className="dark:text-slate-300">Python 可执行文件路径</span>}
                       >
                         <Input placeholder="python3" />
                       </Form.Item>
@@ -495,7 +495,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="test_duration_seconds"
-                        label="测试持续时间 (秒)"
+                        label={<span className="dark:text-slate-300">测试持续时间 (秒)</span>}
                       >
                         <InputNumber
                           min={10}
@@ -507,7 +507,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="recognition_timeout_seconds"
-                        label="识别超时时间 (秒)"
+                        label={<span className="dark:text-slate-300">识别超时时间 (秒)</span>}
                       >
                         <InputNumber
                           min={5}
@@ -521,7 +521,7 @@ export default function AsrSettings() {
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name="min_recognition_length"
-                        label="最小识别长度"
+                        label={<span className="dark:text-slate-300">最小识别长度</span>}
                       >
                         <InputNumber
                           min={1}
@@ -533,7 +533,7 @@ export default function AsrSettings() {
 
                       <Form.Item
                         name="max_recognition_length"
-                        label="最大识别长度"
+                        label={<span className="dark:text-slate-300">最大识别长度</span>}
                       >
                         <InputNumber
                           min={10}
@@ -549,7 +549,7 @@ export default function AsrSettings() {
             ]}
           />
 
-          <div className="flex justify-end gap-2 mt-6 pt-6 border-t">
+          <div className="flex justify-end gap-2 mt-6 pt-6 border-t dark:border-slate-700">
             <Button
               onClick={() => {
                 try {
