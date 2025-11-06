@@ -55,3 +55,70 @@ export async function extractResumeText(file: File): Promise<{ text: string }> {
   }
   return await res.json();
 }
+
+// 简历优化相关接口
+export interface ResumeOptimization {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  original_resume: string;
+  original_word_count: number;
+  optimized_resume: string | null;
+  optimized_word_count: number;
+  model_id: string | null;
+  model_name: string | null;
+  suggestion: string | null;
+  optimization_count: number;
+  error_message: string | null;
+  job_id?: string;
+}
+
+export interface CreateResumeOptimizationPayload {
+  originalResume: string;
+  optimizedResume?: string;
+  suggestion?: string;
+  modelId?: string;
+  modelName?: string;
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
+  errorMessage?: string;
+}
+
+export interface UpdateResumeOptimizationPayload {
+  optimizedResume?: string;
+  suggestion?: string;
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
+  errorMessage?: string;
+}
+
+// 获取岗位的简历优化记录列表
+export async function listResumeOptimizations(jobId: string): Promise<PaginatedResponse<ResumeOptimization>> {
+  return await http.get<PaginatedResponse<ResumeOptimization>>(`/jobs/${jobId}/resume-optimizations`);
+}
+
+// 获取单个简历优化记录详情
+export async function getResumeOptimization(optimizationId: string): Promise<{ optimization: ResumeOptimization }> {
+  return await http.get<{ optimization: ResumeOptimization }>(`/resume-optimizations/${optimizationId}`);
+}
+
+// 创建新的简历优化记录
+export async function createResumeOptimization(
+  jobId: string,
+  payload: CreateResumeOptimizationPayload
+): Promise<{ optimizationId: string; message: string }> {
+  return await http.post<{ optimizationId: string; message: string }>(
+    `/jobs/${jobId}/resume-optimizations`,
+    payload
+  );
+}
+
+// 更新简历优化记录
+export async function updateResumeOptimization(
+  optimizationId: string,
+  payload: UpdateResumeOptimizationPayload
+): Promise<{ success: boolean; message: string }> {
+  return await http.put<{ success: boolean; message: string }>(
+    `/resume-optimizations/${optimizationId}`,
+    payload
+  );
+}

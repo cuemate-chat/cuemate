@@ -2,7 +2,16 @@ import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/ou
 import { Button, Input, Modal } from 'antd';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { deleteJob, extractResumeText, listJobs, updateJob, type JobWithResume } from '../../api/jobs';
+import {
+  createResumeOptimization,
+  deleteJob,
+  extractResumeText,
+  getResumeOptimization,
+  listJobs,
+  updateJob,
+  type JobWithResume,
+  type ResumeOptimization
+} from '../../api/jobs';
 import { optimizeResumeWithLLM } from '../../api/llm';
 import CollapsibleSidebar from '../../components/CollapsibleSidebar';
 import FullScreenOverlay from '../../components/FullScreenOverlay';
@@ -10,7 +19,8 @@ import { WarningIcon } from '../../components/Icons';
 import { message as globalMessage } from '../../components/Message';
 import PageLoading from '../../components/PageLoading';
 import { useLoading } from '../../hooks/useLoading';
-import ResumeOptimizeDrawer from './ResumeOptimizeDrawer';
+import ResumeOptimizationListDrawer from './ResumeOptimizationListDrawer';
+import ResumeOptimizeDrawerLevel2 from './ResumeOptimizeDrawerLevel2';
 import UploadResumeDrawer from './UploadResumeDrawer';
 
 export default function JobsList() {
@@ -24,16 +34,11 @@ export default function JobsList() {
   const [adaptiveRows, setAdaptiveRows] = useState<{ desc: number; resume: number }>({ desc: 8, resume: 8 });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { loading: optimizeLoading, start: startOptimize, end: endOptimize } = useLoading();
-  const [optimizeModalVisible, setOptimizeModalVisible] = useState(false);
-  const [optimizeResult, setOptimizeResult] = useState<{
-    suggestions: string;
-    originalResume: string;
-    optimizedResume: string;
-  } | null>(null);
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
-  const [tempOptimizedResume, setTempOptimizedResume] = useState('');
-  const [tempOriginalResume, setTempOriginalResume] = useState('');
+  const [optimizationListVisible, setOptimizationListVisible] = useState(false);
+  const [selectedOptimization, setSelectedOptimization] = useState<ResumeOptimization | null>(null);
+  const [optimizationDetailVisible, setOptimizationDetailVisible] = useState(false);
   // 计算中间可视区域高度：100vh - Header(56px) - Footer(48px) - Main 上下内边距(48px)
   const MAIN_HEIGHT = 'calc(100vh - 56px - 48px - 48px)';
 
@@ -193,17 +198,9 @@ export default function JobsList() {
   };
 
   // 简历优化功能 - 直接调用 LLM Router
-  const onOptimizeResume = async (forceRefresh = false) => {
+  const onOptimizeResume = async () => {
     if (!selectedId || !resumeContent.trim()) return;
-    
-    // 如果有缓存且不是强制刷新，直接显示
-    if (!forceRefresh && optimizeResult && optimizeResult.originalResume === resumeContent) {
-      setTempOriginalResume(optimizeResult.originalResume);
-      setTempOptimizedResume(optimizeResult.optimizedResume);
-      setOptimizeModalVisible(true);
-      return;
-    }
-    
+
     startOptimize();
     try {
       // 调用 LLM API
@@ -211,41 +208,54 @@ export default function JobsList() {
         jobDescription: description,
         resumeContent: resumeContent,
       });
-      
+
       // 验证优化后简历的长度
       const originalLength = resumeContent.length;
       const optimizedLength = result.optimizedResume.length;
       const minRequiredLength = Math.floor(originalLength * 0.8); // 至少 80%的长度
-      
-      const newResult = {
-        suggestions: result.suggestions,
+
+      // 保存优化记录到数据库
+      const { optimizationId } = await createResumeOptimization(selectedId, {
         originalResume: resumeContent,
         optimizedResume: result.optimizedResume,
-      };
-      
-      setOptimizeResult(newResult);
-      setTempOriginalResume(newResult.originalResume);
-      setTempOptimizedResume(newResult.optimizedResume);
-      setOptimizeModalVisible(true);
-      
+        suggestion: result.suggestions,
+        status: 'completed',
+      });
+
+      globalMessage.success('简历优化完成');
+
       // 如果优化后的内容太短，显示警告
       if (optimizedLength < minRequiredLength) {
         globalMessage.warning(`优化后的简历较短（${optimizedLength}字），建议在此基础上补充更多详细信息。原简历${originalLength}字。`);
       }
-      
+
+      // 从数据库查询刚保存的记录
+      const { optimization } = await getResumeOptimization(optimizationId);
+      setSelectedOptimization(optimization);
+      setOptimizationDetailVisible(true);
+
+      // 如果列表弹框打开着，关闭后重新打开以刷新列表
+      if (optimizationListVisible) {
+        setOptimizationListVisible(false);
+        setTimeout(() => setOptimizationListVisible(true), 100);
+      }
+
     } catch (error: any) {
       globalMessage.error(error.message || '简历优化失败');
+
+      // 即使优化失败，也保存失败记录
+      try {
+        await createResumeOptimization(selectedId, {
+          originalResume: resumeContent,
+          status: 'failed',
+          errorMessage: error.message || '未知错误',
+        });
+      } catch (dbError) {
+        // 忽略数据库保存错误
+      }
     } finally {
       await endOptimize();
     }
-  };
-
-  // 应用简历内容
-  const applyResumeContent = (type: 'original' | 'optimized') => {
-    const content = type === 'original' ? tempOriginalResume : tempOptimizedResume;
-    setResumeContent(content);
-    setOptimizeModalVisible(false);
-    globalMessage.success(`已应用${type === 'original' ? '优化前' : '优化后'}的简历内容`);
   };
 
   // 上传简历文件
@@ -381,23 +391,13 @@ export default function JobsList() {
                 <span className="hidden sm:inline">上传简历</span>
                 <span className="sm:hidden">上传</span>
               </Button>
-              <Button 
-                disabled={!selectedId || !resumeContent.trim() || optimizeLoading} 
-                loading={optimizeLoading}
-                onClick={() => onOptimizeResume()}
+              <Button
+                disabled={!selectedId}
+                onClick={() => setOptimizationListVisible(true)}
                 className="shrink-0"
               >
-                {optimizeLoading ? (
-                  <>
-                    <span className="hidden sm:inline">优化中...</span>
-                    <span className="sm:hidden">优化中...</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="hidden sm:inline">简历优化</span>
-                    <span className="sm:hidden">优化</span>
-                  </>
-                )}
+                <span className="hidden sm:inline">简历优化</span>
+                <span className="sm:hidden">优化</span>
               </Button>
             </div>
 
@@ -453,18 +453,44 @@ export default function JobsList() {
         onFileUpload={handleFileUpload}
         uploadLoading={uploadLoading}
       />
-      
-      {/* 简历优化侧拉弹框 */}
-      <ResumeOptimizeDrawer
-        open={optimizeModalVisible}
-        onClose={() => setOptimizeModalVisible(false)}
-        optimizeResult={optimizeResult}
-        tempOriginalResume={tempOriginalResume}
-        tempOptimizedResume={tempOptimizedResume}
-        onApplyResumeContent={applyResumeContent}
-        onTempOriginalChange={setTempOriginalResume}
-        onTempOptimizedChange={setTempOptimizedResume}
-      />
+
+      {/* 简历优化列表一级侧拉弹框 */}
+      {selectedId && (
+        <ResumeOptimizationListDrawer
+          open={optimizationListVisible}
+          onClose={() => setOptimizationListVisible(false)}
+          jobId={selectedId}
+          jobDescription={description}
+          onCreateNew={() => onOptimizeResume()}
+          onOptimizationCreated={(newOptimization) => {
+            // 显示新创建的优化记录
+            setSelectedOptimization(newOptimization as ResumeOptimization);
+            setOptimizationDetailVisible(true);
+          }}
+        />
+      )}
+
+      {/* 简历优化详情二级侧拉弹框 */}
+      {selectedOptimization && (
+        <ResumeOptimizeDrawerLevel2
+          open={optimizationDetailVisible}
+          onClose={() => {
+            setOptimizationDetailVisible(false);
+            setSelectedOptimization(null);
+          }}
+          optimization={selectedOptimization}
+          onBack={() => {
+            setOptimizationDetailVisible(false);
+            setSelectedOptimization(null);
+          }}
+          jobId={selectedId || undefined}
+          jobDescription={description}
+          onOptimizationCreated={(newOptimization) => {
+            // 显示新创建的优化记录
+            setSelectedOptimization(newOptimization as ResumeOptimization);
+          }}
+        />
+      )}
 
       {/* 全屏遮罩组件 - 简历优化 */}
       <FullScreenOverlay
