@@ -348,7 +348,7 @@ export default function ModelsList() {
         title="大模型供应商"
         className="h-full"
       >
-        <div className="p-4 h-full overflow-y-auto">
+        <div className="p-4 h-full overflow-y-auto [&_.ant-tree]:text-slate-900 [&_.ant-tree]:dark:text-slate-100 [&_.ant-tree_.ant-tree-node-content-wrapper]:text-slate-900 [&_.ant-tree_.ant-tree-node-content-wrapper]:dark:text-slate-100 [&_.ant-tree_.ant-tree-title]:text-slate-900 [&_.ant-tree_.ant-tree-title]:dark:text-slate-100 [&_.ant-tree_.ant-tree-node-selected_.ant-tree-node-content-wrapper]:!bg-blue-100 [&_.ant-tree_.ant-tree-node-selected_.ant-tree-node-content-wrapper]:dark:!bg-blue-900/30 [&_.ant-tree_.ant-tree-node-selected_.ant-tree-title]:!text-blue-700 [&_.ant-tree_.ant-tree-node-selected_.ant-tree-title]:dark:!text-blue-300 [&_.ant-tree_.ant-tree-node-content-wrapper:hover]:!bg-slate-100 [&_.ant-tree_.ant-tree-node-content-wrapper:hover]:dark:!bg-slate-700 [&_.ant-tree_.ant-tree-node-selected_.ant-tree-node-content-wrapper:hover]:!bg-blue-100 [&_.ant-tree_.ant-tree-node-selected_.ant-tree-node-content-wrapper:hover]:dark:!bg-blue-900/30 [&_.ant-tree_.ant-tree-node-selected_.ant-tree-title:hover]:!text-blue-700 [&_.ant-tree_.ant-tree-node-selected_.ant-tree-title:hover]:dark:!text-blue-300">
           <Tree
             defaultExpandAll
             selectedKeys={selectedKeys as any}

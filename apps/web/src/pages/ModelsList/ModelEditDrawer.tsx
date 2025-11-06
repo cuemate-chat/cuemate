@@ -245,7 +245,7 @@ export default function ModelEditDrawer({
                   <div className="space-y-5 pt-2 w-full overflow-y-auto flex-1">
                     {/* 模型名称：上下结构 */}
                     <div className="w-full">
-                      <div className="mb-1 text-slate-700">
+                      <div className="mb-1 text-slate-700 dark:text-slate-200">
                         模型名称<span className="text-red-500"> *</span>
                       </div>
                       <Input
@@ -259,37 +259,61 @@ export default function ModelEditDrawer({
                     </div>
                     {/* 模型情况：根据 provider 自动选中，不可更改 */}
                     <div className="w-full">
-                      <div className="mb-2 text-slate-700">
+                      <div className="mb-2 text-slate-700 dark:text-slate-200">
                         模型情况<span className="text-red-500"> *</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3 w-full">
                         <div
                           className={`border rounded-lg px-3 py-2 text-left ${
                             form.scope === 'private'
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-slate-200 bg-slate-50 opacity-60'
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-50'
+                              : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 opacity-60'
                           }`}
                         >
-                          <div className="font-medium">私有模型</div>
-                          <div className="text-xs text-slate-500 mt-1">
+                          <div className={`font-medium ${
+                            form.scope === 'private'
+                              ? 'text-slate-900'
+                              : 'text-slate-900 dark:text-slate-100'
+                          }`}>私有模型</div>
+                          <div className={`text-xs mt-1 ${
+                            form.scope === 'private'
+                              ? 'text-slate-600'
+                              : 'text-slate-500 dark:text-slate-300'
+                          }`}>
                             本地部署，数据在您的设备或环境内处理与存储
                           </div>
-                          <div className="text-xs text-slate-400 mt-1.5">
+                          <div className={`text-xs mt-1.5 ${
+                            form.scope === 'private'
+                              ? 'text-slate-500'
+                              : 'text-slate-400 dark:text-slate-400'
+                          }`}>
                             示例：Ollama、vLLM、Xinference、本地模型
                           </div>
                         </div>
                         <div
                           className={`border rounded-lg px-3 py-2 text-left ${
                             form.scope === 'public'
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-slate-200 bg-slate-50 opacity-60'
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-50'
+                              : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 opacity-60'
                           }`}
                         >
-                          <div className="font-medium">公有模型</div>
-                          <div className="text-xs text-slate-500 mt-1">
+                          <div className={`font-medium ${
+                            form.scope === 'public'
+                              ? 'text-slate-900'
+                              : 'text-slate-900 dark:text-slate-100'
+                          }`}>公有模型</div>
+                          <div className={`text-xs mt-1 ${
+                            form.scope === 'public'
+                              ? 'text-slate-600'
+                              : 'text-slate-500 dark:text-slate-300'
+                          }`}>
                             云端服务，数据通过网络在供应商云端处理推理
                           </div>
-                          <div className="text-xs text-slate-400 mt-1.5">
+                          <div className={`text-xs mt-1.5 ${
+                            form.scope === 'public'
+                              ? 'text-slate-500'
+                              : 'text-slate-400 dark:text-slate-400'
+                          }`}>
                             示例：OpenAI、Claude、Gemini、DeepSeek
                           </div>
                         </div>
@@ -297,7 +321,7 @@ export default function ModelEditDrawer({
                     </div>
                     {/* 模型类型：上下结构 */}
                     <div className="w-full">
-                      <div className="mb-1 text-slate-700">
+                      <div className="mb-1 text-slate-700 dark:text-slate-200">
                         模型类型<span className="text-red-500"> *</span>
                       </div>
                       <Select
@@ -311,7 +335,7 @@ export default function ModelEditDrawer({
                     {/* 基础模型：标题与红字同一行，输入在下方 */}
                     <div className="w-full">
                       <div className="mb-1 flex items-center justify-between">
-                        <div className="text-slate-700">
+                        <div className="text-slate-700 dark:text-slate-200">
                           基础模型<span className="text-red-500"> *</span>
                         </div>
                         <div className="text-xs text-red-500">
@@ -339,7 +363,7 @@ export default function ModelEditDrawer({
                     {/* 凭证：选择基础模型后显示，纵向排列 */}
                     {!!form.model_name && (
                       <div className="w-full">
-                        <div className="mb-1 text-slate-700">
+                        <div className="mb-1 text-slate-700 dark:text-slate-200">
                           凭证<span className="text-red-500"> *</span>
                         </div>
                         <div className="space-y-2">
@@ -369,7 +393,7 @@ export default function ModelEditDrawer({
                                 }
                                 addonBefore={
                                   <span
-                                    className="text-slate-700"
+                                    className="text-slate-700 dark:text-slate-200"
                                     style={{ display: 'inline-block', width: 120 }}
                                   >
                                     {f.label}
@@ -414,14 +438,14 @@ export default function ModelEditDrawer({
                 children: (
                   <div className="pt-2 overflow-y-auto flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <div className="text-slate-800">模型参数</div>
-                      <button className="text-blue-600" onClick={() => addParamRow(setForm)}>
+                      <div className="text-slate-800 dark:text-slate-200">模型参数</div>
+                      <button className="text-blue-600 dark:text-blue-400" onClick={() => addParamRow(setForm)}>
                         + 添加
                       </button>
                     </div>
-                    <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
                       {/* 表头 */}
-                      <div className="grid grid-cols-12 bg-slate-50 text-slate-600 text-sm px-3 py-2">
+                      <div className="grid grid-cols-12 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm px-3 py-2">
                         <div className="col-span-3">显示名称</div>
                         <div className="col-span-3">参数</div>
                         <div className="col-span-2">组件类型</div>
@@ -433,7 +457,7 @@ export default function ModelEditDrawer({
                       {(form.params || []).map((p: any, idx: number) => (
                         <div
                           key={idx}
-                          className="grid grid-cols-12 gap-2 items-center px-3 py-2 border-t border-slate-200"
+                          className="grid grid-cols-12 gap-2 items-center px-3 py-2 border-t border-slate-200 dark:border-slate-700"
                         >
                           <div className="col-span-3">
                             <Input
