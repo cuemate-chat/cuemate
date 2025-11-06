@@ -4,7 +4,7 @@ import { createStyles, useTheme } from 'antd-style';
 import type { DrawerClassNames, DrawerStyles } from 'antd/es/drawer/DrawerPanel';
 import React from 'react';
 
-const useStyle = createStyles(({ token }) => ({
+const useStyle = createStyles(({ token, isDarkMode }) => ({
   'drawer-body': {
     padding: 0,
     display: 'flex',
@@ -13,25 +13,25 @@ const useStyle = createStyles(({ token }) => ({
   },
   'drawer-mask': {
     backdropFilter: 'blur(8px)',
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.25)',
   },
   'drawer-header': {
-    background: '#e5eefc',
-    color: '#3b82f6',
-    borderBottom: `1px solid ${token.colorBorderSecondary}`,
+    background: isDarkMode ? '#1e293b' : '#e5eefc',
+    color: isDarkMode ? '#e2e8f0' : '#3b82f6',
+    borderBottom: `1px solid ${isDarkMode ? '#334155' : token.colorBorderSecondary}`,
     fontWeight: 400,
     padding: '20px 24px',
   },
   'drawer-footer': {
-    background: token.colorBgContainer,
-    borderTop: `1px solid ${token.colorBorderSecondary}`,
+    background: isDarkMode ? '#1e293b' : token.colorBgContainer,
+    borderTop: `1px solid ${isDarkMode ? '#334155' : token.colorBorderSecondary}`,
     padding: '16px 24px',
     marginTop: 'auto',
   },
   'drawer-content': {
     borderRadius: 0,
     overflow: 'hidden',
-    boxShadow: '-8px 0 24px rgba(0, 0, 0, 0.15)',
+    boxShadow: isDarkMode ? '-8px 0 24px rgba(0, 0, 0, 0.5)' : '-8px 0 24px rgba(0, 0, 0, 0.15)',
   },
 }));
 
@@ -105,10 +105,12 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
     content: styles['drawer-content'],
   };
 
+  const isDarkMode = document.documentElement.classList.contains('dark');
+
   const drawerStyles: DrawerStyles = {
     mask: {
       backdropFilter: 'blur(12px)',
-      background: 'rgba(0, 0, 0, 0.25)',
+      background: isDarkMode ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.25)',
       position: 'fixed',
       top: 0,
       left: 0,
@@ -117,13 +119,14 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
     },
     content: {
       borderRadius: 0,
-      boxShadow: '-8px 0 24px rgba(0, 0, 0, 0.15)',
+      boxShadow: isDarkMode ? '-8px 0 24px rgba(0, 0, 0, 0.5)' : '-8px 0 24px rgba(0, 0, 0, 0.15)',
       border: 'none',
+      background: isDarkMode ? '#1e293b' : '#ffffff',
     },
     header: {
-      borderBottom: `1px solid ${token.colorBorderSecondary}`,
-      background: '#e5eefc',
-      color: '#3b82f6',
+      borderBottom: `1px solid ${isDarkMode ? '#334155' : token.colorBorderSecondary}`,
+      background: isDarkMode ? '#1e293b' : '#e5eefc',
+      color: isDarkMode ? '#e2e8f0' : '#3b82f6',
       fontSize: '18px',
       fontWeight: 400,
       padding: '16px 24px',
@@ -133,10 +136,11 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
+      background: isDarkMode ? '#1e293b' : '#ffffff',
     },
     footer: {
-      borderTop: `1px solid ${token.colorBorderSecondary}`,
-      background: '#fafafa', // 非常浅的灰色背景，接近白色但不是纯白
+      borderTop: `1px solid ${isDarkMode ? '#334155' : token.colorBorderSecondary}`,
+      background: isDarkMode ? '#1e293b' : '#fafafa',
       padding: '10px 24px',
     },
   };
@@ -154,11 +158,11 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
       zIndex={9997} // 固定为一级弹框层级
       {...props}
     >
-      <div style={{ 
-        flex: 1, 
-        overflowY: 'auto', 
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
         padding: '24px',
-        background: token.colorBgContainer,
+        background: isDarkMode ? '#1e293b' : token.colorBgContainer,
       }}>
         {content}
       </div>

@@ -95,13 +95,13 @@ export default function Header() {
       title: '确认跳转到外部网站',
       content: (
         <div className="space-y-3">
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-slate-600 dark:text-slate-200">
             即将跳转到帮助中心网站：
           </div>
-          <div className="bg-slate-50 p-3 rounded border text-sm break-all">
+          <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-100 break-all">
             {helpUrl}
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-500 dark:text-slate-300">
             链接将在{isElectron() ? '外部浏览器' : '新标签页'}中打开
           </div>
         </div>

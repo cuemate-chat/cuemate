@@ -1,10 +1,10 @@
 import type { DrawerProps } from 'antd';
-import { Button, Drawer } from 'antd';
+import { Button, ConfigProvider, Drawer, theme } from 'antd';
 import { createStyles, useTheme } from 'antd-style';
 import type { DrawerClassNames, DrawerStyles } from 'antd/es/drawer/DrawerPanel';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
-const useStyle = createStyles(({ token }) => ({
+const useStyle = createStyles(({ token, isDarkMode }) => ({
   'drawer-body': {
     padding: 0,
     display: 'flex',
@@ -13,25 +13,25 @@ const useStyle = createStyles(({ token }) => ({
   },
   'drawer-mask': {
     backdropFilter: 'blur(8px)',
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.25)',
   },
   'drawer-header': {
-    background: '#e5eefc',
-    color: '#3b82f6',
-    borderBottom: `1px solid ${token.colorBorderSecondary}`,
+    background: isDarkMode ? '#1e293b' : '#e5eefc',
+    color: isDarkMode ? '#e2e8f0' : '#3b82f6',
+    borderBottom: `1px solid ${isDarkMode ? '#334155' : token.colorBorderSecondary}`,
     fontWeight: 400,
     padding: '20px 24px',
   },
   'drawer-footer': {
-    background: token.colorBgContainer,
-    borderTop: `1px solid ${token.colorBorderSecondary}`,
+    background: isDarkMode ? '#1e293b' : token.colorBgContainer,
+    borderTop: `1px solid ${isDarkMode ? '#334155' : token.colorBorderSecondary}`,
     padding: '16px 24px',
     marginTop: 'auto',
   },
   'drawer-content': {
     borderRadius: 0,
     overflow: 'hidden',
-    boxShadow: '-8px 0 24px rgba(0, 0, 0, 0.15)',
+    boxShadow: isDarkMode ? '-8px 0 24px rgba(0, 0, 0, 0.5)' : '-8px 0 24px rgba(0, 0, 0, 0.15)',
   },
 }));
 
@@ -55,14 +55,37 @@ interface DrawerProviderProps extends Omit<DrawerProps, 'title' | 'footer'> {
   width?: string | number;
 }
 
-const DrawerProvider: React.FC<DrawerProviderProps> = ({ 
-  children, 
+const DrawerProvider: React.FC<DrawerProviderProps> = ({
+  children,
   width = '50%',
   onClose,
-  ...props 
+  ...props
 }) => {
   const { styles } = useStyle();
   const token = useTheme();
+
+  // 检测深色模式
+  const [isDarkMode, setIsDarkMode] = useState(() =>
+    document.documentElement.classList.contains('dark')
+  );
+
+  useEffect(() => {
+    // 监听 class 变化
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          setIsDarkMode(document.documentElement.classList.contains('dark'));
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // 自动检测当前弹框层级
   const getCurrentLevel = () => {
@@ -124,7 +147,7 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
   const drawerStyles: DrawerStyles = {
     mask: {
       backdropFilter: 'blur(12px)',
-      background: 'rgba(0, 0, 0, 0.25)',
+      background: isDarkMode ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.25)',
       position: 'fixed',
       top: 0,
       left: 0,
@@ -133,13 +156,14 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
     },
     content: {
       borderRadius: 0,
-      boxShadow: '-8px 0 24px rgba(0, 0, 0, 0.15)',
+      boxShadow: isDarkMode ? '-8px 0 24px rgba(0, 0, 0, 0.5)' : '-8px 0 24px rgba(0, 0, 0, 0.15)',
       border: 'none',
+      background: isDarkMode ? '#1e293b' : '#ffffff',
     },
     header: {
-      borderBottom: `1px solid ${token.colorBorderSecondary}`,
-      background: '#e5eefc',
-      color: '#3b82f6',
+      borderBottom: isDarkMode ? '1px solid #334155' : `1px solid ${token.colorBorderSecondary}`,
+      background: isDarkMode ? '#1e293b' : '#e5eefc',
+      color: isDarkMode ? '#e2e8f0' : '#3b82f6',
       fontSize: '18px',
       fontWeight: 400,
       padding: '16px 24px',
@@ -149,36 +173,43 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
+      background: isDarkMode ? '#1e293b' : '#ffffff',
     },
     footer: {
-      borderTop: `1px solid ${token.colorBorderSecondary}`,
-      background: '#fafafa', // 非常浅的灰色背景，接近白色但不是纯白
+      borderTop: isDarkMode ? '1px solid #334155' : `1px solid ${token.colorBorderSecondary}`,
+      background: isDarkMode ? '#1e293b' : '#fafafa',
       padding: '10px 24px',
     },
   };
 
   return (
-    <Drawer
-      title={header}
-      placement="right"
-      width={width}
-      onClose={onClose}
-      classNames={classNames}
-      styles={drawerStyles}
-      footer={footer}
-      getContainer={() => document.body}
-      zIndex={getZIndex(getCurrentLevel())}
-      {...props}
+    <ConfigProvider
+      theme={{
+        algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+      }}
     >
-      <div style={{ 
-        flex: 1, 
-        overflowY: 'auto', 
-        padding: '24px',
-        background: token.colorBgContainer,
-      }}>
-        {content}
-      </div>
-    </Drawer>
+      <Drawer
+        title={header}
+        placement="right"
+        width={width}
+        onClose={onClose}
+        classNames={classNames}
+        styles={drawerStyles}
+        footer={footer}
+        getContainer={() => document.body}
+        zIndex={getZIndex(getCurrentLevel())}
+        {...props}
+      >
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '24px',
+          background: isDarkMode ? '#1e293b' : token.colorBgContainer,
+        }}>
+          {content}
+        </div>
+      </Drawer>
+    </ConfigProvider>
   );
 };
 
