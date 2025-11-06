@@ -80,8 +80,8 @@ curl http://localhost:10095         # FunASR
 |------|------|------|
 | Web Frontend | 80 | Web 前端界面 |
 | Web API | 3001 | 业务 API（SQLite 数据库） |
-| LLM Router | 3002 | 大模型路由服务 |
-| RAG Service | 3003 | 知识库检索服务 |
+| LLM Router | 3002 | LLM 大模型路由 |
+| RAG Service | 3003 | RAG 向量知识库服务 |
 | ChromaDB | 8000 | 向量数据库 |
 | FunASR | 10095 | 实时语音识别 |
 
