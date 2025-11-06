@@ -110,12 +110,12 @@ export default function OperationLogsList() {
       render: (record: OperationLog) => (
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-900">{record.menu}</span>
+            <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{record.menu}</span>
             <span className={getOperationBadge(record.operation)}>
               {record.operation}
             </span>
           </div>
-          <div className="text-sm text-gray-500 mt-1">
+          <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             {record.message || record.resource_name}
           </div>
         </div>
@@ -127,8 +127,8 @@ export default function OperationLogsList() {
       width: '10%',
       render: (record: OperationLog) => (
         <div>
-          <div className="text-sm text-gray-900">{record.user_name || '未知用户'}</div>
-          <div className="text-sm text-gray-500">{record.user_id}</div>
+          <div className="text-sm text-slate-900 dark:text-slate-100">{record.user_name || '未知用户'}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">{record.user_id}</div>
         </div>
       ),
     },
@@ -137,7 +137,7 @@ export default function OperationLogsList() {
       key: 'time',
       width: '17%',
       render: (record: OperationLog) => (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-slate-900 dark:text-slate-100">
           {dayjs(record.time * 1000).format('YYYY-MM-DD HH:mm:ss')}
         </div>
       ),
@@ -147,7 +147,7 @@ export default function OperationLogsList() {
       key: 'source_ip',
       width: '12%',
       render: (record: OperationLog) => (
-        <div className="text-sm text-gray-900">{record.source_ip}</div>
+        <div className="text-sm text-slate-900 dark:text-slate-100">{record.source_ip}</div>
       ),
     },
     {
@@ -167,7 +167,7 @@ export default function OperationLogsList() {
       render: (record: OperationLog) => (
         <div className="flex items-center gap-2">
           <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
             onClick={() => openDetailDrawer(record)}
           >
             <EyeIcon className="w-4 h-4" /> 查看
@@ -178,7 +178,7 @@ export default function OperationLogsList() {
             okText="确定"
             cancelText="取消"
           >
-            <button className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 transition-colors">
+            <button className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-300 dark:hover:border-red-600 transition-colors">
               <TrashIcon className="w-4 h-4" /> 删除
             </button>
           </Popconfirm>
@@ -310,11 +310,11 @@ export default function OperationLogsList() {
     const baseClass = 'px-2 py-1 rounded-full text-xs font-medium';
     switch (status) {
       case 'success':
-        return `${baseClass} bg-green-100 text-green-800`;
+        return `${baseClass} bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300`;
       case 'failed':
-        return `${baseClass} bg-red-100 text-red-800`;
+        return `${baseClass} bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300`;
       default:
-        return `${baseClass} bg-gray-100 text-gray-800`;
+        return `${baseClass} bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-300`;
     }
   };
 
@@ -323,17 +323,17 @@ export default function OperationLogsList() {
     const baseClass = 'px-2 py-1 rounded-full text-xs font-medium';
     switch (operation) {
       case 'login':
-        return `${baseClass} bg-blue-100 text-blue-800`;
+        return `${baseClass} bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300`;
       case 'create':
-        return `${baseClass} bg-green-100 text-green-800`;
+        return `${baseClass} bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300`;
       case 'update':
-        return `${baseClass} bg-yellow-100 text-yellow-800`;
+        return `${baseClass} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300`;
       case 'delete':
-        return `${baseClass} bg-red-100 text-red-800`;
+        return `${baseClass} bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300`;
       case 'view':
-        return `${baseClass} bg-gray-100 text-gray-800`;
+        return `${baseClass} bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-300`;
       default:
-        return `${baseClass} bg-purple-100 text-purple-800`;
+        return `${baseClass} bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300`;
     }
   };
 
@@ -351,65 +351,65 @@ export default function OperationLogsList() {
     <div className="p-6 space-y-6">
       {/* 页面标题 */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">操作记录</h1>
-        <p className="text-gray-600 mt-1">查看用户操作记录和系统审计信息</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">操作记录</h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-1">查看用户操作记录和系统审计信息</p>
       </div>
 
       {/* 统计面板 */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">今日操作总数</h3>
-                <p className="text-2xl font-bold text-blue-600">
+                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">今日操作总数</h3>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {stats.todayTotal}
                 </p>
               </div>
-              <ChartBarIcon className="w-8 h-8 text-blue-500" />
+              <ChartBarIcon className="w-8 h-8 text-blue-500 dark:text-blue-400" />
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">成功操作数</h3>
-                <p className="text-2xl font-bold text-green-600">
+                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">成功操作数</h3>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {stats.todaySuccess}
                 </p>
               </div>
-              <CheckCircleIcon className="w-8 h-8 text-green-500" />
+              <CheckCircleIcon className="w-8 h-8 text-green-500 dark:text-green-400" />
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">失败操作数</h3>
-                <p className="text-2xl font-bold text-red-600">
+                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">失败操作数</h3>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {stats.todayFailed}
                 </p>
               </div>
-              <XCircleIcon className="w-8 h-8 text-red-500" />
+              <XCircleIcon className="w-8 h-8 text-red-500 dark:text-red-400" />
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">今日面试次数</h3>
-                <p className="text-2xl font-bold text-purple-600">
+                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">今日面试次数</h3>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {stats.interviewCount}
                 </p>
               </div>
-              <PlayIcon className="w-8 h-8 text-purple-500" />
+              <PlayIcon className="w-8 h-8 text-purple-500 dark:text-purple-400" />
             </div>
           </div>
         </div>
       )}
 
       {/* 筛选区域 */}
-      <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">操作菜单</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">操作菜单</label>
             <Select
               value={filters.menu}
               onChange={(value) => setFilters(prev => ({ ...prev, menu: value }))}
@@ -420,7 +420,7 @@ export default function OperationLogsList() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">操作类型</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">操作类型</label>
             <Select
               value={filters.operation}
               onChange={(value) => setFilters(prev => ({ ...prev, operation: value }))}
@@ -431,7 +431,7 @@ export default function OperationLogsList() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">状态</label>
             <Select
               value={filters.status}
               onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
@@ -442,19 +442,19 @@ export default function OperationLogsList() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">关键词</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">关键词</label>
             <input
               type="text"
               value={filters.keyword}
               onChange={(e) => setFilters(prev => ({ ...prev, keyword: e.target.value }))}
-              className="w-full px-3 py-2 h-[42px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 h-[42px] border border-gray-300 dark:border-slate-700 dark:bg-slate-900/30 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="搜索操作信息、资源名称或用户名"
             />
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">开始时间</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">开始时间</label>
             <DatePicker
               value={filters.startTime ? dayjs(filters.startTime) : null}
               onChange={(date) => setFilters(prev => ({ ...prev, startTime: date ? date.format('YYYY-MM-DD') : '' }))}
@@ -463,7 +463,7 @@ export default function OperationLogsList() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">结束时间</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">结束时间</label>
             <DatePicker
               value={filters.endTime ? dayjs(filters.endTime) : null}
               onChange={(date) => setFilters(prev => ({ ...prev, endTime: date ? date.format('YYYY-MM-DD') : '' }))}
@@ -489,7 +489,7 @@ export default function OperationLogsList() {
       </div>
 
       {/* Ant Design Table 自适应表格 */}
-      <div className="bg-white rounded-lg shadow border overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
         <Table
           columns={columns}
           dataSource={logs}
@@ -503,7 +503,7 @@ export default function OperationLogsList() {
 
       {/* 外部分页组件 */}
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500">共 {total} 条</div>
+        <div className="text-slate-500 dark:text-slate-400">共 {total} 条</div>
         <PaginationBar 
           page={page} 
           pageSize={pageSize} 

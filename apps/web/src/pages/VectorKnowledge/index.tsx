@@ -387,7 +387,7 @@ export default function VectorKnowledge() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <div
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
         style={{ position: 'relative', zIndex: 1 }}
@@ -395,14 +395,14 @@ export default function VectorKnowledge() {
         {/* 页面标题 */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">向量知识库</h1>
-            <p className="mt-2 text-slate-600">查询和检索存储在向量数据库中的知识内容</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">向量知识库</h1>
+            <p className="mt-2 text-slate-600 dark:text-slate-400">查询和检索存储在向量数据库中的知识内容</p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={loadDocumentsByTab}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/70 hover:border-blue-300 dark:hover:border-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               刷新
@@ -411,14 +411,14 @@ export default function VectorKnowledge() {
         </div>
 
         {/* 主标签页 */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b border-gray-200 dark:border-slate-700 mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => handleTabChange('jobs')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 currentTab === 'jobs'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'
               }`}
             >
               岗位信息
@@ -427,8 +427,8 @@ export default function VectorKnowledge() {
               onClick={() => handleTabChange('resumes')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 currentTab === 'resumes'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'
               }`}
             >
               简历信息
@@ -437,8 +437,8 @@ export default function VectorKnowledge() {
               onClick={() => handleTabChange('questions')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 currentTab === 'questions'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'
               }`}
             >
               面试押题
@@ -447,8 +447,8 @@ export default function VectorKnowledge() {
               onClick={() => handleTabChange('sync-status')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 currentTab === 'sync-status'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'
               }`}
             >
               同步状态
@@ -458,11 +458,11 @@ export default function VectorKnowledge() {
 
         {/* 同步状态页面 */}
         {currentTab === 'sync-status' && (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-slate-900 mb-2">数据同步状态</h2>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">数据同步状态</h2>
             </div>
-            
+
             <SyncStatusOverview
               onSyncStart={startSync}
               onSyncEnd={endSync}
@@ -474,24 +474,24 @@ export default function VectorKnowledge() {
 
         {/* 搜索区域 - 只在非同步状态页面显示 */}
         {currentTab !== 'sync-status' && (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
             <div className="flex flex-col lg:flex-row gap-4">
               {/* 搜索输入框 */}
               <div className="flex-1">
                 <div className="relative">
-                  <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                  <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                   <input
                     type="text"
                     placeholder="输入关键词搜索知识内容..."
                     value={filters.query}
                     onChange={(e) => setFilters({ ...filters, query: e.target.value })}
-                    className="w-full pl-10 pr-12 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-10 pr-12 py-3 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
                     onKeyPress={(e) => e.key === 'Enter' && searchDocuments()}
                   />
                   {filters.query && (
                     <button
                       onClick={() => searchDocuments({ query: '' })}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                     >
                       <CloseOutlined />
                     </button>
@@ -503,7 +503,7 @@ export default function VectorKnowledge() {
               <button
                 onClick={searchDocuments}
                 disabled={loading}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {loading ? (
                   <>
@@ -523,8 +523,8 @@ export default function VectorKnowledge() {
                 onClick={() => setShowFilters(!showFilters)}
                 className={`px-4 py-3 border rounded-lg flex items-center gap-2 ${
                   showFilters
-                    ? 'border-blue-500 text-blue-600 bg-blue-50'
-                    : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                    ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/50'
+                    : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
               >
                 <FilterOutlined />
@@ -534,11 +534,11 @@ export default function VectorKnowledge() {
 
             {/* 筛选条件 */}
             {showFilters && (
-              <div className="mt-6 pt-6 border-t border-slate-200">
+              <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
                 <div className={`grid grid-cols-1 ${currentTab === 'questions' ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
                   {/* 相关度阈值 */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">相关度</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">相关度</label>
                     <Select
                       value={minScorePercent}
                       onChange={(value) => {
@@ -567,7 +567,7 @@ export default function VectorKnowledge() {
                   {currentTab === 'jobs' && (
                     <>
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                           创建时间
                         </label>
                         <div className="flex gap-2">
@@ -609,7 +609,7 @@ export default function VectorKnowledge() {
                   {currentTab === 'resumes' && (
                     <>
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                           创建时间
                         </label>
                         <div className="flex gap-2">
@@ -651,7 +651,7 @@ export default function VectorKnowledge() {
                   {currentTab === 'questions' && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">押题标签</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">押题标签</label>
                         <Select
                           value={filters.tagId}
                           onChange={(value) => searchDocuments({ tagId: value })}
@@ -667,7 +667,7 @@ export default function VectorKnowledge() {
                         </Select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">开始时间</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">开始时间</label>
                         <Input
                           type="date"
                           value={
@@ -685,7 +685,7 @@ export default function VectorKnowledge() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">结束时间</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">结束时间</label>
                         <Input
                           type="date"
                           value={
@@ -710,7 +710,7 @@ export default function VectorKnowledge() {
                 <div className="mt-4 flex justify-end gap-2">
                   <button
                     onClick={clearFilters}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                    className="px-4 py-2 text-gray-600 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 transition-colors"
                   >
                     × 清除筛选
                   </button>
@@ -722,15 +722,15 @@ export default function VectorKnowledge() {
 
         {/* 搜索结果 - 只在非同步状态页面显示 */}
         {currentTab !== 'sync-status' && searchResults.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200">
-            <div className="px-6 py-4 border-b border-slate-200">
-              <h3 className="text-lg font-medium text-slate-900">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
                 搜索结果 (共 {totalResults} 条)
               </h3>
             </div>
-            <div className="divide-y divide-slate-200">
+            <div className="divide-y divide-slate-200 dark:divide-slate-700">
               {searchResults.map((doc, index) => (
-                <div key={doc.id} className="p-6 hover:bg-slate-50 relative">
+                <div key={doc.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 relative">
                   {/* 左上角序号 */}
                   <div className="absolute left-0 top-0">
                     <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
@@ -743,13 +743,13 @@ export default function VectorKnowledge() {
                   <div className="absolute right-6 top-6 flex items-center gap-2">
                     <button
                       onClick={() => showDetail(doc)}
-                      className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                      className="px-3 py-1 text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/70"
                     >
                       详情
                     </button>
                     <button
                       onClick={() => handleDelete(doc)}
-                      className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+                      className="px-3 py-1 text-xs bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/70"
                     >
                       删除
                     </button>
@@ -757,10 +757,10 @@ export default function VectorKnowledge() {
 
                   <div className="flex-1 pr-32 ml-8">
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">
                         {getDocumentTypeLabel(doc.metadata.type)}
                       </span>
-                      <span className="text-sm text-slate-500">
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
                         相关度:{' '}
                         {(
                           Math.max(0, Math.min(1, Number.isFinite(doc.score) ? doc.score : 0)) * 100
@@ -801,7 +801,7 @@ export default function VectorKnowledge() {
                         </>
                       )}
                        {doc.metadata.tagName && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
                           {doc.metadata.tagName}
                         </span>
                       )}
@@ -830,13 +830,13 @@ export default function VectorKnowledge() {
                     </div>
 
                     {/* 名称 */}
-                    <h4 className="text-lg font-medium text-slate-900 mb-2">
+                    <h4 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
                       {getDocumentName(doc)}
                     </h4>
 
                     {/* 描述内容 */}
                     <div className="mb-3">
-                      <p className="text-slate-600 whitespace-pre-wrap">
+                      <p className="text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
                         {doc.content.length > 200 ? (
                           <>
                             {doc.content.substring(0, 200)}...
@@ -845,7 +845,7 @@ export default function VectorKnowledge() {
                                 setCurrentFullContentDoc(doc);
                                 setFullContentDrawerVisible(true);
                               }}
-                              className="ml-2 text-blue-600 hover:text-blue-800 underline"
+                              className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
                             >
                               查看完整内容
                             </button>
@@ -857,7 +857,7 @@ export default function VectorKnowledge() {
                     </div>
 
                     {/* 基础信息 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-slate-500">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-slate-500 dark:text-slate-400">
                       <span>
                         创建时间:{' '}
                         {doc.metadata.timestamp || doc.metadata.createdAt
@@ -887,11 +887,11 @@ export default function VectorKnowledge() {
         {/* 空状态 - 只在非同步状态页面显示 */}
         {currentTab !== 'sync-status' && !loading && searchResults.length === 0 && (
           <div className="text-center py-12">
-            <SearchOutlined className="mx-auto text-6xl text-slate-400" />
-            <h3 className="mt-2 text-sm font-medium text-slate-900">
+            <SearchOutlined className="mx-auto text-6xl text-slate-400 dark:text-slate-500" />
+            <h3 className="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">
               {filters.query ? '未找到相关结果' : '暂无数据'}
             </h3>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {filters.query ? '请尝试其他关键词或调整筛选条件' : '请先添加一些数据或进行搜索'}
             </p>
           </div>
@@ -1112,8 +1112,8 @@ const SyncStatusOverview = ({
             disabled={loading}
             className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
               loading
-                ? 'bg-gray-400 text-white cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg transform hover:scale-105'
+                ? 'bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed'
+                : 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-lg transform hover:scale-105'
             }`}
           >
             一键同步所有数据
@@ -1124,46 +1124,46 @@ const SyncStatusOverview = ({
             disabled={loading}
             className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
               loading
-                ? 'bg-gray-400 text-white cursor-not-allowed'
-                : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg transform hover:scale-105'
+                ? 'bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed'
+                : 'bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600 hover:shadow-lg transform hover:scale-105'
             }`}
           >
             一键清空所有数据
           </button>
         </div>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           一键同步所有数据将同步岗位信息、简历信息、面试押题三个模块的数据到向量库，同步完成后，可以进行搜索。
         </p>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           一键清空所有数据将清空向量库中的所有数据，清空后需要重新同步才能恢复搜索功能。
         </p>
       </div>
 
       {/* 总体统计 */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-900 mb-4">总体同步状态</h3>
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-lg p-6 border border-blue-200 dark:border-blue-700">
+        <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-4">总体同步状态</h3>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{totalItems}</div>
-            <div className="text-sm text-blue-700">总数据量</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalItems}</div>
+            <div className="text-sm text-blue-700 dark:text-blue-300">总数据量</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{totalSynced}</div>
-            <div className="text-sm text-green-700">已同步</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{totalSynced}</div>
+            <div className="text-sm text-green-700 dark:text-green-300">已同步</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">{totalUnsynced}</div>
-            <div className="text-sm text-orange-700">未同步</div>
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{totalUnsynced}</div>
+            <div className="text-sm text-orange-700 dark:text-orange-300">未同步</div>
           </div>
         </div>
         <div className="mt-4">
-          <div className="flex items-center justify-between text-sm text-blue-700">
+          <div className="flex items-center justify-between text-sm text-blue-700 dark:text-blue-300">
             <span>同步进度</span>
             <span>{totalItems > 0 ? Math.round((totalSynced / totalItems) * 100) : 0}%</span>
           </div>
-          <div className="w-full bg-blue-200 rounded-full h-2 mt-1">
+          <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2 mt-1">
             <div
-              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-blue-500 to-green-500 dark:from-blue-400 dark:to-green-400 h-2 rounded-full transition-all duration-300"
               style={{ width: `${totalItems > 0 ? (totalSynced / totalItems) * 100 : 0}%` }}
             ></div>
           </div>
@@ -1173,181 +1173,181 @@ const SyncStatusOverview = ({
       {/* 各模块详细状态 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 岗位信息 */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm3 2a1 1 0 011-1h4a1 1 0 011 1v1H7V6z" clipRule="evenodd" />
               </svg>
-              <h4 className="font-medium text-slate-900">岗位信息</h4>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">岗位信息</h4>
             </div>
             <span className={`px-2 py-1 text-xs rounded-full ${
-              syncStatus.job.unsynced === 0 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-orange-100 text-orange-800'
+              syncStatus.job.unsynced === 0
+                ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300'
+                : 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-300'
             }`}>
               {syncStatus.job.unsynced === 0 ? '已同步' : `${syncStatus.job.unsynced} 条未同步`}
             </span>
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-600">总数:</span>
-              <span className="font-medium">{syncStatus.job.total}</span>
+              <span className="text-slate-600 dark:text-slate-400">总数:</span>
+              <span className="font-medium dark:text-slate-200">{syncStatus.job.total}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">已同步:</span>
-              <span className="font-medium text-green-600">{syncStatus.job.synced}</span>
+              <span className="text-slate-600 dark:text-slate-400">已同步:</span>
+              <span className="font-medium text-green-600 dark:text-green-400">{syncStatus.job.synced}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">未同步:</span>
-              <span className="font-medium text-orange-600">{syncStatus.job.unsynced}</span>
+              <span className="text-slate-600 dark:text-slate-400">未同步:</span>
+              <span className="font-medium text-orange-600 dark:text-orange-400">{syncStatus.job.unsynced}</span>
             </div>
           </div>
         </div>
 
         {/* 简历信息 */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm3 2a1 1 0 011-1h4a1 1 0 011 1v1H7V6z" clipRule="evenodd" />
               </svg>
-              <h4 className="font-medium text-slate-900">简历信息</h4>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">简历信息</h4>
             </div>
             <span className={`px-2 py-1 text-xs rounded-full ${
-              syncStatus.resume.unsynced === 0 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-orange-100 text-orange-800'
+              syncStatus.resume.unsynced === 0
+                ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300'
+                : 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-300'
             }`}>
               {syncStatus.resume.unsynced === 0 ? '已同步' : `${syncStatus.resume.unsynced} 条未同步`}
             </span>
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-600">总数:</span>
-              <span className="font-medium">{syncStatus.resume.total}</span>
+              <span className="text-slate-600 dark:text-slate-400">总数:</span>
+              <span className="font-medium dark:text-slate-200">{syncStatus.resume.total}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">已同步:</span>
-              <span className="font-medium text-green-600">{syncStatus.resume.synced}</span>
+              <span className="text-slate-600 dark:text-slate-400">已同步:</span>
+              <span className="font-medium text-green-600 dark:text-green-400">{syncStatus.resume.synced}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">未同步:</span>
-              <span className="font-medium text-orange-600">{syncStatus.resume.unsynced}</span>
+              <span className="text-slate-600 dark:text-slate-400">未同步:</span>
+              <span className="font-medium text-orange-600 dark:text-orange-400">{syncStatus.resume.unsynced}</span>
             </div>
           </div>
         </div>
 
         {/* 面试押题 */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
-              <h4 className="font-medium text-slate-900">面试押题</h4>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">面试押题</h4>
             </div>
             <span className={`px-2 py-1 text-xs rounded-full ${
-              syncStatus.questions.unsynced === 0 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-orange-100 text-orange-800'
+              syncStatus.questions.unsynced === 0
+                ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300'
+                : 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-300'
             }`}>
               {syncStatus.questions.unsynced === 0 ? '已同步' : `${syncStatus.questions.unsynced} 条未同步`}
             </span>
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-600">总数:</span>
-              <span className="font-medium">{syncStatus.questions.total}</span>
+              <span className="text-slate-600 dark:text-slate-400">总数:</span>
+              <span className="font-medium dark:text-slate-200">{syncStatus.questions.total}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">已同步:</span>
-              <span className="font-medium text-green-600">{syncStatus.questions.synced}</span>
+              <span className="text-slate-600 dark:text-slate-400">已同步:</span>
+              <span className="font-medium text-green-600 dark:text-green-400">{syncStatus.questions.synced}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">未同步:</span>
-              <span className="font-medium text-orange-600">{syncStatus.questions.unsynced}</span>
+              <span className="text-slate-600 dark:text-slate-400">未同步:</span>
+              <span className="font-medium text-orange-600 dark:text-orange-400">{syncStatus.questions.unsynced}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* 同步说明 */}
-      <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-6 border border-slate-200 shadow-sm">
+      <div className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800/50 dark:to-blue-900/30 rounded-lg p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
             </svg>
           </div>
-          <h4 className="text-lg font-semibold text-slate-900">同步说明</h4>
+          <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100">同步说明</h4>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3">
-            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200 shadow-sm">
-              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+            <div className="flex items-start gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-green-200 dark:border-green-700 shadow-sm">
+              <div className="w-6 h-6 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
               <div>
-                <div className="font-medium text-green-800 mb-1">新增同步</div>
-                <div className="text-sm text-green-700">数据库有但向量库没有：新插入到向量库</div>
+                <div className="font-medium text-green-800 dark:text-green-300 mb-1">新增同步</div>
+                <div className="text-sm text-green-700 dark:text-green-400">数据库有但向量库没有：新插入到向量库</div>
               </div>
             </div>
-            
-            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-blue-200 shadow-sm">
-              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+
+            <div className="flex items-start gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 shadow-sm">
+              <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
                 </svg>
               </div>
               <div>
-                <div className="font-medium text-blue-800 mb-1">更新同步</div>
-                <div className="text-sm text-blue-700">数据库有且向量库也有：更新向量库（先删除后插入）</div>
+                <div className="font-medium text-blue-800 dark:text-blue-300 mb-1">更新同步</div>
+                <div className="text-sm text-blue-700 dark:text-blue-400">数据库有且向量库也有：更新向量库（先删除后插入）</div>
               </div>
             </div>
           </div>
           
           <div className="space-y-3">
-            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-orange-200 shadow-sm">
-              <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+            <div className="flex items-start gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-orange-200 dark:border-orange-700 shadow-sm">
+              <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
                   <path fillRule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 001 1h6a1 1 0 001-1V3a2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
                 </svg>
               </div>
               <div>
-                <div className="font-medium text-orange-800 mb-1">清理同步</div>
-                <div className="text-sm text-orange-700">数据库没有但向量库有：从向量库删除</div>
+                <div className="font-medium text-orange-800 dark:text-orange-300 mb-1">清理同步</div>
+                <div className="text-sm text-orange-700 dark:text-orange-400">数据库没有但向量库有：从向量库删除</div>
               </div>
             </div>
-            
-            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-purple-200 shadow-sm">
-              <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+
+            <div className="flex items-start gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-purple-200 dark:border-purple-700 shadow-sm">
+              <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               </div>
               <div>
-                <div className="font-medium text-purple-800 mb-1">数据一致性</div>
-                <div className="text-sm text-purple-700">同步完成后，所有数据将保持一致性</div>
+                <div className="font-medium text-purple-800 dark:text-purple-300 mb-1">数据一致性</div>
+                <div className="text-sm text-purple-700 dark:text-purple-400">同步完成后，所有数据将保持一致性</div>
               </div>
             </div>
           </div>
         </div>
         
-        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
               </svg>
             </div>
             <div>
-              <div className="font-medium text-blue-900">AI 面试训练</div>
-              <div className="text-sm text-blue-700">向量知识库所有数据，将用于 AI 面试训练</div>
+              <div className="font-medium text-blue-900 dark:text-blue-100">AI 面试训练</div>
+              <div className="text-sm text-blue-700 dark:text-blue-300">向量知识库所有数据，将用于 AI 面试训练</div>
             </div>
           </div>
         </div>

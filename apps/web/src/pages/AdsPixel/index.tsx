@@ -325,7 +325,7 @@ export default function AdsPixel() {
   }
 
   return (
-    <div className={`h-screen flex flex-col bg-white ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+    <div className={`h-screen flex flex-col bg-white dark:bg-slate-800 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
       {/* 添加炫酷的高亮动画 CSS */}
       <style>{`
         .highlight-glow {
@@ -364,15 +364,15 @@ export default function AdsPixel() {
       `}</style>
       {/* 控制工具栏 */}
       {!isFullscreen && (
-        <div className="bg-white shadow-lg border-b border-gray-200 px-6 py-4">
+        <div className="bg-white dark:bg-slate-800 shadow-lg border-b border-gray-200 dark:border-slate-700 px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">像素广告位</h1>
-              <p className="text-sm text-gray-600 mt-1">
-                总块数: <span className="text-blue-600 font-medium">{blockConfigs.length}</span> | 
-                已占用: <span className="text-green-600 font-medium">{adBlocks.filter(b => b.ad && !b.isAvailable).length}</span> | 
-                可用: <span className="text-orange-600 font-medium">{adBlocks.filter(b => b.isAvailable).length}</span> |
-                比例: <span className="text-purple-600 font-medium">32×20</span>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">像素广告位</h1>
+              <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">
+                总块数: <span className="text-blue-600 dark:text-blue-400 font-medium">{blockConfigs.length}</span> |
+                已占用: <span className="text-green-600 dark:text-green-400 font-medium">{adBlocks.filter(b => b.ad && !b.isAvailable).length}</span> |
+                可用: <span className="text-orange-600 dark:text-orange-400 font-medium">{adBlocks.filter(b => b.isAvailable).length}</span> |
+                比例: <span className="text-purple-600 dark:text-purple-400 font-medium">32×20</span>
               </p>
             </div>
             
@@ -401,14 +401,14 @@ export default function AdsPixel() {
               
               <button
                 onClick={toggleFullscreen}
-                className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                className="p-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors shadow-sm"
                 title="全屏 (Ctrl+F)"
               >
                 <ArrowsPointingOutIcon className="w-5 h-5" />
               </button>
               <button
                 onClick={() => fetchData()}
-                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm flex items-center gap-2"
+                className="px-3 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-sm shadow-sm flex items-center gap-2"
               >
                 <ArrowPathIcon className="w-4 h-4" />
                 刷新
@@ -420,7 +420,7 @@ export default function AdsPixel() {
       )}
 
       {/* 画布容器 - 铺满屏幕 */}
-      <div className="flex-1 relative overflow-hidden bg-white">
+      <div className="flex-1 relative overflow-hidden bg-white dark:bg-slate-800">
         <div
           ref={containerRef}
           className="w-full h-full relative flex items-center justify-center"
@@ -566,37 +566,37 @@ export default function AdsPixel() {
 
         {/* 悬停信息面板 */}
         {hoveredBlock && (
-          <div className="absolute top-4 left-4 bg-white bg-opacity-95 backdrop-blur-sm p-4 rounded-lg shadow-xl text-sm max-w-xs z-30 border border-gray-200">
-            <div className="font-semibold text-gray-900 text-lg flex items-center gap-2">
-              <PhotoIcon className="w-5 h-5 text-blue-600" />
+          <div className="absolute top-4 left-4 bg-white dark:bg-slate-800 bg-opacity-95 backdrop-blur-sm p-4 rounded-lg shadow-xl text-sm max-w-xs z-30 border border-gray-200 dark:border-slate-700">
+            <div className="font-semibold text-gray-900 dark:text-slate-100 text-lg flex items-center gap-2">
+              <PhotoIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               {hoveredBlock.block_id}
             </div>
-            <div className="text-xs text-purple-600 mt-1 font-medium">
+            <div className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">
               块 ID: {hoveredBlock.block_id}
             </div>
-            <div className="text-xs text-gray-600 mt-1">
+            <div className="text-xs text-gray-600 dark:text-slate-400 mt-1">
               网格位置: {hoveredBlock.x}, {hoveredBlock.y} | 
               网格大小: {hoveredBlock.width} × {hoveredBlock.height}
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">
               容器占比: {hoveredBlock.pixelWidth.toFixed(1)}% × {hoveredBlock.pixelHeight.toFixed(1)}%
             </div>
             {hoveredBlock.ad ? (
               <>
-                <div className="text-sm text-blue-700 mt-3 font-medium">{hoveredBlock.ad.title}</div>
-                <div className="text-xs text-gray-700 mt-1">{hoveredBlock.ad.description}</div>
+                <div className="text-sm text-blue-700 dark:text-blue-400 mt-3 font-medium">{hoveredBlock.ad.title}</div>
+                <div className="text-xs text-gray-700 dark:text-slate-300 mt-1">{hoveredBlock.ad.description}</div>
 
-                <div className="text-xs text-purple-700 mt-2 font-medium flex items-center gap-1">
+                <div className="text-xs text-purple-700 dark:text-purple-400 mt-2 font-medium flex items-center gap-1">
                   <ClockIcon className="w-3 h-3" />
                   {formatExpireTime(hoveredBlock.ad.expires_at)}
                 </div>
-                <div className="text-xs text-emerald-700 mt-1 font-bold flex items-center gap-1">
+                <div className="text-xs text-emerald-700 dark:text-emerald-400 mt-1 font-bold flex items-center gap-1">
                   <LinkIcon className="w-3 h-3" />
                   点击访问链接
                 </div>
               </>
             ) : (
-              <div className="text-xs text-gray-500 mt-2">
+              <div className="text-xs text-gray-500 dark:text-slate-400 mt-2">
                 <div className="flex items-center gap-1 mb-1">
                   <SparklesIcon className="w-3 h-3" />
                   此块可用，点击可模拟上传广告
@@ -611,34 +611,34 @@ export default function AdsPixel() {
         )}
 
         {/* 操作指南 - 悬浮在最顶层，可折叠 */}
-        <div className="absolute bottom-4 left-4 bg-white bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs text-gray-700 border border-gray-200 transition-all duration-300 z-[9996]">
+        <div className="absolute bottom-4 left-4 bg-white dark:bg-slate-800 bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 transition-all duration-300 z-[9996]">
           <div className="flex items-center justify-between p-2 cursor-pointer" onClick={() => setIsControlsCollapsed(!isControlsCollapsed)}>
-            <div className="font-semibold text-gray-900 flex items-center gap-2">
+            <div className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
               <ComputerDesktopIcon className="w-4 h-4" />
               操作指南
             </div>
             {isControlsCollapsed ? (
-              <ChevronDownIcon className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+              <ChevronDownIcon className="w-4 h-4 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300" />
             ) : (
-              <ChevronUpIcon className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+              <ChevronUpIcon className="w-4 h-4 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300" />
             )}
           </div>
           {!isControlsCollapsed && (
             <div className="px-3 pb-3 space-y-2">
               <div className="flex items-center gap-2 text-xs">
-                <PhotoIcon className="w-3 h-3 text-blue-500" />
+                <PhotoIcon className="w-3 h-3 text-blue-500 dark:text-blue-400" />
                 点击空闲块进行模拟上传
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <LinkIcon className="w-3 h-3 text-green-500" />
+                <LinkIcon className="w-3 h-3 text-green-500 dark:text-green-400" />
                 点击广告块访问链接
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <EyeIcon className="w-3 h-3 text-purple-500" />
+                <EyeIcon className="w-3 h-3 text-purple-500 dark:text-purple-400" />
                 悬停查看详细信息
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <ArrowsPointingOutIcon className="w-3 h-3 text-orange-500" />
+                <ArrowsPointingOutIcon className="w-3 h-3 text-orange-500 dark:text-orange-400" />
                 Ctrl+F 全屏模式
               </div>
             </div>
@@ -646,31 +646,31 @@ export default function AdsPixel() {
         </div>
 
         {/* 状态图例 - 悬浮在最顶层，可折叠 */}
-        <div className="absolute bottom-4 right-4 bg-white bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs border border-gray-200 transition-all duration-300 z-[9996]">
+        <div className="absolute bottom-4 right-4 bg-white dark:bg-slate-800 bg-opacity-70 backdrop-blur-sm rounded-lg shadow-lg text-xs border border-gray-200 dark:border-slate-700 transition-all duration-300 z-[9996]">
           <div className="flex items-center justify-between p-2 cursor-pointer" onClick={() => setIsLegendCollapsed(!isLegendCollapsed)}>
-            <div className="font-semibold text-gray-900 flex items-center gap-2">
+            <div className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
               <PaintBrushIcon className="w-4 h-4" />
               状态图例
             </div>
             {isLegendCollapsed ? (
-              <ChevronDownIcon className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+              <ChevronDownIcon className="w-4 h-4 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300" />
             ) : (
-              <ChevronUpIcon className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+              <ChevronUpIcon className="w-4 h-4 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300" />
             )}
           </div>
           {!isLegendCollapsed && (
             <div className="px-3 pb-3 space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border border-gray-400 rounded" style={{ background: 'linear-gradient(135deg, #f8fafc, #e2e8f0)' }}></div>
-                <span className="text-gray-700">空闲可用</span>
+                <div className="w-4 h-4 border border-gray-400 dark:border-slate-600 rounded" style={{ background: 'linear-gradient(135deg, #f8fafc, #e2e8f0)' }}></div>
+                <span className="text-gray-700 dark:text-slate-300">空闲可用</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border border-blue-500 rounded" style={{ background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)' }}></div>
-                <span className="text-blue-700">已占用</span>
+                <div className="w-4 h-4 border border-blue-500 dark:border-blue-600 rounded" style={{ background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)' }}></div>
+                <span className="text-blue-700 dark:text-blue-400">已占用</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border border-red-500 rounded" style={{ background: 'linear-gradient(135deg, #fee2e2, #fecaca)' }}></div>
-                <span className="text-red-700">已过期</span>
+                <div className="w-4 h-4 border border-red-500 dark:border-red-600 rounded" style={{ background: 'linear-gradient(135deg, #fee2e2, #fecaca)' }}></div>
+                <span className="text-red-700 dark:text-red-400">已过期</span>
               </div>
             </div>
           )}

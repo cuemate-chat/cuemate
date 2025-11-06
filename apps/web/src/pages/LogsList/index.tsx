@@ -98,26 +98,26 @@ export default function LogsList() {
       render: (record: any) => (
         <div className="flex items-center gap-2">
           <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
             onClick={() => openLogViewer(record)}
           >
             <EyeIcon className="w-4 h-4" /> 查看
           </button>
           <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 hover:border-amber-300 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:border-amber-300 dark:hover:border-amber-600 transition-colors"
             onClick={() => {
               Modal.confirm({
                 title: '确认清理日志',
                 content: (
                   <div className="space-y-2">
-                    <p>确定要清理以下日志文件吗？</p>
-                    <div className="bg-slate-50 p-3 rounded text-sm">
-                      <div><strong>服务：</strong>{serviceNameMap[record.service] || record.service}</div>
-                      <div><strong>级别：</strong>{record.level.toUpperCase()}</div>
-                      <div><strong>日期：</strong>{record.date}</div>
-                      <div><strong>大小：</strong>{(record.size / 1024).toFixed(1)} KB</div>
+                    <p className="text-slate-900 dark:text-slate-100">确定要清理以下日志文件吗？</p>
+                    <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded text-sm">
+                      <div className="text-slate-900 dark:text-slate-100"><strong>服务：</strong>{serviceNameMap[record.service] || record.service}</div>
+                      <div className="text-slate-900 dark:text-slate-100"><strong>级别：</strong>{record.level.toUpperCase()}</div>
+                      <div className="text-slate-900 dark:text-slate-100"><strong>日期：</strong>{record.date}</div>
+                      <div className="text-slate-900 dark:text-slate-100"><strong>大小：</strong>{(record.size / 1024).toFixed(1)} KB</div>
                     </div>
-                    <p className="text-amber-600 text-sm">
+                    <p className="text-amber-600 dark:text-amber-400 text-sm">
                       <WarningIcon className="w-4 h-4 inline mr-1" />
                       清理后日志内容将无法恢复！
                     </p>
@@ -133,24 +133,24 @@ export default function LogsList() {
             <XCircleIcon className="w-4 h-4" /> 清理
           </button>
           <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-300 dark:hover:border-red-600 transition-colors"
             onClick={() => {
               Modal.confirm({
                 title: '确认删除日志文件',
                 content: (
                   <div className="space-y-2">
-                    <p>确定要删除以下日志文件吗？</p>
-                    <div className="bg-slate-50 p-3 rounded text-sm">
-                      <div><strong>服务：</strong>{serviceNameMap[record.service] || record.service}</div>
-                      <div><strong>级别：</strong>{record.level.toUpperCase()}</div>
-                      <div><strong>日期：</strong>{record.date}</div>
-                      <div><strong>大小：</strong>{(record.size / 1024).toFixed(1)} KB</div>
+                    <p className="text-slate-900 dark:text-slate-100">确定要删除以下日志文件吗？</p>
+                    <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded text-sm">
+                      <div className="text-slate-900 dark:text-slate-100"><strong>服务：</strong>{serviceNameMap[record.service] || record.service}</div>
+                      <div className="text-slate-900 dark:text-slate-100"><strong>级别：</strong>{record.level.toUpperCase()}</div>
+                      <div className="text-slate-900 dark:text-slate-100"><strong>日期：</strong>{record.date}</div>
+                      <div className="text-slate-900 dark:text-slate-100"><strong>大小：</strong>{(record.size / 1024).toFixed(1)} KB</div>
                     </div>
-                    <p className="text-red-600 text-sm">
+                    <p className="text-red-600 dark:text-red-400 text-sm">
                       <DangerIcon className="w-4 h-4 inline mr-1" />
                       删除后日志文件将完全消失，无法恢复！
                     </p>
-                    <p className="text-red-600 text-sm">此操作比清理更加危险，请谨慎操作！</p>
+                    <p className="text-red-600 dark:text-red-400 text-sm">此操作比清理更加危险，请谨慎操作！</p>
                   </div>
                 ),
                 okText: '确认删除',
@@ -267,22 +267,21 @@ export default function LogsList() {
   };
 
   const LevelPill = ({ lvl }: { lvl: LogLevel }) => {
-    const map: Record<LogLevel, { Icon: any; color: string; bg: string; text: string }> = {
-      info: { Icon: InformationCircleIcon, color: 'text-blue-600', bg: 'bg-blue-50', text: 'INFO' },
+    const map: Record<LogLevel, { Icon: any; colorClass: string; text: string }> = {
+      info: { Icon: InformationCircleIcon, colorClass: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30', text: 'INFO' },
       warn: {
         Icon: ExclamationTriangleIcon,
-        color: 'text-amber-600',
-        bg: 'bg-amber-50',
+        colorClass: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30',
         text: 'WARN',
       },
-      error: { Icon: XCircleIcon, color: 'text-red-600', bg: 'bg-red-50', text: 'ERROR' },
-      debug: { Icon: BugAntIcon, color: 'text-slate-600', bg: 'bg-slate-100', text: 'DEBUG' },
+      error: { Icon: XCircleIcon, colorClass: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30', text: 'ERROR' },
+      debug: { Icon: BugAntIcon, colorClass: 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50', text: 'DEBUG' },
     };
     const cfg = map[lvl];
     const Icon = cfg.Icon;
     return (
       <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${cfg.bg} ${cfg.color}`}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${cfg.colorClass}`}
       >
         <Icon className="w-3.5 h-3.5" /> {cfg.text}
       </span>
@@ -302,7 +301,7 @@ export default function LogsList() {
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">日志管理</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">日志管理</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
@@ -310,13 +309,13 @@ export default function LogsList() {
                 title: '确认清理今日日志',
                 content: (
                   <div className="space-y-2">
-                    <p>确定要清理所有今日产生的日志文件内容吗？</p>
-                    <div className="bg-amber-50 p-3 rounded text-sm border border-amber-200">
-                      <div className="text-amber-800">
+                    <p className="text-slate-900 dark:text-slate-100">确定要清理所有今日产生的日志文件内容吗？</p>
+                    <div className="bg-amber-50 dark:bg-amber-900/30 p-3 rounded text-sm border border-amber-200 dark:border-amber-700">
+                      <div className="text-amber-800 dark:text-amber-300">
                         <WarningIcon className="w-4 h-4 inline mr-1" />
                         <strong>注意：</strong>此操作将清理所有服务、所有级别的今日日志内容（从今日 00:00 到现在）
                       </div>
-                      <div className="text-amber-700 mt-1">
+                      <div className="text-amber-700 dark:text-amber-400 mt-1">
                         • 仅清理日志内容，不会删除日志文件<br/>
                         • 清理后日志内容将无法恢复<br/>
                         • 建议在确认无重要日志后再执行此操作
@@ -331,7 +330,7 @@ export default function LogsList() {
               });
             }}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 hover:border-amber-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:border-amber-300 dark:hover:border-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <XCircleIcon className="w-4 h-4" />
             清理今日日志
@@ -342,7 +341,7 @@ export default function LogsList() {
               loadLogs();
             }}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             刷新
@@ -352,7 +351,7 @@ export default function LogsList() {
 
       <div className="flex flex-wrap gap-4 items-end mb-4">
         <div className="flex flex-col">
-          <label className="block text-xs text-slate-500 mb-1">项目</label>
+          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">项目</label>
           <Select
             value={service || undefined}
             onChange={(v) => {
@@ -369,7 +368,7 @@ export default function LogsList() {
           />
         </div>
         <div className="flex flex-col">
-          <label className="block text-xs text-slate-500 mb-1">级别</label>
+          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">级别</label>
           <Select
             value={level || undefined}
             onChange={(v) => {
@@ -386,7 +385,7 @@ export default function LogsList() {
           />
         </div>
         <div className="flex flex-col">
-          <label className="block text-xs text-slate-500 mb-1">日期</label>
+          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">日期</label>
           <DatePicker
             value={date ? dayjs(date) : null}
             onChange={(d) => {
@@ -400,7 +399,7 @@ export default function LogsList() {
       </div>
 
       {/* Ant Design Table 自适应表格 */}
-      <div className="bg-white rounded-lg shadow border overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 border border-slate-200 dark:border-slate-700 overflow-hidden">
         <Table
           columns={columns}
           dataSource={items}
@@ -414,7 +413,7 @@ export default function LogsList() {
 
       {/* 外部分页组件 */}
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500">共 {total} 条</div>
+        <div className="text-slate-500 dark:text-slate-400">共 {total} 条</div>
         <PaginationBar 
           page={page} 
           pageSize={pageSize} 

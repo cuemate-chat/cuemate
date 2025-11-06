@@ -132,28 +132,28 @@ export default function JobsList() {
       title: '确认删除岗位',
       content: (
         <div className="space-y-3">
-          <div className="text-red-600 font-medium">
+          <div className="text-red-600 dark:text-red-400 font-medium">
             此操作将永久删除以下所有相关数据，且无法恢复！
           </div>
-          <div className="space-y-2 text-sm text-gray-700">
+          <div className="space-y-2 text-sm text-gray-700 dark:text-slate-300">
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">1</span>
+              <span className="w-4 h-4 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-xs">1</span>
               <span>岗位信息：<strong>{currentJob.title}</strong></span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">2</span>
+              <span className="w-4 h-4 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-xs">2</span>
               <span>对应的简历数据</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">3</span>
+              <span className="w-4 h-4 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-xs">3</span>
               <span>对应的面试押题数据</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs">4</span>
+              <span className="w-4 h-4 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-xs">4</span>
               <span>向量库中的所有相关数据</span>
             </div>
           </div>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
+          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-md p-3 text-sm text-yellow-800 dark:text-yellow-300">
             <div className="font-medium mb-1">
               <WarningIcon className="w-4 h-4 inline mr-1" />
               重要提醒：
@@ -291,19 +291,19 @@ export default function JobsList() {
               title="点击查看详情"
               className={`relative w-full text-left pl-10 pr-4 py-3 rounded-lg border transition-all duration-200 group ${
                 selectedId === item.id
-                  ? 'border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm'
-                  : 'border-slate-200 hover:border-blue-300 hover:bg-gradient-to-r hover:from-slate-50 hover:to-blue-50'
+                  ? 'border-blue-400 dark:border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 shadow-sm'
+                  : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-gradient-to-r hover:from-slate-50 hover:to-blue-50 dark:hover:from-slate-800/30 dark:hover:to-blue-900/30'
               }`}
             >
               <div className={`absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200 ${
                 selectedId === item.id
-                  ? 'bg-blue-500 text-white shadow-lg'
-                  : 'bg-slate-200 text-slate-600 group-hover:bg-blue-400 group-hover:text-white'
+                  ? 'bg-blue-500 dark:bg-blue-600 text-white shadow-lg'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 group-hover:bg-blue-400 dark:group-hover:bg-blue-500 group-hover:text-white'
               }`}>
                 {index + 1}
               </div>
               <div className={`font-medium transition-colors duration-200 ${
-                selectedId === item.id ? 'text-blue-700' : 'text-slate-800 group-hover:text-blue-700'
+                selectedId === item.id ? 'text-blue-700 dark:text-blue-400' : 'text-slate-800 dark:text-slate-200 group-hover:text-blue-700 dark:group-hover:text-blue-400'
               }`}>
                 {item.title}
               </div>
@@ -314,9 +314,9 @@ export default function JobsList() {
             </button>
           ))}
           {!items.length && (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <div className="text-sm">暂无岗位</div>
-              <div className="text-xs text-slate-400 mt-1">请先创建岗位</div>
+              <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">请先创建岗位</div>
             </div>
           )}
         </div>
@@ -324,10 +324,10 @@ export default function JobsList() {
       
       {/* 右侧详情 */}
       <div className="flex-1 min-w-0">
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm h-full overflow-auto">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm h-full overflow-auto">
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <div className="text-sm text-slate-600 mb-1">岗位名称<span className="text-red-500"> *</span></div>
+              <div className="text-sm text-slate-600 dark:text-slate-300 mb-1">岗位名称<span className="text-red-500 dark:text-red-400"> *</span></div>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -335,7 +335,7 @@ export default function JobsList() {
               />
             </div>
             <div>
-              <div className="text-sm text-slate-600 mb-1">岗位描述<span className="text-red-500"> *</span></div>
+              <div className="text-sm text-slate-600 dark:text-slate-300 mb-1">岗位描述<span className="text-red-500 dark:text-red-400"> *</span></div>
               <Input.TextArea
                 rows={adaptiveRows.desc}
                 maxLength={5000}
@@ -343,10 +343,10 @@ export default function JobsList() {
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={!selectedId}
               />
-              <div className="text-right text-xs text-slate-500">{description.length} / 5000</div>
+              <div className="text-right text-xs text-slate-500 dark:text-slate-400">{description.length} / 5000</div>
             </div>
             <div>
-              <div className="text-sm text-slate-600 mb-1">简历信息（文本）<span className="text-red-500"> *</span></div>
+              <div className="text-sm text-slate-600 dark:text-slate-300 mb-1">简历信息（文本）<span className="text-red-500 dark:text-red-400"> *</span></div>
               <Input.TextArea
                 rows={adaptiveRows.resume}
                 maxLength={20000}
@@ -355,7 +355,7 @@ export default function JobsList() {
                 placeholder="简历正文"
                 disabled={!selectedId}
               />
-              <div className="text-right text-xs text-slate-500">{resumeContent.length} / 20000</div>
+              <div className="text-right text-xs text-slate-500 dark:text-slate-400">{resumeContent.length} / 20000</div>
             </div>
           </div>
 
@@ -403,15 +403,15 @@ export default function JobsList() {
               <div className="flex items-start gap-2 text-xs">
                 {items.find((i) => i.id === selectedId)?.vector_status ? (
                   <>
-                    <CheckCircleIcon className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-                    <span className="text-green-600 font-medium">
+                    <CheckCircleIcon className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                    <span className="text-green-600 dark:text-green-400 font-medium">
                       已同步到向量库
                     </span>
                   </>
                 ) : (
                   <>
-                    <ExclamationTriangleIcon className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                    <span className="text-red-500">
+                    <ExclamationTriangleIcon className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0 mt-0.5" />
+                    <span className="text-red-500 dark:text-red-400">
                       <span className="hidden sm:inline">未同步到向量库，点击保存修改按钮即可同步至向量库</span>
                       <span className="sm:hidden">未同步，点击保存即可同步</span>
                     </span>
@@ -421,7 +421,7 @@ export default function JobsList() {
             )}
 
             {/* 主要操作按钮行 */}
-            <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100">
+            <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
               <Button 
                 type="primary" 
                 disabled={!selectedId || loading} 

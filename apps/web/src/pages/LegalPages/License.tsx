@@ -211,8 +211,8 @@ export default function License() {
       {/* 页面标题 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">License 管理</h1>
-          <p className="text-sm text-slate-600 mt-1">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">License 管理</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             管理系统授权许可，确保合规使用
           </p>
         </div>
@@ -220,7 +220,7 @@ export default function License() {
           <button
             onClick={handleRefreshAll}
             disabled={loading || loadingVersions}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowPathIcon className={`w-4 h-4 ${(loading || loadingVersions) ? 'animate-spin' : ''}`} />
             刷新
@@ -229,7 +229,7 @@ export default function License() {
             <button
               onClick={handleOpenVersionManagement}
               disabled={loadingVersions}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-md hover:bg-emerald-100 hover:border-emerald-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
@@ -241,21 +241,21 @@ export default function License() {
       </div>
 
       {/* License 信息卡片 */}
-      <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200/60 backdrop-blur-sm">
+      <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl shadow-lg border border-slate-200/60 dark:border-slate-700/60 backdrop-blur-sm">
         <div className="p-8">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                 <DocumentTextIcon className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-xl font-semibold text-slate-900">当前 License</h2>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">当前 License</h2>
             </div>
           </div>
 
           {license ? (
             <div className="space-y-6">
               {/* License 状态指示 */}
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200/50">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-xl border border-green-200/50 dark:border-green-700/50">
                 <div className="flex items-center gap-3">
                   <div className={`w-4 h-4 rounded-full shadow-sm ${
                     isExpiringSoon(license.expireTime) 
@@ -263,13 +263,13 @@ export default function License() {
                       : 'bg-gradient-to-r from-green-400 to-emerald-400'
                   }`} />
                   <span className={`text-base font-semibold ${
-                    isExpiringSoon(license.expireTime) ? 'text-yellow-700' : 'text-green-700'
+                    isExpiringSoon(license.expireTime) ? 'text-yellow-700 dark:text-yellow-400' : 'text-green-700 dark:text-green-400'
                   }`}>
                     {isExpiringSoon(license.expireTime) ? '即将过期' : '授权有效'}
                   </span>
                 </div>
-                <div className="px-3 py-1 bg-white/80 rounded-full">
-                  <span className="text-sm font-medium text-slate-600">授权版本： {license.licenseVersion}</span>
+                <div className="px-3 py-1 bg-white/80 dark:bg-slate-700/80 rounded-full">
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">授权版本： {license.licenseVersion}</span>
                 </div>
               </div>
 
@@ -277,63 +277,63 @@ export default function License() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* 左列 */}
                 <div className="space-y-4">
-                  <div className="p-4 bg-white/60 rounded-lg border border-slate-200/50">
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                  <div className="p-4 bg-white/60 dark:bg-slate-700/60 rounded-lg border border-slate-200/50 dark:border-slate-600/50">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                       授权名称
                     </label>
-                    <div className="text-lg font-semibold text-slate-900">{license.corporation}</div>
+                    <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">{license.corporation}</div>
                   </div>
-                  <div className="p-4 bg-white/60 rounded-lg border border-slate-200/50">
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                  <div className="p-4 bg-white/60 dark:bg-slate-700/60 rounded-lg border border-slate-200/50 dark:border-slate-600/50">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                       版本类型
                     </label>
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                         {license.edition}
                       </span>
                     </div>
                   </div>
-                  <div className="p-4 bg-white/60 rounded-lg border border-slate-200/50">
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                  <div className="p-4 bg-white/60 dark:bg-slate-700/60 rounded-lg border border-slate-200/50 dark:border-slate-600/50">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                       产品类型
                     </label>
-                    <div className="text-base font-medium text-slate-900">{license.productType}</div>
+                    <div className="text-base font-medium text-slate-900 dark:text-slate-100">{license.productType}</div>
                   </div>
                 </div>
                 
                 {/* 右列 */}
                 <div className="space-y-4">
-                  <div className="p-4 bg-white/60 rounded-lg border border-slate-200/50">
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                  <div className="p-4 bg-white/60 dark:bg-slate-700/60 rounded-lg border border-slate-200/50 dark:border-slate-600/50">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                       授权数量
                     </label>
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-slate-900">{license.authorizeCount}</span>
-                      <span className="text-sm text-slate-500">个授权</span>
+                      <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{license.authorizeCount}</span>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">个授权</span>
                     </div>
                   </div>
-                  <div className="p-4 bg-white/60 rounded-lg border border-slate-200/50">
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                  <div className="p-4 bg-white/60 dark:bg-slate-700/60 rounded-lg border border-slate-200/50 dark:border-slate-600/50">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                       过期时间
                     </label>
                     <div className={`text-base font-semibold ${
-                      isExpiringSoon(license.expireTime) ? 'text-orange-600' : 'text-slate-900'
+                      isExpiringSoon(license.expireTime) ? 'text-orange-600 dark:text-orange-400' : 'text-slate-900 dark:text-slate-100'
                     }`}>
                       {formatDate(license.expireTime)}
                     </div>
                   </div>
-                  <div className="p-4 bg-white/60 rounded-lg border border-slate-200/50">
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                  <div className="p-4 bg-white/60 dark:bg-slate-700/60 rounded-lg border border-slate-200/50 dark:border-slate-600/50">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                       激活时间
                     </label>
-                    <div className="text-base text-slate-700">{formatDate(license.createdAt)}</div>
+                    <div className="text-base text-slate-700 dark:text-slate-300">{formatDate(license.createdAt)}</div>
                   </div>
                 </div>
               </div>
 
               {/* 过期警告 */}
               {isExpiringSoon(license.expireTime) && (
-                <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
+                <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-200 dark:border-amber-700 rounded-xl">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full flex items-center justify-center">
@@ -343,8 +343,8 @@ export default function License() {
                       </div>
                     </div>
                     <div className="ml-4">
-                      <h3 className="text-sm font-semibold text-amber-800">License 即将过期</h3>
-                      <p className="text-sm text-amber-700 mt-1">
+                      <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-300">License 即将过期</h3>
+                      <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
                         您的 License 将在 30 天内过期，请及时续费或更新 License。
                       </p>
                     </div>
@@ -354,11 +354,11 @@ export default function License() {
               
               {/* 导入预置题库按钮 - 只在 License 有效时显示 */}
               {license && license.status === 'active' && !isExpiringSoon(license.expireTime) && (
-                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-semibold text-blue-800 mb-1">导入预置题库</h3>
-                      <p className="text-sm text-blue-600">上传文件来导入预置面试题库</p>
+                      <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">导入预置题库</h3>
+                      <p className="text-sm text-blue-600 dark:text-blue-400">上传文件来导入预置面试题库</p>
                     </div>
                     <div className="relative">
                       <input
@@ -386,9 +386,9 @@ export default function License() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <DocumentTextIcon className="mx-auto h-16 w-16 text-slate-400 mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">暂无有效 License</h3>
-              <p className="text-slate-600">
+              <DocumentTextIcon className="mx-auto h-16 w-16 text-slate-400 dark:text-slate-500 mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">暂无有效 License</h3>
+              <p className="text-slate-600 dark:text-slate-400">
                 请上传有效的 License 文件以激活系统功能
               </p>
             </div>
@@ -397,19 +397,19 @@ export default function License() {
       </div>
 
       {/* 上传 License 卡片 */}
-      <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200/60 backdrop-blur-sm">
+      <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl shadow-lg border border-slate-200/60 dark:border-slate-700/60 backdrop-blur-sm">
         <div className="p-8">
           <div className="flex items-center space-x-3 mb-6">
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
               <CloudArrowUpIcon className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">上传 License</h2>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">上传 License</h2>
           </div>
           
           <div className="space-y-6">
             {/* 文件上传方式 */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 上传 License.key 文件
               </label>
               <div className="relative">
@@ -420,18 +420,18 @@ export default function License() {
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   disabled={uploadingFile}
                 />
-                <div className="flex items-center justify-center w-full h-40 border-2 border-dashed border-slate-300 rounded-xl hover:border-emerald-400 hover:bg-emerald-50/50 transition-all duration-200">
+                <div className="flex items-center justify-center w-full h-40 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl hover:border-emerald-400 dark:hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 transition-all duration-200">
                   <div className="text-center">
                     {uploadingFile ? (
                       <div className="flex flex-col items-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-                        <span className="text-sm text-slate-600">上传中...</span>
+                        <span className="text-sm text-slate-600 dark:text-slate-400">上传中...</span>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center">
-                        <CloudArrowUpIcon className="h-8 w-8 text-slate-400 mb-2" />
-                        <span className="text-sm text-slate-600">点击选择 License.key 文件</span>
-                        <span className="text-xs text-slate-500 mt-1">支持 .key 格式</span>
+                        <CloudArrowUpIcon className="h-8 w-8 text-slate-400 dark:text-slate-500 mb-2" />
+                        <span className="text-sm text-slate-600 dark:text-slate-400">点击选择 License.key 文件</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">支持 .key 格式</span>
                       </div>
                     )}
                   </div>

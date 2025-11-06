@@ -74,34 +74,34 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center login-bg p-10">
+    <div className="min-h-screen flex items-center justify-center login-bg dark:bg-slate-900 p-10">
       <div className="quarter-circle" />
       <div className="login-ornaments" />
       {/* 居中白色卡片 */}
-      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden">
+      <div className="w-full max-w-5xl bg-white dark:bg-slate-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* 左侧：顶部 Logo + 插画（居左） */}
-          <div className="hidden md:flex flex-col items-start p-12 bg-[#e5eefc]">
+          <div className="hidden md:flex flex-col items-start p-12 bg-blue-50 dark:bg-slate-700">
             <img src={Logo} alt="CueMate" className="h-8 mb-6 bg-transparent" />
             <img src={LeftImage} alt="illustration" className="w-full h-auto object-contain" />
           </div>
 
           {/* 右侧表单（浅色输入 + 蓝色按钮）*/}
-          <div className="p-10 bg-white">
+          <div className="p-10 bg-white dark:bg-slate-800">
             {/* 欢迎语 + 登录标题（右侧上方） */}
             <div className="mt-8 md:mt-14 mb-6 text-center">
-              <div className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
+              <div className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-slate-100 mb-3">
                 欢迎使用 CueMate
               </div>
-              <div className="h-2 w-28 bg-blue-600 rounded-full mx-auto" />
+              <div className="h-2 w-28 bg-blue-600 dark:bg-blue-500 rounded-full mx-auto" />
             </div>
             <div className="mb-6 text-center">
-              <h1 className="text-xl font-semibold text-gray-900">登录</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-slate-100">登录</h1>
             </div>
 
             <form onSubmit={onSubmit} className="space-y-4">
               <input
-                className="w-full px-3 py-2 rounded border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 rounded border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                 placeholder="请输入用户名"
                 value={account}
                 onChange={(e) => setAccount(e.target.value)}
@@ -111,7 +111,7 @@ export default function Login() {
               />
               <div className="relative group">
                 <input
-                  className="w-full px-3 pr-10 py-2 rounded border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 pr-10 py-2 rounded border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                   placeholder="请输入密码"
                   type={showPwd ? 'text' : 'password'}
                   value={password}
@@ -125,7 +125,7 @@ export default function Login() {
                   aria-label={showPwd ? '隐藏密码' : '显示密码'}
                   title={showPwd ? '隐藏密码' : '显示密码'}
                   onClick={() => setShowPwd((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   {showPwd ? (
                     // eye-off
@@ -158,7 +158,7 @@ export default function Login() {
                 </button>
               </div>
               {errorMsg && (
-                <div className="p-3 rounded bg-red-50 text-red-600 text-sm border border-red-200">
+                <div className="p-3 rounded bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm border border-red-200 dark:border-red-800">
                   {errorMsg}
                 </div>
               )}
@@ -169,7 +169,7 @@ export default function Login() {
               >
                 {submitting ? '登录中…' : '登录'}
               </button>
-              <div className="flex items-center justify-between text-sm text-gray-500">
+              <div className="flex items-center justify-between text-sm text-gray-500 dark:text-slate-400">
                 <label className="inline-flex items-center space-x-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -181,7 +181,7 @@ export default function Login() {
                 </label>
                 <button
                   type="button"
-                  className="text-blue-600 hover:text-blue-500 transition-colors"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors"
                   onClick={() => message.info('请联系管理员重置密码')}
                 >
                   忘记密码？

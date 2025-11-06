@@ -212,10 +212,10 @@ export default function PresetQuestionsList() {
 
   return (
     <LicenseGuard feature="preset_questions">
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
         {/* 顶部操作栏 */}
         <div className="flex items-center justify-between mb-6">
-          <div className="text-lg font-semibold">预置题库</div>
+          <div className="text-lg font-semibold dark:text-slate-100">预置题库</div>
           <div className="flex items-center gap-2 flex-wrap">
             <DatePicker
               placeholder="按日期过滤"
@@ -293,7 +293,7 @@ export default function PresetQuestionsList() {
 
         {/* 批量操作栏 */}
         {(selectedIds.length > 0 || items.length > 0) && (
-          <div className="flex items-center justify-between mb-4 p-3 bg-slate-50 rounded-lg">
+          <div className="flex items-center justify-between mb-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
             <div className="flex items-center gap-3">
               <Checkbox
                 checked={selectAll}
@@ -303,7 +303,7 @@ export default function PresetQuestionsList() {
                 全选（当前页）
               </Checkbox>
               {selectedIds.length > 0 && (
-                <span className="text-sm text-slate-600">已选择 {selectedIds.length} 项</span>
+                <span className="text-sm text-slate-600 dark:text-slate-400">已选择 {selectedIds.length} 项</span>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -333,7 +333,7 @@ export default function PresetQuestionsList() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {items.map((item, idx) => (
-                <Card key={item.id} className="relative h-full group hover:shadow-md transition-shadow duration-200">
+                <Card key={item.id} className="relative h-full group hover:shadow-md transition-shadow duration-200 dark:bg-slate-800 dark:border-slate-700">
                   {/* 左上角序号 */}
                   <div className="pointer-events-none absolute left-0 top-0 z-10">
                     <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
@@ -354,7 +354,7 @@ export default function PresetQuestionsList() {
                   <div className="pt-4 pr-6 pb-2 pl-2">
                     {/* 问题标题 + 标签（右上角对齐，参考面试押题样式） */}
                     <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="text-base font-semibold text-slate-800 break-words line-clamp-2 min-h-[3.25rem] pr-2">
+                      <div className="text-base font-semibold text-slate-800 dark:text-slate-100 break-words line-clamp-2 min-h-[3.25rem] pr-2">
                         {item.question}
                       </div>
                       <div className="shrink-0 flex flex-col items-end gap-1">
@@ -372,16 +372,16 @@ export default function PresetQuestionsList() {
                     </div>
 
                     {/* 分割线 */}
-                    <div className="my-2 border-t border-slate-200"></div>
+                    <div className="my-2 border-t border-slate-200 dark:border-slate-700"></div>
 
                     {/* 答案预览 */}
-                    <div className="text-sm text-slate-600 mt-2 line-clamp-4 break-words leading-5 min-h-[5rem]" title={item.answer}>
+                    <div className="text-sm text-slate-600 dark:text-slate-400 mt-2 line-clamp-4 break-words leading-5 min-h-[5rem]" title={item.answer}>
                       {item.answer}
                     </div>
 
                     {/* 同步状态（如果有的话，放在时间上方） */}
                     {item.synced_jobs.length > 0 && (
-                      <div className="text-xs text-slate-500 mt-2">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         <button
                           onClick={() => showSyncJobsDetail(item.synced_jobs, item.question)}
                           className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors duration-200"
@@ -391,13 +391,13 @@ export default function PresetQuestionsList() {
                       </div>
                     )}
                     {item.synced_jobs.length == 0 && (
-                      <div className="text-xs text-slate-500 mt-2">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         暂未同步到岗位
                       </div>
                     )}
 
                     {/* 时间和操作按钮 */}
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
                       <span>{dayjs(item.created_at).format('YYYY-MM-DD HH:mm')}</span>
                       <div className="space-x-2">
                         <Button size="small" onClick={() => openEditDrawer(item)}>
@@ -440,7 +440,7 @@ export default function PresetQuestionsList() {
             )}
 
             {items.length === 0 && (
-              <div className="py-20 text-center text-slate-500">
+              <div className="py-20 text-center text-slate-500 dark:text-slate-400">
                 <div className="text-4xl mb-4">📋</div>
                 <div>暂无预置题目</div>
                 <Button

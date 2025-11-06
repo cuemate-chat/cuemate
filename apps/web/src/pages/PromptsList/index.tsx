@@ -51,7 +51,7 @@ export default function PromptsList() {
       key: 'id',
       width: '15%',
       render: (id: string) => (
-        <span className="font-mono text-sm text-blue-600">{id}</span>
+        <span className="font-mono text-sm text-blue-600 dark:text-blue-400">{id}</span>
       ),
     },
     {
@@ -69,8 +69,8 @@ export default function PromptsList() {
         <span
           className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
             source === 'desktop'
-              ? 'bg-purple-100 text-purple-700'
-              : 'bg-green-100 text-green-700'
+              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+              : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
           }`}
         >
           {source === 'desktop' ? 'Desktop' : 'Web'}
@@ -90,7 +90,7 @@ export default function PromptsList() {
               {vars.map((v: string, i: number) => (
                 <span
                   key={i}
-                  className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-mono"
+                  className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-mono"
                 >
                   {v}
                 </span>
@@ -98,7 +98,7 @@ export default function PromptsList() {
             </div>
           );
         } catch {
-          return <span className="text-slate-400">-</span>;
+          return <span className="text-slate-400 dark:text-slate-500">-</span>;
         }
       },
     },
@@ -109,19 +109,19 @@ export default function PromptsList() {
       render: (record: Prompt) => (
         <div className="flex items-center gap-2">
           <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
             onClick={() => handleEdit(record.id)}
           >
             <PencilIcon className="w-4 h-4" /> 编辑
           </button>
           <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 hover:border-amber-300 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:border-amber-300 dark:hover:border-amber-600 transition-colors"
             onClick={() => handleRestore(record)}
           >
             <ArrowPathIcon className="w-4 h-4" /> 恢复
           </button>
           <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-slate-400 bg-slate-50 border border-slate-200 rounded-md cursor-not-allowed"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md cursor-not-allowed"
             disabled
           >
             <TrashIcon className="w-4 h-4" /> 删除
@@ -222,12 +222,12 @@ export default function PromptsList() {
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">Prompt 管理</h1>
+        <h1 className="text-xl font-semibold dark:text-slate-100">Prompt 管理</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setCreateDrawerOpen(true)}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 hover:border-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-md hover:bg-green-100 dark:hover:bg-green-900/50 hover:border-green-300 dark:hover:border-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <PlusIcon className="w-4 h-4" />
             新增
@@ -235,7 +235,7 @@ export default function PromptsList() {
           <button
             onClick={loadPrompts}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             刷新
@@ -245,7 +245,7 @@ export default function PromptsList() {
 
       <div className="flex flex-wrap gap-4 items-end mb-4">
         <div className="flex flex-col">
-          <label className="block text-xs text-slate-500 mb-1">来源</label>
+          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">来源</label>
           <Select
             value={sourceFilter || undefined}
             onChange={(v) => {
@@ -264,7 +264,7 @@ export default function PromptsList() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow border overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
         <Table
           columns={columns}
           dataSource={items}
@@ -277,7 +277,7 @@ export default function PromptsList() {
       </div>
 
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500">共 {total} 条</div>
+        <div className="text-slate-500 dark:text-slate-400">共 {total} 条</div>
         <PaginationBar
           page={page}
           pageSize={pageSize}

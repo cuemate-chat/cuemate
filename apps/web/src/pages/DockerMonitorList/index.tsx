@@ -94,14 +94,14 @@ export default function DockerMonitorList() {
       dataIndex: 'name',
       key: 'name',
       width: '15%',
-      render: (name: string) => <Text strong>{name}</Text>
+      render: (name: string) => <Text strong className="text-slate-900 dark:text-slate-100">{name}</Text>
     },
     {
       title: '镜像',
       dataIndex: 'image',
       key: 'image',
       width: '20%',
-      render: (image: string) => <Text code>{image}</Text>
+      render: (image: string) => <Text code className="text-slate-900 dark:text-slate-100">{image}</Text>
     },
     {
       title: '运行状态',
@@ -117,12 +117,12 @@ export default function DockerMonitorList() {
                     state === 'paused' ? '已暂停' : state;
         return (
           <span className={`px-2 py-1 rounded text-xs font-medium ${
-            color === 'green' ? 'bg-green-100 text-green-800' :
-            color === 'orange' ? 'bg-orange-100 text-orange-800' :
-            color === 'red' ? 'bg-red-100 text-red-800' :
-            color === 'blue' ? 'bg-blue-100 text-blue-800' :
-            color === 'purple' ? 'bg-purple-100 text-purple-800' :
-            'bg-gray-100 text-gray-800'
+            color === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+            color === 'orange' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300' :
+            color === 'red' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+            color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+            color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' :
+            'bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-300'
           }`}>
             {text}
           </span>
@@ -137,12 +137,12 @@ export default function DockerMonitorList() {
       render: (ports: string[]) => (
         <div className="flex flex-wrap gap-1">
           {ports.slice(0, 2).map((port, index) => (
-            <span key={index} className="text-xs text-blue-700 bg-blue-50 px-1 py-0.5 rounded">
+            <span key={index} className="text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-1 py-0.5 rounded">
               {port}
             </span>
           ))}
           {ports.length > 2 && (
-            <span className="text-xs text-gray-500">+{ports.length - 2}</span>
+            <span className="text-xs text-gray-500 dark:text-slate-400">+{ports.length - 2}</span>
           )}
         </div>
       )
@@ -152,7 +152,7 @@ export default function DockerMonitorList() {
       dataIndex: 'size',
       key: 'size',
       width: '10%',
-      render: (size: string) => <Text>{size}</Text>
+      render: (size: string) => <Text className="text-slate-900 dark:text-slate-100">{size}</Text>
     },
     {
       title: '操作',
@@ -161,7 +161,7 @@ export default function DockerMonitorList() {
       render: (_: any, record: DockerContainer) => (
         <div className="flex items-center gap-2">
           <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-300 dark:hover:border-red-600 transition-colors"
             onClick={() => {
               if (window.confirm('重启该服务可能会导致 CueMate 某些服务断开连接一段时间，确认重启吗？')) {
                 handleRestartContainer(record.id);
@@ -171,7 +171,7 @@ export default function DockerMonitorList() {
             <ReloadOutlined className="w-4 h-4" /> 重启
           </button>
           <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
             onClick={() => openLogDrawer(record)}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,8 +216,8 @@ export default function DockerMonitorList() {
     <div className="p-6 space-y-6">
       {/* 页面标题 */}
       <div>
-        <Title level={2}>Docker 容器监控</Title>
-        <Text type="secondary">监控本地 Docker 容器的运行状态和日志</Text>
+        <Title level={2} className="text-slate-900 dark:text-slate-100">Docker 容器监控</Title>
+        <Text type="secondary" className="text-slate-600 dark:text-slate-400">监控本地 Docker 容器的运行状态和日志</Text>
       </div>
 
       {/* 统计卡片 */}
@@ -280,7 +280,7 @@ export default function DockerMonitorList() {
 
       {/* 外部分页组件 */}
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500">共 {totalCount} 条</div>
+        <div className="text-slate-500 dark:text-slate-400">共 {totalCount} 条</div>
         <PaginationBar 
           page={page} 
           pageSize={pageSize} 

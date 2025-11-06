@@ -116,13 +116,13 @@ export default function AdsManagementList() {
       title: '确认跳转',
       content: (
         <div className="space-y-3">
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-slate-600 dark:text-slate-400">
             即将跳转到以下链接：
           </div>
-          <div className="bg-slate-50 p-3 rounded border text-sm break-all">
+          <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded border dark:border-slate-600 text-sm break-all dark:text-slate-100">
             {ad.link_url}
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
             链接将在新窗口中打开
           </div>
         </div>
@@ -161,10 +161,10 @@ export default function AdsManagementList() {
       title: '确认重置搜索条件',
       content: (
         <div className="space-y-2">
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-slate-600 dark:text-slate-400">
             此操作将清除所有筛选和搜索条件，并返回到第一页
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
             包括：搜索关键词、状态筛选、块信息筛选
           </div>
         </div>
@@ -207,15 +207,15 @@ export default function AdsManagementList() {
       <div className="p-6 max-w-7xl mx-auto">
         {/* 页面标题 */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">广告管理</h1>
-          <p className="text-slate-600">管理像素广告的创建、编辑和删除</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">广告管理</h1>
+          <p className="text-slate-600 dark:text-slate-400">管理像素广告的创建、编辑和删除</p>
         </div>
 
         {/* 搜索和筛选 */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
           <div className="flex flex-col lg:flex-row gap-4 items-end">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-700 mb-1">搜索广告</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">搜索广告</label>
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
@@ -223,14 +223,14 @@ export default function AdsManagementList() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="搜索广告标题或描述..."
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />
               </div>
             </div>
             
             <div className="w-full lg:w-48">
-              <label className="block text-sm font-medium text-slate-700 mb-1">块信息筛选</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">块信息筛选</label>
               <Select
                 showSearch
                 value={blockFilter}
@@ -252,7 +252,7 @@ export default function AdsManagementList() {
             </div>
 
             <div className="w-full lg:w-48">
-              <label className="block text-sm font-medium text-slate-700 mb-1">状态筛选</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">状态筛选</label>
               <Select
                 value={statusFilter}
                 onChange={(value) => setStatusFilter(value)}
@@ -287,7 +287,7 @@ export default function AdsManagementList() {
 
         {/* 操作栏 */}
         <div className="flex justify-between items-center mb-6">
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-slate-600 dark:text-slate-400">
             共 {ads.length} 条广告
           </div>
           <div className="flex items-center gap-2">
@@ -310,12 +310,12 @@ export default function AdsManagementList() {
         </div>
 
         {/* 广告列表 */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
           {loading ? (
             <PageLoading tip="加载广告列表..." />
           ) : ads.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-slate-400 mb-2">暂无广告</div>
+              <div className="text-slate-400 dark:text-slate-500 mb-2">暂无广告</div>
               <button
                 onClick={handleCreate}
                 className="text-blue-600 hover:text-blue-700 text-sm"
@@ -326,44 +326,44 @@ export default function AdsManagementList() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full" style={{ tableLayout: 'fixed' }}>
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: '6%' }}>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" style={{ width: '6%' }}>
                       序号
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: '21%' }}>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" style={{ width: '21%' }}>
                       广告信息
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: '10%' }}>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" style={{ width: '10%' }}>
                       块信息
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: '12%' }}>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" style={{ width: '12%' }}>
                       位置/尺寸
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: '8%' }}>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" style={{ width: '8%' }}>
                       状态
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: '8%' }}>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" style={{ width: '8%' }}>
                       价格
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: '15%' }}>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" style={{ width: '15%' }}>
                       过期时间
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: '15%' }}>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" style={{ width: '15%' }}>
                       操作
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-slate-200">
+                <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                   {ads.map((ad, index) => (
-                    <tr key={ad.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 text-sm text-slate-500 font-medium">
+                    <tr key={ad.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 font-medium">
                         {(currentPage - 1) * pageSize + index + 1}
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-sm font-medium text-slate-900">{ad.title}</div>
-                          <div className="text-sm text-slate-500 line-clamp-2">{ad.description}</div>
+                          <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{ad.title}</div>
+                          <div className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{ad.description}</div>
                           <div className="text-xs text-blue-600 mt-1 truncate">
                             <button 
                               onClick={() => handlePreviewLink(ad)} 
@@ -374,13 +374,13 @@ export default function AdsManagementList() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-900">
-                        <div className="text-xs text-slate-500">块 ID</div>
+                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                        <div className="text-xs text-slate-500 dark:text-slate-400">块 ID</div>
                         <div className="font-medium text-blue-600">{ad.block_id || 'N/A'}</div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-900">
+                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
                         <div>({ad.x || 0}, {ad.y || 0})</div>
-                        <div className="text-slate-500">{ad.width || 0} × {ad.height || 0}</div>
+                        <div className="text-slate-500 dark:text-slate-400">{ad.width || 0} × {ad.height || 0}</div>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -393,10 +393,10 @@ export default function AdsManagementList() {
                           {ad.status === 'active' ? '活跃' : ad.status === 'inactive' ? '停用' : '已过期'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-900">
+                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
                         {formatPrice(ad.price)}
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-900">
+                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
                         {formatDate(ad.expires_at)}
                       </td>
                       <td className="px-6 py-4 text-right text-sm font-medium">

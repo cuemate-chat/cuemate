@@ -1,5 +1,5 @@
 import { GlobeAltIcon } from '@heroicons/react/24/outline';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { updateMe } from '../api/auth';
 import { storage } from '../api/http';
 import { message } from './Message';
@@ -13,6 +13,7 @@ const languageOptions = [
 export default function LanguageSelector() {
   const [locale, setLocale] = useState<string>('zh-CN');
   const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 从 localStorage 读取初始值
   useEffect(() => {
@@ -35,11 +36,39 @@ export default function LanguageSelector() {
     return () => window.removeEventListener('user-settings-updated', onUserSettingsUpdated);
   }, []);
 
+  // 清除延迟关闭定时器
+  const clearTimer = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+
+  // 延迟关闭（给鼠标时间移动到下拉列表）
+  const handleContainerLeave = () => {
+    clearTimer();
+    closeTimerRef.current = setTimeout(() => {
+      setOpen(false);
+    }, 100); // 100ms 延迟
+  };
+
+  // 鼠标进入按钮或下拉列表，取消关闭
+  const handleMouseEnter = () => {
+    clearTimer();
+    setOpen(true);
+  };
+
+  // 组件卸载时清理定时器
+  useEffect(() => {
+    return () => clearTimer();
+  }, []);
+
   const handleChange = async (value: string) => {
     try {
       // 立即更新本地状态
       setLocale(value);
       setOpen(false);
+      clearTimer();
 
       // 调用后端 API 更新数据库
       const updatedUser = await updateMe({ locale: value });
@@ -66,10 +95,13 @@ export default function LanguageSelector() {
   const currentLabel = languageOptions.find((opt) => opt.value === locale)?.label || '简体中文';
 
   return (
-    <div className="user-menu relative">
+    <div
+      className="user-menu relative"
+      onMouseLeave={handleContainerLeave}
+      onMouseEnter={handleMouseEnter}
+    >
       <div
         className="user-avatar-container"
-        onMouseEnter={() => setOpen(true)}
         style={{ minWidth: '120px' }}
       >
         <GlobeAltIcon className="w-5 h-5" />
@@ -90,15 +122,13 @@ export default function LanguageSelector() {
 
       {open && (
         <div
-          className="absolute right-0 top-full mt-2 w-40 rounded-lg border border-slate-200 bg-white shadow-xl overflow-hidden select-none z-[100]"
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
+          className="absolute left-0 top-full w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl overflow-hidden select-none z-[100]"
         >
           {languageOptions.map((option) => (
             <button
               key={option.value}
-              className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 ${
-                locale === option.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-slate-700'
+              className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 ${
+                locale === option.value ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium' : 'text-slate-700 dark:text-slate-300'
               }`}
               onClick={() => handleChange(option.value)}
             >

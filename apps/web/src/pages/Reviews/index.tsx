@@ -64,9 +64,9 @@ export default function Reviews() {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-      <div className="text-sm text-slate-600 mb-3">
-        面试时间轴 <span className="text-slate-400">（共 {total} 场面试）</span>
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+      <div className="text-sm text-slate-600 dark:text-slate-300 mb-3">
+        面试时间轴 <span className="text-slate-400 dark:text-slate-500">（共 {total} 场面试）</span>
       </div>
       {loading ? (
         <PageLoading tip="正在加载面试记录..." />
@@ -88,23 +88,23 @@ export default function Reviews() {
             >
               {/* 左列：时间显示；右边缘作为时间轴，圆点紧贴右侧靠近卡片 */}
               <div className="col-span-12 md:col-span-2 relative pr-10 text-right pt-3">
-                <div className="absolute right-4 top-0 bottom-0 w-0.5 bg-slate-200" />
-                <div className={`absolute right-4 top-5 w-3 h-3 rounded-full transform translate-x-1/2 ${isSelected ? 'bg-orange-500 ring-4 ring-orange-200' : 'bg-blue-500'}`} />
-                <div className="text-[20px] text-slate-500 leading-4 mt-1">
+                <div className="absolute right-4 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-600" />
+                <div className={`absolute right-4 top-5 w-3 h-3 rounded-full transform translate-x-1/2 ${isSelected ? 'bg-orange-500 ring-4 ring-orange-200 dark:ring-orange-900/50' : 'bg-blue-500 dark:bg-blue-400'}`} />
+                <div className="text-[20px] text-slate-500 dark:text-slate-400 leading-4 mt-1">
                   {dayjs(it.started_at).format('YYYY-MM-DD')}
                 </div>
-                <div className="text-[14px] text-slate-400 mt-1">
+                <div className="text-[14px] text-slate-400 dark:text-slate-500 mt-1">
                   {dayjs(it.started_at).format('HH:mm')}
                 </div>
               </div>
               {/* 右列：岗位 + 总结 + 建议/弱点 */}
               <div className="col-span-12 md:col-span-10">
-                <div className={`border rounded-xl p-4 hover:bg-slate-50 relative ml-4 md:ml-6 transition-all ${isSelected ? 'border-orange-400 bg-orange-50 shadow-lg' : ''}`}>
+                <div className={`border rounded-xl p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 relative ml-4 md:ml-6 transition-all ${isSelected ? 'border-orange-400 dark:border-orange-500 bg-orange-50 dark:bg-orange-900/20 shadow-lg' : 'dark:border-slate-600 dark:bg-slate-700/30'}`}>
                   <div className="pointer-events-none absolute left-0 top-0">
-                    <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
+                    <div className="bg-blue-600 dark:bg-blue-500 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
                       {idx + 1}
                     </div>
-                    <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
+                    <div className="w-0 h-0 border-t-8 border-t-blue-700 dark:border-t-blue-600 border-r-8 border-r-transparent"></div>
                   </div>
                   {/* 右上角标签区域 */}
                   <div className="absolute right-3 top-2 flex items-center gap-2">
@@ -153,17 +153,17 @@ export default function Reviews() {
                       </Tag>
                     )}
                     <Badge count={it.advantages_total || 0} overflowCount={99}>
-                      <span className="inline-flex items-center h-6 px-2 text-[11px] text-slate-700 bg-slate-100 border border-slate-200 rounded-full shadow-sm">
+                      <span className="inline-flex items-center h-6 px-2 text-[11px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded-full shadow-sm">
                         优缺点
                       </span>
                     </Badge>
                   </div>
 
                   <div className="pl-4">
-                    <div className="text-slate-900 font-semibold">{it.job_title}</div>
+                    <div className="text-slate-900 dark:text-slate-100 font-semibold">{it.job_title}</div>
                     {it.job_content && (
                       <div
-                        className={`mt-1 text-xs text-slate-500 cursor-pointer hover:text-slate-700 whitespace-pre-line ${expandedJobContent.has(it.id) ? '' : 'line-clamp-3'}`}
+                        className={`mt-1 text-xs text-slate-500 dark:text-slate-400 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 whitespace-pre-line ${expandedJobContent.has(it.id) ? '' : 'line-clamp-3'}`}
                         onClick={() => {
                           const newSet = new Set(expandedJobContent);
                           if (newSet.has(it.id)) {
@@ -186,7 +186,7 @@ export default function Reviews() {
                     </div>
                     {it.resumes_content && (
                       <div
-                        className={`mt-1 text-xs text-slate-400 italic cursor-pointer hover:text-slate-600 whitespace-pre-line ${expandedResumes.has(it.id) ? '' : 'line-clamp-3'}`}
+                        className={`mt-1 text-xs text-slate-400 dark:text-slate-500 italic cursor-pointer hover:text-slate-600 dark:hover:text-slate-400 whitespace-pre-line ${expandedResumes.has(it.id) ? '' : 'line-clamp-3'}`}
                         onClick={() => {
                           const newSet = new Set(expandedResumes);
                           if (newSet.has(it.id)) {
@@ -201,12 +201,12 @@ export default function Reviews() {
                       </div>
                     )}
                     {it.overall_summary && (
-                      <div className="mt-2 text-sm text-slate-700 whitespace-pre-line line-clamp-2">
+                      <div className="mt-2 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line line-clamp-2">
                         {it.overall_summary}
                       </div>
                     )}
                     {it.message && (
-                      <div className="mt-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                      <div className="mt-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">
                         {it.message}
                       </div>
                     )}

@@ -379,7 +379,7 @@ export default function ModelsList() {
       {/* 右侧卡片 + 搜索 + 分页 */}
       <section className="flex-1 h-full min-h-0">
         <div className="mb-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <div className="text-slate-900 font-semibold text-lg">{selectedTitle}</div>
+          <div className="text-slate-900 dark:text-slate-100 font-semibold text-lg">{selectedTitle}</div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <Input.Search
               allowClear
@@ -399,7 +399,7 @@ export default function ModelsList() {
             </Button>
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 h-[calc(100%-56px)] overflow-y-auto">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 h-[calc(100%-56px)] overflow-y-auto">
           {loading && <div className="text-slate-500 text-sm">加载中…</div>}
           <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: rowGap }}>
             {list.map((m, idx) => {
@@ -409,7 +409,7 @@ export default function ModelsList() {
               return (
                 <div
                   key={m.id}
-                  className="group border p-4 bg-white shadow-sm relative overflow-hidden"
+                  className="group border border-slate-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-800 shadow-sm relative overflow-hidden"
                 >
                   {/* 左上角序号角标 */}
                   <div className="pointer-events-none absolute left-0 top-0">
@@ -430,16 +430,16 @@ export default function ModelsList() {
                           }
                           return null;
                         })()}
-                        <div className="font-semibold text-slate-900 text-base truncate">{m.name}</div>
+                        <div className="font-semibold text-slate-900 dark:text-slate-100 text-base truncate">{m.name}</div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span
-                            className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${m.scope === 'public' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}
+                            className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${m.scope === 'public' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'}`}
                           >
                             {m.scope === 'public' ? '公有' : '私有'}
                           </span>
                           {m.status && (
                             <span
-                              className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${m.status === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}
+                              className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${m.status === 'ok' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}
                             >
                               {m.status === 'ok' ? '已连通' : '不可用'}
                             </span>
@@ -486,32 +486,32 @@ export default function ModelsList() {
                     </div>
                   </div>
                   {/* 横线分割 */}
-                  <div className="my-3 h-px bg-slate-200" />
+                  <div className="my-3 h-px bg-slate-200 dark:bg-slate-700" />
                   {/* 详情信息：每项不换行，值溢出省略（时间不省略） */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm pl-6">
                     <div className="flex items-baseline gap-1 min-w-0">
-                      <span className="text-slate-500 shrink-0 whitespace-nowrap">供应商：</span>
-                      <span className="text-slate-800 font-medium truncate">{providerCn}</span>
+                      <span className="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">供应商：</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-medium truncate">{providerCn}</span>
                     </div>
                     <div className="flex items-baseline gap-1 min-w-0">
-                      <span className="text-slate-500 shrink-0 whitespace-nowrap">模型类型：</span>
-                      <span className="text-slate-800 font-medium truncate">{typeCn}</span>
+                      <span className="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">模型类型：</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-medium truncate">{typeCn}</span>
                     </div>
                     <div className="flex items-baseline gap-1 min-w-0">
-                      <span className="text-slate-500 shrink-0 whitespace-nowrap">基础模型：</span>
-                      <span className="text-slate-800 truncate">{m.model_name}</span>
+                      <span className="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">基础模型：</span>
+                      <span className="text-slate-800 dark:text-slate-200 truncate">{m.model_name}</span>
                     </div>
                     <div className="flex items-baseline gap-1 min-w-0">
-                      <span className="text-slate-500 shrink-0 whitespace-nowrap">版本号：</span>
-                      <span className="text-slate-800 truncate">{m.version || '-'}</span>
+                      <span className="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">版本号：</span>
+                      <span className="text-slate-800 dark:text-slate-200 truncate">{m.version || '-'}</span>
                     </div>
                     <div className="flex items-baseline gap-1 min-w-0">
-                      <span className="text-slate-500 shrink-0 whitespace-nowrap">创建者：</span>
-                      <span className="text-slate-800 truncate">{creatorCn}</span>
+                      <span className="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">创建者：</span>
+                      <span className="text-slate-800 dark:text-slate-200 truncate">{creatorCn}</span>
                     </div>
                     <div className="flex items-baseline gap-1 min-w-0">
-                      <span className="text-slate-500 shrink-0 whitespace-nowrap">创建时间：</span>
-                      <span className="text-slate-800 whitespace-nowrap">
+                      <span className="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">创建时间：</span>
+                      <span className="text-slate-800 dark:text-slate-200 whitespace-nowrap">
                         {m.created_at ? new Date(m.created_at).toLocaleString() : '-'}
                       </span>
                     </div>

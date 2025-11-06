@@ -137,10 +137,10 @@ export default function QuestionsList() {
       title: '确认删除全部押题',
       content: (
         <div className="space-y-3">
-          <div className="text-red-600 font-medium">
+          <div className="text-red-600 dark:text-red-400 font-medium">
             此操作将永久删除该岗位的所有押题数据，且无法恢复！
           </div>
-          <div className="space-y-2 text-sm text-gray-700">
+          <div className="space-y-2 text-sm text-gray-700 dark:text-slate-300">
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs"><DocumentIcon className="w-3 h-3" /></span>
               <span>岗位：<strong>{currentJob.title}</strong></span>
@@ -330,7 +330,7 @@ export default function QuestionsList() {
 
       {/* 右侧押题卡片 */}
       <div className="flex-1 min-w-0">
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm md:h-[calc(100vh-175px)] min-h-0 overflow-y-auto">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm md:h-[calc(100vh-175px)] min-h-0 overflow-y-auto">
           <div className="mb-4">
             <div className="flex flex-wrap items-center gap-2">
               <DatePicker
@@ -404,7 +404,7 @@ export default function QuestionsList() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {items.map((it, idx) => (
-                  <Card key={it.id} className="relative h-full">
+                  <Card key={it.id} className="relative h-full dark:bg-slate-800 dark:border-slate-700">
                     <div className="pointer-events-none absolute left-0 top-0">
                       <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
                         {(page - 1) * pageSize + idx + 1}
@@ -413,7 +413,7 @@ export default function QuestionsList() {
                     </div>
                     {/* 标题 + 标签（右上角对齐，但不遮挡内容） */}
                     <div className="flex items-start justify-between gap-3">
-                      <div className="text-base font-semibold text-slate-800 break-words line-clamp-2 min-h-[3.25rem] pr-2">
+                      <div className="text-base font-semibold text-slate-800 dark:text-slate-100 break-words line-clamp-2 min-h-[3.25rem] pr-2">
                         {it.title}
                       </div>
                       <div className="shrink-0 flex flex-col items-end gap-1">
@@ -432,17 +432,17 @@ export default function QuestionsList() {
                     {/* 分割线 */}
                     <div className="my-2 border-t border-slate-200"></div>
                     <div
-                      className="text-sm text-slate-600 mt-2 line-clamp-4 break-words leading-5 min-h-[5rem]"
+                      className="text-sm text-slate-600 dark:text-slate-400 mt-2 line-clamp-4 break-words leading-5 min-h-[5rem]"
                       title={it.description}
                     >
                       {it.description}
                     </div>
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
                       <span className="flex-1 mr-2 truncate">{dayjs(it.created_at).format('YYYY-MM-DD HH:mm')}</span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <button 
-                          onClick={() => openDetailDrawer(it)} 
-                          className="w-6 h-6 flex items-center justify-center rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+                        <button
+                          onClick={() => openDetailDrawer(it)}
+                          className="w-6 h-6 flex items-center justify-center rounded bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                           title="编辑"
                         >
                           <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -473,7 +473,7 @@ export default function QuestionsList() {
                               }
                             });
                           }}
-                          className="w-6 h-6 flex items-center justify-center rounded bg-red-100 hover:bg-red-200 transition-colors"
+                          className="w-6 h-6 flex items-center justify-center rounded bg-red-100 dark:bg-slate-700 hover:bg-red-200 dark:hover:bg-slate-600 transition-colors"
                           title="删除"
                         >
                           <svg className="w-3 h-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
