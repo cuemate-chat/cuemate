@@ -1,8 +1,9 @@
 import { Button } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CloudArrowUpIcon, CircleStackIcon, ChartBarIcon, InformationCircleIcon, CheckCircleIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import DrawerProvider, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProvider';
 import { message as globalMessage } from '../../components/Message';
+import { getIQSyncStats, syncIQBatch } from '../../api/questions';
 
 interface SyncVectorDrawerProps {
   open: boolean;
@@ -24,15 +25,23 @@ const SyncVectorDrawer: React.FC<SyncVectorDrawerProps> = ({
   onRefresh,
 }) => {
   const [syncing, setSyncing] = useState(false);
+  const [localSyncStats, setLocalSyncStats] = useState(syncStats);
+
+  // 当传入的 syncStats 变化时，更新本地状态
+  useEffect(() => {
+    setLocalSyncStats(syncStats);
+  }, [syncStats]);
 
   const handleBatchSync = async () => {
     if (!jobId) return;
     setSyncing(true);
     try {
-      const { syncIQBatch } = await import('../../api/questions');
       const res = await syncIQBatch(jobId);
       globalMessage.success(`批量同步完成：成功 ${res.success} 条，失败 ${res.failed} 条，清理 ${res.deletedExtras || 0} 条残留`);
       await onRefresh();
+      // 重新获取统计数据并更新本地状态
+      const newStats = await getIQSyncStats(jobId);
+      setLocalSyncStats(newStats);
     } catch (e: any) {
       globalMessage.error(e?.message || '同步失败');
     } finally {
@@ -81,7 +90,7 @@ const SyncVectorDrawer: React.FC<SyncVectorDrawerProps> = ({
                   <ChartBarIcon className="w-4 h-4 text-slate-400" />
                 </div>
                 <div className="text-xs text-slate-500 mb-1">总押题数</div>
-                <div className="text-2xl font-bold text-slate-700">{syncStats?.total ?? '-'}</div>
+                <div className="text-2xl font-bold text-slate-700">{localSyncStats?.total ?? '-'}</div>
                 <div className="text-xs text-slate-500 mt-1">当前岗位下的全部押题</div>
               </div>
               <div className="rounded-lg border border-emerald-200 p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 relative overflow-hidden">
@@ -89,7 +98,7 @@ const SyncVectorDrawer: React.FC<SyncVectorDrawerProps> = ({
                   <CheckCircleIcon className="w-4 h-4 text-emerald-500" />
                 </div>
                 <div className="text-xs text-emerald-700 mb-1">已同步</div>
-                <div className="text-2xl font-bold text-emerald-700">{syncStats?.synced ?? '-'}</div>
+                <div className="text-2xl font-bold text-emerald-700">{localSyncStats?.synced ?? '-'}</div>
                 <div className="text-xs text-emerald-600 mt-1">已加入向量库</div>
               </div>
               <div className="rounded-lg border border-rose-200 p-4 bg-gradient-to-br from-rose-50 to-rose-100 relative overflow-hidden">
@@ -97,28 +106,28 @@ const SyncVectorDrawer: React.FC<SyncVectorDrawerProps> = ({
                   <XCircleIcon className="w-4 h-4 text-rose-500" />
                 </div>
                 <div className="text-xs text-rose-700 mb-1">未同步</div>
-                <div className="text-2xl font-bold text-rose-700">{syncStats?.unsynced ?? '-'}</div>
+                <div className="text-2xl font-bold text-rose-700">{localSyncStats?.unsynced ?? '-'}</div>
                 <div className="text-xs text-rose-600 mt-1">待处理的押题</div>
               </div>
             </div>
           </div>
 
           {/* 同步进度可视化 */}
-          {syncStats && syncStats.total > 0 && (
+          {localSyncStats && localSyncStats.total > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <ArrowPathIcon className="w-5 h-5 text-gray-600" />
                 <span className="text-sm font-medium text-gray-700">同步进度</span>
               </div>
               <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
-                <div 
+                <div
                   className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-full transition-all duration-300"
-                  style={{ width: `${(syncStats.synced / syncStats.total * 100)}%` }}
+                  style={{ width: `${(localSyncStats.synced / localSyncStats.total * 100)}%` }}
                 ></div>
               </div>
               <div className="flex justify-between text-xs text-gray-500 mt-2">
-                <span>同步率: {((syncStats.synced / syncStats.total) * 100).toFixed(1)}%</span>
-                <span>{syncStats.synced}/{syncStats.total}</span>
+                <span>同步率: {((localSyncStats.synced / localSyncStats.total) * 100).toFixed(1)}%</span>
+                <span>{localSyncStats.synced}/{localSyncStats.total}</span>
               </div>
             </div>
           )}
