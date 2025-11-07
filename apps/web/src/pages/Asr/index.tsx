@@ -557,6 +557,7 @@ export default function AsrSettings() {
                 } catch {}
                 loadMicDevices();
                 loadSpeakerDevices();
+                message.success('已刷新设备列表');
               }}
             >
               刷新

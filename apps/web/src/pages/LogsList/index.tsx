@@ -339,6 +339,7 @@ export default function LogsList() {
             onClick={() => {
               loadServices();
               loadLogs();
+              message.success('已刷新日志列表');
             }}
             disabled={loading}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
