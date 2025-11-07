@@ -363,7 +363,7 @@ export default function JobsNew() {
                   <PaperClipIcon className="w-6 h-6" />
                 </p>
                 <p className="ant-upload-text">拖拽简历到此处上传，或点击选择文件</p>
-                <p className="ant-upload-hint">也可直接将简历文本粘贴到下方输入框</p>
+                <p className="ant-upload-hint">支持 PDF 和 DOCX 格式，也可直接将简历文本粘贴到下方输入框</p>
               </Upload.Dragger>
             </div>
             <div>
