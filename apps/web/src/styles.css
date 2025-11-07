@@ -506,6 +506,21 @@
   color: #94a3b8 !important;
 }
 
+/* 隐藏 Upload.Dragger 的拖拽装饰元素 */
+.ant-upload.ant-upload-drag .ant-upload-drag-container::before,
+.ant-upload.ant-upload-drag .ant-upload-drag-container::after {
+  display: none !important;
+}
+
+/* 隐藏拖拽提示边角 */
+.ant-upload-drag-container {
+  position: relative;
+}
+
+.ant-upload.ant-upload-drag p.ant-upload-drag-icon .anticon {
+  display: block;
+}
+
 .dark .ant-upload-text {
   color: #e2e8f0 !important;
   font-weight: 500 !important;

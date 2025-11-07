@@ -38,7 +38,7 @@ const UploadResumeDrawer: React.FC<UploadResumeDrawerProps> = ({
               <div>
                 <div className="text-sm font-medium text-blue-700 mb-2">📝 智能简历解析</div>
                 <div className="text-sm text-blue-600 space-y-1">
-                  <div>• 支持 PDF、Word 格式的简历文件</div>
+                  <div>• 支持 PDF、DOCX 格式的简历文件（不支持旧版 DOC 格式）</div>
                   <div>• 自动提取个人信息、工作经历、教育背景等关键内容</div>
                   <div>• 智能填充到对应的表单字段中，提升录入效率</div>
                 </div>
@@ -47,14 +47,13 @@ const UploadResumeDrawer: React.FC<UploadResumeDrawerProps> = ({
           </div>
 
           {/* 上传区域 */}
-          <div className="relative">
+          <div className="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 bg-gray-50 dark:bg-gray-800 transition-all duration-200">
             <Upload.Dragger
               name="file"
               multiple={false}
               accept=".pdf,.doc,.docx"
               beforeUpload={onFileUpload}
               showUploadList={false}
-              className="!border-2 !border-dashed !border-gray-300 hover:!border-blue-400 !bg-gray-50 dark:bg-gray-800 hover:!bg-blue-50 dark:bg-blue-900/20 !rounded-lg !p-8 transition-all duration-200"
               disabled={uploadLoading}
             >
               <div className="flex flex-col items-center justify-center py-6">
@@ -72,7 +71,7 @@ const UploadResumeDrawer: React.FC<UploadResumeDrawerProps> = ({
                     </div>
                   ) : (
                     <>
-                      <div>支持 PDF、DOC、DOCX 格式</div>
+                      <div>支持 PDF、DOCX 格式（不支持旧版 DOC）</div>
                       <div className="mt-1">文件大小不超过 10MB</div>
                     </>
                   )}
@@ -98,7 +97,7 @@ const UploadResumeDrawer: React.FC<UploadResumeDrawerProps> = ({
               </div>
               <div className="text-sm">
                 <div className="font-medium text-gray-700 dark:text-gray-200">Word 格式</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">DOC/DOCX</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">DOCX</div>
               </div>
             </div>
             <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
