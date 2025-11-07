@@ -147,9 +147,27 @@ export default function PresetQuestionsList() {
 
   // 删除单个题目
   const onDeleteItem = async (item: PresetQuestion) => {
+    const tagName = item.tag_id ? tags.find(t => t.id === item.tag_id)?.name : undefined;
     Modal.confirm({
       title: '确认删除题目',
-      content: '确定要删除该题目吗？删除后无法恢复。',
+      content: (
+        <div>
+          <p>确定要删除以下题目吗？删除后无法恢复。</p>
+          <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+            <div className="space-y-1">
+              <div><span className="font-medium">题目：</span>{item.question}</div>
+              {tagName && (
+                <div>
+                  <span className="font-medium">标签：</span>
+                  <span className="ml-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-xs">
+                    {tagName}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ),
       okText: '删除',
       okType: 'danger',
       cancelText: '取消',

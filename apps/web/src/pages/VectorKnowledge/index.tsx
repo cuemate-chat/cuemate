@@ -302,9 +302,29 @@ export default function VectorKnowledge() {
   };
 
   const handleDelete = async (doc: VectorDocument) => {
+    const getTypeName = (type: string) => {
+      if (type === 'jobs') return '岗位';
+      if (type === 'questions') return '押题';
+      if (type === 'resumes') return '简历';
+      return '数据';
+    };
+
     Modal.confirm({
       title: '确认删除',
-      content: '确定要删除这条数据吗？删除后无法恢复。',
+      content: (
+        <div>
+          <p>确定要删除以下向量数据吗？删除后无法恢复。</p>
+          <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+            <div className="space-y-1">
+              <div><span className="font-medium">数据类型：</span>{getTypeName(doc.metadata.type)}</div>
+              {doc.metadata.title && (
+                <div><span className="font-medium">标题：</span>{doc.metadata.title}</div>
+              )}
+              <div><span className="font-medium">文档 ID：</span><span className="text-xs">{doc.id}</span></div>
+            </div>
+          </div>
+        </div>
+      ),
       okText: '删除',
       okType: 'danger',
       cancelText: '取消',

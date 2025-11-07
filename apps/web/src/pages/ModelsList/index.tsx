@@ -179,17 +179,29 @@ export default function ModelsList() {
     setEditing(m);
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(model: any) {
+    const providerCn = findProvider(model.provider)?.name || model.provider;
     Modal.confirm({
       title: '确认删除模型',
-      content: '确定要删除该模型吗？删除后无法恢复。',
+      content: (
+        <div>
+          <p>确定要删除以下模型吗？删除后无法恢复。</p>
+          <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+            <div className="space-y-1">
+              <div><span className="font-medium">模型名称：</span>{model.name}</div>
+              <div><span className="font-medium">供应商：</span>{providerCn}</div>
+              <div><span className="font-medium">基础模型：</span>{model.model_name}</div>
+            </div>
+          </div>
+        </div>
+      ),
       okText: '删除',
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
         startOperation();
         try {
-          await deleteModel(id);
+          await deleteModel(model.id);
           message.success('已删除');
           // 删除后立即刷新，保障页码回退逻辑生效
           await fetchList();
@@ -478,7 +490,7 @@ export default function ModelsList() {
                         <button
                           className="inline-flex items-center justify-center"
                           title="删除"
-                          onClick={() => handleDelete(m.id)}
+                          onClick={() => handleDelete(m)}
                         >
                           <DeleteOutlined style={{ fontSize: 18, color: '#dc2626' }} />
                         </button>
