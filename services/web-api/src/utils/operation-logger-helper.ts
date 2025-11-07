@@ -116,12 +116,12 @@ export const OPERATION_MAPPING = {
   },
   // AI 对话
   AI_CONVERSATION: {
-    menu: 'AI 对话',
+    menu: MenuType.AI_CONVERSATION_LOGS,
     type: 'ai_conversation',
   },
   // Prompt 管理
   PROMPT: {
-    menu: 'Prompt 管理',
+    menu: MenuType.PRESET_QUESTION_BANK,
     type: 'prompt',
   },
 } as const;
