@@ -1,5 +1,6 @@
 import { ReloadOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Row, Statistic, Table, Typography } from 'antd';
+import { CubeIcon, PlayIcon, StopIcon } from '@heroicons/react/24/solid';
+import { Button, Card, Col, Popconfirm, Row, Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useState } from 'react';
 import { DockerContainer, getContainers, restartContainer } from '../../api/docker';
@@ -27,7 +28,19 @@ export default function DockerMonitorList() {
     startLoading();
     try {
       const data = await getContainers();
-      setContainers(data);
+      // 只监控核心的 6 个容器
+      const monitoredContainers = [
+        'cuemate-web',
+        'cuemate-rag-service',
+        'cuemate-asr',
+        'cuemate-web-api',
+        'cuemate-llm-router',
+        'cuemate-chroma',
+      ];
+      const filteredData = data.filter(container =>
+        monitoredContainers.includes(container.name)
+      );
+      setContainers(filteredData);
 
       if (showSuccessMessage) {
         message.success('已刷新容器列表');
@@ -160,16 +173,19 @@ export default function DockerMonitorList() {
       width: '20%',
       render: (_: any, record: DockerContainer) => (
         <div className="flex items-center gap-2">
-          <button
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-300 dark:hover:border-red-600 transition-colors"
-            onClick={() => {
-              if (window.confirm('重启该服务可能会导致 CueMate 某些服务断开连接一段时间，确认重启吗？')) {
-                handleRestartContainer(record.id);
-              }
-            }}
+          <Popconfirm
+            title="重启容器"
+            description="重启该服务可能会导致 CueMate 某些服务断开连接一段时间，确认重启吗？"
+            onConfirm={() => handleRestartContainer(record.id)}
+            okText="确定"
+            cancelText="取消"
           >
-            <ReloadOutlined className="w-4 h-4" /> 重启
-          </button>
+            <button
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-300 dark:hover:border-red-600 transition-colors"
+            >
+              <ReloadOutlined className="w-4 h-4" /> 重启
+            </button>
+          </Popconfirm>
           <button
             className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
             onClick={() => openLogDrawer(record)}
@@ -223,33 +239,45 @@ export default function DockerMonitorList() {
       {/* 统计卡片 */}
       <Row gutter={16}>
         <Col xs={24} sm={8}>
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <Statistic
-              title={<span className="text-slate-600 dark:text-slate-300">总容器数</span>}
-              value={totalCount}
-              valueStyle={{ color: '#1890ff' }}
-              className="dark:[&_.ant-statistic-content]:text-blue-400"
-            />
+          <Card
+            className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+            style={{ borderLeft: '4px solid #1890ff' }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">总容器数</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalCount}</div>
+              </div>
+              <CubeIcon className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+            </div>
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <Statistic
-              title={<span className="text-slate-600 dark:text-slate-300">运行中</span>}
-              value={runningCount}
-              valueStyle={{ color: '#52c41a' }}
-              className="dark:[&_.ant-statistic-content]:text-green-400"
-            />
+          <Card
+            className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+            style={{ borderLeft: '4px solid #52c41a' }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">运行中</div>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{runningCount}</div>
+              </div>
+              <PlayIcon className="w-8 h-8 text-green-500 dark:text-green-400" />
+            </div>
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <Statistic
-              title={<span className="text-slate-600 dark:text-slate-300">已停止</span>}
-              value={stoppedCount}
-              valueStyle={{ color: '#faad14' }}
-              className="dark:[&_.ant-statistic-content]:text-orange-400"
-            />
+          <Card
+            className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+            style={{ borderLeft: '4px solid #faad14' }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">已停止</div>
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stoppedCount}</div>
+              </div>
+              <StopIcon className="w-8 h-8 text-orange-500 dark:text-orange-400" />
+            </div>
           </Card>
         </Col>
       </Row>

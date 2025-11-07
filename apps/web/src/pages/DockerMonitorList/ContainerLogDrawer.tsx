@@ -17,13 +17,17 @@ export default function ContainerLogDrawer({ open, onClose, container }: Contain
   const [loading, setLoading] = useState(false);
 
   // 获取容器日志
-  const fetchLogs = async () => {
+  const fetchLogs = async (showSuccessMessage: boolean = false) => {
     if (!container) return;
-    
+
     setLoading(true);
     try {
       const logData = await getContainerLogs(container.id);
       setLogs(logData);
+
+      if (showSuccessMessage) {
+        message.success('已刷新容器日志');
+      }
     } catch (error) {
       message.error('获取容器日志失败');
       setLogs('获取日志失败，请检查后端服务是否正常运行');
@@ -108,7 +112,7 @@ export default function ContainerLogDrawer({ open, onClose, container }: Contain
               type="primary"
               size="small"
               icon={<ReloadOutlined />}
-              onClick={fetchLogs}
+              onClick={() => fetchLogs(true)}
               loading={loading}
             >
               刷新
