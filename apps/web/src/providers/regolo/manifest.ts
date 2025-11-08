@@ -4,7 +4,7 @@ import { ProviderManifest } from '../types';
 const manifest: ProviderManifest = {
   id: 'regolo',
   name: 'Regolo',
-  scope: 'public',
+  scope: 'private',
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/regolo_icon_svg',
