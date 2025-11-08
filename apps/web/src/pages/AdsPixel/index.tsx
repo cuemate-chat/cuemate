@@ -91,7 +91,7 @@ export default function AdsPixel() {
 
       setAds(adsData);
       setBlockConfigs(blockConfigsData);
-      initializeAdBlocks(adsData, blockConfigsData);
+      initializeAdBlocks(adsData, blockConfigsData, tempAds);
     } catch (error) {
       // HTTP 客户端已经处理了错误提示，这里不再重复弹出
       console.error('获取数据失败:', error);
@@ -102,14 +102,14 @@ export default function AdsPixel() {
 
 
   // 使用块配置数据初始化广告块 - 基于百分比计算位置和大小
-  const initializeAdBlocks = (adsData: PixelAd[], blockConfigsData: BlockConfig[]) => {
+  const initializeAdBlocks = (adsData: PixelAd[], blockConfigsData: BlockConfig[], currentTempAds: Record<string, { title: string; image: string; link?: string }>) => {
     const blocks: AdBlock[] = blockConfigsData.map(config => {
       // 查找该块对应的广告
       let ad = adsData.find(ad => ad.block_id === config.block_id);
-      
+
       // 如果没有真实广告，检查是否有临时上传的数据
-      if (!ad && tempAds[config.block_id]) {
-        const tempAd = tempAds[config.block_id];
+      if (!ad && currentTempAds[config.block_id]) {
+        const tempAd = currentTempAds[config.block_id];
         ad = {
           id: `temp-${config.block_id}`,
           block_id: config.block_id,
@@ -201,20 +201,23 @@ export default function AdsPixel() {
 
     // 创建图片 URL
     const imageUrl = URL.createObjectURL(file);
-    
-    // 添加到临时数据
-    setTempAds(prev => {
-      const newTempAds = {
-        ...prev,
-        [selectedBlock.block_id]: {
-          title: `模拟广告 - ${selectedBlock.block_id}`,
-          image: imageUrl,
-          link: '#'
-        }
-      };
-      return newTempAds;
-    });
-    
+
+    // 创建新的临时数据
+    const newTempAds = {
+      ...tempAds,
+      [selectedBlock.block_id]: {
+        title: `模拟广告 - ${selectedBlock.block_id}`,
+        image: imageUrl,
+        link: '#'
+      }
+    };
+
+    // 更新 state
+    setTempAds(newTempAds);
+
+    // 立即刷新布局（手动调用，不依赖 useEffect）
+    initializeAdBlocks(ads, blockConfigs, newTempAds);
+
     const price = selectedBlock.price || 100;
     message.success(`模拟上传到块 ${selectedBlock.block_id} 成功！价格: ¥${price}`);
     setShowUploadModal(false);
@@ -305,7 +308,7 @@ export default function AdsPixel() {
   // 当临时广告数据变化时，重新初始化布局
   useEffect(() => {
     if (ads.length > 0 && blockConfigs.length > 0) {
-      initializeAdBlocks(ads, blockConfigs);
+      initializeAdBlocks(ads, blockConfigs, tempAds);
     }
   }, [tempAds, ads, blockConfigs]);
 
