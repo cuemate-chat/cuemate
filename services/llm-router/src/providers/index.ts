@@ -3,14 +3,19 @@ import { logger } from '../utils/logger.js';
 import { AliyunProvider } from './aliyun.js';
 import { AnthropicProvider } from './anthropic.js';
 import { AzureOpenAIProvider } from './azure-openai.js';
+import { BaichuanProvider } from './baichuan.js';
+import { BaiduProvider } from './baidu.js';
 import { BaseLLMProvider } from './base.js';
 import { BedrockProvider } from './bedrock.js';
 import { DeepSeekProvider } from './deepseek.js';
 import { GeminiProvider } from './gemini.js';
 import { KimiProvider } from './kimi.js';
+import { MiniMaxProvider } from './minimax.js';
 import { OllamaProvider } from './ollama.js';
 import { RegoloProvider } from './regolo.js';
+import { SenseNovaProvider } from './sensenova.js';
 import { SiliconFlowProvider } from './siliconflow.js';
+import { StepFunProvider } from './stepfun.js';
 import { TencentProvider } from './tencent.js';
 import { TencentCloudProvider } from './tencent-cloud.js';
 import { VllmProvider } from './vllm.js';
@@ -49,6 +54,11 @@ export async function initializeProviders(
       new XfProvider(),
       new XinferenceProvider(),
       new RegoloProvider(),
+      new BaiduProvider(),
+      new MiniMaxProvider(),
+      new StepFunProvider(),
+      new SenseNovaProvider(),
+      new BaichuanProvider(),
     ];
 
     // 将所有 providers 添加到 Map 中

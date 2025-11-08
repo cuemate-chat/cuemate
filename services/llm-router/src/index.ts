@@ -63,7 +63,7 @@ async function start() {
       健康检查: `http://${host}:${port}/health`,
       路由策略: config.routing.strategy || 'primary-fallback',
       支持提供商:
-        'openai, moonshot, glm, qwen, deepseek, kimi, gemini, zhipu, siliconflow, tencent, volcengine, vllm, ollama, bedrock, aliyun-bailian, tencent-cloud, xf, xinference, regolo',
+        'openai, anthropic, azure-openai, moonshot, qwen, deepseek, kimi, gemini, zhipu, siliconflow, tencent, volcengine, vllm, ollama, bedrock, aliyun-bailian, tencent-cloud, xf, xinference, regolo, baidu, yi, minimax, stepfun, sensenova, baichuan',
     });
   } catch (err) {
     logger.error(err);

@@ -4,6 +4,8 @@ import { Config } from '../config/index.js';
 import { AliyunProvider } from '../providers/aliyun.js';
 import { AnthropicProvider } from '../providers/anthropic.js';
 import { AzureOpenAIProvider } from '../providers/azure-openai.js';
+import { BaichuanProvider } from '../providers/baichuan.js';
+import { BaiduProvider } from '../providers/baidu.js';
 import {
   BaseLLMProvider,
   CompletionRequest,
@@ -14,12 +16,15 @@ import { BedrockProvider } from '../providers/bedrock.js';
 import { DeepSeekProvider } from '../providers/deepseek.js';
 import { GeminiProvider } from '../providers/gemini.js';
 import { KimiProvider } from '../providers/kimi.js';
+import { MiniMaxProvider } from '../providers/minimax.js';
 import { MoonshotProvider } from '../providers/moonshot.js';
 import { OllamaProvider } from '../providers/ollama.js';
 import { OpenAIProvider } from '../providers/openai.js';
 import { QwenProvider } from '../providers/qwen.js';
 import { RegoloProvider } from '../providers/regolo.js';
+import { SenseNovaProvider } from '../providers/sensenova.js';
 import { SiliconFlowProvider } from '../providers/siliconflow.js';
+import { StepFunProvider } from '../providers/stepfun.js';
 import { TencentCloudProvider } from '../providers/tencent-cloud.js';
 import { TencentProvider } from '../providers/tencent.js';
 import { VllmProvider } from '../providers/vllm.js';
@@ -90,6 +95,11 @@ export class LLMManager extends EventEmitter {
     providers.set('xf', new XfProvider());
     providers.set('xinference', new XinferenceProvider());
     providers.set('regolo', new RegoloProvider());
+    providers.set('baidu', new BaiduProvider());
+    providers.set('minimax', new MiniMaxProvider());
+    providers.set('stepfun', new StepFunProvider());
+    providers.set('sensenova', new SenseNovaProvider());
+    providers.set('baichuan', new BaichuanProvider());
 
     logger.info(
       `Registered ${providers.size} providers: ${Array.from(providers.keys()).join(', ')}`,

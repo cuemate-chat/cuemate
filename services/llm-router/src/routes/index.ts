@@ -3,17 +3,22 @@ import { LLMManager } from '../managers/llm-manager.js';
 import { AliyunProvider } from '../providers/aliyun.js';
 import { AnthropicProvider } from '../providers/anthropic.js';
 import { AzureOpenAIProvider } from '../providers/azure-openai.js';
+import { BaichuanProvider } from '../providers/baichuan.js';
+import { BaiduProvider } from '../providers/baidu.js';
 import { BaseLLMProvider, CompletionRequest, RuntimeConfig } from '../providers/base.js';
 import { BedrockProvider } from '../providers/bedrock.js';
 import { DeepSeekProvider } from '../providers/deepseek.js';
 import { GeminiProvider } from '../providers/gemini.js';
 import { KimiProvider } from '../providers/kimi.js';
+import { MiniMaxProvider } from '../providers/minimax.js';
 import { MoonshotProvider } from '../providers/moonshot.js';
 import { OllamaProvider } from '../providers/ollama.js';
 import { OpenAIProvider } from '../providers/openai.js';
 import { QwenProvider } from '../providers/qwen.js';
 import { RegoloProvider } from '../providers/regolo.js';
+import { SenseNovaProvider } from '../providers/sensenova.js';
 import { SiliconFlowProvider } from '../providers/siliconflow.js';
+import { StepFunProvider } from '../providers/stepfun.js';
 import { TencentCloudProvider } from '../providers/tencent-cloud.js';
 import { TencentProvider } from '../providers/tencent.js';
 import { VllmProvider } from '../providers/vllm.js';
@@ -291,10 +296,25 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         case 'regolo':
           provider = new RegoloProvider();
           break;
+        case 'baidu':
+          provider = new BaiduProvider();
+          break;
+        case 'minimax':
+          provider = new MiniMaxProvider();
+          break;
+        case 'stepfun':
+          provider = new StepFunProvider();
+          break;
+        case 'sensenova':
+          provider = new SenseNovaProvider();
+          break;
+        case 'baichuan':
+          provider = new BaichuanProvider();
+          break;
         default:
           return reply.code(400).send({
             ok: false,
-            error: `Unknown provider: ${providerId}. Please use one of: openai, anthropic, azure-openai, ollama, deepseek, kimi, gemini, qwen, zhipu, siliconflow, tencent, volcengine, vllm, moonshot, bedrock, aliyun-bailian, tencent-cloud, xf, xinference, regolo`,
+            error: `Unknown provider: ${providerId}. Please use one of: openai, anthropic, azure-openai, ollama, deepseek, kimi, gemini, qwen, zhipu, siliconflow, tencent, volcengine, vllm, moonshot, bedrock, aliyun-bailian, tencent-cloud, xf, xinference, regolo, baidu, yi, minimax, stepfun, sensenova, baichuan`,
           });
       }
 
