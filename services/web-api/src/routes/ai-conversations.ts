@@ -460,6 +460,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'ai-messages.create', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
+
         const validatedData = createMessageSchema.parse(req.body);
 
         // 检查对话是否存在且属于当前用户
@@ -468,6 +469,10 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
           .get(validatedData.conversation_id, payload.uid);
 
         if (!conversation) {
+          app.log.error(
+            { conversation_id: validatedData.conversation_id },
+            '对话不存在',
+          );
           return reply.code(404).send(buildPrefixedError('对话不存在', null, 404));
         }
 
@@ -476,7 +481,7 @@ export function registerAIConversationRoutes(app: FastifyInstance) {
             `
             INSERT INTO ai_messages (
               conversation_id, message_type, content, content_format,
-              sequence_number, token_count, response_time_ms, 
+              sequence_number, token_count, response_time_ms,
               error_message, metadata
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `,

@@ -1,9 +1,9 @@
+import { ArrowPathIcon, ChartBarIcon, CheckCircleIcon, CircleStackIcon, CloudArrowUpIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { Button } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { CloudArrowUpIcon, CircleStackIcon, ChartBarIcon, InformationCircleIcon, CheckCircleIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { getIQSyncStats, syncIQBatch } from '../../api/questions';
 import DrawerProvider, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProvider';
 import { message as globalMessage } from '../../components/Message';
-import { getIQSyncStats, syncIQBatch } from '../../api/questions';
 
 interface SyncVectorDrawerProps {
   open: boolean;
@@ -68,7 +68,7 @@ const SyncVectorDrawer: React.FC<SyncVectorDrawerProps> = ({
             <div className="flex items-start gap-3">
               <CloudArrowUpIcon className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" />
               <div>
-                <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">🔄 向量库同步</div>
+                <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">向量库同步</div>
                 <div className="text-sm text-blue-600 dark:text-blue-400 space-y-1">
                   <div>• 将岗位押题同步到向量知识库，便于智能检索和相似度匹配</div>
                   <div>• 支持批量同步操作，自动处理重复和无效数据</div>
@@ -137,7 +137,7 @@ const SyncVectorDrawer: React.FC<SyncVectorDrawerProps> = ({
             <div className="flex items-start gap-3">
               <InformationCircleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
               <div>
-                <div className="text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-2">💡 同步说明</div>
+                <div className="text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-2">同步说明</div>
                 <div className="text-sm text-yellow-600 dark:text-yellow-400 space-y-1">
                   <div>• 批量同步会处理当前岗位下的所有押题数据</div>
                   <div>• 系统会自动跳过已同步的内容，只处理新增或变更的数据</div>
