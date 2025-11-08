@@ -6,7 +6,6 @@ import jwt from '@fastify/jwt';
 import fastifyStatic from '@fastify/static';
 import { config } from 'dotenv';
 import Fastify from 'fastify';
-import path from 'node:path';
 import { registerAdsRoutes } from './routes/ads.js';
 import { registerAIConversationRoutes } from './routes/ai-conversations.js';
 import { registerAsrRoutes } from './routes/asr.js';
@@ -49,9 +48,9 @@ async function start() {
   });
   await app.register(jwt, { secret: process.env.JWT_SECRET || 'dev-secret' });
 
-  // 静态文件服务 - 提供图片访问
+  // 静态文件服务 - 提供图片访问（使用 Docker 挂载路径）
   await app.register(fastifyStatic, {
-    root: path.join(process.cwd(), '../../data/images'),
+    root: '/opt/cuemate/images',
     prefix: '/images/',
     decorateReply: false,
   });

@@ -73,8 +73,8 @@ export function registerFileRoutes(app: FastifyInstance) {
       const nameWithoutExt = path.basename(filename, extension);
       const newFilename = `${nameWithoutExt}${timestamp}${extension}`;
 
-      // 确保图片目录存在
-      const imageDir = path.join(process.cwd(), '../../data/images');
+      // 确保图片目录存在（使用 Docker 挂载路径）
+      const imageDir = '/opt/cuemate/images';
       await fs.mkdir(imageDir, { recursive: true });
 
       // 保存图片文件
