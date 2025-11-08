@@ -122,7 +122,7 @@ export class AIQuestionWindow {
       this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       this.window.setFullScreenable(false);
 
-      // // 开发模式下自动打开开发者工具
+      // 开发模式下自动打开开发者工具
       // if (this.isDevelopment) {
       //   this.window.webContents.openDevTools({ mode: 'detach' });
       // }

@@ -215,7 +215,7 @@ export function VoiceQAApp() {
       // 使用 AI 服务进行流式调用
       await aiService.callAIStream(
         [{ role: 'user', content: currentQuestion }],
-        (chunk) => {
+        async (chunk) => {
           if (chunk.error) {
             console.error('AI 调用出错:', chunk.error);
             const errorMessage = `抱歉，AI 调用出错了：${chunk.error}`;
@@ -242,20 +242,22 @@ export function VoiceQAApp() {
           }
 
           if (chunk.finished) {
-            
+            // 提取 token 使用情况
+            const tokenCount = chunk.usage?.totalTokens || 0;
+
             // 保存完整 AI 回答到数据库
             if (aiResponseContent && conversationId) {
-              conversationService.saveMessage(
+              await conversationService.saveMessage(
                 conversationId,
                 'assistant',
                 aiResponseContent,
                 currentSeq,
-                0, // token 数量暂时为 0，后续可以计算
+                tokenCount,
                 Date.now() - startTime
               );
               setSequenceNumber(currentSeq + 1);
             }
-            
+
             setIsLoading(false);
             return;
           }

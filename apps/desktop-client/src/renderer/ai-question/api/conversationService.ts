@@ -2,6 +2,8 @@
  * AI 对话数据持久化服务
  */
 
+import { estimateTokens } from '../../utils/ai/calculateTokens';
+
 interface ConversationData {
   id: number;
   title: string;
@@ -204,30 +206,41 @@ export class ConversationService {
     await this.ensureAuth();
 
     try {
+      // 如果 tokenCount 为 0，使用本地估算
+      let finalTokenCount = tokenCount;
+      let tokenSource = 'llm'; // 默认是 LLM 返回的
+
+      if (finalTokenCount === 0 && content) {
+        finalTokenCount = estimateTokens(content);
+        tokenSource = 'estimated'; // 标记为本地估算
+      }
+
+      const requestBody = {
+        conversation_id: conversationId,
+        message_type: messageType,
+        content,
+        content_format: 'text',
+        sequence_number: sequenceNumber,
+        token_count: finalTokenCount,
+        token_source: tokenSource,
+        response_time_ms: responseTimeMs,
+        error_message: errorMessage,
+      };
+
       const response = await fetch(`${this.baseURL}/ai/messages`, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({
-          conversation_id: conversationId,
-          message_type: messageType,
-          content,
-          content_format: 'text',
-          sequence_number: sequenceNumber,
-          token_count: tokenCount,
-          response_time_ms: responseTimeMs,
-          error_message: errorMessage,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`保存消息失败 ${response.status}:`, errorText);
         throw new Error(`保存消息失败: ${response.status} - ${errorText}`);
       }
 
+      await response.json();
       return true;
     } catch (error) {
-      console.error('保存消息失败:', error);
       return false;
     }
   }

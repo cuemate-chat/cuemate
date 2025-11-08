@@ -28,6 +28,11 @@ export interface StreamResponse {
   content: string;
   finished: boolean;
   error?: string;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
 }
 
 export interface AIServiceConfig {
@@ -188,9 +193,10 @@ class AIService {
         // 回退到普通调用
         const result = await response.json();
         const content = result.content || '抱歉，AI 没有返回内容';
+        const usage = result.usage;
 
         // 模拟流式输出效果
-        await this.simulateStreamOutput(content, onChunk);
+        await this.simulateStreamOutput(content, onChunk, usage);
         return;
       }
 
@@ -201,7 +207,9 @@ class AIService {
         // 普通 JSON 响应，模拟流式输出
         const result = await response.json();
         const content = result.content || '抱歉，AI 没有返回内容';
-        await this.simulateStreamOutput(content, onChunk);
+        const usage = result.usage;
+
+        await this.simulateStreamOutput(content, onChunk, usage);
       }
     } catch (error) {
       onChunk({
@@ -261,7 +269,9 @@ class AIService {
       if (!contentType.includes('text/event-stream') && !contentType.includes('application/json')) {
         const result = await response.json();
         const content = result.content || '抱歉，AI 没有返回内容';
-        await this.simulateStreamOutput(content, onChunk);
+        const usage = result.usage;
+
+        await this.simulateStreamOutput(content, onChunk, usage);
         return;
       }
 
@@ -270,7 +280,9 @@ class AIService {
       } else {
         const result = await response.json();
         const content = result.content || '抱歉，AI 没有返回内容';
-        await this.simulateStreamOutput(content, onChunk);
+        const usage = result.usage;
+
+        await this.simulateStreamOutput(content, onChunk, usage);
       }
     } catch (error) {
       onChunk({
@@ -319,7 +331,28 @@ class AIService {
 
             try {
               const parsed = JSON.parse(data);
+
+              // 检测是否是包含 usage 信息的 chunk
+              if (parsed.usage) {
+                onChunk({ content: '', finished: true, usage: parsed.usage });
+                return;
+              }
+
               const content = parsed.choices?.[0]?.delta?.content || parsed.content || '';
+
+              // LLM Router 可能把 usage JSON 包装在 content 里
+              if (content && content.startsWith('{') && content.includes('usage')) {
+                try {
+                  const usageData = JSON.parse(content);
+                  if (usageData.usage) {
+                    onChunk({ content: '', finished: true, usage: usageData.usage });
+                    return;
+                  }
+                } catch {
+                  // 不是 JSON，当普通内容处理
+                }
+              }
+
               if (content) {
                 onChunk({ content, finished: false });
               }
@@ -341,6 +374,7 @@ class AIService {
   private async simulateStreamOutput(
     content: string,
     onChunk: (chunk: StreamResponse) => void,
+    usage?: { promptTokens: number; completionTokens: number; totalTokens: number },
   ): Promise<void> {
     const words = content.split('');
     let currentContent = '';
@@ -366,8 +400,8 @@ class AIService {
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
-    // 输出完成
-    onChunk({ content: '', finished: true });
+    // 输出完成，附带 usage 信息
+    onChunk({ content: '', finished: true, usage });
   }
 }
 
