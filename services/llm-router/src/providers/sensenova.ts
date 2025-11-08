@@ -1,4 +1,3 @@
-import OpenAI from 'openai';
 import { logger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
@@ -9,7 +8,7 @@ export class SenseNovaProvider extends BaseLLMProvider {
 
   async complete(request: CompletionRequest, config: RuntimeConfig): Promise<CompletionResponse> {
     const apiKey = config.credentials.api_key;
-    const baseUrl = config.credentials.base_url || 'https://api.sensenova.cn/v1';
+    const baseUrl = config.credentials.base_url || 'https://api.sensenova.cn';
 
     if (!apiKey) {
       throw new Error('SenseNova API key is required');
@@ -18,35 +17,44 @@ export class SenseNovaProvider extends BaseLLMProvider {
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
     const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
 
-    const client = new OpenAI({
-      apiKey: apiKey,
-      baseURL: baseUrl,
-    });
-
+    const url = `${baseUrl}/v1/llm/chat-completions`;
     const startTime = Date.now();
 
     try {
-      const completion = await client.chat.completions.create({
-        model: config.model,
-        messages: request.messages,
-        temperature: request.temperature ?? temperature,
-        max_tokens: request.maxTokens ?? maxTokens,
-        stream: false,
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: request.messages,
+          temperature: request.temperature ?? temperature,
+          max_new_tokens: request.maxTokens ?? maxTokens,
+          stream: false,
+        }),
       });
 
-      const response = completion.choices[0];
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`SenseNova API error: ${response.status} ${errorText}`);
+      }
+
+      const result = await response.json() as any;
+      const data = result.data;
       const latency = Date.now() - startTime;
 
       return {
-        content: response.message?.content || '',
-        usage: completion.usage
+        content: data.choices[0]?.message || '',
+        usage: data.usage
           ? {
-              promptTokens: completion.usage.prompt_tokens,
-              completionTokens: completion.usage.completion_tokens,
-              totalTokens: completion.usage.total_tokens,
+              promptTokens: data.usage.prompt_tokens,
+              completionTokens: data.usage.completion_tokens,
+              totalTokens: data.usage.total_tokens,
             }
           : undefined,
-        model: completion.model,
+        model: config.model,
         provider: 'sensenova',
         latency,
       };
@@ -58,7 +66,7 @@ export class SenseNovaProvider extends BaseLLMProvider {
 
   async *stream(request: CompletionRequest, config: RuntimeConfig): AsyncGenerator<string> {
     const apiKey = config.credentials.api_key;
-    const baseUrl = config.credentials.base_url || 'https://api.sensenova.cn/v1';
+    const baseUrl = config.credentials.base_url || 'https://api.sensenova.cn';
 
     if (!apiKey) {
       throw new Error('SenseNova API key is required');
@@ -67,35 +75,71 @@ export class SenseNovaProvider extends BaseLLMProvider {
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
     const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
 
-    const client = new OpenAI({
-      apiKey: apiKey,
-      baseURL: baseUrl,
-    });
+    const url = `${baseUrl}/v1/llm/chat-completions`;
 
     try {
-      const stream = await client.chat.completions.create({
-        model: config.model,
-        messages: request.messages,
-        temperature: request.temperature ?? temperature,
-        max_tokens: request.maxTokens ?? maxTokens,
-        stream: true,
-        stream_options: { include_usage: true },
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: request.messages,
+          temperature: request.temperature ?? temperature,
+          max_new_tokens: request.maxTokens ?? maxTokens,
+          stream: true,
+        }),
       });
 
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content;
-        if (content) {
-          yield content;
-        }
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`SenseNova API error: ${response.status} ${errorText}`);
+      }
 
-        if (chunk.usage) {
-          yield JSON.stringify({
-            usage: {
-              promptTokens: chunk.usage.prompt_tokens,
-              completionTokens: chunk.usage.completion_tokens,
-              totalTokens: chunk.usage.total_tokens,
-            },
-          });
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              const responseData = parsed.data;
+              const content = responseData.choices?.[0]?.delta || responseData.choices?.[0]?.message;
+              if (content) {
+                yield typeof content === 'string' ? content : content.content || '';
+              }
+
+              if (responseData.usage) {
+                yield JSON.stringify({
+                  usage: {
+                    promptTokens: responseData.usage.prompt_tokens,
+                    completionTokens: responseData.usage.completion_tokens,
+                    totalTokens: responseData.usage.total_tokens,
+                  },
+                });
+              }
+            } catch (e) {
+              logger.warn({ err: e, data }, 'Failed to parse SSE data');
+            }
+          }
         }
       }
     } catch (error) {
@@ -106,24 +150,34 @@ export class SenseNovaProvider extends BaseLLMProvider {
 
   async healthCheck(config: RuntimeConfig): Promise<boolean> {
     const apiKey = config.credentials.api_key;
-    const baseUrl = config.credentials.base_url || 'https://api.sensenova.cn/v1';
+    const baseUrl = config.credentials.base_url || 'https://api.sensenova.cn';
 
     if (!apiKey) {
       throw new Error('SenseNova API key is required');
     }
 
-    const client = new OpenAI({
-      apiKey: apiKey,
-      baseURL: baseUrl,
-    });
+    const url = `${baseUrl}/v1/llm/chat-completions`;
 
     try {
-      await client.chat.completions.create({
-        model: config.model,
-        messages: [{ role: 'user', content: 'ping' }],
-        temperature: 0,
-        max_tokens: 1,
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [{ role: 'user', content: 'ping' }],
+          temperature: 0.1,
+          max_new_tokens: 5,
+        }),
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`SenseNova health check failed: ${response.status} ${errorText}`);
+      }
+
       return true;
     } catch (error) {
       logger.error({ err: error }, `SenseNova health check failed for model ${config.model}`);
