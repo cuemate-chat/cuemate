@@ -82,6 +82,7 @@ export class MoonshotProvider extends BaseLLMProvider {
           temperature: request.temperature || temperature,
           max_tokens: request.maxTokens || maxTokens,
           stream: true,
+          stream_options: { include_usage: true },
         },
         {
           headers: {
@@ -112,6 +113,16 @@ export class MoonshotProvider extends BaseLLMProvider {
               const content = json.choices[0]?.delta?.content;
               if (content) {
                 yield content;
+              }
+
+              if (json.usage) {
+                yield JSON.stringify({
+                  usage: {
+                    promptTokens: json.usage.prompt_tokens,
+                    completionTokens: json.usage.completion_tokens,
+                    totalTokens: json.usage.total_tokens,
+                  },
+                });
               }
             } catch (e) {
               // 忽略解析错误

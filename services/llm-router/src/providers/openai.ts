@@ -84,12 +84,24 @@ export class OpenAIProvider extends BaseLLMProvider {
         temperature: request.temperature ?? temperature,
         max_tokens: request.maxTokens ?? maxTokens,
         stream: true,
+        stream_options: { include_usage: true },
       });
 
       for await (const chunk of stream) {
         const content = chunk.choices[0]?.delta?.content;
         if (content) {
           yield content;
+        }
+
+        // 最后一个 chunk 包含 usage 信息
+        if (chunk.usage) {
+          yield JSON.stringify({
+            usage: {
+              promptTokens: chunk.usage.prompt_tokens,
+              completionTokens: chunk.usage.completion_tokens,
+              totalTokens: chunk.usage.total_tokens,
+            },
+          });
         }
       }
     } catch (error) {

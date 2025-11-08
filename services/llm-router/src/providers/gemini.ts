@@ -148,6 +148,18 @@ export class GeminiProvider extends BaseLLMProvider {
           yield text;
         }
       }
+
+      // 获取完整响应以提取 usage
+      const response = await result.response;
+      if (response.usageMetadata) {
+        yield JSON.stringify({
+          usage: {
+            promptTokens: response.usageMetadata.promptTokenCount || 0,
+            completionTokens: response.usageMetadata.candidatesTokenCount || 0,
+            totalTokens: response.usageMetadata.totalTokenCount || 0,
+          },
+        });
+      }
     } catch (error) {
       logger.error({ err: error }, 'Gemini stream failed:');
       throw error;

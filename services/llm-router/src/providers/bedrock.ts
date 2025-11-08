@@ -129,6 +129,17 @@ export class BedrockProvider extends BaseLLMProvider {
           if (event.contentBlockDelta?.delta?.text) {
             yield event.contentBlockDelta.delta.text;
           }
+
+          if (event.metadata?.usage) {
+            yield JSON.stringify({
+              usage: {
+                promptTokens: event.metadata.usage.inputTokens || 0,
+                completionTokens: event.metadata.usage.outputTokens || 0,
+                totalTokens:
+                  (event.metadata.usage.inputTokens || 0) + (event.metadata.usage.outputTokens || 0),
+              },
+            });
+          }
         }
       }
     } catch (error) {

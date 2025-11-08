@@ -65,27 +65,29 @@ export function up(db: any): void {
     END
   `);
 
-  // 添加触发器：插入消息时自动更新会话的消息计数和时间戳
+  // 添加触发器：插入消息时自动更新会话的消息计数、token累计和时间戳
   db.exec(`
     CREATE TRIGGER update_conversation_on_message_insert
     AFTER INSERT ON ai_messages
     FOR EACH ROW
     BEGIN
-      UPDATE ai_conversations 
+      UPDATE ai_conversations
       SET message_count = message_count + 1,
+          token_used = token_used + NEW.token_count,
           updated_at = strftime('%s', 'now')
       WHERE id = NEW.conversation_id;
     END
   `);
 
-  // 添加触发器：删除消息时自动更新会话的消息计数
+  // 添加触发器：删除消息时自动更新会话的消息计数和token累计
   db.exec(`
     CREATE TRIGGER update_conversation_on_message_delete
     AFTER DELETE ON ai_messages
     FOR EACH ROW
     BEGIN
-      UPDATE ai_conversations 
+      UPDATE ai_conversations
       SET message_count = message_count - 1,
+          token_used = token_used - OLD.token_count,
           updated_at = strftime('%s', 'now')
       WHERE id = OLD.conversation_id;
     END

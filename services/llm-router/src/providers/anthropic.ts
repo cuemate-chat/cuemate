@@ -101,6 +101,18 @@ export class AnthropicProvider extends BaseLLMProvider {
           yield chunk.delta.text;
         }
       }
+
+      // 获取最终消息以提取 usage
+      const finalMessage = await stream.finalMessage();
+      if (finalMessage.usage) {
+        yield JSON.stringify({
+          usage: {
+            promptTokens: finalMessage.usage.input_tokens,
+            completionTokens: finalMessage.usage.output_tokens,
+            totalTokens: finalMessage.usage.input_tokens + finalMessage.usage.output_tokens,
+          },
+        });
+      }
     } catch (error) {
       logger.error({ err: error }, 'Anthropic stream failed:');
       throw error;
