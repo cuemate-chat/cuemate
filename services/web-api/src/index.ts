@@ -3,6 +3,7 @@ import { initSqlite } from '@cuemate/data-sqlite';
 import { fastifyLoggingHooks, printBanner, printSuccessInfo } from '@cuemate/logger';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
+import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import { config } from 'dotenv';
 import Fastify from 'fastify';
@@ -47,6 +48,9 @@ async function start() {
     maxAge: 86400,
   });
   await app.register(jwt, { secret: process.env.JWT_SECRET || 'dev-secret' });
+  await app.register(multipart, {
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB 文件大小限制
+  });
 
   // 静态文件服务 - 提供图片访问（使用 Docker 挂载路径）
   await app.register(fastifyStatic, {

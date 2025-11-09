@@ -1,4 +1,3 @@
-import multipart from '@fastify/multipart';
 import type { FastifyInstance } from 'fastify';
 import { promises as fs } from 'fs';
 import mammoth from 'mammoth';
@@ -20,9 +19,7 @@ async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 }
 
 export function registerFileRoutes(app: FastifyInstance) {
-  app.register(multipart, {
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-  });
+  // multipart 插件已在 index.ts 中全局注册，这里直接使用
 
   // 图片上传路由
   app.post('/files/upload-image', async (req: any, reply) => {

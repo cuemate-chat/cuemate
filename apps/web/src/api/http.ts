@@ -180,9 +180,10 @@ export const http = {
   },
 
   post: <T = any>(path: string, body?: any): Promise<T> => {
-    // 如果没有 body，不设置 Content-Type，让浏览器自动处理
+    // 如果是 FormData，不设置 Content-Type，让浏览器自动设置 multipart/form-data
+    // 否则设置为 application/json
     const headers: Record<string, string> = {};
-    if (body) {
+    if (body && !(body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
 
