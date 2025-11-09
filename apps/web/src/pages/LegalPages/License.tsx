@@ -2,11 +2,12 @@ import { ArrowPathIcon, CloudArrowUpIcon, DocumentTextIcon, FolderArrowDownIcon 
 import { Badge } from 'antd';
 import { useEffect, useState } from 'react';
 import { storage } from '../../api/http';
-import { getLicenseInfo, uploadLicenseFile, uploadQuestions, type LicenseInfo } from '../../api/license';
+import { getLicenseInfo, uploadLicenseFile, type LicenseInfo } from '../../api/license';
 import { fetchVersionList, type VersionInfo } from '../../api/versions';
 import { message } from '../../components/Message';
 import PageLoading from '../../components/PageLoading';
 import { useLoading } from '../../hooks/useLoading';
+import BatchImportDrawer from '../PresetQuestionsList/BatchImportDrawer';
 import VersionDetailDrawer from './VersionDetailDrawer';
 import VersionListDrawer from './VersionListDrawer';
 
@@ -14,7 +15,6 @@ import VersionListDrawer from './VersionListDrawer';
 export default function License() {
   const [license, setLicense] = useState<LicenseInfo | null>(null);
   const { loading, start: startLoading, end: endLoading } = useLoading();
-  const { loading: uploadingQuestions, start: startUploadingQuestions, end: endUploadingQuestions } = useLoading();
   const { loading: uploadingFile, start: startUploadingFile, end: endUploadingFile } = useLoading();
 
   // 版本管理相关状态
@@ -23,6 +23,9 @@ export default function License() {
   const [versionListOpen, setVersionListOpen] = useState(false);
   const [versionDetailOpen, setVersionDetailOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<VersionInfo | null>(null);
+
+  // 导入题库弹框状态
+  const [importDrawerOpen, setImportDrawerOpen] = useState(false);
 
   // 当前系统版本：从 localStorage 的 user 对象获取
   const currentVersion = storage.getUser()?.version || 'v0.1.0';
@@ -83,34 +86,6 @@ export default function License() {
       console.error('License 文件上传失败:', error);
     } finally {
       await endUploadingFile();
-      // 清空文件输入
-      if (event.target) {
-        event.target.value = '';
-      }
-    }
-  };
-
-
-  // 上传内置题库
-  const handleUploadQuestions = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // 检查文件类型
-    if (!file.name.endsWith('.sql')) {
-      message.error('只支持上传 .sql 文件');
-      return;
-    }
-
-    startUploadingQuestions();
-
-    try {
-      const data = await uploadQuestions(file);
-      message.success(data.message || `导入完成: ${data.summary} 条新增，${data.existingCount || 0} 条已存在`);
-    } catch (error) {
-      console.error('内置题库导入失败:', error);
-    } finally {
-      await endUploadingQuestions();
       // 清空文件输入
       if (event.target) {
         event.target.value = '';
@@ -358,28 +333,15 @@ export default function License() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">导入预置题库</h3>
-                      <p className="text-sm text-blue-600 dark:text-blue-400">上传文件来导入预置面试题库</p>
+                      <p className="text-sm text-blue-600 dark:text-blue-400">支持 CSV 或 JSON 格式文件导入预置面试题库</p>
                     </div>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept=".sql"
-                        onChange={handleUploadQuestions}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        disabled={uploadingQuestions}
-                      />
-                      <button
-                        disabled={uploadingQuestions}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                      >
-                        {uploadingQuestions ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        ) : (
-                          <FolderArrowDownIcon className="h-4 w-4" />
-                        )}
-                        {uploadingQuestions ? '导入中...' : '导入题库'}
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => setImportDrawerOpen(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                    >
+                      <FolderArrowDownIcon className="h-4 w-4" />
+                      导入题库
+                    </button>
                   </div>
                 </div>
               )}
@@ -460,6 +422,16 @@ export default function License() {
         onClose={handleCloseAllVersionDrawers}
         onBack={handleBackToVersionList}
         onUpdate={handleUpdateToVersion}
+      />
+
+      {/* 导入题库侧拉弹框 */}
+      <BatchImportDrawer
+        open={importDrawerOpen}
+        onClose={() => setImportDrawerOpen(false)}
+        onSuccess={() => {
+          setImportDrawerOpen(false);
+          message.success('题库导入成功');
+        }}
       />
     </div>
   );
