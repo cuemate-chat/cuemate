@@ -514,6 +514,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
               .min(1)
               .max(1000),
             overwrite: z.boolean().default(false), // 是否覆盖相同问题
+            is_builtin: z.boolean().default(false), // 是否为内置题库（从 License 页面导入为 true）
           })
           .parse((req as any).body || {});
 
@@ -587,9 +588,9 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
               // 非覆盖模式或新问题：直接插入（允许重复问题文本）
               (app as any).db
                 .prepare(
-                  'INSERT INTO preset_questions (id, question, answer, tag_id, is_builtin, synced_jobs, created_at) VALUES (?, ?, ?, ?, 0, ?, ?)',
+                  'INSERT INTO preset_questions (id, question, answer, tag_id, is_builtin, synced_jobs, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
                 )
-                .run(id, item.question, item.answer, tagId, '[]', now);
+                .run(id, item.question, item.answer, tagId, body.is_builtin ? 1 : 0, '[]', now);
 
               existingQuestions.add(item.question);
             }

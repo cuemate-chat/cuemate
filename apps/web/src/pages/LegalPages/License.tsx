@@ -432,6 +432,7 @@ export default function License() {
           setImportDrawerOpen(false);
           message.success('题库导入成功');
         }}
+        isBuiltin={true}
       />
     </div>
   );

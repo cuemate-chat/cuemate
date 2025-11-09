@@ -10,6 +10,7 @@ interface ImportResult {
 
 interface UseQuestionImportOptions {
   overwrite?: boolean;
+  is_builtin?: boolean; // 是否为内置题库（从 License 页面导入为 true）
   onSuccess?: (result: ImportResult) => void;
   onError?: (error: Error) => void;
 }
@@ -89,6 +90,7 @@ export function useQuestionImport(options?: UseQuestionImportOptions) {
       const result = await batchImportPresetQuestions({
         questions,
         overwrite: options?.overwrite ?? false,
+        is_builtin: options?.is_builtin ?? false,
       });
 
       // 显示成功消息

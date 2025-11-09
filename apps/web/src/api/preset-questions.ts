@@ -113,6 +113,7 @@ export async function batchImportPresetQuestions(payload: {
     tag_name?: string | null;
   }>;
   overwrite?: boolean;
+  is_builtin?: boolean; // 是否为内置题库（从 License 页面导入为 true）
 }): Promise<{
   success: boolean;
   importedCount: number;

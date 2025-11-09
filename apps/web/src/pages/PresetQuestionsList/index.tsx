@@ -1,4 +1,4 @@
-import { CheckIcon, CloudArrowUpIcon, TrashIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, CloudArrowUpIcon, TrashIcon, LockClosedIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { Button, Card, Checkbox, DatePicker, Input, Modal, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
@@ -223,6 +223,12 @@ export default function PresetQuestionsList() {
     setSyncJobsDetailDrawerOpen(true);
   };
 
+  // 刷新列表
+  const handleRefresh = async () => {
+    await reloadList();
+    globalMessage.success('刷新成功');
+  };
+
   // 删除操作时显示全屏 loading
   if (operationLoading) {
     return <PageLoading tip="正在删除，请稍候..." type="saving" />;
@@ -338,6 +344,13 @@ export default function PresetQuestionsList() {
               onClick={() => setCreateDrawerOpen(true)}
             >
               新增题目
+            </Button>
+            <Button
+              icon={<ArrowPathIcon className="w-4 h-4" />}
+              onClick={handleRefresh}
+              loading={loading}
+            >
+              刷新
             </Button>
           </div>
 

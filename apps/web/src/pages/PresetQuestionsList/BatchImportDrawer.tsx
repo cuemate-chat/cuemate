@@ -8,18 +8,21 @@ interface BatchImportDrawerProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  isBuiltin?: boolean; // 是否为内置题库（从 License 页面导入为 true）
 }
 
 export default function BatchImportDrawer({
   open,
   onClose,
-  onSuccess
+  onSuccess,
+  isBuiltin = false
 }: BatchImportDrawerProps) {
   const [importOverwrite, setImportOverwrite] = useState(false);
 
   // 使用导入 Hook
   const { importing, importFile } = useQuestionImport({
     overwrite: importOverwrite,
+    is_builtin: isBuiltin,
     onSuccess: () => {
       setImportOverwrite(false);
       onSuccess();
