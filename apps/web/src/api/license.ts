@@ -26,19 +26,3 @@ export async function uploadLicenseFile(file: File): Promise<{ license: LicenseI
 
   return await http.post<{ license: LicenseInfo }>('/license/upload-file', formData);
 }
-
-// 上传内置题库
-export async function uploadQuestions(file: File): Promise<{
-  message: string;
-  summary: string;
-  existingCount?: number;
-}> {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  return await http.post<{
-    message: string;
-    summary: string;
-    existingCount?: number;
-  }>('/license/upload-questions', formData);
-}

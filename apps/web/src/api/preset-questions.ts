@@ -110,20 +110,20 @@ export async function batchImportPresetQuestions(payload: {
   questions: Array<{
     question: string;
     answer: string;
-    tag_id?: string | null;
+    tag_name?: string | null;
   }>;
   overwrite?: boolean;
-}): Promise<{ 
-  success: boolean; 
-  importedCount: number; 
-  skippedCount: number; 
+}): Promise<{
+  success: boolean;
+  importedCount: number;
+  skippedCount: number;
   totalCount: number;
   errors?: string[];
 }> {
-  return await http.post<{ 
-    success: boolean; 
-    importedCount: number; 
-    skippedCount: number; 
+  return await http.post<{
+    success: boolean;
+    importedCount: number;
+    skippedCount: number;
     totalCount: number;
     errors?: string[];
   }>('/preset-questions/batch-import', payload);
