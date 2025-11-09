@@ -85,8 +85,13 @@ export default function VectorKnowledge() {
       }
 
       if (result.success) {
+        // 当加载所有数据时（query为空），不过滤 score
         const list = (result.results || []).filter((doc: any) => {
+          // 没有查询关键词时，显示所有文档
           const s = Number((doc as any).score) || 0;
+          // 如果 score 为 0，说明是直接获取的文档（getAllDocuments），不过滤
+          if (s === 0) return true;
+          // 如果有 score，则根据阈值过滤
           return minScorePercent === 100 ? s >= 1 : s > minScorePercent / 100;
         });
         // 为每个文档添加相关数量信息
@@ -186,8 +191,13 @@ export default function VectorKnowledge() {
       }
 
       if (result.success) {
+        // 判断是否有搜索关键词
+        const hasQuery = finalFilters.query && finalFilters.query.trim().length > 0;
         const list = (result.results || []).filter((doc: any) => {
           const s = Number((doc as any).score) || 0;
+          // 如果没有搜索关键词或 score 为 0，显示所有文档
+          if (!hasQuery || s === 0) return true;
+          // 如果有搜索关键词且有 score，则根据阈值过滤
           return minScorePercent === 100 ? s >= 1 : s > minScorePercent / 100;
         });
         // 为每个文档添加相关数量信息
