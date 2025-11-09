@@ -1,4 +1,3 @@
-import { DefaultEmbeddingFunction } from '@chroma-core/default-embed';
 import { ChromaClient } from 'chromadb';
 import { v4 as uuidv4 } from 'uuid';
 import { Config } from '../config/index.js';
@@ -62,10 +61,11 @@ export class VectorStore {
 
     try {
       const clientAny = this.client as any;
+      // 不指定 embeddingFunction，ChromaDB 会使用内置的默认实现
+      // 因为我们在 addDocuments 时会提供自己生成的 embeddings
       const collection = await clientAny.getOrCreateCollection({
         name,
         metadata: { created_at: new Date().toISOString() },
-        embeddingFunction: new DefaultEmbeddingFunction(),
       });
 
       this.collections.set(name, collection);
