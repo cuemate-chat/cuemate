@@ -508,7 +508,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
                 z.object({
                   question: z.string().min(1).max(500),
                   answer: z.string().min(1).max(5000),
-                  tag_id: z.string().nullable().optional(),
+                  tag_name: z.string().nullable().optional(), // 标签名称，不是 ID
                 }),
               )
               .min(1)
@@ -532,15 +532,49 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
             .map((row: any) => row.question),
         );
 
+        // 标签名称到 ID 的缓存，避免重复查询
+        const tagCache = new Map<string, string>();
+
+        // 辅助函数：根据标签名称获取或创建标签 ID
+        const getOrCreateTagId = (tagName: string | null | undefined): string | null => {
+          if (!tagName || tagName.trim() === '') {
+            return null;
+          }
+
+          const trimmedName = tagName.trim();
+
+          // 检查缓存
+          if (tagCache.has(trimmedName)) {
+            return tagCache.get(trimmedName)!;
+          }
+
+          // 查询 tags 表（LIMIT 1 确保只取第一条）
+          const existingTag = (app as any).db
+            .prepare('SELECT id FROM tags WHERE name = ? LIMIT 1')
+            .get(trimmedName);
+
+          if (existingTag) {
+            tagCache.set(trimmedName, existingTag.id);
+            return existingTag.id;
+          }
+
+          // 标签不存在，创建新标签
+          const tagId = randomUUID();
+          (app as any).db
+            .prepare('INSERT INTO tags (id, name, created_at) VALUES (?, ?, ?)')
+            .run(tagId, trimmedName, now);
+
+          tagCache.set(trimmedName, tagId);
+          app.log.info({ tagName: trimmedName, tagId }, '自动创建新标签');
+          return tagId;
+        };
+
         for (const [index, item] of body.questions.entries()) {
           try {
-            // 检查是否已存在
-            if (existingQuestions.has(item.question) && !body.overwrite) {
-              skippedCount++;
-              continue;
-            }
-
             const id = randomUUID();
+
+            // 获取或创建标签 ID
+            const tagId = getOrCreateTagId(item.tag_name);
 
             if (body.overwrite && existingQuestions.has(item.question)) {
               // 覆盖模式：更新现有记录
@@ -548,14 +582,14 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
                 .prepare(
                   'UPDATE preset_questions SET answer = ?, tag_id = ?, updated_at = ? WHERE question = ?',
                 )
-                .run(item.answer, item.tag_id || null, now, item.question);
+                .run(item.answer, tagId, now, item.question);
             } else {
-              // 新增记录
+              // 非覆盖模式或新问题：直接插入（允许重复问题文本）
               (app as any).db
                 .prepare(
                   'INSERT INTO preset_questions (id, question, answer, tag_id, is_builtin, synced_jobs, created_at) VALUES (?, ?, ?, ?, 0, ?, ?)',
                 )
-                .run(id, item.question, item.answer, item.tag_id || null, '[]', now);
+                .run(id, item.question, item.answer, tagId, '[]', now);
 
               existingQuestions.add(item.question);
             }
