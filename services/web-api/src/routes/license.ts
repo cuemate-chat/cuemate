@@ -1,5 +1,5 @@
 import { withErrorLogging } from '@cuemate/logger';
-import * as crypto from 'crypto';
+import CryptoJS from 'crypto-js';
 import type { FastifyInstance } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
@@ -40,24 +40,25 @@ interface LicenseResponse {
   license?: LicenseData;
 }
 
-// AES 加解密工具函数
+// AES 解密工具函数（使用 CryptoJS，与加密端保持一致）
 function aesDecrypt(cipherText: string, key: string, iv: string): string {
   try {
-    // Base64 解码
-    const cipherBytes = Buffer.from(cipherText, 'base64');
-
-    // AES 解密
-    const decipher = crypto.createDecipheriv(
-      'aes-128-cbc',
-      Buffer.from(key, 'utf8'),
-      Buffer.from(iv, 'utf8'),
+    // 使用 CryptoJS 进行 AES 解密
+    const decrypted = CryptoJS.AES.decrypt(
+      cipherText,
+      CryptoJS.enc.Utf8.parse(key),
+      {
+        iv: CryptoJS.enc.Utf8.parse(iv),
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+      }
     );
-    let decrypted = decipher.update(cipherBytes);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
 
-    // Base64 解码
-    const base64String = decrypted.toString('utf8').trim();
-    const jsonString = Buffer.from(base64String, 'base64').toString('utf8');
+    // 解密后得到 Base64 编码的字符串
+    const base64String = decrypted.toString(CryptoJS.enc.Utf8);
+
+    // Base64 解码得到 JSON 字符串
+    const jsonString = CryptoJS.enc.Base64.parse(base64String).toString(CryptoJS.enc.Utf8);
 
     return jsonString;
   } catch (error) {
@@ -65,18 +66,29 @@ function aesDecrypt(cipherText: string, key: string, iv: string): string {
   }
 }
 
-// AES 加密功能已移除，仅保留解密验证功能
-
 // License 验证函数
 function validateLicenseKey(licenseKey: string): LicenseResponse {
   try {
     if (!licenseKey || licenseKey.trim() === '') {
-      return { status: LicenseStatus.Fail, message: 'Invalid License' };
+      return { status: LicenseStatus.Fail, message: 'License 文件为空' };
     }
 
     // 解密 License
-    const decryptedJson = aesDecrypt(licenseKey, SECRET_KEY, IV);
-    const licenseExpand: LicenseExpand = JSON.parse(decryptedJson);
+    let decryptedJson: string;
+    try {
+      decryptedJson = aesDecrypt(licenseKey, SECRET_KEY, IV);
+    } catch (decryptError) {
+      return { status: LicenseStatus.Fail, message: 'License 解密失败，请确认文件格式正确' };
+    }
+
+    // 解析 JSON
+    let licenseExpand: LicenseExpand;
+    try {
+      licenseExpand = JSON.parse(decryptedJson);
+    } catch (parseError) {
+      return { status: LicenseStatus.Fail, message: 'License 格式无效，解析失败' };
+    }
+
     const license = licenseExpand.license;
 
     // 检查产品类型 (这里暂时不做严格检查)
@@ -99,15 +111,22 @@ function validateLicenseKey(licenseKey: string): LicenseResponse {
 }
 
 export function registerLicenseRoutes(app: FastifyInstance) {
-  // multipart 插件已在 files.ts 中注册，不需要重复注册
+  // multipart 插件已在 index.ts 中全局注册，这里直接使用
 
   // 上传和验证 License (文件上传)
   app.post(
     '/license/upload-file',
     withErrorLogging(app.log as any, 'license.upload-file', async (req, reply) => {
+      // JWT 认证检查
+      let payload: any;
       try {
-        const payload = await (req as any).jwtVerify();
+        payload = await (req as any).jwtVerify();
+      } catch (jwtError: any) {
+        app.log.warn({ err: jwtError }, 'JWT 认证失败');
+        return reply.code(401).send({ error: 'JWT 认证失败，请重新登录' });
+      }
 
+      try {
         // 处理文件上传
         const data = await (req as any).file();
         if (!data) {
@@ -404,163 +423,4 @@ export function registerLicenseRoutes(app: FastifyInstance) {
     }),
   );
 
-  // 上传内置题库 SQL 文件
-  app.post(
-    '/license/upload-questions',
-    withErrorLogging(app.log as any, 'license.upload-questions', async (req, reply) => {
-      try {
-        await (req as any).jwtVerify();
-
-        // 检查是否有有效的 License
-        const activeLicense = (app as any).db
-          .prepare(
-            'SELECT * FROM licenses WHERE status = ? AND expire_time >= ? ORDER BY created_at DESC LIMIT 1',
-          )
-          .get('active', Date.now());
-
-        if (!activeLicense) {
-          return reply.code(403).send({ error: '请先上传有效的 License' });
-        }
-
-        // 处理文件上传
-        const data = await (req as any).file();
-        if (!data) {
-          return reply.code(400).send({ error: '请选择要上传的 SQL 文件' });
-        }
-
-        // 检查文件类型
-        const filename = data.filename || '';
-        if (!filename.toLowerCase().endsWith('.sql')) {
-          return reply.code(400).send({ error: '只支持上传 .sql 文件' });
-        }
-
-        // 读取文件内容
-        let sqlContent = '';
-        for await (const chunk of data.file) {
-          sqlContent += chunk.toString();
-        }
-
-        if (!sqlContent.trim()) {
-          return reply.code(400).send({ error: 'SQL 文件内容为空' });
-        }
-
-        // 解析并执行 SQL 语句
-        let insertedCount = 0;
-        let existingCount = 0;
-        let totalAttempted = 0;
-
-        const statements = sqlContent
-          .split(';')
-          .map((stmt) => stmt.trim())
-          .filter((stmt) => stmt.length > 0);
-
-        const db = (app as any).db;
-
-        // 准备检查 ID 是否存在的语句
-        const checkExistsStmt = db.prepare(
-          'SELECT COUNT(*) as count FROM preset_questions WHERE id = ?',
-        );
-
-        const transaction = db.transaction(() => {
-          for (const statement of statements) {
-            try {
-              // 只允许执行 INSERT 语句，并且只能插入到 preset_questions 表
-              if (
-                statement.toLowerCase().includes('insert') &&
-                statement.toLowerCase().includes('preset_questions')
-              ) {
-                totalAttempted++;
-
-                // 提取 ID 字段值
-                const idMatch = statement.match(/VALUES\s*\(\s*'([^']+)'/i);
-                if (!idMatch) {
-                  app.log.warn({ statement: statement.substring(0, 100) }, '无法从语句中提取 ID');
-                  continue;
-                }
-
-                const id = idMatch[1];
-
-                // 检查 ID 是否已存在
-                const existsResult = checkExistsStmt.get(id);
-                if (existsResult && existsResult.count > 0) {
-                  existingCount++;
-                  app.log.info(`题库 ID ${id} 已存在，跳过插入`);
-                  continue;
-                }
-
-                // ID 不存在，执行插入
-                try {
-                  const result = db.prepare(statement).run();
-                  if (result.changes > 0) {
-                    insertedCount++;
-                    app.log.info(`成功插入题库 ID: ${id}`);
-                  }
-                } catch (insertError: any) {
-                  // 如果是唯一性约束错误，也算作已存在
-                  if (insertError.message && insertError.message.includes('UNIQUE')) {
-                    existingCount++;
-                    app.log.info(`题库 ID ${id} 插入时发现重复，算作已存在`);
-                  } else {
-                    app.log.error({ err: insertError }, `插入题库 ID ${id} 失败`);
-                    throw insertError;
-                  }
-                }
-              } else if (statement.toLowerCase().includes('insert')) {
-                // 如果是其他表的插入语句，记录日志但不执行
-                app.log.warn(
-                  `跳过非 preset_questions 表的插入语句: ${statement.substring(0, 100)}...`,
-                );
-              }
-            } catch (error: any) {
-              app.log.error({ err: error }, `SQL 语句处理失败: ${statement.substring(0, 100)}...`);
-              // 对于单个语句的错误，我们记录日志但不中止整个事务
-            }
-          }
-        });
-
-        try {
-          transaction();
-
-          if (totalAttempted === 0) {
-            return reply.code(400).send({
-              error: 'SQL 文件中没有找到有效的 preset_questions 插入语句',
-            });
-          }
-
-          const message = `内置题库导入完成: ${insertedCount}/${totalAttempted} 条新增，${existingCount} 条已存在`;
-          app.log.info(message);
-
-          // 记录操作日志
-          const payload = (req as any).user as any;
-          await logOperation(app, req, {
-            ...OPERATION_MAPPING.PRESET_QUESTION,
-            resourceId: filename,
-            resourceName: filename,
-            operation: OperationType.CREATE,
-            message: `导入内置题库: ${message}`,
-            status: 'success',
-            userId: payload.uid
-          });
-
-          return {
-            success: true,
-            message,
-            insertedCount,
-            existingCount,
-            totalAttempted,
-            summary: `${insertedCount}/${totalAttempted}`,
-          };
-        } catch (error: any) {
-          app.log.error({ err: error }, '执行 SQL 事务失败');
-          return reply.code(500).send(buildPrefixedError('SQL 执行失败', error, 500));
-        }
-      } catch (error: any) {
-        app.log.error({ err: error }, '上传内置题库失败');
-        if (error.name === 'PayloadTooLargeError') {
-          return reply.code(413).send(buildPrefixedError('内置题库上传失败', error, 413));
-        }
-        return reply.code(500).send(buildPrefixedError('内置题库上传失败', error, 500));
-      }
-    }),
-  );
 }

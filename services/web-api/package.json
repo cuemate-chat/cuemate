@@ -21,6 +21,7 @@
     "@fastify/static": "^6.12.0",
     "@types/ws": "^8.18.1",
     "bcryptjs": "^2.4.3",
+    "crypto-js": "^4.2.0",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
     "mammoth": "^1.7.2",
@@ -30,6 +31,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^20.16.10",
     "@types/uuid": "^9.0.7",
     "tsx": "^4.19.1",
