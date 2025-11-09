@@ -1,4 +1,4 @@
-import { CheckIcon, CloudArrowUpIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, CloudArrowUpIcon, TrashIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { Button, Card, Checkbox, DatePicker, Input, Modal, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
@@ -229,12 +229,43 @@ export default function PresetQuestionsList() {
   }
 
   return (
-    <LicenseGuard feature="preset_questions">
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-        {/* 顶部操作栏 */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="text-lg font-semibold dark:text-slate-100">预置题库</div>
-          <div className="flex items-center gap-2 flex-wrap">
+    <LicenseGuard
+      feature="preset_questions"
+      fallback={
+        <div className="space-y-6 p-6">
+          {/* 页面标题 */}
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">预置题库</h1>
+          </div>
+          {/* 授权提示卡片 */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm min-h-[500px] flex items-center justify-center">
+            <div className="text-center p-8">
+              <LockClosedIcon className="w-24 h-24 mx-auto mb-4 text-slate-400" />
+              <h3 className="text-xl font-medium text-slate-900 dark:text-slate-100 mb-2">需要有效授权</h3>
+              <p className="text-slate-600 dark:text-slate-400 mb-6">
+                此功能需要有效的 License 授权才能使用
+              </p>
+              <a
+                href="/settings/license"
+                className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                前往授权管理
+              </a>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-6 p-6">
+        {/* 页面标题 */}
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">预置题库</h1>
+        </div>
+
+        {/* 主要内容卡片 */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+          {/* 顶部操作栏 */}
+          <div className="flex items-center justify-end mb-6 gap-2 flex-wrap">
             <DatePicker
               placeholder="按日期过滤"
               value={filterDay ? dayjs(filterDay) : undefined}
@@ -309,9 +340,8 @@ export default function PresetQuestionsList() {
               新增题目
             </Button>
           </div>
-        </div>
 
-        {/* 批量操作栏 */}
+          {/* 批量操作栏 */}
         {(selectedIds.length > 0 || items.length > 0) && (
           <div className="flex items-center justify-between mb-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
             <div className="flex items-center gap-3">
@@ -534,6 +564,7 @@ export default function PresetQuestionsList() {
           questionTitle={currentQuestionTitle}
         />
       </div>
+    </div>
     </LicenseGuard>
   );
 }

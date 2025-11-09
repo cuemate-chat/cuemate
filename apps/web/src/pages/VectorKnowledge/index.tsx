@@ -417,13 +417,9 @@ export default function VectorKnowledge() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-        style={{ position: 'relative', zIndex: 1 }}
-      >
-        {/* 页面标题 */}
-        <div className="mb-8 flex items-center justify-between">
+    <div className="space-y-6 p-6">
+      {/* 页面标题 */}
+      <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">向量知识库</h1>
             <p className="mt-2 text-slate-600 dark:text-slate-400">查询和检索存储在向量数据库中的知识内容</p>
@@ -950,13 +946,12 @@ export default function VectorKnowledge() {
           onClose={() => setFullContentDrawerVisible(false)}
           document={currentFullContentDoc}
         />
-        {/* 同步和清空操作的全屏 loading */}
-        {syncLoading && <PageLoading tip="正在同步所有数据，请稍候..." type="loading" />}
-        {cleanLoading && <PageLoading tip="正在清空所有数据，请稍候..." type="saving" />}
-        {loading && searchResults.length === 0 && !syncLoading && !cleanLoading && (
-          <PageLoading tip="正在加载，请稍候..." />
-        )}
-      </div>
+      {/* 同步和清空操作的全屏 loading */}
+      {syncLoading && <PageLoading tip="正在同步所有数据，请稍候..." type="loading" />}
+      {cleanLoading && <PageLoading tip="正在清空所有数据，请稍候..." type="saving" />}
+      {loading && searchResults.length === 0 && !syncLoading && !cleanLoading && (
+        <PageLoading tip="正在加载，请稍候..." />
+      )}
     </div>
   );
 }
