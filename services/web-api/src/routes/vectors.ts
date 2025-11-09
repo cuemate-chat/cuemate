@@ -459,6 +459,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({}),
             },
           );
 
@@ -491,7 +492,9 @@ export function registerVectorRoutes(app: FastifyInstance) {
               app.log.info(`Updated resumes vector_status: ${resumesUpdate.changes} rows affected`);
 
               const questionsUpdate = (app as any).db
-                .prepare('UPDATE interview_questions SET vector_status = 0 WHERE user_id = ?')
+                .prepare(
+                  'UPDATE interview_questions SET vector_status = 0 WHERE job_id IN (SELECT id FROM jobs WHERE user_id = ?)',
+                )
                 .run(payload.uid);
               app.log.info(
                 `Updated questions vector_status: ${questionsUpdate.changes} rows affected`,
