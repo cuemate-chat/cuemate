@@ -109,7 +109,6 @@ export default function NotificationPage() {
         message.success('已刷新通知列表');
       }
     } catch (error) {
-      console.error('Failed to load notifications:', error);
       message.error('获取通知列表失败');
     } finally {
       await endLoading();

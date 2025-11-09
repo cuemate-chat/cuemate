@@ -36,16 +36,19 @@ export class InterviewIPCHandler {
 
   private registerEventHandlers(): void {
     // 通用事件转发处理器
-    Object.values(InterviewIPCEvents).forEach(eventType => {
+    Object.values(InterviewIPCEvents).forEach((eventType) => {
       ipcMain.on(`interview:${eventType}`, (ipcEvent: IpcMainEvent, data: any) => {
         this.handleInterviewEvent(ipcEvent, eventType, data);
       });
     });
 
     // 窗口注册和注销
-    ipcMain.on('interview:register-window', (event: IpcMainEvent, windowType: 'ai-question' | 'control-bar') => {
-      this.registerWindow(event, windowType);
-    });
+    ipcMain.on(
+      'interview:register-window',
+      (event: IpcMainEvent, windowType: 'ai-question' | 'control-bar') => {
+        this.registerWindow(event, windowType);
+      },
+    );
 
     ipcMain.on('interview:unregister-window', (ipcEvent: IpcMainEvent) => {
       this.unregisterWindow(ipcEvent);
@@ -59,7 +62,10 @@ export class InterviewIPCHandler {
     // 设置当前状态
     ipcMain.on('interview:set-current-state', (_event: IpcMainEvent, state: any) => {
       this.currentInterviewState = { ...state, timestamp: Date.now() };
-      this.broadcastToAllWindows(InterviewIPCEvents.PROVIDE_CURRENT_STATE, this.currentInterviewState);
+      this.broadcastToAllWindows(
+        InterviewIPCEvents.PROVIDE_CURRENT_STATE,
+        this.currentInterviewState,
+      );
     });
   }
 
@@ -70,8 +76,6 @@ export class InterviewIPCHandler {
       console.warn(`Unknown sender for interview event: ${event}`);
       return;
     }
-
-    console.debug(`[IPC] ${senderWindow.type} -> ${event}:`, data);
 
     // 根据事件类型处理不同的逻辑
     switch (event) {
@@ -116,7 +120,7 @@ export class InterviewIPCHandler {
       isActive: true,
       interviewId: data.interviewId,
       config: data.config,
-      startTime: data.timestamp
+      startTime: data.timestamp,
     };
 
     // 通知所有窗口面试开始
@@ -131,7 +135,7 @@ export class InterviewIPCHandler {
       ...this.currentInterviewState,
       isActive: false,
       endTime: data.timestamp,
-      summary: data.summary
+      summary: data.summary,
     };
 
     // 通知所有窗口面试结束
@@ -144,7 +148,7 @@ export class InterviewIPCHandler {
   private handleStateChanged(sender: WindowReference, data: any): void {
     this.currentInterviewState = {
       ...this.currentInterviewState,
-      ...data
+      ...data,
     };
 
     // 转发到其他窗口
@@ -154,7 +158,7 @@ export class InterviewIPCHandler {
   private handleVoiceStateChanged(sender: WindowReference, data: any): void {
     this.currentInterviewState = {
       ...this.currentInterviewState,
-      voiceState: data
+      voiceState: data,
     };
 
     // 转发到其他窗口
@@ -171,7 +175,11 @@ export class InterviewIPCHandler {
 
   private handleRequestCurrentState(sender: WindowReference): void {
     if (this.currentInterviewState) {
-      this.sendToWindow(sender, InterviewIPCEvents.PROVIDE_CURRENT_STATE, this.currentInterviewState);
+      this.sendToWindow(
+        sender,
+        InterviewIPCEvents.PROVIDE_CURRENT_STATE,
+        this.currentInterviewState,
+      );
     }
   }
 
@@ -203,7 +211,7 @@ export class InterviewIPCHandler {
     const windowRef: WindowReference = {
       id: webContents.id,
       window: browserWindow,
-      type: windowType
+      type: windowType,
     };
 
     this.windows.set(webContents.id, windowRef);
@@ -213,11 +221,13 @@ export class InterviewIPCHandler {
       this.windows.delete(webContents.id);
     });
 
-    console.debug(`Registered ${windowType} window with ID: ${webContents.id}`);
-
     // 如果是新注册的窗口，发送当前状态
     if (this.currentInterviewState) {
-      this.sendToWindow(windowRef, InterviewIPCEvents.PROVIDE_CURRENT_STATE, this.currentInterviewState);
+      this.sendToWindow(
+        windowRef,
+        InterviewIPCEvents.PROVIDE_CURRENT_STATE,
+        this.currentInterviewState,
+      );
     }
   }
 
@@ -256,7 +266,7 @@ export class InterviewIPCHandler {
   }
 
   private forwardToOtherWindows(sender: WindowReference, event: string, data: any): void {
-    this.windows.forEach(windowRef => {
+    this.windows.forEach((windowRef) => {
       if (windowRef.id !== sender.id) {
         this.sendToWindow(windowRef, event, data);
       }
@@ -264,7 +274,7 @@ export class InterviewIPCHandler {
   }
 
   private broadcastToAllWindows(event: string, data: any): void {
-    this.windows.forEach(windowRef => {
+    this.windows.forEach((windowRef) => {
       this.sendToWindow(windowRef, event, data);
     });
   }
@@ -285,7 +295,7 @@ export class InterviewIPCHandler {
   // 清理方法
   destroy(): void {
     // 移除所有 IPC 监听器
-    Object.values(InterviewIPCEvents).forEach(event => {
+    Object.values(InterviewIPCEvents).forEach((event) => {
       ipcMain.removeAllListeners(`interview:${event}`);
     });
 
@@ -297,8 +307,6 @@ export class InterviewIPCHandler {
     this.windows.clear();
     this.currentInterviewState = null;
     this.isInitialized = false;
-
-    console.debug('Interview IPC Handler destroyed');
   }
 }
 
