@@ -16,7 +16,7 @@ import {
   XCircleIcon,
 } from '@heroicons/react/24/solid';
 import { Button, DatePicker, Empty, Modal, Select, Tabs } from 'antd';
-import dayjs, { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { storage } from '../../api/http';
@@ -73,6 +73,9 @@ export default function NotificationPage() {
   const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [categoryStatsData, setCategoryStatsData] = useState<Record<string, number>>({});
+  const [tabCountsData, setTabCountsData] = useState({ all: 0, unread: 0, read: 0, starred: 0 });
 
   // Tab 状态
   const [activeTab, setActiveTab] = useState<string>('all');
@@ -98,12 +101,50 @@ export default function NotificationPage() {
         return;
       }
 
-      const result = await fetchNotifications({
-        limit: 1000, // 获取所有数据,前端分页
-      });
+      // 构建后端查询参数
+      const params: any = {
+        limit: pageSize,
+        offset: (currentPage - 1) * pageSize,
+      };
+
+      // Tab 筛选
+      if (activeTab === 'unread') {
+        params.is_read = false;
+      } else if (activeTab === 'read') {
+        params.is_read = true;
+      } else if (activeTab === 'starred') {
+        params.is_starred = true;
+      }
+
+      // 分类筛选
+      if (filterCategory !== 'all') {
+        params.category = filterCategory;
+      }
+
+      // 优先级筛选
+      if (filterPriority !== 'all') {
+        params.priority = filterPriority;
+      }
+
+      // 关键词搜索
+      if (searchKeyword) {
+        params.keyword = searchKeyword;
+      }
+
+      // 时间段筛选
+      if (dateRange && dateRange[0] && dateRange[1]) {
+        params.start_date = dateRange[0].valueOf();
+        params.end_date = dateRange[1].valueOf();
+      }
+
+      // 获取分页数据和统计信息
+      const result = await fetchNotifications(params);
 
       setNotifications(result.notifications);
       setUnreadCount(result.unreadCount);
+      setTotal(result.total);
+      setCategoryStatsData(result.categoryStats);
+      setTabCountsData(result.tabCounts);
 
       if (showSuccessMessage) {
         message.success('已刷新通知列表');
@@ -115,9 +156,10 @@ export default function NotificationPage() {
     }
   };
 
+  // 监听筛选条件和分页变化，重新加载数据
   useEffect(() => {
     loadNotifications();
-  }, []);
+  }, [currentPage, pageSize, activeTab, filterCategory, filterPriority, searchKeyword, dateRange]);
 
   // 标记为已读
   const handleMarkAsRead = async (notification: Notification) => {
@@ -216,12 +258,19 @@ export default function NotificationPage() {
     });
   };
 
-  // 计算分类统计
+  // 计算分类统计 - 固定 5 个分类卡片 + 其他（基于后端返回的统计数据）
+  const mainCategories = ['job', 'question', 'interview', 'knowledge', 'license'];
+
+  // 计算"其他"类别的总数
+  const otherCount = Object.keys(categoryStatsData)
+    .filter((key) => !mainCategories.includes(key))
+    .reduce((sum, key) => sum + categoryStatsData[key], 0);
+
   const categoryStats: CategoryStats[] = [
     {
       key: 'job',
       label: '岗位管理',
-      count: notifications.filter((n) => n.category === 'job').length,
+      count: categoryStatsData.job || 0,
       iconType: 'briefcase',
       color: 'bg-blue-500',
       textColor: 'text-blue-600',
@@ -229,7 +278,7 @@ export default function NotificationPage() {
     {
       key: 'question',
       label: '面试押题',
-      count: notifications.filter((n) => n.category === 'question').length,
+      count: categoryStatsData.question || 0,
       iconType: 'document',
       color: 'bg-green-500',
       textColor: 'text-green-600',
@@ -237,7 +286,7 @@ export default function NotificationPage() {
     {
       key: 'interview',
       label: '面试报告',
-      count: notifications.filter((n) => n.category === 'interview').length,
+      count: categoryStatsData.interview || 0,
       iconType: 'chart',
       color: 'bg-purple-500',
       textColor: 'text-purple-600',
@@ -245,7 +294,7 @@ export default function NotificationPage() {
     {
       key: 'knowledge',
       label: '知识库',
-      count: notifications.filter((n) => n.category === 'knowledge').length,
+      count: categoryStatsData.knowledge || 0,
       iconType: 'book',
       color: 'bg-cyan-500',
       textColor: 'text-cyan-600',
@@ -253,71 +302,23 @@ export default function NotificationPage() {
     {
       key: 'license',
       label: '许可证',
-      count: notifications.filter((n) => n.category === 'license').length,
+      count: categoryStatsData.license || 0,
       iconType: 'key',
       color: 'bg-orange-500',
       textColor: 'text-orange-600',
     },
+    {
+      key: 'other',
+      label: '其他',
+      count: otherCount,
+      iconType: 'info',
+      color: 'bg-slate-500',
+      textColor: 'text-slate-600',
+    },
   ];
 
-  // 筛选通知
-  const filteredNotifications = notifications
-    .filter((n) => {
-      // Tab 筛选 (全部/未读/已读/星标)
-      if (activeTab === 'unread' && n.is_read === 1) return false;
-      if (activeTab === 'read' && n.is_read === 0) return false;
-      if (activeTab === 'starred' && n.is_starred === 0) return false;
-
-      // 分类筛选 (通过卡片点击)
-      if (filterCategory !== 'all' && n.category !== filterCategory) return false;
-
-      // 优先级筛选
-      if (filterPriority !== 'all' && n.priority !== filterPriority) return false;
-
-      // 时间段筛选
-      if (dateRange && dateRange[0] && dateRange[1]) {
-        const notificationDate = dayjs(n.created_at);
-        if (notificationDate.isBefore(dateRange[0]) || notificationDate.isAfter(dateRange[1])) {
-          return false;
-        }
-      }
-
-      // 关键词搜索
-      if (searchKeyword && !n.title.includes(searchKeyword) && !n.content.includes(searchKeyword)) {
-        return false;
-      }
-
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'time') {
-        // 按时间排序：最新的在前
-        return b.created_at - a.created_at;
-      } else {
-        // 按优先级排序：urgent > high > normal > low
-        const priorityOrder: Record<string, number> = {
-          urgent: 4,
-          high: 3,
-          normal: 2,
-          low: 1,
-        };
-        const priorityA = priorityOrder[a.priority] || 0;
-        const priorityB = priorityOrder[b.priority] || 0;
-
-        // 优先级不同时按优先级排序
-        if (priorityA !== priorityB) {
-          return priorityB - priorityA;
-        }
-        // 优先级相同时按时间排序
-        return b.created_at - a.created_at;
-      }
-    });
-
-  // 分页数据
-  const paginatedNotifications = filteredNotifications.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  // 后端已处理筛选和分页，前端直接使用返回的数据
+  const paginatedNotifications = notifications;
 
   // 重置筛选
   const handleReset = () => {
@@ -339,41 +340,8 @@ export default function NotificationPage() {
     setCurrentPage(1);
   };
 
-  // 基于当前筛选条件计算各 Tab 的数量
-  const getTabCounts = () => {
-    // 先应用分类筛选、优先级筛选、时间段筛选、关键词搜索
-    const baseFiltered = notifications.filter((n) => {
-      // 分类筛选 (通过卡片点击)
-      if (filterCategory !== 'all' && n.category !== filterCategory) return false;
-
-      // 优先级筛选
-      if (filterPriority !== 'all' && n.priority !== filterPriority) return false;
-
-      // 时间段筛选
-      if (dateRange && dateRange[0] && dateRange[1]) {
-        const notificationDate = dayjs(n.created_at);
-        if (notificationDate.isBefore(dateRange[0]) || notificationDate.isAfter(dateRange[1])) {
-          return false;
-        }
-      }
-
-      // 关键词搜索
-      if (searchKeyword && !n.title.includes(searchKeyword) && !n.content.includes(searchKeyword)) {
-        return false;
-      }
-
-      return true;
-    });
-
-    return {
-      all: baseFiltered.length,
-      unread: baseFiltered.filter((n) => n.is_read === 0).length,
-      read: baseFiltered.filter((n) => n.is_read === 1).length,
-      starred: baseFiltered.filter((n) => n.is_starred === 1).length,
-    };
-  };
-
-  const tabCounts = getTabCounts();
+  // 使用后端返回的 Tab 计数
+  const tabCounts = tabCountsData;
 
   // 操作时显示全屏 loading
   if (operationLoading) {
@@ -407,7 +375,7 @@ export default function NotificationPage() {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-6 gap-4">
         {categoryStats.map((stat) => (
           <div
             key={stat.key}
@@ -468,16 +436,29 @@ export default function NotificationPage() {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">关键词</label>
-            <input
-              type="text"
-              value={searchKeyword}
-              onChange={(e) => {
-                setSearchKeyword(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="搜索标题、内容"
-              className="w-full h-10 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-900 dark:text-slate-100"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={searchKeyword}
+                onChange={(e) => {
+                  setSearchKeyword(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="搜索标题、内容"
+                className="w-full h-10 px-3 pr-10 py-2 border border-slate-300 dark:border-slate-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-900 dark:text-slate-100"
+              />
+              {searchKeyword && (
+                <button
+                  onClick={() => {
+                    setSearchKeyword('');
+                    setCurrentPage(1);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                >
+                  <XCircleIcon className="w-5 h-5" />
+                </button>
+              )}
+            </div>
           </div>
 
           <div>
@@ -530,9 +511,10 @@ export default function NotificationPage() {
           </div>
         ) : (
           <div className="divide-y divide-slate-200 dark:divide-slate-700">
-            {paginatedNotifications.map((notification) => {
+            {paginatedNotifications.map((notification, index) => {
               const typeInfo = getNotificationTypeInfo(notification.type);
               const priorityInfo = getPriorityInfo(notification.priority);
+              const serialNumber = (currentPage - 1) * pageSize + index + 1;
 
               return (
                 <div
@@ -556,7 +538,7 @@ export default function NotificationPage() {
                           <h3
                             className={`text-base font-semibold ${notification.is_read === 0 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-200'}`}
                           >
-                            {notification.title}
+                            {serialNumber}. {notification.title}
                           </h3>
                           {notification.is_read === 0 ? (
                             <span className="inline-flex items-center px-2 py-0.5 bg-red-500 text-white text-xs font-medium rounded-full">
@@ -628,11 +610,11 @@ export default function NotificationPage() {
 
       {/* 外部分页组件 */}
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500 dark:text-slate-300">共 {filteredNotifications.length} 条</div>
+        <div className="text-slate-500 dark:text-slate-300">共 {total} 条</div>
         <PaginationBar
           page={currentPage}
           pageSize={pageSize}
-          total={filteredNotifications.length}
+          total={total}
           onChange={(p: number) => setCurrentPage(p)}
           onPageSizeChange={(_: number, size: number) => {
             setPageSize(size);

@@ -42,37 +42,119 @@ export function registerNotificationRoutes(app: FastifyInstance) {
       try {
         const payload = await (request as any).jwtVerify();
         const userId = payload.uid;
-        const { type, is_read, limit = '20', offset = '0' } = request.query as any;
+        const {
+          type,
+          is_read,
+          category,
+          priority,
+          is_starred,
+          keyword,
+          start_date,
+          end_date,
+          limit = '20',
+          offset = '0',
+        } = request.query as any;
 
         // 在返回通知列表之前,先检查并创建到期提醒通知
         await checkAndCreateExpiringNotifications(db, userId);
 
-        let query = `
-          SELECT * FROM user_notifications
-          WHERE user_id = ?
-        `;
+        // 构建查询条件
+        let whereClause = 'WHERE user_id = ?';
         const params: any[] = [userId];
 
         // 按类型筛选
         if (type) {
-          query += ' AND type = ?';
+          whereClause += ' AND type = ?';
           params.push(type);
+        }
+
+        // 按分类筛选
+        if (category) {
+          if (category === 'other') {
+            // "其他"类别：排除主要类别
+            whereClause += ' AND category NOT IN (?, ?, ?, ?, ?)';
+            params.push('job', 'question', 'interview', 'knowledge', 'license');
+          } else {
+            whereClause += ' AND category = ?';
+            params.push(category);
+          }
+        }
+
+        // 按优先级筛选
+        if (priority) {
+          whereClause += ' AND priority = ?';
+          params.push(priority);
         }
 
         // 按已读状态筛选
         if (is_read !== undefined) {
-          query += ' AND is_read = ?';
+          whereClause += ' AND is_read = ?';
           params.push(is_read === 'true' ? 1 : 0);
         }
 
-        query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
-        params.push(parseInt(limit), parseInt(offset));
+        // 按星标状态筛选
+        if (is_starred !== undefined) {
+          whereClause += ' AND is_starred = ?';
+          params.push(is_starred === 'true' ? 1 : 0);
+        }
 
-        const notifications = db.prepare(query).all(...params);
+        // 按关键词搜索
+        if (keyword) {
+          whereClause += ' AND (title LIKE ? OR content LIKE ?)';
+          const keywordPattern = `%${keyword}%`;
+          params.push(keywordPattern, keywordPattern);
+        }
+
+        // 按时间段筛选
+        if (start_date) {
+          whereClause += ' AND created_at >= ?';
+          params.push(parseInt(start_date));
+        }
+        if (end_date) {
+          whereClause += ' AND created_at <= ?';
+          params.push(parseInt(end_date));
+        }
+
+        // 获取总数（用于分页）
+        const countQuery = `SELECT COUNT(*) as count FROM user_notifications ${whereClause}`;
+        const totalResult = db.prepare(countQuery).get(...params) as { count: number };
+
+        // 获取分页数据（需要重新构建 params 数组，因为上面已经用过了）
+        const dataParams = [...params, parseInt(limit), parseInt(offset)];
+        const dataQuery = `
+          SELECT * FROM user_notifications
+          ${whereClause}
+          ORDER BY created_at DESC
+          LIMIT ? OFFSET ?
+        `;
+        const notifications = db.prepare(dataQuery).all(...dataParams);
 
         // 获取未读数量
         const unreadCount = db
           .prepare('SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND is_read = 0')
+          .get(userId) as { count: number };
+
+        // 获取各类别统计（基于全部通知，不受筛选条件影响）
+        const categoryStats = db
+          .prepare(
+            `
+            SELECT category, COUNT(*) as count
+            FROM user_notifications
+            WHERE user_id = ?
+            GROUP BY category
+          `,
+          )
+          .all(userId) as Array<{ category: string; count: number }>;
+
+        // 获取各 Tab 统计（基于全部通知）
+        const allCount = db
+          .prepare('SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ?')
+          .get(userId) as { count: number };
+        const readCount = db
+          .prepare('SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND is_read = 1')
+          .get(userId) as { count: number };
+        const starredCount = db
+          .prepare('SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND is_starred = 1')
           .get(userId) as { count: number };
 
         // 记录操作日志
@@ -88,7 +170,17 @@ export function registerNotificationRoutes(app: FastifyInstance) {
         return reply.send({
           notifications,
           unreadCount: unreadCount.count,
-          total: notifications.length,
+          total: totalResult.count,
+          categoryStats: categoryStats.reduce((acc, item) => {
+            acc[item.category] = item.count;
+            return acc;
+          }, {} as Record<string, number>),
+          tabCounts: {
+            all: allCount.count,
+            unread: unreadCount.count,
+            read: readCount.count,
+            starred: starredCount.count,
+          },
         });
       } catch (error) {
         app.log.error({ err: error }, 'Failed to fetch notifications');

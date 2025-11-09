@@ -37,18 +37,37 @@ export interface Notification {
 // 获取通知列表
 export async function fetchNotifications(params?: {
   type?: string;
+  category?: string;
+  priority?: string;
   is_read?: boolean;
+  is_starred?: boolean;
+  keyword?: string;
+  start_date?: number;
+  end_date?: number;
   limit?: number;
   offset?: number;
 }): Promise<{
   notifications: Notification[];
   unreadCount: number;
   total: number;
+  categoryStats: Record<string, number>;
+  tabCounts: {
+    all: number;
+    unread: number;
+    read: number;
+    starred: number;
+  };
 }> {
   try {
     const queryParams: any = {};
     if (params?.type) queryParams.type = params.type;
+    if (params?.category) queryParams.category = params.category;
+    if (params?.priority) queryParams.priority = params.priority;
     if (params?.is_read !== undefined) queryParams.is_read = params.is_read;
+    if (params?.is_starred !== undefined) queryParams.is_starred = params.is_starred;
+    if (params?.keyword) queryParams.keyword = params.keyword;
+    if (params?.start_date) queryParams.start_date = params.start_date;
+    if (params?.end_date) queryParams.end_date = params.end_date;
     if (params?.limit) queryParams.limit = params.limit;
     if (params?.offset) queryParams.offset = params.offset;
 
@@ -56,11 +75,24 @@ export async function fetchNotifications(params?: {
       notifications: Notification[];
       unreadCount: number;
       total: number;
-    }>('/api/notifications', { params: queryParams });
+      categoryStats: Record<string, number>;
+      tabCounts: {
+        all: number;
+        unread: number;
+        read: number;
+        starred: number;
+      };
+    }>('/api/notifications', queryParams);
     return response;
   } catch (error) {
     console.error('Error fetching notifications:', error);
-    return { notifications: [], unreadCount: 0, total: 0 };
+    return {
+      notifications: [],
+      unreadCount: 0,
+      total: 0,
+      categoryStats: {},
+      tabCounts: { all: 0, unread: 0, read: 0, starred: 0 },
+    };
   }
 }
 
