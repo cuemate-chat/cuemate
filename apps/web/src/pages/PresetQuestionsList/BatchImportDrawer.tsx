@@ -1,9 +1,8 @@
 import { CloudArrowUpIcon } from '@heroicons/react/24/outline';
-import { Button, Checkbox, Upload, message } from 'antd';
+import { Button, Checkbox, Upload } from 'antd';
 import { useState } from 'react';
-import { batchImportPresetQuestions } from '../../api/preset-questions';
 import DrawerProvider, { DrawerContent, DrawerHeader } from '../../components/DrawerProvider';
-import { message as globalMessage } from '../../components/Message';
+import { useQuestionImport } from '../../hooks/useQuestionImport';
 
 interface BatchImportDrawerProps {
   open: boolean;
@@ -17,77 +16,19 @@ export default function BatchImportDrawer({
   onSuccess
 }: BatchImportDrawerProps) {
   const [importOverwrite, setImportOverwrite] = useState(false);
-  const [importLoading, setImportLoading] = useState(false);
+
+  // 使用导入 Hook
+  const { importing, importFile } = useQuestionImport({
+    overwrite: importOverwrite,
+    onSuccess: () => {
+      setImportOverwrite(false);
+      onSuccess();
+    },
+  });
 
   // 批量导入处理
-  const handleImportFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        setImportLoading(true);
-        let questions: Array<{ question: string; answer: string; tag_id?: string | null }> = [];
-        
-        if (file.name.endsWith('.json')) {
-          // JSON 格式导入
-          const data = JSON.parse(e.target?.result as string);
-          if (Array.isArray(data)) {
-            questions = data.map((item: any) => ({
-              question: String(item.question || '').trim(),
-              answer: String(item.answer || '').trim(),
-              tag_id: item.tag_id || null,
-            })).filter(item => item.question && item.answer);
-          }
-        } else if (file.name.endsWith('.csv')) {
-          // CSV 格式导入
-          const csvText = e.target?.result as string;
-          const lines = csvText.split('\n').map(line => line.trim()).filter(line => line);
-          
-          // 跳过表头
-          for (let i = 1; i < lines.length; i++) {
-            const columns = lines[i].split(',').map(col => col.trim().replace(/^"|"$/g, ''));
-            if (columns.length >= 2 && columns[0] && columns[1]) {
-              questions.push({
-                question: columns[0],
-                answer: columns[1],
-                tag_id: columns[2] || null,
-              });
-            }
-          }
-        }
-        
-        if (questions.length === 0) {
-          globalMessage.warning('未找到有效的题目数据，请检查文件格式');
-          return;
-        }
-        
-        const result = await batchImportPresetQuestions({
-          questions,
-          overwrite: importOverwrite,
-        });
-        
-        globalMessage.success(
-          `批量导入完成！新增 ${result.importedCount} 个，跳过 ${result.skippedCount} 个${result.errors?.length ? `，错误 ${result.errors.length} 个` : ''}`
-        );
-        
-        if (result.errors && result.errors.length > 0) {
-          message.warning('导入错误：' + result.errors);
-        }
-        
-        setImportOverwrite(false);
-        onSuccess();
-      } catch (e: any) {
-        globalMessage.error(e?.message || '导入失败');
-      } finally {
-        setImportLoading(false);
-      }
-    };
-    
-    reader.onerror = () => {
-      globalMessage.error('文件读取失败');
-      setImportLoading(false);
-    };
-    
-    reader.readAsText(file);
+  const handleImportFile = async (file: File) => {
+    await importFile(file);
     return false; // 阻止自动上传
   };
 
@@ -135,9 +76,9 @@ export default function BatchImportDrawer({
               showUploadList={false}
               accept=".csv,.json"
             >
-              <Button 
+              <Button
                 icon={<CloudArrowUpIcon className="w-4 h-4" />}
-                loading={importLoading}
+                loading={importing}
                 size="large"
                 block
               >
