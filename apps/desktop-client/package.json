@@ -94,7 +94,9 @@
       "resources/**/*"
     ],
     "asarUnpack": [
-      "dist/native/**/*.node"
+      "dist/native/**/*.node",
+      "dist/pcm-processor.js",
+      "dist/speaker-pcm-processor.js"
     ],
     "mac": {
       "icon": "assets/icon.icns",
