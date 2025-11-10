@@ -1,3 +1,5 @@
+import { app } from 'electron';
+import * as fs from 'fs';
 import * as path from 'path';
 import { logger } from '../../utils/logger.js';
 
@@ -49,18 +51,48 @@ export class SystemAudioCapture {
 
   /**
    * 加载 AudioTee 模块
+   *
+   * 注意：生产环境中，audiotee 二进制文件通过符号链接指向 Resources/bin/audiotee，
+   * 这样 audiotee 进程会继承 CueMate.app 的权限，无需用户单独授权
    */
   private async loadAudioTeeModule(): Promise<any> {
-    if (process.env.NODE_ENV === 'development') {
+    const appPath = app.getAppPath();
+    const isPackaged = appPath.includes('app.asar');
+
+    if (!isPackaged) {
       // 开发环境使用相对路径，从 dist/main 回到项目根目录
       const audioTeePath = path.join(
         __dirname,
         '../../../../node_modules/.pnpm/audiotee@0.0.6/node_modules/audiotee/dist/index.js',
       );
+      logger.info({ audioTeePath, __dirname, isPackaged }, '开发环境 AudioTee 路径');
       return await import(audioTeePath);
     } else {
-      // 生产环境使用动态 import
-      return await import('audiotee');
+      // 生产环境：使用 app.asar.unpacked
+      const resourcesPath = path.join(appPath, '..');
+      const audioTeePath = path.join(
+        resourcesPath,
+        'app.asar.unpacked/node_modules/audiotee/dist/index.js',
+      );
+
+      // 检查文件是否存在
+      const exists = fs.existsSync(audioTeePath);
+      logger.info(
+        {
+          audioTeePath,
+          resourcesPath,
+          appPath,
+          fileExists: exists,
+          isPackaged,
+        },
+        '生产环境 AudioTee 路径',
+      );
+
+      if (!exists) {
+        throw new Error(`AudioTee 模块文件不存在: ${audioTeePath}`);
+      }
+
+      return await import(audioTeePath);
     }
   }
 
@@ -70,12 +102,25 @@ export class SystemAudioCapture {
   private async shouldUseAudioTee(): Promise<boolean> {
     try {
       const audioTeeModule = await this.loadAudioTeeModule();
+      logger.info(
+        {
+          hasModule: !!audioTeeModule,
+          hasAudioTee: !!(audioTeeModule && audioTeeModule.AudioTee),
+          moduleKeys: audioTeeModule ? Object.keys(audioTeeModule) : [],
+        },
+        'AudioTee 模块加载结果',
+      );
+
       if (audioTeeModule && audioTeeModule.AudioTee) {
         return true;
       }
+      logger.warn({ audioTeeModule }, 'AudioTee 模块结构不正确');
       return false;
     } catch (error) {
-      logger.error({ err: error }, 'AudioTee 不可用:');
+      logger.error(
+        { err: error, stack: error instanceof Error ? error.stack : undefined },
+        'AudioTee 加载失败:',
+      );
       return false;
     }
   }

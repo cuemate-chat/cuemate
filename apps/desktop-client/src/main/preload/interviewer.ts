@@ -129,6 +129,9 @@ const interviewerAPI = {
     },
   },
 
+  // === 通用 IPC 调用方法 ===
+  invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
+
   // === 工具方法 ===
   platform: process.platform,
   versions: {

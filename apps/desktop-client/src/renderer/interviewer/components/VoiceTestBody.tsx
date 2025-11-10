@@ -282,7 +282,7 @@ export function VoiceTestBody() {
           </div>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <button className="test-button" onClick={testMicrophone} disabled={micStatus === 'testing'}>
+              <button className="test-button" onClick={testMicrophone} disabled={micStatus === 'testing' || speakerStatus === 'testing'}>
                 测试
               </button>
             </Tooltip.Trigger>
@@ -325,7 +325,7 @@ export function VoiceTestBody() {
           </div>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <button className="test-button" onClick={testSpeaker} disabled={speakerStatus === 'testing'}>
+              <button className="test-button" onClick={testSpeaker} disabled={speakerStatus === 'testing' || micStatus === 'testing'}>
                 测试
               </button>
             </Tooltip.Trigger>

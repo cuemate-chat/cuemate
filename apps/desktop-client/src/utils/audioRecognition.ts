@@ -119,7 +119,28 @@ export async function startMicrophoneRecognition(
         audioContext = new AudioContext({ sampleRate });
         const source = audioContext.createMediaStreamSource(stream);
         try {
-          await audioContext.audioWorklet.addModule('/pcm-processor.js');
+          // 获取 AudioWorklet 处理器代码
+          const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+          let moduleURL: string;
+
+          if (electronAPI?.invoke) {
+            // 从主进程获取文件内容
+            const result = await electronAPI.invoke('get-asar-unpacked-path', 'pcm-processor.js');
+
+            if (result.success) {
+              // 创建 Blob URL
+              const blob = new Blob([result.content], { type: 'application/javascript' });
+              moduleURL = URL.createObjectURL(blob);
+            } else {
+              throw new Error(`加载处理器失败: ${result.error}`);
+            }
+          } else {
+            // 开发环境降级处理
+            moduleURL = '/pcm-processor.js';
+          }
+
+          await audioContext.audioWorklet.addModule(moduleURL);
+
           const workletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
           workletNode.port.onmessage = (event) => {
             if (
@@ -269,7 +290,28 @@ export async function startSpeakerRecognition(
       // 初始化 AudioContext 和 WorkletNode
       audioContext = new AudioContext({ sampleRate });
       try {
-        await audioContext.audioWorklet.addModule('/speaker-pcm-processor.js');
+        // 获取 AudioWorklet 处理器代码
+        const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+        let moduleURL: string;
+
+        if (electronAPI?.invoke) {
+          // 从主进程获取文件内容
+          const result = await electronAPI.invoke('get-asar-unpacked-path', 'speaker-pcm-processor.js');
+
+          if (result.success) {
+            // 创建 Blob URL
+            const blob = new Blob([result.content], { type: 'application/javascript' });
+            moduleURL = URL.createObjectURL(blob);
+          } else {
+            throw new Error(`加载处理器失败: ${result.error}`);
+          }
+        } else {
+          // 开发环境降级处理
+          moduleURL = '/speaker-pcm-processor.js';
+        }
+
+        await audioContext.audioWorklet.addModule(moduleURL);
+
         speakerWorkletNode = new AudioWorkletNode(audioContext, 'speaker-pcm-processor');
 
         // 监听来自 WorkletNode 的处理后音频数据

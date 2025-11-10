@@ -82,10 +82,10 @@ export class InterviewerWindow {
 
       this.setupEvents();
 
-      // // 开发模式下自动打开开发者工具
-      // if (this.isDevelopment) {
-      //   this.window.webContents.openDevTools({ mode: 'detach' });
-      // }
+      // 开发模式下自动打开开发者工具
+      if (this.isDevelopment) {
+        this.window.webContents.openDevTools({ mode: 'detach' });
+      }
     } catch (error) {
       logger.error({ error }, '创建 interviewer 窗口失败');
       throw error;
