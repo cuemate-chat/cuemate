@@ -73,8 +73,14 @@ class ElectronLogger implements Logger {
       const dirPath = path.dirname(filePath);
       fs.mkdirSync(dirPath, { recursive: true });
 
-      // 使用追加模式写入文件
-      fs.appendFileSync(filePath, logLine, 'utf8');
+      // 使用 prepend 模式写入文件（将新日志插入到文件开头，保持与其他服务一致）
+      let existing = '';
+      try {
+        if (fs.existsSync(filePath)) {
+          existing = fs.readFileSync(filePath, 'utf8');
+        }
+      } catch {}
+      fs.writeFileSync(filePath, logLine + existing, 'utf8');
     } catch (error) {
       // 如果文件写入失败，只输出到控制台
       console.error('日志文件写入失败:', error);

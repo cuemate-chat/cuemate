@@ -990,7 +990,7 @@ export function setupIPC(windowManager: WindowManager): void {
     'system-audio-capture-start',
     async (event, options?: { sampleRate?: number; channels?: number }) => {
       try {
-        logger.debug('开始系统音频扬声器捕获');
+        logger.info('开始系统音频扬声器捕获');
 
         if (systemAudioCapture && systemAudioCapture.isCaptureActive()) {
           return { success: false, error: '系统音频扬声器捕获已在进行中' };
@@ -1030,7 +1030,7 @@ export function setupIPC(windowManager: WindowManager): void {
       if (systemAudioCapture) {
         systemAudioCapture.stopCapture();
         systemAudioCapture = null;
-        logger.debug('系统音频扬声器捕获已停止');
+        logger.info('系统音频扬声器捕获已停止');
         return { success: true };
       } else {
         return { success: false, error: '没有正在进行的系统音频扬声器捕获任务' };
@@ -1063,23 +1063,23 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('mic-test-start', async (event, _options?: { deviceId?: string }) => {
     try {
-      logger.debug('开始麦克风测试');
+      logger.info('开始麦克风测试');
 
-      logger.debug('开始麦克风测试，连接 cuemate-asr 服务');
+      logger.info('开始麦克风测试，连接 cuemate-asr 服务');
 
       // 创建到 ASR 服务的 WebSocket 连接
       const asrServiceUrl = 'ws://localhost:10095';
       micAsrWebSocket = new WebSocket(asrServiceUrl);
 
       micAsrWebSocket!.on('open', () => {
-        logger.debug('麦克风 ASR 服务连接成功');
+        logger.info('麦克风 ASR 服务连接成功');
         // 不发送状态消息，只记录日志
       });
 
       micAsrWebSocket!.on('message', (data: any) => {
         try {
           const result = JSON.parse(data.toString());
-          logger.debug('麦克风 ASR 识别结果:', result);
+          logger.info('麦克风 ASR 识别结果:', result);
 
           // 构建显示文本
           let displayText = '';
@@ -1116,7 +1116,7 @@ export function setupIPC(windowManager: WindowManager): void {
       });
 
       micAsrWebSocket!.on('close', () => {
-        logger.debug('麦克风 ASR WebSocket 连接关闭');
+        logger.info('麦克风 ASR WebSocket 连接关闭');
         micAsrWebSocket = null;
       });
 
@@ -1149,7 +1149,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('speaker-test-start', async (event, _options?: { deviceId?: string }) => {
     try {
-      logger.debug('开始扬声器音频捕获');
+      logger.info('开始扬声器音频捕获');
 
       if (systemAudioCapture && systemAudioCapture.isCaptureActive()) {
         return { success: false, error: '系统音频捕获已在进行中' };
@@ -1167,7 +1167,7 @@ export function setupIPC(windowManager: WindowManager): void {
         );
       });
 
-      logger.debug('speaker-test pipeline ready');
+      logger.info('speaker-test pipeline ready');
       // 设置错误回调
       systemAudioCapture.onError((error: Error) => {
         logger.error({ err: error }, '扬声器测试音频捕获错误:');
@@ -1177,7 +1177,7 @@ export function setupIPC(windowManager: WindowManager): void {
         });
       });
 
-      logger.debug('speaker-test startCapture');
+      logger.info('speaker-test startCapture');
       // 启动捕获
       await systemAudioCapture.startCapture();
 
@@ -1196,7 +1196,7 @@ export function setupIPC(windowManager: WindowManager): void {
       if (systemAudioCapture) {
         systemAudioCapture.stopCapture();
         systemAudioCapture = null;
-        logger.debug('音频测试已停止');
+        logger.info('音频测试已停止');
       }
       return { success: true };
     } catch (error) {
@@ -1255,7 +1255,7 @@ export function setupIPC(windowManager: WindowManager): void {
       const filePath = path.join(dataDir, fileName);
       fs.writeFileSync(filePath, Buffer.from(audioData));
 
-      logger.debug(`音频文件已保存: ${filePath}, ${audioData.length} 字节`);
+      logger.info(`音频文件已保存: ${filePath}, ${audioData.length} 字节`);
       return { success: true, filePath, size: audioData.length };
     } catch (error) {
       logger.error({ error }, 'IPC: 保存音频文件失败');
@@ -1393,5 +1393,52 @@ export function setupIPC(windowManager: WindowManager): void {
     (global as any).toggleClickThroughMode = toggleClickThroughMode;
   } catch {}
 
-  logger.debug('IPC 通信处理器设置完成');
+  // === 获取 asar unpacked 文件路径 ===
+  ipcMain.handle('get-asar-unpacked-path', async (_event, filename: string) => {
+    const fs = require('fs');
+    const path = require('path');
+
+    logger.info(
+      { filename, isPackaged: app.isPackaged },
+      'IPC: 收到获取 AudioWorklet 处理器文件请求',
+    );
+
+    // 只允许访问 pcm-processor.js 和 speaker-pcm-processor.js
+    if (filename !== 'pcm-processor.js' && filename !== 'speaker-pcm-processor.js') {
+      logger.error({ filename }, 'IPC: 不允许访问该文件');
+      return { success: false, error: '不允许访问该文件' };
+    }
+
+    try {
+      let filePath: string;
+
+      if (!app.isPackaged) {
+        // 开发环境：从 public 目录读取
+        filePath = path.join(process.cwd(), 'public', filename);
+        logger.info({ filePath }, 'IPC: 开发环境文件路径');
+      } else {
+        // 生产环境：从 app.asar.unpacked/dist 目录读取
+        filePath = path.join(process.resourcesPath, 'app.asar.unpacked', 'dist', filename);
+        logger.info({ filePath }, 'IPC: 生产环境文件路径');
+      }
+
+      // 检查文件是否存在
+      if (!fs.existsSync(filePath)) {
+        logger.error({ filePath }, 'IPC: 文件不存在');
+        return { success: false, error: `文件不存在: ${filePath}` };
+      }
+
+      // 读取文件内容
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      logger.info({ filename, contentLength: fileContent.length }, 'IPC: 文件读取成功');
+
+      // 返回文件内容（前端将使用 Blob URL）
+      return { success: true, content: fileContent };
+    } catch (error) {
+      logger.error({ error, filename }, 'IPC: 读取 AudioWorklet 处理器文件失败');
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  logger.info('IPC 通信处理器设置完成');
 }
