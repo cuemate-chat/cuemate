@@ -36,7 +36,8 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard, selectedJobI
         const res = await electronAPI?.asrConfig?.get?.();
         micDeviceId = res?.config?.microphone_device_id || undefined;
       } catch {}
-      await startVoiceQA(micDeviceId, question);
+      // 传入共享状态中的文本，确保和右侧窗口同步
+      await startVoiceQA(micDeviceId, qa.confirmedText);
       setVoiceState({ mode: 'voice-qa', subState: 'voice-speaking' });
     } else {
       await stopVoiceQA();

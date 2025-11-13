@@ -1,9 +1,19 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { Copy, CornerDownLeft, Eraser, Mic, Square } from 'lucide-react';
-import React, { useRef } from 'react';
-import { MicrophoneRecognitionController } from '../../../../utils/audioRecognition';
+import React from 'react';
 import { setVoiceState, useVoiceState } from '../../../../utils/voiceState';
-import { startVoiceQA, stopVoiceQA, useVoiceQAState } from '../../../utils/voiceQA';
+import { startVoiceQA, stopVoiceQA } from '../../../utils/voiceQA';
+
+// 闪烁圆圈组件，录音状态指示器
+function FlashingCircle({ isActive }: { isActive: boolean }) {
+  return (
+    <div className={`voice-circle ${isActive ? 'active' : ''}`}>
+      <div className="circle-inner" />
+      <div className="circle-wave" />
+      <div className="circle-wave-2" />
+    </div>
+  );
+}
 
 interface WindowFooterProps {
   question: string;
@@ -29,15 +39,9 @@ export function VoiceQAFooter({
   className
 }: WindowFooterProps) {
   const isConversationCompleted = currentConversationStatus === 'completed';
-  // 仍保留模式写入，但局部未直接读取
-  useVoiceState();
-  const recognitionControllerRef = useRef<MicrophoneRecognitionController | null>(null);
-  const qa = useVoiceQAState();
-  const isRecording = qa.isRecording;
+  const vState = useVoiceState();
+  const isRecording = vState.mode === 'voice-qa' && vState.subState === 'voice-speaking';
 
-  // 累积模式：保存已确认的文本（固定不变）
-  const confirmedTextRef = useRef<string>('');
-  
   const handleSubmit = () => {
     if (isConversationCompleted) {
       alert('当前对话已完成，无法继续提问。请点击"新建提问"开始新的对话。');
@@ -59,17 +63,15 @@ export function VoiceQAFooter({
     if (isConversationCompleted) return;
     if (!isRecording) {
       try {
-        // 开始说话时，保存当前输入框文本作为已确认文本
-        confirmedTextRef.current = question || '';
-
         let micDeviceId: string | undefined = undefined;
         try {
           const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
           const res = await electronAPI?.asrConfig?.get?.();
           micDeviceId = res?.config?.microphone_device_id || undefined;
         } catch {}
-        confirmedTextRef.current = question || '';
-        await startVoiceQA(micDeviceId, confirmedTextRef.current);
+
+        // 传入当前 input 的内容，确保不会被清空
+        await startVoiceQA(micDeviceId, question);
         setVoiceState({ mode: 'voice-qa', subState: 'voice-speaking' });
       } catch {
         setVoiceState({ mode: 'voice-qa', subState: 'idle' });
@@ -78,11 +80,6 @@ export function VoiceQAFooter({
       try {
         await stopVoiceQA();
       } finally {
-        recognitionControllerRef.current = null;
-
-        // 停止说话时，将完整的文本赋值给输入框
-        const finalText = qa.confirmedText || '';
-        onQuestionChange(finalText);
         setVoiceState({ mode: 'voice-qa', subState: 'voice-end' });
       }
     }
@@ -91,14 +88,15 @@ export function VoiceQAFooter({
   return (
     <div className={`ai-window-footer${className ? ` ${className}` : ''}`}>
       <div className="ai-input-container">
+        {isRecording && <FlashingCircle isActive={true} />}
         <input
           type="search"
-          value={isRecording ? (qa.confirmedText || '正在识别语音...') : question}
-          onChange={isRecording ? undefined : (e) => onQuestionChange(e.target.value)}
-          onKeyDown={isRecording ? undefined : handleKeyDown}
-          placeholder={isConversationCompleted ? "对话已完成，请新建提问" : "询问 AI 任意问题"}
-          className="ai-input-field"
-          disabled={isConversationCompleted || isRecording}
+          value={question}
+          onChange={(e) => onQuestionChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={isConversationCompleted ? "对话已完成，请新建提问" : (isRecording ? "正在识别语音..." : "询问 AI 任意问题")}
+          className={`ai-input-field ${isRecording ? 'recording' : ''}`}
+          disabled={isConversationCompleted}
           readOnly={isRecording}
         />
       </div>
