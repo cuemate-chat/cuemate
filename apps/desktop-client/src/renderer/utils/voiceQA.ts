@@ -39,14 +39,18 @@ export function getVoiceQAState(): VoiceQAState {
 
 export function setVoiceQAState(next: Partial<VoiceQAState> | VoiceQAState): VoiceQAState {
   const current = getVoiceQAState();
+
   const merged: VoiceQAState = {
     isRecording: next.hasOwnProperty('isRecording')
       ? (next as VoiceQAState).isRecording
       : current.isRecording,
-    confirmedText: (next as VoiceQAState).confirmedText ?? current.confirmedText,
+    confirmedText: next.hasOwnProperty('confirmedText')
+      ? ((next as VoiceQAState).confirmedText ?? '')
+      : current.confirmedText,
     tempText: (next as VoiceQAState).tempText ?? current.tempText,
     updatedAt: Date.now(),
   };
+
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
   } catch {}
@@ -122,8 +126,15 @@ try {
 
 export async function startVoiceQA(deviceId?: string, initialConfirmed?: string): Promise<void> {
   if (getVoiceQAState().isRecording) return; // 已在录制
-  confirmedTextRef = initialConfirmed || '';
-  setVoiceQAState({ isRecording: true, confirmedText: initialConfirmed || '', tempText: '' });
+
+  // 获取当前状态
+  const currentState = getVoiceQAState();
+  // 如果传入的是空字符串或 undefined，使用当前状态中的 confirmedText
+  const initialText = initialConfirmed || currentState.confirmedText || '';
+  confirmedTextRef = initialText;
+
+  // 只设置 isRecording，不修改 confirmedText（保持原样，由语音识别回调更新）
+  setVoiceQAState({ isRecording: true, tempText: '' });
 
   const controller = await startMicrophoneRecognition({
     deviceId,
@@ -135,7 +146,8 @@ export async function startVoiceQA(deviceId?: string, initialConfirmed?: string)
       setVoiceQAState({ confirmedText: t, tempText: '' });
     },
     onError: () => {
-      clearVoiceQAState();
+      // 只重置录音状态，不清空 confirmedText（保留用户已输入的内容）
+      setVoiceQAState({ isRecording: false, tempText: '' });
     },
   });
   recognitionController = controller;
