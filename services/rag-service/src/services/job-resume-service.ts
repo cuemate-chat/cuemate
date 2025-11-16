@@ -16,6 +16,7 @@ export interface ResumeData {
   id: string;
   title: string;
   content: string;
+  file_path?: string; // 简历文件路径
   job_id: string; // 与数据库字段名保持一致
   user_id: string; // 与数据库字段名保持一致
   created_at: number; // 与数据库字段名保持一致
@@ -107,6 +108,7 @@ export class JobResumeService {
           jobId: resume.job_id,
           userId: resume.user_id,
           title: resume.title,
+          filePath: resume.file_path,
           chunkIndex: index,
           totalChunks: chunks.length,
           createdAt: resume.created_at,

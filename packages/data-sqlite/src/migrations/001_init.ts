@@ -31,6 +31,7 @@ export function up(db: any): void {
       job_id TEXT NOT NULL,
       title TEXT NOT NULL,
       content TEXT NOT NULL,
+      file_path TEXT,
       created_at INTEGER NOT NULL,
       FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE,

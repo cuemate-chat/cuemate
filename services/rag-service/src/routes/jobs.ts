@@ -32,6 +32,7 @@ export async function createJobRoutes(
         id: string;
         title: string;
         content: string;
+        file_path?: string;
         job_id: string;
         user_id: string;
         created_at: number;

@@ -59,6 +59,13 @@ async function start() {
     decorateReply: false,
   });
 
+  // 静态文件服务 - 提供 PDF 简历访问（使用 Docker 挂载路径）
+  await app.register(fastifyStatic, {
+    root: '/opt/cuemate/pdf',
+    prefix: '/pdf/',
+    decorateReply: false,
+  });
+
   // 记录时区信息（实际生效由 @cuemate/logger 内部基于环境变量自动设置）
   const tz = process.env.CUEMATE_LOG_TZ || process.env.TZ || undefined;
   if (tz) app.log.info({ tz }, 'logger-timezone');

@@ -110,6 +110,7 @@ export function registerFileRoutes(app: FastifyInstance) {
 
   app.post('/files/extract-text', async (req: any, reply) => {
     let text = ''; // 在函数开始就声明 text 变量
+    let savedFilePath = ''; // 保存的文件路径
 
     try {
       // JWT 认证检查
@@ -136,6 +137,29 @@ export function registerFileRoutes(app: FastifyInstance) {
 
       const buf = await streamToBuffer(file.file);
       app.log.info({ filename, bufferSize: buf.length }, '文件已转换为 Buffer');
+
+      // 保存原始文件到 /opt/cuemate/pdf 目录
+      try {
+        // 生成带时间戳的文件名，避免重名
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '');
+        const extension = path.extname(filename) || '.pdf';
+        const nameWithoutExt = path.basename(filename, extension);
+        const newFilename = `${nameWithoutExt}_${timestamp}${extension}`;
+
+        // 确保 PDF 目录存在（使用 Docker 挂载路径）
+        const pdfDir = '/opt/cuemate/pdf';
+        await fs.mkdir(pdfDir, { recursive: true });
+
+        // 保存文件
+        const filePath = path.join(pdfDir, newFilename);
+        await fs.writeFile(filePath, buf);
+        savedFilePath = `/pdf/${newFilename}`; // 返回相对路径
+
+        app.log.info({ filename, newFilename, filePath, size: buf.length }, '原始文件已保存');
+      } catch (saveError: any) {
+        app.log.error({ err: saveError, filename }, '保存原始文件失败（继续提取文本）');
+        // 不中断流程，继续提取文本
+      }
 
       // 支持 PDF、DOC、DOCX 和纯文本文件
       if (mimetype === 'application/pdf' || lower.endsWith('.pdf')) {
@@ -176,7 +200,7 @@ export function registerFileRoutes(app: FastifyInstance) {
                     { filename, textLength: text.length, pages: pages.length },
                     'PDF 解析完成（使用 pdf2json）',
                   );
-                  resolve({ text });
+                  resolve({ text, filePath: savedFilePath });
                 } else {
                   reject(new Error('pdf2json 提取的文本内容过少'));
                 }
@@ -313,7 +337,7 @@ export function registerFileRoutes(app: FastifyInstance) {
       }
 
       app.log.info({ filename, finalTextLength: text.length }, '文件解析成功');
-      
+
       // 记录操作日志
       const payload = req.user as any;
       await logOperation(app, req, {
@@ -325,8 +349,8 @@ export function registerFileRoutes(app: FastifyInstance) {
         status: 'success',
         userId: payload.uid
       });
-      
-      return { text };
+
+      return { text, filePath: savedFilePath };
     } catch (err: any) {
       app.log.error({ err }, 'extract-text 处理失败');
 
