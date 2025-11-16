@@ -5,6 +5,7 @@ import { http } from './http';
 export interface CreateJobPayload extends CreateJobRequest {
   resumeTitle?: string;
   resumeContent: string;
+  resumeFilePath?: string;
 }
 
 export interface JobWithResume extends Job {
@@ -12,6 +13,7 @@ export interface JobWithResume extends Job {
   resumeId?: string;
   resumeTitle?: string;
   resumeContent?: string;
+  resumeFilePath?: string;
   vector_status?: number;
 }
 
@@ -40,11 +42,17 @@ export async function deleteJob(jobId: string): Promise<{ success: boolean }> {
   return await http.delete<{ success: boolean }>(`/jobs/${jobId}`);
 }
 
-export async function extractResumeText(file: File): Promise<{ text: string }> {
+export async function extractResumeText(file: File, jobId?: string): Promise<{ text: string; filePath?: string }> {
   const token = localStorage.getItem('auth_token');
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch(`${WEB_API_BASE}/files/extract-text`, {
+
+  // jobId 通过 URL query 参数传递，而不是 FormData
+  const url = jobId
+    ? `${WEB_API_BASE}/files/extract-text?jobId=${encodeURIComponent(jobId)}`
+    : `${WEB_API_BASE}/files/extract-text`;
+
+  const res = await fetch(url, {
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: form,
@@ -121,4 +129,29 @@ export async function updateResumeOptimization(
     `/resume-optimizations/${optimizationId}`,
     payload
   );
+}
+
+// 上传简历文件到指定岗位
+export async function uploadJobResume(
+  jobId: string,
+  file: File
+): Promise<{ success: boolean; message: string; filePath: string; textLength: number }> {
+  const token = localStorage.getItem('auth_token');
+  const form = new FormData();
+  form.append('file', file);
+
+  const url = `${WEB_API_BASE}/jobs/${encodeURIComponent(jobId)}/upload-resume`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: form,
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || '简历上传失败');
+  }
+
+  return await res.json();
 }
