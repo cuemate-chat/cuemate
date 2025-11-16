@@ -5,10 +5,10 @@ import { useSearchParams } from 'react-router-dom';
 import {
   createResumeOptimization,
   deleteJob,
-  extractResumeText,
   getResumeOptimization,
   listJobs,
   updateJob,
+  uploadJobResume,
   type JobWithResume,
   type ResumeOptimization
 } from '../../api/jobs';
@@ -22,6 +22,7 @@ import { useLoading } from '../../hooks/useLoading';
 import ResumeOptimizationListDrawer from './ResumeOptimizationListDrawer';
 import ResumeOptimizeDrawerLevel2 from './ResumeOptimizeDrawerLevel2';
 import UploadResumeDrawer from './UploadResumeDrawer';
+import UploadedResumeDrawer from './UploadedResumeDrawer';
 
 export default function JobsList() {
   const [searchParams] = useSearchParams();
@@ -30,6 +31,7 @@ export default function JobsList() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [resumeContent, setResumeContent] = useState('');
+  const [resumeFilePath, setResumeFilePath] = useState<string | undefined>(undefined);
   const { loading, start: startLoading, end: endLoading } = useLoading();
   const [adaptiveRows, setAdaptiveRows] = useState<{ desc: number; resume: number }>({ desc: 8, resume: 8 });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -39,6 +41,7 @@ export default function JobsList() {
   const [optimizationListVisible, setOptimizationListVisible] = useState(false);
   const [selectedOptimization, setSelectedOptimization] = useState<ResumeOptimization | null>(null);
   const [optimizationDetailVisible, setOptimizationDetailVisible] = useState(false);
+  const [uploadedResumeVisible, setUploadedResumeVisible] = useState(false);
   // 计算中间可视区域高度：100vh - Header(56px) - Footer(48px) - Main 上下内边距(48px)
   const MAIN_HEIGHT = 'calc(100vh - 56px - 48px - 48px)';
 
@@ -84,6 +87,7 @@ export default function JobsList() {
           setTitle(jobToSelect.title || '');
           setDescription(jobToSelect.description || '');
           setResumeContent(jobToSelect.resumeContent || '');
+          setResumeFilePath(jobToSelect.resumeFilePath);
         }
       } catch (error) {
         // error handled by global http client
@@ -101,6 +105,7 @@ export default function JobsList() {
       setTitle(found.title || '');
       setDescription(found.description || '');
       setResumeContent(found.resumeContent || '');
+      setResumeFilePath(found.resumeFilePath);
     }
   };
 
@@ -108,12 +113,12 @@ export default function JobsList() {
     if (!selectedId) return;
     startLoading();
     try {
-      await updateJob(selectedId, { title, description, resumeContent });
+      await updateJob(selectedId, { title, description, resumeContent, resumeFilePath });
       // 更新本地列表缓存
       setItems((prev) =>
         prev.map((it) =>
           it.id === selectedId
-            ? { ...it, title, description, resumeContent, vector_status: 1 }
+            ? { ...it, title, description, resumeContent, resumeFilePath, vector_status: 1 }
             : it,
         ),
       );
@@ -186,6 +191,7 @@ export default function JobsList() {
             setTitle('');
             setDescription('');
             setResumeContent('');
+            setResumeFilePath(undefined);
           }
           globalMessage.success('岗位及相关数据已全部删除');
         } catch (e: any) {
@@ -267,10 +273,19 @@ export default function JobsList() {
 
     setUploadLoading(true);
     try {
-      const result = await extractResumeText(file);
-      setResumeContent(result.text);
+      await uploadJobResume(selectedId, file);
+
+      // 刷新列表数据,获取最新的 file_path
+      const data = await listJobs();
+      setItems(data.items || []);
+      const updated = data.items?.find(item => item.id === selectedId);
+      if (updated) {
+        setResumeContent(updated.resumeContent || '');
+        setResumeFilePath(updated.resumeFilePath);
+      }
+
       setUploadModalVisible(false);
-      globalMessage.success(`简历文件 ${file.name} 解析成功`);
+      globalMessage.success(`简历文件 ${file.name} 上传成功并已保存到数据库`);
     } catch (error: any) {
       globalMessage.error(error.message || '文件解析失败');
     } finally {
@@ -399,6 +414,21 @@ export default function JobsList() {
                 <span className="hidden sm:inline">简历优化</span>
                 <span className="sm:hidden">优化</span>
               </Button>
+              {selectedId && items.find((i) => i.id === selectedId)?.resumeFilePath && (
+                <Button
+                  onClick={() => setUploadedResumeVisible(true)}
+                  className="shrink-0"
+                  style={{
+                    backgroundColor: '#facc15',
+                    borderColor: '#facc15',
+                    color: '#78350f',
+                    fontWeight: 500
+                  }}
+                >
+                  <span className="hidden sm:inline">已上传的简历</span>
+                  <span className="sm:hidden">已上传</span>
+                </Button>
+              )}
             </div>
 
             {/* 状态提示行 */}
@@ -488,6 +518,26 @@ export default function JobsList() {
           onOptimizationCreated={(newOptimization) => {
             // 显示新创建的优化记录
             setSelectedOptimization(newOptimization as ResumeOptimization);
+          }}
+        />
+      )}
+
+      {/* 已上传的简历查看弹框 */}
+      {selectedId && (
+        <UploadedResumeDrawer
+          open={uploadedResumeVisible}
+          onClose={() => setUploadedResumeVisible(false)}
+          filePath={items.find((i) => i.id === selectedId)?.resumeFilePath}
+          jobTitle={items.find((i) => i.id === selectedId)?.title}
+          jobId={selectedId || undefined}
+          onRefresh={async () => {
+            const data = await listJobs();
+            setItems(data.items || []);
+            const updated = data.items?.find(item => item.id === selectedId);
+            if (updated) {
+              setResumeContent(updated.resumeContent || '');
+              setResumeFilePath(updated.resumeFilePath);
+            }
           }}
         />
       )}
