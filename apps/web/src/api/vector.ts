@@ -17,6 +17,7 @@ export interface VectorDocument {
     tagName?: string;
     jobTitle?: string;
     resumeTitle?: string;
+    filePath?: string;
     chunkIndex?: number;
     totalChunks?: number;
     createdAt?: number;

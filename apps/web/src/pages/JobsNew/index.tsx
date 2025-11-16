@@ -29,6 +29,7 @@ export default function JobsNew() {
   const [resumeMeta, setResumeMeta] = useState<{ name: string; size: number; type: string } | null>(
     null,
   );
+  const [resumeFilePath, setResumeFilePath] = useState<string | undefined>(undefined);
 
   // Step3: 提交态由 progress 控制
   const [progress, setProgress] = useState(0);
@@ -116,6 +117,7 @@ export default function JobsNew() {
           description: jobDesc.trim().slice(0, 5000),
           resumeTitle: resumeMeta?.name || `${jobName.trim()}-简历`,
           resumeContent,
+          resumeFilePath,
         });
         if (progressTimerRef.current) {
           window.clearInterval(progressTimerRef.current);
@@ -331,6 +333,7 @@ export default function JobsNew() {
 
                       const res = await extractResumeText(file);
                       setResumeText((res.text || '').slice(0, 20000));
+                      setResumeFilePath(res.filePath);
                       globalMessage.success(`已从文件解析得到文本（${res.text?.length || 0}个字符）`);
                     } catch (err: any) {
                       // 根据错误类型给出不同的提示
