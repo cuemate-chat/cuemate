@@ -23,12 +23,7 @@ const UploadResumeDrawer: React.FC<UploadResumeDrawerProps> = ({
       onClose={onClose}
       width="50%"
     >
-      <DrawerHeader>
-        <div className="flex items-center gap-2">
-          <DocumentTextIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          <span>上传简历文件</span>
-        </div>
-      </DrawerHeader>
+      <DrawerHeader>上传简历文件</DrawerHeader>
       <DrawerContent>
         <div className="space-y-6">
           {/* 功能说明 */}
@@ -36,7 +31,7 @@ const UploadResumeDrawer: React.FC<UploadResumeDrawerProps> = ({
             <div className="flex items-start gap-3">
               <CloudArrowUpIcon className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
               <div>
-                <div className="text-sm font-medium text-blue-700 mb-2">📝 智能简历解析</div>
+                <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">智能简历解析</div>
                 <div className="text-sm text-blue-600 space-y-1">
                   <div>• 支持 PDF、DOCX 格式的简历文件（不支持旧版 DOC 格式）</div>
                   <div>• 自动提取个人信息、工作经历、教育背景等关键内容</div>
@@ -116,7 +111,7 @@ const UploadResumeDrawer: React.FC<UploadResumeDrawerProps> = ({
             <div className="flex items-start gap-3">
               <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div>
-                <div className="text-sm font-medium text-yellow-700 mb-1">💡 使用提示</div>
+                <div className="text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-1">使用提示</div>
                 <div className="text-sm text-yellow-600 space-y-1">
                   <div>• 请确保简历内容清晰完整，便于系统准确解析</div>
                   <div>• 上传后请检查自动填充的内容，必要时进行手动调整</div>
