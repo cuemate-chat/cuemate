@@ -1,6 +1,9 @@
 import { withErrorLogging } from '@cuemate/logger';
 import { randomUUID } from 'crypto';
 import type { FastifyInstance } from 'fastify';
+import { promises as fs } from 'fs';
+import mammoth from 'mammoth';
+import path from 'path';
 import { z } from 'zod';
 import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
@@ -14,6 +17,7 @@ export function registerJobRoutes(app: FastifyInstance) {
     description: z.string().min(1).max(5000),
     resumeTitle: z.string().max(200).optional(),
     resumeContent: z.string().min(1).max(5000),
+    resumeFilePath: z.string().optional(),
   });
   const updateSchema = createSchema;
 
@@ -38,7 +42,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         // 再创建简历并指向岗位
         app.db
           .prepare(
-            'INSERT INTO resumes (id, user_id, job_id, title, content, created_at, vector_status) VALUES (?, ?, ?, ?, ?, ?, 0)',
+            'INSERT INTO resumes (id, user_id, job_id, title, content, file_path, created_at, vector_status) VALUES (?, ?, ?, ?, ?, ?, ?, 0)',
           )
           .run(
             resumeId,
@@ -46,6 +50,7 @@ export function registerJobRoutes(app: FastifyInstance) {
             jobId,
             body.resumeTitle || `${body.title}-简历`,
             body.resumeContent,
+            body.resumeFilePath || null,
             now,
           );
 
@@ -73,6 +78,7 @@ export function registerJobRoutes(app: FastifyInstance) {
                   id: resumeId,
                   title: body.resumeTitle || `${body.title}-简历`,
                   content: body.resumeContent,
+                  file_path: body.resumeFilePath,
                   job_id: jobId,
                   user_id: payload.uid,
                   created_at: now,
@@ -135,13 +141,13 @@ export function registerJobRoutes(app: FastifyInstance) {
       const rows = app.db
         .prepare(
           `SELECT j.id, j.title, j.description, j.status, j.created_at, j.vector_status,
-                  r.id AS resumeId, r.title AS resumeTitle, r.content AS resumeContent,
+                  r.id AS resumeId, r.title AS resumeTitle, r.content AS resumeContent, r.file_path AS resumeFilePath,
                   COALESCE(q.question_count, 0) AS question_count
-             FROM jobs j 
+             FROM jobs j
              LEFT JOIN resumes r ON r.job_id = j.id
              LEFT JOIN (
-               SELECT job_id, COUNT(*) AS question_count 
-               FROM interview_questions 
+               SELECT job_id, COUNT(*) AS question_count
+               FROM interview_questions
                GROUP BY job_id
              ) q ON q.job_id = j.id
             WHERE j.user_id = ?
@@ -163,7 +169,7 @@ export function registerJobRoutes(app: FastifyInstance) {
       const row = app.db
         .prepare(
           `SELECT j.id, j.title, j.description, j.status, j.created_at, j.vector_status,
-                  r.id AS resumeId, r.title AS resumeTitle, r.content AS resumeContent
+                  r.id AS resumeId, r.title AS resumeTitle, r.content AS resumeContent, r.file_path AS resumeFilePath
              FROM jobs j LEFT JOIN resumes r ON r.job_id = j.id
             WHERE j.id = ? AND j.user_id = ?`,
         )
@@ -196,17 +202,26 @@ export function registerJobRoutes(app: FastifyInstance) {
         .prepare('SELECT id FROM resumes WHERE job_id=? AND user_id=?')
         .get(id, payload.uid);
       if (r) {
-        app.db
-          .prepare(
-            'UPDATE resumes SET title=?, content=?, vector_status=0 WHERE id=? AND user_id=?',
-          )
-          .run(body.resumeTitle || `${body.title}-简历`, body.resumeContent, r.id, payload.uid);
+        // 只有当 resumeFilePath 有值时才更新 file_path,避免覆盖原有值
+        if (body.resumeFilePath !== undefined && body.resumeFilePath !== null) {
+          app.db
+            .prepare(
+              'UPDATE resumes SET title=?, content=?, file_path=?, vector_status=0 WHERE id=? AND user_id=?',
+            )
+            .run(body.resumeTitle || `${body.title}-简历`, body.resumeContent, body.resumeFilePath, r.id, payload.uid);
+        } else {
+          app.db
+            .prepare(
+              'UPDATE resumes SET title=?, content=?, vector_status=0 WHERE id=? AND user_id=?',
+            )
+            .run(body.resumeTitle || `${body.title}-简历`, body.resumeContent, r.id, payload.uid);
+        }
       } else {
         const resumeId = randomUUID();
         const now = Date.now();
         app.db
           .prepare(
-            'INSERT INTO resumes (id, user_id, job_id, title, content, created_at, vector_status) VALUES (?, ?, ?, ?, ?, ?, 0)',
+            'INSERT INTO resumes (id, user_id, job_id, title, content, file_path, created_at, vector_status) VALUES (?, ?, ?, ?, ?, ?, ?, 0)',
           )
           .run(
             resumeId,
@@ -214,6 +229,7 @@ export function registerJobRoutes(app: FastifyInstance) {
             id,
             body.resumeTitle || `${body.title}-简历`,
             body.resumeContent,
+            body.resumeFilePath || null,
             now,
           );
       }
@@ -225,9 +241,9 @@ export function registerJobRoutes(app: FastifyInstance) {
           method: 'DELETE',
         });
 
-        // 获取最新的简历信息
+        // 获取最新的简历信息(包括 title)
         const resumeRow = app.db
-          .prepare('SELECT id, content FROM resumes WHERE job_id=? AND user_id=?')
+          .prepare('SELECT id, title, content, file_path FROM resumes WHERE job_id=? AND user_id=?')
           .get(id, payload.uid);
 
         if (resumeRow) {
@@ -245,8 +261,9 @@ export function registerJobRoutes(app: FastifyInstance) {
               },
               resume: {
                 id: resumeRow.id,
-                title: body.resumeTitle || `${body.title}-简历`,
+                title: resumeRow.title,
                 content: resumeRow.content,
+                file_path: resumeRow.file_path,
                 job_id: id,
                 user_id: payload.uid,
                 created_at: Date.now(),
@@ -277,6 +294,365 @@ export function registerJobRoutes(app: FastifyInstance) {
     } catch (err: any) {
       app.log.error({ err }, '更新岗位失败');
       return reply.code(401).send(buildPrefixedError('更新岗位失败', err, 401));
+    }
+  });
+
+  // 工具函数：将流转换为 Buffer
+  async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      if (Buffer.isBuffer(chunk)) {
+        chunks.push(chunk);
+      } else {
+        chunks.push(Buffer.from(chunk));
+      }
+    }
+    return Buffer.concat(chunks);
+  }
+
+  // 上传简历文件到指定岗位 POST /jobs/:id/upload-resume
+  app.post('/jobs/:id/upload-resume', async (req: any, reply) => {
+    let text = '';
+    let savedFilePath = '';
+
+    try {
+      // JWT 认证检查
+      const payload = await req.jwtVerify();
+      const jobId = (req.params as any)?.id as string;
+
+      if (!jobId) {
+        return reply
+          .code(400)
+          .send(buildPrefixedError('简历上传失败', new Error('岗位 ID 不能为空'), 400));
+      }
+
+      // 检查岗位是否存在且属于当前用户
+      const job = app.db
+        .prepare('SELECT id, title, description, created_at FROM jobs WHERE id = ? AND user_id = ?')
+        .get(jobId, payload.uid);
+
+      if (!job) {
+        return reply.code(404).send({ error: '岗位不存在' });
+      }
+
+      // 获取上传的文件
+      const file = await req.file();
+      if (!file) {
+        return reply
+          .code(400)
+          .send(buildPrefixedError('简历上传失败', new Error('缺少文件，请选择要上传的简历文件'), 400));
+      }
+
+      const mimetype: string = file.mimetype || '';
+      const filename: string = file.filename || '';
+      const lower = filename.toLowerCase();
+
+      app.log.info({ jobId, filename, mimetype }, '开始处理岗位简历上传');
+
+      const buf = await streamToBuffer(file.file);
+
+      // 保存原始文件到 /opt/cuemate/pdf 目录
+      try {
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '');
+        const extension = path.extname(filename) || '.pdf';
+        const nameWithoutExt = path.basename(filename, extension);
+        const newFilename = `${nameWithoutExt}_${timestamp}${extension}`;
+
+        const pdfDir = '/opt/cuemate/pdf';
+        await fs.mkdir(pdfDir, { recursive: true });
+
+        const filePath = path.join(pdfDir, newFilename);
+        await fs.writeFile(filePath, buf);
+        savedFilePath = `/pdf/${newFilename}`;
+
+        app.log.info({ filename, newFilename, filePath, size: buf.length }, '原始文件已保存');
+      } catch (saveError: any) {
+        app.log.error({ err: saveError, filename }, '保存原始文件失败');
+        return reply
+          .code(500)
+          .send(buildPrefixedError('简历上传失败', new Error('保存文件失败'), 500));
+      }
+
+      // 解析文件内容
+      if (mimetype === 'application/pdf' || lower.endsWith('.pdf')) {
+        try {
+          if (buf.length < 4 || buf.toString('ascii', 0, 4) !== '%PDF') {
+            throw new Error('无效的 PDF 文件格式');
+          }
+
+          const PDFParser = (await import('pdf2json')).default;
+
+          text = await new Promise((resolve, reject) => {
+            const pdfParser = new PDFParser();
+
+            pdfParser.on('pdfParser_dataReady', (pdfData: any) => {
+              try {
+                const pages = pdfData.Pages || [];
+                const textContent = pages
+                  .map((page: any) => {
+                    const texts = page.Texts || [];
+                    return texts
+                      .map((text: any) => {
+                        const decodedText = decodeURIComponent(text.R[0].T);
+                        return decodedText;
+                      })
+                      .join(' ');
+                  })
+                  .join('\n');
+
+                const extractedText = textContent.trim();
+
+                if (extractedText && extractedText.length > 5) {
+                  app.log.info(
+                    { filename, textLength: extractedText.length, pages: pages.length },
+                    'PDF 解析完成',
+                  );
+                  resolve(extractedText);
+                } else {
+                  reject(new Error('提取的文本内容过少'));
+                }
+              } catch (parseError: any) {
+                reject(new Error(`PDF 解析失败：${parseError.message}`));
+              }
+            });
+
+            pdfParser.on('pdfParser_dataError', (err: any) => {
+              reject(new Error(`PDF 数据错误：${err.message}`));
+            });
+
+            pdfParser.parseBuffer(buf);
+          });
+        } catch (pdfError: any) {
+          app.log.error({ err: pdfError, filename }, 'PDF 解析失败');
+          return reply
+            .code(422)
+            .send(buildPrefixedError('简历上传失败', new Error(`PDF 文件解析失败：${pdfError.message}`), 422));
+        }
+      } else if (
+        mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        lower.endsWith('.docx')
+      ) {
+        try {
+          const res = await mammoth.extractRawText({ buffer: buf });
+          text = (res.value || '').trim();
+          app.log.info({ filename, textLength: text.length }, 'DOCX 解析完成');
+        } catch (docxError: any) {
+          app.log.error({ err: docxError, filename }, 'DOCX 解析失败');
+          return reply
+            .code(422)
+            .send(buildPrefixedError('简历上传失败', new Error(`DOCX 文件解析失败：${docxError.message}`), 422));
+        }
+      } else if (mimetype === 'application/msword' || lower.endsWith('.doc')) {
+        try {
+          const res = await mammoth.extractRawText({ buffer: buf });
+          text = (res.value || '').trim();
+          app.log.info({ filename, textLength: text.length }, 'DOC 解析完成');
+
+          if (!text || text.length < 10) {
+            return reply
+              .code(422)
+              .send(
+                buildPrefixedError(
+                  '简历上传失败',
+                  new Error('此 DOC 文件可能是较老的格式，建议转换为 DOCX 格式后重新上传'),
+                  422,
+                ),
+              );
+          }
+        } catch (docError: any) {
+          app.log.error({ err: docError, filename }, 'DOC 解析失败');
+          return reply
+            .code(422)
+            .send(buildPrefixedError('简历上传失败', new Error(`DOC 文件解析失败：${docError.message}`), 422));
+        }
+      } else {
+        return reply
+          .code(415)
+          .send(
+            buildPrefixedError(
+              '简历上传失败',
+              new Error(`不支持的文件类型：${mimetype || '未知格式'}。仅支持 PDF、DOC 和 DOCX 格式。`),
+              415,
+            ),
+          );
+      }
+
+      if (!text || text.length < 5) {
+        return reply
+          .code(422)
+          .send(
+            buildPrefixedError(
+              '简历上传失败',
+              new Error(`文件解析成功但未提取到有效文本内容（长度: ${text.length}字符）`),
+              422,
+            ),
+          );
+      }
+
+      app.log.info({ jobId, savedFilePath, textLength: text.length }, '文件解析成功，开始更新数据库');
+
+      // 查询该岗位对应的简历记录
+      const resume = app.db
+        .prepare('SELECT id, title FROM resumes WHERE job_id = ? AND user_id = ?')
+        .get(jobId, payload.uid);
+
+      if (!resume) {
+        return reply
+          .code(404)
+          .send(buildPrefixedError('简历上传失败', new Error('未找到该岗位的简历记录'), 404));
+      }
+
+      // 更新简历内容和文件路径，重置向量状态
+      app.db
+        .prepare(
+          'UPDATE resumes SET content = ?, file_path = ?, vector_status = 0 WHERE id = ? AND user_id = ?',
+        )
+        .run(text, savedFilePath, resume.id, payload.uid);
+
+      app.log.info({ resumeId: resume.id, jobId, filePath: savedFilePath }, '简历数据库记录已更新');
+
+      // 同步到 RAG 服务
+      try {
+        // 先删除旧的向量数据
+        await fetch(getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_DELETE}/${jobId}`), {
+          method: 'DELETE',
+        });
+
+        // 重新处理岗位和简历
+        const ragResponse = await fetch(
+          getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_PROCESS),
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              job: {
+                id: job.id,
+                title: job.title,
+                description: job.description,
+                user_id: payload.uid,
+                created_at: job.created_at,
+              },
+              resume: {
+                id: resume.id,
+                title: resume.title,
+                content: text,
+                file_path: savedFilePath,
+                job_id: jobId,
+                user_id: payload.uid,
+                created_at: Date.now(),
+              },
+            }),
+          },
+        );
+
+        if (ragResponse.ok) {
+          app.log.info({ jobId, resumeId: resume.id }, '向量库同步成功');
+          // 更新向量同步状态
+          app.db.prepare('UPDATE jobs SET vector_status = 1 WHERE id = ?').run(jobId);
+          app.db.prepare('UPDATE resumes SET vector_status = 1 WHERE id = ?').run(resume.id);
+        } else {
+          const errorText = await ragResponse.text();
+          app.log.error({ jobId, error: errorText }, '向量库同步失败');
+        }
+      } catch (ragError: any) {
+        app.log.error({ err: ragError, jobId }, '同步 RAG 服务失败');
+        // 不中断流程，继续返回成功
+      }
+
+      // 记录操作日志
+      await logOperation(app, req, {
+        ...OPERATION_MAPPING.JOB,
+        resourceId: jobId,
+        resourceName: job.title,
+        operation: OperationType.UPDATE,
+        message: `上传简历文件: ${filename}`,
+        status: 'success',
+        userId: payload.uid,
+      });
+
+      return {
+        success: true,
+        message: '简历上传成功',
+        filePath: savedFilePath,
+        textLength: text.length,
+      };
+    } catch (err: any) {
+      app.log.error({ err }, '简历上传失败');
+      return reply.code(500).send(buildPrefixedError('简历上传失败', err, 500));
+    }
+  });
+
+  // 删除岗位的简历文件 DELETE /jobs/:id/resume-file
+  app.delete('/jobs/:id/resume-file', async (req, reply) => {
+    try {
+      const payload = await req.jwtVerify();
+      const jobId = (req.params as any)?.id as string;
+
+      if (!jobId) {
+        return reply
+          .code(400)
+          .send(buildPrefixedError('删除失败', new Error('岗位 ID 不能为空'), 400));
+      }
+
+      // 检查岗位是否存在且属于当前用户
+      const job = app.db
+        .prepare('SELECT id FROM jobs WHERE id = ? AND user_id = ?')
+        .get(jobId, payload.uid);
+
+      if (!job) {
+        return reply.code(404).send({ error: '岗位不存在' });
+      }
+
+      // 查询该岗位对应的简历记录
+      const resume = app.db
+        .prepare('SELECT id, file_path FROM resumes WHERE job_id = ? AND user_id = ?')
+        .get(jobId, payload.uid);
+
+      if (!resume) {
+        return reply
+          .code(404)
+          .send(buildPrefixedError('删除失败', new Error('未找到该岗位的简历记录'), 404));
+      }
+
+      const oldFilePath = resume.file_path;
+
+      // 更新数据库，清空 file_path
+      app.db
+        .prepare('UPDATE resumes SET file_path = NULL WHERE id = ? AND user_id = ?')
+        .run(resume.id, payload.uid);
+
+      app.log.info({ resumeId: resume.id, jobId, oldFilePath }, '简历文件路径已清空');
+
+      // 删除物理文件
+      if (oldFilePath) {
+        try {
+          const fullPath = path.join('/opt/cuemate', oldFilePath);
+          await fs.unlink(fullPath);
+          app.log.info({ filePath: fullPath }, '简历文件已删除');
+        } catch (fileError: any) {
+          app.log.warn({ err: fileError, filePath: oldFilePath }, '删除文件失败（可能文件不存在）');
+          // 不中断流程，数据库已更新
+        }
+      }
+
+      // 记录操作日志
+      await logOperation(app, req, {
+        ...OPERATION_MAPPING.JOB,
+        resourceId: jobId,
+        resourceName: `删除简历文件`,
+        operation: OperationType.DELETE,
+        message: `删除简历文件: ${oldFilePath || '无'}`,
+        status: 'success',
+        userId: payload.uid,
+      });
+
+      return {
+        success: true,
+        message: '简历文件已删除',
+      };
+    } catch (err: any) {
+      app.log.error({ err }, '删除简历文件失败');
+      return reply.code(500).send(buildPrefixedError('删除简历文件失败', err, 500));
     }
   });
 
@@ -746,7 +1122,7 @@ export function registerJobRoutes(app: FastifyInstance) {
             success: true,
             suggestions:
               (result.suggestions || '暂无具体建议') +
-              '\n\n⚠️ 注意：AI 生成的简历内容相对较短，建议您在优化后的基础上补充更多详细信息。',
+              '\n\n注意：AI 生成的简历内容相对较短，建议您在优化后的基础上补充更多详细信息。',
             optimizedResume: result.optimizedResume || content,
             warning: `优化后的简历较短（${optimizedLength}字），建议在此基础上补充更多详细信息。原简历${originalLength}字。`,
           };
