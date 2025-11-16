@@ -20,6 +20,7 @@ import PageLoading from '../../components/PageLoading';
 import { useLoading } from '../../hooks/useLoading';
 import DocumentDetailDrawer from './DocumentDetailDrawer';
 import FullContentDrawer from './FullContentDrawer';
+import UploadedResumeDrawer from '../JobsList/UploadedResumeDrawer';
 
 export default function VectorKnowledge() {
   const [searchResults, setSearchResults] = useState<VectorDocument[]>([]);
@@ -54,6 +55,11 @@ export default function VectorKnowledge() {
   // FullContentDrawer 状态管理
   const [fullContentDrawerVisible, setFullContentDrawerVisible] = useState(false);
   const [currentFullContentDoc, setCurrentFullContentDoc] = useState<VectorDocument | null>(null);
+
+  // UploadedResumeDrawer 状态管理
+  const [uploadedResumeVisible, setUploadedResumeVisible] = useState(false);
+  const [currentResumeFilePath, setCurrentResumeFilePath] = useState<string | undefined>(undefined);
+  const [currentResumeTitle, setCurrentResumeTitle] = useState<string | undefined>(undefined);
 
   // 同步和清空的加载状态
   const { loading: syncLoading, start: startSync, end: endSync } = useLoading();
@@ -893,24 +899,40 @@ export default function VectorKnowledge() {
 
                     {/* 基础信息 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-slate-500 dark:text-slate-400">
-                      <span>
+                      <span className="truncate">
                         创建时间:{' '}
                         {doc.metadata.timestamp || doc.metadata.createdAt
                           ? formatDate(doc.metadata.createdAt || doc.metadata.timestamp)
                           : '未知'}
                       </span>
                       {doc.metadata.source && (
-                        <span>来源: {getSourceDisplayName(doc.metadata.source)}</span>
+                        <span className="truncate">来源: {getSourceDisplayName(doc.metadata.source)}</span>
                       )}
                       {doc.metadata.type && (
-                        <span>类型: {getTypeDisplayName(doc.metadata.type)}</span>
+                        <span className="truncate">类型: {getTypeDisplayName(doc.metadata.type)}</span>
                       )}
                       {doc.metadata.chunkIndex !== undefined && (
-                        <span>
+                        <span className="truncate">
                           分块: {doc.metadata.chunkIndex + 1}/{doc.metadata.totalChunks}
                         </span>
                       )}
-                      <span className="md:col-span-2 lg:col-span-2">ID: {doc.id}</span>
+                      <span className="truncate" title={doc.id}>ID: {doc.id}</span>
+                      {doc.metadata.type === 'resumes' && doc.metadata.filePath && (
+                        <span className="truncate">
+                          已上传简历:{' '}
+                          <button
+                            onClick={() => {
+                              setCurrentResumeFilePath(doc.metadata.filePath);
+                              setCurrentResumeTitle(doc.metadata.title);
+                              setUploadedResumeVisible(true);
+                            }}
+                            className="text-blue-600 dark:text-blue-400 hover:underline truncate inline-block align-bottom max-w-[200px]"
+                            title={doc.metadata.filePath.split('/').pop()}
+                          >
+                            {doc.metadata.filePath.split('/').pop()}
+                          </button>
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -945,6 +967,14 @@ export default function VectorKnowledge() {
           open={fullContentDrawerVisible}
           onClose={() => setFullContentDrawerVisible(false)}
           document={currentFullContentDoc}
+        />
+
+        {/* 已上传的简历查看弹框 */}
+        <UploadedResumeDrawer
+          open={uploadedResumeVisible}
+          onClose={() => setUploadedResumeVisible(false)}
+          filePath={currentResumeFilePath}
+          jobTitle={currentResumeTitle}
         />
       {/* 同步和清空操作的全屏 loading */}
       {syncLoading && <PageLoading tip="正在同步所有数据，请稍候..." type="loading" />}
