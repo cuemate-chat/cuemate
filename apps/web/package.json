@@ -14,6 +14,7 @@
         "@ant-design/icons": "^5.3.7",
         "@ant-design/plots": "^2.6.3",
         "@heroicons/react": "^2.1.5",
+        "@js-preview/docx": "^1.6.4",
         "@monaco-editor/react": "^4.7.0",
         "antd": "^5.27.3",
         "antd-style": "^3.7.1",

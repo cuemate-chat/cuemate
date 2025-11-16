@@ -155,3 +155,8 @@ export async function uploadJobResume(
 
   return await res.json();
 }
+
+// 删除岗位的简历文件
+export async function deleteJobResume(jobId: string): Promise<{ success: boolean; message: string }> {
+  return await http.delete<{ success: boolean; message: string }>(`/jobs/${jobId}/resume-file`);
+}
