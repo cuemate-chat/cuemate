@@ -110,7 +110,9 @@ const DrawerProvider: React.FC<DrawerProviderProps> = ({
   const drawerStyles: DrawerStyles = {
     mask: {
       backdropFilter: 'blur(12px)',
-      background: isDarkMode ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.25)',
+      background: isDarkMode
+        ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.75) 50%, rgba(51, 65, 85, 0.65) 100%)'
+        : 'linear-gradient(135deg, rgba(147, 197, 253, 0.2) 0%, rgba(191, 219, 254, 0.15) 50%, rgba(219, 234, 254, 0.1) 100%)',
       position: 'fixed',
       top: 0,
       left: 0,
