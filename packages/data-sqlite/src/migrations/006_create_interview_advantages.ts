@@ -22,6 +22,8 @@ export function up(db: any): void {
     ALTER TABLE interview_reviews ADD COLUMN key_points TEXT;         -- 考察点
     ALTER TABLE interview_reviews ADD COLUMN assessment TEXT;         -- 回答评价
     ALTER TABLE interview_reviews ADD COLUMN reference_answer TEXT;   -- 参考回答
+    ALTER TABLE interview_reviews ADD COLUMN other_id TEXT;           -- 其他文件 ID
+    ALTER TABLE interview_reviews ADD COLUMN other_content TEXT;      -- 其他文件内容
 
     -- interview_scores 追加整体评价与雷达维度（0~100）
     ALTER TABLE interview_scores ADD COLUMN pros TEXT;

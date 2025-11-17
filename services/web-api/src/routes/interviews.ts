@@ -281,6 +281,8 @@ export function registerInterviewRoutes(app: FastifyInstance) {
             keyPoints: z.string().optional(),
             assessment: z.string().optional(),
             referenceAnswer: z.string().optional(),
+            otherId: z.string().optional(),
+            otherContent: z.string().optional(),
           })
           .parse((req as any).body || {});
 
@@ -299,8 +301,8 @@ export function registerInterviewRoutes(app: FastifyInstance) {
             `INSERT INTO interview_reviews (
               id, interview_id, note_type, content, question_id, question,
               answer, asked_question, candidate_answer, pros, cons,
-              suggestions, key_points, assessment, reference_answer, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              suggestions, key_points, assessment, reference_answer, other_id, other_content, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .run(
             id,
@@ -318,6 +320,8 @@ export function registerInterviewRoutes(app: FastifyInstance) {
             body.keyPoints || null,
             body.assessment || null,
             body.referenceAnswer || null,
+            body.otherId || null,
+            body.otherContent || null,
             now,
           );
 
@@ -387,7 +391,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           SELECT
             r.id, r.interview_id, r.note_type, r.content, r.question_id, r.question,
             r.answer, r.asked_question, r.candidate_answer, r.pros, r.cons,
-            r.suggestions, r.key_points, r.assessment, r.reference_answer, r.created_at
+            r.suggestions, r.key_points, r.assessment, r.reference_answer, r.other_id, r.other_content, r.created_at
           FROM interview_reviews r
           JOIN interviews i ON r.interview_id = i.id
           ${whereClause}
@@ -430,6 +434,8 @@ export function registerInterviewRoutes(app: FastifyInstance) {
             keyPoints: z.string().optional(),
             assessment: z.string().optional(),
             referenceAnswer: z.string().optional(),
+            otherId: z.string().optional(),
+            otherContent: z.string().optional(),
           })
           .parse((req as any).body || {});
 
@@ -500,6 +506,14 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         if (body.referenceAnswer !== undefined) {
           updateFields.push('reference_answer = ?');
           updateValues.push(body.referenceAnswer);
+        }
+        if (body.otherId !== undefined) {
+          updateFields.push('other_id = ?');
+          updateValues.push(body.otherId);
+        }
+        if (body.otherContent !== undefined) {
+          updateFields.push('other_content = ?');
+          updateValues.push(body.otherContent);
         }
 
         if (updateFields.length > 0) {

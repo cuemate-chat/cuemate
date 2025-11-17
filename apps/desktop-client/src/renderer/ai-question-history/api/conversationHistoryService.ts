@@ -60,6 +60,8 @@ export interface InterviewReview {
   key_points?: string;
   assessment?: string;
   reference_answer?: string;
+  other_id?: string;
+  other_content?: string;
   created_at: number;
 }
 
