@@ -349,3 +349,80 @@ export const getRelatedDocuments = async (
     return { success: false, error: `网络错误: ${error}` };
   }
 };
+
+// 其他文件相关 API
+
+// 上传其他文件
+export const uploadOtherFile = async (file: File): Promise<{ success: boolean; message: string; id?: string; error?: string }> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await http.post('/vectors/other-files/upload', formData);
+    return response as { success: boolean; message: string; id?: string; error?: string };
+  } catch (error) {
+    return { success: false, message: '', error: `上传失败: ${error}` };
+  }
+};
+
+// 添加其他文本内容
+export const addOtherFileText = async (title: string, content: string): Promise<{ success: boolean; message: string; id?: string; error?: string }> => {
+  try {
+    const response = await http.post('/vectors/other-files/text', { title, content });
+    return response as { success: boolean; message: string; id?: string; error?: string };
+  } catch (error) {
+    return { success: false, message: '', error: `添加失败: ${error}` };
+  }
+};
+
+// 获取其他文件列表
+export const listOtherFiles = async (): Promise<SearchResponse> => {
+  try {
+    const url = `${RAG_SERVICE_URL}/search/other-files?query=&k=1000`;
+    const response = await fetch(url);
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        const results = data.results || [];
+        return {
+          success: true,
+          results,
+          total: results.length,
+        };
+      } else {
+        return {
+          success: false,
+          results: [],
+          total: 0,
+          error: data.error || '获取列表失败',
+        };
+      }
+    } else {
+      const errorText = await response.text();
+      return {
+        success: false,
+        results: [],
+        total: 0,
+        error: `请求失败: ${response.status} ${errorText}`,
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      results: [],
+      total: 0,
+      error: `网络错误: ${error}`,
+    };
+  }
+};
+
+// 删除其他文件
+export const deleteOtherFile = async (docId: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const data: any = await http.post('/vectors/delete', { id: docId, type: 'other-files' });
+    return data?.success ? { success: true } : { success: false, error: data?.error || '删除失败' };
+  } catch (error) {
+    return { success: false, error: `网络错误: ${error}` };
+  }
+};
