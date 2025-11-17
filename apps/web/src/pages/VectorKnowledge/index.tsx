@@ -9,10 +9,14 @@ import {
   deleteDocument,
   deleteJob,
   deleteQuestion,
+  deleteOtherFile,
   getRelatedDocuments,
+  listOtherFiles,
   searchJobs,
   searchQuestions,
-  searchResumes
+  searchResumes,
+  uploadOtherFile,
+  addOtherFileText
 } from '../../api/vector';
 import { WarningIcon } from '../../components/Icons';
 import { message } from '../../components/Message';
@@ -65,11 +69,20 @@ export default function VectorKnowledge() {
   const { loading: syncLoading, start: startSync, end: endSync } = useLoading();
   const { loading: cleanLoading, start: startClean, end: endClean } = useLoading();
 
+  // 其他文件页面状态
+  const [otherFiles, setOtherFiles] = useState<VectorDocument[]>([]);
+  const [otherFileText, setOtherFileText] = useState('');
+  const [otherFileTitle, setOtherFileTitle] = useState('');
+  const [otherFilesSearchQuery, setOtherFilesSearchQuery] = useState(''); // 搜索框
+  const { loading: uploadLoading, start: startUpload, end: endUpload } = useLoading();
+
   // 获取标签列表和默认加载所有内容
   useEffect(() => {
     fetchTags();
-    if (currentTab !== 'sync-status') {
+    if (currentTab !== 'sync-status' && currentTab !== 'other-files') {
       loadDocumentsByTab();
+    } else if (currentTab === 'other-files') {
+      loadOtherFilesList();
     }
   }, [currentTab]); // 当标签页切换时重新加载数据
 
@@ -173,6 +186,98 @@ export default function VectorKnowledge() {
     } catch (error) {
       console.error('获取标签失败:', error);
     }
+  };
+
+  // 加载其他文件列表
+  const loadOtherFilesList = async () => {
+    try {
+      startLoading();
+      const result = await listOtherFiles();
+      if (result.success) {
+        setOtherFiles(result.results || []);
+      } else {
+        message.error(result.error || '加载文件列表失败');
+      }
+    } catch (error: any) {
+      message.error(error.message || '加载文件列表失败');
+    } finally {
+      await endLoading();
+    }
+  };
+
+  // 处理文件上传
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      startUpload();
+      const result = await uploadOtherFile(file);
+      if (result.success) {
+        message.success(result.message || '文件上传成功');
+        await loadOtherFilesList();
+        // 重置文件输入
+        event.target.value = '';
+      } else {
+        message.error(result.error || '文件上传失败');
+      }
+    } catch (error: any) {
+      message.error(error.message || '文件上传失败');
+    } finally {
+      await endUpload();
+    }
+  };
+
+  // 处理文本内容提交
+  const handleTextSubmit = async () => {
+    if (!otherFileText.trim()) {
+      message.error('请输入文本内容');
+      return;
+    }
+
+    try {
+      startUpload();
+      const result = await addOtherFileText(
+        otherFileTitle.trim() || '未命名文档',
+        otherFileText.trim()
+      );
+      if (result.success) {
+        message.success(result.message || '内容添加成功');
+        await loadOtherFilesList();
+        // 清空表单
+        setOtherFileText('');
+        setOtherFileTitle('');
+      } else {
+        message.error(result.error || '内容添加失败');
+      }
+    } catch (error: any) {
+      message.error(error.message || '内容添加失败');
+    } finally {
+      await endUpload();
+    }
+  };
+
+  // 删除其他文件
+  const handleDeleteOtherFile = async (docId: string, title: string) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除文件 "${title}" 吗？`,
+      okText: '确定',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          const result = await deleteOtherFile(docId);
+          if (result.success) {
+            message.success('删除成功');
+            await loadOtherFilesList();
+          } else {
+            message.error(result.error || '删除失败');
+          }
+        } catch (error: any) {
+          message.error(error.message || '删除失败');
+        }
+      },
+    });
   };
 
   // 搜索文档（支持传入局部覆盖，便于在交互事件里立刻生效）
@@ -488,6 +593,16 @@ export default function VectorKnowledge() {
             >
               同步状态
             </button>
+            <button
+              onClick={() => handleTabChange('other-files')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                currentTab === 'other-files'
+                  ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'
+              }`}
+            >
+              其他文件
+            </button>
           </nav>
         </div>
 
@@ -507,8 +622,213 @@ export default function VectorKnowledge() {
           </div>
         )}
 
-        {/* 搜索区域 - 只在非同步状态页面显示 */}
-        {currentTab !== 'sync-status' && (
+        {/* 其他文件页面 */}
+        {currentTab === 'other-files' && (
+          <div className="space-y-6">
+            {/* 上传区域 */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">上传文件或输入内容</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  上传项目文件或直接输入文本内容，系统将自动提取并存储到向量知识库中，方便后续检索。
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 文件上传 */}
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+                  <div className="text-gray-400 mb-4">
+                    <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
+                    上传文件
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                    支持 PDF、TXT、DOCX、MD 等格式
+                  </p>
+                  <input
+                    type="file"
+                    id="file-upload"
+                    className="hidden"
+                    accept=".pdf,.txt,.docx,.md,.doc"
+                    onChange={handleFileUpload}
+                    disabled={uploadLoading}
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className={`inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 ${uploadLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    {uploadLoading ? '上传中...' : '选择文件'}
+                  </label>
+                </div>
+
+                {/* 文本输入 */}
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+                  <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
+                    输入文本内容
+                  </h3>
+                  <Input.TextArea
+                    rows={6}
+                    placeholder="在此输入文本内容，可以是项目需求、技术文档、面试问题等..."
+                    className="mb-4 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
+                    value={otherFileText}
+                    onChange={(e) => setOtherFileText(e.target.value)}
+                    disabled={uploadLoading}
+                  />
+                  <Input
+                    placeholder="文件标题（可选）"
+                    className="mb-4 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600"
+                    value={otherFileTitle}
+                    onChange={(e) => setOtherFileTitle(e.target.value)}
+                    disabled={uploadLoading}
+                  />
+                  <button
+                    onClick={handleTextSubmit}
+                    disabled={uploadLoading || !otherFileText.trim()}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {uploadLoading ? '添加中...' : '添加到知识库'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 已上传文件列表 */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                  已上传的文件 ({otherFiles.filter(doc =>
+                    !otherFilesSearchQuery ||
+                    (doc.metadata.title || '').toLowerCase().includes(otherFilesSearchQuery.toLowerCase()) ||
+                    doc.content.toLowerCase().includes(otherFilesSearchQuery.toLowerCase())
+                  ).length})
+                </h3>
+                <div className="flex items-center gap-3">
+                  {/* 搜索框 */}
+                  {otherFiles.length > 0 && (
+                    <Input
+                      placeholder="搜索文件名或内容..."
+                      value={otherFilesSearchQuery}
+                      onChange={(e) => setOtherFilesSearchQuery(e.target.value)}
+                      allowClear
+                      prefix={<SearchOutlined className="text-slate-400" />}
+                      className="w-64"
+                    />
+                  )}
+                  {/* 刷新按钮 */}
+                  {otherFiles.length > 0 && (
+                    <button
+                      onClick={loadOtherFilesList}
+                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                    >
+                      <ArrowPathIcon className="w-4 h-4" />
+                      刷新
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {(() => {
+                if (loading) {
+                  return (
+                    <div className="text-center py-12">
+                      <PageLoading tip="加载中..." />
+                    </div>
+                  );
+                }
+
+                if (otherFiles.length === 0) {
+                  return (
+                    <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                      暂无上传文件
+                    </div>
+                  );
+                }
+
+                const filteredFiles = otherFiles.filter(doc =>
+                  !otherFilesSearchQuery ||
+                  (doc.metadata.title || '').toLowerCase().includes(otherFilesSearchQuery.toLowerCase()) ||
+                  doc.content.toLowerCase().includes(otherFilesSearchQuery.toLowerCase())
+                );
+
+                if (filteredFiles.length === 0) {
+                  return (
+                    <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                      未找到匹配的文件
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {filteredFiles.map((doc, index) => (
+                    <div
+                      key={doc.id}
+                      className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+                    >
+                      <div className="flex items-start gap-4">
+                        {/* 序号 */}
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{index + 1}</span>
+                        </div>
+
+                        {/* 内容 */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                            {doc.metadata.title || '未命名文档'}
+                          </h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                            {doc.content}
+                          </p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                            <span>
+                              创建时间: {doc.metadata.createdAt ? new Date(doc.metadata.createdAt).toLocaleString('zh-CN') : '未知'}
+                            </span>
+                            <span>ID: {doc.id.slice(0, 12)}...</span>
+                          </div>
+                        </div>
+
+                        {/* 操作按钮 */}
+                        <div className="flex-shrink-0 flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              // 使用文件预览（PDF/DOCX），而不是显示纯文本
+                              const filePath = doc.metadata.filePath;
+                              if (filePath) {
+                                setCurrentResumeFilePath(filePath);
+                                setCurrentResumeTitle(doc.metadata.title || '未命名文档');
+                                setUploadedResumeVisible(true);
+                              } else {
+                                // 兜底：如果没有文件路径，显示纯文本内容
+                                setCurrentFullContentDoc(doc);
+                                setFullContentDrawerVisible(true);
+                              }
+                            }}
+                            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                          >
+                            查看
+                          </button>
+                          <button
+                            onClick={() => handleDeleteOtherFile(doc.id, doc.metadata.title || '未命名文档')}
+                            className="text-sm text-red-600 dark:text-red-400 hover:underline"
+                          >
+                            删除
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* 搜索区域 - 只在岗位/简历/押题页面显示 */}
+        {currentTab !== 'sync-status' && currentTab !== 'other-files' && (
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
             <div className="flex flex-col lg:flex-row gap-4">
               {/* 搜索输入框 */}
@@ -761,8 +1081,8 @@ export default function VectorKnowledge() {
           </div>
         )}
 
-        {/* 搜索结果 - 只在非同步状态页面显示 */}
-        {currentTab !== 'sync-status' && searchResults.length > 0 && (
+        {/* 搜索结果 - 只在岗位/简历/押题页面显示 */}
+        {currentTab !== 'sync-status' && currentTab !== 'other-files' && searchResults.length > 0 && (
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
@@ -941,8 +1261,8 @@ export default function VectorKnowledge() {
           </div>
         )}
 
-        {/* 空状态 - 只在非同步状态页面显示 */}
-        {currentTab !== 'sync-status' && !loading && searchResults.length === 0 && (
+        {/* 空状态 - 只在岗位/简历/押题页面显示 */}
+        {currentTab !== 'sync-status' && currentTab !== 'other-files' && !loading && searchResults.length === 0 && (
           <div className="text-center py-12">
             <SearchOutlined className="mx-auto text-6xl text-slate-400 dark:text-slate-500" />
             <h3 className="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">
