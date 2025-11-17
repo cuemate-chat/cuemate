@@ -9,6 +9,7 @@ import { createDocumentRoutes } from './documents.js';
 import { createHealthRoutes } from './health.js';
 import { createJobRoutes } from './jobs.js';
 import { createQuestionRoutes } from './questions.js';
+import { createAIVectorRecordsRoutes } from './ai-vector-records.js';
 
 export async function createRoutes(
   app: FastifyInstance,
@@ -23,6 +24,7 @@ export async function createRoutes(
   await createDocumentRoutes(app, deps);
   await createJobRoutes(app, deps);
   await createQuestionRoutes(app, deps);
+  await createAIVectorRecordsRoutes(app, deps);
   await createHealthRoutes(app, deps);
 
   // 根路径信息
