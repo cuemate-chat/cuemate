@@ -1,9 +1,9 @@
 import { Button } from 'antd';
+import { storage } from '../../api/http';
 import type { VersionInfo } from '../../api/versions';
 import { getCommitTypeInfo, parseCommitType } from '../../api/versions';
-import { storage } from '../../api/http';
-import { isVersionGreater } from '../../utils/version';
 import DrawerProviderLevel2, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProviderLevel2';
+import { isVersionGreater } from '../../utils/version';
 
 interface VersionDetailDrawerProps {
   open: boolean;
@@ -284,18 +284,6 @@ export default function VersionDetailDrawer({
                     >
                       {version.maintainer.github}
                     </a>
-                  </div>
-                )}
-                {version.maintainer.tm && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-500 dark:text-slate-400 min-w-16">TM:</span>
-                    <span className="text-slate-800 dark:text-slate-200">{version.maintainer.tm}</span>
-                  </div>
-                )}
-                {version.maintainer.vx && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-500 dark:text-slate-400 min-w-16">VX:</span>
-                    <span className="text-slate-800 dark:text-slate-200">{version.maintainer.vx}</span>
                   </div>
                 )}
               </div>
