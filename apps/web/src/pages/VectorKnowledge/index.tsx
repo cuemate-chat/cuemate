@@ -1,5 +1,6 @@
 import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { FileText, File, FileCode } from 'lucide-react';
 import { Input, Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import { listTags } from '../../api/questions';
@@ -16,7 +17,9 @@ import {
   searchQuestions,
   searchResumes,
   uploadOtherFile,
-  addOtherFileText
+  addOtherFileText,
+  listAIVectorRecords,
+  deleteAIVectorRecord
 } from '../../api/vector';
 import { WarningIcon } from '../../components/Icons';
 import { message } from '../../components/Message';
@@ -76,13 +79,19 @@ export default function VectorKnowledge() {
   const [otherFilesSearchQuery, setOtherFilesSearchQuery] = useState(''); // 搜索框
   const { loading: uploadLoading, start: startUpload, end: endUpload } = useLoading();
 
+  // AI 向量记录页面状态
+  const [aiVectorRecords, setAiVectorRecords] = useState<VectorDocument[]>([]);
+  const [aiVectorSearchQuery, setAiVectorSearchQuery] = useState(''); // 搜索框
+
   // 获取标签列表和默认加载所有内容
   useEffect(() => {
     fetchTags();
-    if (currentTab !== 'sync-status' && currentTab !== 'other-files') {
+    if (currentTab !== 'sync-status' && currentTab !== 'other-files' && currentTab !== 'ai-vector-records') {
       loadDocumentsByTab();
     } else if (currentTab === 'other-files') {
       loadOtherFilesList();
+    } else if (currentTab === 'ai-vector-records') {
+      loadAIVectorRecordsList();
     }
   }, [currentTab]); // 当标签页切换时重新加载数据
 
@@ -205,6 +214,23 @@ export default function VectorKnowledge() {
     }
   };
 
+  // 加载 AI 向量记录列表
+  const loadAIVectorRecordsList = async () => {
+    try {
+      startLoading();
+      const result = await listAIVectorRecords({ query: aiVectorSearchQuery });
+      if (result.success) {
+        setAiVectorRecords(result.results || []);
+      } else {
+        message.error(result.error || '加载 AI 向量记录失败');
+      }
+    } catch (error: any) {
+      message.error(error.message || '加载 AI 向量记录失败');
+    } finally {
+      await endLoading();
+    }
+  };
+
   // 处理文件上传
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -257,6 +283,45 @@ export default function VectorKnowledge() {
     }
   };
 
+  // 根据文件路径或标题获取文件类型图标和标签
+  const getFileTypeInfo = (doc: VectorDocument) => {
+    const filePath = doc.metadata.filePath || doc.metadata.title || '';
+    const lowerPath = filePath.toLowerCase();
+
+    if (lowerPath.endsWith('.pdf')) {
+      return {
+        icon: <FileText className="w-5 h-5 text-red-500" />,
+        label: 'PDF',
+        color: 'text-red-500 bg-red-50 dark:bg-red-900/20'
+      };
+    } else if (lowerPath.endsWith('.md') || lowerPath.endsWith('.markdown')) {
+      return {
+        icon: <FileCode className="w-5 h-5 text-blue-500" />,
+        label: 'MD',
+        color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20'
+      };
+    } else if (lowerPath.endsWith('.doc') || lowerPath.endsWith('.docx')) {
+      return {
+        icon: <FileText className="w-5 h-5 text-blue-600" />,
+        label: 'DOCX',
+        color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20'
+      };
+    } else if (lowerPath.endsWith('.txt')) {
+      return {
+        icon: <File className="w-5 h-5 text-slate-500" />,
+        label: 'TXT',
+        color: 'text-slate-500 bg-slate-50 dark:bg-slate-700'
+      };
+    } else {
+      // 默认文本类型
+      return {
+        icon: <FileText className="w-5 h-5 text-slate-400" />,
+        label: '文本',
+        color: 'text-slate-400 bg-slate-50 dark:bg-slate-700'
+      };
+    }
+  };
+
   // 删除其他文件
   const handleDeleteOtherFile = async (docId: string, title: string) => {
     Modal.confirm({
@@ -270,6 +335,29 @@ export default function VectorKnowledge() {
           if (result.success) {
             message.success('删除成功');
             await loadOtherFilesList();
+          } else {
+            message.error(result.error || '删除失败');
+          }
+        } catch (error: any) {
+          message.error(error.message || '删除失败');
+        }
+      },
+    });
+  };
+
+  // 删除 AI 向量记录
+  const handleDeleteAIVectorRecord = async (docId: string, question: string) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除记录 "${question}" 吗？`,
+      okText: '确定',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          const result = await deleteAIVectorRecord(docId);
+          if (result.success) {
+            message.success('删除成功');
+            await loadAIVectorRecordsList();
           } else {
             message.error(result.error || '删除失败');
           }
@@ -603,6 +691,16 @@ export default function VectorKnowledge() {
             >
               其他文件
             </button>
+            <button
+              onClick={() => handleTabChange('ai-vector-records')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                currentTab === 'ai-vector-records'
+                  ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'
+              }`}
+            >
+              AI 向量记录
+            </button>
           </nav>
         </div>
 
@@ -766,12 +864,25 @@ export default function VectorKnowledge() {
                     {filteredFiles.map((doc, index) => (
                     <div
                       key={doc.id}
-                      className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+                      className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-colors relative"
                     >
-                      <div className="flex items-start gap-4">
-                        {/* 序号 */}
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{index + 1}</span>
+                      {/* 左上角序号 */}
+                      <div className="absolute left-0 top-0">
+                        <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
+                          {index + 1}
+                        </div>
+                        <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
+                      </div>
+
+                      <div className="flex items-start gap-4 ml-8">
+                        {/* 文件类型图标 + 标签 */}
+                        <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                          <div className={`w-12 h-12 rounded-lg ${getFileTypeInfo(doc).color} flex items-center justify-center`}>
+                            {getFileTypeInfo(doc).icon}
+                          </div>
+                          <span className={`text-[10px] font-medium ${getFileTypeInfo(doc).color.split(' ')[0]}`}>
+                            {getFileTypeInfo(doc).label}
+                          </span>
                         </div>
 
                         {/* 内容 */}
@@ -827,8 +938,119 @@ export default function VectorKnowledge() {
           </div>
         )}
 
+        {/* AI 向量记录页面 */}
+        {currentTab === 'ai-vector-records' && (
+          <div className="space-y-6">
+            {/* 搜索区域 */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+              <div className="flex gap-4">
+                <Input
+                  placeholder="搜索 AI 向量记录..."
+                  value={aiVectorSearchQuery}
+                  onChange={(e) => setAiVectorSearchQuery(e.target.value)}
+                  onPressEnter={loadAIVectorRecordsList}
+                  prefix={<SearchOutlined />}
+                  className="flex-1"
+                />
+                <button
+                  onClick={loadAIVectorRecordsList}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  搜索
+                </button>
+              </div>
+            </div>
+
+            {/* 记录列表 */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
+              {(() => {
+                const groupedRecords: { [key: string]: VectorDocument[] } = {};
+                aiVectorRecords.forEach((record) => {
+                  const noteType = record.metadata.note_type || 'unknown';
+                  if (!groupedRecords[noteType]) {
+                    groupedRecords[noteType] = [];
+                  }
+                  groupedRecords[noteType].push(record);
+                });
+
+                const typeLabels: { [key: string]: string } = {
+                  mock: '模拟面试',
+                  training: '面试训练',
+                };
+
+                return Object.entries(groupedRecords).map(([noteType, records]) => (
+                  <div key={noteType} className="border-b border-slate-200 dark:border-slate-700 last:border-b-0">
+                    <div className="px-6 py-4 bg-slate-50 dark:bg-slate-700/50">
+                      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                        {typeLabels[noteType] || noteType} ({records.length})
+                      </h3>
+                    </div>
+                    <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                      {records.map((record) => (
+                        <div key={record.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                          <div className="space-y-3">
+                            {/* 问题 */}
+                            {record.metadata.asked_question && (
+                              <div>
+                                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">问题：</span>
+                                <p className="mt-1 text-slate-900 dark:text-slate-100">{record.metadata.asked_question}</p>
+                              </div>
+                            )}
+                            {/* 用户回答 */}
+                            {record.metadata.candidate_answer && (
+                              <div>
+                                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">回答：</span>
+                                <p className="mt-1 text-slate-700 dark:text-slate-300">{record.metadata.candidate_answer}</p>
+                              </div>
+                            )}
+                            {/* 押题答案 */}
+                            {record.metadata.answer && (
+                              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
+                                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">使用了押题答案</span>
+                                <p className="mt-1 text-sm text-blue-600 dark:text-blue-400">{record.metadata.answer.substring(0, 200)}...</p>
+                              </div>
+                            )}
+                            {/* 其他文件 */}
+                            {record.metadata.other_content && (
+                              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded">
+                                <span className="text-sm font-medium text-green-700 dark:text-green-300">使用了其他文件</span>
+                                <p className="mt-1 text-sm text-green-600 dark:text-green-400">{record.metadata.other_content.substring(0, 200)}...</p>
+                              </div>
+                            )}
+                            {/* 时间和操作 */}
+                            <div className="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-600">
+                              <span className="text-sm text-slate-500 dark:text-slate-400">
+                                {new Date((record.metadata.created_at || 0) * 1000).toLocaleString('zh-CN')}
+                              </span>
+                              <button
+                                onClick={() => handleDeleteAIVectorRecord(record.id, record.metadata.asked_question || '未命名问题')}
+                                className="text-sm text-red-600 dark:text-red-400 hover:underline"
+                              >
+                                删除
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ));
+              })()}
+
+              {/* 空状态 */}
+              {aiVectorRecords.length === 0 && !loading && (
+                <div className="text-center py-12">
+                  <SearchOutlined className="mx-auto text-6xl text-slate-400 dark:text-slate-500" />
+                  <h3 className="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">暂无 AI 向量记录</h3>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">使用押题或其他文件生成答案后会自动保存</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 搜索区域 - 只在岗位/简历/押题页面显示 */}
-        {currentTab !== 'sync-status' && currentTab !== 'other-files' && (
+        {currentTab !== 'sync-status' && currentTab !== 'other-files' && currentTab !== 'ai-vector-records' && (
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
             <div className="flex flex-col lg:flex-row gap-4">
               {/* 搜索输入框 */}
@@ -1082,7 +1304,7 @@ export default function VectorKnowledge() {
         )}
 
         {/* 搜索结果 - 只在岗位/简历/押题页面显示 */}
-        {currentTab !== 'sync-status' && currentTab !== 'other-files' && searchResults.length > 0 && (
+        {currentTab !== 'sync-status' && currentTab !== 'other-files' && currentTab !== 'ai-vector-records' && searchResults.length > 0 && (
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
@@ -1262,7 +1484,7 @@ export default function VectorKnowledge() {
         )}
 
         {/* 空状态 - 只在岗位/简历/押题页面显示 */}
-        {currentTab !== 'sync-status' && currentTab !== 'other-files' && !loading && searchResults.length === 0 && (
+        {currentTab !== 'sync-status' && currentTab !== 'other-files' && currentTab !== 'ai-vector-records' && !loading && searchResults.length === 0 && (
           <div className="text-center py-12">
             <SearchOutlined className="mx-auto text-6xl text-slate-400 dark:text-slate-500" />
             <h3 className="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">

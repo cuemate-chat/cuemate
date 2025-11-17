@@ -28,6 +28,23 @@ export interface VectorDocument {
     relatedJobs?: number;
     relatedResumes?: number;
     relatedQuestions?: number;
+    // AI 向量记录字段
+    note_type?: string;
+    interview_id?: string;
+    question_id?: string;
+    question?: string;
+    answer?: string;
+    asked_question?: string;
+    candidate_answer?: string;
+    pros?: string;
+    cons?: string;
+    suggestions?: string;
+    key_points?: string;
+    assessment?: string;
+    reference_answer?: string;
+    other_id?: string;
+    other_content?: string;
+    created_at?: number;
   };
   score: number;
 }
@@ -422,6 +439,77 @@ export const deleteOtherFile = async (docId: string): Promise<{ success: boolean
   try {
     const data: any = await http.post('/vectors/delete', { id: docId, type: 'other-files' });
     return data?.success ? { success: true } : { success: false, error: data?.error || '删除失败' };
+  } catch (error) {
+    return { success: false, error: `网络错误: ${error}` };
+  }
+};
+
+// 获取 AI 向量记录列表
+export const listAIVectorRecords = async (params?: {
+  query?: string;
+  note_type?: string;
+  createdFrom?: number;
+  createdTo?: number;
+}): Promise<SearchResponse> => {
+  try {
+    let url = `${RAG_SERVICE_URL}/search/ai-vector-records?k=1000`;
+    if (params?.query) url += `&query=${encodeURIComponent(params.query)}`;
+    if (params?.note_type) url += `&note_type=${params.note_type}`;
+    if (params?.createdFrom) url += `&createdFrom=${params.createdFrom}`;
+    if (params?.createdTo) url += `&createdTo=${params.createdTo}`;
+
+    const response = await fetch(url);
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        const results = data.results || [];
+        return {
+          success: true,
+          results,
+          total: results.length,
+        };
+      } else {
+        return {
+          success: false,
+          results: [],
+          total: 0,
+          error: data.error || '获取列表失败',
+        };
+      }
+    } else {
+      const errorText = await response.text();
+      return {
+        success: false,
+        results: [],
+        total: 0,
+        error: `请求失败: ${response.status} ${errorText}`,
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      results: [],
+      total: 0,
+      error: `网络错误: ${error}`,
+    };
+  }
+};
+
+// 删除 AI 向量记录
+export const deleteAIVectorRecord = async (docId: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const response = await fetch(`${RAG_SERVICE_URL}/ai-vector-records/${docId}`, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data?.success ? { success: true } : { success: false, error: data?.error || '删除失败' };
+    } else {
+      const errorText = await response.text();
+      return { success: false, error: `删除失败: ${response.status} ${errorText}` };
+    }
   } catch (error) {
     return { success: false, error: `网络错误: ${error}` };
   }
