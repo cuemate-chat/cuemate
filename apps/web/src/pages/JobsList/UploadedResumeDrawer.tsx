@@ -2,6 +2,8 @@ import { Modal, Spin } from 'antd';
 import { useEffect, useState, useRef } from 'react';
 import jsPreviewDocx from '@js-preview/docx';
 import '@js-preview/docx/lib/index.css';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { deleteJobResume } from '../../api/jobs';
 import DrawerProvider, { DrawerContent, DrawerHeader } from '../../components/DrawerProvider';
 import { WEB_API_BASE } from '../../config';
@@ -28,18 +30,34 @@ export default function UploadedResumeDrawer({
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [content, setContent] = useState<string>('');
   const [fileUrl, setFileUrl] = useState<string>('');
+  const [markdownPreview, setMarkdownPreview] = useState(true); // Markdown 预览模式
   const docxContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open && filePath) {
       loadFileContent();
     }
+
+    // 清理函数：清空 DOCX 预览器内容
+    return () => {
+      if (docxContainerRef.current) {
+        docxContainerRef.current.innerHTML = '';
+      }
+      setContent('');
+      setFileUrl('');
+    };
   }, [open, filePath]);
 
   const loadFileContent = async () => {
     if (!filePath) return;
 
     setLoading(true);
+    // 清空之前的内容
+    setContent('');
+    if (docxContainerRef.current) {
+      docxContainerRef.current.innerHTML = '';
+    }
+
     try {
       const url = `${WEB_API_BASE}${filePath}`;
       setFileUrl(url);
@@ -63,6 +81,19 @@ export default function UploadedResumeDrawer({
             });
           }
         }, 100);
+      } else if (ext === 'txt' || ext === 'md' || ext === 'markdown') {
+        // TXT/MD 文件：fetch 文件内容并显示
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error('文件加载失败');
+          }
+          const textContent = await response.text();
+          setContent(textContent);
+        } catch (error: any) {
+          console.error('文本文件加载失败:', error);
+          setContent('文本文件加载失败，请下载查看。');
+        }
       } else {
         // 其他文件类型显示提示
         setContent('此文件格式不支持预览，请下载查看。');
@@ -120,21 +151,32 @@ export default function UploadedResumeDrawer({
     >
       <DrawerHeader>
         <div className="flex items-center justify-between pr-8">
-          <span>已上传的简历{jobTitle ? ` - ${jobTitle}` : ''}</span>
+          <span>已上传的{jobId ? '简历' : '文档'}{jobTitle ? ` - ${jobTitle}` : ''}</span>
           <div className="flex items-center gap-4">
+            {/* Markdown 预览/源码切换按钮 */}
+            {(ext === 'md' || ext === 'markdown') && (
+              <button
+                onClick={() => setMarkdownPreview(!markdownPreview)}
+                className="text-sm px-3 py-1 rounded bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+              >
+                {markdownPreview ? '查看源码' : '预览效果'}
+              </button>
+            )}
             <button
               onClick={downloadFile}
               className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
             >
               下载文件
             </button>
-            <button
-              onClick={handleDeleteFile}
-              disabled={deleteLoading}
-              className="text-sm text-red-600 dark:text-red-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {deleteLoading ? '删除中...' : '删除文件'}
-            </button>
+            {jobId && (
+              <button
+                onClick={handleDeleteFile}
+                disabled={deleteLoading}
+                className="text-sm text-red-600 dark:text-red-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleteLoading ? '删除中...' : '删除文件'}
+              </button>
+            )}
           </div>
         </div>
       </DrawerHeader>
@@ -159,6 +201,22 @@ export default function UploadedResumeDrawer({
                 className="w-full h-full overflow-auto bg-white dark:bg-slate-900 rounded-lg"
                 style={{ minHeight: 'calc(100vh - 200px)' }}
               />
+            ) : (ext === 'txt' || ext === 'md' || ext === 'markdown') && content ? (
+              <div className="w-full h-full overflow-auto bg-slate-100 dark:bg-slate-800 p-6" style={{ minHeight: 'calc(100vh - 200px)' }}>
+                <div className="max-w-5xl mx-auto bg-white dark:bg-slate-900 shadow-lg rounded-lg p-12">
+                  {(ext === 'md' || ext === 'markdown') && markdownPreview ? (
+                    // Markdown 预览模式
+                    <div className="prose prose-slate dark:prose-invert max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    // 源码模式（TXT 或 MD 源码）
+                    <pre className="whitespace-pre-wrap break-words text-slate-900 dark:text-slate-100 font-mono text-sm leading-relaxed">
+                      {content}
+                    </pre>
+                  )}
+                </div>
+              </div>
             ) : (
               <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-8 text-center">
                 <div className="text-slate-600 dark:text-slate-300 mb-4">
