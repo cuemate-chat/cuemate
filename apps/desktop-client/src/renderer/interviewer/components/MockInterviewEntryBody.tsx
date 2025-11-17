@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { interviewDataService } from '../../ai-question/components/shared/data/InterviewDataService';
 import { mockInterviewService } from '../../ai-question/components/shared/services/InterviewService';
+import { contextManagementService } from '../../ai-question/components/shared/services/ContextManagementService';
 import { InterviewState, InterviewStateMachine } from '../../ai-question/components/shared/state/InterviewStateMachine';
 import { promptService } from '../../prompts/promptService';
 import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
@@ -59,6 +60,8 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     answer?: string;
     referenceAnswer?: string;
     candidateAnswer?: string;
+    otherId?: string;
+    otherContent?: string;
   } | null>(null);
 
   // 使用跨窗口状态管理
@@ -865,6 +868,15 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         context.questionsBank
       );
 
+      // 初始化上下文管理服务
+      await contextManagementService.initialize({
+        interviewId: context.interviewId,
+        resume: context.resume?.resumeContent || '',
+        jd: context.jobPosition?.description || '',
+      });
+
+      console.log('[MockInterview] 上下文管理服务初始化完成');
+
       // 发送成功事件,并在 payload 中传入 totalQuestions
       stateMachine.current?.send({
         type: 'INIT_SUCCESS',
@@ -888,30 +900,17 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         throw new Error('未选择模型');
       }
 
-      // 构建完整的系统 prompt（包含岗位和简历信息）
-      let systemPrompt = context.initPrompt;
-      if (!systemPrompt) {
-        const initPromptData = await promptService.buildInitPrompt(
-          context.jobPosition,
-          context.resume,
-          context.questionsBank || []
-        );
-        systemPrompt = initPromptData.content;
-      }
-
       // 构建问题生成的用户消息
       const questionPrompt = await promptService.buildQuestionPrompt(context.currentQuestionIndex);
 
-      const messages = [
-        {
-          role: 'system' as const,
-          content: systemPrompt,
-        },
-        {
-          role: 'user' as const,
-          content: questionPrompt,
-        }
-      ];
+      // 使用上下文管理服务获取优化后的上下文
+      const optimizedMessages = await contextManagementService.getOptimizedContext(questionPrompt);
+
+      console.log('[MockInterview] 使用优化后的上下文生成问题', {
+        round: context.currentQuestionIndex + 1,
+        totalMessages: optimizedMessages.length,
+        stats: contextManagementService.getStats(),
+      });
 
       // 准备模型配置
       const modelConfig: ModelConfig = {
@@ -927,7 +926,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
 
       let generatedQuestion = '';
 
-      await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, (chunk) => {
+      await aiService.callAIStreamWithCustomModel(optimizedMessages, modelConfig, modelParams, (chunk) => {
         if (chunk.error) {
           stateMachine.current?.send({ type: 'THINKING_ERROR', payload: { error: chunk.error } });
           return;
@@ -1059,7 +1058,33 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
               suggestions: analysis.suggestions || '',
               key_points: analysis.key_points || '',
               assessment: analysis.assessment || '',
+              other_id: questionData.otherId,
+              other_content: questionData.otherContent,
             });
+
+            // 如果使用了押题或其他文件，同时保存到 ChromaDB（AI 向量记录）
+            if (questionData.questionId || questionData.otherId) {
+              await mockInterviewService.saveAIVectorRecord({
+                id: questionState.reviewId,
+                interview_id: interviewDataService.getInterviewDataState()?.interviewId || '',
+                note_type: 'mock',
+                content: '',
+                question_id: questionData.questionId,
+                question: questionData.question,
+                answer: questionData.answer,
+                asked_question: context.currentQuestion,
+                candidate_answer: candidateAnswer,
+                pros: analysis.pros || '',
+                cons: analysis.cons || '',
+                suggestions: analysis.suggestions || '',
+                key_points: analysis.key_points || '',
+                assessment: analysis.assessment || '',
+                reference_answer: questionData.referenceAnswer || '',
+                other_id: questionData.otherId,
+                other_content: questionData.otherContent,
+                created_at: Math.floor(Date.now() / 1000),
+              });
+            }
 
             // 更新本地状态
             interviewDataService.markQuestionComplete(context.currentQuestionIndex);
@@ -1088,7 +1113,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         throw new Error('未选择模型');
       }
 
-      // 从向量知识库中搜索相似问题，获取押题答案（如果有）
+      // 从向量知识库中搜索相似问题（押题答案）和其他文件（项目内容）
       const similarQuestion = await mockInterviewService.findSimilarQuestion(
         context.currentQuestion,
         context.jobPosition.id,
@@ -1097,21 +1122,30 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
 
       // 提取押题答案（可能为空字符串）
       const referenceAnswerFromBank = similarQuestion?.answer || '';
+      // 提取其他文件内容（可能为空字符串）
+      const otherFileContent = similarQuestion?.otherContent || '';
 
-      // 使用专门的答案生成 prompt
-      const answerPrompt = await promptService.buildAnswerPrompt(
-        context.jobPosition,
-        context.resume,
-        context.currentQuestion,
-        referenceAnswerFromBank || undefined
-      );
+      // 构建答案生成的问题提示
+      let answerQuestionPrompt = `请为以下面试问题提供一个专业的参考答案：\n\n问题：${context.currentQuestion}`;
 
-      const messages = [
-        {
-          role: 'user' as const,
-          content: answerPrompt,
-        }
-      ];
+      if (referenceAnswerFromBank) {
+        answerQuestionPrompt += `\n\n题库参考答案：${referenceAnswerFromBank}`;
+      }
+
+      if (otherFileContent) {
+        answerQuestionPrompt += `\n\n相关项目资料：${otherFileContent}`;
+      }
+
+      // 使用优化后的上下文（包含简历/JD摘要和对话历史）
+      const optimizedMessages = await contextManagementService.getOptimizedContext(answerQuestionPrompt);
+
+      console.log('[MockInterview] 使用优化后的上下文生成答案', {
+        round: context.currentQuestionIndex + 1,
+        totalMessages: optimizedMessages.length,
+        hasQuestionAnswer: !!referenceAnswerFromBank,
+        hasOtherFile: !!otherFileContent,
+        stats: contextManagementService.getStats(),
+      });
 
       // 准备模型配置
       const modelConfig: ModelConfig = {
@@ -1126,7 +1160,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
 
       let referenceAnswer = '';
 
-      await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, async (chunk) => {
+      await aiService.callAIStreamWithCustomModel(optimizedMessages, modelConfig, modelParams, async (chunk) => {
         if (chunk.error) {
           stateMachine.current?.send({ type: 'GENERATION_ERROR', payload: { error: chunk.error } });
           return;
@@ -1135,13 +1169,15 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         if (chunk.finished) {
           referenceAnswer = referenceAnswer.trim();
 
-          // 暂存押题信息和参考答案到本地状态（不写数据库）
+          // 暂存押题信息、其他文件信息和参考答案到本地状态（不写数据库）
           currentQuestionData.current = {
             sequence: context.currentQuestionIndex,
             questionId: similarQuestion?.questionId,
             question: similarQuestion?.question,
             answer: similarQuestion?.answer,
             referenceAnswer: referenceAnswer,
+            otherId: similarQuestion?.otherId,
+            otherContent: similarQuestion?.otherContent,
           };
 
           onAnswerGenerated?.(referenceAnswer);
@@ -1158,9 +1194,27 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
   };
 
   // 轮次完成
-  const handleRoundComplete = (context: any) => {
+  const handleRoundComplete = async (context: any) => {
     setCurrentLine(`第${context.currentQuestionIndex + 1}个问题已完成`);
     setErrorMessage('');
+
+    try {
+      // 记录对话到上下文管理服务
+      const question = context.currentQuestion || '';
+      const candidateAnswer = currentQuestionData.current?.candidateAnswer || context.userResponse || '';
+
+      if (question && candidateAnswer) {
+        await contextManagementService.recordConversation(question, candidateAnswer);
+        console.log('[MockInterview] 对话已记录到上下文管理服务', {
+          round: context.currentQuestionIndex + 1,
+          questionLength: question.length,
+          answerLength: candidateAnswer.length,
+        });
+      }
+    } catch (error) {
+      console.error('[MockInterview] 记录对话失败:', error);
+      // 不影响主流程，继续执行
+    }
 
     // 标记问题完成
     interviewDataService.markQuestionComplete(context.currentQuestionIndex);
@@ -1214,6 +1268,10 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
   const handleInterviewCompleted = async () => {
     setCurrentLine('面试已完成！感谢您的参与。');
     setErrorMessage('');
+
+    // 清理上下文管理服务
+    contextManagementService.clear();
+    console.log('[MockInterview] 上下文管理服务已清理');
 
     // 从 localStorage 获取当前面试 ID
     const interviewId = currentInterview.get();

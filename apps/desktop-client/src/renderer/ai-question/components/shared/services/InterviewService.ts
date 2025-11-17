@@ -21,6 +21,8 @@ export interface InterviewReview {
   key_points?: string;
   assessment?: string;
   reference_answer?: string;
+  other_id?: string;
+  other_content?: string;
 }
 
 // 创建问答记录的数据
@@ -39,6 +41,8 @@ export interface CreateReviewData {
   key_points?: string;
   assessment?: string;
   reference_answer?: string;
+  other_id?: string;
+  other_content?: string;
 }
 
 // 更新问答记录的数据
@@ -54,6 +58,8 @@ export interface UpdateReviewData {
   key_points?: string;
   assessment?: string;
   reference_answer?: string;
+  other_id?: string;
+  other_content?: string;
 }
 
 // 面试题接口
@@ -132,6 +138,8 @@ export class InterviewService {
         keyPoints: data.key_points,
         assessment: data.assessment,
         referenceAnswer: data.reference_answer,
+        otherId: data.other_id,
+        otherContent: data.other_content,
       };
 
       const response = await fetch(`${this.baseURL}/interview-reviews`, {
@@ -171,6 +179,8 @@ export class InterviewService {
       if (data.key_points !== undefined) updateData.keyPoints = data.key_points;
       if (data.assessment !== undefined) updateData.assessment = data.assessment;
       if (data.reference_answer !== undefined) updateData.referenceAnswer = data.reference_answer;
+      if (data.other_id !== undefined) updateData.otherId = data.other_id;
+      if (data.other_content !== undefined) updateData.otherContent = data.other_content;
 
       const response = await fetch(`${this.baseURL}/interview-reviews/${reviewId}`, {
         method: 'PUT',
@@ -214,16 +224,23 @@ export class InterviewService {
   }
 
   /**
-   * 检查问题与题库的相似度
+   * 检查问题与题库的相似度，同时查询其他文件中的项目内容
    */
   async findSimilarQuestion(
     question: string,
     jobId: string,
     threshold: number = 0.8,
-  ): Promise<{ questionId?: string; question?: string; answer?: string; similarity?: number }> {
+  ): Promise<{
+    questionId?: string;
+    question?: string;
+    answer?: string;
+    similarity?: number;
+    otherId?: string;
+    otherContent?: string;
+  }> {
     try {
-      // 使用 RAG 服务在向量知识库中搜索相似问题
-      const response = await fetch(`${this.ragServiceURL}/similarity/questions`, {
+      // 1. 查询面试押题
+      const questionResponse = await fetch(`${this.ragServiceURL}/similarity/questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -235,28 +252,107 @@ export class InterviewService {
         }),
       });
 
-      if (!response.ok) {
-        console.warn('RAG 服务调用失败');
-        return {};
+      let questionResult: any = {};
+      if (questionResponse.ok) {
+        const data = await questionResponse.json();
+        if (data.match && data.match.questionId) {
+          questionResult = {
+            questionId: data.match.questionId,
+            question: data.match.question,
+            answer: data.match.answer || '',
+            similarity: data.match.score,
+          };
+        }
+      } else {
+        console.warn('查询面试押题失败');
       }
 
-      const result = await response.json();
+      // 2. 查询其他文件
+      const otherFilesResponse = await fetch(
+        `${this.ragServiceURL}/search/other-files?query=${encodeURIComponent(question)}&k=1`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-      // 后端返回 match 对象（可能是空对象 {}）
-      if (result.match && result.match.questionId) {
-        return {
-          questionId: result.match.questionId,
-          question: result.match.question,
-          answer: result.match.answer || '',
-          similarity: result.match.score,
-        };
+      let otherFilesResult: any = {};
+      if (otherFilesResponse.ok) {
+        const data = await otherFilesResponse.json();
+        if (data.success && data.results && data.results.length > 0) {
+          const topResult = data.results[0];
+          otherFilesResult = {
+            otherId: topResult.id,
+            otherContent: topResult.content || '',
+          };
+        }
+      } else {
+        console.warn('查询其他文件失败');
       }
 
-      // 没有匹配到，返回空对象
-      return {};
+      // 3. 合并结果
+      const mergedResult = {
+        ...questionResult,
+        ...otherFilesResult,
+      };
+
+      console.log('[InterviewService] 查询结果', {
+        hasQuestion: !!questionResult.questionId,
+        hasOtherFile: !!otherFilesResult.otherId,
+      });
+
+      return mergedResult;
     } catch (error) {
       console.warn('RAG 服务不可用:', error);
       return {};
+    }
+  }
+
+  /**
+   * 保存 AI 向量记录到 ChromaDB
+   * （当使用了押题或其他文件时调用）
+   */
+  async saveAIVectorRecord(data: {
+    id: string;
+    interview_id: string;
+    note_type: string;
+    content: string;
+    question_id?: string;
+    question?: string;
+    answer?: string;
+    asked_question?: string;
+    candidate_answer?: string;
+    pros?: string;
+    cons?: string;
+    suggestions?: string;
+    key_points?: string;
+    assessment?: string;
+    reference_answer?: string;
+    other_id?: string;
+    other_content?: string;
+    created_at: number;
+  }): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.ragServiceURL}/ai-vector-records`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        console.error('保存 AI 向量记录失败:', response.status);
+        return false;
+      }
+
+      const result = await response.json();
+      return result.success || false;
+    } catch (error) {
+      console.error('保存 AI 向量记录失败:', error);
+      return false;
     }
   }
 
