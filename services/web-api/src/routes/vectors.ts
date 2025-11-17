@@ -1,5 +1,7 @@
 import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
+import { promises as fs } from 'fs';
+import path from 'path';
 import { z } from 'zod';
 import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
@@ -595,6 +597,282 @@ export function registerVectorRoutes(app: FastifyInstance) {
         return { success: true };
       } catch (err: any) {
         return reply.code(400).send(buildPrefixedError('删除向量失败', err, 400));
+      }
+    }),
+  );
+
+  // 辅助函数：将流转换为 Buffer
+  async function streamToBuffer(stream: any): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      if (Buffer.isBuffer(chunk)) {
+        chunks.push(chunk);
+      } else {
+        chunks.push(Buffer.from(chunk));
+      }
+    }
+    return Buffer.concat(chunks);
+  }
+
+  // 上传其他文件到向量库
+  app.post(
+    '/vectors/other-files/upload',
+    withErrorLogging(app.log as any, 'vectors.other-files.upload', async (req, reply) => {
+      let savedFilePath = '';
+
+      try {
+        const payload = await (req as any).jwtVerify();
+        const file = await (req as any).file();
+
+        if (!file) {
+          return reply.code(400).send({ error: '未找到上传的文件' });
+        }
+
+        const mimetype: string = file.mimetype || '';
+        const filename: string = file.filename || '';
+        const lower = filename.toLowerCase();
+
+        app.log.info({ filename, mimetype }, '开始处理其他文件上传');
+
+        const buf = await streamToBuffer(file.file);
+
+        // 1. 保存原始文件到服务器（复用 /opt/cuemate/pdf 目录和 /pdf/ 路由）
+        try {
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '');
+          const extension = path.extname(filename) || '';
+          const nameWithoutExt = path.basename(filename, extension);
+          const newFilename = `${nameWithoutExt}_${timestamp}${extension}`;
+
+          const filesDir = '/opt/cuemate/pdf';
+          await fs.mkdir(filesDir, { recursive: true });
+
+          const filePath = path.join(filesDir, newFilename);
+          await fs.writeFile(filePath, buf);
+          savedFilePath = `/pdf/${newFilename}`; // 返回相对路径，前端可通过 /pdf/ 访问
+
+          app.log.info({ filename, newFilename, filePath, size: buf.length }, '原始文件已保存');
+        } catch (saveError: any) {
+          app.log.error({ err: saveError, filename }, '保存原始文件失败');
+          return reply.code(500).send({ error: '保存文件失败' });
+        }
+
+        // 2. 尝试解析文件内容（失败不报错，继续上传）
+        let content = '';
+
+        if (mimetype === 'application/pdf' || lower.endsWith('.pdf')) {
+          // 解析 PDF 文件
+          try {
+            if (buf.length >= 4 && buf.toString('ascii', 0, 4) === '%PDF') {
+              const PDFParser = (await import('pdf2json')).default;
+
+              content = await new Promise((resolve) => {
+                const pdfParser = new PDFParser();
+
+                pdfParser.on('pdfParser_dataReady', (pdfData: any) => {
+                  try {
+                    const pages = pdfData.Pages || [];
+                    const textContent = pages
+                      .map((page: any) => {
+                        const texts = page.Texts || [];
+                        return texts
+                          .map((text: any) => {
+                            return decodeURIComponent(text.R[0].T);
+                          })
+                          .join(' ');
+                      })
+                      .join('\n');
+
+                    const extractedText = textContent.trim();
+                    app.log.info(
+                      { filename, textLength: extractedText.length, pages: pages.length },
+                      'PDF 解析完成',
+                    );
+                    resolve(extractedText);
+                  } catch (parseError: any) {
+                    app.log.warn({ err: parseError, filename }, 'PDF 解析失败，但文件已保存，继续上传');
+                    resolve(''); // 解析失败返回空字符串
+                  }
+                });
+
+                pdfParser.on('pdfParser_dataError', (err: any) => {
+                  app.log.warn({ err, filename }, 'PDF 数据错误，但文件已保存，继续上传');
+                  resolve(''); // 解析失败返回空字符串
+                });
+
+                pdfParser.parseBuffer(buf);
+              });
+            }
+          } catch (pdfError: any) {
+            app.log.warn({ err: pdfError, filename }, 'PDF 解析失败，但文件已保存，继续上传');
+            content = ''; // 解析失败不报错
+          }
+        } else if (
+          mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          lower.endsWith('.docx')
+        ) {
+          // 解析 DOCX 文件
+          try {
+            const mammoth = await import('mammoth');
+            const res = await mammoth.extractRawText({ buffer: buf });
+            content = (res.value || '').trim();
+            app.log.info({ filename, textLength: content.length }, 'DOCX 解析完成');
+          } catch (docxError: any) {
+            app.log.warn({ err: docxError, filename }, 'DOCX 解析失败，但文件已保存，继续上传');
+            content = ''; // 解析失败不报错
+          }
+        } else if (mimetype === 'application/msword' || lower.endsWith('.doc')) {
+          // 解析 DOC 文件
+          try {
+            const mammoth = await import('mammoth');
+            const res = await mammoth.extractRawText({ buffer: buf });
+            content = (res.value || '').trim();
+            app.log.info({ filename, textLength: content.length }, 'DOC 解析完成');
+          } catch (docError: any) {
+            app.log.warn({ err: docError, filename }, 'DOC 解析失败，但文件已保存，继续上传');
+            content = ''; // 解析失败不报错
+          }
+        } else if (
+          mimetype === 'text/plain' ||
+          lower.endsWith('.txt') ||
+          lower.endsWith('.md') ||
+          lower.endsWith('.markdown')
+        ) {
+          // 纯文本文件
+          try {
+            content = buf.toString('utf-8').trim();
+            app.log.info({ filename, textLength: content.length }, '文本文件解析完成');
+          } catch (txtError: any) {
+            app.log.warn({ err: txtError, filename }, '文本文件解析失败，但文件已保存，继续上传');
+            content = '';
+          }
+        }
+
+        // 3. 同步到 RAG 向量库（使用 ingest/batch 接口）
+        // 如果没有提取到文本内容，使用文件名作为内容（这样至少可以通过文件名搜索）
+        const contentForVector = content || `文件名：${filename}`;
+
+        // 生成唯一 ID
+        const docId = `other-file:${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+        const ragUrl = getRagServiceUrl();
+        const syncRes = await fetch(`${ragUrl}/ingest/batch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            collection: 'other_files',
+            documents: [
+              {
+                content: contentForVector,
+                metadata: {
+                  type: 'other-files',
+                  title: filename,
+                  source: 'user_upload',
+                  userId: payload.uid,
+                  createdAt: Date.now(),
+                  fileType: mimetype,
+                  filePath: savedFilePath, // 保存文件路径到 metadata，前端可用于预览
+                },
+              },
+            ],
+          }),
+        });
+
+        if (!syncRes.ok) {
+          const errorText = await syncRes.text();
+          return reply.code(500).send({ error: `同步到向量库失败: ${errorText}` });
+        }
+
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.VECTOR,
+          resourceId: docId,
+          resourceName: `上传文件: ${filename}`,
+          operation: OperationType.CREATE,
+          message: `上传文件到向量库: ${filename}`,
+          status: 'success',
+          userId: payload.uid,
+        });
+
+        app.log.info(
+          {
+            filename,
+            userId: payload.uid,
+            docId,
+            contentLength: content.length,
+            filePath: savedFilePath,
+          },
+          '其他文件上传成功',
+        );
+
+        return { success: true, message: '文件上传成功', id: docId, filePath: savedFilePath };
+      } catch (err: any) {
+        app.log.error({ err }, '上传其他文件失败');
+        return reply.code(500).send(buildPrefixedError('上传文件失败', err, 500));
+      }
+    }),
+  );
+
+  // 添加文本内容到向量库
+  app.post(
+    '/vectors/other-files/text',
+    withErrorLogging(app.log as any, 'vectors.other-files.text', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const schema = z.object({
+          title: z.string().min(1).max(200),
+          content: z.string().min(1).max(50000),
+        });
+
+        const body = schema.parse((req as any).body);
+
+        // 生成唯一 ID
+        const docId = `other-file:${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+        // 同步到 RAG 向量库（使用 ingest/batch 接口）
+        const ragUrl = getRagServiceUrl();
+        const syncRes = await fetch(`${ragUrl}/ingest/batch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            collection: 'other_files',
+            documents: [
+              {
+                content: body.content.trim(),
+                metadata: {
+                  type: 'other-files',
+                  title: body.title,
+                  source: 'user_input',
+                  userId: payload.uid,
+                  createdAt: Date.now(),
+                },
+              },
+            ],
+          }),
+        });
+
+        if (!syncRes.ok) {
+          const errorText = await syncRes.text();
+          return reply.code(500).send({ error: `同步到向量库失败: ${errorText}` });
+        }
+
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.VECTOR,
+          resourceId: docId,
+          resourceName: `添加文本: ${body.title}`,
+          operation: OperationType.CREATE,
+          message: `添加文本内容到向量库: ${body.title}`,
+          status: 'success',
+          userId: payload.uid,
+        });
+
+        return { success: true, message: '内容添加成功', id: docId };
+      } catch (err: any) {
+        if (err instanceof z.ZodError) {
+          return reply.code(400).send({ error: '参数验证失败', details: err.errors });
+        }
+        app.log.error({ err }, '添加文本内容失败');
+        return reply.code(500).send(buildPrefixedError('添加内容失败', err, 500));
       }
     }),
   );

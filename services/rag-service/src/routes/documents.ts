@@ -572,6 +572,70 @@ export async function createDocumentRoutes(
     }
   });
 
+  // 搜索 other-files 集合
+  app.get('/search/other-files', async (request, reply) => {
+    try {
+      const { query, filter, k = 1000 } = request.query as any;
+
+      let parsedFilter: any = {};
+      if (filter) {
+        try {
+          parsedFilter = JSON.parse(filter);
+        } catch (e) {
+          app.log.warn('Invalid filter format, using empty object');
+        }
+      }
+
+      app.log.info({ query, filter: parsedFilter, k }, 'Searching other-files collection');
+
+      let searchResults: any[] = [];
+
+      if (!query || query.trim() === '') {
+        // 没有查询关键词时，直接获取所有文档
+        searchResults = await deps.vectorStore.getAllDocuments(
+          Number(k),
+          parsedFilter,
+          'other_files',
+        );
+      } else {
+        // 有查询关键词时，进行向量搜索
+        // 生成查询的嵌入向量
+        const queryEmbedding = await deps.embeddingService.embed([query.trim()]);
+
+        // 搜索 other_files 集合
+        const results = await deps.vectorStore.searchByEmbedding(
+          queryEmbedding[0],
+          Number(k),
+          parsedFilter,
+          'other_files',
+        );
+
+        searchResults = results.map((r: any) => {
+          const score = typeof r.score === 'number' ? r.score : 0;
+          return {
+            ...r,
+            score,
+          };
+        });
+      }
+
+      const ordered = sortByCreatedAtDesc(searchResults);
+
+      return {
+        success: true,
+        results: ordered,
+        total: ordered.length,
+        query: query,
+        filter: parsedFilter,
+        topK: k,
+        collection: 'other_files',
+      };
+    } catch (error) {
+      app.log.error({ err: error as any }, 'Search other-files failed');
+      return reply.status(500).send({ success: false, error: '搜索 other-files 失败' });
+    }
+  });
+
   // 获取文档的关联信息
   app.get('/documents/:docId/related', async (req) => {
     const { docId } = (req as any).params as { docId: string };
