@@ -23,28 +23,73 @@ export interface PiperTTSOptions {
 export class PiperTTS {
   private pythonPath: string;
   private wrapperScript: string;
+  private piperBinaryPath: string | null = null;
   private modelsPath: string;
   private voices: Map<string, PiperVoice> = new Map();
 
   constructor() {
-    // 动态检测 Python 路径
-    this.pythonPath = this.findPythonPath();
+    // 优先检查是否存在打包的 Piper 二进制文件（无需 Python 环境）
+    this.piperBinaryPath = this.findPiperBinary();
 
-    // 开发环境和生产环境的路径处理
+    if (this.piperBinaryPath) {
+      logger.info(`使用打包的 Piper 二进制文件: ${this.piperBinaryPath}`);
+      // 设置占位值（不会被使用）
+      this.pythonPath = '';
+      this.wrapperScript = '';
+    } else {
+      // 回退到 Python 脚本方式
+      logger.info('未找到打包的 Piper 二进制文件，回退到 Python 脚本');
+      this.pythonPath = this.findPythonPath();
+      // 开发环境和生产环境的路径处理
+      if (!app.isPackaged) {
+        this.wrapperScript = path.join(process.cwd(), 'resources', 'piper', 'piper_wrapper.py');
+      } else {
+        this.wrapperScript = path.join(
+          process.resourcesPath,
+          'resources',
+          'piper',
+          'piper_wrapper.py',
+        );
+      }
+    }
+
+    // 设置模型路径
     if (!app.isPackaged) {
-      this.wrapperScript = path.join(process.cwd(), 'resources', 'piper', 'piper_wrapper.py');
       this.modelsPath = path.join(process.cwd(), 'resources', 'piper');
     } else {
-      this.wrapperScript = path.join(
-        process.resourcesPath,
-        'resources',
-        'piper',
-        'piper_wrapper.py',
-      );
       this.modelsPath = path.join(process.resourcesPath, 'resources', 'piper');
     }
 
     this.initializeVoices();
+  }
+
+  /**
+   * 查找打包的 Piper 二进制文件
+   */
+  private findPiperBinary(): string | null {
+    const possiblePaths = [
+      // 生产环境：打包到应用内的二进制文件
+      ...(app.isPackaged
+        ? [path.join(process.resourcesPath, 'resources', 'piper-bin', 'piper')]
+        : []),
+      // 开发环境：本地构建的二进制文件
+      path.join(process.cwd(), 'resources', 'piper-bin', 'piper'),
+    ];
+
+    for (const binPath of possiblePaths) {
+      if (fs.existsSync(binPath)) {
+        try {
+          // 确保二进制文件有执行权限
+          fs.chmodSync(binPath, 0o755);
+          logger.info(`找到 Piper 二进制文件: ${binPath}`);
+          return binPath;
+        } catch (error) {
+          logger.warn({ err: error }, `设置 Piper 二进制文件权限失败: ${binPath}`);
+        }
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -220,20 +265,36 @@ export class PiperTTS {
     }
 
     return new Promise((resolve, reject) => {
-      const args = [
-        this.wrapperScript,
-        '--model',
-        voice.modelPath,
-        '--output-raw', // 输出原始 PCM 数据
-        text,
-      ];
+      let command: string;
+      let args: string[];
+
+      if (this.piperBinaryPath) {
+        // 使用打包的二进制文件
+        command = this.piperBinaryPath;
+        args = [
+          '-m',
+          voice.modelPath,
+          '--output-raw', // 输出原始 PCM 数据
+          text,
+        ];
+      } else {
+        // 回退到 Python 脚本
+        command = this.pythonPath;
+        args = [
+          this.wrapperScript,
+          '--model',
+          voice.modelPath,
+          '--output-raw',
+          text,
+        ];
+      }
 
       // 语速控制
       if (options.speed && options.speed !== 1.0) {
         args.push('--length-scale', (1 / options.speed).toString());
       }
 
-      const piperProcess = spawn(this.pythonPath, args);
+      const piperProcess = spawn(command, args);
       const audioChunks: Buffer[] = [];
       let errorOutput = '';
 
@@ -389,20 +450,36 @@ export class PiperTTS {
     }
 
     return new Promise((resolve, reject) => {
-      const args = [
-        this.wrapperScript,
-        '--model',
-        voice.modelPath,
-        '--play', // 直接播放
-        text,
-      ];
+      let command: string;
+      let args: string[];
+
+      if (this.piperBinaryPath) {
+        // 使用打包的二进制文件
+        command = this.piperBinaryPath;
+        args = [
+          '-m',
+          voice.modelPath,
+          '--play', // 直接播放
+          text,
+        ];
+      } else {
+        // 回退到 Python 脚本
+        command = this.pythonPath;
+        args = [
+          this.wrapperScript,
+          '--model',
+          voice.modelPath,
+          '--play',
+          text,
+        ];
+      }
 
       // 语速控制
       if (options.speed && options.speed !== 1.0) {
         args.push('--length-scale', (1 / options.speed).toString());
       }
 
-      const piperProcess = spawn(this.pythonPath, args);
+      const piperProcess = spawn(command, args);
       let errorOutput = '';
 
       // 收集错误信息
