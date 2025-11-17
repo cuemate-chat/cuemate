@@ -1,13 +1,13 @@
-import { app, BrowserWindow } from 'electron';
 import { execSync } from 'child_process';
-import * as path from 'path';
+import { app, BrowserWindow } from 'electron';
 import * as fs from 'fs';
 import * as https from 'https';
+import * as path from 'path';
 import { logger } from '../../utils/logger.js';
-import { DockerServiceManager } from './DockerServiceManager.js';
-import { UpdateStateManager } from './UpdateStateManager.js';
 import { getDockerEnv } from '../utils/dockerPath.js';
 import type { WindowManager } from '../windows/WindowManager.js';
+import { DockerServiceManager } from './DockerServiceManager.js';
+import { UpdateStateManager } from './UpdateStateManager.js';
 
 interface UpdateProgress {
   stepId: string;
@@ -257,7 +257,8 @@ export class AppUpdateManager {
 
           response.on('data', (chunk) => {
             downloadedBytes += chunk.length;
-            const percent = totalBytes > 0 ? 10 + Math.floor((downloadedBytes / totalBytes) * 20) : 10;
+            const percent =
+              totalBytes > 0 ? 10 + Math.floor((downloadedBytes / totalBytes) * 20) : 10;
 
             this.updateProgress({
               stepId: 'download',
@@ -445,40 +446,71 @@ export class AppUpdateManager {
     });
 
     if (platform === 'macos') {
-      // 替换 /Applications/CueMate.app
+      // 只替换应用内部文件，不删除应用本身，保持签名不变
       const newAppPath = path.join(extractDir, 'CueMate.app');
       const installedAppPath = '/Applications/CueMate.app';
 
       if (fs.existsSync(newAppPath)) {
-        logger.info('替换应用到 /Applications');
+        logger.info('更新应用内部文件（保持签名不变）');
 
-        // 删除旧应用
-        if (fs.existsSync(installedAppPath)) {
-          execSync(`rm -rf "${installedAppPath}"`, { stdio: 'pipe' });
+        // 1. 替换 app.asar
+        const newAsarPath = path.join(newAppPath, 'Contents/Resources/app.asar');
+        const installedAsarPath = path.join(installedAppPath, 'Contents/Resources/app.asar');
+        if (fs.existsSync(newAsarPath)) {
+          logger.info('替换 app.asar');
+          if (fs.existsSync(installedAsarPath)) {
+            execSync(`rm -f "${installedAsarPath}"`, { stdio: 'pipe' });
+          }
+          execSync(`cp "${newAsarPath}" "${installedAsarPath}"`, { stdio: 'pipe' });
         }
 
-        // 复制新应用
-        execSync(`cp -R "${newAppPath}" "${installedAppPath}"`, { stdio: 'pipe' });
+        // 2. 替换 app.asar.unpacked
+        const newUnpackedPath = path.join(newAppPath, 'Contents/Resources/app.asar.unpacked');
+        const installedUnpackedPath = path.join(
+          installedAppPath,
+          'Contents/Resources/app.asar.unpacked',
+        );
+        if (fs.existsSync(newUnpackedPath)) {
+          logger.info('替换 app.asar.unpacked');
+          if (fs.existsSync(installedUnpackedPath)) {
+            execSync(`rm -rf "${installedUnpackedPath}"`, { stdio: 'pipe' });
+          }
+          execSync(`cp -R "${newUnpackedPath}" "${installedUnpackedPath}"`, { stdio: 'pipe' });
+        }
+
+        // 3. 替换 Resources/bin (audiotee)
+        const newBinPath = path.join(newAppPath, 'Contents/Resources/bin');
+        const installedBinPath = path.join(installedAppPath, 'Contents/Resources/bin');
+        if (fs.existsSync(newBinPath)) {
+          logger.info('替换 Resources/bin');
+          if (fs.existsSync(installedBinPath)) {
+            execSync(`rm -rf "${installedBinPath}"`, { stdio: 'pipe' });
+          }
+          execSync(`cp -R "${newBinPath}" "${installedBinPath}"`, { stdio: 'pipe' });
+        }
+
+        // 4. 替换 Resources/piper (如果存在)
+        const newPiperPath = path.join(newAppPath, 'Contents/Resources/piper');
+        const installedPiperPath = path.join(installedAppPath, 'Contents/Resources/piper');
+        if (fs.existsSync(newPiperPath)) {
+          logger.info('替换 Resources/piper');
+          if (fs.existsSync(installedPiperPath)) {
+            execSync(`rm -rf "${installedPiperPath}"`, { stdio: 'pipe' });
+          }
+          execSync(`cp -R "${newPiperPath}" "${installedPiperPath}"`, { stdio: 'pipe' });
+        }
+
+        // 5. 禁用 asar 完整性校验
+        // 说明：因为替换了 asar 文件但不重新签名，必须禁用完整性校验
+        // 否则 Electron 会因为 hash 不匹配而拒绝加载
+        const infoPlistPath = path.join(installedAppPath, 'Contents/Info.plist');
+        logger.info('禁用 asar 完整性校验');
+        execSync(
+          `/usr/libexec/PlistBuddy -c "Delete :ElectronAsarIntegrity" "${infoPlistPath}" 2>/dev/null || true`,
+          { stdio: 'pipe' },
+        );
       }
     } else if (platform === 'windows') {
-      // Windows 替换逻辑
-      const newAppPath = path.join(extractDir, 'CueMate');
-      const installedAppPath = path.join(
-        process.env.PROGRAMFILES || 'C:\\Program Files',
-        'CueMate',
-      );
-
-      if (fs.existsSync(newAppPath)) {
-        logger.info('替换应用到 Program Files');
-
-        // 删除旧应用
-        if (fs.existsSync(installedAppPath)) {
-          execSync(`rmdir /s /q "${installedAppPath}"`, { stdio: 'pipe' });
-        }
-
-        // 复制新应用
-        execSync(`xcopy "${newAppPath}" "${installedAppPath}" /E /I /Y`, { stdio: 'pipe' });
-      }
     }
 
     this.updateProgress({
