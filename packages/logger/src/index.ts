@@ -33,10 +33,6 @@ export function createLogger(options: CreateLoggerOptions) {
   void getLoggerTimeZone();
 
   ensureDir(baseDir);
-  ensureDir(path.join(baseDir, 'info'));
-  ensureDir(path.join(baseDir, 'debug'));
-  ensureDir(path.join(baseDir, 'warn'));
-  ensureDir(path.join(baseDir, 'error'));
 
   const transports: any = [];
 

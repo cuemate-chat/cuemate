@@ -62,8 +62,8 @@ function resolveLogPath(
   dateStr: string,
 ) {
   const dir = service
-    ? path.join(baseDir, level, service, dateStr)
-    : path.join(baseDir, level, dateStr);
+    ? path.join(baseDir, service, dateStr)
+    : path.join(baseDir, dateStr);
   ensureDir(dir);
   return path.join(dir, `${level}.log`);
 }
