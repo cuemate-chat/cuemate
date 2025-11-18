@@ -175,6 +175,7 @@ export default function LogsList() {
     'web-api': '后端 API 服务',
     'llm-router': '大模型路由服务',
     'rag-service': 'RAG 知识库服务',
+    'cuemate-asr': 'ASR 语音识别服务',
     'desktop-client': '桌面客户端',
   };
 
@@ -253,8 +254,11 @@ export default function LogsList() {
       const result = await clearTodayLogsApi();
       if (result.success) {
         message.success(`今日日志清理成功，共清理 ${result.clearedCount} 个日志文件`);
-        // 清理后重新加载当前页
-        loadLogs();
+        // 清理后重置到第一页并重新加载
+        setPage(1);
+        // 延迟 100ms 确保文件系统同步
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await loadLogs();
       } else {
         message.error('今日日志清理失败');
       }
