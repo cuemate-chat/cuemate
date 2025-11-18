@@ -26,7 +26,8 @@ services:
     environment:
       - TZ=Asia/Shanghai
     volumes:
-      - ../../data/funasr-runtime-resources/models:/workspace/models
+      - ${DATA_DIR:-../../data}/funasr-models:/workspace/models
+      - ${DATA_DIR:-../../data}/logs:/opt/cuemate/logs
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
@@ -34,10 +35,10 @@ services:
     restart: unless-stopped
     command: [
       "bash", "-c",
-      "cd /workspace/FunASR/runtime/websocket/build/bin && ./funasr-wss-server-2pass --download-model-dir /workspace/models --model-dir damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-onnx --online-model-dir damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online-onnx --vad-dir damo/speech_fsmn_vad_zh-cn-16k-common-onnx --punc-dir damo/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727-onnx --itn-dir thuduj12/fst_itn_zh --lm-dir damo/speech_ngram_lm_zh-cn-ai-wesp-fst --decoder-thread-num 4 --model-thread-num 1 --io-thread-num 2 --port 10095 --certfile \"\""
+      "LOG_DATE=$(date +%Y-%m-%d) && mkdir -p /opt/cuemate/logs/cuemate-asr/$LOG_DATE && cd /workspace/FunASR/runtime/websocket/build/bin && ./funasr-wss-server-2pass --download-model-dir /workspace/models --model-dir damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-onnx --online-model-dir damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online-onnx --vad-dir damo/speech_fsmn_vad_zh-cn-16k-common-onnx --punc-dir damo/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727-onnx --itn-dir thuduj12/fst_itn_zh --lm-dir damo/speech_ngram_lm_zh-cn-ai-wesp-fst --decoder-thread-num 4 --model-thread-num 1 --io-thread-num 2 --port 10095 --certfile \"\" 2>&1 | tee /opt/cuemate/logs/cuemate-asr/$LOG_DATE/info.log"
     ]
 
-  # Web API (SQLite) - 端口3001
+  # Web API (SQLite)
   web-api:
     image: ${REGISTRY:-registry.cn-beijing.aliyuncs.com/cuemate}/cuemate-web-api:${VERSION}
     build:
@@ -57,10 +58,10 @@ services:
       - CUEMATE_LOG_DIR=/opt/cuemate/logs
       - TZ=Asia/Shanghai
     volumes:
-      - ../../data/sqlite:/opt/cuemate/data/sqlite
-      - ../../data/logs:/opt/cuemate/logs
-      - ../../data/pdf:/opt/cuemate/pdf
-      - ../../data/images:/opt/cuemate/images
+      - ${DATA_DIR:-../../data}/sqlite:/opt/cuemate/data/sqlite
+      - ${DATA_DIR:-../../data}/logs:/opt/cuemate/logs
+      - ${DATA_DIR:-../../data}/pdf:/opt/cuemate/pdf
+      - ${DATA_DIR:-../../data}/images:/opt/cuemate/images
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
@@ -90,7 +91,7 @@ services:
       - CUEMATE_LOG_DIR=/opt/cuemate/logs
       - TZ=Asia/Shanghai
     volumes:
-      - ../../data/logs:/opt/cuemate/logs
+      - ${DATA_DIR:-../../data}/logs:/opt/cuemate/logs
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
@@ -118,7 +119,7 @@ services:
       - TZ=Asia/Shanghai
     volumes:
       - chroma_data:/opt/cuemate/chroma_data
-      - ../../data/logs:/opt/cuemate/logs
+      - ${DATA_DIR:-../../data}/logs:/opt/cuemate/logs
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
@@ -140,11 +141,11 @@ services:
     ports:
       - "80:80"
     environment:
-      - VITE_WEB_API_BASE=${WEB_API_BASE:-http://cuemate-web-api:3001}
-      - VITE_RAG_SERVICE_URL=http://cuemate-rag-service:3003
-      - VITE_LLM_ROUTER_URL=http://cuemate-llm-router:3002
+      - VITE_WEB_API_BASE=${WEB_API_BASE:-http://localhost:3001}
+      - VITE_RAG_SERVICE_URL=http://localhost:3003
+      - VITE_LLM_ROUTER_URL=http://localhost:3002
     volumes:
-      - ../../data/images:/opt/cuemate/images
+      - ${DATA_DIR:-../../data}/images:/opt/cuemate/images
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     depends_on:
