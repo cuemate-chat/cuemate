@@ -10,6 +10,9 @@ const LOG_BASE_DIR = process.env.CUEMATE_LOG_DIR || path.join(process.cwd(), '..
 const LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 type Level = (typeof LEVELS)[number];
 
+// 固定的服务列表
+const SERVICES = ['web-api', 'llm-router', 'rag-service', 'cuemate-asr', 'desktop-client'] as const;
+
 function clampPageSize(ps?: number) {
   const n = Number(ps || 10);
   if (!Number.isFinite(n) || n <= 0) return 10;
@@ -25,14 +28,7 @@ function safeList(dir: string) {
 }
 
 function getServices(): string[] {
-  const set = new Set<string>();
-  for (const lvl of LEVELS) {
-    const levelDir = path.join(LOG_BASE_DIR, lvl);
-    for (const entry of safeList(levelDir)) {
-      if (entry.isDirectory()) set.add(entry.name);
-    }
-  }
-  return Array.from(set).sort();
+  return [...SERVICES];
 }
 
 export function registerLogRoutes(app: FastifyInstance) {
@@ -66,23 +62,20 @@ export function registerLogRoutes(app: FastifyInstance) {
       ctimeMs: number;
     }> = [];
 
-    const levels = level ? [level] : LEVELS;
-    for (const lvl of levels) {
-      const levelDir = path.join(LOG_BASE_DIR, lvl);
-      const services = service
-        ? [service]
-        : safeList(levelDir)
+    // 新目录结构：{LOG_BASE_DIR}/{service}/{date}/{level}.log
+    const services = service ? [service] : getServices();
+    for (const svc of services) {
+      const svcDir = path.join(LOG_BASE_DIR, svc);
+      const dates = date
+        ? [date]
+        : safeList(svcDir)
             .filter((d) => d.isDirectory())
             .map((d) => d.name);
-      for (const svc of services) {
-        const svcDir = path.join(levelDir, svc);
-        const dates = date
-          ? [date]
-          : safeList(svcDir)
-              .filter((d) => d.isDirectory())
-              .map((d) => d.name);
-        for (const dt of dates) {
-          const filePath = path.join(svcDir, dt, `${lvl}.log`);
+      for (const dt of dates) {
+        const dateDir = path.join(svcDir, dt);
+        const levels = level ? [level] : LEVELS;
+        for (const lvl of levels) {
+          const filePath = path.join(dateDir, `${lvl}.log`);
           try {
             const stat = fs.statSync(filePath);
             if (!stat.isFile()) continue;
@@ -153,7 +146,7 @@ export function registerLogRoutes(app: FastifyInstance) {
       tail: z.coerce.number().min(1).max(1000).default(500),
     });
     const { level, service, date, tail } = schema.parse((req as any).query || {});
-    const filePath = path.join(LOG_BASE_DIR, level, service, date, `${level}.log`);
+    const filePath = path.join(LOG_BASE_DIR, service, date, `${level}.log`);
     try {
       const stat = fs.statSync(filePath);
       if (!stat.isFile()) return reply.code(404).send({ error: 'not_found' });
@@ -192,7 +185,7 @@ export function registerLogRoutes(app: FastifyInstance) {
         });
       }
 
-      const filePath = path.join(LOG_BASE_DIR, level, service, date, `${level}.log`);
+      const filePath = path.join(LOG_BASE_DIR, service, date, `${level}.log`);
 
       // 检查文件是否存在
       try {
@@ -267,7 +260,7 @@ export function registerLogRoutes(app: FastifyInstance) {
         });
       }
 
-      const filePath = path.join(LOG_BASE_DIR, level, service, date, `${level}.log`);
+      const filePath = path.join(LOG_BASE_DIR, service, date, `${level}.log`);
       const dirPath = path.dirname(filePath);
 
       // 检查文件是否存在
@@ -351,31 +344,19 @@ export function registerLogRoutes(app: FastifyInstance) {
       let clearedCount = 0;
       const errors: string[] = [];
 
-      // 遍历所有日志级别
-      for (const level of LEVELS) {
-        const levelDir = path.join(LOG_BASE_DIR, level);
+      // 遍历所有服务
+      const services = getServices();
+      for (const service of services) {
+        const serviceDir = path.join(LOG_BASE_DIR, service);
 
-        // 检查级别目录是否存在
-        if (!fs.existsSync(levelDir)) {
+        // 检查今日目录是否存在
+        const todayDir = path.join(serviceDir, todayStr);
+        if (!fs.existsSync(todayDir)) {
           continue;
         }
 
-        // 获取该级别下的所有服务目录
-        const serviceDirs = fs
-          .readdirSync(levelDir, { withFileTypes: true })
-          .filter((dirent) => dirent.isDirectory())
-          .map((dirent) => dirent.name);
-
-        // 遍历每个服务目录
-        for (const service of serviceDirs) {
-          const serviceDir = path.join(levelDir, service);
-
-          // 检查今日目录是否存在
-          const todayDir = path.join(serviceDir, todayStr);
-          if (!fs.existsSync(todayDir)) {
-            continue;
-          }
-
+        // 遍历所有日志级别
+        for (const level of LEVELS) {
           // 检查今日日志文件是否存在
           const logFile = path.join(todayDir, `${level}.log`);
           if (!fs.existsSync(logFile)) {
@@ -388,7 +369,7 @@ export function registerLogRoutes(app: FastifyInstance) {
             clearedCount++;
             (req as any).log.debug({ level, service, date: todayStr }, '今日日志文件已清空');
           } catch (clearErr: any) {
-            const errorMsg = `清空 ${level}/${service}/${todayStr} 失败: ${clearErr.message}`;
+            const errorMsg = `清空 ${service}/${todayStr}/${level} 失败: ${clearErr.message}`;
             errors.push(errorMsg);
             (req as any).log.error(
               { err: clearErr, level, service, date: todayStr },
