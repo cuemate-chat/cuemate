@@ -17,21 +17,6 @@ class ElectronLogger implements Logger {
     // 使用统一的日志目录（相对路径）
     this.baseDir = process.env.CUEMATE_LOG_DIR || getLogsDir();
     this.service = 'desktop-client';
-
-    // 确保日志目录存在
-    this.ensureLogDirectories();
-  }
-
-  private ensureLogDirectories(): void {
-    const levels = ['debug', 'info', 'warn', 'error'];
-    for (const level of levels) {
-      const levelDir = path.join(this.baseDir, level, this.service);
-      try {
-        fs.mkdirSync(levelDir, { recursive: true });
-      } catch (error) {
-        console.warn(`创建日志目录失败: ${levelDir}`, error);
-      }
-    }
   }
 
   private getDateString(): string {
@@ -61,7 +46,7 @@ class ElectronLogger implements Logger {
 
   private getLogFilePath(level: string): string {
     const dateStr = this.getDateString();
-    return path.join(this.baseDir, level, this.service, dateStr, `${level}.log`);
+    return path.join(this.baseDir, this.service, dateStr, `${level}.log`);
   }
 
   private writeToFile(level: string, logObject: any): void {
