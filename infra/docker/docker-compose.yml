@@ -9,7 +9,7 @@ services:
       - CHROMA_SERVER_CORS_ALLOW_ORIGINS=["*"]
       - TZ=Asia/Shanghai
     volumes:
-      - chroma_data:/chroma/chroma
+      - ${DATA_DIR:-../../data}/chroma:/data
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:
@@ -118,7 +118,6 @@ services:
       - CUEMATE_LOG_DIR=/opt/cuemate/logs
       - TZ=Asia/Shanghai
     volumes:
-      - chroma_data:/opt/cuemate/chroma_data
       - ${DATA_DIR:-../../data}/logs:/opt/cuemate/logs
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
@@ -157,6 +156,3 @@ services:
 networks:
   cuemate-network:
     driver: bridge
-
-volumes:
-  chroma_data:
