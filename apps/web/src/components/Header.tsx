@@ -171,7 +171,7 @@ export default function Header() {
           <Badge count={unreadCount} offset={[-5, 5]} showZero={false}>
             <button
               onClick={() => navigate('/settings/notification')}
-              className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 active:bg-blue-200 dark:active:bg-blue-900/40 active:scale-95 transition-all duration-150 hover:shadow-sm"
               title="站内信"
             >
               <BellIcon className="w-5 h-5" />
