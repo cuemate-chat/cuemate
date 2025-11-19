@@ -41,15 +41,15 @@ export default function Header() {
     `flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-[6px] rounded-lg transition-all duration-200 text-xs sm:text-sm whitespace-nowrap ${
       activeKey === key
         ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium shadow-sm'
-        : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+        : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 active:bg-blue-200 dark:active:bg-blue-900/40 active:scale-95 hover:shadow-sm'
     }`;
 
   // 移动端链接样式
   const mobileLinkCls = (key: string) =>
-    `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-base ${
+    `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-base ${
       activeKey === key
         ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium shadow-sm'
-        : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+        : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 active:bg-blue-200 dark:active:bg-blue-900/40 active:scale-95 hover:shadow-sm'
     }`;
 
   const navigationItems = [
@@ -132,9 +132,9 @@ export default function Header() {
     <>
       <header className="h-14 px-3 sm:px-6 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400 sticky top-0 z-[2000]">
         {/* Logo 区域 */}
-        <div className="flex items-center flex-shrink-0">
+        <Link to="/home" className="flex items-center flex-shrink-0 p-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 active:bg-blue-200 dark:active:bg-blue-900/40 active:scale-95 transition-all duration-150 hover:shadow-sm">
           <img src={Logo} alt="CueMate" className="h-6 sm:h-8 bg-transparent" />
-        </div>
+        </Link>
 
         {/* 桌面端导航 - 在大屏幕上显示 */}
         <nav className="hidden lg:flex items-center justify-center flex-1 max-w-4xl mx-4">
@@ -185,7 +185,7 @@ export default function Header() {
           
           {/* 移动端菜单按钮 */}
           <button
-            className="md:hidden p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+            className="md:hidden p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 active:bg-blue-200 dark:active:bg-blue-900/40 active:scale-95 transition-all duration-150 hover:shadow-sm"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
