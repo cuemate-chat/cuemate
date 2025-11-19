@@ -187,6 +187,8 @@ export function notifyKnowledgeSynced(
       type: 'knowledge_synced',
       category: 'knowledge',
       priority: 'normal',
+      actionUrl: '/settings/vector-knowledge',
+      actionText: '查看知识库详情',
     });
   } else {
     return createNotification(db, {

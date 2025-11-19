@@ -362,12 +362,14 @@ export function registerVectorRoutes(app: FastifyInstance) {
             ? `岗位: ${jobs[0]?.title || body.jobId}`
             : '所有岗位';
           const totalSize = (jobs.length * 10 + totalSuccess) * 1024; // 粗略估计大小
+          // 总数量 = 岗位数 + 简历数 + 押题数 (每个岗位对应一个简历)
+          const totalCount = jobs.length * 2 + totalSuccess;
 
           if (totalFailed > 0) {
             // 同步失败通知
             notifyKnowledgeSynced((app as any).db, payload.uid, {
               success: false,
-              count: totalSuccess,
+              count: totalCount,
               error: `${totalFailed} 个题目同步失败`,
               sourceName,
               totalSize,
@@ -376,7 +378,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
             // 同步成功通知
             notifyKnowledgeSynced((app as any).db, payload.uid, {
               success: true,
-              count: totalSuccess,
+              count: totalCount,
               sourceName,
               totalSize,
             });
