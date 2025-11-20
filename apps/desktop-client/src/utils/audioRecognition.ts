@@ -51,13 +51,9 @@ export async function startMicrophoneRecognition(
 
   let stream: MediaStream | null = null;
   let audioContext: AudioContext | null = null;
+  let websocket: WebSocket | null = null;
   let finalizedText = initialText; // 累积已确认的文本，从初始文本开始
 
-  // 获取 ElectronAPI
-  const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-  if (!electronAPI?.asrWebSocket) {
-    throw new Error('ASR WebSocket API 不可用');
-  }
 
   const cleanup = async () => {
     try {
@@ -71,10 +67,11 @@ export async function startMicrophoneRecognition(
       }
     } catch {}
     try {
-      // 使用 IPC WebSocket API 发送停止信号并关闭连接
-      await electronAPI.asrWebSocket.sendConfig(sessionId, { is_speaking: false });
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await electronAPI.asrWebSocket.close(sessionId);
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify({ is_speaking: false }));
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        websocket.close();
+      }
     } catch {}
     onClose?.();
   };
@@ -103,69 +100,24 @@ export async function startMicrophoneRecognition(
       },
     };
     stream = await navigator.mediaDevices.getUserMedia(constraints);
-    const tracks = stream.getTracks();
-      tracks: tracks.map(t => ({
-        kind: t.kind,
-        label: t.label,
-        enabled: t.enabled,
-        muted: t.muted,
-        readyState: t.readyState,
-        settings: t.getSettings?.()
-      }))
-    });
 
-    // 检查 tracks 是否 muted
-    const mutedTracks = tracks.filter(t => t.muted);
-    if (mutedTracks.length > 0) {
-        mutedTracks: mutedTracks.map(t => t.label)
-      });
-    }
+    websocket = new WebSocket(url);
 
+    websocket.onopen = async () => {
+      onOpen?.();
 
-    // 关键修复：先设置消息监听器，再创建连接，避免消息丢失
-    electronAPI.asrWebSocket.onMessage(sessionId, (message: string) => {
-      try {
-        const data = JSON.parse(message);
+      const config = {
+        chunk_size: [5, 10, 5],
+        chunk_interval: 5,
+        wav_name: `${sessionId}_${Date.now()}`, // 使用 sessionId 和时间戳确保唯一性
+        is_speaking: true,
+        mode: 'online',
+      };
+      websocket?.send(JSON.stringify(config));
 
-        if (data.text && data.text.trim()) {
-          const currentRecognizedText = data.text.trim();
-
-          // 累积所有识别结果，避免重复添加
-          if (currentRecognizedText && !finalizedText.includes(currentRecognizedText)) {
-            finalizedText = finalizedText ? `${finalizedText} ${currentRecognizedText}` : currentRecognizedText;
-            onText?.(finalizedText, data.is_final);
-          }
-        }
-      } catch (err) {
-      }
-    });
-
-    // 使用 IPC WebSocket API 创建连接
-    const connectResult = await electronAPI.asrWebSocket.connect(sessionId, url);
-    if (!connectResult.success) {
-      throw new Error(`WebSocket 连接失败: ${connectResult.error}`);
-    }
-    onOpen?.();
-
-    // 发送 FunASR 配置
-    const config = {
-      chunk_size: [5, 10, 5],
-      chunk_interval: 5,
-      wav_name: `${sessionId}_${Date.now()}`,
-      is_speaking: true,
-      mode: 'online',
-    };
-    await electronAPI.asrWebSocket.sendConfig(sessionId, config);
-
-    // 初始化音频处理
-    if (stream) {
+      if (stream) {
         audioContext = new AudioContext({ sampleRate });
-          sampleRate: audioContext.sampleRate,
-          state: audioContext.state
-        });
-
         const source = audioContext.createMediaStreamSource(stream);
-
         try {
           // 获取 AudioWorklet 处理器代码
           const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
@@ -179,8 +131,6 @@ export async function startMicrophoneRecognition(
               // 创建 Blob URL
               const blob = new Blob([result.content], { type: 'application/javascript' });
               moduleURL = URL.createObjectURL(blob);
-                contentLength: result.content.length
-              });
             } else {
               throw new Error(`加载处理器失败: ${result.error}`);
             }
@@ -192,96 +142,59 @@ export async function startMicrophoneRecognition(
           await audioContext.audioWorklet.addModule(moduleURL);
 
           const workletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
-
-          let messageCount = 0;
           workletNode.port.onmessage = (event) => {
-            messageCount++;
-            if (messageCount <= 3) {
-                type: event.data?.type,
-                dataSize: event.data?.data?.byteLength,
-                messageCount
-              });
-            }
-
-            // 调试消息
-            if (event.data?.type === 'debug') {
-                message: event.data.message,
-                samplesString: event.data.samplesString,
-                maxAbsValue: event.data.maxAbsValue,
-                inputLength: event.data.inputLength,
-                samples: event.data.samples
-              });
-
-              // 如果音频全是 0，报错
-              if (event.data.maxAbsValue === 0) {
-              }
-            }
-
-            if (event.data?.type === 'audiodata') {
-              // 使用 IPC WebSocket API 发送音频数据
-              electronAPI.asrWebSocket.sendAudio(sessionId, event.data.data).then((result: any) => {
-                if (!result || !result.success) {
-                    result,
-                    byteLength: event.data.data.byteLength,
-                    sessionId
-                  });
-                  onError?.(`发送音频数据失败: ${result?.error || '未知错误'}`);
-                } else if (messageCount <= 3) {
-                    byteLength: event.data.data.byteLength
-                  });
-                }
-              }).catch((error: any) => {
-                  error,
-                  errorMessage: error?.message,
-                  byteLength: event.data.data.byteLength,
-                  sessionId
-                });
-                onError?.(`IPC 调用异常: ${error?.message || String(error)}`);
-              });
+            if (
+              event.data?.type === 'audiodata' &&
+              websocket &&
+              websocket.readyState === WebSocket.OPEN
+            ) {
+              websocket.send(event.data.data);
             }
           };
           source.connect(workletNode);
         } catch (err) {
-
           const processor = audioContext.createScriptProcessor(4096, 1, 1);
-
-          let processCount = 0;
           processor.onaudioprocess = (event) => {
-            processCount++;
-            if (processCount <= 3) {
-                processCount
-              });
-            }
-
-            const inputData = event.inputBuffer.getChannelData(0);
-            const pcmData = new Int16Array(inputData.length);
-            for (let i = 0; i < inputData.length; i++) {
-              pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
-            }
-            // 使用 IPC WebSocket API 发送音频数据
-            electronAPI.asrWebSocket.sendAudio(sessionId, pcmData.buffer).then((result: any) => {
-              if (!result || !result.success) {
-                  result,
-                  byteLength: pcmData.buffer.byteLength,
-                  sessionId
-                });
-                onError?.(`发送音频数据失败: ${result?.error || '未知错误'}`);
-              } else if (processCount <= 3) {
-                  byteLength: pcmData.buffer.byteLength
-                });
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+              const inputData = event.inputBuffer.getChannelData(0);
+              const pcmData = new Int16Array(inputData.length);
+              for (let i = 0; i < inputData.length; i++) {
+                pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
               }
-            }).catch((error: any) => {
-                error,
-                errorMessage: error?.message,
-                byteLength: pcmData.buffer.byteLength,
-                sessionId
-              });
-              onError?.(`IPC 调用异常: ${error?.message || String(error)}`);
-            });
+              websocket.send(pcmData.buffer);
+            }
           };
           source.connect(processor);
         }
-    }
+      }
+    };
+
+    websocket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.text && data.text.trim()) {
+          const currentRecognizedText = data.text.trim();
+
+          // 累积所有识别结果，避免重复添加
+          if (currentRecognizedText && !finalizedText.includes(currentRecognizedText)) {
+            finalizedText = finalizedText ? `${finalizedText} ${currentRecognizedText}` : currentRecognizedText;
+            onText?.(finalizedText, data.is_final);
+          }
+        }
+      } catch (err) {
+        console.error('AudioRecognition WebSocket 解析出错:', err);
+      }
+    };
+
+    websocket.onerror = () => {
+      onError?.('麦克风识别 WebSocket 连接错误');
+      void cleanup();
+    };
+
+    websocket.onclose = () => {
+      onClose?.();
+    };
   } catch (error: any) {
     const message = error?.message || '启动麦克风识别失败';
     onError?.(message);
@@ -312,24 +225,20 @@ export async function startSpeakerRecognition(
     onClose,
   } = options;
 
+  let websocket: WebSocket | null = null;
   let audioDataListener: any = null;
   let audioContext: AudioContext | null = null;
   let speakerWorkletNode: AudioWorkletNode | null = null;
   let finalizedText = ''; // 累积已确认的文本
   let currentSessionText = ''; // 当前识别会话的临时文本
 
-  // 获取 ElectronAPI
-  const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-  if (!electronAPI?.asrWebSocket) {
-    throw new Error('ASR WebSocket API 不可用');
-  }
-
   const cleanup = async () => {
     try {
-      // 使用 IPC WebSocket API 发送停止信号并关闭连接
-      await electronAPI.asrWebSocket.sendConfig(sessionId, { is_speaking: false });
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      await electronAPI.asrWebSocket.close(sessionId);
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify({ is_speaking: false }));
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        websocket.close();
+      }
     } catch {}
     try {
       if (audioContext && audioContext.state !== 'closed') {
@@ -337,6 +246,7 @@ export async function startSpeakerRecognition(
       }
     } catch {}
     try {
+      const electronAPI = (window as any).electronInterviewerAPI;
       if (audioDataListener) electronAPI?.off('speaker-audio-data', audioDataListener);
       electronAPI?.audioTest?.stopTest();
     } catch {}
@@ -362,56 +272,23 @@ export async function startSpeakerRecognition(
       return { stop: async () => {} };
     }
 
+    websocket = new WebSocket(url);
 
-    // 关键修复：先设置消息监听器，再创建连接，避免消息丢失
-    electronAPI.asrWebSocket.onMessage(sessionId, (message: string) => {
-      try {
-        const data = JSON.parse(message);
+    websocket.onopen = async () => {
+      onOpen?.();
 
-        if (data.text && data.text.trim()) {
-          const newText = data.text.trim();
-
-          if (data.is_final) {
-            // 确认文本，累积到 finalizedText
-            finalizedText = finalizedText ? `${finalizedText} ${newText}` : newText;
-            onText?.(finalizedText, true);
-            currentSessionText = ''; // 清空临时文本
-          } else {
-            // 临时文本
-            currentSessionText = newText;
-            const fullText = finalizedText ? `${finalizedText} ${currentSessionText}` : currentSessionText;
-            onText?.(fullText, false);
-          }
-        }
-      } catch (err) {
-      }
-    });
-
-    // 使用 IPC WebSocket API 创建连接
-    const connectResult = await electronAPI.asrWebSocket.connect(sessionId, url);
-    if (!connectResult.success) {
-      throw new Error(`WebSocket 连接失败: ${connectResult.error}`);
-    }
-    onOpen?.();
-
-    // 发送 FunASR 配置
-    const config = {
-      chunk_size: [5, 10, 5],
-      chunk_interval: 5,
-      wav_name: `${sessionId}_${Date.now()}`,
-      is_speaking: true,
-      mode: 'online',
-    };
-    await electronAPI.asrWebSocket.sendConfig(sessionId, config);
-
-    // 初始化音频处理流程
+      // 发送 FunASR 配置参数
+      const config = {
+        chunk_size: [5, 10, 5],
+        chunk_interval: 5,
+        wav_name: `${sessionId}_${Date.now()}`, // 使用 sessionId 和时间戳确保唯一性
+        is_speaking: true,
+        mode: 'online',
+      };
+      websocket?.send(JSON.stringify(config));
 
       // 初始化 AudioContext 和 WorkletNode
       audioContext = new AudioContext({ sampleRate });
-        sampleRate: audioContext.sampleRate,
-        state: audioContext.state
-      });
-
       try {
         // 获取 AudioWorklet 处理器代码
         const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
@@ -425,8 +302,6 @@ export async function startSpeakerRecognition(
             // 创建 Blob URL
             const blob = new Blob([result.content], { type: 'application/javascript' });
             moduleURL = URL.createObjectURL(blob);
-              contentLength: result.content.length
-            });
           } else {
             throw new Error(`加载处理器失败: ${result.error}`);
           }
@@ -440,37 +315,13 @@ export async function startSpeakerRecognition(
         speakerWorkletNode = new AudioWorkletNode(audioContext, 'speaker-pcm-processor');
 
         // 监听来自 WorkletNode 的处理后音频数据
-        let messageCount = 0;
         speakerWorkletNode.port.onmessage = (event) => {
-          messageCount++;
-          if (messageCount <= 3) {
-              type: event.data.type,
-              dataSize: event.data.data?.byteLength,
-              messageCount
-            });
-          }
-
-          if (event.data.type === 'audiodata') {
-            // 使用 IPC WebSocket API 发送音频数据
-            electronAPI.asrWebSocket.sendAudio(sessionId, event.data.data).then((result: any) => {
-              if (!result || !result.success) {
-                  result,
-                  byteLength: event.data.data.byteLength,
-                  sessionId
-                });
-                onError?.(`发送音频数据失败: ${result?.error || '未知错误'}`);
-              } else if (messageCount <= 3) {
-                  byteLength: event.data.data.byteLength
-                });
-              }
-            }).catch((error: any) => {
-                error,
-                errorMessage: error?.message,
-                byteLength: event.data.data.byteLength,
-                sessionId
-              });
-              onError?.(`IPC 调用异常: ${error?.message || String(error)}`);
-            });
+          if (
+            event.data.type === 'audiodata' &&
+            websocket &&
+            websocket.readyState === WebSocket.OPEN
+          ) {
+            websocket.send(event.data.data);
           }
         };
       } catch (err) {
@@ -488,25 +339,55 @@ export async function startSpeakerRecognition(
       }
 
       // 接收原生音频数据并转发给 WorkletNode 处理
-      let audioDataCount = 0;
       audioDataListener = (audioData: ArrayBuffer) => {
-        audioDataCount++;
-        if (audioDataCount <= 3) {
-            byteLength: audioData.byteLength,
-            count: audioDataCount
-          });
-        }
-
         if (speakerWorkletNode && audioData.byteLength > 0) {
           speakerWorkletNode.port.postMessage({
             type: 'nativeAudioData',
             audioData: audioData,
           });
-          if (audioDataCount <= 3) {
-          }
         }
       };
       electronAPI.on('speaker-audio-data', audioDataListener);
+    };
+
+    websocket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        // FunASR 返回格式: { mode: "online", text: "识别结果", wav_name: "speaker", is_final: false }
+        if (data.text && data.text.trim()) {
+          const currentRecognizedText = data.text.trim();
+
+          if (data.is_final) {
+            // 识别结果已确认，累加到 finalizedText
+            if (currentRecognizedText && !finalizedText.includes(currentRecognizedText)) {
+              finalizedText = finalizedText
+                ? `${finalizedText} ${currentRecognizedText}`
+                : currentRecognizedText;
+              currentSessionText = '';
+            }
+            onText?.(finalizedText, true);
+          } else {
+            // 临时识别结果，更新 currentSessionText
+            currentSessionText = currentRecognizedText;
+            const combinedText = finalizedText
+              ? `${finalizedText} ${currentSessionText}`
+              : currentSessionText;
+            onText?.(combinedText, false);
+          }
+        }
+      } catch (err) {
+        console.error('解析 FunASR 消息失败:', err, event.data);
+      }
+    };
+
+    websocket.onerror = () => {
+      onError?.('连接扬声器识别服务失败');
+      void cleanup();
+    };
+
+    websocket.onclose = () => {
+      onClose?.();
+    };
   } catch (error: any) {
     const errorMsg =
       error?.name === 'SecurityError'

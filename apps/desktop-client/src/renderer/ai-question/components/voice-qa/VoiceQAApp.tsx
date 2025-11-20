@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { aiService } from '../../../utils/ai/aiService';
 import { clearVoiceQAState, setVoiceQAState, useVoiceQAState } from '../../../utils/voiceQA';
 import { conversationService } from '../../api/conversationService.ts';
+import { interviewService } from '../shared/services/InterviewService';
 import { VoiceQABody } from './VoiceQABody.tsx';
 import { VoiceQAFooter } from './VoiceQAFooter.tsx';
 import { VoiceQAHeader } from './VoiceQAHeader.tsx';
@@ -210,8 +211,44 @@ export function VoiceQAApp() {
     
     let aiResponseContent = '';
     const startTime = Date.now();
-    
+
+    // 用于保存 RAG 查询结果
+    let ragQuestionId: string | undefined = undefined;
+    let ragQuestion: string | undefined = undefined;
+    let ragAnswer: string | undefined = undefined;
+    let ragOtherId: string | undefined = undefined;
+    let ragOtherContent: string | undefined = undefined;
+
     try {
+      // 查询所有岗位的押题（语音提问不需要选择岗位）
+      let ragResultText = '';
+      try {
+        const ragResult = await interviewService.findSimilarQuestionInAllJobs(
+          currentQuestion,
+          0.8
+        );
+
+        // 保存 RAG 查询结果，用于后续保存到 ChromaDB
+        ragQuestionId = ragResult.questionId;
+        ragQuestion = ragResult.question;
+        ragAnswer = ragResult.answer;
+        ragOtherId = ragResult.otherId;
+        ragOtherContent = ragResult.otherContent;
+
+        // 构建 RAG 增强的问题提示
+        if (ragResult.answer || ragResult.otherContent) {
+          ragResultText = '\n\n';
+          if (ragResult.answer) {
+            ragResultText += `[相关题库答案]：${ragResult.answer}\n`;
+          }
+          if (ragResult.otherContent) {
+            ragResultText += `[相关项目资料]：${ragResult.otherContent}`;
+          }
+        }
+      } catch (ragError) {
+        // RAG 查询失败不影响正常提问流程
+      }
+
       // 从共享状态获取选中的模型
       const selectedModelId = qa.selectedModelId;
 
@@ -244,9 +281,12 @@ export function VoiceQAApp() {
         credentials: modelToUse.credentials || '{}',
       };
 
+      // 构建最终的用户问题（可能包含 RAG 结果）
+      const finalQuestion = ragResultText ? `${currentQuestion}${ragResultText}` : currentQuestion;
+
       // 使用 AI 服务进行流式调用（使用自定义模型）
       await aiService.callAIStreamWithCustomModel(
-        [{ role: 'user', content: currentQuestion }],
+        [{ role: 'user', content: finalQuestion }],
         modelConfig,
         modelParams,
         async (chunk) => {
@@ -290,6 +330,25 @@ export function VoiceQAApp() {
                 Date.now() - startTime
               );
               setSequenceNumber(currentSeq + 1);
+
+              // 如果使用了 RAG（有押题或其他文件命中），保存到 ChromaDB 作为 AI 向量记录
+              if (ragQuestionId || ragOtherId) {
+                const vectorRecordId = `voiceqa_${conversationId}_${currentSeq}`;
+                await interviewService.saveAIVectorRecord({
+                  id: vectorRecordId,
+                  interview_id: conversationId.toString(),
+                  note_type: 'voice_qa',
+                  content: '',
+                  question_id: ragQuestionId,
+                  question: ragQuestion,
+                  answer: ragAnswer,
+                  asked_question: currentQuestion,
+                  reference_answer: aiResponseContent,
+                  other_id: ragOtherId,
+                  other_content: ragOtherContent,
+                  created_at: Date.now(),
+                });
+              }
             }
 
             setIsLoading(false);

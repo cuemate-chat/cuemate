@@ -311,6 +311,70 @@ export class InterviewService {
   }
 
   /**
+   * 查询所有岗位的押题（用于语音提问场景）
+   * 不需要指定 jobId，会查询所有岗位
+   */
+  async findSimilarQuestionInAllJobs(
+    question: string,
+    threshold: number = 0.8,
+  ): Promise<{
+    questionId?: string;
+    question?: string;
+    answer?: string;
+    similarity?: number;
+    otherId?: string;
+    otherContent?: string;
+  }> {
+    try {
+      // 调用统一接口，查询所有 ChromaDB 集合（岗位信息、简历信息、面试押题、其他文件）
+      const response = await fetch(`${this.ragServiceURL}/similarity/questions/all`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: question,
+          threshold,
+        }),
+      });
+
+      if (!response.ok) {
+        console.warn('查询 ChromaDB 失败');
+        return {};
+      }
+
+      const data = await response.json();
+
+      if (!data.success || !data.match) {
+        console.log('[InterviewService] 未找到匹配结果');
+        return {};
+      }
+
+      const match = data.match;
+
+      const result = {
+        questionId: match.questionId,
+        question: match.question,
+        answer: match.answer || '',
+        similarity: match.score,
+        otherId: match.otherId,
+        otherContent: match.otherContent || '',
+      };
+
+      console.log('[InterviewService] 查询所有 ChromaDB 集合结果', {
+        hasQuestion: !!result.questionId,
+        hasOtherContent: !!result.otherContent,
+        similarity: result.similarity,
+      });
+
+      return result;
+    } catch (error) {
+      console.warn('RAG 服务不可用:', error);
+      return {};
+    }
+  }
+
+  /**
    * 保存 AI 向量记录到 ChromaDB
    * （当使用了押题或其他文件时调用）
    */

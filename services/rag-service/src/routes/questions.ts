@@ -235,6 +235,7 @@ export async function createQuestionRoutes(
         topK,
         { jobId },
         deps.config.vectorStore.questionsCollection,
+        query,
       );
 
       if (searchResults.length === 0) {
@@ -288,6 +289,125 @@ export async function createQuestionRoutes(
     } catch (error) {
       app.log.error({ err: error as any }, 'Similarity calculation failed');
       return { success: false, error: '相似度计算失败' };
+    }
+  });
+
+  // 查询所有 ChromaDB 集合（用于语音提问场景）
+  // 查询岗位信息、简历信息、面试押题、其他文件等所有内容
+  app.post('/similarity/questions/all', async (req) => {
+    const body = (req as any).body as {
+      query: string;
+      threshold?: number;
+      topK?: number;
+    };
+
+    try {
+      const { query, threshold = 0.8, topK = 3 } = body;
+
+      if (!query) {
+        return {
+          success: false,
+          error: 'query 参数是必需的',
+        };
+      }
+
+      // 生成查询问题的嵌入向量
+      const queryEmbeddings = await deps.embeddingService.embed([query]);
+      const queryEmbedding = queryEmbeddings[0];
+
+      // 查询所有集合：岗位信息、简历信息、面试押题、其他文件
+      const collections = [
+        { name: deps.config.vectorStore.questionsCollection, type: 'questions' },
+        { name: deps.config.vectorStore.jobsCollection, type: 'jobs' },
+        { name: deps.config.vectorStore.resumesCollection, type: 'resumes' },
+        { name: 'other_files', type: 'other_files' },
+      ];
+
+      const allResults: any[] = [];
+
+      // 并行查询所有集合
+      for (const collection of collections) {
+        try {
+          const results = await deps.vectorStore.searchByEmbedding(
+            queryEmbedding,
+            topK,
+            {},
+            collection.name,
+            query,
+          );
+
+          // 添加集合类型标识
+          results.forEach((r) => {
+            allResults.push({
+              ...r,
+              collectionType: collection.type,
+            });
+          });
+        } catch (err) {
+          app.log.warn(`查询集合 ${collection.name} 失败`);
+        }
+      }
+
+      // 按相似度排序
+      allResults.sort((a, b) => (b.score || 0) - (a.score || 0));
+
+      // 过滤低分结果
+      const validResults = allResults.filter((r) => r.score >= threshold);
+
+      if (validResults.length === 0) {
+        return {
+          success: true,
+          match: {},
+          threshold,
+        };
+      }
+
+      // 构建返回结果
+      let questionId: string | undefined;
+      let question: string | undefined;
+      let answer: string | undefined;
+      let otherId: string | undefined;
+      let otherContent: string | undefined;
+
+      // 优先找面试押题
+      const questionMatch = validResults.find((r) => r.collectionType === 'questions');
+      if (questionMatch) {
+        questionId = questionMatch.metadata?.questionId;
+        question = questionMatch.metadata?.title;
+        answer = questionMatch.metadata?.description || '';
+      }
+
+      // 其他内容（岗位信息、简历信息、其他文件）合并为 otherContent
+      const otherMatches = validResults.filter((r) => r.collectionType !== 'questions').slice(0, 2);
+      if (otherMatches.length > 0) {
+        const contents = otherMatches.map((m) => {
+          const type =
+            m.collectionType === 'jobs'
+              ? '岗位信息'
+              : m.collectionType === 'resumes'
+                ? '简历信息'
+                : '项目资料';
+          return `【${type}】${m.content || m.metadata?.content || ''}`;
+        });
+        otherContent = contents.join('\n\n');
+        otherId = otherMatches[0].id;
+      }
+
+      return {
+        success: true,
+        match: {
+          questionId,
+          question,
+          answer,
+          otherId,
+          otherContent,
+          score: validResults[0]?.score,
+        },
+        threshold,
+      };
+    } catch (error) {
+      app.log.error({ err: error as any }, '查询所有 ChromaDB 集合失败');
+      return { success: false, error: '查询失败' };
     }
   });
 }
