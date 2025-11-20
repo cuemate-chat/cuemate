@@ -10,6 +10,8 @@ export interface VoiceQAState {
   confirmedText: string;
   tempText: string;
   updatedAt: number;
+  selectedModelId?: string;
+  selectedLanguage?: 'zh-CN' | 'zh-TW' | 'en-US';
 }
 
 const STORAGE_KEY = 'cuemate.voiceQA.state';
@@ -26,7 +28,14 @@ try {
 const listeners = new Set<(s: VoiceQAState) => void>();
 
 function getDefaultState(): VoiceQAState {
-  return { isRecording: false, confirmedText: '', tempText: '', updatedAt: Date.now() };
+  return {
+    isRecording: false,
+    confirmedText: '',
+    tempText: '',
+    updatedAt: Date.now(),
+    selectedModelId: undefined,
+    selectedLanguage: 'zh-CN'
+  };
 }
 
 export function getVoiceQAState(): VoiceQAState {
@@ -48,6 +57,12 @@ export function setVoiceQAState(next: Partial<VoiceQAState> | VoiceQAState): Voi
       ? ((next as VoiceQAState).confirmedText ?? '')
       : current.confirmedText,
     tempText: (next as VoiceQAState).tempText ?? current.tempText,
+    selectedModelId: next.hasOwnProperty('selectedModelId')
+      ? (next as VoiceQAState).selectedModelId
+      : current.selectedModelId,
+    selectedLanguage: next.hasOwnProperty('selectedLanguage')
+      ? (next as VoiceQAState).selectedLanguage
+      : current.selectedLanguage,
     updatedAt: Date.now(),
   };
 

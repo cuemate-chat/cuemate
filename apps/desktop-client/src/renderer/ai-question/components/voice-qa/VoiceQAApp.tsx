@@ -212,9 +212,43 @@ export function VoiceQAApp() {
     const startTime = Date.now();
     
     try {
-      // 使用 AI 服务进行流式调用
-      await aiService.callAIStream(
+      // 从共享状态获取选中的模型
+      const selectedModelId = qa.selectedModelId;
+
+      // 获取用户数据和模型信息
+      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const userDataResult = await api?.getUserData?.();
+      const userData = userDataResult?.success ? userDataResult.userData : null;
+
+      let modelToUse = userData?.model;
+      let modelParams = userData?.model_params || [];
+
+      // 如果用户选择了自定义模型，尝试获取该模型
+      if (selectedModelId && selectedModelId !== userData?.model?.id) {
+        const { modelService } = await import('../../../interviewer/api/modelService');
+        const modelResult = await modelService.getModels({ type: 'llm' });
+        const selectedModel = modelResult.list.find((m: any) => m.id === selectedModelId);
+        if (selectedModel) {
+          modelToUse = selectedModel;
+        }
+      }
+
+      if (!modelToUse) {
+        throw new Error('请先在设置中配置 AI 模型');
+      }
+
+      // 准备模型配置
+      const modelConfig = {
+        provider: modelToUse.provider,
+        model_name: modelToUse.model_name,
+        credentials: modelToUse.credentials || '{}',
+      };
+
+      // 使用 AI 服务进行流式调用（使用自定义模型）
+      await aiService.callAIStreamWithCustomModel(
         [{ role: 'user', content: currentQuestion }],
+        modelConfig,
+        modelParams,
         async (chunk) => {
           if (chunk.error) {
             console.error('AI 调用出错:', chunk.error);

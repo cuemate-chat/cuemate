@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { currentInterview } from '../../utils/currentInterview';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { setMockInterviewState } from '../../utils/mockInterviewState';
-import { startVoiceQA, stopVoiceQA, useVoiceQAState } from '../../utils/voiceQA';
+import { setVoiceQAState, startVoiceQA, stopVoiceQA, useVoiceQAState } from '../../utils/voiceQA';
 import { InterviewTrainingEntryBody } from './InterviewTrainingEntryBody';
 import { MockInterviewEntryBody } from './MockInterviewEntryBody';
 import { VoiceQAEntryBody } from './VoiceQAEntryBody';
@@ -21,6 +21,21 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard, selectedJobI
   const qa = useVoiceQAState();
   const vState = useVoiceState();
   const isRecording = vState.mode === 'voice-qa' && vState.subState === 'voice-speaking';
+
+  // 语音提问的模型和语言选择状态
+  const [voiceQAModel, setVoiceQAModel] = useState<any>(null);
+  const [voiceQALanguage, setVoiceQALanguage] = useState<'zh-CN' | 'zh-TW' | 'en-US'>('zh-CN');
+
+  // 同步模型和语言选择到共享状态
+  useEffect(() => {
+    if (voiceQAModel) {
+      setVoiceQAState({ selectedModelId: voiceQAModel.id });
+    }
+  }, [voiceQAModel]);
+
+  useEffect(() => {
+    setVoiceQAState({ selectedLanguage: voiceQALanguage });
+  }, [voiceQALanguage]);
 
   // 同步语音识别结果到本地状态
   useEffect(() => {
@@ -140,7 +155,14 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard, selectedJobI
     <Tooltip.Provider>
       <div className="interviewer-window-body" key={selectedCard || 'page'}>
         {selectedCard === '语音测试' && <VoiceTestBody />}
-        {selectedCard === '语音提问' && <VoiceQAEntryBody question={question} onVoiceToggle={handleVoiceToggle} />}
+        {selectedCard === '语音提问' && (
+          <VoiceQAEntryBody
+            question={question}
+            onVoiceToggle={handleVoiceToggle}
+            onModelSelect={setVoiceQAModel}
+            onLanguageSelect={setVoiceQALanguage}
+          />
+        )}
         {selectedCard === '模拟面试' && (
           <MockInterviewEntryBody
             selectedJobId={selectedJobId}
