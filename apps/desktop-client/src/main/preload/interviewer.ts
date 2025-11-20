@@ -85,6 +85,37 @@ const interviewerAPI = {
     },
   },
 
+  // === ASR WebSocket API (解决 V8 Sandbox ArrayBuffer 发送问题) ===
+  asrWebSocket: {
+    // 创建 WebSocket 连接
+    connect: (sessionId: string, url: string) =>
+      ipcRenderer.invoke('asr-websocket:connect', sessionId, url),
+    // 发送配置
+    sendConfig: (sessionId: string, config: any) =>
+      ipcRenderer.invoke('asr-websocket:send-config', sessionId, config),
+    // 发送音频数据
+    sendAudio: (sessionId: string, audioData: ArrayBuffer) =>
+      ipcRenderer.invoke('asr-websocket:send-audio', sessionId, audioData),
+    // 监听消息
+    onMessage: (sessionId: string, callback: (message: string) => void) => {
+      // 设置消息监听器
+      ipcRenderer.invoke('asr-websocket:on-message', sessionId);
+      // 监听来自主进程的消息
+      ipcRenderer.on(`asr-websocket:message:${sessionId}`, (_event, message) =>
+        callback(message),
+      );
+      // 返回清理函数
+      return () => ipcRenderer.removeAllListeners(`asr-websocket:message:${sessionId}`);
+    },
+    // 关闭连接
+    close: (sessionId: string) => ipcRenderer.invoke('asr-websocket:close', sessionId),
+    // 获取连接状态
+    getReadyState: (sessionId: string) =>
+      ipcRenderer.invoke('asr-websocket:get-ready-state', sessionId),
+    // 检查 ASR 服务状态
+    checkService: () => ipcRenderer.invoke('asr-websocket:check-service'),
+  },
+
   // === 事件监听 API ===
   on: (channel: string, callback: (...args: any[]) => void) => {
     // 只允许特定的事件频道

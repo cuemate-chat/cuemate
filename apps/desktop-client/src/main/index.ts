@@ -77,7 +77,7 @@ class CueMateApp {
         // 在 macOS 上隐藏 Dock 图标但保留菜单栏
         if (process.platform === 'darwin') {
           // 保持 regular 模式以确保菜单栏显示，只隐藏 dock 图标
-          app.dock.hide();
+          app.dock?.hide();
         }
 
         // 创建菜单栏图标（任务栏图标）

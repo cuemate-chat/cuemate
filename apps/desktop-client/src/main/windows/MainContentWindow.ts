@@ -78,7 +78,7 @@ export class MainContentWindow {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
-          webSecurity: !this.isDevelopment,
+          webSecurity: false,
           devTools: this.isDevelopment, // 仅开发环境允许打开 DevTools，但不自动打开
           preload: getPreloadPath('mainContent'), // 添加预加载脚本
         },
@@ -179,9 +179,9 @@ export class MainContentWindow {
     // 页面加载完成
     this.window.webContents.on('did-finish-load', () => {});
 
-    // 处理页面崩溃
-    this.window.webContents.on('crashed', () => {
-      logger.error('main-content 页面崩溃');
+    // 处理渲染进程崩溃
+    this.window.webContents.on('render-process-gone', (_event, details) => {
+      logger.error({ reason: details.reason, exitCode: details.exitCode }, 'main-content 渲染进程崩溃');
       // 可以在这里添加崩溃恢复逻辑
     });
 

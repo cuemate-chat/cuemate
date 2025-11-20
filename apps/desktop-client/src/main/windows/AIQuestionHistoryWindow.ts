@@ -60,7 +60,7 @@ export class AIQuestionHistoryWindow {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
-          webSecurity: !this.isDevelopment,
+          webSecurity: false,
           devTools: this.isDevelopment,
           preload: getPreloadPath('aiQuestionHistory'),
         },
@@ -85,9 +85,9 @@ export class AIQuestionHistoryWindow {
       this.setupEvents();
 
       // 开发环境下打开独立的 DevTools
-      // if (this.isDevelopment) {
-      //   this.window.webContents.openDevTools({ mode: 'detach' });
-      // }
+      if (this.isDevelopment) {
+        this.window.webContents.openDevTools({ mode: 'detach' });
+      }
     } catch (error) {
       logger.error({ error }, '创建 ai-question-history 窗口失败');
       throw error;

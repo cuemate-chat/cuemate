@@ -58,8 +58,8 @@ export class InterviewerWindow {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
-          webSecurity: !this.isDevelopment,
-          devTools: true, // 语音识别窗口始终允许开发者工具
+          webSecurity: false, // 禁用以允许 WebSocket 连接到 localhost ASR 服务
+          devTools: this.isDevelopment,
           preload: getPreloadPath('interviewer'),
         },
       });
@@ -82,10 +82,8 @@ export class InterviewerWindow {
 
       this.setupEvents();
 
-      // 开发模式下自动打开开发者工具
-      if (this.isDevelopment) {
-        this.window.webContents.openDevTools({ mode: 'detach' });
-      }
+      // 语音识别窗口始终打开开发者工具（用于调试音频问题）
+      this.window.webContents.openDevTools({ mode: 'detach' });
     } catch (error) {
       logger.error({ error }, '创建 interviewer 窗口失败');
       throw error;

@@ -105,7 +105,7 @@ export class AIQuestionWindow {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
-          webSecurity: !this.isDevelopment,
+          webSecurity: false,
           devTools: this.isDevelopment,
           preload: getPreloadPath('aiQuestion'),
         },
@@ -123,9 +123,9 @@ export class AIQuestionWindow {
       this.window.setFullScreenable(false);
 
       // 开发模式下自动打开开发者工具
-      // if (this.isDevelopment) {
-      //   this.window.webContents.openDevTools({ mode: 'detach' });
-      // }
+      if (this.isDevelopment) {
+        this.window.webContents.openDevTools({ mode: 'detach' });
+      }
 
       // 加载页面
       if (this.isDevelopment) {
