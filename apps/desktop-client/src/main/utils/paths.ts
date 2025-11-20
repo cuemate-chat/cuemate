@@ -132,21 +132,21 @@ export function getAppRoot(): string {
 
 /**
  * 获取日志目录
- * 统一使用 cuemate-installer 的日志目录，与容器服务共享
+ * 统一使用 cuemate-desktop-client 的日志目录，与容器服务共享
  */
 export function getLogsDir(): string {
   if (process.platform === 'darwin') {
-    // macOS: ~/Library/Application Support/cuemate-installer/data/logs
+    // macOS: ~/Library/Application Support/cuemate-desktop-client/data/logs
     const homeDir = app.getPath('home');
-    return join(homeDir, 'Library', 'Application Support', 'cuemate-installer', 'data', 'logs');
+    return join(homeDir, 'Library', 'Application Support', 'cuemate-desktop-client', 'data', 'logs');
   } else if (process.platform === 'win32') {
-    // Windows: %APPDATA%/cuemate-installer/data/logs
+    // Windows: %APPDATA%/cuemate-desktop-client/data/logs
     const appData = app.getPath('appData');
-    return join(appData, 'cuemate-installer', 'data', 'logs');
+    return join(appData, 'cuemate-desktop-client', 'data', 'logs');
   } else {
-    // Linux: ~/.local/share/cuemate-installer/data/logs
+    // Linux: ~/.local/share/cuemate-desktop-client/data/logs
     const homeDir = app.getPath('home');
-    return join(homeDir, '.local', 'share', 'cuemate-installer', 'data', 'logs');
+    return join(homeDir, '.local', 'share', 'cuemate-desktop-client', 'data', 'logs');
   }
 }
 

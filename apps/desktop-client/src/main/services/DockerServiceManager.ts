@@ -41,20 +41,29 @@ export class DockerServiceManager {
     // 3. 生产环境：检查用户数据目录
     const userDataDir = path.join(app.getPath('userData'), 'docker');
     const userComposePath = path.join(userDataDir, 'docker-compose.yml');
-    if (fs.existsSync(userComposePath)) {
-      logger.info({ userDataDir }, '生产环境：使用用户数据目录');
-      return userDataDir;
+
+    // 如果用户数据目录没有 docker-compose.yml，尝试从应用资源目录复制
+    if (!fs.existsSync(userComposePath)) {
+      const appResourcesDir = path.join(app.getAppPath(), 'resources', 'docker');
+      const appComposePath = path.join(appResourcesDir, 'docker-compose.yml');
+
+      if (fs.existsSync(appComposePath)) {
+        logger.info({ from: appResourcesDir, to: userDataDir }, '首次初始化：复制 docker-compose.yml 到用户数据目录');
+        // 确保目录存在
+        if (!fs.existsSync(userDataDir)) {
+          fs.mkdirSync(userDataDir, { recursive: true });
+        }
+        // 复制文件
+        fs.copyFileSync(appComposePath, userComposePath);
+        logger.info('docker-compose.yml 复制成功');
+      } else {
+        throw new Error(`找不到 docker-compose.yml 文件，应用资源目录: ${appResourcesDir}`);
+      }
     }
 
-    // 4. 生产环境：检查应用资源目录
-    const appResourcesDir = path.join(app.getAppPath(), 'resources', 'docker');
-    const appComposePath = path.join(appResourcesDir, 'docker-compose.yml');
-    if (fs.existsSync(appComposePath)) {
-      logger.info({ appResourcesDir }, '生产环境：使用应用资源目录');
-      return appResourcesDir;
-    }
-
-    throw new Error('找不到 docker-compose.yml 文件');
+    // 返回用户数据目录
+    logger.info({ userDataDir }, '生产环境：使用用户数据目录');
+    return userDataDir;
   }
 
   /**
