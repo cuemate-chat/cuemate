@@ -119,6 +119,7 @@ services:
       - TZ=Asia/Shanghai
     volumes:
       - ${DATA_DIR:-../../data}/logs:/opt/cuemate/logs
+      - ${DATA_DIR:-../../data}/fastembed_models:/opt/cuemate/models/fastembed
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     networks:

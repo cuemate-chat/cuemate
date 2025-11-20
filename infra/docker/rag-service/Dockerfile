@@ -53,7 +53,9 @@ RUN mkdir -p /opt/cuemate/logs/info/rag-service \
     && mkdir -p /opt/cuemate/logs/debug/rag-service \
     && mkdir -p /opt/cuemate/logs/warn/rag-service \
     && mkdir -p /opt/cuemate/logs/error/rag-service \
-    && chown -R node:node /opt/cuemate/logs
+    && mkdir -p /opt/cuemate/models/fastembed \
+    && chown -R node:node /opt/cuemate/logs \
+    && chown -R node:node /opt/cuemate/models
 
 ARG VERSION=v0.1.0
 ENV VERSION=${VERSION}
