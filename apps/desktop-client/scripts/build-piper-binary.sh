@@ -10,25 +10,36 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 RESOURCES_DIR="$PROJECT_ROOT/resources/piper"
 OUTPUT_DIR="$PROJECT_ROOT/resources/piper-bin"
+VENV_DIR="$OUTPUT_DIR/venv"
 
 echo "=========================================="
 echo "构建 Piper TTS 独立可执行文件"
 echo "=========================================="
 
+# 创建虚拟环境
+if [ ! -d "$VENV_DIR" ]; then
+    echo "创建 Python 虚拟环境..."
+    python3 -m venv "$VENV_DIR"
+fi
+
+# 激活虚拟环境
+echo "激活虚拟环境..."
+source "$VENV_DIR/bin/activate"
+
 # 检查是否安装了 pyinstaller
-if ! command -v pyinstaller &> /dev/null; then
+if ! python -c "import PyInstaller" 2>/dev/null; then
     echo "安装 PyInstaller..."
     pip install pyinstaller
 fi
 
 # 检查是否安装了 piper-tts
-if ! python3 -c "from piper import PiperVoice" 2>/dev/null; then
+if ! python -c "from piper import PiperVoice" 2>/dev/null; then
     echo "安装 piper-tts..."
     pip install piper-tts
 fi
 
-# 清理旧的输出目录
-rm -rf "$OUTPUT_DIR"
+# 清理旧的输出目录（保留 venv）
+rm -rf "$OUTPUT_DIR/piper" "$OUTPUT_DIR/build" "$OUTPUT_DIR/piper.spec"
 mkdir -p "$OUTPUT_DIR"
 
 # 使用 PyInstaller 打包
@@ -49,6 +60,9 @@ pyinstaller \
 
 # 清理构建文件
 rm -rf "$OUTPUT_DIR/build" "$OUTPUT_DIR/piper.spec"
+
+# 停用虚拟环境
+deactivate
 
 # 验证生成的可执行文件
 if [ -f "$OUTPUT_DIR/piper" ]; then

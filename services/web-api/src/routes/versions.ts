@@ -99,7 +99,15 @@ export function registerVersionRoutes(app: FastifyInstance) {
         // 获取每个版本文件的内容
         const versionPromises = versionFiles.map(async (filename: string) => {
           try {
-            const fileUrl = `${COS_BUCKET_URL}/cuemate-version/${filename}`;
+            // 从文件名提取版本号: cuemate-version-v0.1.0.json -> v0.1.0
+            const versionMatch = filename.match(/cuemate-version-(.+)\.json$/);
+            if (!versionMatch) {
+              throw new Error(`Invalid filename format: ${filename}`);
+            }
+            const version = versionMatch[1];
+
+            // 版本文件现在按版本目录组织: cuemate-version/v0.1.0/cuemate-version-v0.1.0.json
+            const fileUrl = `${COS_BUCKET_URL}/cuemate-version/${version}/${filename}`;
             const fileResponse = await fetch(fileUrl);
 
             if (!fileResponse.ok) {
@@ -172,7 +180,8 @@ export function registerVersionRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'versions.detail', async (request, reply) => {
       try {
         const { version } = request.params as { version: string };
-        const key = `cuemate-version/cuemate-version-${version}.json`;
+        // 版本详情文件现在按版本目录组织: cuemate-version/v0.1.0/cuemate-version-v0.1.0.json
+        const key = `cuemate-version/${version}/cuemate-version-${version}.json`;
         const fileUrl = `${COS_BUCKET_URL}/${key}`;
 
         const fileResponse = await fetch(fileUrl);

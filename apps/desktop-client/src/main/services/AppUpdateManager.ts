@@ -232,7 +232,8 @@ export class AppUpdateManager {
     arch: string,
   ): Promise<string> {
     return new Promise((resolve, reject) => {
-      const url = `${this.COS_BASE_URL}/CueMate-${version}-${platform}-${arch}-update.tar.gz`;
+      // 更新包现在按版本目录组织: cuemate-version/v0.1.0/CueMate-v0.1.0-macos-arm64-update.tar.gz
+      const url = `${this.COS_BASE_URL}/${version}/CueMate-${version}-${platform}-${arch}-update.tar.gz`;
       const tempDir = path.join(app.getPath('temp'), `cuemate-update-${version}`);
       const downloadPath = path.join(tempDir, 'update.tar.gz');
 
