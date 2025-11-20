@@ -106,5 +106,4 @@ private/
 /data/
 
 # Installer generated files (do not commit)
-apps/desktop-client/resources/docker-images/
-apps/desktop-client/resources/config/
+apps/desktop-client/resources/
