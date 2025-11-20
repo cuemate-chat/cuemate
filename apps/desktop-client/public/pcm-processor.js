@@ -16,6 +16,22 @@ class PCMProcessor extends AudioWorkletProcessor {
     if (input.length > 0) {
       const inputChannel = input[0];
 
+      // 调试：第一次处理时检查输入数据
+      if (!this.firstProcessLogged) {
+        this.firstProcessLogged = true;
+        const first10Samples = Array.from(inputChannel.slice(0, 10));
+        const samplesStr = first10Samples.map(v => v.toFixed(6)).join(', ');
+        const maxValue = Math.max(...first10Samples.map(Math.abs));
+        this.port.postMessage({
+          type: 'debug',
+          message: 'First audio samples',
+          samples: first10Samples,
+          samplesString: samplesStr,
+          maxAbsValue: maxValue,
+          inputLength: inputChannel.length
+        });
+      }
+
       // 复制输入到输出（透传）
       if (output.length > 0) {
         output[0].set(inputChannel);

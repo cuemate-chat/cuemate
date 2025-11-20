@@ -6,6 +6,7 @@ import { PiperTTS } from '../audio/PiperTTS.js';
 import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
 import { DockerServiceManager } from '../services/DockerServiceManager.js';
 import { WindowManager } from '../windows/WindowManager.js';
+import { registerASRWebSocketHandlers } from './asrWebSocketHandlers.js';
 
 /**
  * 格式化时间为北京时间字符串
@@ -1439,6 +1440,9 @@ export function setupIPC(windowManager: WindowManager): void {
       return { success: false, error: (error as Error).message };
     }
   });
+
+  // 注册 ASR WebSocket IPC 处理器
+  registerASRWebSocketHandlers();
 
   logger.info('IPC 通信处理器设置完成');
 }

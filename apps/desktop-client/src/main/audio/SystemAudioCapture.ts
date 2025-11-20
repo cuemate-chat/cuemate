@@ -147,7 +147,7 @@ export class SystemAudioCapture {
    * 使用 AudioTee 开始捕获
    */
   private async startCaptureWithAudioTee(): Promise<void> {
-    logger.info('开始启动 AudioTee 系统音频捕获...');
+    logger.debug('开始启动 AudioTee 系统音频捕获...');
 
     // 设置错误回调
     this.onErrorCallback = (error: Error) => {
@@ -160,11 +160,19 @@ export class SystemAudioCapture {
       const audioTeeModule = await this.loadAudioTeeModule();
       const AudioTee = audioTeeModule.AudioTee;
 
+      logger.debug('创建 AudioTee 实例，配置:', {
+        sampleRate: this.options.sampleRate,
+        chunkDurationMs: 200,
+        mute: false,
+      });
+
       this.audioTeeCapture = new AudioTee({
         sampleRate: this.options.sampleRate,
         chunkDurationMs: 200, // 每块 200 毫秒
         mute: false,
       });
+
+      logger.debug('AudioTee 实例创建完成，开始设置事件监听器');
 
       // 监听音频数据
       this.audioTeeCapture.on('data', (chunk: { data: Buffer }) => {
@@ -192,13 +200,13 @@ export class SystemAudioCapture {
             }
           }
 
-          logger.info(
+          logger.debug(
             `AudioTee 音频数据分析: 长度=${audioData.length}bytes, 最大振幅=${maxAmplitude}, 阈值=${threshold}, 有声音=${hasSound}`,
           );
 
           // 只有包含实际声音时才发送回调
           if (hasSound && this.onDataCallback) {
-            logger.info('AudioTee 发送音频数据到回调');
+            logger.debug('AudioTee 发送音频数据到回调');
             this.onDataCallback(audioData);
           } else {
             logger.debug(`AudioTee 跳过静音数据: 最大振幅=${maxAmplitude} < 阈值=${threshold}`);
@@ -243,7 +251,7 @@ export class SystemAudioCapture {
         logger.debug(`AudioTee [${level}]: ${message.message}`);
       });
 
-      logger.info(
+      logger.debug(
         '调用 AudioTee start，配置:',
         JSON.stringify({
           sampleRate: this.options.sampleRate,
@@ -253,9 +261,9 @@ export class SystemAudioCapture {
       );
 
       // 启动 AudioTee 音频捕获
-      logger.info('即将调用 AudioTee start()');
+      logger.debug('即将调用 AudioTee start()');
       await this.audioTeeCapture.start();
-      logger.info('AudioTee start() 调用完成');
+      logger.debug('AudioTee start() 调用完成');
 
       logger.info('AudioTee 系统音频捕获已启动');
     } catch (error) {
