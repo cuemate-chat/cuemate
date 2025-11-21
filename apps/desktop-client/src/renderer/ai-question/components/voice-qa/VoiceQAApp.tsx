@@ -333,9 +333,8 @@ export function VoiceQAApp() {
 
               // 如果使用了 RAG（有押题或其他文件命中），保存到 ChromaDB 作为 AI 向量记录
               if (ragQuestionId || ragOtherId) {
-                const vectorRecordId = `voiceqa_${conversationId}_${currentSeq}`;
                 await interviewService.saveAIVectorRecord({
-                  id: vectorRecordId,
+                  id: crypto.randomUUID(),
                   interview_id: conversationId.toString(),
                   note_type: 'voice_qa',
                   content: '',
@@ -346,7 +345,7 @@ export function VoiceQAApp() {
                   reference_answer: aiResponseContent,
                   other_id: ragOtherId,
                   other_content: ragOtherContent,
-                  created_at: Date.now(),
+                  created_at: Math.floor(Date.now() / 1000),
                 });
               }
             }

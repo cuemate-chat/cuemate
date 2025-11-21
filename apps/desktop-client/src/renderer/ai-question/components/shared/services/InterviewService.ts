@@ -224,7 +224,8 @@ export class InterviewService {
   }
 
   /**
-   * 检查问题与题库的相似度，同时查询其他文件中的项目内容
+   * 检查问题与题库的相似度，查询所有相关集合
+   * 返回：岗位信息(最多1条)/简历信息(最多1条)/面试押题(最多1条)/其他文件(最多1条)
    */
   async findSimilarQuestion(
     question: string,
@@ -235,12 +236,16 @@ export class InterviewService {
     question?: string;
     answer?: string;
     similarity?: number;
+    jobId?: string;
+    jobContent?: string;
+    resumeId?: string;
+    resumeContent?: string;
     otherId?: string;
     otherContent?: string;
   }> {
     try {
-      // 1. 查询面试押题
-      const questionResponse = await fetch(`${this.ragServiceURL}/similarity/questions`, {
+      // 调用新接口，一次性查询所有集合
+      const response = await fetch(`${this.ragServiceURL}/similarity/questions/interview`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -252,58 +257,55 @@ export class InterviewService {
         }),
       });
 
-      let questionResult: any = {};
-      if (questionResponse.ok) {
-        const data = await questionResponse.json();
-        if (data.match && data.match.questionId) {
-          questionResult = {
-            questionId: data.match.questionId,
-            question: data.match.question,
-            answer: data.match.answer || '',
-            similarity: data.match.score,
-          };
-        }
-      } else {
-        console.warn('查询面试押题失败');
+      if (!response.ok) {
+        console.warn('查询面试相关集合失败');
+        return {};
       }
 
-      // 2. 查询其他文件
-      const otherFilesResponse = await fetch(
-        `${this.ragServiceURL}/search/other-files?query=${encodeURIComponent(question)}&k=1`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const data = await response.json();
 
-      let otherFilesResult: any = {};
-      if (otherFilesResponse.ok) {
-        const data = await otherFilesResponse.json();
-        if (data.success && data.results && data.results.length > 0) {
-          const topResult = data.results[0];
-          otherFilesResult = {
-            otherId: topResult.id,
-            otherContent: topResult.content || '',
-          };
-        }
-      } else {
-        console.warn('查询其他文件失败');
+      if (!data.success) {
+        console.warn('查询失败:', data.error);
+        return {};
       }
 
-      // 3. 合并结果
-      const mergedResult = {
-        ...questionResult,
-        ...otherFilesResult,
-      };
+      // 构建返回结果
+      const result: any = {};
+
+      // 押题
+      if (data.questionId) {
+        result.questionId = data.questionId;
+        result.question = data.question;
+        result.answer = data.answer;
+        result.similarity = data.questionScore;
+      }
+
+      // 岗位信息
+      if (data.jobId) {
+        result.jobId = data.jobId;
+        result.jobContent = data.jobContent;
+      }
+
+      // 简历信息
+      if (data.resumeId) {
+        result.resumeId = data.resumeId;
+        result.resumeContent = data.resumeContent;
+      }
+
+      // 其他文件
+      if (data.otherId) {
+        result.otherId = data.otherId;
+        result.otherContent = data.otherContent;
+      }
 
       console.log('[InterviewService] 查询结果', {
-        hasQuestion: !!questionResult.questionId,
-        hasOtherFile: !!otherFilesResult.otherId,
+        hasQuestion: !!result.questionId,
+        hasJob: !!result.jobId,
+        hasResume: !!result.resumeId,
+        hasOther: !!result.otherId,
       });
 
-      return mergedResult;
+      return result;
     } catch (error) {
       console.warn('RAG 服务不可用:', error);
       return {};

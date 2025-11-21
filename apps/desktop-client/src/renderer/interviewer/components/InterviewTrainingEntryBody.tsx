@@ -1147,16 +1147,17 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         throw new Error('未选择模型');
       }
 
-      // 从向量知识库中搜索相似问题（押题答案）和其他文件（项目内容）
+      // 从向量知识库中搜索相似问题（押题答案、岗位信息、简历信息、其他文件）
       const similarQuestion = await mockInterviewService.findSimilarQuestion(
         context.currentQuestion,
         context.jobPosition.id,
         0.8
       );
 
-      // 提取押题答案（可能为空字符串）
+      // 提取各类内容（可能为空字符串）
       const referenceAnswerFromBank = similarQuestion?.answer || '';
-      // 提取其他文件内容（可能为空字符串）
+      const jobContent = similarQuestion?.jobContent || '';
+      const resumeContent = similarQuestion?.resumeContent || '';
       const otherFileContent = similarQuestion?.otherContent || '';
 
       // 构建答案生成的问题提示
@@ -1164,6 +1165,14 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
       if (referenceAnswerFromBank) {
         answerQuestionPrompt += `\n\n题库参考答案：${referenceAnswerFromBank}`;
+      }
+
+      if (jobContent) {
+        answerQuestionPrompt += `\n\n岗位信息：${jobContent}`;
+      }
+
+      if (resumeContent) {
+        answerQuestionPrompt += `\n\n简历信息：${resumeContent}`;
       }
 
       if (otherFileContent) {
