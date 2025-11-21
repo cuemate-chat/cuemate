@@ -81,6 +81,26 @@ export async function createDocumentRoutes(
     });
   }
 
+  // 有查询条件时按相关度优先排序，相关度相同时按时间倒序排序
+  function sortByScoreThenCreatedAt(results: Array<{ score?: number; metadata?: Record<string, any> }>) {
+    return results.sort((a: any, b: any) => {
+      const scoreA = typeof a.score === 'number' ? a.score : 0;
+      const scoreB = typeof b.score === 'number' ? b.score : 0;
+
+      // 第一优先级：按相关度降序（分数高的在前）
+      if (scoreA !== scoreB) {
+        return scoreB - scoreA;
+      }
+
+      // 第二优先级：相关度相同时按时间倒序（新的在前）
+      const ta = a?.metadata?.createdAt ?? a?.metadata?.timestamp ?? 0;
+      const tb = b?.metadata?.createdAt ?? b?.metadata?.timestamp ?? 0;
+      const na = typeof ta === 'number' ? ta : ta ? new Date(ta).getTime() : 0;
+      const nb = typeof tb === 'number' ? tb : tb ? new Date(tb).getTime() : 0;
+      return nb - na;
+    });
+  }
+
   // 处理单个文档
   app.post('/ingest', async (req) => {
     const body = (req as any).body as {
@@ -314,7 +334,8 @@ export async function createDocumentRoutes(
           return true;
         });
 
-        const ordered = sortByCreatedAtDesc(filtered);
+        // 有查询条件时按相关度优先排序
+        const ordered = sortByScoreThenCreatedAt(filtered);
 
         return {
           success: true,
@@ -327,7 +348,8 @@ export async function createDocumentRoutes(
         };
       }
 
-      const ordered = sortByCreatedAtDesc(searchResults);
+      // 有查询条件时按相关度优先排序
+      const ordered = sortByScoreThenCreatedAt(searchResults);
 
       return {
         success: true,
@@ -428,7 +450,8 @@ export async function createDocumentRoutes(
           return true;
         });
 
-        const ordered = sortByCreatedAtDesc(filtered);
+        // 有查询条件时按相关度优先排序
+        const ordered = sortByScoreThenCreatedAt(filtered);
 
         return {
           success: true,
@@ -441,7 +464,8 @@ export async function createDocumentRoutes(
         };
       }
 
-      const ordered = sortByCreatedAtDesc(searchResults);
+      // 有查询条件时按相关度优先排序
+      const ordered = sortByScoreThenCreatedAt(searchResults);
 
       return {
         success: true,
@@ -542,7 +566,8 @@ export async function createDocumentRoutes(
           return true;
         });
 
-        const ordered = sortByCreatedAtDesc(filtered);
+        // 有查询条件时按相关度优先排序
+        const ordered = sortByScoreThenCreatedAt(filtered);
 
         return {
           success: true,
@@ -555,7 +580,8 @@ export async function createDocumentRoutes(
         };
       }
 
-      const ordered = sortByCreatedAtDesc(searchResults);
+      // 有查询条件时按相关度优先排序
+      const ordered = sortByScoreThenCreatedAt(searchResults);
 
       return {
         success: true,
@@ -589,14 +615,27 @@ export async function createDocumentRoutes(
       app.log.info({ query, filter: parsedFilter, k }, 'Searching other-files collection');
 
       let searchResults: any[] = [];
+      const hasQuery = query && query.trim() !== '';
 
-      if (!query || query.trim() === '') {
+      if (!hasQuery) {
         // 没有查询关键词时，直接获取所有文档
         searchResults = await deps.vectorStore.getAllDocuments(
           Number(k),
           parsedFilter,
           'other_files',
         );
+        // 没有查询条件时按时间排序
+        const ordered = sortByCreatedAtDesc(searchResults);
+
+        return {
+          success: true,
+          results: ordered,
+          total: ordered.length,
+          query: query,
+          filter: parsedFilter,
+          topK: k,
+          collection: 'other_files',
+        };
       } else {
         // 有查询关键词时，进行向量搜索
         // 生成查询的嵌入向量
@@ -619,7 +658,8 @@ export async function createDocumentRoutes(
         });
       }
 
-      const ordered = sortByCreatedAtDesc(searchResults);
+      // 有查询条件时按相关度优先排序
+      const ordered = sortByScoreThenCreatedAt(searchResults);
 
       return {
         success: true,

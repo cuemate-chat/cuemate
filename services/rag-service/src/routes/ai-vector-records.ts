@@ -1,8 +1,8 @@
 import type { FastifyInstance } from 'fastify';
+import type { Config } from '../config/index.js';
 import type { DocumentProcessor } from '../processors/document-processor.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import type { VectorStore } from '../stores/vector-store.js';
-import type { Config } from '../config/index.js';
 
 // AI 向量记录结构（与 interview_reviews 表结构一致）
 interface AIVectorRecord {
@@ -79,9 +79,9 @@ export async function createAIVectorRecordsRoutes(
 
       // 构建 metadata
       const metadata: any = {
-        interview_id: record.interview_id,
         note_type: record.note_type,
         created_at: record.created_at,
+        resource_id: record.id,
       };
 
       if (record.question_id) metadata.question_id = record.question_id;
@@ -139,7 +139,14 @@ export async function createAIVectorRecordsRoutes(
     };
   }>('/search/ai-vector-records', async (request, reply) => {
     try {
-      const { query = '', k = 100, interview_id, note_type, createdFrom, createdTo } = request.query;
+      const {
+        query = '',
+        k = 100,
+        interview_id,
+        note_type,
+        createdFrom,
+        createdTo,
+      } = request.query;
 
       // 构建过滤条件
       const filter: any = {};

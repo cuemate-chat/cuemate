@@ -410,6 +410,92 @@ export async function createQuestionRoutes(
       return { success: false, error: '查询失败' };
     }
   });
+
+  // 查询所有集合（用于模拟面试/训练场景）
+  // 返回：岗位信息(最多1条)/简历信息(最多1条)/面试押题(最多1条)/其他文件(最多1条)
+  app.post('/similarity/questions/interview', async (req) => {
+    const body = (req as any).body as {
+      query: string;
+      jobId: string;
+      threshold?: number;
+    };
+
+    try {
+      const { query, jobId, threshold = 0.8 } = body;
+
+      if (!query || !jobId) {
+        return {
+          success: false,
+          error: 'query 和 jobId 参数是必需的',
+        };
+      }
+
+      // 生成查询问题的嵌入向量
+      const queryEmbeddings = await deps.embeddingService.embed([query]);
+      const queryEmbedding = queryEmbeddings[0];
+
+      // 查询4个集合，每个集合只取最相似的1条
+      const collections = [
+        { name: deps.config.vectorStore.questionsCollection, type: 'questions', key: 'question' },
+        { name: deps.config.vectorStore.jobsCollection, type: 'jobs', key: 'job' },
+        { name: deps.config.vectorStore.resumesCollection, type: 'resumes', key: 'resume' },
+        { name: 'other_files', type: 'other_files', key: 'other' },
+      ];
+
+      const result: any = {
+        success: true,
+        threshold,
+      };
+
+      // 并行查询所有集合
+      for (const collection of collections) {
+        try {
+          const results = await deps.vectorStore.searchByEmbedding(
+            queryEmbedding,
+            1, // 每个集合只取1条
+            { jobId },
+            collection.name,
+            query,
+          );
+
+          // 如果有结果且相似度 >= threshold
+          if (results.length > 0 && results[0].score >= threshold) {
+            const topResult = results[0];
+
+            if (collection.type === 'questions') {
+              // 押题
+              result.questionId = topResult.metadata?.questionId;
+              result.question = topResult.metadata?.title;
+              result.answer = topResult.metadata?.description || '';
+              result.questionScore = topResult.score;
+            } else if (collection.type === 'jobs') {
+              // 岗位信息
+              result.jobId = topResult.id;
+              result.jobContent = topResult.content;
+              result.jobScore = topResult.score;
+            } else if (collection.type === 'resumes') {
+              // 简历信息
+              result.resumeId = topResult.id;
+              result.resumeContent = topResult.content;
+              result.resumeScore = topResult.score;
+            } else if (collection.type === 'other_files') {
+              // 其他文件
+              result.otherId = topResult.id;
+              result.otherContent = topResult.content;
+              result.otherScore = topResult.score;
+            }
+          }
+        } catch (err) {
+          app.log.warn(`查询集合 ${collection.name} 失败`);
+        }
+      }
+
+      return result;
+    } catch (error) {
+      app.log.error({ err: error as any }, '查询面试相关集合失败');
+      return { success: false, error: '查询失败' };
+    }
+  });
 }
 
 // 计算关键词命中率（基于候选问题的关键词在查询问题中的命中比例）
