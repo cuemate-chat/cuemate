@@ -21,7 +21,7 @@ const configSchema = z.object({
     questionsCollection: z.string().default('questions'),
   }),
   embeddings: z.object({
-    dimensions: z.number().default(1536), // 默认维度，实际从数据库动态获取
+    dimensions: z.number().default(512), // FastEmbed BGE-small-zh 模型维度
   }),
   processing: z.object({
     chunkSize: z.number().default(500),
@@ -64,7 +64,7 @@ export const config = configSchema.parse({
     questionsCollection: 'questions',
   },
   embeddings: {
-    dimensions: 1536,
+    dimensions: 512,
   },
   processing: {
     chunkSize: 500,

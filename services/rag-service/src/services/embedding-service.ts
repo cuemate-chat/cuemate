@@ -1,4 +1,4 @@
-import { FlagEmbedding, EmbeddingModel } from 'fastembed';
+import { EmbeddingModel, FlagEmbedding } from 'fastembed';
 import { Config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
 
@@ -46,17 +46,17 @@ export class EmbeddingService {
         const allEmbeddings: number[][] = [];
 
         for await (const batch of embeddingsGenerator) {
-          // batch 是 number[][]，需要展平收集
-          allEmbeddings.push(...batch);
+          // batch 可能是 Float32Array[]，需要转换为 number[][]
+          const normalizedBatch = batch.map((vec: any) =>
+            Array.isArray(vec) ? vec : Array.from(vec),
+          );
+          allEmbeddings.push(...normalizedBatch);
         }
 
-        logger.debug(`使用 FastEmbed 生成了 ${allEmbeddings.length} 个文本的向量嵌入`);
+        logger.info(`使用 FastEmbed 生成了 ${allEmbeddings.length} 个文本的向量嵌入`);
         return allEmbeddings;
       } catch (error) {
-        logger.warn(
-          { err: error as any },
-          'FastEmbed 向量生成失败，降级使用 Hash 算法',
-        );
+        logger.warn({ err: error as any }, 'FastEmbed 向量生成失败，降级使用 Hash 算法');
         // 标记为不可用，后续直接使用 Hash 算法
         this.useFastEmbed = false;
         this.fastEmbedModel = null;
@@ -64,18 +64,18 @@ export class EmbeddingService {
     }
 
     // 降级使用 Hash 算法（兜底方案）
-    logger.debug(`使用 Hash 算法生成了 ${texts.length} 个文本的向量嵌入`);
+    logger.info(`使用 Hash 算法生成了 ${texts.length} 个文本的向量嵌入`);
     return this.embedWithHash(texts);
   }
 
   /**
    * Hash 算法实现（兜底方案）
-   * 基于字符哈希生成 384 维向量
+   * 基于字符哈希生成 512 维向量（匹配 FastEmbed BGE-small-zh 模型维度）
    */
   private embedWithHash(texts: string[]): number[][] {
     return texts.map((text) => {
       const words = text.toLowerCase().split(/[\s,，.。!！?？:：;；\-_]+/);
-      const vector = new Array(384).fill(0);
+      const vector = new Array(512).fill(0);
 
       words.forEach((word) => {
         if (!word) return;
@@ -88,14 +88,14 @@ export class EmbeddingService {
         hash = Math.abs(hash);
 
         for (let i = 0; i < 8; i++) {
-          const pos = (hash + i * 31) % 384;
+          const pos = (hash + i * 31) % 512;
           const value = ((hash >> (i * 4)) & 0xf) / 0xf;
           vector[pos] = (vector[pos] + value) / 2;
         }
 
         for (let i = 0; i < word.length; i++) {
           const code = word.charCodeAt(i);
-          const pos = code % 384;
+          const pos = code % 512;
           vector[pos] = (vector[pos] + code / 65535) / 2;
         }
       });
@@ -106,4 +106,11 @@ export class EmbeddingService {
   }
 
   async setModelConfig(_modelConfig: any): Promise<void> {}
+
+  /**
+   * 返回当前是否使用 FastEmbed 模型
+   */
+  isUsingFastEmbed(): boolean {
+    return this.useFastEmbed;
+  }
 }

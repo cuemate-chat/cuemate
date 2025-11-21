@@ -1,6 +1,7 @@
 import { ChromaClient } from 'chromadb';
 import { v4 as uuidv4 } from 'uuid';
 import { Config } from '../config/index.js';
+import { EmbeddingService } from '../services/embedding-service.js';
 import { logger } from '../utils/logger.js';
 
 export interface Document {
@@ -21,9 +22,11 @@ export class VectorStore {
   private client: any = null;
   private collections: Map<string, any> = new Map();
   private config: Config['vectorStore'];
+  private embeddingService: EmbeddingService;
 
-  constructor(config: Config['vectorStore']) {
+  constructor(config: Config['vectorStore'], embeddingService: EmbeddingService) {
     this.config = config;
+    this.embeddingService = embeddingService;
   }
 
   async initialize(): Promise<void> {
@@ -61,15 +64,37 @@ export class VectorStore {
 
     try {
       const clientAny = this.client as any;
-      // 不指定 embeddingFunction，ChromaDB 会使用内置的默认实现
-      // 因为我们在 addDocuments 时会提供自己生成的 embeddings
-      const collection = await clientAny.getOrCreateCollection({
-        name,
-        metadata: { created_at: new Date().toISOString() },
-      });
 
-      this.collections.set(name, collection);
-      return collection;
+      // 先尝试获取已存在的 collection
+      try {
+        const collection = await clientAny.getCollection({ name });
+        this.collections.set(name, collection);
+        return collection;
+      } catch (getError: any) {
+        // Collection 不存在，创建新的并使用 cosine 距离
+        // ChromaDB 可能返回不同的错误信息：
+        // - "does not exist"
+        // - "The requested resource could not be found"
+        // - status 404
+        if (
+          getError.message?.includes('does not exist') ||
+          getError.message?.includes('could not be found') ||
+          getError.status === 404 ||
+          getError.name === 'ChromaNotFoundError'
+        ) {
+          const collection = await clientAny.createCollection({
+            name,
+            metadata: {
+              created_at: new Date().toISOString(),
+              'hnsw:space': 'cosine',
+            },
+          });
+          this.collections.set(name, collection);
+          logger.info(`Created new collection ${name} with cosine distance`);
+          return collection;
+        }
+        throw getError;
+      }
     } catch (error) {
       logger.error({ err: error as any }, `Failed to get/create collection ${name}`);
       throw error;
@@ -100,12 +125,23 @@ export class VectorStore {
     return matchedChars / queryChars.length; // 0~1
   }
 
-  /** 最终分数：字符门控 + 语义融合。无任一字符命中则置 0；否则取 max(向量分数, 字符覆盖率) */
+  /**
+   * 最终分数计算：
+   * - FastEmbed + Cosine 距离：similarity = 1 - distance（范围 0-1，1 表示完全相同）
+   * - Hash 兜底：使用 max(向量相似度, 字符覆盖率)
+   */
   private calcFinalScore(query: string, text: string, distance: number): number {
-    // 向量距离映射到相似度（0~1）
-    const vectorSim = 1 / (1 + (typeof distance === 'number' ? distance : 0));
+    // Cosine 距离转相似度：similarity = 1 - distance
+    // distance = 0 表示完全相同，distance = 1 表示完全不同
+    const vectorSim = 1 - (typeof distance === 'number' ? distance : 0);
+
+    // 如果使用 FastEmbed，直接返回向量相似度
+    if (this.embeddingService.isUsingFastEmbed()) {
+      return vectorSim;
+    }
+
+    // Hash 兜底方案：结合字符覆盖率
     const overlap = this.calcCharOverlap(query, text);
-    if (overlap === 0) return 0;
     return Math.max(vectorSim, overlap);
   }
 
