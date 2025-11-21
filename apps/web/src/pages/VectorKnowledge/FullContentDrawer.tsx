@@ -112,7 +112,7 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
           <div className="space-y-6">
             {/* 基本信息 */}
             <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <span className="font-medium text-purple-700">类型:</span>
                   <span className="ml-2 text-purple-900">
@@ -125,9 +125,9 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
                     {formatDate(document.metadata.created_at)}
                   </span>
                 </div>
-                <div>
-                  <span className="font-medium text-purple-700">ID:</span>
-                  <span className="ml-2 text-purple-900 text-xs">{document.id.slice(0, 24)}...</span>
+                <div className="flex items-center min-w-0">
+                  <span className="font-medium text-purple-700 flex-shrink-0">ID:</span>
+                  <span className="ml-2 text-purple-900 text-xs truncate">{document.id}</span>
                 </div>
               </div>
             </div>

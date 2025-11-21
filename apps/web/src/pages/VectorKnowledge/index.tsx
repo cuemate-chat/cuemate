@@ -663,8 +663,16 @@ export default function VectorKnowledge() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
-                loadDocumentsByTab();
-                message.success('已刷新向量数据列表');
+                // 根据当前标签页刷新对应的数据
+                if (currentTab === 'other-files') {
+                  loadOtherFilesList();
+                } else if (currentTab === 'ai-vector-records') {
+                  loadAIVectorRecordsList();
+                } else if (currentTab !== 'sync-status') {
+                  // 岗位信息、简历信息、面试押题标签页刷新
+                  loadDocumentsByTab();
+                }
+                message.success('已刷新数据');
               }}
               disabled={loading}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/70 hover:border-blue-300 dark:hover:border-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -933,10 +941,10 @@ export default function VectorKnowledge() {
                             {doc.content}
                           </p>
                           <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
-                            <span>
+                            <span className="flex-shrink-0">
                               创建时间: {doc.metadata.createdAt ? new Date(doc.metadata.createdAt).toLocaleString('zh-CN') : '未知'}
                             </span>
-                            <span>ID: {doc.id.slice(0, 12)}...</span>
+                            <span className="truncate">ID: {doc.id}</span>
                           </div>
                         </div>
 
@@ -1113,20 +1121,20 @@ export default function VectorKnowledge() {
 
                       {/* 底部信息 */}
                       <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-3">
-                        <span>
+                        <span className="flex-shrink-0">
                           时间: {formatDate(record.metadata.created_at)}
                         </span>
                         {record.metadata.answer && (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-200">
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-200 flex-shrink-0">
                             使用了押题答案
                           </span>
                         )}
                         {record.metadata.other_content && (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-full border border-green-200">
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-full border border-green-200 flex-shrink-0">
                             使用了其他文件
                           </span>
                         )}
-                        <span>ID: {record.id.slice(0, 16)}...</span>
+                        <span className="truncate">ID: {record.id}</span>
                       </div>
                     </div>
                   </div>
@@ -1569,7 +1577,7 @@ export default function VectorKnowledge() {
                           分块: {doc.metadata.chunkIndex + 1}/{doc.metadata.totalChunks}
                         </span>
                       )}
-                      <span className="truncate" title={doc.id}>ID: {doc.id}</span>
+                      <span className="truncate">ID: {doc.id}</span>
                       {doc.metadata.type === 'resumes' && doc.metadata.filePath && (
                         <span className="truncate">
                           已上传简历:{' '}
