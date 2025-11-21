@@ -174,10 +174,10 @@ export function VoiceTestBody() {
           if (hasRecognitionResult) setMicStatus('success');
           else {
             setMicStatus('failed');
-            setMicRecognitionResult(prev => ({ ...prev, error: '连接或识别超时，请检查麦克风和 ASR 服务', timestamp: Date.now() }));
+            setMicRecognitionResult(prev => ({ ...prev, error: '连接或识别超时，30 秒内未收到任何识别结果，请检查麦克风和 ASR 服务', timestamp: Date.now() }));
           }
         });
-      }, 60000);
+      }, 30000);
     } catch (error: any) {
       setMicStatus('failed');
       let errorMsg = '';
@@ -236,10 +236,10 @@ export function VoiceTestBody() {
           if (hasRecognitionResult) setSpeakerStatus('success');
           else {
             setSpeakerStatus('failed');
-            setSpeakerRecognitionResult(prev => ({ ...prev, error: '60 秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务', timestamp: Date.now() }));
+            setSpeakerRecognitionResult(prev => ({ ...prev, error: '连接或识别超时，30 秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务', timestamp: Date.now() }));
           }
         });
-      }, 60000);
+      }, 30000);
     } catch (error: any) {
       setSpeakerStatus('failed');
       setSpeakerRecognitionResult(prev => ({ ...prev, error: `扬声器测试失败：${error?.message}`, timestamp: Date.now() }));
