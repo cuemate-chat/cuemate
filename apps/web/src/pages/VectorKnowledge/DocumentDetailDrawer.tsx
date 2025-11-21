@@ -99,7 +99,7 @@ const DocumentDetailDrawer: React.FC<DocumentDetailDrawerProps> = ({
       </DrawerHeader>
       
       <DrawerContent>
-        <div className="space-y-6">
+        <div className="flex flex-col h-full">
           {/* 顶部标签 */}
           <div className="border-b border-gray-200 dark:border-slate-700">
             <nav className="-mb-px flex space-x-8">
@@ -157,139 +157,148 @@ const DocumentDetailDrawer: React.FC<DocumentDetailDrawerProps> = ({
           </div>
 
           {/* 标签页内容 */}
-          {activeTab === 'document' && (
-            <div className="space-y-4">
-              {/* 文档基本信息 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div className="md:col-span-2">
-                  <span className="font-medium text-gray-700 dark:text-slate-200">ID:</span>
-                  <span className="ml-2 text-gray-900 dark:text-slate-100 break-all">{document.id}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-slate-200">类型:</span>
-                  <span className="ml-2 text-gray-900 dark:text-slate-100">
-                    {getTypeDisplayName(document.metadata.type || '')}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-slate-200">来源:</span>
-                  <span className="ml-2 text-gray-900 dark:text-slate-100">
-                    {getSourceDisplayName(document.metadata.source || '')}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-slate-200">创建时间:</span>
-                  <span className="ml-2 text-gray-900 dark:text-slate-100">
-                    {document.metadata.timestamp || document.metadata.createdAt
-                      ? formatDate(
-                          document.metadata.createdAt ||
-                            document.metadata.timestamp,
-                        )
-                      : '未知'}
-                  </span>
-                </div>
-                {document.metadata.title && (
-                  <div className="md:col-span-2">
-                    <span className="font-medium text-gray-700 dark:text-slate-200">标题:</span>
-                    <span className="ml-2 text-gray-900 dark:text-slate-100">{document.metadata.title}</span>
-                  </div>
-                )}
-                {document.metadata.tagName && (
-                  <div>
-                    <span className="font-medium text-gray-700 dark:text-slate-200">标签:</span>
-                    <span className="ml-2 text-gray-900 dark:text-slate-100">{document.metadata.tagName}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 文档内容 */}
-              <div>
-                <div className="font-medium text-gray-700 dark:text-slate-200 mb-2">内容:</div>
-                <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-md text-sm text-gray-900 dark:text-slate-100 whitespace-pre-wrap max-h-96 overflow-y-auto">
-                  {document.content}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 相关简历标签页 */}
-          {activeTab === 'resumes' && (
-            <div className="space-y-4">
-              {relatedData?.resumes && relatedData.resumes.length > 0 ? (
-                <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                  <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                    <h4 className="font-medium text-slate-900 dark:text-slate-100">
-                      {relatedData.resumes[0].metadata.title || '简历标题'}
-                    </h4>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      ID: {relatedData.resumes[0].id}
-                    </span>
-                  </div>
-                  <div className="p-4 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap max-h-96 overflow-y-auto">
-                    {relatedData.resumes[0].content}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 dark:text-slate-400 py-8">暂无相关简历信息</div>
-              )}
-            </div>
-          )}
-
-          {/* 相关押题标签页 */}
-          {activeTab === 'questions' && (
-            <div className="space-y-4">
-              {relatedData?.questions && relatedData.questions.length > 0 ? (
-                relatedData.questions.map((question, index) => (
-                  <div key={question.id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 relative">
-                    {/* 左上角序号 */}
-                    <div className="absolute left-0 top-0">
-                      <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
-                        {index + 1}
+          <div className="flex-1 overflow-hidden" style={{ minHeight: 0 }}>
+            {activeTab === 'document' && (
+              <div className="h-full overflow-auto space-y-6 p-6">
+                {/* 文档基本信息 */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-lg p-4 border border-blue-200 dark:border-slate-600">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="md:col-span-2">
+                      <span className="font-medium text-blue-700 dark:text-blue-300">ID:</span>
+                      <span className="ml-2 text-blue-900 dark:text-slate-100 break-all">{document.id}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-blue-700 dark:text-blue-300">类型:</span>
+                      <span className="ml-2 text-blue-900 dark:text-slate-100">
+                        {getTypeDisplayName(document.metadata.type || '')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-blue-700 dark:text-blue-300">来源:</span>
+                      <span className="ml-2 text-blue-900 dark:text-slate-100">
+                        {getSourceDisplayName(document.metadata.source || '')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-blue-700 dark:text-blue-300">创建时间:</span>
+                      <span className="ml-2 text-blue-900 dark:text-slate-100">
+                        {document.metadata.timestamp || document.metadata.createdAt
+                          ? formatDate(
+                              document.metadata.createdAt ||
+                                document.metadata.timestamp,
+                            )
+                          : '未知'}
+                      </span>
+                    </div>
+                    {document.metadata.title && (
+                      <div className="md:col-span-2">
+                        <span className="font-medium text-blue-700 dark:text-blue-300">标题:</span>
+                        <span className="ml-2 text-blue-900 dark:text-slate-100">{document.metadata.title}</span>
                       </div>
-                      <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
-                    </div>
-                    <div className="flex justify-between items-start mb-2 ml-6">
-                      <h4 className="font-medium text-gray-900 dark:text-slate-100">
-                        {question.metadata.title || '押题标题'}
-                      </h4>
-                      <span className="text-xs text-gray-500 dark:text-slate-400">ID: {question.id}</span>
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-slate-300 mb-2 ml-6">
-                      {question.metadata.tagName && (
-                        <span className="font-medium">标签: {question.metadata.tagName}</span>
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-700 dark:text-slate-200 whitespace-pre-wrap max-h-80 overflow-y-auto ml-6">
-                      {question.content}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-gray-500 dark:text-slate-400 py-8">暂无相关押题信息</div>
-              )}
-            </div>
-          )}
-
-          {/* 相关岗位标签页 */}
-          {activeTab === 'jobs' && (
-            <div className="space-y-4">
-              {relatedData?.jobs && relatedData.jobs.length > 0 ? (
-                <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                  <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                    <h4 className="font-medium text-slate-900 dark:text-slate-100">
-                      {relatedData.jobs[0].metadata.title || '岗位标题'}
-                    </h4>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">ID: {relatedData.jobs[0].id}</span>
-                  </div>
-                  <div className="p-4 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap max-h-96 overflow-y-auto">
-                    {relatedData.jobs[0].content}
+                    )}
+                    {document.metadata.tagName && (
+                      <div>
+                        <span className="font-medium text-blue-700 dark:text-blue-300">标签:</span>
+                        <span className="ml-2 text-blue-900 dark:text-slate-100">{document.metadata.tagName}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="text-center text-gray-500 dark:text-slate-400 py-8">暂无相关岗位信息</div>
-              )}
-            </div>
-          )}
+
+                {/* 文档内容 */}
+                <div>
+                  <div className="font-medium text-gray-700 dark:text-slate-200 mb-3 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    完整内容
+                  </div>
+                  <div className="bg-gray-50 dark:bg-slate-800 p-6 rounded-md text-sm text-gray-900 dark:text-slate-100 whitespace-pre-wrap border border-gray-200 dark:border-slate-700">
+                    {document.content}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 相关简历标签页 */}
+            {activeTab === 'resumes' && (
+              <div className="h-full overflow-auto space-y-6 p-6">
+                {relatedData?.resumes && relatedData.resumes.length > 0 ? (
+                  <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                    <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                      <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                        {relatedData.resumes[0].metadata.title || '简历标题'}
+                      </h4>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        ID: {relatedData.resumes[0].id}
+                      </span>
+                    </div>
+                    <div className="p-6 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+                      {relatedData.resumes[0].content}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 dark:text-slate-400 py-8">暂无相关简历信息</div>
+                )}
+              </div>
+            )}
+
+            {/* 相关押题标签页 */}
+            {activeTab === 'questions' && (
+              <div className="h-full overflow-auto space-y-6 p-6">
+                {relatedData?.questions && relatedData.questions.length > 0 ? (
+                  relatedData.questions.map((question, index) => (
+                    <div key={question.id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 relative">
+                      {/* 左上角序号 */}
+                      <div className="absolute left-0 top-0">
+                        <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
+                          {index + 1}
+                        </div>
+                        <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
+                      </div>
+                      <div className="flex justify-between items-start mb-2 ml-6">
+                        <h4 className="font-medium text-gray-900 dark:text-slate-100">
+                          {question.metadata.title || '押题标题'}
+                        </h4>
+                        <span className="text-xs text-gray-500 dark:text-slate-400">ID: {question.id}</span>
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-slate-300 mb-2 ml-6">
+                        {question.metadata.tagName && (
+                          <span className="font-medium">标签: {question.metadata.tagName}</span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-700 dark:text-slate-200 whitespace-pre-wrap ml-6">
+                        {question.content}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 dark:text-slate-400 py-8">暂无相关押题信息</div>
+                )}
+              </div>
+            )}
+
+            {/* 相关岗位标签页 */}
+            {activeTab === 'jobs' && (
+              <div className="h-full overflow-auto space-y-6 p-6">
+                {relatedData?.jobs && relatedData.jobs.length > 0 ? (
+                  <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                    <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                      <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                        {relatedData.jobs[0].metadata.title || '岗位标题'}
+                      </h4>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">ID: {relatedData.jobs[0].id}</span>
+                    </div>
+                    <div className="p-6 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+                      {relatedData.jobs[0].content}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 dark:text-slate-400 py-8">暂无相关岗位信息</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </DrawerContent>
     </DrawerProvider>

@@ -31,6 +31,7 @@ export interface VectorDocument {
     // AI 向量记录字段
     note_type?: string;
     interview_id?: string;
+    resource_id?: string;
     question_id?: string;
     question?: string;
     answer?: string;

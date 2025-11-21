@@ -1,33 +1,70 @@
 import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
-import { FileText, File, FileCode } from 'lucide-react';
 import { Input, Modal, Select } from 'antd';
+import { File, FileCode, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { listTags } from '../../api/questions';
 import {
   SearchFilters,
   VectorDocument,
+  addOtherFileText,
+  deleteAIVectorRecord,
   deleteDocument,
   deleteJob,
-  deleteQuestion,
   deleteOtherFile,
+  deleteQuestion,
   getRelatedDocuments,
+  listAIVectorRecords,
   listOtherFiles,
   searchJobs,
   searchQuestions,
   searchResumes,
-  uploadOtherFile,
-  addOtherFileText,
-  listAIVectorRecords,
-  deleteAIVectorRecord
+  uploadOtherFile
 } from '../../api/vector';
 import { WarningIcon } from '../../components/Icons';
 import { message } from '../../components/Message';
 import PageLoading from '../../components/PageLoading';
 import { useLoading } from '../../hooks/useLoading';
+import UploadedResumeDrawer from '../JobsList/UploadedResumeDrawer';
 import DocumentDetailDrawer from './DocumentDetailDrawer';
 import FullContentDrawer from './FullContentDrawer';
-import UploadedResumeDrawer from '../JobsList/UploadedResumeDrawer';
+
+// 根据相似度分数返回相关性标签和样式
+function getRelevanceLabel(score: number): { text: string; bgColor: string; textColor: string; show: boolean } {
+  const percent = score * 100;
+
+  if (percent >= 100) {
+    return { text: '', bgColor: '', textColor: '', show: false };
+  } else if (percent >= 80) {
+    return {
+      text: '高度相关',
+      bgColor: 'bg-green-100 dark:bg-green-900/50',
+      textColor: 'text-green-700 dark:text-green-300',
+      show: true
+    };
+  } else if (percent >= 60) {
+    return {
+      text: '一定程度相关',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/50',
+      textColor: 'text-blue-600 dark:text-blue-300',
+      show: true
+    };
+  } else if (percent >= 40) {
+    return {
+      text: '相似相关',
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/50',
+      textColor: 'text-yellow-600 dark:text-yellow-300',
+      show: true
+    };
+  } else {
+    return {
+      text: '不相关',
+      bgColor: 'bg-gray-100 dark:bg-gray-900/50',
+      textColor: 'text-gray-600 dark:text-gray-400',
+      show: true
+    };
+  }
+}
 
 export default function VectorKnowledge() {
   const [searchResults, setSearchResults] = useState<VectorDocument[]>([]);
@@ -712,6 +749,8 @@ export default function VectorKnowledge() {
             </div>
 
             <SyncStatusOverview
+              syncLoading={syncLoading}
+              cleanLoading={cleanLoading}
               onSyncStart={startSync}
               onSyncEnd={endSync}
               onCleanStart={startClean}
@@ -943,99 +982,156 @@ export default function VectorKnowledge() {
           <div className="space-y-6">
             {/* 搜索区域 */}
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-              <div className="flex gap-4">
-                <Input
-                  placeholder="搜索 AI 向量记录..."
-                  value={aiVectorSearchQuery}
-                  onChange={(e) => setAiVectorSearchQuery(e.target.value)}
-                  onPressEnter={loadAIVectorRecordsList}
-                  prefix={<SearchOutlined />}
-                  className="flex-1"
-                />
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* 搜索输入框 */}
+                <div className="flex-1">
+                  <div className="relative">
+                    <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                    <input
+                      type="text"
+                      placeholder="输入关键词搜索知识内容..."
+                      value={aiVectorSearchQuery}
+                      onChange={(e) => setAiVectorSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-12 py-3 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                      onKeyDown={(e) => e.key === 'Enter' && loadAIVectorRecordsList()}
+                    />
+                    {aiVectorSearchQuery && (
+                      <button
+                        onClick={() => {
+                          setAiVectorSearchQuery('');
+                          loadAIVectorRecordsList();
+                        }}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+                      >
+                        <CloseOutlined />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 搜索按钮 */}
                 <button
                   onClick={loadAIVectorRecordsList}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                  disabled={loading}
+                  className="px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  搜索
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      搜索中...
+                    </>
+                  ) : (
+                    <>
+                      <SearchOutlined />
+                      搜索
+                    </>
+                  )}
                 </button>
               </div>
             </div>
 
             {/* 记录列表 */}
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
-              {(() => {
-                const groupedRecords: { [key: string]: VectorDocument[] } = {};
-                aiVectorRecords.forEach((record) => {
-                  const noteType = record.metadata.note_type || 'unknown';
-                  if (!groupedRecords[noteType]) {
-                    groupedRecords[noteType] = [];
-                  }
-                  groupedRecords[noteType].push(record);
-                });
-
-                const typeLabels: { [key: string]: string } = {
-                  mock: '模拟面试',
-                  training: '面试训练',
-                };
-
-                return Object.entries(groupedRecords).map(([noteType, records]) => (
-                  <div key={noteType} className="border-b border-slate-200 dark:border-slate-700 last:border-b-0">
-                    <div className="px-6 py-4 bg-slate-50 dark:bg-slate-700/50">
-                      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
-                        {typeLabels[noteType] || noteType} ({records.length})
-                      </h3>
+              <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                  搜索结果 (共 {aiVectorRecords.length} 条)
+                </h3>
+              </div>
+              <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                {aiVectorRecords.map((record, index) => (
+                  <div key={record.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 relative">
+                    {/* 左上角序号 */}
+                    <div className="absolute left-0 top-0">
+                      <div className="bg-blue-600 text-white text-[10px] font-semibold px-2 py-1 rounded-br">
+                        {index + 1}
+                      </div>
+                      <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
                     </div>
-                    <div className="divide-y divide-slate-200 dark:divide-slate-700">
-                      {records.map((record) => (
-                        <div key={record.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                          <div className="space-y-3">
-                            {/* 问题 */}
-                            {record.metadata.asked_question && (
-                              <div>
-                                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">问题：</span>
-                                <p className="mt-1 text-slate-900 dark:text-slate-100">{record.metadata.asked_question}</p>
-                              </div>
-                            )}
-                            {/* 用户回答 */}
-                            {record.metadata.candidate_answer && (
-                              <div>
-                                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">回答：</span>
-                                <p className="mt-1 text-slate-700 dark:text-slate-300">{record.metadata.candidate_answer}</p>
-                              </div>
-                            )}
-                            {/* 押题答案 */}
-                            {record.metadata.answer && (
-                              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
-                                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">使用了押题答案</span>
-                                <p className="mt-1 text-sm text-blue-600 dark:text-blue-400">{record.metadata.answer.substring(0, 200)}...</p>
-                              </div>
-                            )}
-                            {/* 其他文件 */}
-                            {record.metadata.other_content && (
-                              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded">
-                                <span className="text-sm font-medium text-green-700 dark:text-green-300">使用了其他文件</span>
-                                <p className="mt-1 text-sm text-green-600 dark:text-green-400">{record.metadata.other_content.substring(0, 200)}...</p>
-                              </div>
-                            )}
-                            {/* 时间和操作 */}
-                            <div className="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-600">
-                              <span className="text-sm text-slate-500 dark:text-slate-400">
-                                {new Date((record.metadata.created_at || 0) * 1000).toLocaleString('zh-CN')}
-                              </span>
-                              <button
-                                onClick={() => handleDeleteAIVectorRecord(record.id, record.metadata.asked_question || '未命名问题')}
-                                className="text-sm text-red-600 dark:text-red-400 hover:underline"
-                              >
-                                删除
-                              </button>
-                            </div>
-                          </div>
+
+                    {/* 右上角按钮 */}
+                    <div className="absolute right-6 top-6 flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setCurrentFullContentDoc(record);
+                          setFullContentDrawerVisible(true);
+                        }}
+                        className="px-3 py-1 text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/70"
+                      >
+                        详情
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAIVectorRecord(record.id, record.metadata.asked_question || '未命名问题')}
+                        className="px-3 py-1 text-xs bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/70"
+                      >
+                        删除
+                      </button>
+                    </div>
+
+                    <div className="flex-1 pr-32 ml-8">
+                      <div className="flex items-center gap-3 mb-2">
+                        {/* 类型标签 */}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300">
+                          {record.metadata.note_type === 'mock'
+                            ? '模拟面试'
+                            : record.metadata.note_type === 'training'
+                            ? '面试训练'
+                            : 'AI 提问'}
+                        </span>
+                        {/* 相关度 */}
+                        <span className="text-sm text-slate-500 dark:text-slate-400">
+                          相关度:{' '}
+                          {(
+                            Math.max(0, Math.min(1, Number.isFinite(record.score) ? record.score : 0)) * 100
+                          ).toFixed(1)}
+                          %
+                        </span>
+                        {(() => {
+                          const relevanceLabel = getRelevanceLabel(Number.isFinite(record.score) ? record.score : 0);
+                          return relevanceLabel.show ? (
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${relevanceLabel.bgColor} ${relevanceLabel.textColor}`}>
+                              {relevanceLabel.text}
+                            </span>
+                          ) : null;
+                        })()}
+                      </div>
+
+                      {/* 问题 */}
+                      {record.metadata.asked_question && (
+                        <div className="mb-2">
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {record.metadata.asked_question}
+                          </span>
                         </div>
-                      ))}
+                      )}
+
+                      {/* 回答摘要 */}
+                      {record.metadata.candidate_answer && (
+                        <div className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-2">
+                          {record.metadata.candidate_answer}
+                        </div>
+                      )}
+
+                      {/* 底部信息 */}
+                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-3">
+                        <span>
+                          时间: {formatDate(record.metadata.created_at)}
+                        </span>
+                        {record.metadata.answer && (
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-200">
+                            使用了押题答案
+                          </span>
+                        )}
+                        {record.metadata.other_content && (
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-full border border-green-200">
+                            使用了其他文件
+                          </span>
+                        )}
+                        <span>ID: {record.id.slice(0, 16)}...</span>
+                      </div>
                     </div>
                   </div>
-                ));
-              })()}
+                ))}
+              </div>
 
               {/* 空状态 */}
               {aiVectorRecords.length === 0 && !loading && (
@@ -1043,6 +1139,13 @@ export default function VectorKnowledge() {
                   <SearchOutlined className="mx-auto text-6xl text-slate-400 dark:text-slate-500" />
                   <h3 className="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">暂无 AI 向量记录</h3>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">使用押题或其他文件生成答案后会自动保存</p>
+                </div>
+              )}
+
+              {/* 加载状态 */}
+              {loading && (
+                <div className="text-center py-12">
+                  <PageLoading tip="加载中..." />
                 </div>
               )}
             </div>
@@ -1063,7 +1166,7 @@ export default function VectorKnowledge() {
                     value={filters.query}
                     onChange={(e) => setFilters({ ...filters, query: e.target.value })}
                     className="w-full pl-10 pr-12 py-3 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
-                    onKeyPress={(e) => e.key === 'Enter' && searchDocuments()}
+                    onKeyDown={(e) => e.key === 'Enter' && searchDocuments()}
                   />
                   {filters.query && (
                     <button
@@ -1350,6 +1453,14 @@ export default function VectorKnowledge() {
                         ).toFixed(1)}
                         %
                       </span>
+                      {(() => {
+                        const relevanceLabel = getRelevanceLabel(Number.isFinite(doc.score) ? doc.score : 0);
+                        return relevanceLabel.show ? (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${relevanceLabel.bgColor} ${relevanceLabel.textColor}`}>
+                            {relevanceLabel.text}
+                          </span>
+                        ) : null;
+                      })()}
                       {/* 相关数量显示 */}
                       {doc.metadata.type === 'jobs' && (
                         <>
@@ -1530,18 +1641,21 @@ export default function VectorKnowledge() {
 
 // 同步状态概览组件
 const SyncStatusOverview = ({
+  syncLoading,
+  cleanLoading,
   onSyncStart,
   onSyncEnd,
   onCleanStart,
   onCleanEnd
 }: {
+  syncLoading: boolean;
+  cleanLoading: boolean;
   onSyncStart?: () => void;
   onSyncEnd?: () => void;
   onCleanStart?: () => void;
   onCleanEnd?: () => void;
 }) => {
   const [syncStatus, setSyncStatus] = useState<any>(null);
-  const { loading, start: startLoading, end: endLoading } = useLoading();
 
   useEffect(() => {
     loadSyncStatus();
@@ -1596,39 +1710,42 @@ const SyncStatusOverview = ({
       okText: '确认同步',
       okType: 'primary',
       cancelText: '取消',
-      onOk: async () => {
-        try {
-          startLoading();
-          onSyncStart?.();
-          const { syncAll } = await import('../../api/vector');
-          // 不传 jobId 同步所有数据
-          const result = await syncAll('');
-          if (result.success) {
-            message.success('同步完成！');
-            loadSyncStatus(); // 重新加载状态
-          } else {
-            message.error('同步失败：' + (result.error || '未知错误'));
+      onOk: () => {
+        // 立即开始同步，Modal 自动关闭
+        onSyncStart?.();
+
+        // 异步执行同步逻辑
+        (async () => {
+          try {
+            const { syncAll } = await import('../../api/vector');
+            // 不传 jobId 同步所有数据
+            const result = await syncAll('');
+            if (result.success) {
+              message.success('同步完成！');
+              loadSyncStatus(); // 重新加载状态
+            } else {
+              message.error('同步失败：' + (result.error || '未知错误'));
+            }
+          } catch (error: any) {
+            let errorMessage = '同步失败：';
+
+            if (error.response?.status === 401) {
+              errorMessage += '登录已过期，请重新登录';
+            } else if (error.response?.status === 503) {
+              errorMessage += 'RAG 服务不可用，请检查服务是否正常运行';
+            } else if (error.response?.data?.error) {
+              errorMessage += error.response.data.error;
+            } else if (error.message) {
+              errorMessage += error.message;
+            } else {
+              errorMessage += '未知错误';
+            }
+
+            message.error(errorMessage);
+          } finally {
+            onSyncEnd?.();
           }
-        } catch (error: any) {
-          let errorMessage = '同步失败：';
-          
-          if (error.response?.status === 401) {
-            errorMessage += '登录已过期，请重新登录';
-          } else if (error.response?.status === 503) {
-            errorMessage += 'RAG 服务不可用，请检查服务是否正常运行';
-          } else if (error.response?.data?.error) {
-            errorMessage += error.response.data.error;
-          } else if (error.message) {
-            errorMessage += error.message;
-          } else {
-            errorMessage += '未知错误';
-          }
-          
-          message.error(errorMessage);
-        } finally {
-          await endLoading();
-          onSyncEnd?.();
-        }
+        })();
       }
     });
   };
@@ -1715,9 +1832,9 @@ const SyncStatusOverview = ({
         <div className="flex gap-4 justify-center">
           <button
             onClick={handleSyncAll}
-            disabled={loading}
+            disabled={syncLoading || cleanLoading}
             className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
-              loading
+              syncLoading || cleanLoading
                 ? 'bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed'
                 : 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-lg transform hover:scale-105'
             }`}
@@ -1727,9 +1844,9 @@ const SyncStatusOverview = ({
 
           <button
             onClick={handleCleanAll}
-            disabled={loading}
+            disabled={syncLoading || cleanLoading}
             className={`px-8 py-3 text-lg font-medium rounded-lg transition-all ${
-              loading
+              syncLoading || cleanLoading
                 ? 'bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed'
                 : 'bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600 hover:shadow-lg transform hover:scale-105'
             }`}
