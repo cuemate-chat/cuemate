@@ -1082,7 +1082,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
                 reference_answer: questionData.referenceAnswer || '',
                 other_id: questionData.otherId,
                 other_content: questionData.otherContent,
-                created_at: Math.floor(Date.now() / 1000),
+                created_at: Date.now(),
               });
             }
 

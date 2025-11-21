@@ -40,7 +40,7 @@ export class OperationLogger {
       const userAgent = req.headers['user-agent'] || '';
       const requestMethod = req.method;
       const requestUrl = req.url;
-      const timestamp = Math.floor(Date.now() / 1000);
+      const timestamp = Date.now();
 
       // 准备插入数据
       const insertData = {

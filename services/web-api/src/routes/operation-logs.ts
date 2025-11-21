@@ -235,12 +235,12 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
         const query = (req as any).query || {};
         const { days = 7 } = query; // 默认统计最近 7 天
 
-        const daySeconds = 24 * 60 * 60;
-        const startTime = Math.floor(Date.now() / 1000) - Number(days) * daySeconds;
+        const dayMilliseconds = 24 * 60 * 60 * 1000;
+        const startTime = Date.now() - Number(days) * dayMilliseconds;
         // 今日 00:00（本地时区）起始时间
         const d = new Date();
         d.setHours(0, 0, 0, 0);
-        const todayStart = Math.floor(d.getTime() / 1000);
+        const todayStart = d.getTime();
 
         // 按菜单统计
         const menuStats = (app as any).db

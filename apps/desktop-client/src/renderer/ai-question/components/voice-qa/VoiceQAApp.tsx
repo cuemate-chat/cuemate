@@ -345,7 +345,7 @@ export function VoiceQAApp() {
                   reference_answer: aiResponseContent,
                   other_id: ragOtherId,
                   other_content: ragOtherContent,
-                  created_at: Math.floor(Date.now() / 1000),
+                  created_at: Date.now(),
                 });
               }
             }

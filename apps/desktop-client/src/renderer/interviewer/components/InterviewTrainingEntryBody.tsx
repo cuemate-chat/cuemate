@@ -1118,7 +1118,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
                 reference_answer: questionData.referenceAnswer || '',
                 other_id: questionData.otherId,
                 other_content: questionData.otherContent,
-                created_at: Math.floor(Date.now() / 1000),
+                created_at: Date.now(),
               });
             }
 
