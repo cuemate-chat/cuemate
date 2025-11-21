@@ -541,11 +541,18 @@ export function registerVectorRoutes(app: FastifyInstance) {
         const body = z
           .object({
             id: z.string().min(1),
-            type: z.enum(['jobs', 'resumes', 'questions']).optional(),
+            type: z.enum(['jobs', 'resumes', 'questions', 'other-files']).optional(),
           })
           .parse((req as any).body || {});
 
-        const collection = body.type || 'default';
+        // 类型映射到 collection 名称（other-files -> other_files）
+        const typeToCollection: Record<string, string> = {
+          'jobs': 'jobs',
+          'resumes': 'resumes',
+          'questions': 'questions',
+          'other-files': 'other_files',
+        };
+        const collection = body.type ? typeToCollection[body.type] || body.type : 'default';
 
         // 先删除向量库
         const res = await fetch(
