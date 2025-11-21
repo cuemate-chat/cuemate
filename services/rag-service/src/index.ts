@@ -30,6 +30,7 @@ async function buildServer() {
   await fastify.register(cors, {
     origin: config.cors.origin,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
 
   await fastify.register(multipart, {
@@ -46,7 +47,7 @@ async function buildServer() {
 
   // 初始化服务
   const embeddingService = new EmbeddingService(config.embeddings);
-  const vectorStore = new VectorStore(config.vectorStore);
+  const vectorStore = new VectorStore(config.vectorStore, embeddingService);
   const documentProcessor = new DocumentProcessor(config.processing);
 
   await vectorStore.initialize();

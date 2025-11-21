@@ -13,14 +13,13 @@
     "format": "prettier --write src"
   },
   "dependencies": {
-    "@chroma-core/default-embed": "^0.1.8",
     "@cuemate/logger": "workspace:*",
     "@fastify/cors": "^11.1.0",
     "@fastify/multipart": "^9.2.1",
     "@fastify/static": "^8.2.0",
-    "chromadb": "^3.0.15",
+    "chromadb": "^3.1.5",
     "dotenv": "^17.2.2",
-    "fastembed": "^1.14.0",
+    "fastembed": "^2.0.0",
     "fastify": "^5.6.0",
     "mammoth": "^1.11.0",
     "marked": "^16.3.0",

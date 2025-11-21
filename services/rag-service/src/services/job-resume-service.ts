@@ -108,7 +108,7 @@ export class JobResumeService {
           jobId: resume.job_id,
           userId: resume.user_id,
           title: resume.title,
-          filePath: resume.file_path,
+          filePath: resume.file_path || '', // 如果 undefined 则赋值为空字符串
           chunkIndex: index,
           totalChunks: chunks.length,
           createdAt: resume.created_at,
