@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-green.svg)](https://nodejs.org)
-[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D8.12.0-orange.svg)](https://pnpm.io)
+[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.15.9-orange.svg)](https://pnpm.io)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)]()
 
 AI-driven real-time interview training tool
