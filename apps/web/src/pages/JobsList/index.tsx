@@ -1,5 +1,5 @@
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { Button, Input, Modal } from 'antd';
+import { Badge, Button, Input, Modal } from 'antd';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -7,6 +7,7 @@ import {
   deleteJob,
   getResumeOptimization,
   listJobs,
+  listResumeOptimizations,
   updateJob,
   uploadJobResume,
   type JobWithResume,
@@ -42,6 +43,7 @@ export default function JobsList() {
   const [selectedOptimization, setSelectedOptimization] = useState<ResumeOptimization | null>(null);
   const [optimizationDetailVisible, setOptimizationDetailVisible] = useState(false);
   const [uploadedResumeVisible, setUploadedResumeVisible] = useState(false);
+  const [optimizationCount, setOptimizationCount] = useState<number>(0);
   // 计算中间可视区域高度：100vh - Header(56px) - Footer(48px) - Main 上下内边距(48px)
   const MAIN_HEIGHT = 'calc(100vh - 56px - 48px - 48px)';
 
@@ -88,6 +90,8 @@ export default function JobsList() {
           setDescription(jobToSelect.description || '');
           setResumeContent(jobToSelect.resumeContent || '');
           setResumeFilePath(jobToSelect.resumeFilePath);
+          // 加载优化记录数量
+          loadOptimizationCount(jobToSelect.id);
         }
       } catch (error) {
         // error handled by global http client
@@ -98,6 +102,16 @@ export default function JobsList() {
     loadData();
   }, [searchParams, startLoading, endLoading]);
 
+  // 加载优化记录数量
+  const loadOptimizationCount = async (jobId: string) => {
+    try {
+      const result = await listResumeOptimizations(jobId);
+      setOptimizationCount(result.items?.length || 0);
+    } catch (error) {
+      setOptimizationCount(0);
+    }
+  };
+
   const selectJob = async (id: string) => {
     setSelectedId(id);
     const found = items.find((i) => i.id === id);
@@ -107,6 +121,8 @@ export default function JobsList() {
       setResumeContent(found.resumeContent || '');
       setResumeFilePath(found.resumeFilePath);
     }
+    // 加载优化记录数量
+    loadOptimizationCount(id);
   };
 
   const onSave = async () => {
@@ -261,6 +277,10 @@ export default function JobsList() {
       }
     } finally {
       await endOptimize();
+      // 刷新优化记录数量
+      if (selectedId) {
+        loadOptimizationCount(selectedId);
+      }
     }
   };
 
@@ -406,14 +426,16 @@ export default function JobsList() {
                 <span className="hidden sm:inline">上传简历</span>
                 <span className="sm:hidden">上传</span>
               </Button>
-              <Button
-                disabled={!selectedId}
-                onClick={() => setOptimizationListVisible(true)}
-                className="shrink-0"
-              >
-                <span className="hidden sm:inline">简历优化</span>
-                <span className="sm:hidden">优化</span>
-              </Button>
+              <Badge count={optimizationCount} offset={[-5, 5]} showZero={true}>
+                <Button
+                  disabled={!selectedId}
+                  onClick={() => setOptimizationListVisible(true)}
+                  className="shrink-0"
+                >
+                  <span className="hidden sm:inline">简历优化</span>
+                  <span className="sm:hidden">优化</span>
+                </Button>
+              </Badge>
               {selectedId && items.find((i) => i.id === selectedId)?.resumeFilePath && (
                 <Button
                   onClick={() => setUploadedResumeVisible(true)}
