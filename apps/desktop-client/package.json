@@ -91,8 +91,13 @@
     "files": [
       "dist/**/*",
       "node_modules/audiotee/bin/**/*",
-      "node_modules/audiotee/dist/**/*",
-      "resources/**/*"
+      "node_modules/audiotee/dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "resources",
+        "to": "resources"
+      }
     ],
     "asarUnpack": [
       "dist/native/**/*.node",

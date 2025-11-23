@@ -280,13 +280,7 @@ export class PiperTTS {
       } else {
         // 回退到 Python 脚本
         command = this.pythonPath;
-        args = [
-          this.wrapperScript,
-          '--model',
-          voice.modelPath,
-          '--output-raw',
-          text,
-        ];
+        args = [this.wrapperScript, '--model', voice.modelPath, '--output-raw', text];
       }
 
       // 语速控制
@@ -465,13 +459,7 @@ export class PiperTTS {
       } else {
         // 回退到 Python 脚本
         command = this.pythonPath;
-        args = [
-          this.wrapperScript,
-          '--model',
-          voice.modelPath,
-          '--play',
-          text,
-        ];
+        args = [this.wrapperScript, '--model', voice.modelPath, '--play', text];
       }
 
       // 语速控制
@@ -508,6 +496,12 @@ export class PiperTTS {
    */
   async isAvailable(): Promise<boolean> {
     try {
+      // 如果使用打包的二进制文件
+      if (this.piperBinaryPath) {
+        return fs.existsSync(this.piperBinaryPath) && this.voices.size > 0;
+      }
+
+      // 否则检查 Python 环境
       return (
         fs.existsSync(this.pythonPath) && fs.existsSync(this.wrapperScript) && this.voices.size > 0
       );
