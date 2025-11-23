@@ -8,6 +8,8 @@ import { message } from '../../components/Message';
 import PageLoading from '../../components/PageLoading';
 import { useLoading } from '../../hooks/useLoading';
 import BatchImportDrawer from '../PresetQuestionsList/BatchImportDrawer';
+import UpdateConfirmModal from './UpdateConfirmModal';
+import UpdateProgressModal, { type UpdateStatus } from './UpdateProgressModal';
 import VersionDetailDrawer from './VersionDetailDrawer';
 import VersionListDrawer from './VersionListDrawer';
 
@@ -23,6 +25,15 @@ export default function License() {
   const [versionListOpen, setVersionListOpen] = useState(false);
   const [versionDetailOpen, setVersionDetailOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<VersionInfo | null>(null);
+
+  // 更新相关状态
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [showUpdateProgress, setShowUpdateProgress] = useState(false);
+  const [updateTargetVersion, setUpdateTargetVersion] = useState<VersionInfo | null>(null);
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle');
+  const [updateProgress, setUpdateProgress] = useState(0);
+  const [updateCurrentStep, setUpdateCurrentStep] = useState<string>('');
+  const [updateError, setUpdateError] = useState<string>('');
 
   // 导入题库弹框状态
   const [importDrawerOpen, setImportDrawerOpen] = useState(false);
@@ -145,7 +156,58 @@ export default function License() {
 
   // 更新到指定版本
   const handleUpdateToVersion = (version: VersionInfo) => {
-    message.info(`准备更新到 ${version.version} 版本,此功能即将开放`);
+    setUpdateTargetVersion(version);
+    setShowUpdateConfirm(true);
+  };
+
+  // 确认更新
+  const handleConfirmUpdate = () => {
+    if (!updateTargetVersion) return;
+
+    // 关闭确认对话框
+    setShowUpdateConfirm(false);
+
+    // 显示进度对话框
+    setShowUpdateProgress(true);
+    setUpdateStatus('downloading');
+    setUpdateProgress(0);
+    setUpdateError('');
+
+    // 通过 WebSocket 发送更新请求
+    const { getWebSocketBridge } = require('../../utils/websocketBridge');
+    const bridge = getWebSocketBridge();
+
+    // 发送更新请求
+    bridge.updateVersion(updateTargetVersion.version);
+
+    // 监听更新进度
+    bridge.onUpdateProgress((data: any) => {
+      if (data.status) {
+        setUpdateStatus(data.status);
+      }
+      if (data.progress !== undefined) {
+        setUpdateProgress(data.progress);
+      }
+      if (data.currentStep) {
+        setUpdateCurrentStep(data.currentStep);
+      }
+      if (data.error) {
+        setUpdateError(data.error);
+      }
+    });
+  };
+
+  // 取消更新
+  const handleCancelUpdate = () => {
+    setShowUpdateConfirm(false);
+    setUpdateTargetVersion(null);
+  };
+
+  // 重试更新
+  const handleRetryUpdate = () => {
+    if (updateTargetVersion) {
+      handleConfirmUpdate();
+    }
   };
 
   // 计算待更新版本数量
@@ -433,6 +495,26 @@ export default function License() {
           message.success('题库导入成功');
         }}
         isBuiltin={true}
+      />
+
+      {/* 更新确认对话框 */}
+      <UpdateConfirmModal
+        open={showUpdateConfirm}
+        version={updateTargetVersion}
+        currentVersion={currentVersion}
+        onConfirm={handleConfirmUpdate}
+        onCancel={handleCancelUpdate}
+      />
+
+      {/* 更新进度对话框 */}
+      <UpdateProgressModal
+        open={showUpdateProgress}
+        version={updateTargetVersion?.version || ''}
+        status={updateStatus}
+        progress={updateProgress}
+        currentStep={updateCurrentStep}
+        error={updateError}
+        onRetry={handleRetryUpdate}
       />
     </div>
   );

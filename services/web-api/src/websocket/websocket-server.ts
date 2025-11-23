@@ -9,6 +9,11 @@ interface WebSocketMessage {
   user?: any;
   mode?: 'mock-interview' | 'interview-training';
   jobId?: string;
+  version?: string;
+  status?: string;
+  progress?: number;
+  currentStep?: string;
+  error?: string;
 }
 
 interface RegisteredClient {
@@ -112,6 +117,14 @@ export class CueMateWebSocketServer {
 
       case 'OPEN_INTERVIEWER':
         this.handleOpenInterviewer(message);
+        break;
+
+      case 'UPDATE_VERSION':
+        this.handleUpdateVersion(message);
+        break;
+
+      case 'UPDATE_PROGRESS':
+        this.handleUpdateProgress(message);
         break;
 
       default:
@@ -331,6 +344,62 @@ export class CueMateWebSocketServer {
         );
       } catch (error) {
         logger.error({ error, clientId: client.id }, 'WebSocket: 转发 OPEN_INTERVIEWER 失败');
+      }
+    });
+  }
+
+  private handleUpdateVersion(message: WebSocketMessage): void {
+    if (!message.version) {
+      logger.warn('WebSocket: UPDATE_VERSION 消息缺少版本号');
+      return;
+    }
+
+    // 转发给 desktop 客户端
+    const desktopClients = Array.from(this.clients.values()).filter(
+      (client) => client.type === 'desktop',
+    );
+
+    if (desktopClients.length === 0) {
+      logger.warn('WebSocket: 没有可用的 desktop 客户端来处理 UPDATE_VERSION');
+      return;
+    }
+
+    desktopClients.forEach((client) => {
+      try {
+        client.ws.send(
+          JSON.stringify({
+            type: 'UPDATE_VERSION',
+            version: message.version,
+          }),
+        );
+        logger.info(
+          { version: message.version, clientId: client.id },
+          'WebSocket: 已转发 UPDATE_VERSION 到 desktop',
+        );
+      } catch (error) {
+        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 UPDATE_VERSION 失败');
+      }
+    });
+  }
+
+  private handleUpdateProgress(message: WebSocketMessage): void {
+    // Desktop 客户端发送更新进度，转发给 web 客户端
+    const webClients = Array.from(this.clients.values()).filter((client) => client.type === 'web');
+
+    webClients.forEach((client) => {
+      try {
+        client.ws.send(
+          JSON.stringify({
+            type: 'UPDATE_PROGRESS',
+            status: message.status,
+            progress: message.progress,
+            currentStep: message.currentStep,
+            error: message.error,
+          }),
+        );
+        logger.debug({ status: message.status, clientId: client.id }, 'WebSocket: 已转发 UPDATE_PROGRESS 到 web');
+      } catch (error) {
+        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 UPDATE_PROGRESS 失败');
       }
     });
   }

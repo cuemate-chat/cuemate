@@ -2,7 +2,7 @@
     "name": "cuemate",
     "version": "0.1.0",
     "private": true,
-    "description": "实时语音面试助手 - Real-time voice interview assistant",
+    "description": "AI 实时语音面试助手 - AI Real-time voice interview assistant",
     "author": "CueMate Team",
     "license": "GPL-3.0-only",
     "workspaces": [

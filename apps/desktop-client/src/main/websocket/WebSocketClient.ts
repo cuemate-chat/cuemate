@@ -14,6 +14,7 @@ interface WebSocketMessage {
   clientType?: string;
   mode?: 'mock-interview' | 'interview-training';
   jobId?: string;
+  version?: string;
 }
 
 export class WebSocketClient {
@@ -192,6 +193,27 @@ export class WebSocketClient {
         this.windowManager.showInterviewerNextToAI();
 
         logger.info({ mode, jobId }, '已打开面试窗口');
+        break;
+      }
+
+      case 'UPDATE_VERSION': {
+        if (!message.version) {
+          logger.warn('WebSocket: UPDATE_VERSION 消息缺少版本号');
+          break;
+        }
+
+        const targetVersion = message.version;
+        logger.info({ version: targetVersion }, '收到版本更新请求');
+
+        // 动态导入 UpdateService
+        import('../services/UpdateService.js').then(({ UpdateService }) => {
+          const updateService = new UpdateService(this);
+          updateService.startUpdate(targetVersion).catch((error) => {
+            logger.error({ error }, '版本更新失败');
+          });
+        }).catch((error) => {
+          logger.error({ error }, '加载 UpdateService 失败');
+        });
         break;
       }
 

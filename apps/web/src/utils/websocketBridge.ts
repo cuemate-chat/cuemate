@@ -139,6 +139,44 @@ class WebSocketBridge {
   }
 
   /**
+   * 请求更新到指定版本
+   */
+  public updateVersion(version: string): void {
+    this.send({
+      type: 'UPDATE_VERSION',
+      version: version,
+    });
+  }
+
+  /**
+   * 监听更新进度
+   */
+  public onUpdateProgress(callback: (data: any) => void): void {
+    if (!this.ws) return;
+
+    const originalOnMessage = this.ws.onmessage;
+    const ws = this.ws; // 保存引用以供闭包使用
+
+    this.ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        // 处理更新进度消息
+        if (data.type === 'UPDATE_PROGRESS') {
+          callback(data);
+        }
+
+        // 调用原始的 onmessage 处理器
+        if (originalOnMessage) {
+          originalOnMessage.call(ws, event);
+        }
+      } catch (error) {
+        console.error('WebSocket 消息解析失败:', error);
+      }
+    };
+  }
+
+  /**
    * 检查连接状态
    */
   public isConnected(): boolean {
