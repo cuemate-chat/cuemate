@@ -319,4 +319,39 @@ export class InterviewStateMachine {
     const percentage = Math.round((current / total) * 100);
     return { current, total, percentage };
   }
+
+  /**
+   * 设置状态（用于测试或强制状态切换）
+   */
+  setState(state: InterviewState): void {
+    this.currentState = state;
+    this.notifyStateChange();
+  }
+
+  /**
+   * 恢复状态（从持久化数据恢复）
+   */
+  restoreState(state: InterviewState, context: Partial<InterviewContext>): void {
+    console.log('[InterviewStateMachine] 恢复状态:', state, context);
+
+    // 更新 context
+    if (context.jobPosition !== undefined) {
+      this.context.jobPosition = context.jobPosition;
+    }
+    if (context.resume !== undefined) {
+      this.context.resume = context.resume;
+    }
+    if (context.questionsBank !== undefined) {
+      this.context.questionsBank = context.questionsBank;
+    }
+    if (context.currentQuestionIndex !== undefined) {
+      this.context.currentQuestionIndex = context.currentQuestionIndex;
+    }
+    if (context.totalQuestions !== undefined) {
+      this.context.totalQuestions = context.totalQuestions;
+    }
+
+    // 设置状态
+    this.setState(state);
+  }
 }

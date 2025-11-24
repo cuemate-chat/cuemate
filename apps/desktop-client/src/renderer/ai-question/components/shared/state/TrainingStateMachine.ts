@@ -284,4 +284,34 @@ export class TrainingStateMachine {
     const percentage = Math.round((current / total) * 100);
     return { current, total, percentage };
   }
+
+  /**
+   * 设置状态
+   */
+  setState(state: TrainingState): void {
+    this.currentState = state;
+    this.notifyStateChange();
+  }
+
+  /**
+   * 恢复状态
+   */
+  restoreState(state: TrainingState, context: Partial<TrainingContext>): void {
+    console.log('[TrainingStateMachine] 恢复状态:', state, context);
+
+    if (context.jobPosition !== undefined) {
+      this.context.jobPosition = context.jobPosition;
+    }
+    if (context.resume !== undefined) {
+      this.context.resume = context.resume;
+    }
+    if (context.currentQuestionIndex !== undefined) {
+      this.context.currentQuestionIndex = context.currentQuestionIndex;
+    }
+    if (context.totalQuestions !== undefined) {
+      this.context.totalQuestions = context.totalQuestions;
+    }
+
+    this.setState(state);
+  }
 }
