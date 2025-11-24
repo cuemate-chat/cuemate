@@ -87,12 +87,28 @@ export function JobPositionCard({ selectedJobId, onPositionSelect, onModelSelect
         onPositionSelect?.(position);
       }
     }
-  }, [selectedJobId, positions, onPositionSelect]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedJobId, positions]);
 
-  const handlePositionChange = (positionId: string) => {
+  const handlePositionChange = async (positionId: string) => {
     const position = positions.find(p => p.id === positionId) || null;
+
+    // 先设置基本信息（立即更新 UI）
     setSelectedPosition(position);
     onPositionSelect?.(position);
+
+    // 异步加载完整的岗位详情
+    if (position) {
+      try {
+        const fullPosition = await jobPositionService.getJobPosition(positionId);
+        if (fullPosition) {
+          setSelectedPosition(fullPosition);
+          onPositionSelect?.(fullPosition);
+        }
+      } catch (error) {
+        console.error('加载岗位详情失败:', error);
+      }
+    }
   };
 
   const handleModelChange = (modelId: string) => {
@@ -243,7 +259,7 @@ export function JobPositionCard({ selectedJobId, onPositionSelect, onModelSelect
 
           {selectedPosition.question_count !== undefined && (
             <div className="detail-row">
-              <span className="detail-label">面试题数量:</span>
+              <span className="detail-label">面试押题:</span>
               <span className="detail-value">{selectedPosition.question_count}</span>
             </div>
           )}
