@@ -19,6 +19,9 @@
         "clean": "pnpm -r run clean && rimraf node_modules"
     },
     "devDependencies": {
+        "@esbuild/darwin-arm64": "0.21.5",
+        "@esbuild/darwin-x64": "0.21.5",
+        "@rollup/rollup-darwin-x64": "4.46.2",
         "@types/node": "^20.16.10",
         "@typescript-eslint/eslint-plugin": "^6.13.0",
         "@typescript-eslint/parser": "^6.13.0",
