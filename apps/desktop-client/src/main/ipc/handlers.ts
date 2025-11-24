@@ -30,10 +30,30 @@ function formatTimeString(date: Date): string {
  * 设置 IPC 通信处理器
  * command 系统，处理前端和后端之间的通信
  */
+/**
+ * 全局缓存用户数据和 token
+ * 导出以便 WebSocket 等其他模块可以更新
+ */
+export let cachedUserData: any = null;
+export let cachedToken: string | null = null;
+
+/**
+ * 设置缓存的用户数据和 token
+ */
+export function setCachedAuth(userData: any, token: string): void {
+  cachedUserData = userData;
+  cachedToken = token;
+}
+
+/**
+ * 清空缓存
+ */
+export function clearCachedAuth(): void {
+  cachedUserData = null;
+  cachedToken = null;
+}
+
 export function setupIPC(windowManager: WindowManager): void {
-  // 全局缓存用户数据和 token
-  let cachedUserData: any = null;
-  let cachedToken: string | null = null;
   // 全局缓存 ASR 配置
   let asrConfigCache: any | null = null;
 

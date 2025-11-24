@@ -41,24 +41,24 @@ export function MainControlBar({}: MainControlBarProps) {
   const [isMainAppVisible, setIsMainAppVisible] = useState(false);
 
   // 检查登录状态
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        if ((window as any).electronAPI) {
-          const result = await (window as any).electronAPI.checkLoginStatus();
-          if (result.success) {
-            setIsLoggedIn(result.isLoggedIn);
-          } else {
-            await logger.error(`登录状态检查失败: ${result.error}`);
-          }
+  const checkLoginStatus = async () => {
+    try {
+      if ((window as any).electronAPI) {
+        const result = await (window as any).electronAPI.checkLoginStatus();
+        if (result.success) {
+          setIsLoggedIn(result.isLoggedIn);
+        } else {
+          await logger.error(`登录状态检查失败: ${result.error}`);
         }
-      } catch (error) {
-        await logger.error(`登录状态检查异常: ${error}`);
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      await logger.error(`登录状态检查异常: ${error}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     checkLoginStatus();
   }, []);
 

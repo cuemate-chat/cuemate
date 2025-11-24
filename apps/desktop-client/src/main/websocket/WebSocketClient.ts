@@ -4,6 +4,7 @@ import { logger } from '../../utils/logger.js';
 import { getVoiceState } from '../../utils/voiceState.js';
 import { PiperTTS } from '../audio/PiperTTS.js';
 import type { WindowManager } from '../windows/WindowManager.js';
+import { setCachedAuth, clearCachedAuth } from '../ipc/handlers.js';
 
 interface WebSocketMessage {
   type: string;
@@ -96,6 +97,25 @@ export class WebSocketClient {
           }
         }
 
+        // 刷新登录状态缓存（获取 token）
+        try {
+          const response = await fetch('http://127.0.0.1:3001/auth/login-status', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(5000),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.isLoggedIn && data.user && data.token) {
+              setCachedAuth(data.user, data.token);
+              logger.info('WebSocket: 登录状态缓存已更新');
+            }
+          }
+        } catch (error) {
+          logger.error({ error }, 'WebSocket: 刷新登录状态缓存失败');
+        }
+
         // 通知 control-bar 登录成功
         const controlBarWindow = this.windowManager.getControlBarWindow();
         if (controlBarWindow && !controlBarWindow.isDestroyed()) {
@@ -107,6 +127,14 @@ export class WebSocketClient {
         break;
 
       case 'LOGOUT':
+        // 清空登录状态缓存
+        try {
+          clearCachedAuth();
+          logger.info('WebSocket: 登录状态缓存已清空');
+        } catch (error) {
+          logger.error({ error }, 'WebSocket: 清空登录状态缓存失败');
+        }
+
         // 通知 control-bar 登出
         const controlBarWindowLogout = this.windowManager.getControlBarWindow();
         if (controlBarWindowLogout && !controlBarWindowLogout.isDestroyed()) {
