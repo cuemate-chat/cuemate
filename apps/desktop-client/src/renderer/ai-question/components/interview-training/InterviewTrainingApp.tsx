@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useVoiceState } from '../../../../utils/voiceState';
 import { setInterviewTrainingState, useInterviewTrainingState } from '../../../utils/interviewTrainingState';
+import { getTrainingStateMachine, subscribeInterviewTraining } from '../../../utils/trainingManager';
 import { InterviewTrainingBody } from './InterviewTrainingBody';
 import { InterviewTrainingFooter } from './InterviewTrainingFooter';
 import { InterviewTrainingHeader } from './InterviewTrainingHeader';
@@ -17,33 +18,55 @@ export function InterviewTrainingApp() {
   const voiceState = useVoiceState();
   const interviewId = voiceState.interviewId;
 
-  // 组件初始化时清理状态
+  // 订阅全局状态机变化
   useEffect(() => {
-    // 如果没有 interviewId,清理所有状态(应用重启场景)
-    if (!interviewId) {
-      setInterviewTrainingState({
-        aiMessage: '',
-        speechText: '',
-        candidateAnswer: '',
-        isLoading: false,
-        isListening: false,
-        interviewState: undefined,
-      });
-    }
+    const unsubscribe = subscribeInterviewTraining((state) => {
+      console.log('[InterviewTrainingApp] 收到状态更新:', state);
+      // 更新 UI 状态
+      setInterviewTrainingState({ interviewState: state });
+    });
+
+    return unsubscribe;
   }, []);
 
-  // 监听 interviewId 变化，如果是新面试则清空状态
+  // 监听 interviewId 变化，只在真正变化时才清理
   useEffect(() => {
-    if (interviewId !== previousInterviewId.current) {
-      // interviewId 发生变化，清空旧数据
-      setInterviewTrainingState({
-        aiMessage: '',
-        speechText: '',
-        candidateAnswer: '',
-        isLoading: false,
-        isListening: false,
-        interviewState: undefined,
-      });
+    if (interviewId && interviewId !== previousInterviewId.current) {
+      console.log('[InterviewTrainingApp] interviewId 变化:', previousInterviewId.current, '->', interviewId);
+
+      // 从全局管理器获取当前状态
+      const machine = getTrainingStateMachine();
+      if (machine) {
+        const context = machine.getContext();
+
+        // 如果 interviewId 匹配，从状态机获取状态，不清理
+        if (context.interviewId === interviewId) {
+          console.log('[InterviewTrainingApp] interviewId 匹配，从状态机获取状态');
+          // 不清理，面试训练正在进行中
+        } else {
+          // 不同的 interviewId，清理旧状态
+          console.log('[InterviewTrainingApp] interviewId 不匹配，清理旧状态');
+          setInterviewTrainingState({
+            aiMessage: '',
+            speechText: '',
+            candidateAnswer: '',
+            isLoading: false,
+            isListening: false,
+            interviewState: undefined,
+          });
+        }
+      } else {
+        // 没有状态机，清理状态
+        setInterviewTrainingState({
+          aiMessage: '',
+          speechText: '',
+          candidateAnswer: '',
+          isLoading: false,
+          isListening: false,
+          interviewState: undefined,
+        });
+      }
+
       previousInterviewId.current = interviewId;
     }
   }, [interviewId]);

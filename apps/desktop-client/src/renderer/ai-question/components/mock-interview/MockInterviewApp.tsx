@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useVoiceState } from '../../../../utils/voiceState';
+import { getMockInterviewStateMachine, subscribeMockInterview } from '../../../utils/mockInterviewManager';
 import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
 import { MockInterviewBody } from './MockInterviewBody.tsx';
 import { MockInterviewFooter } from './MockInterviewFooter.tsx';
@@ -17,33 +18,55 @@ export function MockInterviewApp() {
   const voiceState = useVoiceState();
   const interviewId = voiceState.interviewId;
 
-  // 组件初始化时清理状态
+  // 订阅全局状态机变化
   useEffect(() => {
-    // 如果没有 interviewId,清理所有状态(应用重启场景)
-    if (!interviewId) {
-      setMockInterviewState({
-        aiMessage: '',
-        speechText: '',
-        candidateAnswer: '',
-        isLoading: false,
-        isListening: false,
-        interviewState: undefined,
-      });
-    }
+    const unsubscribe = subscribeMockInterview((state) => {
+      console.log('[MockInterviewApp] 收到状态更新:', state);
+      // 更新 UI 状态
+      setMockInterviewState({ interviewState: state });
+    });
+
+    return unsubscribe;
   }, []);
 
-  // 监听 interviewId 变化，如果是新面试则清空状态
+  // 监听 interviewId 变化，只在真正变化时才清理
   useEffect(() => {
-    if (interviewId !== previousInterviewId.current) {
-      // interviewId 发生变化，清空旧数据
-      setMockInterviewState({
-        aiMessage: '',
-        speechText: '',
-        candidateAnswer: '',
-        isLoading: false,
-        isListening: false,
-        interviewState: undefined,
-      });
+    if (interviewId && interviewId !== previousInterviewId.current) {
+      console.log('[MockInterviewApp] interviewId 变化:', previousInterviewId.current, '->', interviewId);
+
+      // 从全局管理器获取当前状态
+      const machine = getMockInterviewStateMachine();
+      if (machine) {
+        const context = machine.getContext();
+
+        // 如果 interviewId 匹配，从状态机获取状态，不清理
+        if (context.interviewId === interviewId) {
+          console.log('[MockInterviewApp] interviewId 匹配，从状态机获取状态');
+          // 不清理，面试正在进行中
+        } else {
+          // 不同的 interviewId，清理旧状态
+          console.log('[MockInterviewApp] interviewId 不匹配，清理旧状态');
+          setMockInterviewState({
+            aiMessage: '',
+            speechText: '',
+            candidateAnswer: '',
+            isLoading: false,
+            isListening: false,
+            interviewState: undefined,
+          });
+        }
+      } else {
+        // 没有状态机，清理状态
+        setMockInterviewState({
+          aiMessage: '',
+          speechText: '',
+          candidateAnswer: '',
+          isLoading: false,
+          isListening: false,
+          interviewState: undefined,
+        });
+      }
+
       previousInterviewId.current = interviewId;
     }
   }, [interviewId]);
