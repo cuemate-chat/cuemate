@@ -107,8 +107,7 @@ export class UpdateService {
   ): Promise<string> {
     return new Promise((resolve, reject) => {
       const https = require('https');
-      const baseUrl = 'https://cuemate-1300709663.cos.ap-beijing.myqcloud.com/cuemate-version';
-      const url = `${baseUrl}/${version}/CueMate-${version}-${platform}-${arch}-update.tar.gz`;
+      const url = `${__COS_VERSION_URL__}/${version}/CueMate-${version}-${platform}-${arch}-update.tar.gz`;
       const tempDir = path.join(app.getPath('temp'), `cuemate-update-${version}`);
       const downloadPath = path.join(tempDir, 'update.tar.gz');
 

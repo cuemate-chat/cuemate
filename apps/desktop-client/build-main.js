@@ -15,11 +15,13 @@ const buildConfig = {
   minify: process.env.NODE_ENV === 'production',
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    // 内联 @cuemate/config 的常量，避免打包时的路径问题
+    '__COS_VERSION_URL__': JSON.stringify('https://cos.cuemate.chat/cuemate-version'),
   },
   external: [
     'electron',
     'fs',
-    'path', 
+    'path',
     'os',
     'crypto',
     'util',
@@ -30,7 +32,7 @@ const buildConfig = {
     'url',
     'querystring',
     'zlib',
-    'child_process'
+    'child_process',
   ],
   alias: {
     'node:fs': 'fs',

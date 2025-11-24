@@ -39,8 +39,6 @@ interface UpdateManifest {
  * 应用更新管理器
  */
 export class AppUpdateManager {
-  private static readonly COS_BASE_URL =
-    'https://cuemate-1300709663.cos.ap-beijing.myqcloud.com/cuemate-version';
   private static progressWindow: BrowserWindow | null = null;
   private static updateState: any = null;
 
@@ -233,7 +231,7 @@ export class AppUpdateManager {
   ): Promise<string> {
     return new Promise((resolve, reject) => {
       // 更新包现在按版本目录组织: cuemate-version/v0.1.0/CueMate-v0.1.0-macos-arm64-update.tar.gz
-      const url = `${this.COS_BASE_URL}/${version}/CueMate-${version}-${platform}-${arch}-update.tar.gz`;
+      const url = `${__COS_VERSION_URL__}/${version}/CueMate-${version}-${platform}-${arch}-update.tar.gz`;
       const tempDir = path.join(app.getPath('temp'), `cuemate-update-${version}`);
       const downloadPath = path.join(tempDir, 'update.tar.gz');
 

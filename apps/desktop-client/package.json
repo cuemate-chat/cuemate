@@ -1,7 +1,7 @@
 {
   "name": "cuemate-desktop-client",
   "private": true,
-  "version": "v0.1.0",
+  "version": "v0.1.1",
   "description": "CueMate Desktop Client - Real-time voice interview assistant",
   "author": "CueMate Team",
   "main": "dist/main/index.cjs",
@@ -85,13 +85,15 @@
   "build": {
     "appId": "com.cuemate.desktop",
     "productName": "CueMate",
+    "npmRebuild": false,
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
       "node_modules/audiotee/bin/**/*",
-      "node_modules/audiotee/dist/**/*"
+      "node_modules/audiotee/dist/**/*",
+      "!node_modules/@cuemate/**"
     ],
     "extraResources": [
       {
