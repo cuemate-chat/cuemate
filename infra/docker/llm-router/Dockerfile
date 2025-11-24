@@ -35,7 +35,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/llm-router/package.json ./services/llm-router/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
-RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/llm-router...
+RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/llm-router... && \
+    rm -rf /root/.local/share/pnpm /root/.npm /root/.cache
+
 COPY --from=builder /app/services/llm-router/dist ./services/llm-router/dist
 COPY --from=builder /app/packages/logger/dist ./packages/logger/dist
 

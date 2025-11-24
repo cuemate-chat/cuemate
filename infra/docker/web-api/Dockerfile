@@ -57,7 +57,8 @@ COPY packages/config/package.json ./packages/config/package.json
 COPY packages/data-sqlite/package.json ./packages/data-sqlite/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
 ENV INSTALL_FULL_OPTIONALS=true
-RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cuemate/web-api...
+RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cuemate/web-api... && \
+    rm -rf /root/.local/share/pnpm /root/.npm /root/.cache
 
 COPY --from=builder /app/services/web-api/dist ./services/web-api/dist
 COPY --from=builder /app/packages/config/dist ./packages/config/dist

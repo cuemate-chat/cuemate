@@ -46,11 +46,16 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/rag-service/package.json ./services/rag-service/package.json
 COPY packages/config/package.json ./packages/config/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
-RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/rag-service...
+RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/rag-service... && \
+    find /app/node_modules/.pnpm/onnxruntime-node*/node_modules/onnxruntime-node/bin/napi-v3 \
+    -type d \( -name "win32" -o -name "darwin" \) -exec rm -rf {} + 2>/dev/null || true && \
+    find /app/node_modules/.pnpm/onnxruntime-node*/node_modules/onnxruntime-node/bin/napi-v3/linux/x64 \
+    -type f -name "libonnxruntime_providers_cuda.so" -delete 2>/dev/null || true && \
+    rm -rf /root/.local/share/pnpm /root/.npm /root/.cache
 
-COPY --from=builder /app/services/rag-service/dist ./services/rag-service/dist
-COPY --from=builder /app/packages/config/dist ./packages/config/dist
-COPY --from=builder /app/packages/logger/dist ./packages/logger/dist
+COPY --from=builder --chown=node:node /app/services/rag-service/dist ./services/rag-service/dist
+COPY --from=builder --chown=node:node /app/packages/config/dist ./packages/config/dist
+COPY --from=builder --chown=node:node /app/packages/logger/dist ./packages/logger/dist
 
 WORKDIR /app/services/rag-service
 RUN mkdir -p /opt/cuemate/logs/info/rag-service \
