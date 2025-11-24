@@ -1,13 +1,10 @@
-import type { FastifyInstance } from 'fastify';
+import { COS_VERSION_URL } from '@cuemate/config';
 import { withErrorLogging } from '@cuemate/logger';
+import type { FastifyInstance } from 'fastify';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { notifyNewVersionAvailable } from '../utils/notification-helper.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
-import { notifyNewVersionAvailable } from '../utils/notification-helper.js';
-
-// 腾讯云 COS 公共读 bucket 的直接访问 URL
-// 使用 COS 原生域名，因为自定义域名需要配置 HTTPS 证书
-const COS_BUCKET_URL = 'https://cuemate-1300709663.cos.ap-beijing.myqcloud.com';
 
 /**
  * 比较版本号，返回 true 如果 v1 > v2
@@ -83,7 +80,7 @@ export function registerVersionRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'versions.list', async (request, reply) => {
       try {
         // 从索引文件获取版本文件列表
-        const indexUrl = `${COS_BUCKET_URL}/cuemate-version/index.json`;
+        const indexUrl = `${COS_VERSION_URL}/index.json`;
         const indexResponse = await fetch(indexUrl);
 
         if (!indexResponse.ok) {
@@ -107,7 +104,7 @@ export function registerVersionRoutes(app: FastifyInstance) {
             const version = versionMatch[1];
 
             // 版本文件现在按版本目录组织: cuemate-version/v0.1.0/cuemate-version-v0.1.0.json
-            const fileUrl = `${COS_BUCKET_URL}/cuemate-version/${version}/${filename}`;
+            const fileUrl = `${COS_VERSION_URL}/${version}/${filename}`;
             const fileResponse = await fetch(fileUrl);
 
             if (!fileResponse.ok) {
@@ -181,8 +178,7 @@ export function registerVersionRoutes(app: FastifyInstance) {
       try {
         const { version } = request.params as { version: string };
         // 版本详情文件现在按版本目录组织: cuemate-version/v0.1.0/cuemate-version-v0.1.0.json
-        const key = `cuemate-version/${version}/cuemate-version-${version}.json`;
-        const fileUrl = `${COS_BUCKET_URL}/${key}`;
+        const fileUrl = `${COS_VERSION_URL}/${version}/cuemate-version-${version}.json`;
 
         const fileResponse = await fetch(fileUrl);
 

@@ -1,3 +1,4 @@
+import { CONTAINER_IMAGES_DIR, CONTAINER_PDF_DIR } from '@cuemate/config';
 import type { FastifyInstance } from 'fastify';
 import { promises as fs } from 'fs';
 import mammoth from 'mammoth';
@@ -71,7 +72,7 @@ export function registerFileRoutes(app: FastifyInstance) {
       const newFilename = `${nameWithoutExt}${timestamp}${extension}`;
 
       // 确保图片目录存在（使用 Docker 挂载路径）
-      const imageDir = '/opt/cuemate/images';
+      const imageDir = CONTAINER_IMAGES_DIR;
       await fs.mkdir(imageDir, { recursive: true });
 
       // 保存图片文件
@@ -147,7 +148,7 @@ export function registerFileRoutes(app: FastifyInstance) {
         const newFilename = `${nameWithoutExt}_${timestamp}${extension}`;
 
         // 确保 PDF 目录存在（使用 Docker 挂载路径）
-        const pdfDir = '/opt/cuemate/pdf';
+        const pdfDir = CONTAINER_PDF_DIR;
         await fs.mkdir(pdfDir, { recursive: true });
 
         // 保存文件

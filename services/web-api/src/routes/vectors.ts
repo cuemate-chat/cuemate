@@ -1,3 +1,4 @@
+import { CONTAINER_PDF_DIR } from '@cuemate/config';
 import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { promises as fs } from 'fs';
@@ -652,7 +653,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
           const nameWithoutExt = path.basename(filename, extension);
           const newFilename = `${nameWithoutExt}_${timestamp}${extension}`;
 
-          const filesDir = '/opt/cuemate/pdf';
+          const filesDir = CONTAINER_PDF_DIR;
           await fs.mkdir(filesDir, { recursive: true });
 
           const filePath = path.join(filesDir, newFilename);

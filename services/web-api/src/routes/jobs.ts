@@ -1,3 +1,4 @@
+import { CONTAINER_BASE_DIR, CONTAINER_PDF_DIR } from '@cuemate/config';
 import { withErrorLogging } from '@cuemate/logger';
 import { randomUUID } from 'crypto';
 import type { FastifyInstance } from 'fastify';
@@ -358,7 +359,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         const nameWithoutExt = path.basename(filename, extension);
         const newFilename = `${nameWithoutExt}_${timestamp}${extension}`;
 
-        const pdfDir = '/opt/cuemate/pdf';
+        const pdfDir = CONTAINER_PDF_DIR;
         await fs.mkdir(pdfDir, { recursive: true });
 
         const filePath = path.join(pdfDir, newFilename);
@@ -626,7 +627,7 @@ export function registerJobRoutes(app: FastifyInstance) {
       // 删除物理文件
       if (oldFilePath) {
         try {
-          const fullPath = path.join('/opt/cuemate', oldFilePath);
+          const fullPath = path.join(CONTAINER_BASE_DIR, oldFilePath);
           await fs.unlink(fullPath);
           app.log.info({ filePath: fullPath }, '简历文件已删除');
         } catch (fileError: any) {

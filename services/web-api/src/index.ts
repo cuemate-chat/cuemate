@@ -1,4 +1,5 @@
 // 使用包名导入；tsconfig.paths 已指向源码目录（仅供类型解析），运行时由构建或容器解析
+import { CONTAINER_IMAGES_DIR, CONTAINER_PDF_DIR, CONTAINER_SQLITE_PATH } from '@cuemate/config';
 import { initSqlite } from '@cuemate/data-sqlite';
 import { fastifyLoggingHooks, printBanner, printSuccessInfo } from '@cuemate/logger';
 import cors from '@fastify/cors';
@@ -54,14 +55,14 @@ async function start() {
 
   // 静态文件服务 - 提供图片访问（使用 Docker 挂载路径）
   await app.register(fastifyStatic, {
-    root: '/opt/cuemate/images',
+    root: CONTAINER_IMAGES_DIR,
     prefix: '/images/',
     decorateReply: false,
   });
 
   // 静态文件服务 - 提供 PDF 简历访问（使用 Docker 挂载路径）
   await app.register(fastifyStatic, {
-    root: '/opt/cuemate/pdf',
+    root: CONTAINER_PDF_DIR,
     prefix: '/pdf/',
     decorateReply: false,
   });
@@ -71,7 +72,7 @@ async function start() {
   if (tz) app.log.info({ tz }, 'logger-timezone');
 
   // 初始化 SQLite（better-sqlite3）
-  const db = await initSqlite(process.env.SQLITE_PATH || './cuemate.db');
+  const db = await initSqlite(process.env.SQLITE_PATH || CONTAINER_SQLITE_PATH);
   app.decorate('db', db as any);
 
   // 初始化操作记录器

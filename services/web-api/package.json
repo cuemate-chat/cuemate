@@ -12,6 +12,7 @@
     "format": "prettier --write src"
   },
   "dependencies": {
+    "@cuemate/config": "workspace:*",
     "@cuemate/data-sqlite": "workspace:*",
     "@cuemate/logger": "workspace:*",
     "@fastify/cors": "^8.5.0",

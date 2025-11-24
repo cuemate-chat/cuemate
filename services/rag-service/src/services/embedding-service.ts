@@ -1,3 +1,4 @@
+import { CONTAINER_FASTEMBED_DIR } from '@cuemate/config';
 import { EmbeddingModel, FlagEmbedding } from 'fastembed';
 import { Config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
@@ -18,7 +19,7 @@ export class EmbeddingService {
       logger.info('正在初始化 FastEmbed 模型（fast-bge-small-zh-v1.5）...');
       this.fastEmbedModel = await FlagEmbedding.init({
         model: EmbeddingModel.BGESmallZH,
-        cacheDir: '/opt/cuemate/models/fastembed',
+        cacheDir: CONTAINER_FASTEMBED_DIR,
       });
       this.useFastEmbed = true;
       logger.info('FastEmbed 模型初始化成功，将使用语义向量嵌入');
