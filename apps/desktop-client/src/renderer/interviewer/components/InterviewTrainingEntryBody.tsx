@@ -1,17 +1,24 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ChevronDown, CornerDownLeft, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { startSpeakerRecognition, type SpeakerRecognitionController } from '../../../utils/audioRecognition';
+import { startSpeakerRecognition } from '../../../utils/audioRecognition';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { interviewDataService } from '../../ai-question/components/shared/data/InterviewDataService';
-import { mockInterviewService } from '../../ai-question/components/shared/services/InterviewService';
 import { contextManagementService } from '../../ai-question/components/shared/services/ContextManagementService';
-import { TrainingState, TrainingStateMachine } from '../../ai-question/components/shared/state/TrainingStateMachine';
+import { mockInterviewService } from '../../ai-question/components/shared/services/InterviewService';
+import { TrainingState } from '../../ai-question/components/shared/state/TrainingStateMachine';
 import { promptService } from '../../prompts/promptService';
 import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { aiService } from '../../utils/ai/aiService';
 import { currentInterview } from '../../utils/currentInterview';
 import { setInterviewTrainingState, useInterviewTrainingState } from '../../utils/interviewTrainingState';
+import {
+  getSpeakerController,
+  getTrainingStateMachine,
+  setSpeakerController,
+  startInterviewTraining,
+  stopInterviewTraining
+} from '../../utils/trainingManager';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
 import { Model } from '../api/modelService';
@@ -43,7 +50,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   const [selectedMic, setSelectedMic] = useState<string>('');
   const [selectedSpeaker, setSelectedSpeaker] = useState<string>('');
 
-  const stateMachine = useRef<TrainingStateMachine | null>(null);
+  // 使用全局管理器，不再使用组件级 useRef
+  // const stateMachine = useRef<TrainingStateMachine | null>(null); // 删除
   const [_interviewState, setInterviewState] = useState<TrainingState>(TrainingState.IDLE);
   const [isInitializing, setIsInitializing] = useState(false);
 
@@ -58,8 +66,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     otherContent?: string;
   } | null>(null);
 
-  // 扬声器识别控制器
-  const speakerController = useRef<SpeakerRecognitionController | null>(null);
+  // 扬声器识别控制器 - 使用全局管理器
+  // const speakerController = useRef<SpeakerRecognitionController | null>(null); // 删除
 
   const trainingState = useInterviewTrainingState();
 
@@ -67,23 +75,26 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   useEffect(() => {
     const candidateAnswer = trainingState.candidateAnswer;
 
-    if (candidateAnswer && stateMachine.current) {
-      const currentState = stateMachine.current.getState();
+    if (candidateAnswer) {
+      const machine = getTrainingStateMachine();
+      if (machine) {
+        const currentState = machine.getState();
 
-      if (currentState === TrainingState.USER_LISTENING ||
-          currentState === TrainingState.USER_SPEAKING) {
+        if (currentState === TrainingState.USER_LISTENING ||
+            currentState === TrainingState.USER_SPEAKING) {
 
-        if (currentQuestionData.current) {
-          currentQuestionData.current.candidateAnswer = candidateAnswer;
+          if (currentQuestionData.current) {
+            currentQuestionData.current.candidateAnswer = candidateAnswer;
+          }
+
+          machine.send({
+            type: 'USER_FINISHED_SPEAKING',
+            payload: { response: candidateAnswer }
+          });
+        } else {
+          console.warn(`用户在非法状态 ${currentState} 下提交了答案，已忽略`);
+          setInterviewTrainingState({ candidateAnswer: '' });
         }
-
-        stateMachine.current.send({
-          type: 'USER_FINISHED_SPEAKING',
-          payload: { response: candidateAnswer }
-        });
-      } else {
-        console.warn(`用户在非法状态 ${currentState} 下提交了答案，已忽略`);
-        setInterviewTrainingState({ candidateAnswer: '' });
       }
     }
   }, [trainingState.candidateAnswer]);
@@ -170,13 +181,9 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
     loadAudioSettings();
 
+    // 清理函数（不清理状态机和扬声器控制器，让全局管理器管理）
     return () => {
-      if (stateMachine.current) {
-        stateMachine.current.reset();
-      }
-      if (speakerController.current) {
-        speakerController.current.stop().catch(console.error);
-      }
+      // ✅ 不清理状态机和扬声器控制器，只取消订阅（如果有的话）
     };
   }, []);
 
@@ -209,7 +216,11 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         },
       });
 
-      speakerController.current = controller;
+      // 保存到全局管理器
+      setSpeakerController(controller, {
+        deviceId: selectedSpeaker || '',
+        sessionId: 'interviewer-training',
+      });
 
       setInterviewTrainingState({
         currentPhase: 'listening-interviewer',
@@ -224,9 +235,9 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   // 停止监听扬声器
   const stopListeningInterviewer = async () => {
     try {
-      if (speakerController.current) {
-        await speakerController.current.stop();
-        speakerController.current = null;
+      const controller = getSpeakerController();
+      if (controller) {
+        await controller.stop();
       }
     } catch (error) {
       console.error('停止扬声器监听失败:', error);
@@ -254,7 +265,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       });
 
       // 如果状态机未初始化,创建并送入 AI_THINKING 以外的起点
-      if (!stateMachine.current) {
+      if (!getTrainingStateMachine()) {
         const interviewId = currentInterview.get();
         if (!interviewId) {
           throw new Error('面试 ID 不存在');
@@ -273,29 +284,32 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           currentQuestion: interviewerQuestion,
         };
 
-        stateMachine.current = new TrainingStateMachine(initialContext);
+        const machine = startInterviewTraining(initialContext);
 
-        stateMachine.current.onStateChange(async (state, context) => {
+        machine.onStateChange(async (state, context) => {
           setInterviewState(state);
           await handleStateChange(state, context);
         });
 
         // 直接进入 GENERATING_ANSWER 阶段
-        stateMachine.current.send({
+        machine.send({
           type: 'QUESTION_RECEIVED',
           payload: { question: interviewerQuestion }
         });
       } else {
         // 已经初始化过,更新问题并继续
-        stateMachine.current.updateContextPartial({
-          currentQuestion: interviewerQuestion,
-        });
+        const machine = getTrainingStateMachine();
+        if (machine) {
+          machine.updateContextPartial({
+            currentQuestion: interviewerQuestion,
+          });
 
-        // 进入下一轮循环
-        stateMachine.current.send({
-          type: 'QUESTION_RECEIVED',
-          payload: { question: interviewerQuestion }
-        });
+          // 进入下一轮循环
+          machine.send({
+            type: 'QUESTION_RECEIVED',
+            payload: { question: interviewerQuestion }
+          });
+        }
       }
 
     } catch (error) {
@@ -332,7 +346,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       }
 
       // 如果状态机未初始化,创建状态机
-      if (!stateMachine.current) {
+      if (!getTrainingStateMachine()) {
         const initialContext = {
           interviewId: interviewId,
           jobPosition: selectedPosition,
@@ -346,19 +360,22 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           currentQuestion: question,
         };
 
-        stateMachine.current = new TrainingStateMachine(initialContext);
+        const machine = startInterviewTraining(initialContext);
 
-        stateMachine.current.onStateChange(async (state, context) => {
+        machine.onStateChange(async (state, context) => {
           setInterviewState(state);
           await handleStateChange(state, context);
         });
       } else {
         // 状态机已存在，更新当前问题索引
-        const context = stateMachine.current.getContext();
-        stateMachine.current.updateContextPartial({
-          currentQuestion: question,
-          currentQuestionIndex: context.currentQuestionIndex + 1,
-        });
+        const machine = getTrainingStateMachine();
+        if (machine) {
+          const context = machine.getContext();
+          machine.updateContextPartial({
+            currentQuestion: question,
+            currentQuestionIndex: context.currentQuestionIndex + 1,
+          });
+        }
       }
 
       // 5. 创建新的 review 记录
@@ -374,10 +391,13 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       });
 
       // 7. 生成 AI 答案
-      await generateAnswerInBackground(stateMachine.current.getContext());
+      const machine = getTrainingStateMachine();
+      if (machine) {
+        await generateAnswerInBackground(machine.getContext());
 
-      // 8. 发送答案生成完成事件
-      stateMachine.current.send({ type: 'ANSWER_GENERATED' });
+        // 8. 发送答案生成完成事件
+        machine.send({ type: 'ANSWER_GENERATED' });
+      }
 
     } catch (error) {
       console.error('自动问题检测处理失败:', error);
@@ -517,23 +537,26 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   };
 
   const checkAndHandlePause = (): boolean => {
-    if (!stateMachine.current) return false;
-    const context = stateMachine.current.getContext();
+    const machine = getTrainingStateMachine();
+    if (!machine) return false;
+    const context = machine.getContext();
     return !!context.isPaused;
   };
 
   const transitionToNext = (eventType: string, payload?: any): boolean => {
-    if (!stateMachine.current) return false;
+    const machine = getTrainingStateMachine();
+    if (!machine) return false;
 
     if (checkAndHandlePause()) {
       return false;
     }
 
-    return stateMachine.current.send({ type: eventType, payload });
+    return machine.send({ type: eventType, payload });
   };
 
   const continueFromState = (state: TrainingState): void => {
-    if (!stateMachine.current) return;
+    const machine = getTrainingStateMachine();
+    if (!machine) return;
 
     const completionEvents: Record<TrainingState, string | null> = {
       [TrainingState.IDLE]: null,
@@ -551,21 +574,22 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
     const eventType = completionEvents[state];
     if (eventType) {
-      stateMachine.current.send({ type: eventType });
+      machine.send({ type: eventType });
     }
   };
 
   const handlePauseInterview = async () => {
-    if (!stateMachine.current) return;
+    const machine = getTrainingStateMachine();
+    if (!machine) return;
 
     const interviewId = currentInterview.get();
     if (!interviewId) return;
 
     try {
-      stateMachine.current.updateContextPartial({ isPaused: true });
+      machine.updateContextPartial({ isPaused: true });
 
-      const currentState = stateMachine.current.getState();
-      const currentContext = stateMachine.current.getContext();
+      const currentState = machine.getState();
+      const currentContext = machine.getContext();
 
       localStorage.setItem('training-paused-state', JSON.stringify({
         interviewId: interviewId,
@@ -593,7 +617,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   };
 
   const handleResumeInterview = async () => {
-    if (!stateMachine.current) return;
+    const machine = getTrainingStateMachine();
+    if (!machine) return;
 
     const interviewId = currentInterview.get();
     if (!interviewId) return;
@@ -610,9 +635,9 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         throw new Error('暂停状态与当前训练不匹配');
       }
 
-      stateMachine.current.restoreContext(savedState.context);
+      machine.restoreContext(savedState.context);
 
-      stateMachine.current.updateContextPartial({ isPaused: false });
+      machine.updateContextPartial({ isPaused: false });
 
       await interviewService.updateInterview(interviewId, {
         status: 'interview-training-recording',
@@ -707,6 +732,9 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         interviewId: interviewId
       });
 
+      // 停止并清理全局状态机
+      stopInterviewTraining();
+
     } catch (error) {
       console.error('结束面试训练失败:', error);
       setErrorMessage(`结束面试训练失败: ${error instanceof Error ? error.message : '未知错误'}`);
@@ -717,6 +745,9 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         subState: 'interview-training-completed',
         interviewId: interviewId
       });
+
+      // 停止并清理全局状态机
+      stopInterviewTraining();
     }
   };
 
@@ -1010,9 +1041,9 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       await generateAnswerInBackground(context);
 
       // 发送答案生成完成事件
-      stateMachine.current?.send({ type: 'ANSWER_GENERATED' });
+      getTrainingStateMachine()?.send({ type: 'ANSWER_GENERATED' });
     } catch (error) {
-      stateMachine.current?.send({ type: 'GENERATION_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+      getTrainingStateMachine()?.send({ type: 'GENERATION_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
   };
 
@@ -1068,7 +1099,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
       await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, async (chunk) => {
         if (chunk.error) {
-          stateMachine.current?.send({ type: 'ANALYSIS_ERROR', payload: { error: chunk.error } });
+          getTrainingStateMachine()?.send({ type: 'ANALYSIS_ERROR', payload: { error: chunk.error } });
           return;
         }
 
@@ -1124,17 +1155,17 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
             interviewDataService.markQuestionComplete(context.currentQuestionIndex);
 
-            stateMachine.current?.send({ type: 'ANALYSIS_COMPLETE' });
+            getTrainingStateMachine()?.send({ type: 'ANALYSIS_COMPLETE' });
           } catch (parseError) {
             console.error('Failed to parse analysis result:', parseError);
-            stateMachine.current?.send({ type: 'ANALYSIS_ERROR', payload: { error: '分析结果解析失败' } });
+            getTrainingStateMachine()?.send({ type: 'ANALYSIS_ERROR', payload: { error: '分析结果解析失败' } });
           }
         } else {
           analysisResult += chunk.content;
         }
       });
     } catch (error) {
-      stateMachine.current?.send({ type: 'ANALYSIS_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+      getTrainingStateMachine()?.send({ type: 'ANALYSIS_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
   };
 
@@ -1204,7 +1235,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
       await aiService.callAIStreamWithCustomModel(optimizedMessages, modelConfig, modelParams, async (chunk) => {
         if (chunk.error) {
-          stateMachine.current?.send({ type: 'GENERATION_ERROR', payload: { error: chunk.error } });
+          getTrainingStateMachine()?.send({ type: 'GENERATION_ERROR', payload: { error: chunk.error } });
           return;
         }
 
@@ -1235,7 +1266,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         }
       });
     } catch (error) {
-      stateMachine.current?.send({ type: 'GENERATION_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+      getTrainingStateMachine()?.send({ type: 'GENERATION_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
   };
 
@@ -1264,10 +1295,10 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
     interviewDataService.markQuestionComplete(context.currentQuestionIndex);
 
-    const shouldEnd = stateMachine.current?.shouldEndInterview();
+    const shouldEnd = getTrainingStateMachine()?.shouldEndInterview();
 
     if (shouldEnd) {
-      stateMachine.current?.send({ type: 'END_TRAINING' });
+      getTrainingStateMachine()?.send({ type: 'END_TRAINING' });
     } else {
       // 手动模式:重新开始监听扬声器
       // 自动模式:扬声器一直在监听,只需清理状态
@@ -1340,13 +1371,16 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
     const interviewId = currentInterview.get();
 
-    if (interviewId && stateMachine.current) {
-      generateInterviewReport(interviewId, stateMachine.current.getContext()).catch(error => {
-        const errorMsg = error instanceof Error ? error.message : '生成面试训练报告失败';
-        console.error('生成面试训练报告失败:', error);
-        setErrorMessage(`后台生成面试训练报告失败: ${errorMsg}`);
-        setTimestamp(Date.now());
-      });
+    if (interviewId) {
+      const machine = getTrainingStateMachine();
+      if (machine) {
+        generateInterviewReport(interviewId, machine.getContext()).catch(error => {
+          const errorMsg = error instanceof Error ? error.message : '生成面试训练报告失败';
+          console.error('生成面试训练报告失败:', error);
+          setErrorMessage(`后台生成面试训练报告失败: ${errorMsg}`);
+          setTimestamp(Date.now());
+        });
+      }
     }
 
     setVoiceState({
