@@ -9,14 +9,16 @@ RUN npm config set registry https://registry.npmmirror.com && \
 # 复制根工作区元数据和 web 包元数据，仅安装 web 所需依赖
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY apps/web/package.json ./apps/web/package.json
-RUN pnpm install --no-frozen-lockfile --filter @cuemate/web...
+COPY packages/config/package.json ./packages/config/package.json
+RUN pnpm install --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/web...
 
 # 复制源码并构建（支持通过构建参数注入后端地址）
 ARG WEB_API_BASE=http://localhost:3001
 ENV VITE_WEB_API_BASE=${WEB_API_BASE}
 COPY tsconfig.base.json ./tsconfig.base.json
+COPY packages/config ./packages/config
 COPY apps/web ./apps/web
-RUN pnpm --filter @cuemate/web build
+RUN pnpm --filter @cuemate/config --filter @cuemate/web build
 
 # --- Runtime ---
 FROM nginx:alpine

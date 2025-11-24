@@ -26,7 +26,7 @@ services:
     environment:
       - TZ=Asia/Shanghai
     volumes:
-      - ${DATA_DIR:-../../data}/funasr-models:/workspace/models
+      - ${DATA_DIR:-../../data}/funasr_models:/workspace/models
       - ${DATA_DIR:-../../data}/logs:/opt/cuemate/logs
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro

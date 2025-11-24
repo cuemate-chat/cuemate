@@ -17,13 +17,15 @@ RUN npm config set registry https://registry.npmmirror.com && \
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/rag-service/package.json ./services/rag-service/package.json
+COPY packages/config/package.json ./packages/config/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
-RUN pnpm install --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/rag-service...
+RUN pnpm install --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/rag-service...
 
 COPY services/rag-service ./services/rag-service
+COPY packages/config ./packages/config
 COPY packages/logger ./packages/logger
 COPY tsconfig.base.json ./tsconfig.base.json
-RUN pnpm -r --filter @cuemate/logger --filter @cuemate/rag-service build
+RUN pnpm -r --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/rag-service build
 
 FROM --platform=linux/amd64 node:22-bookworm-slim
 WORKDIR /app
@@ -42,10 +44,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/rag-service/package.json ./services/rag-service/package.json
+COPY packages/config/package.json ./packages/config/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
-RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/rag-service...
+RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/rag-service...
 
 COPY --from=builder /app/services/rag-service/dist ./services/rag-service/dist
+COPY --from=builder /app/packages/config/dist ./packages/config/dist
 COPY --from=builder /app/packages/logger/dist ./packages/logger/dist
 
 WORKDIR /app/services/rag-service

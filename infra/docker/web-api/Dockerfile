@@ -19,16 +19,18 @@ ENV npm_config_jobs="1"
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/web-api/package.json ./services/web-api/package.json
+COPY packages/config/package.json ./packages/config/package.json
 COPY packages/data-sqlite/package.json ./packages/data-sqlite/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
 ENV INSTALL_FULL_OPTIONALS=true
-RUN pnpm install --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cuemate/web-api...
+RUN pnpm install --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cuemate/web-api...
 
 COPY services/web-api ./services/web-api
+COPY packages/config ./packages/config
 COPY packages/data-sqlite ./packages/data-sqlite
 COPY packages/logger ./packages/logger
 COPY tsconfig.base.json ./tsconfig.base.json
-RUN pnpm -r --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cuemate/web-api build
+RUN pnpm -r --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cuemate/web-api build
 
 FROM node:20-bookworm-slim
 WORKDIR /app
@@ -51,12 +53,14 @@ ENV npm_config_jobs="1"
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/web-api/package.json ./services/web-api/package.json
+COPY packages/config/package.json ./packages/config/package.json
 COPY packages/data-sqlite/package.json ./packages/data-sqlite/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
 ENV INSTALL_FULL_OPTIONALS=true
-RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cuemate/web-api...
+RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/data-sqlite --filter @cuemate/web-api...
 
 COPY --from=builder /app/services/web-api/dist ./services/web-api/dist
+COPY --from=builder /app/packages/config/dist ./packages/config/dist
 COPY --from=builder /app/packages/data-sqlite/dist ./packages/data-sqlite/dist
 COPY --from=builder /app/packages/logger/dist ./packages/logger/dist
 
