@@ -1,3 +1,4 @@
+import { COS_VERSION_URL } from '@cuemate/config';
 import { http } from './http';
 
 export interface LicenseInfo {
@@ -25,4 +26,19 @@ export async function uploadLicenseFile(file: File): Promise<{ license: LicenseI
   formData.append('file', file);
 
   return await http.post<{ license: LicenseInfo }>('/license/upload-file', formData);
+}
+
+// 下载预置题库文件
+export async function downloadPresetQuestionsFile(): Promise<File> {
+  const response = await fetch(`${COS_VERSION_URL}/questions.csv`);
+
+  if (!response.ok) {
+    throw new Error(`下载失败: ${response.status} ${response.statusText}`);
+  }
+
+  const csvContent = await response.text();
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const file = new File([blob], 'questions.csv', { type: 'text/csv' });
+
+  return file;
 }

@@ -2,11 +2,12 @@ import { ArrowPathIcon, CloudArrowUpIcon, DocumentTextIcon, FolderArrowDownIcon 
 import { Badge } from 'antd';
 import { useEffect, useState } from 'react';
 import { storage } from '../../api/http';
-import { getLicenseInfo, uploadLicenseFile, type LicenseInfo } from '../../api/license';
+import { downloadPresetQuestionsFile, getLicenseInfo, uploadLicenseFile, type LicenseInfo } from '../../api/license';
 import { fetchVersionList, type VersionInfo } from '../../api/versions';
 import { message } from '../../components/Message';
 import PageLoading from '../../components/PageLoading';
 import { useLoading } from '../../hooks/useLoading';
+import { useQuestionImport } from '../../hooks/useQuestionImport';
 import BatchImportDrawer from '../PresetQuestionsList/BatchImportDrawer';
 import UpdateConfirmModal from './UpdateConfirmModal';
 import UpdateProgressModal, { type UpdateStatus } from './UpdateProgressModal';
@@ -41,6 +42,40 @@ export default function License() {
   // 当前系统版本：从 localStorage 的 user 对象获取
   const currentVersion = storage.getUser()?.version || 'v0.1.0';
 
+  // 使用题库导入 Hook（用于自动导入预置题库）
+  const { importing: autoImporting, importFile: autoImportFile } = useQuestionImport({
+    overwrite: false, // 不覆盖已存在的题目
+    is_builtin: true, // 标记为内置题库
+    onSuccess: (result) => {
+      message.success(`预置题库导入成功！新增 ${result.importedCount} 个题目`);
+    },
+    onError: () => {
+      message.error('预置题库自动导入失败，请稍后重试');
+    }
+  });
+
+
+  // 检查 License 是否有效（未过期）
+  const isLicenseValid = (licenseInfo: LicenseInfo | null): boolean => {
+    if (!licenseInfo) return false;
+    // 检查是否过期
+    const now = Date.now();
+    return licenseInfo.expireTime > now;
+  };
+
+  // 下载并导入预置题库
+  const downloadAndImportPresetQuestions = async () => {
+    try {
+      // 下载 CSV 文件
+      const file = await downloadPresetQuestionsFile();
+
+      // 调用导入函数
+      await autoImportFile(file);
+
+    } catch (error) {
+      message.error('预置题库导入失败，请稍后重试');
+    }
+  };
 
   // 获取当前 License 信息
   const fetchLicenseInfo = async () => {
@@ -90,11 +125,20 @@ export default function License() {
       // 存储新的 license 信息
       if (data.license) {
         storage.setLicense(data.license);
+        setLicense(data.license);
+
+        // 检查 License 是否有效（未过期）
+        if (isLicenseValid(data.license)) {
+          // 延迟 500ms 后执行导入，避免UI阻塞
+          setTimeout(() => {
+            downloadAndImportPresetQuestions();
+          }, 500);
+        }
       }
 
-      fetchLicenseInfo(); // 刷新 License 信息
+      await fetchLicenseInfo(); // 刷新 License 信息
     } catch (error) {
-      console.error('License 文件上传失败:', error);
+      // 上传失败由 uploadLicenseFile 内部处理
     } finally {
       await endUploadingFile();
       // 清空文件输入
@@ -389,6 +433,19 @@ export default function License() {
                 </div>
               )}
               
+              {/* 自动导入预置题库状态提示 */}
+              {autoImporting && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-xl border border-green-200/50 dark:border-green-700/50">
+                  <div className="flex items-center gap-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-green-800 dark:text-green-300 mb-1">正在自动导入预置题库</h3>
+                      <p className="text-sm text-green-600 dark:text-green-400">正在从云端下载并导入预置面试题库，请稍候...</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* 导入预置题库按钮 - 只在 License 有效时显示 */}
               {license && license.status === 'active' && !isExpiringSoon(license.expireTime) && (
                 <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
@@ -399,7 +456,8 @@ export default function License() {
                     </div>
                     <button
                       onClick={() => setImportDrawerOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                      disabled={autoImporting}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <FolderArrowDownIcon className="h-4 w-4" />
                       导入题库
