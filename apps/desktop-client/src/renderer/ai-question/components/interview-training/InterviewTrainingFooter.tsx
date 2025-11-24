@@ -1,7 +1,14 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { CornerDownLeft } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { startMicrophoneRecognition, type MicrophoneRecognitionController } from '../../../../utils/audioRecognition';
+import { startMicrophoneRecognition } from '../../../../utils/audioRecognition';
+import {
+  getMicrophoneController,
+  getVoiceCoordinator,
+  initVoiceCoordinator,
+  startMicrophone,
+  stopMicrophone,
+} from '../../../utils/audioManager';
 import { setInterviewTrainingState, useInterviewTrainingState } from '../../../utils/interviewTrainingState';
 import { VoiceCoordinator } from '../shared/voice/VoiceCoordinator';
 
@@ -28,8 +35,6 @@ export function InterviewTrainingFooter({
   className
 }: WindowFooterProps) {
   const speechRef = useRef<HTMLSpanElement>(null);
-  const recognitionController = useRef<MicrophoneRecognitionController | null>(null);
-  const voiceCoordinator = useRef<VoiceCoordinator | null>(null);
 
   // 使用跨窗口状态
   const trainingState = useInterviewTrainingState();
@@ -41,26 +46,32 @@ export function InterviewTrainingFooter({
   // isAutoMode 是用户偏好设置,始终显示真实值,不依赖 interviewId
   const isAutoMode = trainingState.isAutoMode;
 
-  // 初始化 VoiceCoordinator
+  // 初始化 VoiceCoordinator（只初始化一次，使用全局管理器）
   useEffect(() => {
-    const initVoiceCoordinator = async () => {
+    const initCoordinator = async () => {
+      // 检查是否已经初始化
+      if (getVoiceCoordinator('interview-training')) {
+        console.log('[InterviewTrainingFooter] VoiceCoordinator 已存在，跳过初始化');
+        return;
+      }
+
       try {
-        voiceCoordinator.current = new VoiceCoordinator({
+        const coordinator = new VoiceCoordinator({
           silenceThreshold: 5000,
           volumeThreshold: 0.01,
           ttsDelay: 500,
           autoEndTimeout: 5000,
         });
 
-        await voiceCoordinator.current.initialize();
+        await coordinator.initialize();
 
         // 监听用户开始说话
-        voiceCoordinator.current.addEventListener('userStartedSpeaking', (() => {
+        coordinator.addEventListener('userStartedSpeaking', (() => {
           // 用户开始说话,无需额外处理,已经在 isListening 状态中
         }) as EventListener);
 
         // 监听用户说话结束(自动模式)
-        voiceCoordinator.current.addEventListener('userFinishedSpeaking', ((_event: CustomEvent) => {
+        coordinator.addEventListener('userFinishedSpeaking', ((_event: CustomEvent) => {
           if (isAutoMode) {
             // 自动模式下,静音 5 秒后自动触发回答完成
             onResponseComplete();
@@ -69,17 +80,18 @@ export function InterviewTrainingFooter({
           }
         }) as EventListener);
 
+        // 初始化到全局管理器
+        initVoiceCoordinator('interview-training', coordinator);
+
       } catch (error) {
         console.error('Failed to initialize VoiceCoordinator:', error);
       }
     };
 
-    initVoiceCoordinator();
+    initCoordinator();
 
     return () => {
-      if (voiceCoordinator.current) {
-        voiceCoordinator.current.destroy();
-      }
+      // ✅ 不清理 VoiceCoordinator，让 audioManager 管理
     };
   }, []);
 
@@ -93,7 +105,7 @@ export function InterviewTrainingFooter({
   // 监听 isListening 状态,启动/停止语音识别和音量检测
   useEffect(() => {
     const startRecognition = async () => {
-      if (isListening && !recognitionController.current) {
+      if (isListening && !getMicrophoneController('interview-training')) {
         try {
           // 获取麦克风设备 ID
           const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
@@ -101,8 +113,9 @@ export function InterviewTrainingFooter({
           const micDeviceId = res?.config?.microphone_device_id;
 
           // 启动 VoiceCoordinator 音量检测
-          if (voiceCoordinator.current?.canStartASR()) {
-            voiceCoordinator.current.startASRListening();
+          const coordinator = getVoiceCoordinator('interview-training');
+          if (coordinator?.canStartASR()) {
+            coordinator.startASRListening();
           }
 
           // 启动语音识别
@@ -117,24 +130,23 @@ export function InterviewTrainingFooter({
               setInterviewTrainingState({ speechText: '', isListening: false });
             },
           });
-          recognitionController.current = controller;
+
+          // 设置到全局管理器
+          await startMicrophone('interview-training', controller);
+
         } catch (error) {
           console.error('启动语音识别失败:', error);
           setInterviewTrainingState({ isListening: false });
         }
-      } else if (!isListening && recognitionController.current) {
+      } else if (!isListening && getMicrophoneController('interview-training')) {
         // 停止 VoiceCoordinator
-        if (voiceCoordinator.current) {
-          voiceCoordinator.current.stopASRListening();
+        const coordinator = getVoiceCoordinator('interview-training');
+        if (coordinator) {
+          coordinator.stopASRListening();
         }
 
-        // 停止语音识别
-        try {
-          await recognitionController.current.stop();
-        } catch (error) {
-          console.error('停止语音识别失败:', error);
-        }
-        recognitionController.current = null;
+        // 停止语音识别（但不销毁）
+        await stopMicrophone('interview-training');
       }
     };
 
@@ -142,10 +154,7 @@ export function InterviewTrainingFooter({
 
     // 清理函数
     return () => {
-      if (recognitionController.current) {
-        recognitionController.current.stop().catch(console.error);
-        recognitionController.current = null;
-      }
+      // ✅ 不清理任何东西，让 audioManager 管理
     };
   }, [isListening, isAutoMode]);
 
