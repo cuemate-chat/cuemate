@@ -31,6 +31,9 @@ const mainContentAPI = {
       ipcRenderer.removeAllListeners(channel);
     }
   },
+
+  // 通知托盘菜单设置已变更
+  notifySettingsChanged: () => ipcRenderer.invoke('notify-settings-changed'),
 };
 
 // 通过 contextBridge 安全地暴露 API

@@ -22,12 +22,13 @@ import { listModels } from '../../api/models';
 import { message } from '../../components/Message';
 import PageLoading from '../../components/PageLoading';
 import { useLoading } from '../../hooks/useLoading';
+import { findProvider } from '../../providers';
 
 export default function Settings() {
   const [form, setForm] = useState(defaultUserForm);
   const { loading: saving, start: startSaving, end: endSaving } = useLoading();
   const { loading, start: startLoading, end: endLoading } = useLoading();
-  const [modelOptions, setModelOptions] = useState<{ label: string; value: string }[]>([]);
+  const [modelOptions, setModelOptions] = useState<{ label: string; value: string; provider?: string }[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -87,6 +88,7 @@ export default function Settings() {
         const opts = (res.list || []).map((m: any) => ({
           label: `${m.name} (${m.model_name})`,
           value: m.id,
+          provider: m.provider, // 保存 provider 信息用于显示图标
         }));
         setModelOptions(opts);
       } catch (error) {
@@ -230,6 +232,41 @@ export default function Settings() {
                   className="w-full"
                   popupMatchSelectWidth
                   style={{ height: 40 }}
+                  optionRender={(option) => {
+                    const providerData = option.data.provider;
+                    const provider = providerData ? findProvider(providerData) : undefined;
+                    const icon = provider?.icon;
+                    return (
+                      <div className="flex items-center gap-2">
+                        {icon && (
+                          <img
+                            src={`data:image/svg+xml;utf8,${encodeURIComponent(icon)}`}
+                            alt=""
+                            className="w-5 h-5 shrink-0"
+                          />
+                        )}
+                        <span>{option.label}</span>
+                      </div>
+                    );
+                  }}
+                  labelRender={(option) => {
+                    const modelOption = modelOptions.find((m) => m.value === option.value);
+                    const providerData = modelOption?.provider;
+                    const provider = providerData ? findProvider(providerData) : undefined;
+                    const icon = provider?.icon;
+                    return (
+                      <div className="flex items-center gap-2">
+                        {icon && (
+                          <img
+                            src={`data:image/svg+xml;utf8,${encodeURIComponent(icon)}`}
+                            alt=""
+                            className="w-5 h-5 shrink-0"
+                          />
+                        )}
+                        <span>{option.label}</span>
+                      </div>
+                    );
+                  }}
                 />
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
@@ -395,6 +432,7 @@ export default function Settings() {
                     const opts = (res.list || []).map((m: any) => ({
                       label: `${m.name} (${m.model_name})`,
                       value: m.id,
+                      provider: m.provider, // 保存 provider 信息用于显示图标
                     }));
                     setModelOptions(opts);
                   } catch {}
@@ -435,6 +473,8 @@ export default function Settings() {
                     setForm(userToFormData(res));
                     // 触发自定义事件，通知其他组件（如顶部语言选择器）
                     window.dispatchEvent(new CustomEvent('user-settings-updated', { detail: res }));
+                    // 通知托盘菜单刷新数据（如果在 Electron 环境中）
+                    (window as any).electronAPI?.notifySettingsChanged?.();
                   }
                   message.success('设置已保存');
                 } catch (e: any) {
