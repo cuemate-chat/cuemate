@@ -104,6 +104,10 @@ async function buildPreloadScripts(watchMode = false) {
       entry: resolve(__dirname, 'src/main/preload/interviewer.ts'),
       output: resolve(__dirname, 'dist/main/preload/interviewer.js'),
     },
+    {
+      entry: resolve(__dirname, 'src/main/preload/tray-menu.ts'),
+      output: resolve(__dirname, 'dist/main/preload/tray-menu.js'),
+    },
   ];
 
   try {

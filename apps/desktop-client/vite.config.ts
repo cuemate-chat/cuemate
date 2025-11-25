@@ -30,6 +30,7 @@ export default defineConfig({
         'ai-question': resolve(__dirname, 'src/renderer/ai-question/index.html'),
         'ai-question-history': resolve(__dirname, 'src/renderer/ai-question-history/index.html'),
         'interviewer': resolve(__dirname, 'src/renderer/interviewer/index.html'),
+        'tray-menu': resolve(__dirname, 'src/renderer/tray-menu/index.html'),
       },
 
       output: {
