@@ -1,4 +1,4 @@
-import type { BrowserWindow } from 'electron';
+import type { BrowserWindow, Tray } from 'electron';
 import { screen } from 'electron';
 import type { AppState } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
@@ -9,6 +9,7 @@ import { AIQuestionWindow } from './AIQuestionWindow.js';
 import { ControlBarWindow } from './ControlBarWindow.js';
 import { InterviewerWindow } from './InterviewerWindow.js';
 import { MainContentWindow } from './MainContentWindow.js';
+import { TrayMenuWindow } from './TrayMenuWindow.js';
 
 export class WindowManager {
   private controlBarWindow: ControlBarWindow;
@@ -19,6 +20,7 @@ export class WindowManager {
   private appState: AppState;
   private aiQuestionHistoryWindow!: AIQuestionHistoryWindow; // 在 initialize 中初始化
   private interviewerWindow!: InterviewerWindow; // 在 initialize 中初始化
+  private trayMenuWindow!: TrayMenuWindow; // 托盘菜单窗口
   private windowStatesBeforeHide: {
     isMainContentVisible: boolean;
     isAIQuestionVisible: boolean;
@@ -83,6 +85,10 @@ export class WindowManager {
 
       // 6. 创建 Interviewer 窗口（初始隐藏）
       await this.interviewerWindow.create();
+
+      // 6.5 创建托盘菜单窗口（初始隐藏）
+      this.trayMenuWindow = new TrayMenuWindow(this.isDevelopment);
+      await this.trayMenuWindow.create();
 
       // 7. 设置控制条窗口关闭回调，隐藏所有子窗口
       this.controlBarWindow.setOnCloseCallback(() => {
@@ -221,6 +227,10 @@ export class WindowManager {
     this.appState.isControlBarVisible = true;
     this.appState.isCloseButtonVisible = true;
 
+    // 广播应用可见性变化
+    const { broadcastAppVisibilityChanged } = require('../ipc/handlers.js');
+    broadcastAppVisibilityChanged(true);
+
     // 通知菜单更新
     try {
       const { ipcMain } = require('electron');
@@ -290,6 +300,10 @@ export class WindowManager {
     this.controlBarWindow.hide();
     this.appState.isControlBarVisible = false;
     this.appState.isCloseButtonVisible = false;
+
+    // 广播应用可见性变化
+    const { broadcastAppVisibilityChanged } = require('../ipc/handlers.js');
+    broadcastAppVisibilityChanged(false);
 
     // 通知菜单更新
     try {
@@ -627,5 +641,43 @@ export class WindowManager {
     this.aiQuestionWindow.destroy();
     this.aiQuestionHistoryWindow.destroy();
     this.interviewerWindow.destroy();
+    this.trayMenuWindow.destroy();
+  }
+
+  /**
+   * 显示托盘菜单窗口
+   */
+  public showTrayMenu(tray: Tray | null): void {
+    if (!this.trayMenuWindow) return;
+    this.trayMenuWindow.showNearTray(tray);
+  }
+
+  /**
+   * 隐藏托盘菜单窗口
+   */
+  public hideTrayMenu(): void {
+    if (!this.trayMenuWindow) return;
+    this.trayMenuWindow.hide();
+  }
+
+  /**
+   * 切换托盘菜单窗口显示状态
+   */
+  public toggleTrayMenu(tray: Tray | null): void {
+    if (!this.trayMenuWindow) return;
+    if (this.trayMenuWindow.isVisible()) {
+      this.trayMenuWindow.hide();
+    } else {
+      this.trayMenuWindow.showNearTray(tray);
+    }
+  }
+
+  /**
+   * 通知托盘菜单设置已变更
+   */
+  public notifyTrayMenuSettingsChanged(): void {
+    if (this.trayMenuWindow) {
+      this.trayMenuWindow.notifySettingsChanged();
+    }
   }
 }

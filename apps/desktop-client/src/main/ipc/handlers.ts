@@ -53,6 +53,29 @@ export function clearCachedAuth(): void {
   cachedToken = null;
 }
 
+// 导出广播函数供其他模块使用
+export function broadcastClickThroughChanged(enabled: boolean): void {
+  try {
+    const windows = BrowserWindow.getAllWindows();
+    for (const win of windows) {
+      try {
+        win.webContents.send('click-through-changed', enabled);
+      } catch {}
+    }
+  } catch {}
+}
+
+export function broadcastAppVisibilityChanged(visible: boolean): void {
+  try {
+    const windows = BrowserWindow.getAllWindows();
+    for (const win of windows) {
+      try {
+        win.webContents.send('app-visibility-changed', visible);
+      } catch {}
+    }
+  } catch {}
+}
+
 export function setupIPC(windowManager: WindowManager): void {
   // 全局缓存 ASR 配置
   let asrConfigCache: any | null = null;
@@ -62,6 +85,8 @@ export function setupIPC(windowManager: WindowManager): void {
 
   // === 点击穿透模式全局状态与持久化 ===
   let clickThroughEnabled = false;
+  // === Dock 图标显示状态 ===
+  let dockIconVisible = false;
   function getSettingsFilePath(): string {
     const path = require('path');
     return path.join(app.getPath('userData'), 'settings.json');
@@ -75,6 +100,7 @@ export function setupIPC(windowManager: WindowManager): void {
         const json = JSON.parse(raw || '{}');
         stealthModeEnabled = !!json.stealthModeEnabled;
         clickThroughEnabled = !!json.clickThroughEnabled;
+        dockIconVisible = !!json.dockIconVisible;
       }
     } catch {}
   }
@@ -90,6 +116,7 @@ export function setupIPC(windowManager: WindowManager): void {
           {
             stealthModeEnabled,
             clickThroughEnabled,
+            dockIconVisible,
           },
           null,
           2,
@@ -122,6 +149,11 @@ export function setupIPC(windowManager: WindowManager): void {
       const windows = BrowserWindow.getAllWindows();
       for (const win of windows) {
         try {
+          const title = win.getTitle();
+          // 排除托盘菜单窗口，它不应该受穿透模式影响
+          if (title === 'CueMate Menu') {
+            continue;
+          }
           win.setIgnoreMouseEvents(enabled, { forward: true });
         } catch (error) {
           logger.error({ error }, `设置窗口穿透失败: ${win.getTitle()}`);
@@ -131,28 +163,31 @@ export function setupIPC(windowManager: WindowManager): void {
       logger.error({ error }, '应用点击穿透到所有窗口失败');
     }
   }
-  function broadcastClickThroughChanged(enabled: boolean): void {
-    try {
-      const windows = BrowserWindow.getAllWindows();
-      for (const win of windows) {
-        try {
-          win.webContents.send('click-through-changed', enabled);
-        } catch {}
-      }
-    } catch {}
-  }
 
   // 初始化加载并应用一次（若已开启）
   loadSettings();
   try {
     (global as any).stealthModeEnabled = stealthModeEnabled;
     (global as any).clickThroughEnabled = clickThroughEnabled;
+    (global as any).dockIconVisible = dockIconVisible;
   } catch {}
   if (stealthModeEnabled) {
     applyStealthModeToAllWindows(true);
   }
   if (clickThroughEnabled) {
     applyClickThroughToAllWindows(true);
+  }
+  // 应用 Dock 图标显示状态（仅在 macOS 上）
+  if (process.platform === 'darwin') {
+    try {
+      if (dockIconVisible) {
+        app.dock?.show();
+      } else {
+        app.dock?.hide();
+      }
+    } catch (error) {
+      logger.error({ error }, '应用 Dock 图标显示状态失败');
+    }
   }
 
   async function fetchAsrConfigFromServer(): Promise<any | null> {
@@ -517,7 +552,14 @@ export function setupIPC(windowManager: WindowManager): void {
   ipcMain.handle('get-app-state', async () => {
     try {
       const appState = windowManager.getAppState();
-      return { success: true, data: appState };
+      const isClickThrough = (global as any).clickThroughEnabled || false;
+      return {
+        success: true,
+        data: {
+          ...appState,
+          isClickThrough,
+        },
+      };
     } catch (error) {
       logger.error({ error }, 'IPC: 获取应用状态失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
@@ -1458,6 +1500,146 @@ export function setupIPC(windowManager: WindowManager): void {
     } catch (error) {
       logger.error({ error, filename }, 'IPC: 读取 AudioWorklet 处理器文件失败');
       return { success: false, error: (error as Error).message };
+    }
+  });
+
+  // ============= 托盘菜单相关 IPC 处理器 =============
+
+  // 获取用户统计数据
+  ipcMain.handle('get-user-stats', async () => {
+    try {
+      // TODO: 从数据库或本地存储获取真实的用户统计数据
+      // 这里返回模拟数据
+      return {
+        success: true,
+        data: {
+          totalTrainings: 0,
+          totalMinutes: 0,
+          averageScore: 0,
+        },
+      };
+    } catch (error) {
+      logger.error({ error }, '获取用户统计数据失败');
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
+  // 显示应用
+  ipcMain.handle('show-app', async () => {
+    try {
+      windowManager.showFloatingWindows();
+      broadcastAppVisibilityChanged(true);
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, '显示应用失败');
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
+  // 隐藏应用
+  ipcMain.handle('hide-app', async () => {
+    try {
+      windowManager.hideFloatingWindows();
+      broadcastAppVisibilityChanged(false);
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, '隐藏应用失败');
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
+  // 设置交互模式
+  ipcMain.handle('set-interactive-mode', async () => {
+    try {
+      if ((global as any).clickThroughEnabled) {
+        windowManager.toggleClickThroughMode();
+      }
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, '设置交互模式失败');
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
+  // 设置穿透模式
+  ipcMain.handle('set-click-through-mode', async () => {
+    try {
+      if (!(global as any).clickThroughEnabled) {
+        windowManager.toggleClickThroughMode();
+      }
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, '设置穿透模式失败');
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
+  // 获取 Dock 图标显示状态
+  ipcMain.handle('get-dock-icon-visible', async () => {
+    try {
+      return dockIconVisible;
+    } catch (error) {
+      logger.error({ error }, '获取 Dock 图标显示状态失败');
+      return false;
+    }
+  });
+
+  // 设置 Dock 图标显示状态
+  ipcMain.handle('set-dock-icon-visible', async (_event, visible: boolean) => {
+    try {
+      dockIconVisible = !!visible;
+      try {
+        (global as any).dockIconVisible = dockIconVisible;
+      } catch {}
+
+      // 仅在 macOS 上执行
+      if (process.platform === 'darwin') {
+        if (dockIconVisible) {
+          app.dock?.show();
+        } else {
+          app.dock?.hide();
+        }
+      }
+
+      // 保存到配置文件
+      saveSettings();
+
+      return { success: true, visible: dockIconVisible };
+    } catch (error) {
+      logger.error({ error }, '设置 Dock 图标显示状态失败');
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
+  // 通知托盘菜单设置已变更
+  ipcMain.handle('notify-settings-changed', async () => {
+    try {
+      windowManager.notifyTrayMenuSettingsChanged();
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, '通知托盘菜单设置变更失败');
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
     }
   });
 
