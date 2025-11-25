@@ -761,4 +761,57 @@ export function registerInterviewRoutes(app: FastifyInstance) {
       }
     }),
   );
+
+  // 获取用户训练统计数据
+  app.get(
+    '/user-training-stats',
+    withErrorLogging(app.log as any, 'user-training-stats.get', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+
+        // 1. 获取训练总数（interviews 表的总条数）
+        const trainingCountResult = (app as any).db
+          .prepare('SELECT COUNT(*) as count FROM interviews WHERE user_id = ?')
+          .get(payload.uid);
+        const trainingCount = trainingCountResult?.count || 0;
+
+        // 2. 获取总时长（interviews 表所有 duration 的总和，转换为小时）
+        const totalDurationResult = (app as any).db
+          .prepare('SELECT SUM(duration) as total FROM interviews WHERE user_id = ?')
+          .get(payload.uid);
+        const totalDurationMinutes = totalDurationResult?.total || 0;
+        const totalHours = Math.round((totalDurationMinutes / 60) * 10) / 10; // 保留一位小数
+
+        // 3. 获取平均对话数（interview_reviews 总条数 / 不同的 interview_id 数量）
+        const reviewStatsResult = (app as any).db
+          .prepare(
+            `
+            SELECT
+              COUNT(*) as total_reviews,
+              COUNT(DISTINCT r.interview_id) as distinct_interviews
+            FROM interview_reviews r
+            JOIN interviews i ON r.interview_id = i.id
+            WHERE i.user_id = ?
+          `,
+          )
+          .get(payload.uid);
+
+        const totalReviews = reviewStatsResult?.total_reviews || 0;
+        const distinctInterviews = reviewStatsResult?.distinct_interviews || 0;
+        const avgConversations =
+          distinctInterviews > 0 ? Math.round((totalReviews / distinctInterviews) * 10) / 10 : 0;
+
+        return {
+          success: true,
+          data: {
+            trainingCount, // 训练总数
+            totalHours, // 总时长（小时）
+            avgConversations, // 平均对话数
+          },
+        };
+      } catch (err: any) {
+        return reply.code(400).send(buildPrefixedError('获取用户训练统计数据失败', err, 400));
+      }
+    }),
+  );
 }
