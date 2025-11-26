@@ -5,7 +5,7 @@
 # CueMate - 智能语音面试助手
 
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/node-%3E%3D20-green.svg)](https://nodejs.org)
+[![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-green.svg)](https://nodejs.org)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.15.9-5865F2.svg)](https://pnpm.io)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-3b82f6.svg)]()
 
