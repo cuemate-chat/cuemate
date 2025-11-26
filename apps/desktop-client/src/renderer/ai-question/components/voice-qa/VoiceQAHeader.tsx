@@ -2,6 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { History, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { logger } from '../../../../utils/rendererLogger.js';
 import CueMateLogo from '../../../../assets/CueMate.png';
 import { useVoiceState } from '../../../../utils/voiceState';
 import { userSettingsService } from '../../../control-bar/api/userSettingsService';
@@ -62,7 +63,7 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
           }
         } catch {}
       } catch (e) {
-        console.error('获取麦克风设备失败:', e);
+        logger.error(`获取麦克风设备失败: ${e}`);
       }
     })();
     try {
@@ -159,7 +160,7 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
                       floating_window_height: newHeight
                     });
                   } catch (error) {
-                    console.error('更新窗口高度设置失败:', error);
+                    logger.error(`更新窗口高度设置失败: ${error}`);
                   }
                 }}
               >

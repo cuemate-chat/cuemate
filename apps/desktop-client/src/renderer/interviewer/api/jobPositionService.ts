@@ -3,6 +3,8 @@
  * 处理岗位相关的 API 调用
  */
 
+import { logger } from '../../../utils/rendererLogger.js';
+
 export interface JobPosition {
   id: string;
   user_id: string;
@@ -34,7 +36,7 @@ export class JobPositionService {
         this.token = result.userData.token;
       }
     } catch (error) {
-      console.error('初始化岗位服务认证失败:', error);
+      logger.error(`初始化岗位服务认证失败: ${error}`);
     }
   }
 
@@ -74,7 +76,7 @@ export class JobPositionService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('获取岗位列表失败:', error);
+      logger.error(`获取岗位列表失败: ${error}`);
       return { items: [], total: 0 };
     }
   }
@@ -98,7 +100,7 @@ export class JobPositionService {
       const data = await response.json();
       return data.job;
     } catch (error) {
-      console.error('获取岗位详情失败:', error);
+      logger.error(`获取岗位详情失败: ${error}`);
       return null;
     }
   }

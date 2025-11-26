@@ -4,6 +4,7 @@
  */
 
 import { BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
+import { logger } from '../../utils/logger.js';
 import { InterviewIPCEvents } from '../../renderer/ai-question/components/mock-interview/ipc/InterviewIPCService';
 
 interface WindowReference {
@@ -30,7 +31,7 @@ export class InterviewIPCHandler {
       this.isInitialized = true;
       console.debug('Interview IPC Handler initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize Interview IPC Handler:', error);
+      logger.error(`Failed to initialize Interview IPC Handler: ${error}`);
     }
   }
 
@@ -204,7 +205,7 @@ export class InterviewIPCHandler {
     const browserWindow = BrowserWindow.fromWebContents(webContents);
 
     if (!browserWindow) {
-      console.error('Cannot register window: BrowserWindow not found');
+      logger.error('Cannot register window: BrowserWindow not found');
       return;
     }
 
@@ -261,7 +262,7 @@ export class InterviewIPCHandler {
     try {
       windowRef.window.webContents.send(`interview:${event}`, data);
     } catch (error) {
-      console.error(`Failed to send event ${event} to window ${windowRef.id}:`, error);
+      logger.error(`Failed to send event ${event} to window ${windowRef.id}: ${error}`);
     }
   }
 

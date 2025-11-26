@@ -1,6 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { GraduationCap, MessageSquare, Mic, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { logger } from '../../../utils/rendererLogger.js';
 import { currentInterview } from '../../utils/currentInterview';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { setMockInterviewState } from '../../utils/mockInterviewState';
@@ -70,7 +71,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard, selectedJobI
         (window as any).electronAPI.setAskAIButtonDisabled(isInterviewerModeSelected);
       }
     } catch (error) {
-      console.error('通知 control-bar 更新按钮状态失败:', error);
+      logger.error(`通知 control-bar 更新按钮状态失败: ${error}`);
     }
   }, [selectedCard]);
 
@@ -85,7 +86,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard, selectedJobI
             await (window as any).electronAPI.showAIQuestionHistory();
           }
         } catch (error) {
-          console.error('切换到语音提问模式失败:', error);
+          logger.error(`切换到语音提问模式失败: ${error}`);
         }
       })();
     }

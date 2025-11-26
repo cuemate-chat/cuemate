@@ -2,6 +2,7 @@
  * AI 对话数据持久化服务
  */
 
+import { logger } from '../../../utils/rendererLogger.js';
 import { estimateTokens } from '../../utils/ai/calculateTokens';
 
 interface ConversationData {
@@ -59,7 +60,7 @@ export class ConversationService {
         this.token = result.userData.token;
       }
     } catch (error) {
-      console.error('初始化用户数据失败:', error);
+      logger.error(`初始化用户数据失败: ${error}`);
     }
   }
 
@@ -103,7 +104,7 @@ export class ConversationService {
 
       return null;
     } catch (error) {
-      console.error('获取最新对话失败:', error);
+      logger.error(`获取最新对话失败: ${error}`);
       return null;
     }
   }
@@ -127,7 +128,7 @@ export class ConversationService {
       const data = await response.json();
       return data as ConversationWithMessages;
     } catch (error) {
-      console.error('获取对话详情失败:', error);
+      logger.error(`获取对话详情失败: ${error}`);
       return null;
     }
   }
@@ -139,7 +140,7 @@ export class ConversationService {
     await this.ensureAuth();
 
     if (!this.userData?.user?.model) {
-      console.error('用户模型配置缺失');
+      logger.error('用户模型配置缺失');
       return null;
     }
 
@@ -179,14 +180,14 @@ export class ConversationService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`创建对话失败 ${response.status}:`, errorText);
+        logger.error(`创建对话失败 ${response.status}: ${errorText}`);
         throw new Error(`创建对话失败: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
       return data.id;
     } catch (error) {
-      console.error('创建对话失败:', error);
+      logger.error(`创建对话失败: ${error}`);
       return null;
     }
   }
@@ -277,7 +278,7 @@ export class ConversationService {
 
       return true;
     } catch (error) {
-      console.error('批量保存消息失败:', error);
+      logger.error(`批量保存消息失败: ${error}`);
       return false;
     }
   }
@@ -310,7 +311,7 @@ export class ConversationService {
 
       return true;
     } catch (error) {
-      console.error('更新对话状态失败:', error);
+      logger.error(`更新对话状态失败: ${error}`);
       return false;
     }
   }

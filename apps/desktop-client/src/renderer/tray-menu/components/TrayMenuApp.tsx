@@ -1,6 +1,7 @@
 import ReactECharts from 'echarts-for-react';
 import { ArrowLeft, Check, ChevronDown, Eye, EyeOff, Ghost, LogOut, MousePointer2, Settings } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { logger } from '../../../utils/rendererLogger.js';
 import logoBackground from '../../../assets/logo-background.png';
 import { getProviderIcon } from '../../shared/providerIcons';
 import { getModelList, getTrainingStats, getUserSettings, getVectorSyncStatus, updateUserSettings } from '../api/trayMenuService';
@@ -50,7 +51,7 @@ export function TrayMenuApp() {
         setShowDockIcon(visible);
       }
     } catch (error) {
-      console.error('获取应用状态失败:', error);
+      logger.error(`获取应用状态失败: ${error}`);
     }
   };
 
@@ -136,7 +137,7 @@ export function TrayMenuApp() {
       await (window as any).electronAPI?.showApp?.();
       setIsAppVisible(true);
     } catch (error) {
-      console.error('显示应用失败:', error);
+      logger.error(`显示应用失败: ${error}`);
     }
   };
 
@@ -145,7 +146,7 @@ export function TrayMenuApp() {
       await (window as any).electronAPI?.hideApp?.();
       setIsAppVisible(false);
     } catch (error) {
-      console.error('隐藏应用失败:', error);
+      logger.error(`隐藏应用失败: ${error}`);
     }
   };
 
@@ -154,7 +155,7 @@ export function TrayMenuApp() {
       await (window as any).electronAPI?.setInteractiveMode?.();
       setIsClickThrough(false);
     } catch (error) {
-      console.error('设置交互模式失败:', error);
+      logger.error(`设置交互模式失败: ${error}`);
     }
   };
 
@@ -163,7 +164,7 @@ export function TrayMenuApp() {
       await (window as any).electronAPI?.setClickThroughMode?.();
       setIsClickThrough(true);
     } catch (error) {
-      console.error('设置穿透模式失败:', error);
+      logger.error(`设置穿透模式失败: ${error}`);
     }
   };
 
@@ -171,7 +172,7 @@ export function TrayMenuApp() {
     try {
       await (window as any).electronAPI?.quitApp?.();
     } catch (error) {
-      console.error('退出应用失败:', error);
+      logger.error(`退出应用失败: ${error}`);
     }
   };
 
@@ -190,7 +191,7 @@ export function TrayMenuApp() {
         setShowDockIcon(visible);
       }
     } catch (error) {
-      console.error('设置 Dock 图标失败:', error);
+      logger.error(`设置 Dock 图标失败: ${error}`);
     }
   };
 

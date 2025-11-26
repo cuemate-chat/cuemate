@@ -1,3 +1,5 @@
+import { logger } from '../../../../../utils/rendererLogger.js';
+
 export enum TrainingState {
   IDLE = 'idle', // 空闲状态
   LISTENING_INTERVIEWER = 'listening_interviewer', // 监听面试官(扬声器)
@@ -219,7 +221,7 @@ export class TrainingStateMachine {
       try {
         callback(this.currentState, this.context);
       } catch (error) {
-        console.error('State change callback error:', error);
+        logger.error(`State change callback error: ${error}`);
       }
     });
   }

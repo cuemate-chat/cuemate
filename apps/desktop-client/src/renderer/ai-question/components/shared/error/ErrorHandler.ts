@@ -3,6 +3,8 @@
  * 统一处理面试流程中的各种错误和异常情况
  */
 
+import { logger } from '../../../../../utils/rendererLogger.js';
+
 export enum ErrorType {
   // 音频相关错误
   AUDIO_INITIALIZATION_FAILED = 'AUDIO_INITIALIZATION_FAILED',
@@ -233,7 +235,7 @@ export class ErrorHandler extends EventTarget {
               await navigator.mediaDevices.getUserMedia({ audio: true });
               this.dispatchEvent(new CustomEvent('microphonePermissionGranted'));
             } catch (error) {
-              console.error('重新申请麦克风权限失败:', error);
+              logger.error(`重新申请麦克风权限失败: ${error}`);
             }
           },
           isDefault: true
@@ -455,7 +457,7 @@ export class ErrorHandler extends EventTarget {
 
   // 记录错误
   private logError(errorInfo: ErrorInfo): void {
-    console.error('[ErrorHandler]', errorInfo);
+    logger.error(`[ErrorHandler] ${JSON.stringify(errorInfo)}`);
 
     // 添加到错误历史
     this.errorHistory.push(errorInfo);

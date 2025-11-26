@@ -3,6 +3,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, CornerDownLeft, MousePointer, MousePointerClick, Pause, Play, Square, Type } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { logger } from '../../../utils/rendererLogger.js';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 import { userSettingsService } from '../api/userSettingsService';
@@ -49,7 +50,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         }
       }
     } catch (error) {
-      console.error('语音识别操作失败:', error);
+      logger.error(`语音识别操作失败: ${error}`);
     }
   };
 
@@ -64,7 +65,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         setIsInterviewerWindowOpen(show);
       }
     } catch (error) {
-      console.error('切换 Interviewer 窗口失败:', error);
+      logger.error(`切换 Interviewer 窗口失败: ${error}`);
     }
   };
 
@@ -103,7 +104,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         await (window as any).electronAPI.toggleAIQuestion();
       }
     } catch (error) {
-      console.error('打开 AI 问题窗口失败:', error);
+      logger.error(`打开 AI 问题窗口失败: ${error}`);
     }
   };
 
@@ -118,11 +119,11 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
         if (result?.success) {
           setIsClickThrough(next);
         } else {
-          console.error('设置点击穿透失败:', result?.error);
+          logger.error(`设置点击穿透失败: ${result?.error}`);
           return;
         }
       } else {
-        console.error('clickThrough API 不可用');
+        logger.error('clickThrough API 不可用');
         return;
       }
 
@@ -132,10 +133,10 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
           floating_window_visible: next ? 0 : 1  // 逻辑反转：穿透模式存 0，交互模式存 1
         });
       } catch (error) {
-        console.error('更新穿透性设置失败:', error);
+        logger.error(`更新穿透性设置失败: ${error}`);
       }
     } catch (error) {
-      console.error('穿透性切换失败:', error);
+      logger.error(`穿透性切换失败: ${error}`);
     }
   };
 
@@ -180,7 +181,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
           }
         }
       } catch (error) {
-        console.error('初始化穿透性状态失败:', error);
+        logger.error(`初始化穿透性状态失败: ${error}`);
         // 回退到系统状态
         try {
           const api: any = (window as any).electronAPI;

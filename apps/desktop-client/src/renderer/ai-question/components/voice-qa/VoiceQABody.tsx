@@ -2,6 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import 'animate.css/animate.min.css';
 import { Copy, MoreHorizontal, Plus } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { logger } from '../../../../utils/rendererLogger.js';
 import { useScrollFadeEffect } from '../../../hooks/useScrollFadeEffect';
 import { MessageData, ScrollFadeMessageList } from '../../../shared/components/ScrollFadeMessage';
 
@@ -27,7 +28,7 @@ export function VoiceQABody({ messages, isLoading, onNewChat, onAskMore, onCopyL
         await navigator.clipboard.writeText(lastAIMessage.content);
       }
     } catch (e) {
-      console.error('复制 AI 回答失败:', e);
+      logger.error(`复制 AI 回答失败: ${e}`);
     }
   };
 
@@ -167,7 +168,7 @@ export function VoiceQABody({ messages, isLoading, onNewChat, onAskMore, onCopyL
                           .join('\n\n');
                         await navigator.clipboard.writeText(text);
                       } catch (e) {
-                        console.error('复制对话失败:', e);
+                        logger.error(`复制对话失败: ${e}`);
                       }
                     }}
                     title="复制所有对话内容"

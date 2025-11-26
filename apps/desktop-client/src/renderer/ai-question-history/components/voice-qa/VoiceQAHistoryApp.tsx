@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { logger } from '../../../../utils/rendererLogger.js';
 import { ConversationDetailResponse, ConversationHistoryItem, conversationHistoryService } from '../../api/conversationHistoryService';
 import '../../index.css';
 import { VoiceQAHistoryBody } from './VoiceQAHistoryBody';
@@ -40,7 +41,7 @@ export function VoiceQAHistoryApp() {
         filterConversations(searchValue, result.items);
       }
     } catch (error) {
-      console.error('加载对话历史失败:', error);
+      logger.error(`加载对话历史失败: ${error}`);
       setAllConversations([]);
       setConversations([]);
       setTotalItems(0);
@@ -132,7 +133,7 @@ export function VoiceQAHistoryApp() {
         await (window as any).electronHistoryAPI.showAIQuestion();
       }
     } catch (error) {
-      console.error('加载对话详情失败:', error);
+      logger.error(`加载对话详情失败: ${error}`);
     }
   };
 
@@ -150,7 +151,7 @@ export function VoiceQAHistoryApp() {
         }
       }
     } catch (error) {
-      console.error('删除对话失败:', error);
+      logger.error(`删除对话失败: ${error}`);
     }
   };
 
@@ -163,7 +164,7 @@ export function VoiceQAHistoryApp() {
         handleRefresh();
       }
     } catch (error) {
-      console.error('停止对话失败:', error);
+      logger.error(`停止对话失败: ${error}`);
     }
   };
 

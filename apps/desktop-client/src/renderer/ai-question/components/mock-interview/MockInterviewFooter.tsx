@@ -1,6 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { CornerDownLeft } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { logger } from '../../../../utils/rendererLogger.js';
 import { startMicrophoneRecognition } from '../../../../utils/audioRecognition';
 import {
   getMicrophoneController,
@@ -84,14 +85,14 @@ export function MockInterviewFooter({
         initVoiceCoordinator('mock-interview', coordinator);
 
       } catch (error) {
-        console.error('Failed to initialize VoiceCoordinator:', error);
+        logger.error(`Failed to initialize VoiceCoordinator: ${error}`);
       }
     };
 
     initCoordinator();
 
     return () => {
-      // ✅ 不清理 VoiceCoordinator，让 audioManager 管理
+      // 不清理 VoiceCoordinator，让 audioManager 管理
     };
   }, []);
 
@@ -135,7 +136,7 @@ export function MockInterviewFooter({
           await startMicrophone('mock-interview', controller);
 
         } catch (error) {
-          console.error('启动语音识别失败:', error);
+          logger.error(`启动语音识别失败: ${error}`);
           setMockInterviewState({ isListening: false });
         }
       } else if (!isListening && getMicrophoneController('mock-interview')) {
@@ -154,7 +155,7 @@ export function MockInterviewFooter({
 
     // 清理函数
     return () => {
-      // ✅ 不清理任何东西，让 audioManager 管理
+      // 不清理任何东西，让 audioManager 管理
     };
   }, [isListening, isAutoMode]);
 

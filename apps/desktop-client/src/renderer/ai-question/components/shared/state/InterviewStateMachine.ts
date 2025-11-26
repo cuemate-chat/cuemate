@@ -1,3 +1,5 @@
+import { logger } from '../../../../../utils/rendererLogger.js';
+
 export enum InterviewState {
   IDLE = 'idle', // 空闲状态
   INITIALIZING = 'initializing', // 初始化面试信息
@@ -249,7 +251,7 @@ export class InterviewStateMachine {
       try {
         callback(this.currentState, this.context);
       } catch (error) {
-        console.error('State change callback error:', error);
+        logger.error(`State change callback error: ${error}`);
       }
     });
   }

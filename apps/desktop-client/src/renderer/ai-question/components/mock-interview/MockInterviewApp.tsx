@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
+import { logger } from '../../../../utils/rendererLogger.js';
 import { useVoiceState } from '../../../../utils/voiceState';
 import { getMockInterviewStateMachine, subscribeMockInterview } from '../../../utils/mockInterviewManager';
 import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
@@ -113,7 +114,7 @@ export function MockInterviewApp() {
         }
       }
     } catch (error) {
-      console.error('加载窗口高度设置失败:', error);
+      logger.error(`加载窗口高度设置失败: ${error}`);
     }
   };
 
@@ -123,7 +124,7 @@ export function MockInterviewApp() {
         await (window as any).electronAPI.hideAIQuestion();
       }
     } catch (error) {
-      console.error('关闭 AI 问题窗口失败:', error);
+      logger.error(`关闭 AI 问题窗口失败: ${error}`);
     }
   };
 
@@ -137,7 +138,7 @@ export function MockInterviewApp() {
         await (window as any).electronAPI.setAIQuestionHeight(percentage);
       }
     } catch (error) {
-      console.error('设置窗口高度失败:', error);
+      logger.error(`设置窗口高度失败: ${error}`);
     }
   };
 

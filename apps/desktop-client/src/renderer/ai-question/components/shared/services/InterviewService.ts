@@ -3,6 +3,8 @@
  * 处理面试流程中的所有数据操作（支持模拟面试和面试训练）
  */
 
+import { logger } from '../../../../../utils/rendererLogger.js';
+
 // 面试问答记录接口
 export interface InterviewReview {
   id?: string;
@@ -112,7 +114,7 @@ export class InterviewService {
       const result = await response.json();
       return result.items || [];
     } catch (error) {
-      console.error('获取题库失败:', error);
+      logger.error(`获取题库失败: ${error}`);
       throw error;
     }
   }
@@ -155,7 +157,7 @@ export class InterviewService {
       const result = await response.json();
       return { id: result.id };
     } catch (error) {
-      console.error('创建问答记录失败:', error);
+      logger.error(`创建问答记录失败: ${error}`);
       throw error;
     }
   }
@@ -192,7 +194,7 @@ export class InterviewService {
         throw new Error(`更新问答记录失败: ${response.status}`);
       }
     } catch (error) {
-      console.error('更新问答记录失败:', error);
+      logger.error(`更新问答记录失败: ${error}`);
       throw error;
     }
   }
@@ -218,7 +220,7 @@ export class InterviewService {
       const result = await response.json();
       return result.items || [];
     } catch (error) {
-      console.error('获取问答记录失败:', error);
+      logger.error(`获取问答记录失败: ${error}`);
       throw error;
     }
   }
@@ -410,14 +412,14 @@ export class InterviewService {
       });
 
       if (!response.ok) {
-        console.error('保存 AI 向量记录失败:', response.status);
+        logger.error(`保存 AI 向量记录失败: ${response.status}`);
         return false;
       }
 
       const result = await response.json();
       return result.success || false;
     } catch (error) {
-      console.error('保存 AI 向量记录失败:', error);
+      logger.error(`保存 AI 向量记录失败: ${error}`);
       return false;
     }
   }

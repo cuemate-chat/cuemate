@@ -3,6 +3,8 @@
  * 从数据库获取 prompt 模板并渲染
  */
 
+import { logger } from '../../utils/rendererLogger.js';
+
 interface Prompt {
   id: string;
   content: string;
@@ -46,7 +48,7 @@ class PromptService {
       this.cache.set(id, prompt.content);
       return prompt.content;
     } catch (error) {
-      console.error(`Failed to fetch prompt ${id}, using fallback`, error);
+      logger.error(`Failed to fetch prompt ${id}, using fallback: ${error}`);
       // 如果获取失败，返回空字符串，调用方应该使用本地 fallback
       throw error;
     }
@@ -64,7 +66,7 @@ class PromptService {
       const data = await response.json();
       return data.prompt;
     } catch (error) {
-      console.error(`Failed to fetch prompt ${id}`, error);
+      logger.error(`Failed to fetch prompt ${id}: ${error}`);
       throw error;
     }
   }
@@ -81,7 +83,7 @@ class PromptService {
       const func = new Function(...varNames, `return \`${template}\`;`);
       return func(...varValues);
     } catch (error) {
-      console.error('Failed to render template:', error);
+      logger.error(`Failed to render template: ${error}`);
       return template;
     }
   }
@@ -104,7 +106,7 @@ class PromptService {
         totalQuestions = config.totalQuestions || 10;
       }
     } catch (error) {
-      console.error('Failed to parse prompt extra config:', error);
+      logger.error(`Failed to parse prompt extra config: ${error}`);
     }
 
     // 渲染模板,包含 totalQuestions 作为变量 8

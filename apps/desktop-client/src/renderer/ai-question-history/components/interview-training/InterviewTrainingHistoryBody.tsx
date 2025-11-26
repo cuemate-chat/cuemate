@@ -2,6 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import 'animate.css/animate.min.css';
 import { Info } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { logger } from '../../../../utils/rendererLogger.js';
 import { InterviewReview, conversationHistoryService } from '../../api/conversationHistoryService';
 
 interface WindowBodyProps {
@@ -44,7 +45,7 @@ export function InterviewTrainingHistoryBody({
         // 通知父组件原始数据
         onDataLoaded?.(data);
       } catch (error) {
-        console.error('加载面试训练记录失败:', error);
+        logger.error(`加载面试训练记录失败: ${error}`);
         setReviews([]);
         onDataLoaded?.([]);
       } finally {

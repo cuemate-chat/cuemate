@@ -1,6 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { CheckCircle, ChevronDown, Clock, Loader2, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { logger } from '../../../utils/rendererLogger.js';
 import { MicrophoneRecognitionController, SpeakerRecognitionController, startMicrophoneRecognition, startSpeakerRecognition } from '../../../utils/audioRecognition';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 
@@ -59,7 +60,7 @@ export function VoiceTestBody() {
           setSelectedSpeaker(exists ? (defaultSpeaker as string) : speakers[0].deviceId);
         }
       } catch (e) {
-        console.error('获取设备失败:', e);
+        logger.error(`获取设备失败: ${e}`);
       }
     })();
 

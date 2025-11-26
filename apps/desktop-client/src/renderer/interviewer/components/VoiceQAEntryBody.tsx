@@ -1,6 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ChevronDown, Mic, Square } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { logger } from '../../../utils/rendererLogger.js';
 import { useVoiceState } from '../../../utils/voiceState';
 import { Model, modelService } from '../api/modelService';
 import { userSettingsService } from '../../control-bar/api/userSettingsService';
@@ -58,7 +59,7 @@ export function VoiceQAEntryBody({ question, onVoiceToggle, onModelSelect, onLan
           onLanguageSelect?.(selectedLanguage);
         }
       } catch (error) {
-        console.error('加载模型失败:', error);
+        logger.error(`加载模型失败: ${error}`);
         setLoadingModels(false);
       }
     })();

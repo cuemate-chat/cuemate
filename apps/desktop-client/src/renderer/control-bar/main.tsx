@@ -1,5 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { logger } from '../../utils/rendererLogger.js';
 import { ControlBarApp } from './ControlBarApp';
 import './index.css';
 
@@ -13,7 +14,7 @@ if (document.readyState === 'loading') {
 function initializeApp() {
   const container = document.getElementById('root');
   if (!container) {
-    console.error('未找到根元素 #root');
+    logger.error('未找到根元素 #root');
     return;
   }
 

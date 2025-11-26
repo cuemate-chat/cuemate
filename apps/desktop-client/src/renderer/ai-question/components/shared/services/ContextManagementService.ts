@@ -10,6 +10,7 @@
  */
 
 import type { ChatMessage } from '../../../../utils/ai/aiService';
+import { logger } from '../../../../../utils/rendererLogger.js';
 import { aiService } from '../../../../utils/ai/aiService';
 import { conversationVectorService } from './ConversationVectorService';
 
@@ -91,7 +92,7 @@ export class ContextManagementService {
         jd: params.jd,
       })
       .catch((error) => {
-        console.error('[ContextManagement] 存储简历/JD到ChromaDB失败:', error);
+        logger.error(`[ContextManagement] 存储简历/JD到ChromaDB失败: ${error}`);
       });
   }
 
@@ -188,7 +189,7 @@ export class ContextManagementService {
         answer,
       })
       .catch((error) => {
-        console.error('[ContextManagement] 存储对话到ChromaDB失败:', error);
+        logger.error(`[ContextManagement] 存储对话到ChromaDB失败: ${error}`);
       });
   }
 
@@ -310,7 +311,7 @@ export class ContextManagementService {
         jdSummary: jdSummary.length,
       });
     } catch (error) {
-      console.error('[ContextManagement] 生成简历/JD摘要失败:', error);
+      logger.error(`[ContextManagement] 生成简历/JD摘要失败: ${error}`);
       // 失败时使用原文
     }
   }
@@ -382,7 +383,7 @@ export class ContextManagementService {
         lastSummaryIndex: this.state.lastSummaryIndex,
       });
     } catch (error) {
-      console.error('[ContextManagement] 生成对话摘要失败:', error);
+      logger.error(`[ContextManagement] 生成对话摘要失败: ${error}`);
     }
   }
 

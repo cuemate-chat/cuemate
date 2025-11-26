@@ -1,3 +1,5 @@
+import { logger } from '../../../../../utils/rendererLogger.js';
+
 export interface VoiceCoordinatorConfig {
   silenceThreshold: number; // 静音阈值 (毫秒)
   volumeThreshold: number; // 音量阈值 (0-1)
@@ -71,7 +73,7 @@ export class VoiceCoordinator extends EventTarget {
 
       this.dispatchEvent(new CustomEvent('initialized'));
     } catch (error) {
-      console.error('Failed to initialize VoiceCoordinator:', error);
+      logger.error(`Failed to initialize VoiceCoordinator: ${error}`);
       this.dispatchEvent(new CustomEvent('error', { detail: error }));
       throw error;
     }

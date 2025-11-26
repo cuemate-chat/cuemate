@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { logger } from '../../../utils/rendererLogger.js';
 import { Copy, Check } from 'lucide-react';
 import { AnimatedMessage, AnimatedMessageProps } from './AnimatedMessage';
 import { renderContentByLines, LineRenderOptions } from '../../utils/messageRenderer';
@@ -55,7 +56,7 @@ export const ScrollFadeMessage: React.FC<ScrollFadeMessageProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('复制失败:', error);
+      logger.error(`复制失败: ${error}`);
     }
   };
 

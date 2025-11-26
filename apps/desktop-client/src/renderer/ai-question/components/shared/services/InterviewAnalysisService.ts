@@ -3,6 +3,7 @@
  * 处理面试（模拟面试和面试训练）结束后的 AI 分析、评分和报告生成
  */
 
+import { logger } from '../../../../../utils/rendererLogger.js';
 import { InterviewScore, InterviewInsight } from '../data/InterviewDataService';
 
 // 面试分析请求接口
@@ -93,7 +94,7 @@ export class InterviewAnalysisService {
         this.token = result.userData.token;
       }
     } catch (error: unknown) {
-      console.error('初始化面试训练分析服务认证失败:', error);
+      logger.error(`初始化面试训练分析服务认证失败: ${error}`);
     }
   }
 
@@ -133,7 +134,7 @@ export class InterviewAnalysisService {
       return formattedResult;
 
     } catch (error: unknown) {
-      console.error('面试分析失败:', error);
+      logger.error(`面试分析失败: ${error}`);
       throw new Error(`面试分析失败: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -217,7 +218,7 @@ export class InterviewAnalysisService {
       }
 
     } catch (error) {
-      console.error('AI 分析调用失败:', error);
+      logger.error(`AI 分析调用失败: ${error}`);
       throw error;
     }
   }
@@ -493,7 +494,7 @@ ${qaText}
       return { scoreId, insightId };
 
     } catch (error) {
-      console.error('保存分析结果失败:', error);
+      logger.error(`保存分析结果失败: ${error}`);
       throw error;
     }
   }
@@ -532,7 +533,7 @@ ${qaText}
         });
 
         if (!response.ok) {
-          console.error(`创建问答记录失败: ${response.status}`);
+          logger.error(`创建问答记录失败: ${response.status}`);
           continue;
         }
 
@@ -544,7 +545,7 @@ ${qaText}
       return reviewIds;
 
     } catch (error) {
-      console.error('保存问答分析失败:', error);
+      logger.error(`保存问答分析失败: ${error}`);
       throw error;
     }
   }
@@ -588,7 +589,7 @@ ${qaText}
       };
 
     } catch (error) {
-      console.error('面试分析和保存流程失败:', error);
+      logger.error(`面试分析和保存流程失败: ${error}`);
       throw error;
     }
   }

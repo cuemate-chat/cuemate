@@ -5,6 +5,7 @@
 
 import { InterviewState } from '../../shared/state/InterviewStateMachine';
 import { VoiceState } from '../../shared/voice/VoiceCoordinator';
+import { logger } from '../../../../../utils/rendererLogger.js';
 
 // IPC 通信事件类型
 export enum InterviewIPCEvents {
@@ -136,7 +137,7 @@ export class InterviewIPCService {
       this.isInitialized = true;
       console.debug('Interview IPC Service initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize Interview IPC Service:', error);
+      logger.error(`Failed to initialize Interview IPC Service: ${error}`);
     }
   }
 
@@ -147,7 +148,7 @@ export class InterviewIPCService {
         try {
           listener(data);
         } catch (error) {
-          console.error(`Error in IPC event listener for ${event}:`, error);
+          logger.error(`Error in IPC event listener for ${event}: ${error}`);
         }
       });
     }
@@ -181,7 +182,7 @@ export class InterviewIPCService {
     try {
       this.electronAPI.sendInterviewEvent(event, data);
     } catch (error) {
-      console.error(`Failed to send IPC event ${event}:`, error);
+      logger.error(`Failed to send IPC event ${event}: ${error}`);
     }
   }
 
@@ -302,7 +303,7 @@ export class InterviewIPCService {
         this.requestCurrentState();
       });
     } catch (error) {
-      console.error('IPC ping failed:', error);
+      logger.error(`IPC ping failed: ${error}`);
       return false;
     }
   }

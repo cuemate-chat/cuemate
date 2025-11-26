@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { logger } from '../../utils/rendererLogger.js';
 
 // 跨窗口共享的模拟面试状态
 export interface MockInterviewState {
@@ -70,19 +71,19 @@ export function setMockInterviewState(next: Partial<MockInterviewState>): MockIn
     try {
       localStorage.setItem(AUTO_MODE_KEY, String(merged.isAutoMode));
     } catch (e) {
-      console.error('Failed to persist autoMode:', e);
+      logger.error(`Failed to persist autoMode: ${e}`);
     }
   }
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
   } catch (e) {
-    console.error('Failed to update localStorage:', e);
+    logger.error(`Failed to update localStorage: ${e}`);
   }
   try {
     channel?.postMessage({ type: 'state', payload: merged } as ChannelMessage);
   } catch (e) {
-    console.error('Failed to send BroadcastChannel message:', e);
+    logger.error(`Failed to send BroadcastChannel message: ${e}`);
   }
   // 同窗口立即通知
   listeners.forEach((l) => {

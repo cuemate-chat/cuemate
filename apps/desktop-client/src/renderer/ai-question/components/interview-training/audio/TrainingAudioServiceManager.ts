@@ -4,6 +4,7 @@
  * 不包含 TTS 功能（因为面试训练不需要 AI 语音输出）
  */
 
+import { logger } from '../../../../../utils/rendererLogger.js';
 import { ErrorSeverity, ErrorType } from '../../shared/error/ErrorHandler';
 import { VoiceCoordinator, VoiceState } from '../../shared/voice/VoiceCoordinator';
 
@@ -110,7 +111,7 @@ export class TrainingAudioServiceManager extends EventTarget {
 
       this.dispatchEvent(new CustomEvent('serviceInitialized'));
     } catch (error) {
-      console.error('面试训练音频服务初始化失败:', error);
+      logger.error(`面试训练音频服务初始化失败: ${error}`);
       this.dispatchEvent(
         new CustomEvent('serviceError', {
           detail: {
@@ -144,7 +145,7 @@ export class TrainingAudioServiceManager extends EventTarget {
 
       console.debug('系统音频捕获初始化完成');
     } catch (error) {
-      console.error('系统音频捕获初始化失败:', error);
+      logger.error(`系统音频捕获初始化失败: ${error}`);
       throw error;
     }
   }
@@ -186,7 +187,7 @@ export class TrainingAudioServiceManager extends EventTarget {
       console.debug('系统音频监听已启动');
       this.dispatchEvent(new CustomEvent('systemAudioListeningStarted'));
     } catch (error) {
-      console.error('启动系统音频监听失败:', error);
+      logger.error(`启动系统音频监听失败: ${error}`);
       this._isSystemAudioListening = false;
       this.dispatchEvent(
         new CustomEvent('serviceError', {
@@ -227,7 +228,7 @@ export class TrainingAudioServiceManager extends EventTarget {
       console.debug('用户录音已启动');
       this.dispatchEvent(new CustomEvent('recordingStarted'));
     } catch (error) {
-      console.error('启动录音失败:', error);
+      logger.error(`启动录音失败: ${error}`);
       this.dispatchEvent(
         new CustomEvent('serviceError', {
           detail: {
@@ -255,7 +256,7 @@ export class TrainingAudioServiceManager extends EventTarget {
       console.debug('用户录音已停止');
       this.dispatchEvent(new CustomEvent('recordingStopped'));
     } catch (error) {
-      console.error('停止录音失败:', error);
+      logger.error(`停止录音失败: ${error}`);
       this.dispatchEvent(
         new CustomEvent('serviceError', {
           detail: {
@@ -296,7 +297,7 @@ export class TrainingAudioServiceManager extends EventTarget {
 
       return randomResponse;
     } catch (error) {
-      console.error('面试官语音识别失败:', error);
+      logger.error(`面试官语音识别失败: ${error}`);
       this.dispatchEvent(
         new CustomEvent('serviceError', {
           detail: {
@@ -361,7 +362,7 @@ export class TrainingAudioServiceManager extends EventTarget {
     // 如果系统音频配置变化，重新初始化
     if (this._isInitialized && newConfig.enableSystemAudioCapture !== undefined) {
       if (newConfig.enableSystemAudioCapture) {
-        this.initializeSystemAudioCapture().catch(console.error);
+        this.initializeSystemAudioCapture().catch((error) => logger.error(`系统音频捕获初始化失败: ${error}`));
       } else {
         this.stopSystemAudioListening();
       }
@@ -373,7 +374,7 @@ export class TrainingAudioServiceManager extends EventTarget {
     this.stopSystemAudioListening();
 
     if (this._isRecording) {
-      this.stopRecording().catch(console.error);
+      this.stopRecording().catch((error) => logger.error(`停止录音失败: ${error}`));
     }
 
     if (this.voiceCoordinator) {

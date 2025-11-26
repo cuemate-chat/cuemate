@@ -1,3 +1,5 @@
+import { logger } from './rendererLogger.js';
+
 export interface MicrophoneRecognitionOptions {
   deviceId?: string;
   url?: string;
@@ -183,7 +185,7 @@ export async function startMicrophoneRecognition(
           }
         }
       } catch (err) {
-        console.error('AudioRecognition WebSocket 解析出错:', err);
+        logger.error(`AudioRecognition WebSocket 解析出错: ${err}`);
       }
     };
 
@@ -376,7 +378,7 @@ export async function startSpeakerRecognition(
           }
         }
       } catch (err) {
-        console.error('解析 FunASR 消息失败:', err, event.data);
+        logger.error(`解析 FunASR 消息失败: ${err}, data: ${event.data}`);
       }
     };
 

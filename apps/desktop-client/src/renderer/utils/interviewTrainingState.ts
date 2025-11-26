@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { logger } from '../../utils/rendererLogger.js';
 
 // 面试训练阶段状态
 export type TrainingPhase =
@@ -84,19 +85,19 @@ export function setInterviewTrainingState(next: Partial<InterviewTrainingState>)
     try {
       localStorage.setItem(AUTO_MODE_KEY, String(merged.isAutoMode));
     } catch (e) {
-      console.error('Failed to persist autoMode:', e);
+      logger.error(`Failed to persist autoMode: ${e}`);
     }
   }
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
   } catch (e) {
-    console.error('Failed to update localStorage:', e);
+    logger.error(`Failed to update localStorage: ${e}`);
   }
   try {
     channel?.postMessage({ type: 'state', payload: merged } as ChannelMessage);
   } catch (e) {
-    console.error('Failed to send BroadcastChannel message:', e);
+    logger.error(`Failed to send BroadcastChannel message: ${e}`);
   }
   // 同窗口立即通知
   listeners.forEach((l) => {

@@ -1,6 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { MessageSquare, Mic, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { logger } from '../../../utils/rendererLogger.js';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 
@@ -143,7 +144,7 @@ export function InterviewerWindowHeader({
                   try {
                     await (window as any).electronAPI?.showAIQuestion?.();
                   } catch (error) {
-                    console.error('打开答案窗口失败:', error);
+                    logger.error(`打开答案窗口失败: ${error}`);
                   }
                 }}
               >

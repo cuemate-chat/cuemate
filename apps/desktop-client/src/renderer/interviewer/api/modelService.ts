@@ -3,6 +3,8 @@
  * 处理大模型相关的 API 调用
  */
 
+import { logger } from '../../../utils/rendererLogger.js';
+
 export interface Model {
   id: string;
   name: string;
@@ -73,7 +75,7 @@ export class ModelService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('获取模型列表失败:', error);
+      logger.error(`获取模型列表失败: ${error}`);
       return { list: [], total: 0 };
     }
   }
@@ -89,7 +91,7 @@ export class ModelService {
         value: model.id,
       }));
     } catch (error) {
-      console.error('获取模型选项失败:', error);
+      logger.error(`获取模型选项失败: ${error}`);
       return [];
     }
   }
@@ -112,7 +114,7 @@ export class ModelService {
       const data = await response.json();
       return data.model;
     } catch (error) {
-      console.error('获取模型详情失败:', error);
+      logger.error(`获取模型详情失败: ${error}`);
       return null;
     }
   }

@@ -3,6 +3,8 @@
  * 处理用户设置的读取和更新
  */
 
+import { logger } from '../../../utils/rendererLogger.js';
+
 export interface UserSettings {
   name?: string;
   email?: string;
@@ -47,7 +49,7 @@ export class UserSettingsService {
         this.token = result.userData.token;
       }
     } catch (error) {
-      console.error('初始化用户认证失败:', error);
+      logger.error(`初始化用户认证失败: ${error}`);
     }
   }
 
@@ -82,13 +84,13 @@ export class UserSettingsService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`更新用户设置失败 ${response.status}:`, errorText);
+        logger.error(`更新用户设置失败 ${response.status}: ${errorText}`);
         throw new Error(`更新用户设置失败: ${response.status} - ${errorText}`);
       }
 
       return true;
     } catch (error) {
-      console.error('更新用户设置失败:', error);
+      logger.error(`更新用户设置失败: ${error}`);
       return false;
     }
   }
@@ -112,7 +114,7 @@ export class UserSettingsService {
       const data = await response.json();
       return data.user;
     } catch (error) {
-      console.error('获取用户信息失败:', error);
+      logger.error(`获取用户信息失败: ${error}`);
       return null;
     }
   }

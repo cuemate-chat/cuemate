@@ -2,6 +2,8 @@
  * AI 对话历史记录服务
  */
 
+import { logger } from '../../../utils/rendererLogger.js';
+
 export interface ConversationHistoryItem {
   id: number;
   title: string;
@@ -80,7 +82,7 @@ export class ConversationHistoryService {
         this.token = result.userData.token;
       }
     } catch (error) {
-      console.error('初始化用户数据失败:', error);
+      logger.error(`初始化用户数据失败: ${error}`);
     }
   }
 
@@ -134,7 +136,7 @@ export class ConversationHistoryService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`获取对话历史失败 ${response.status}:`, errorText);
+        logger.error(`获取对话历史失败 ${response.status}: ${errorText}`);
         throw new Error(`获取对话历史失败: ${response.status} - ${errorText}`);
       }
 
@@ -145,7 +147,7 @@ export class ConversationHistoryService {
         total: data.total || 0,
       };
     } catch (error) {
-      console.error('获取对话历史失败:', error);
+      logger.error(`获取对话历史失败: ${error}`);
       throw error;
     }
   }
@@ -164,7 +166,7 @@ export class ConversationHistoryService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`获取对话详情失败 ${response.status}:`, errorText);
+        logger.error(`获取对话详情失败 ${response.status}: ${errorText}`);
         throw new Error(`获取对话详情失败: ${response.status} - ${errorText}`);
       }
 
@@ -172,7 +174,7 @@ export class ConversationHistoryService {
 
       return data as ConversationDetailResponse;
     } catch (error) {
-      console.error('获取对话详情失败:', error);
+      logger.error(`获取对话详情失败: ${error}`);
       throw error;
     }
   }
@@ -191,13 +193,13 @@ export class ConversationHistoryService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`删除对话失败 ${response.status}:`, errorText);
+        logger.error(`删除对话失败 ${response.status}: ${errorText}`);
         throw new Error(`删除对话失败: ${response.status} - ${errorText}`);
       }
 
       return true;
     } catch (error) {
-      console.error('删除对话失败:', error);
+      logger.error(`删除对话失败: ${error}`);
       return false;
     }
   }
@@ -217,13 +219,13 @@ export class ConversationHistoryService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`停止对话失败 ${response.status}:`, errorText);
+        logger.error(`停止对话失败 ${response.status}: ${errorText}`);
         throw new Error(`停止对话失败: ${response.status} - ${errorText}`);
       }
 
       return true;
     } catch (error) {
-      console.error('停止对话失败:', error);
+      logger.error(`停止对话失败: ${error}`);
       return false;
     }
   }
@@ -242,14 +244,14 @@ export class ConversationHistoryService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`获取面试复盘记录失败 ${response.status}:`, errorText);
+        logger.error(`获取面试复盘记录失败 ${response.status}: ${errorText}`);
         throw new Error(`获取面试复盘记录失败: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
       return data.items || [];
     } catch (error) {
-      console.error('获取面试复盘记录失败:', error);
+      logger.error(`获取面试复盘记录失败: ${error}`);
       throw error;
     }
   }

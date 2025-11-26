@@ -3,6 +3,8 @@
  * 基于 web 版本的 LLM Router 调用逻辑适配到 desktop
  */
 
+import { logger } from '../../../utils/rendererLogger.js';
+
 export interface ModelConfig {
   provider: string;
   model_name: string;
@@ -65,7 +67,7 @@ class AIService {
 
       return null;
     } catch (error) {
-      console.error('获取用户数据失败:', error);
+      logger.error(`获取用户数据失败: ${error}`);
       return null;
     }
   }
@@ -136,7 +138,7 @@ class AIService {
       }
 
       // 无法解析,打印错误日志但返回空对象,不中断流程
-      console.error('AI 返回的不是有效的 JSON 格式,将返回空对象。原始内容:', content);
+      logger.error(`AI 返回的不是有效的 JSON 格式,将返回空对象。原始内容: ${content}`);
       return {};
     }
   }

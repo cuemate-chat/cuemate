@@ -1,6 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { logger } from '../../../utils/rendererLogger.js';
 import { userSettingsService } from '../../control-bar/api/userSettingsService';
 import { getInterviewTrainingState, setInterviewTrainingState } from '../../utils/interviewTrainingState';
 import { JobPosition, jobPositionService } from '../api/jobPositionService';
@@ -69,7 +70,7 @@ export function JobPositionCard({ selectedJobId, onPositionSelect, onModelSelect
         setInterviewMode(savedMode);
         onModeSelect?.(savedState.isAutoMode);
       } catch (error) {
-        console.error('加载数据失败:', error);
+        logger.error(`加载数据失败: ${error}`);
       } finally {
         setLoading(false);
       }
@@ -106,7 +107,7 @@ export function JobPositionCard({ selectedJobId, onPositionSelect, onModelSelect
           onPositionSelect?.(fullPosition);
         }
       } catch (error) {
-        console.error('加载岗位详情失败:', error);
+        logger.error(`加载岗位详情失败: ${error}`);
       }
     }
   };

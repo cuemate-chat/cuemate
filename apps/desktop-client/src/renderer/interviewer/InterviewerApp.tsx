@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { logger } from '../../utils/rendererLogger.js';
 import { currentInterview } from '../utils/currentInterview';
 import { clearVoiceState, getVoiceState, setVoiceState } from '../../utils/voiceState';
 import { InterviewerWindowBody } from './components/InterviewerWindowBody';
@@ -39,7 +40,7 @@ export function InterviewerApp() {
         api.off('mode-change', handleModeChange);
       };
     } catch (error) {
-      console.error('监听模式切换事件失败:', error);
+      logger.error(`监听模式切换事件失败: ${error}`);
     }
   }, []);
 
@@ -92,7 +93,7 @@ export function InterviewerApp() {
         }
       }
     } catch (error) {
-      console.error('进入模式失败:', error);
+      logger.error(`进入模式失败: ${error}`);
     }
   };
 

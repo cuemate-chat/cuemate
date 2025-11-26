@@ -3,6 +3,8 @@
  * 负责获取托盘菜单所需的统计数据和用户设置
  */
 
+import { logger } from '../../../utils/rendererLogger.js';
+
 const API_BASE_URL = 'http://localhost:3001';
 
 // 缓存 token
@@ -20,7 +22,7 @@ async function getToken(): Promise<string | null> {
       return cachedToken;
     }
   } catch (error) {
-    console.error('获取用户 token 失败:', error);
+    logger.error(`获取用户 token 失败: ${error}`);
   }
   return null;
 }
@@ -118,7 +120,7 @@ export async function getVectorSyncStatus(): Promise<{ synced: number; total: nu
 
     return { synced: totalSynced, total: totalCount };
   } catch (error) {
-    console.error('获取向量同步状态失败:', error);
+    logger.error(`获取向量同步状态失败: ${error}`);
     return { synced: 0, total: 0 };
   }
 }
@@ -153,7 +155,7 @@ export async function getTrainingStats(): Promise<{
 
     return { interviews: 0, hours: 0, conversations: 0 };
   } catch (error) {
-    console.error('获取训练统计数据失败:', error);
+    logger.error(`获取训练统计数据失败: ${error}`);
     return { interviews: 0, hours: 0, conversations: 0 };
   }
 }
@@ -182,7 +184,7 @@ export async function getUserSettings(): Promise<UserSettings> {
     }
     return { theme: 'light', locale: 'zh-CN', selected_model_id: '' };
   } catch (error) {
-    console.error('获取用户设置失败:', error);
+    logger.error(`获取用户设置失败: ${error}`);
     return { theme: 'light', locale: 'zh-CN', selected_model_id: '' };
   }
 }
@@ -204,7 +206,7 @@ export async function getModelList(): Promise<Model[]> {
     const result = await response.json();
     return result.list || [];
   } catch (error) {
-    console.error('获取模型列表失败:', error);
+    logger.error(`获取模型列表失败: ${error}`);
     return [];
   }
 }
@@ -227,7 +229,7 @@ export async function updateUserSettings(settings: UserSettings): Promise<boolea
     const result = await response.json();
     return result.success !== false;
   } catch (error) {
-    console.error('更新用户设置失败:', error);
+    logger.error(`更新用户设置失败: ${error}`);
     return false;
   }
 }

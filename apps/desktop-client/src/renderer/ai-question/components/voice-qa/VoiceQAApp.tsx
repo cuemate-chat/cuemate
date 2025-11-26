@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import React, { useEffect, useRef, useState } from 'react';
+import { logger } from '../../../../utils/rendererLogger.js';
 import { aiService } from '../../../utils/ai/aiService';
 import { clearVoiceQAState, setVoiceQAState, useVoiceQAState } from '../../../utils/voiceQA';
 import { conversationService } from '../../api/conversationService.ts';
@@ -59,7 +60,7 @@ export function VoiceQAApp() {
         }
       }
     } catch (error) {
-      console.error('加载高度设置失败:', error);
+      logger.error(`加载高度设置失败: ${error}`);
     }
   };
 
@@ -146,7 +147,7 @@ export function VoiceQAApp() {
         setMessages([]);
       }
     } catch (error) {
-      console.error('初始化对话失败:', error);
+      logger.error(`初始化对话失败: ${error}`);
       setCurrentConversationId(null);
       setCurrentConversationStatus(null);
       setSequenceNumber(1);
@@ -178,7 +179,7 @@ export function VoiceQAApp() {
       conversationId = await conversationService.createConversation(title);
       
       if (!conversationId) {
-        console.error('创建对话失败');
+        logger.error('创建对话失败');
         setIsLoading(false);
         updateQuestion(currentQuestion); // 恢复输入
         return;
@@ -291,7 +292,7 @@ export function VoiceQAApp() {
         modelParams,
         async (chunk) => {
           if (chunk.error) {
-            console.error('AI 调用出错:', chunk.error);
+            logger.error(`AI 调用出错: ${chunk.error}`);
             const errorMessage = `抱歉，AI 调用出错了：${chunk.error}`;
             setMessages(prev => prev.map(msg => 
               msg.id === aiMessageId 
@@ -366,7 +367,7 @@ export function VoiceQAApp() {
         }
       );
     } catch (error) {
-      console.error('AI 调用失败:', error);
+      logger.error(`AI 调用失败: ${error}`);
       const errorMessage = `AI 调用失败：${(error as Error).message}`;
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
@@ -405,7 +406,7 @@ export function VoiceQAApp() {
         await (window as any).electronAPI.hideAIQuestion();
       }
     } catch (error) {
-      console.error('关闭 AI 问题窗口失败:', error);
+      logger.error(`关闭 AI 问题窗口失败: ${error}`);
     }
   };
 
@@ -420,7 +421,7 @@ export function VoiceQAApp() {
         await (window as any).electronAPI.setAIWindowHeight(percentage);
       }
     } catch (error) {
-      console.error('设置窗口高度失败:', error);
+      logger.error(`设置窗口高度失败: ${error}`);
     }
   };
 
