@@ -5,21 +5,21 @@ import { File, FileCode, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { listTags } from '../../api/questions';
 import {
-  SearchFilters,
-  VectorDocument,
-  addOtherFileText,
-  deleteAIVectorRecord,
-  deleteDocument,
-  deleteJob,
-  deleteOtherFile,
-  deleteQuestion,
-  getRelatedDocuments,
-  listAIVectorRecords,
-  listOtherFiles,
-  searchJobs,
-  searchQuestions,
-  searchResumes,
-  uploadOtherFile
+    SearchFilters,
+    VectorDocument,
+    addOtherFileText,
+    deleteAIVectorRecord,
+    deleteDocument,
+    deleteJob,
+    deleteOtherFile,
+    deleteQuestion,
+    getRelatedDocuments,
+    listAIVectorRecords,
+    listOtherFiles,
+    searchJobs,
+    searchQuestions,
+    searchResumes,
+    uploadOtherFile
 } from '../../api/vector';
 import { WarningIcon } from '../../components/Icons';
 import { message } from '../../components/Message';
@@ -180,8 +180,8 @@ export default function VectorKnowledge() {
                   }
                 };
               }
-            } catch (error) {
-              console.error('获取相关文档失败:', error);
+            } catch {
+              // 获取相关文档失败，忽略
             }
             return doc;
           })
@@ -192,8 +192,8 @@ export default function VectorKnowledge() {
         setSearchResults([]);
         setTotalResults(0);
       }
-    } catch (error) {
-      console.error('搜索出错:', error);
+    } catch {
+      
       setSearchResults([]);
       setTotalResults(0);
     } finally {
@@ -229,8 +229,8 @@ export default function VectorKnowledge() {
     try {
       const data = await listTags();
       setTags(data.items || []);
-    } catch (error) {
-      console.error('获取标签失败:', error);
+    } catch {
+      
     }
   };
 
@@ -244,8 +244,8 @@ export default function VectorKnowledge() {
       } else {
         message.error(result.error || '加载文件列表失败');
       }
-    } catch (error: any) {
-      message.error(error.message || '加载文件列表失败');
+    } catch {
+      
     } finally {
       await endLoading();
     }
@@ -261,8 +261,8 @@ export default function VectorKnowledge() {
       } else {
         message.error(result.error || '加载 AI 向量记录失败');
       }
-    } catch (error: any) {
-      message.error(error.message || '加载 AI 向量记录失败');
+    } catch {
+      
     } finally {
       await endLoading();
     }
@@ -284,8 +284,8 @@ export default function VectorKnowledge() {
       } else {
         message.error(result.error || '文件上传失败');
       }
-    } catch (error: any) {
-      message.error(error.message || '文件上传失败');
+    } catch {
+      
     } finally {
       await endUpload();
     }
@@ -313,8 +313,8 @@ export default function VectorKnowledge() {
       } else {
         message.error(result.error || '内容添加失败');
       }
-    } catch (error: any) {
-      message.error(error.message || '内容添加失败');
+    } catch {
+      
     } finally {
       await endUpload();
     }
@@ -375,8 +375,8 @@ export default function VectorKnowledge() {
           } else {
             message.error(result.error || '删除失败');
           }
-        } catch (error: any) {
-          message.error(error.message || '删除失败');
+        } catch {
+          
         }
       },
     });
@@ -398,8 +398,8 @@ export default function VectorKnowledge() {
           } else {
             message.error(result.error || '删除失败');
           }
-        } catch (error: any) {
-          message.error(error.message || '删除失败');
+        } catch {
+          
         }
       },
     });
@@ -456,8 +456,8 @@ export default function VectorKnowledge() {
                   }
                 };
               }
-            } catch (error) {
-              message.error('获取相关文档失败:' + error);
+            } catch {
+              // 获取相关文档失败，忽略
             }
             return doc;
           })
@@ -469,8 +469,8 @@ export default function VectorKnowledge() {
         setTotalResults(0);
         message.error('搜索失败:' + result.error);
       }
-    } catch (error) {
-      message.error('搜索出错:' + error);
+    } catch {
+      
       setSearchResults([]);
       setTotalResults(0);
     } finally {
@@ -536,9 +536,8 @@ export default function VectorKnowledge() {
           questions: doc.metadata.type === 'questions' ? [doc] : [],
         });
       }
-    } catch (error) {
-      console.error('获取关联信息失败:', error);
-      // 设置默认的关联数据结构
+    } catch {
+      // 获取关联信息失败，设置默认的关联数据结构
       setRelatedData({
         jobs: doc.metadata.type === 'jobs' ? [doc] : [],
         resumes: doc.metadata.type === 'resumes' ? [doc] : [],
@@ -596,8 +595,8 @@ export default function VectorKnowledge() {
           } else {
             message.error('删除失败: ' + result.error);
           }
-        } catch (error) {
-          message.error('删除失败: ' + error);
+        } catch {
+          
         } finally {
           await endLoading();
         }
@@ -1683,8 +1682,8 @@ const SyncStatusOverview = ({
         resume: resumeStats,
         questions: status.questions
       });
-    } catch (error) {
-      message.error('获取同步状态失败:' + error);
+    } catch {
+      
     }
   };
 
@@ -1734,22 +1733,8 @@ const SyncStatusOverview = ({
             } else {
               message.error('同步失败：' + (result.error || '未知错误'));
             }
-          } catch (error: any) {
-            let errorMessage = '同步失败：';
-
-            if (error.response?.status === 401) {
-              errorMessage += '登录已过期，请重新登录';
-            } else if (error.response?.status === 503) {
-              errorMessage += 'RAG 服务不可用，请检查服务是否正常运行';
-            } else if (error.response?.data?.error) {
-              errorMessage += error.response.data.error;
-            } else if (error.message) {
-              errorMessage += error.message;
-            } else {
-              errorMessage += '未知错误';
-            }
-
-            message.error(errorMessage);
+          } catch {
+            
           } finally {
             onSyncEnd?.();
           }
@@ -1802,22 +1787,8 @@ const SyncStatusOverview = ({
           } else {
             message.error('清空失败：' + (result.error || '未知错误'));
           }
-        } catch (error: any) {
-          let errorMessage = '清空失败：';
-
-          if (error.response?.status === 401) {
-            errorMessage += '登录已过期，请重新登录';
-          } else if (error.response?.status === 503) {
-            errorMessage += 'RAG 服务不可用，请检查服务是否正常运行';
-          } else if (error.response?.data?.error) {
-            errorMessage += error.response.data.error;
-          } else if (error.message) {
-            errorMessage += error.message;
-          } else {
-            errorMessage += '未知错误';
-          }
-
-          message.error(errorMessage);
+        } catch {
+          
         } finally {
           onCleanEnd?.();
         }

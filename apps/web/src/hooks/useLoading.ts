@@ -78,9 +78,8 @@ export function useLoading(options: UseLoadingOptions = {}) {
       } catch (error) {
         if (onError) {
           onError(error);
-        } else {
-          console.error('操作失败:', error);
         }
+        // 未提供 onError 时，HTTP 层已处理错误提示
         return undefined;
       } finally {
         await end();

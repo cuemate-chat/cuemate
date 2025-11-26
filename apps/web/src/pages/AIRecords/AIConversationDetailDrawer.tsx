@@ -2,12 +2,11 @@ import { UserIcon } from '@heroicons/react/24/outline';
 import { ChatBubbleLeftIcon } from '@heroicons/react/24/solid';
 import { useEffect, useState } from 'react';
 import {
-  fetchAIConversationDetail,
-  type AIConversation,
-  type AIMessage,
+    fetchAIConversationDetail,
+    type AIConversation,
+    type AIMessage,
 } from '../../api/ai-conversations';
 import DrawerProvider, { DrawerContent, DrawerHeader } from '../../components/DrawerProvider';
-import { message } from '../../components/Message';
 
 interface AIConversationDetailDrawerProps {
   open: boolean;
@@ -98,9 +97,8 @@ export default function AIConversationDetailDrawer({
     try {
       const response = await fetchAIConversationDetail(conversation.id);
       setMessages(response.messages);
-    } catch (error) {
-      console.error('加载对话详情失败：', error);
-      message.error('加载对话详情失败');
+    } catch {
+      
     } finally {
       setLoading(false);
     }

@@ -75,8 +75,7 @@ export default function UploadedResumeDrawer({
         setTimeout(() => {
           if (docxContainerRef.current) {
             const docxPreviewer = jsPreviewDocx.init(docxContainerRef.current);
-            docxPreviewer.preview(url).catch((e: any) => {
-              console.error('DOCX 预览失败:', e);
+            docxPreviewer.preview(url).catch(() => {
               globalMessage.error('Word 文档预览失败');
             });
           }
@@ -90,8 +89,8 @@ export default function UploadedResumeDrawer({
           }
           const textContent = await response.text();
           setContent(textContent);
-        } catch (error: any) {
-          console.error('文本文件加载失败:', error);
+        } catch {
+          // 文件加载失败
           setContent('文本文件加载失败，请下载查看。');
         }
       } else {

@@ -1,17 +1,17 @@
 import {
-  ArrowsPointingOutIcon,
-  ClockIcon,
-  Cog6ToothIcon,
-  CubeIcon,
-  CursorArrowRaysIcon,
-  DocumentTextIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  GlobeAltIcon,
-  InformationCircleIcon,
-  PaintBrushIcon,
-  UserCircleIcon,
-  WindowIcon,
+    ArrowsPointingOutIcon,
+    ClockIcon,
+    Cog6ToothIcon,
+    CubeIcon,
+    CursorArrowRaysIcon,
+    DocumentTextIcon,
+    EyeIcon,
+    EyeSlashIcon,
+    GlobeAltIcon,
+    InformationCircleIcon,
+    PaintBrushIcon,
+    UserCircleIcon,
+    WindowIcon,
 } from '@heroicons/react/24/outline';
 import { Select as AntSelect, Button } from 'antd';
 import 'antd/dist/reset.css';
@@ -70,8 +70,8 @@ export default function Settings() {
         try {
           await changePassword(oldPassword, newPassword);
           message.success('密码已更新');
-        } catch (err: any) {
-          console.error('修改密码失败:', err);
+        } catch {
+          
         } finally {
           await endSaving();
         }
@@ -91,8 +91,8 @@ export default function Settings() {
           provider: m.provider, // 保存 provider 信息用于显示图标
         }));
         setModelOptions(opts);
-      } catch (error) {
-        console.error('Failed to load model options:', error);
+      } catch {
+        // 加载模型选项失败，忽略
       }
     })();
   }, []);
@@ -437,8 +437,8 @@ export default function Settings() {
                     setModelOptions(opts);
                   } catch {}
                   message.success('已刷新设置');
-                } catch (e: any) {
-                  console.error('刷新失败:', e);
+                } catch {
+                  
                 } finally {
                   await endLoading();
                 }
@@ -477,8 +477,8 @@ export default function Settings() {
                     (window as any).electronAPI?.notifySettingsChanged?.();
                   }
                   message.success('设置已保存');
-                } catch (e: any) {
-                  console.error('保存失败:', e);
+                } catch {
+                  
                 } finally {
                   await endSaving();
                 }

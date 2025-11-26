@@ -1,13 +1,13 @@
-import { CheckIcon, CloudArrowUpIcon, TrashIcon, LockClosedIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, CheckIcon, CloudArrowUpIcon, LockClosedIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Button, Card, Checkbox, DatePicker, Input, Modal, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import {
-  batchDeletePresetQuestions,
-  deletePresetQuestion,
-  getJobsForSync,
-  listPresetQuestions,
-  PresetQuestion,
+    batchDeletePresetQuestions,
+    deletePresetQuestion,
+    getJobsForSync,
+    listPresetQuestions,
+    PresetQuestion,
 } from '../../api/preset-questions';
 import { listTags } from '../../api/questions';
 import LicenseGuard from '../../components/LicenseGuard';
@@ -104,9 +104,8 @@ export default function PresetQuestionsList() {
     try {
       const res = await getJobsForSync();
       setJobs(res.items || []);
-    } catch (error) {
-      console.error('获取岗位列表失败:', error);
-      globalMessage.error('获取岗位列表失败');
+    } catch {
+      
     }
   };
 

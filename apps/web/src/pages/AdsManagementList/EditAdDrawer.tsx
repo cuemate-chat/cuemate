@@ -83,8 +83,8 @@ export default function EditAdDrawer({
           notes: ad.notes || '',
           expires_at: new Date(ad.expires_at).toISOString().split('T')[0],
         });
-      }).catch((error: any) => {
-        console.error('获取块配置失败:', error);
+      }).catch(() => {
+        
         // 仍然设置基本数据，但 block_config_id 为空
         setFormData({
           title: ad.title,
@@ -152,8 +152,8 @@ export default function EditAdDrawer({
       setImagePreview(result.imagePath);
       setSelectedFile(null);
       return result.imagePath;
-    } catch (error: any) {
-      console.error('图片上传失败:', error);
+    } catch {
+      
       return '';
     } finally {
       setUploadingImage(false);
@@ -233,8 +233,8 @@ export default function EditAdDrawer({
       await updatePixelAd(ad.id, payload);
       message.success('广告更新成功');
       onSuccess();
-    } catch (error: any) {
-      console.error('提交广告失败:', error);
+    } catch {
+      
     } finally {
       setSubmitting(false);
     }

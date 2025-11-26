@@ -44,8 +44,8 @@ class WebSocketBridge {
       this.ws.onmessage = (event) => {
         try {
           JSON.parse(event.data);
-        } catch (error) {
-          console.error('WebSocket 消息解析失败:', error);
+        } catch {
+          // 消息解析失败，忽略
         }
       };
 
@@ -55,12 +55,10 @@ class WebSocketBridge {
         this.handleReconnect();
       };
 
-      this.ws.onerror = (error) => {
-        console.error('WebSocket 连接错误:', error);
+      this.ws.onerror = () => {
         this.isConnecting = false;
       };
-    } catch (error) {
-      console.error('WebSocket 连接初始化失败:', error);
+    } catch {
       this.isConnecting = false;
       this.handleReconnect();
     }
@@ -77,8 +75,6 @@ class WebSocketBridge {
       setTimeout(() => {
         this.connect();
       }, this.reconnectDelay);
-    } else {
-      console.error('WebSocket 重连次数超过限制，停止重连');
     }
   }
 
@@ -89,8 +85,8 @@ class WebSocketBridge {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       try {
         this.ws.send(JSON.stringify(message));
-      } catch (error) {
-        console.error('WebSocket 消息发送失败:', error);
+      } catch {
+        // 消息发送失败，忽略
       }
     } else {
       // 连接未准备好，将消息加入队列
@@ -170,8 +166,8 @@ class WebSocketBridge {
         if (originalOnMessage) {
           originalOnMessage.call(ws, event);
         }
-      } catch (error) {
-        console.error('WebSocket 消息解析失败:', error);
+      } catch {
+        // 消息解析失败，忽略
       }
     };
   }

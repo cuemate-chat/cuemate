@@ -55,8 +55,8 @@ export default function Home() {
         if (!webSocketService.getConnectionState()) {
           await webSocketService.connect();
         }
-      } catch (error) {
-        console.error('WebSocket 连接失败:', error);
+      } catch {
+        // WebSocket 连接失败，忽略
       }
     })();
   }, []);

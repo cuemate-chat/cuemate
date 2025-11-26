@@ -94,8 +94,8 @@ export default function AsrSettings() {
         }));
 
       setAvailableMicDevices(micDevices);
-    } catch (error) {
-      console.error('获取麦克风设备失败:', error);
+    } catch {
+      // 获取麦克风设备失败，使用默认值
       setAvailableMicDevices([{ deviceId: '', label: '默认麦克风' }]);
     }
   };
@@ -119,8 +119,8 @@ export default function AsrSettings() {
         }));
 
       setAvailableSpeakerDevices(speakerDevices);
-    } catch (error) {
-      console.error('获取扬声器设备失败:', error);
+    } catch {
+      // 获取扬声器设备失败，使用默认值
       setAvailableSpeakerDevices([{ deviceId: '', label: '默认扬声器' }]);
     }
   };
@@ -141,8 +141,8 @@ export default function AsrSettings() {
           audiotee_exclude_processes: data.config.audiotee_exclude_processes || '[]',
         });
       }
-    } catch (error: any) {
-      console.error('加载配置失败：', error);
+    } catch {
+      
     } finally {
       await endLoading();
     }
@@ -155,8 +155,8 @@ export default function AsrSettings() {
       const data = await saveAsrConfig(values);
       message.success(data.message || '配置已保存');
       setConfig(data.config);
-    } catch (error: any) {
-      console.error('保存失败：', error);
+    } catch {
+      
     } finally {
       await endSaving();
     }

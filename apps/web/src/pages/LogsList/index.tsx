@@ -1,20 +1,20 @@
 import { ArrowPathIcon, EyeIcon } from '@heroicons/react/24/outline';
 import {
-  BugAntIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  XCircleIcon,
+    BugAntIcon,
+    ExclamationTriangleIcon,
+    InformationCircleIcon,
+    XCircleIcon,
 } from '@heroicons/react/24/solid';
 import { DatePicker, Modal, Select, Table } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import {
-  clearLogContent as clearLogContentApi,
-  clearTodayLogs as clearTodayLogsApi,
-  deleteLogFile as deleteLogFileApi,
-  fetchLogs,
-  fetchLogServices,
-  LogLevel,
+    clearLogContent as clearLogContentApi,
+    clearTodayLogs as clearTodayLogsApi,
+    deleteLogFile as deleteLogFileApi,
+    fetchLogs,
+    fetchLogServices,
+    LogLevel,
 } from '../../api/logs';
 import { DangerIcon, WarningIcon } from '../../components/Icons';
 import { message } from '../../components/Message';
@@ -183,8 +183,8 @@ export default function LogsList() {
     try {
       const res = await fetchLogServices();
       setServices(res.services);
-    } catch (err) {
-      console.error('加载服务列表失败：', err);
+    } catch {
+      
     }
   };
 
@@ -204,8 +204,8 @@ export default function LogsList() {
       });
       setItems(res.items);
       setTotal(res.total);
-    } catch (err) {
-      console.error('加载日志失败：', err);
+    } catch {
+      
     } finally {
       await endLoading();
     }
@@ -227,8 +227,8 @@ export default function LogsList() {
       message.success('日志清理成功');
       // 清理后重新加载当前页
       loadLogs();
-    } catch (error: any) {
-      console.error('日志清理失败：', error);
+    } catch {
+      
     } finally {
       await endOperation();
     }
@@ -241,8 +241,8 @@ export default function LogsList() {
       message.success('日志文件已删除');
       // 删除后重新加载当前页
       loadLogs();
-    } catch (error: any) {
-      console.error('日志删除失败:', error);
+    } catch {
+      
     } finally {
       await endOperation();
     }
@@ -262,9 +262,8 @@ export default function LogsList() {
       } else {
         message.error('今日日志清理失败');
       }
-    } catch (error: any) {
-      console.error('今日日志清理失败:', error);
-      message.error('今日日志清理失败');
+    } catch {
+      
     } finally {
       await endOperation();
     }

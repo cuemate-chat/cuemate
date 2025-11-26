@@ -2,13 +2,13 @@ import { SearchOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {
-  checkBlock,
-  createPixelAd,
-  getAvailableBlocks,
-  getBlockConfigs,
-  uploadImage,
-  type BlockConfig,
-  type CreatePixelAdRequest
+    checkBlock,
+    createPixelAd,
+    getAvailableBlocks,
+    getBlockConfigs,
+    uploadImage,
+    type BlockConfig,
+    type CreatePixelAdRequest
 } from '../../api/ads';
 import DrawerProvider, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProvider';
 import { message } from '../../components/Message';
@@ -140,8 +140,8 @@ export default function CreateAdDrawer({
       setImagePreview(result.imagePath);
       setSelectedFile(null);
       return result.imagePath;
-    } catch (error: any) {
-      console.error('图片上传失败:', error);
+    } catch {
+      
       return '';
     } finally {
       setUploadingImage(false);
@@ -220,8 +220,8 @@ export default function CreateAdDrawer({
       });
       handleImageRemove();
       onSuccess();
-    } catch (error: any) {
-      console.error('提交广告失败:', error);
+    } catch {
+      
     } finally {
       setSubmitting(false);
     }

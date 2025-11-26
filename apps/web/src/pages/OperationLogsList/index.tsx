@@ -1,22 +1,22 @@
 import { ArrowDownTrayIcon, EyeIcon, TrashIcon } from '@heroicons/react/24/outline';
 import {
-  ChartBarIcon,
-  CheckCircleIcon,
-  PlayIcon,
-  XCircleIcon,
+    ChartBarIcon,
+    CheckCircleIcon,
+    PlayIcon,
+    XCircleIcon,
 } from '@heroicons/react/24/solid';
 import { Button, DatePicker, Popconfirm, Select, Space, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import {
-  batchDeleteOperationLogs,
-  deleteOperationLog,
-  exportOperationLogs,
-  fetchOperationLogs,
-  fetchOperationStats,
-  type OperationLog,
-  type OperationStats,
+    batchDeleteOperationLogs,
+    deleteOperationLog,
+    exportOperationLogs,
+    fetchOperationLogs,
+    fetchOperationStats,
+    type OperationLog,
+    type OperationStats,
 } from '../../api/operation-logs';
 import { message } from '../../components/Message';
 import PageLoading from '../../components/PageLoading';
@@ -206,9 +206,8 @@ export default function OperationLogsList() {
       if (showSuccessMessage) {
         message.success('已刷新操作记录');
       }
-    } catch (error) {
-      console.error('加载操作记录失败：', error);
-      message.error('加载操作记录失败');
+    } catch {
+      
     } finally {
       await endLoading();
     }
@@ -219,8 +218,8 @@ export default function OperationLogsList() {
     try {
       const response = await fetchOperationStats(7);
       setStats(response);
-    } catch (error) {
-      console.error('加载统计信息失败：', error);
+    } catch {
+      // 加载统计信息失败，忽略
     }
   };
 
@@ -262,9 +261,8 @@ export default function OperationLogsList() {
         format: 'csv',
       });
       message.success('导出成功');
-    } catch (error) {
-      console.error('导出失败：', error);
-      message.error('导出失败');
+    } catch {
+      
     }
   };
 
@@ -276,9 +274,8 @@ export default function OperationLogsList() {
       const response = await batchDeleteOperationLogs({ beforeTime });
       message.success(`删除了 ${response.deletedCount} 条记录`);
       loadOperationLogs();
-    } catch (error) {
-      console.error('删除失败：', error);
-      message.error('删除失败');
+    } catch {
+      
     } finally {
       await endOperation();
     }
@@ -291,9 +288,8 @@ export default function OperationLogsList() {
       await deleteOperationLog(id);
       message.success('删除成功');
       loadOperationLogs();
-    } catch (error) {
-      console.error('删除失败：', error);
-      message.error('删除失败');
+    } catch {
+      
     } finally {
       await endOperation();
     }

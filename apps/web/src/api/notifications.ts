@@ -84,8 +84,7 @@ export async function fetchNotifications(params?: {
       };
     }>('/api/notifications', queryParams);
     return response;
-  } catch (error) {
-    console.error('Error fetching notifications:', error);
+  } catch {
     return {
       notifications: [],
       unreadCount: 0,
@@ -101,8 +100,7 @@ export async function fetchUnreadCount(): Promise<number> {
   try {
     const response = await http.get<{ count: number }>('/api/notifications/unread-count');
     return response.count;
-  } catch (error) {
-    console.error('Error fetching unread count:', error);
+  } catch {
     return 0;
   }
 }
@@ -112,8 +110,7 @@ export async function markNotificationAsRead(id: number): Promise<boolean> {
   try {
     await http.put(`/api/notifications/${id}/read`);
     return true;
-  } catch (error) {
-    console.error('Error marking notification as read:', error);
+  } catch {
     return false;
   }
 }
@@ -123,8 +120,7 @@ export async function markAllNotificationsAsRead(): Promise<boolean> {
   try {
     await http.put('/api/notifications/read-all');
     return true;
-  } catch (error) {
-    console.error('Error marking all notifications as read:', error);
+  } catch {
     return false;
   }
 }
@@ -134,8 +130,7 @@ export async function toggleNotificationStar(id: number, starred: boolean): Prom
   try {
     await http.put(`/api/notifications/${id}/star`, { starred });
     return true;
-  } catch (error) {
-    console.error('Error toggling notification star:', error);
+  } catch {
     return false;
   }
 }
@@ -145,8 +140,7 @@ export async function deleteNotification(id: number): Promise<boolean> {
   try {
     await http.delete(`/api/notifications/${id}`);
     return true;
-  } catch (error) {
-    console.error('Error deleting notification:', error);
+  } catch {
     return false;
   }
 }
@@ -170,8 +164,7 @@ export async function createNotification(data: {
   try {
     const response = await http.post<{ success: boolean; id: number }>('/api/notifications', data);
     return response;
-  } catch (error) {
-    console.error('Error creating notification:', error);
+  } catch {
     return { success: false };
   }
 }
@@ -191,12 +184,32 @@ export function getNotificationTypeInfo(type: string): {
     }
   > = {
     job_created: { label: '岗位创建', color: 'text-blue-700 bg-blue-50', iconType: 'briefcase' },
-    question_created: { label: '押题创建', color: 'text-green-700 bg-green-50', iconType: 'document' },
-    interview_report: { label: '面试报告', color: 'text-purple-700 bg-purple-50', iconType: 'chart' },
-    knowledge_synced: { label: '知识库同步', color: 'text-cyan-700 bg-cyan-50', iconType: 'refresh' },
+    question_created: {
+      label: '押题创建',
+      color: 'text-green-700 bg-green-50',
+      iconType: 'document',
+    },
+    interview_report: {
+      label: '面试报告',
+      color: 'text-purple-700 bg-purple-50',
+      iconType: 'chart',
+    },
+    knowledge_synced: {
+      label: '知识库同步',
+      color: 'text-cyan-700 bg-cyan-50',
+      iconType: 'refresh',
+    },
     model_added: { label: '模型添加', color: 'text-indigo-700 bg-indigo-50', iconType: 'cpu' },
-    license_imported: { label: '许可证导入', color: 'text-green-700 bg-green-50', iconType: 'check' },
-    license_expire: { label: '许可证到期', color: 'text-orange-700 bg-orange-50', iconType: 'warning' },
+    license_imported: {
+      label: '许可证导入',
+      color: 'text-green-700 bg-green-50',
+      iconType: 'check',
+    },
+    license_expire: {
+      label: '许可证到期',
+      color: 'text-orange-700 bg-orange-50',
+      iconType: 'warning',
+    },
     ad_expire: { label: '广告到期', color: 'text-amber-700 bg-amber-50', iconType: 'megaphone' },
     task_success: { label: '任务成功', color: 'text-green-700 bg-green-50', iconType: 'sparkles' },
     task_failed: { label: '任务失败', color: 'text-red-700 bg-red-50', iconType: 'xcircle' },

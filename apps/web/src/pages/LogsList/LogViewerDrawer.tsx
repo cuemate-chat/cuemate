@@ -54,9 +54,8 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
       // 重置选择状态
       setSelectedLines(new Set());
       setSelectAll(false);
-    } catch (e) {
-      console.error('读取日志内容失败', e);
-      message.error('读取日志内容失败');
+    } catch {
+      
     } finally {
       setLoading(false);
     }

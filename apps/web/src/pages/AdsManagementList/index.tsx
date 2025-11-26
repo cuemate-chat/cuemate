@@ -1,19 +1,19 @@
 import {
-  ArrowPathIcon,
-  EyeIcon,
-  MagnifyingGlassIcon,
-  PencilIcon,
-  PlusIcon,
-  TrashIcon,
+    ArrowPathIcon,
+    EyeIcon,
+    MagnifyingGlassIcon,
+    PencilIcon,
+    PlusIcon,
+    TrashIcon,
 } from '@heroicons/react/24/outline';
 import { Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {
-  deletePixelAd,
-  getBlockConfigs,
-  listAdsPixel,
-  type BlockConfig,
-  type PixelAd
+    deletePixelAd,
+    getBlockConfigs,
+    listAdsPixel,
+    type BlockConfig,
+    type PixelAd
 } from '../../api/ads';
 import LicenseGuard from '../../components/LicenseGuard';
 import { message } from '../../components/Message';
@@ -69,8 +69,8 @@ export default function AdsManagementList() {
       });
       setAds(data.ads);
       setTotalCount(data.pagination.total);
-    } catch (error) {
-      console.error('获取广告列表出错:', error);
+    } catch {
+      
     } finally {
       await endLoading();
     }
@@ -90,8 +90,8 @@ export default function AdsManagementList() {
           await deletePixelAd(ad.id);
           message.success('广告删除成功');
           fetchAds(currentPage, pageSize, searchTerm, statusFilter, blockFilter);
-        } catch (error) {
-          console.error('删除广告失败:', error);
+        } catch {
+          
         } finally {
           await endOperation();
         }

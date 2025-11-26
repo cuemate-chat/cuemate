@@ -42,8 +42,8 @@ export class WebSocketService {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
             this.handleMessage(message);
-          } catch (error) {
-            console.error('WebSocket: 消息解析失败', error);
+          } catch {
+            // 消息解析失败，忽略
           }
         };
 
@@ -56,12 +56,10 @@ export class WebSocketService {
         };
 
         this.ws.onerror = (error) => {
-          console.error('WebSocket: 连接错误', error);
           this.isConnected = false;
           reject(error);
         };
       } catch (error) {
-        console.error('WebSocket: 连接初始化失败', error);
         reject(error);
       }
     });
@@ -76,8 +74,8 @@ export class WebSocketService {
       handlers.forEach((handler) => {
         try {
           handler(message);
-        } catch (error) {
-          console.error(`WebSocket: 处理消息 ${message.type} 失败`, error);
+        } catch {
+          // 消息处理失败，忽略
         }
       });
     }
@@ -90,8 +88,8 @@ export class WebSocketService {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       try {
         this.ws.send(JSON.stringify(message));
-      } catch (error) {
-        console.error('WebSocket: 消息发送失败', error);
+      } catch {
+        // 消息发送失败，忽略
       }
     } else {
       console.warn('WebSocket: 连接未就绪，无法发送消息', { readyState: this.ws?.readyState });
@@ -127,8 +125,8 @@ export class WebSocketService {
   private handleReconnect(): void {
     this.reconnectAttempts++;
     setTimeout(() => {
-      this.connect().catch((error) => {
-        console.error('WebSocket: 重连失败', error);
+      this.connect().catch(() => {
+        // 重连失败，忽略
       });
     }, this.reconnectDelay);
   }

@@ -80,9 +80,8 @@ export default function LanguageSelector() {
       window.dispatchEvent(new CustomEvent('user-settings-updated', { detail: updatedUser }));
 
       message.success('语言设置已更新');
-    } catch (error) {
-      console.error('更新语言设置失败:', error);
-      message.error('更新语言设置失败');
+    } catch {
+      
 
       // 失败时回滚到原值
       const user = storage.getUser();

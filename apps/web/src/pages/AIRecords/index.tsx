@@ -213,9 +213,8 @@ export default function AIRecordsList() {
       if (showSuccessMessage) {
         message.success('已刷新 AI 对话记录');
       }
-    } catch (error) {
-      console.error('加载 AI 对话记录失败：', error);
-      message.error('加载 AI 对话记录失败');
+    } catch {
+      
       setConversations([]);
       setTotal(0);
     } finally {
@@ -228,9 +227,8 @@ export default function AIRecordsList() {
     try {
       const response = await fetchAIConversationStats();
       setStats(response);
-    } catch (error) {
-      console.error('加载统计信息失败：', error);
-      // 设置默认统计数据
+    } catch {
+      // HTTP 层已处理错误提示，设置默认统计数据
       setStats({
         total: 0,
         active: 0,
@@ -275,8 +273,8 @@ export default function AIRecordsList() {
         ];
         setModelOptions(options);
       }
-    } catch (error) {
-      console.error('加载模型列表失败:', error);
+    } catch {
+      
     }
   };
 
@@ -304,9 +302,8 @@ export default function AIRecordsList() {
       message.success('删除成功');
       loadAIConversations();
       loadStats(); // 重新加载统计信息
-    } catch (error) {
-      console.error('删除失败：', error);
-      message.error('删除失败');
+    } catch {
+      
     } finally {
       await endOperation();
     }

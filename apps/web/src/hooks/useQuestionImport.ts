@@ -23,7 +23,7 @@ export function useQuestionImport(options?: UseQuestionImportOptions) {
    */
   const parseFileContent = (
     fileContent: string,
-    fileName: string
+    fileName: string,
   ): Array<{ question: string; answer: string; tag_name?: string | null }> => {
     let questions: Array<{ question: string; answer: string; tag_name?: string | null }> = [];
 
@@ -95,13 +95,8 @@ export function useQuestionImport(options?: UseQuestionImportOptions) {
 
       // 显示成功消息
       globalMessage.success(
-        `批量导入完成！新增 ${result.importedCount} 个，跳过 ${result.skippedCount} 个${result.errors?.length ? `，错误 ${result.errors.length} 个` : ''}`
+        `批量导入完成！新增 ${result.importedCount} 个，跳过 ${result.skippedCount} 个${result.errors?.length ? `，错误 ${result.errors.length} 个` : ''}`,
       );
-
-      // 错误信息输出到控制台
-      if (result.errors && result.errors.length > 0) {
-        console.error('导入错误：', result.errors);
-      }
 
       // 调用成功回调
       if (options?.onSuccess) {
@@ -110,9 +105,6 @@ export function useQuestionImport(options?: UseQuestionImportOptions) {
 
       return result;
     } catch (error: any) {
-      console.error('题库导入失败:', error);
-      globalMessage.error(error?.message || '导入失败');
-
       // 调用错误回调
       if (options?.onError) {
         options.onError(error);

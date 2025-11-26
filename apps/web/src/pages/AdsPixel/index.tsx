@@ -1,25 +1,25 @@
 import EyeIcon from '@heroicons/react/16/solid/EyeIcon';
 import {
-  ArrowPathIcon,
-  ArrowsPointingOutIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  ClockIcon,
-  ComputerDesktopIcon,
-  CurrencyDollarIcon,
-  LinkIcon,
-  PaintBrushIcon,
-  PhotoIcon,
-  SparklesIcon,
-  XMarkIcon
+    ArrowPathIcon,
+    ArrowsPointingOutIcon,
+    ChevronDownIcon,
+    ChevronUpIcon,
+    ClockIcon,
+    ComputerDesktopIcon,
+    CurrencyDollarIcon,
+    LinkIcon,
+    PaintBrushIcon,
+    PhotoIcon,
+    SparklesIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 import { Select } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getBlockConfigs, getPublicActiveAds, type BlockConfig, type PixelAd } from '../../api/ads';
 import { message } from '../../components/Message';
 import PageLoading from '../../components/PageLoading';
-import { useLoading } from '../../hooks/useLoading';
 import { WEB_API_BASE } from '../../config';
+import { useLoading } from '../../hooks/useLoading';
 import MockUploadDrawer from './MockUploadDrawer';
 
 interface AdBlock extends BlockConfig {
@@ -92,9 +92,8 @@ export default function AdsPixel() {
       setAds(adsData);
       setBlockConfigs(blockConfigsData);
       initializeAdBlocks(adsData, blockConfigsData, tempAds);
-    } catch (error) {
-      // HTTP 客户端已经处理了错误提示，这里不再重复弹出
-      console.error('获取数据失败:', error);
+    } catch {
+      
     } finally {
       await endLoading();
     }

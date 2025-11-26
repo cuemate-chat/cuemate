@@ -166,9 +166,8 @@ export default function License() {
     try {
       const list = await fetchVersionList();
       setVersions(list);
-    } catch (error) {
-      console.error('Failed to fetch version list:', error);
-      message.error('获取版本列表失败');
+    } catch {
+      
     } finally {
       await endLoadingVersions();
     }

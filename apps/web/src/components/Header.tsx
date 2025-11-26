@@ -115,9 +115,8 @@ export default function Header() {
             const { getWebSocketBridge } = await import('../utils/websocketBridge');
             const bridge = getWebSocketBridge();
             bridge.openExternal(helpUrl);
-          } catch (error) {
-            console.error('WebSocket 通信失败，使用降级方案:', error);
-            // 降级方案：直接使用 window.open
+          } catch {
+            // WebSocket 通信失败，使用降级方案
             window.open(helpUrl, '_blank');
           }
         } else {

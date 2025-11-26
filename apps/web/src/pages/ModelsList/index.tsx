@@ -1,18 +1,18 @@
 import {
-  DeleteOutlined,
-  EditOutlined,
-  LinkOutlined,
+    DeleteOutlined,
+    EditOutlined,
+    LinkOutlined,
 } from '@ant-design/icons';
 import { Button, Input, Modal, Tree } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { storage } from '../../api/http';
 import {
-  deleteModel,
-  getModel,
-  listModels,
-  selectUserModel,
-  testModelConnectivity,
-  upsertModel,
+    deleteModel,
+    getModel,
+    listModels,
+    selectUserModel,
+    testModelConnectivity,
+    upsertModel,
 } from '../../api/models';
 import CollapsibleSidebar from '../../components/CollapsibleSidebar';
 import FullScreenOverlay from '../../components/FullScreenOverlay';
@@ -141,8 +141,8 @@ export default function ModelsList() {
           message.success('已刷新模型列表');
         }
       }
-    } catch (e: any) {
-      console.error('获取模型失败:', e);
+    } catch {
+      
     } finally {
       await endLoading();
     }
@@ -155,12 +155,12 @@ export default function ModelsList() {
       if (!me?.selected_model_id) {
         try {
           await selectUserModel(m.id);
-        } catch (error) {
-          console.error('Failed to select user model:', error);
+        } catch {
+          
         }
       }
-    } catch (error) {
-      console.error('Failed to get user info:', error);
+    } catch {
+      // localStorage 解析失败，忽略
     }
     try {
       const res: any = await getModel(m.id);
@@ -173,8 +173,8 @@ export default function ModelsList() {
         setEditing({ ...detail.model, params: normalizedParams });
         return;
       }
-    } catch (error) {
-      console.error('Failed to get model details:', error);
+    } catch {
+      
     }
     setEditing(m);
   }
@@ -205,8 +205,8 @@ export default function ModelsList() {
           message.success('已删除');
           // 删除后立即刷新，保障页码回退逻辑生效
           await fetchList();
-        } catch (error) {
-          console.error('删除失败：', error);
+        } catch {
+          
         } finally {
           await endOperation();
         }

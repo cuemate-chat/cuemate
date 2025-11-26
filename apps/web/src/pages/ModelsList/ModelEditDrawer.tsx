@@ -1,6 +1,6 @@
 import {
-  EyeInvisibleOutlined,
-  EyeOutlined
+    EyeInvisibleOutlined,
+    EyeOutlined
 } from '@ant-design/icons';
 import { Button, Input, Select, Switch, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
@@ -137,9 +137,8 @@ export default function ModelEditDrawer({
         const errorMsg = result?.error || result?.chatError || result?.embedError || '连接测试失败';
         message.error(errorMsg);
       }
-    } catch (error: any) {
-      console.error('测试连接失败:', error);
-      message.error(error?.message || '连接测试失败，请检查配置信息');
+    } catch {
+      
     } finally {
       setTesting(false);
       onTestingChange?.(false); // 通知父组件测试结束
