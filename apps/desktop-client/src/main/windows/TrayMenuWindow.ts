@@ -6,6 +6,7 @@ import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/pat
 export class TrayMenuWindow {
   private window: BrowserWindow | null = null;
   private isDevelopment: boolean;
+  private parentWindow: BrowserWindow | null = null;
 
   private readonly config: WindowConfig = {
     id: 'tray-menu',
@@ -25,8 +26,9 @@ export class TrayMenuWindow {
     center: false,
   };
 
-  constructor(isDevelopment: boolean = false) {
+  constructor(isDevelopment: boolean = false, parentWindow: BrowserWindow | null = null) {
     this.isDevelopment = isDevelopment;
+    this.parentWindow = parentWindow;
   }
 
   public async create(): Promise<void> {
@@ -37,6 +39,7 @@ export class TrayMenuWindow {
         width: this.config.width,
         height: this.config.height,
         icon: getWindowIconPath(),
+        parent: this.parentWindow || undefined,
         alwaysOnTop: this.config.alwaysOnTop,
         frame: this.config.frame,
         transparent: this.config.transparent,
@@ -57,9 +60,9 @@ export class TrayMenuWindow {
         },
       });
 
-      // 设置始终在最前
-      this.window.setAlwaysOnTop(true, 'pop-up-menu');
-      this.window.setVisibleOnAllWorkspaces(true);
+      // 设置始终在最前 - 使用 screen-saver 级别，与父窗口 ControlBar 保持一致
+      this.window.setAlwaysOnTop(true, 'screen-saver');
+      this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       this.window.setFullScreenable(false);
 
       // 加载页面
@@ -140,7 +143,7 @@ export class TrayMenuWindow {
     this.window.setPosition(x, y, false);
     this.window.show();
     this.window.focus();
-    this.window.setAlwaysOnTop(true, 'pop-up-menu');
+    this.window.setAlwaysOnTop(true, 'screen-saver');
 
     // 通知渲染进程托盘菜单已显示，触发数据刷新
     this.window.webContents.send('tray-menu-shown');

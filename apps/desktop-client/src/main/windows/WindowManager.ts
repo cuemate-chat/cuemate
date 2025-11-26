@@ -86,8 +86,8 @@ export class WindowManager {
       // 6. 创建 Interviewer 窗口（初始隐藏）
       await this.interviewerWindow.create();
 
-      // 6.5 创建托盘菜单窗口（初始隐藏）
-      this.trayMenuWindow = new TrayMenuWindow(this.isDevelopment);
+      // 6.5 创建托盘菜单窗口（初始隐藏，设置 parent 以避免 Dock 图标显示）
+      this.trayMenuWindow = new TrayMenuWindow(this.isDevelopment, controlBarBrowserWindow);
       await this.trayMenuWindow.create();
 
       // 7. 设置控制条窗口关闭回调，隐藏所有子窗口
