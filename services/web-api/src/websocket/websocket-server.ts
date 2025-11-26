@@ -51,7 +51,7 @@ export class CueMateWebSocketServer {
           const message: WebSocketMessage = JSON.parse(data.toString());
           this.handleMessage(clientId, ws, message);
         } catch (error) {
-          logger.error({ error, clientId }, 'WebSocket 消息解析失败');
+          logger.error({ err: error, clientId }, 'WebSocket 消息解析失败');
         }
       });
 
@@ -61,7 +61,7 @@ export class CueMateWebSocketServer {
       });
 
       ws.on('error', (error) => {
-        logger.error({ error, clientId }, 'WebSocket 客户端错误');
+        logger.error({ err: error, clientId }, 'WebSocket 客户端错误');
         this.clients.delete(clientId);
       });
 
@@ -75,7 +75,7 @@ export class CueMateWebSocketServer {
     });
 
     this.wss.on('error', (error) => {
-      logger.error({ error }, 'WebSocket 服务器错误');
+      logger.error({ err: error }, 'WebSocket 服务器错误');
     });
   }
 
@@ -185,7 +185,7 @@ export class CueMateWebSocketServer {
           'WebSocket: 已转发 OPEN_EXTERNAL 到 desktop',
         );
       } catch (error) {
-        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 OPEN_EXTERNAL 失败');
+        logger.error({ err: error, clientId: client.id }, 'WebSocket: 转发 OPEN_EXTERNAL 失败');
       }
     });
   }
@@ -209,7 +209,7 @@ export class CueMateWebSocketServer {
           'WebSocket: 已转发 LOGIN_SUCCESS 到 desktop',
         );
       } catch (error) {
-        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 LOGIN_SUCCESS 失败');
+        logger.error({ err: error, clientId: client.id }, 'WebSocket: 转发 LOGIN_SUCCESS 失败');
       }
     });
   }
@@ -229,7 +229,7 @@ export class CueMateWebSocketServer {
         );
         logger.debug({ clientId: client.id }, 'WebSocket: 已转发 LOGOUT 到 desktop');
       } catch (error) {
-        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 LOGOUT 失败');
+        logger.error({ err: error, clientId: client.id }, 'WebSocket: 转发 LOGOUT 失败');
       }
     });
   }
@@ -255,7 +255,7 @@ export class CueMateWebSocketServer {
         );
         logger.debug({ clientId: client.id }, 'WebSocket: 已转发 START_RECORDING 到 desktop');
       } catch (error) {
-        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 START_RECORDING 失败');
+        logger.error({ err: error, clientId: client.id }, 'WebSocket: 转发 START_RECORDING 失败');
       }
     });
   }
@@ -274,7 +274,7 @@ export class CueMateWebSocketServer {
         );
         logger.debug({ clientId: client.id }, 'WebSocket: 已转发 RECORDING_RESULT 到 web');
       } catch (error) {
-        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 RECORDING_RESULT 失败');
+        logger.error({ err: error, clientId: client.id }, 'WebSocket: 转发 RECORDING_RESULT 失败');
       }
     });
   }
@@ -294,7 +294,7 @@ export class CueMateWebSocketServer {
         );
         logger.debug({ clientId: client.id }, 'WebSocket: 已转发 REQUEST_ASR_DEVICES 到 desktop');
       } catch (error) {
-        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 REQUEST_ASR_DEVICES 失败');
+        logger.error({ err: error, clientId: client.id }, 'WebSocket: 转发 REQUEST_ASR_DEVICES 失败');
       }
     });
   }
@@ -313,7 +313,7 @@ export class CueMateWebSocketServer {
         );
         logger.debug({ clientId: client.id }, 'WebSocket: 已广播 ASR_DEVICES 给 web');
       } catch (error) {
-        logger.error({ error, clientId: client.id }, 'WebSocket: 广播 ASR_DEVICES 失败');
+        logger.error({ err: error, clientId: client.id }, 'WebSocket: 广播 ASR_DEVICES 失败');
       }
     });
   }
@@ -343,7 +343,7 @@ export class CueMateWebSocketServer {
           'WebSocket: 已转发 OPEN_INTERVIEWER 到 desktop',
         );
       } catch (error) {
-        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 OPEN_INTERVIEWER 失败');
+        logger.error({ err: error, clientId: client.id }, 'WebSocket: 转发 OPEN_INTERVIEWER 失败');
       }
     });
   }
@@ -377,7 +377,7 @@ export class CueMateWebSocketServer {
           'WebSocket: 已转发 UPDATE_VERSION 到 desktop',
         );
       } catch (error) {
-        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 UPDATE_VERSION 失败');
+        logger.error({ err: error, clientId: client.id }, 'WebSocket: 转发 UPDATE_VERSION 失败');
       }
     });
   }
@@ -399,7 +399,7 @@ export class CueMateWebSocketServer {
         );
         logger.debug({ status: message.status, clientId: client.id }, 'WebSocket: 已转发 UPDATE_PROGRESS 到 web');
       } catch (error) {
-        logger.error({ error, clientId: client.id }, 'WebSocket: 转发 UPDATE_PROGRESS 失败');
+        logger.error({ err: error, clientId: client.id }, 'WebSocket: 转发 UPDATE_PROGRESS 失败');
       }
     });
   }
@@ -435,7 +435,7 @@ export class CueMateWebSocketServer {
       try {
         client.ws.send(JSON.stringify(data));
       } catch (error) {
-        logger.error({ error, clientId: client.id }, 'WebSocket: 广播消息失败');
+        logger.error({ err: error, clientId: client.id }, 'WebSocket: 广播消息失败');
       }
     });
   }

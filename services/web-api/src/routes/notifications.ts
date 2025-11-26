@@ -1,9 +1,14 @@
-import type { FastifyInstance } from 'fastify';
 import { withErrorLogging } from '@cuemate/logger';
+import type { FastifyInstance } from 'fastify';
+import { logger } from '../utils/logger.js';
 import { buildPrefixedError } from '../utils/error-response.js';
+import {
+  notifyAdExpiring,
+  notifyLicenseExpired,
+  notifyLicenseExpiring,
+} from '../utils/notification-helper.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
-import { notifyLicenseExpiring, notifyLicenseExpired, notifyAdExpiring } from '../utils/notification-helper.js';
 
 /**
  * 通知类型说明：
@@ -131,7 +136,9 @@ export function registerNotificationRoutes(app: FastifyInstance) {
 
         // 获取未读数量
         const unreadCount = db
-          .prepare('SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND is_read = 0')
+          .prepare(
+            'SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND is_read = 0',
+          )
           .get(userId) as { count: number };
 
         // 获取各类别统计（基于全部通知，不受筛选条件影响）
@@ -151,10 +158,14 @@ export function registerNotificationRoutes(app: FastifyInstance) {
           .prepare('SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ?')
           .get(userId) as { count: number };
         const readCount = db
-          .prepare('SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND is_read = 1')
+          .prepare(
+            'SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND is_read = 1',
+          )
           .get(userId) as { count: number };
         const starredCount = db
-          .prepare('SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND is_starred = 1')
+          .prepare(
+            'SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND is_starred = 1',
+          )
           .get(userId) as { count: number };
 
         // 记录操作日志
@@ -171,10 +182,13 @@ export function registerNotificationRoutes(app: FastifyInstance) {
           notifications,
           unreadCount: unreadCount.count,
           total: totalResult.count,
-          categoryStats: categoryStats.reduce((acc, item) => {
-            acc[item.category] = item.count;
-            return acc;
-          }, {} as Record<string, number>),
+          categoryStats: categoryStats.reduce(
+            (acc, item) => {
+              acc[item.category] = item.count;
+              return acc;
+            },
+            {} as Record<string, number>,
+          ),
           tabCounts: {
             all: allCount.count,
             unread: unreadCount.count,
@@ -208,7 +222,9 @@ export function registerNotificationRoutes(app: FastifyInstance) {
         const userId = payload.uid;
 
         const result = db
-          .prepare('SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND is_read = 0')
+          .prepare(
+            'SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND is_read = 0',
+          )
           .get(userId) as { count: number };
 
         return reply.send({ count: result.count });
@@ -231,7 +247,9 @@ export function registerNotificationRoutes(app: FastifyInstance) {
           .run(Date.now(), id);
 
         if (result.changes === 0) {
-          return reply.status(404).send(buildPrefixedError('通知不存在', new Error('Notification not found'), 404));
+          return reply
+            .status(404)
+            .send(buildPrefixedError('通知不存在', new Error('Notification not found'), 404));
         }
 
         await logOperation(app, request, {
@@ -260,7 +278,9 @@ export function registerNotificationRoutes(app: FastifyInstance) {
         const userId = payload.uid;
 
         const result = db
-          .prepare('UPDATE user_notifications SET is_read = 1, read_at = ? WHERE user_id = ? AND is_read = 0')
+          .prepare(
+            'UPDATE user_notifications SET is_read = 1, read_at = ? WHERE user_id = ? AND is_read = 0',
+          )
           .run(Date.now(), userId);
 
         await logOperation(app, request, {
@@ -293,7 +313,9 @@ export function registerNotificationRoutes(app: FastifyInstance) {
           .run(starred ? 1 : 0, starred ? Date.now() : null, id);
 
         if (result.changes === 0) {
-          return reply.status(404).send(buildPrefixedError('通知不存在', new Error('Notification not found'), 404));
+          return reply
+            .status(404)
+            .send(buildPrefixedError('通知不存在', new Error('Notification not found'), 404));
         }
 
         await logOperation(app, request, {
@@ -320,12 +342,12 @@ export function registerNotificationRoutes(app: FastifyInstance) {
       try {
         const { id } = request.params as { id: string };
 
-        const result = db
-          .prepare('DELETE FROM user_notifications WHERE id = ?')
-          .run(id);
+        const result = db.prepare('DELETE FROM user_notifications WHERE id = ?').run(id);
 
         if (result.changes === 0) {
-          return reply.status(404).send(buildPrefixedError('通知不存在', new Error('Notification not found'), 404));
+          return reply
+            .status(404)
+            .send(buildPrefixedError('通知不存在', new Error('Notification not found'), 404));
         }
 
         await logOperation(app, request, {
@@ -367,7 +389,9 @@ export function registerNotificationRoutes(app: FastifyInstance) {
         } = request.body as any;
 
         if (!userId || !title || !content || !type || !category) {
-          return reply.status(400).send(buildPrefixedError('缺少必要参数', new Error('Missing required fields'), 400));
+          return reply
+            .status(400)
+            .send(buildPrefixedError('缺少必要参数', new Error('Missing required fields'), 400));
         }
 
         const result = db
@@ -433,13 +457,15 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
   try {
     // 1.1 检查即将到期的许可证 (30 天内到期,但还没过期)
     const expiringLicenses = db
-      .prepare(`
+      .prepare(
+        `
         SELECT id, edition, expire_time, apply_user
         FROM licenses
         WHERE status = 'active'
         AND expire_time > ?
         AND expire_time <= ?
-      `)
+      `,
+      )
       .all(now, now + 30 * dayMs);
 
     for (const license of expiringLicenses) {
@@ -447,13 +473,15 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
 
       // 检查 24 小时内是否已经创建过通知
       const existingNotification = db
-        .prepare(`
+        .prepare(
+          `
           SELECT id FROM user_notifications
           WHERE user_id = ?
           AND type = 'license_expire'
           AND resource_id = ?
           AND created_at > ?
-        `)
+        `,
+        )
         .get(license.apply_user, license.id, now - dayMs);
 
       if (!existingNotification) {
@@ -468,24 +496,28 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
 
     // 1.2 检查已经过期的许可证 (每天发送提醒)
     const expiredLicenses = db
-      .prepare(`
+      .prepare(
+        `
         SELECT id, edition, expire_time, apply_user
         FROM licenses
         WHERE status = 'active'
         AND expire_time <= ?
-      `)
+      `,
+      )
       .all(now);
 
     for (const license of expiredLicenses) {
       // 检查 24 小时内是否已经创建过通知
       const existingNotification = db
-        .prepare(`
+        .prepare(
+          `
           SELECT id FROM user_notifications
           WHERE user_id = ?
           AND type = 'license_expire'
           AND resource_id = ?
           AND created_at > ?
-        `)
+        `,
+        )
         .get(license.apply_user, license.id, now - dayMs);
 
       if (!existingNotification) {
@@ -497,20 +529,22 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
       }
     }
   } catch (error) {
-    console.error('检查许可证到期失败:', error);
+    logger.error({ err: error }, '检查许可证到期失败');
   }
 
   // 2. 检查广告
   try {
     // 2.1 检查即将到期的广告 (7 天内到期,但还没过期)
     const expiringAds = db
-      .prepare(`
+      .prepare(
+        `
         SELECT id, title, expires_at, user_id
         FROM pixel_ads
         WHERE status = 'active'
         AND expires_at > ?
         AND expires_at <= ?
-      `)
+      `,
+      )
       .all(now, now + 7 * dayMs);
 
     for (const ad of expiringAds) {
@@ -518,13 +552,15 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
 
       // 检查 24 小时内是否已经创建过通知
       const existingNotification = db
-        .prepare(`
+        .prepare(
+          `
           SELECT id FROM user_notifications
           WHERE user_id = ?
           AND type = 'ad_expire'
           AND resource_id = ?
           AND created_at > ?
-        `)
+        `,
+        )
         .get(ad.user_id, ad.id, now - dayMs);
 
       if (!existingNotification) {
@@ -539,12 +575,14 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
 
     // 2.2 检查已经过期的广告 (过期的广告直接下线,不再发送通知,只标记状态为 expired)
     const expiredAds = db
-      .prepare(`
+      .prepare(
+        `
         SELECT id
         FROM pixel_ads
         WHERE status = 'active'
         AND expires_at <= ?
-      `)
+      `,
+      )
       .all(now);
 
     for (const ad of expiredAds) {
@@ -552,6 +590,6 @@ async function checkAndCreateExpiringNotifications(db: any, _userId: string) {
       db.prepare('UPDATE pixel_ads SET status = ? WHERE id = ?').run('expired', ad.id);
     }
   } catch (error) {
-    console.error('检查广告到期失败:', error);
+    logger.error({ err: error }, '检查广告到期失败');
   }
 }
