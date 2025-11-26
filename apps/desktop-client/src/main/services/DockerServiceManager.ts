@@ -11,6 +11,7 @@ import { getDockerEnv } from '../utils/dockerPath.js';
  */
 export class DockerServiceManager {
   private static readonly CONTAINER_PREFIX = 'cuemate';
+  private static readonly PROJECT_NAME = 'cuemate';
   private static readonly VERSION = process.env.VERSION || 'v0.1.0';
   private static readonly REGISTRY =
     process.env.REGISTRY || 'registry.cn-beijing.aliyuncs.com/cuemate';
@@ -209,7 +210,7 @@ export class DockerServiceManager {
       if (containersExist) {
         // 容器已存在但未运行，使用 docker compose start
         logger.info({ dockerComposeDir, envVars, composeEnv }, 'Docker 容器已存在，正在启动...');
-        const command = `docker compose -f docker-compose.yml start`;
+        const command = `docker compose -p ${this.PROJECT_NAME} -f docker-compose.yml start`;
         logger.debug({ command, cwd: dockerComposeDir }, 'Docker: 执行启动命令');
 
         try {
@@ -234,7 +235,7 @@ export class DockerServiceManager {
       } else {
         // 容器不存在，使用 docker compose up -d
         logger.info({ dockerComposeDir, envVars, composeEnv }, 'Docker 容器不存在，正在创建并启动...');
-        const command = `docker compose -f docker-compose.yml up -d`;
+        const command = `docker compose -p ${this.PROJECT_NAME} -f docker-compose.yml up -d`;
         logger.debug({ command, cwd: dockerComposeDir }, 'Docker: 执行创建命令');
 
         try {
@@ -272,13 +273,7 @@ export class DockerServiceManager {
     try {
       logger.info('开始停止 Docker 服务...');
 
-      // 检查容器是否在运行
-      if (!this.areAllContainersRunning()) {
-        logger.info('Docker 服务未运行，无需停止');
-        return;
-      }
-
-      // 检查容器是否存在
+      // 检查是否有容器存在（无论是否全部运行）
       if (!this.areContainersExist()) {
         logger.info('Docker 容器不存在，无需停止');
         return;
@@ -302,7 +297,7 @@ export class DockerServiceManager {
 
       // 停止容器
       logger.info({ dockerComposeDir, composeEnv }, '正在停止 Docker 服务...');
-      const command = `docker compose -f docker-compose.yml stop`;
+      const command = `docker compose -p ${this.PROJECT_NAME} -f docker-compose.yml stop`;
       logger.debug({ command, cwd: dockerComposeDir }, 'Docker: 执行停止命令');
 
       try {
