@@ -101,8 +101,9 @@ export class TrayMenuWindow {
 
     const trayBounds = tray.getBounds();
     const windowBounds = this.window.getBounds();
-    const primaryDisplay = screen.getPrimaryDisplay();
-    const workArea = primaryDisplay.workArea;
+    // 获取托盘图标所在的显示器，而不是主显示器
+    const display = screen.getDisplayMatching(trayBounds);
+    const workArea = display.workArea;
 
     // 计算菜单显示位置
     let x: number;
