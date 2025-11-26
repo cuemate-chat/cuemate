@@ -240,15 +240,15 @@ export default function UserMenu() {
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-            onClick={onPrompts}
-          >
-            <CommandLineIcon className="w-4 h-4" /> Prompt 管理
-          </button>
-          <button
-            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
             onClick={onVectorKnowledge}
           >
             <CubeIcon className="w-4 h-4" /> 向量知识库
+          </button>
+          <button
+            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+            onClick={onPrompts}
+          >
+            <CommandLineIcon className="w-4 h-4" /> Prompt 管理
           </button>
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
