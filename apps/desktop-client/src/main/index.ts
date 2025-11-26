@@ -76,7 +76,6 @@ class CueMateApp {
       try {
         // 在 macOS 上隐藏 Dock 图标但保留菜单栏
         if (process.platform === 'darwin') {
-          // 保持 regular 模式以确保菜单栏显示，只隐藏 dock 图标
           app.dock?.hide();
         }
 
@@ -271,7 +270,6 @@ class CueMateApp {
       logger.error({ error }, '创建菜单栏图标失败');
     }
   }
-
 
   private async cleanup(): Promise<void> {
     // 停止 Docker 服务
