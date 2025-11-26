@@ -3,16 +3,20 @@
  * 处理面试相关的 API 调用
  */
 
+import { logger } from '../../../utils/rendererLogger.js';
+
 export type InterviewStatus =
   | 'idle'
   | 'mock-interview-recording'
   | 'mock-interview-paused'
   | 'mock-interview-completed'
   | 'mock-interview-playing'
+  | 'mock-interview-expired'
   | 'interview-training-recording'
   | 'interview-training-paused'
   | 'interview-training-completed'
-  | 'interview-training-playing';
+  | 'interview-training-playing'
+  | 'interview-training-expired';
 
 export interface InterviewData {
   jobId: string;
@@ -65,7 +69,7 @@ export class InterviewService {
         this.token = result.userData.token;
       }
     } catch (error) {
-      console.error('初始化面试服务认证失败:', error);
+      logger.error(`初始化面试服务认证失败: ${error}`);
     }
   }
 
@@ -105,7 +109,7 @@ export class InterviewService {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('创建面试失败:', error);
+      logger.error(`创建面试失败: ${error}`);
       throw error;
     }
   }
@@ -127,7 +131,7 @@ export class InterviewService {
         throw new Error(`更新面试失败: ${response.status}`);
       }
     } catch (error) {
-      console.error('更新面试失败:', error);
+      logger.error(`更新面试失败: ${error}`);
       throw error;
     }
   }
@@ -149,7 +153,7 @@ export class InterviewService {
         throw new Error(`结束面试失败: ${response.status}`);
       }
     } catch (error) {
-      console.error('结束面试失败:', error);
+      logger.error(`结束面试失败: ${error}`);
       throw error;
     }
   }
@@ -185,7 +189,7 @@ export class InterviewService {
         throw new Error(`保存面试评分失败: ${response.status}`);
       }
     } catch (error) {
-      console.error('保存面试评分失败:', error);
+      logger.error(`保存面试评分失败: ${error}`);
       throw error;
     }
   }
@@ -222,7 +226,7 @@ export class InterviewService {
         throw new Error(`保存面试洞察失败: ${response.status}`);
       }
     } catch (error) {
-      console.error('保存面试洞察失败:', error);
+      logger.error(`保存面试洞察失败: ${error}`);
       throw error;
     }
   }

@@ -1,6 +1,7 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ChevronDown, CornerDownLeft, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { logger } from '../../../utils/rendererLogger.js';
 import { startSpeakerRecognition } from '../../../utils/audioRecognition';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { interviewDataService } from '../../ai-question/components/shared/data/InterviewDataService';
@@ -13,12 +14,21 @@ import { aiService } from '../../utils/ai/aiService';
 import { currentInterview } from '../../utils/currentInterview';
 import { setInterviewTrainingState, useInterviewTrainingState } from '../../utils/interviewTrainingState';
 import {
+  getRecoverableTrainingInfo,
   getSpeakerController,
   getTrainingStateMachine,
+  hasRecoverableTraining,
+  restoreInterviewTraining,
   setSpeakerController,
   startInterviewTraining,
   stopInterviewTraining
 } from '../../utils/trainingManager';
+import {
+  canStartInterview,
+  getInterviewTypeName,
+  formatTimeSince,
+  type OngoingInterviewInfo,
+} from '../../utils/interviewGuard';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
 import { Model } from '../api/modelService';
@@ -55,6 +65,9 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   const [_interviewState, setInterviewState] = useState<TrainingState>(TrainingState.IDLE);
   const [isInitializing, setIsInitializing] = useState(false);
 
+  // 互斥保护：记录阻塞的面试信息（用于未来可能的 UI 扩展）
+  const [_blockingInterview, setBlockingInterview] = useState<OngoingInterviewInfo | null>(null);
+
   const currentQuestionData = useRef<{
     sequence: number;
     questionId?: string;
@@ -65,9 +78,6 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     otherId?: string;
     otherContent?: string;
   } | null>(null);
-
-  // 扬声器识别控制器 - 使用全局管理器
-  // const speakerController = useRef<SpeakerRecognitionController | null>(null); // 删除
 
   const trainingState = useInterviewTrainingState();
 
@@ -173,7 +183,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         }
 
       } catch (error) {
-        console.error('Failed to load audio settings:', error);
+        await logger.error(`Failed to load audio settings: ${error}`);
       } finally {
         setLoading(false);
       }
@@ -183,7 +193,95 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
     // 清理函数（不清理状态机和扬声器控制器，让全局管理器管理）
     return () => {
-      // ✅ 不清理状态机和扬声器控制器，只取消订阅（如果有的话）
+      // 不清理状态机和扬声器控制器，只取消订阅（如果有的话）
+    };
+  }, []);
+
+  // 检查并恢复未完成的面试训练
+  useEffect(() => {
+    const checkAndRecoverTraining = async () => {
+      try {
+        // 检查是否有可恢复的训练
+        if (!hasRecoverableTraining()) {
+          console.log('[InterviewTrainingEntryBody] 没有可恢复的训练');
+          return;
+        }
+
+        // 获取恢复信息
+        const recoverInfo = getRecoverableTrainingInfo();
+        if (!recoverInfo) {
+          console.log('[InterviewTrainingEntryBody] 无法获取恢复信息');
+          return;
+        }
+
+        console.log('[InterviewTrainingEntryBody] 检测到未完成的训练，开始恢复:', recoverInfo.interviewId);
+
+        // 恢复状态机
+        const machine = await restoreInterviewTraining();
+        if (!machine) {
+          await logger.error('[InterviewTrainingEntryBody] 恢复状态机失败');
+          return;
+        }
+
+        // 监听状态机变化
+        machine.onStateChange(async (state, context) => {
+          setInterviewState(state);
+          await handleStateChange(state, context);
+        });
+
+        // 恢复 currentInterview
+        currentInterview.set(recoverInfo.interviewId);
+
+        // 恢复 voiceState
+        const isRecording = recoverInfo.state !== TrainingState.COMPLETED &&
+                          recoverInfo.state !== TrainingState.ERROR &&
+                          recoverInfo.state !== TrainingState.IDLE;
+        const pausedStateStr = localStorage.getItem('training-paused-state');
+        const isPaused = pausedStateStr ? JSON.parse(pausedStateStr).interviewId === recoverInfo.interviewId : false;
+        const subState = isPaused ? 'interview-training-paused' : (isRecording ? 'interview-training-recording' : 'idle');
+
+        setVoiceState({
+          mode: 'interview-training',
+          subState: subState,
+          interviewId: recoverInfo.interviewId,
+        });
+
+        // 恢复 UI 状态
+        if (recoverInfo.jobPosition) {
+          setSelectedPosition(recoverInfo.jobPosition);
+        }
+
+        // 初始化数据服务
+        interviewDataService.initializeInterview(
+          recoverInfo.interviewId,
+          recoverInfo.totalQuestions
+        );
+
+        // 恢复 interviewTrainingState（同步到所有三个窗口）
+        setInterviewTrainingState({
+          interviewState: recoverInfo.state,
+          aiMessage: '',
+          speechText: '',
+          candidateAnswer: '',
+          interviewerQuestion: '',
+          isLoading: false,
+          isListening: false,
+          currentPhase: recoverInfo.state === TrainingState.LISTENING_INTERVIEWER ? 'listening-interviewer' : undefined,
+        });
+
+        setCurrentLine(`训练已恢复，当前第 ${recoverInfo.currentQuestionIndex + 1} 题`);
+
+        console.log('[InterviewTrainingEntryBody] 训练恢复成功');
+      } catch (error) {
+        await logger.error(`[InterviewTrainingEntryBody] 恢复训练失败: ${error}`);
+      }
+    };
+
+    // 延迟 200ms 执行，确保组件完全加载
+    const timer = setTimeout(checkAndRecoverTraining, 200);
+
+    return () => {
+      clearTimeout(timer);
     };
   }, []);
 
@@ -200,8 +298,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
             lastInterviewerSpeechTime: Date.now() // 更新最后说话时间
           });
         },
-        onError: (errorMessage) => {
-          console.error('扬声器识别错误:', errorMessage);
+        onError: async (errorMessage) => {
+          await logger.error(`扬声器识别错误: ${errorMessage}`);
           setErrorMessage(`扬声器识别错误: ${errorMessage}`);
           setInterviewTrainingState({
             currentPhase: undefined,
@@ -227,7 +325,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         interviewerQuestion: '',
       });
     } catch (error) {
-      console.error('启动扬声器监听失败:', error);
+      await logger.error(`启动扬声器监听失败: ${error}`);
       throw error;
     }
   };
@@ -240,7 +338,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         await controller.stop();
       }
     } catch (error) {
-      console.error('停止扬声器监听失败:', error);
+      await logger.error(`停止扬声器监听失败: ${error}`);
     }
   };
 
@@ -313,7 +411,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       }
 
     } catch (error) {
-      console.error('处理提问完毕失败:', error);
+      await logger.error(`处理提问完毕失败: ${error}`);
       setErrorMessage(`处理提问完毕失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
@@ -400,7 +498,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       }
 
     } catch (error) {
-      console.error('自动问题检测处理失败:', error);
+      await logger.error(`自动问题检测处理失败: ${error}`);
       setErrorMessage(`自动问题检测处理失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
@@ -432,12 +530,24 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       // 调用 LLM 分析用户回答
       await analyzeReview(review);
     } catch (error) {
-      console.error('保存并分析上一轮失败:', error);
+      await logger.error(`保存并分析上一轮失败: ${error}`);
       throw error;
     }
   };
 
   const handleStartInterview = async () => {
+    // 互斥保护检查：是否有其他类型的面试正在进行
+    const { canStart, blockingInterview: blocking } = canStartInterview('interview-training');
+    if (!canStart && blocking) {
+      setBlockingInterview(blocking);
+      const typeName = getInterviewTypeName(blocking.type);
+      const timeSince = formatTimeSince(blocking.savedAt);
+      setErrorMessage(`无法开始面试训练：您有一个未完成的${typeName}（${blocking.jobPositionTitle || '未知岗位'}，${timeSince}开始）。请先完成或结束该面试。`);
+      setCurrentLine('');
+      return;
+    }
+    setBlockingInterview(null);
+
     if (!selectedPosition) {
       setErrorMessage('请先选择面试岗位');
       setCurrentLine('');
@@ -517,7 +627,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         onStart();
       }
     } catch (error) {
-      console.error('开始面试训练失败:', error);
+      await logger.error(`开始面试训练失败: ${error}`);
       const errorMsg = `开始面试训练失败: ${error instanceof Error ? error.message : '未知错误'}`;
       setErrorMessage(errorMsg);
       setCurrentLine('');
@@ -530,7 +640,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
             message: errorMsg
           });
         } catch (updateError) {
-          console.error('更新面试错误状态失败:', updateError);
+          await logger.error(`更新面试错误状态失败: ${updateError}`);
         }
       }
     }
@@ -611,7 +721,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       setCurrentLine('面试训练已暂停');
 
     } catch (error) {
-      console.error('暂停面试失败:', error);
+      await logger.error(`暂停面试失败: ${error}`);
       setErrorMessage(`暂停面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
@@ -656,7 +766,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       localStorage.removeItem('training-paused-state');
 
     } catch (error) {
-      console.error('恢复面试失败:', error);
+      await logger.error(`恢复面试失败: ${error}`);
       setErrorMessage(`恢复面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
@@ -736,7 +846,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       stopInterviewTraining();
 
     } catch (error) {
-      console.error('结束面试训练失败:', error);
+      await logger.error(`结束面试训练失败: ${error}`);
       setErrorMessage(`结束面试训练失败: ${error instanceof Error ? error.message : '未知错误'}`);
       setCurrentLine('');
       const interviewId = currentInterview.get();
@@ -818,7 +928,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : '分析回答失败';
-      console.error('分析回答失败:', error);
+      await logger.error(`分析回答失败: ${error}`);
       setErrorMessage(`分析回答失败: ${errorMsg}`);
       setTimestamp(Date.now());
       throw error;
@@ -963,7 +1073,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
-      console.error('生成面试报告失败:', error);
+      await logger.error(`生成面试报告失败: ${error}`);
       setErrorMessage(`生成面试报告失败: ${errorMsg}`);
       setTimestamp(Date.now());
       throw error;
@@ -1016,7 +1126,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           break;
       }
     } catch (error) {
-      console.error('Error handling state change:', error);
+      await logger.error(`Error handling state change: ${error}`);
       setErrorMessage(`状态处理错误: ${error instanceof Error ? error.message : '未知错误'}`);
       setCurrentLine('');
     } finally {
@@ -1157,7 +1267,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
             getTrainingStateMachine()?.send({ type: 'ANALYSIS_COMPLETE' });
           } catch (parseError) {
-            console.error('Failed to parse analysis result:', parseError);
+            await logger.error(`Failed to parse analysis result: ${parseError}`);
             getTrainingStateMachine()?.send({ type: 'ANALYSIS_ERROR', payload: { error: '分析结果解析失败' } });
           }
         } else {
@@ -1289,7 +1399,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         });
       }
     } catch (error) {
-      console.error('[InterviewTraining] 记录对话失败:', error);
+      await logger.error(`[InterviewTraining] 记录对话失败: ${error}`);
       // 不影响主流程，继续执行
     }
 
@@ -1315,7 +1425,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
             await startListeningInterviewer();
             setCurrentLine('正在监听面试官下一个问题...');
           } catch (error) {
-            console.error('重新启动扬声器监听失败:', error);
+            await logger.error(`重新启动扬声器监听失败: ${error}`);
             setErrorMessage('重新启动扬声器监听失败');
           }
         }, 2000);
@@ -1355,7 +1465,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
       transitionToNext('GENERATE_REPORT');
     } catch (error) {
-      console.error('面试训练结束阶段发生错误:', error);
+      await logger.error(`面试训练结束阶段发生错误: ${error}`);
       transitionToNext('ENDING_ERROR', { error: error instanceof Error ? error.message : String(error) });
     }
   };
@@ -1374,9 +1484,9 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     if (interviewId) {
       const machine = getTrainingStateMachine();
       if (machine) {
-        generateInterviewReport(interviewId, machine.getContext()).catch(error => {
+        generateInterviewReport(interviewId, machine.getContext()).catch(async (error) => {
           const errorMsg = error instanceof Error ? error.message : '生成面试训练报告失败';
-          console.error('生成面试训练报告失败:', error);
+          await logger.error(`生成面试训练报告失败: ${error}`);
           setErrorMessage(`后台生成面试训练报告失败: ${errorMsg}`);
           setTimestamp(Date.now());
         });
@@ -1405,7 +1515,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           message: `错误: ${errorMsg}`
         });
       } catch (error) {
-        console.error('更新面试训练错误状态失败:', error);
+        await logger.error(`更新面试训练错误状态失败: ${error}`);
       }
     }
   };
@@ -1421,7 +1531,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       const reviews = await mockInterviewService.getInterviewReviews(interviewId);
 
       if (!reviews || reviews.length === 0) {
-        console.error('无面试问答记录');
+        await logger.error('无面试问答记录');
         setErrorMessage('无法生成面试报告: 没有面试问答记录');
         setTimestamp(Date.now());
         return;
@@ -1553,7 +1663,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
-      console.error('生成面试报告失败:', error);
+      await logger.error(`生成面试报告失败: ${error}`);
       setErrorMessage(`生成面试报告失败: ${errorMsg}`);
       setTimestamp(Date.now());
       throw error;

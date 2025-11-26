@@ -1,5 +1,6 @@
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { logger } from '../../../utils/rendererLogger.js';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { interviewDataService } from '../../ai-question/components/shared/data/InterviewDataService';
 import { contextManagementService } from '../../ai-question/components/shared/services/ContextManagementService';
@@ -11,9 +12,18 @@ import { aiService } from '../../utils/ai/aiService';
 import { currentInterview } from '../../utils/currentInterview';
 import {
   getMockInterviewStateMachine,
+  getRecoverableInterviewInfo,
+  hasRecoverableInterview,
+  restoreMockInterview,
   startMockInterview,
   stopMockInterview
 } from '../../utils/mockInterviewManager';
+import {
+  canStartInterview,
+  getInterviewTypeName,
+  formatTimeSince,
+  type OngoingInterviewInfo,
+} from '../../utils/interviewGuard';
 import { setMockInterviewState, useMockInterviewState } from '../../utils/mockInterviewState';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
@@ -53,9 +63,11 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
   const [piperAvailable, setPiperAvailable] = useState(false);
 
   // 面试状态管理（使用全局管理器）
-  // const stateMachine = useRef<InterviewStateMachine | null>(null); // 删除，使用全局管理器
   const [_interviewState, setInterviewState] = useState<InterviewState>(InterviewState.IDLE);
   const [isInitializing, setIsInitializing] = useState(false);
+
+  // 互斥保护：记录阻塞的面试信息（用于未来可能的 UI 扩展）
+  const [_blockingInterview, setBlockingInterview] = useState<OngoingInterviewInfo | null>(null);
 
   // 当前问题的暂存数据（等待所有数据齐全后一次性 UPDATE）
   const currentQuestionData = useRef<{
@@ -159,7 +171,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         }
 
       } catch (error) {
-        console.error('Failed to load audio settings:', error);
+        logger.error(`Failed to load audio settings: ${error}`);
         setPiperAvailable(false);
       } finally {
         setLoading(false);
@@ -168,9 +180,105 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
 
     loadAudioSettings();
 
+    // 检查并恢复未完成的面试
+    const checkAndRecoverInterview = async () => {
+      try {
+        // 检查是否有可恢复的面试
+        if (!hasRecoverableInterview()) {
+          console.log('[MockInterviewEntryBody] 没有可恢复的面试');
+          return;
+        }
+
+        // 获取恢复信息
+        const recoverInfo = getRecoverableInterviewInfo();
+        if (!recoverInfo) {
+          console.log('[MockInterviewEntryBody] 无法获取恢复信息');
+          return;
+        }
+
+        console.log('[MockInterviewEntryBody] 检测到未完成的面试，准备恢复', {
+          interviewId: recoverInfo.interviewId,
+          state: recoverInfo.state,
+          currentQuestionIndex: recoverInfo.currentQuestionIndex,
+        });
+
+        // 恢复状态机
+        const machine = restoreMockInterview();
+        if (!machine) {
+          logger.error('[MockInterviewEntryBody] 恢复状态机失败');
+          return;
+        }
+
+        // 监听状态机变化（与 handleStartInterview 中相同）
+        machine.onStateChange(async (state, context) => {
+          setInterviewState(state);
+          onStateChange?.(state);
+          await handleStateChange(state, context);
+        });
+
+        // 恢复 currentInterview
+        currentInterview.set(recoverInfo.interviewId);
+
+        // 恢复 voiceState
+        const isRecording = recoverInfo.state !== InterviewState.COMPLETED &&
+                          recoverInfo.state !== InterviewState.ERROR &&
+                          recoverInfo.state !== InterviewState.IDLE;
+
+        // 检查是否有暂停状态
+        const pausedStateStr = localStorage.getItem('mock-interview-paused-state');
+        const isPaused = pausedStateStr ? JSON.parse(pausedStateStr).interviewId === recoverInfo.interviewId : false;
+
+        const subState = isPaused ? 'mock-interview-paused' : (isRecording ? 'mock-interview-recording' : 'idle');
+
+        setVoiceState({
+          mode: 'mock-interview',
+          subState: subState,
+          interviewId: recoverInfo.interviewId,
+        });
+
+        // 恢复 UI 状态 - 设置岗位信息（让 JobPositionCard 显示正确的岗位）
+        if (recoverInfo.jobPosition) {
+          setSelectedPosition(recoverInfo.jobPosition);
+        }
+
+        // 初始化数据服务
+        interviewDataService.initializeInterview(
+          recoverInfo.interviewId,
+          recoverInfo.totalQuestions
+        );
+
+        // 恢复 mockInterviewState（同步到所有三个窗口：左侧控制窗口、中间 AI 窗口、右侧历史窗口）
+        setMockInterviewState({
+          interviewState: recoverInfo.state,
+          aiMessage: '', // AI 消息需要重新生成
+          speechText: '',
+          candidateAnswer: '',
+          isLoading: false,
+          isListening: false,
+        });
+
+        // 设置状态提示
+        setCurrentLine(`面试已恢复，当前第 ${recoverInfo.currentQuestionIndex + 1} 题`);
+
+        console.log('[MockInterviewEntryBody] 面试恢复成功，已同步到所有窗口', {
+          interviewId: recoverInfo.interviewId,
+          subState,
+          isPaused,
+          state: recoverInfo.state,
+        });
+
+      } catch (error) {
+        logger.error(`[MockInterviewEntryBody] 恢复面试失败: ${error}`);
+      }
+    };
+
+    // 延迟执行恢复检查，确保组件完全挂载
+    const timer = setTimeout(checkAndRecoverInterview, 200);
+
     // 清理函数（不清理状态机，让全局管理器管理）
     return () => {
-      // ✅ 不清理状态机，只取消订阅（如果有的话）
+      clearTimeout(timer);
+      // 不清理状态机，只取消订阅（如果有的话）
     };
   }, []);
 
@@ -188,7 +296,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       setErrorMessage('');
       setTimestamp(Date.now());
     } catch (error) {
-      console.error('语音播放失败:', error);
+      logger.error(`语音播放失败: ${error}`);
       setCurrentLine('');
       setErrorMessage(`语音播放失败: ${text}`);
       setTimestamp(Date.now());
@@ -208,6 +316,18 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
   };
 
   const handleStartInterview = async () => {
+    // 互斥保护检查：是否有其他类型的面试正在进行
+    const { canStart, blockingInterview: blocking } = canStartInterview('mock-interview');
+    if (!canStart && blocking) {
+      setBlockingInterview(blocking);
+      const typeName = getInterviewTypeName(blocking.type);
+      const timeSince = formatTimeSince(blocking.savedAt);
+      setErrorMessage(`无法开始模拟面试：您有一个未完成的${typeName}（${blocking.jobPositionTitle || '未知岗位'}，${timeSince}开始）。请先完成或结束该面试。`);
+      setCurrentLine('');
+      return;
+    }
+    setBlockingInterview(null);
+
     if (!selectedPosition) {
       setErrorMessage('请先选择面试岗位');
       setCurrentLine('');
@@ -309,7 +429,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         onStart();
       }
     } catch (error) {
-      console.error('开始面试失败:', error);
+      logger.error(`开始面试失败: ${error}`);
       const errorMsg = `开始面试失败: ${error instanceof Error ? error.message : '未知错误'}`;
       setErrorMessage(errorMsg);
       setCurrentLine('');
@@ -323,7 +443,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
             message: errorMsg
           });
         } catch (updateError) {
-          console.error('更新面试错误状态失败:', updateError);
+          logger.error(`更新面试错误状态失败: ${updateError}`);
         }
       }
     }
@@ -417,7 +537,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       setCurrentLine('面试已暂停');
 
     } catch (error) {
-      console.error('暂停面试失败:', error);
+      logger.error(`暂停面试失败: ${error}`);
       setErrorMessage(`暂停面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
@@ -471,7 +591,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       localStorage.removeItem('mock-interview-paused-state');
 
     } catch (error) {
-      console.error('恢复面试失败:', error);
+      logger.error(`恢复面试失败: ${error}`);
       setErrorMessage(`恢复面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
@@ -560,7 +680,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       stopMockInterview();
 
     } catch (error) {
-      console.error('结束面试失败:', error);
+      logger.error(`结束面试失败: ${error}`);
       setErrorMessage(`结束面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
       setCurrentLine('');
       // 即使失败，也要设置状态为完成
@@ -647,7 +767,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : '分析回答失败';
-      console.error('分析回答失败:', error);
+      logger.error(`分析回答失败: ${error}`);
       setErrorMessage(`分析回答失败: ${errorMsg}`);
       setTimestamp(Date.now());
       throw error;
@@ -802,7 +922,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
-      console.error('生成面试报告失败:', error);
+      logger.error(`生成面试报告失败: ${error}`);
       setErrorMessage(`生成面试报告失败: ${errorMsg}`);
       setTimestamp(Date.now());
       throw error;
@@ -863,7 +983,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           break;
       }
     } catch (error) {
-      console.error('Error handling state change:', error);
+      logger.error(`Error handling state change: ${error}`);
       setErrorMessage(`状态处理错误: ${error instanceof Error ? error.message : '未知错误'}`);
       setCurrentLine('');
     } finally {
@@ -1108,7 +1228,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
             // 发送分析完成事件
             getMockInterviewStateMachine()?.send({ type: 'ANALYSIS_COMPLETE' });
           } catch (parseError) {
-            console.error('Failed to parse analysis result:', parseError);
+            logger.error(`Failed to parse analysis result: ${parseError}`);
             getMockInterviewStateMachine()?.send({ type: 'ANALYSIS_ERROR', payload: { error: '分析结果解析失败' } });
           }
         } else {
@@ -1237,7 +1357,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         });
       }
     } catch (error) {
-      console.error('[MockInterview] 记录对话失败:', error);
+      logger.error(`[MockInterview] 记录对话失败: ${error}`);
       // 不影响主流程，继续执行
     }
 
@@ -1284,7 +1404,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       // 发送生成报告事件
       transitionToNext('GENERATE_REPORT');
     } catch (error) {
-      console.error('面试结束阶段发生错误:', error);
+      logger.error(`面试结束阶段发生错误: ${error}`);
       transitionToNext('ENDING_ERROR', { error: error instanceof Error ? error.message : String(error) });
     }
   };
@@ -1307,7 +1427,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       if (machine) {
         generateInterviewReport(interviewId, machine.getContext()).catch(error => {
           const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
-          console.error('生成面试报告失败:', error);
+          logger.error(`生成面试报告失败: ${error}`);
           setErrorMessage(`后台生成面试报告失败: ${errorMsg}`);
           setTimestamp(Date.now());
         });
@@ -1339,7 +1459,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           message: `错误: ${errorMsg}`
         });
       } catch (error) {
-        console.error('更新面试错误状态失败:', error);
+        logger.error(`更新面试错误状态失败: ${error}`);
       }
     }
   };
@@ -1358,7 +1478,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       const reviews = await mockInterviewService.getInterviewReviews(interviewId);
 
       if (!reviews || reviews.length === 0) {
-        console.error('无面试问答记录');
+        logger.error('无面试问答记录');
         setErrorMessage('无法生成面试报告: 没有面试问答记录');
         setTimestamp(Date.now());
         return;
@@ -1501,7 +1621,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
-      console.error('生成面试报告失败:', error);
+      logger.error(`生成面试报告失败: ${error}`);
       setErrorMessage(`生成面试报告失败: ${errorMsg}`);
       setTimestamp(Date.now());
       throw error;

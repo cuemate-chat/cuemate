@@ -1,10 +1,12 @@
 // apps/desktop-client/src/renderer/utils/mockInterviewManager.ts
 
+import { logger } from '../../utils/rendererLogger.js';
 import {
   InterviewContext,
   InterviewState,
   InterviewStateMachine,
 } from '../ai-question/components/shared/state/InterviewStateMachine';
+import { interviewService } from '../interviewer/api/interviewService';
 
 /**
  * 持久化数据结构
@@ -107,7 +109,7 @@ function persistCurrentState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     console.log('[MockInterviewManager] 状态已持久化:', state);
   } catch (error) {
-    console.error('[MockInterviewManager] 持久化失败:', error);
+    logger.error(`[MockInterviewManager] 持久化失败: ${error}`);
   }
 }
 
@@ -119,7 +121,7 @@ function clearPersistedData() {
     localStorage.removeItem(STORAGE_KEY);
     console.log('[MockInterviewManager] 持久化数据已清除');
   } catch (error) {
-    console.error('[MockInterviewManager] 清除持久化数据失败:', error);
+    logger.error(`[MockInterviewManager] 清除持久化数据失败: ${error}`);
   }
 }
 
@@ -210,6 +212,25 @@ export function subscribeMockInterview(callback: StateSubscriber): () => void {
 }
 
 /**
+ * 处理过期的面试记录（更新数据库状态并清除本地数据）
+ */
+async function handleExpiredInterview(interviewId: string): Promise<void> {
+  try {
+    // 更新数据库状态为过期
+    await interviewService.updateInterview(interviewId, {
+      status: 'mock-interview-expired',
+      message: '面试记录已过期（超过24小时），自动终止',
+    });
+    console.log('[MockInterviewManager] 已将过期面试标记为 expired:', interviewId);
+  } catch (error) {
+    logger.error(`[MockInterviewManager] 更新过期面试状态失败: ${error}`);
+  } finally {
+    // 无论数据库更新是否成功，都清除本地数据
+    clearPersistedData();
+  }
+}
+
+/**
  * 检查是否有可恢复的面试
  */
 export function hasRecoverableInterview(): boolean {
@@ -222,7 +243,8 @@ export function hasRecoverableInterview(): boolean {
     // 检查是否过期（24小时）
     const age = Date.now() - data.savedAt;
     if (age > MAX_AGE) {
-      clearPersistedData();
+      // 异步处理过期面试（更新数据库状态）
+      handleExpiredInterview(data.interviewId);
       return false;
     }
 
@@ -286,7 +308,7 @@ export function restoreMockInterview(): InterviewStateMachine | null {
 
     return machine;
   } catch (error) {
-    console.error('[MockInterviewManager] 恢复失败:', error);
+    logger.error(`[MockInterviewManager] 恢复失败: ${error}`);
     clearPersistedData();
     return null;
   }
