@@ -174,22 +174,19 @@ export function MockInterviewFooter({
 
       {/* 右侧控制按钮 */}
       <div className="control-actions">
-        {/* 自动/手动切换开关 */}
+        {/* 当前模式显示（只读，面试进行中不可切换） */}
         <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <button
-                className={`mode-toggle ${isAutoMode ? 'auto' : 'manual'}`}
-                onClick={() => setMockInterviewState({ isAutoMode: !isAutoMode })}
-              >
+              <div className={`mode-toggle ${isAutoMode ? 'auto' : 'manual'} disabled`}>
                 <span className="toggle-text">{isAutoMode ? '自动' : '手动'}</span>
                 <div className="toggle-switch">
                   <div className="toggle-handle" />
                 </div>
-              </button>
+              </div>
             </Tooltip.Trigger>
             <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-              {isAutoMode ? '切换到手动模式' : '切换到自动模式'}
+              面试进行中无法切换模式
               <Tooltip.Arrow className="radix-tooltip-arrow" />
             </Tooltip.Content>
           </Tooltip.Root>
