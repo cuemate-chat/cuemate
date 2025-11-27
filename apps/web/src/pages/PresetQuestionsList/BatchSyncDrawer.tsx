@@ -61,7 +61,7 @@ export default function BatchSyncDrawer({
       width="50%"
     >
       <DrawerHeader>
-        批量同步到面试题库
+        批量同步选中题目到面试题库
       </DrawerHeader>
 
       <DrawerContent>

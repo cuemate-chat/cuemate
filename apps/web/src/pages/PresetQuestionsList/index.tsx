@@ -1,13 +1,13 @@
-import { ArrowPathIcon, CheckIcon, CloudArrowUpIcon, LockClosedIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, CheckIcon, CloudArrowUpIcon, LockClosedIcon, TagIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Button, Card, Checkbox, DatePicker, Input, Modal, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import {
-    batchDeletePresetQuestions,
-    deletePresetQuestion,
-    getJobsForSync,
-    listPresetQuestions,
-    PresetQuestion,
+  batchDeletePresetQuestions,
+  deletePresetQuestion,
+  getJobsForSync,
+  listPresetQuestions,
+  PresetQuestion,
 } from '../../api/preset-questions';
 import { listTags } from '../../api/questions';
 import LicenseGuard from '../../components/LicenseGuard';
@@ -19,6 +19,7 @@ import TagManagerDrawer from '../QuestionsList/TagManagerDrawer';
 import BatchImportDrawer from './BatchImportDrawer';
 import BatchSyncDrawer from './BatchSyncDrawer';
 import CreatePresetQuestionDrawer from './CreatePresetQuestionDrawer';
+import TagBatchSyncDrawer from './TagBatchSyncDrawer';
 import EditPresetQuestionDrawer from './EditPresetQuestionDrawer';
 import SyncJobsDetailDrawer from './SyncJobsDetailDrawer';
 
@@ -46,6 +47,7 @@ export default function PresetQuestionsList() {
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   const [tagManagerDrawerOpen, setTagManagerDrawerOpen] = useState(false);
   const [batchSyncDrawerOpen, setBatchSyncDrawerOpen] = useState(false);
+  const [tagBatchSyncDrawerOpen, setTagBatchSyncDrawerOpen] = useState(false);
   const [batchImportDrawerOpen, setBatchImportDrawerOpen] = useState(false);
   const [syncJobsDetailDrawerOpen, setSyncJobsDetailDrawerOpen] = useState(false);
 
@@ -374,7 +376,13 @@ export default function PresetQuestionsList() {
                 disabled={selectedIds.length === 0}
                 onClick={() => setBatchSyncDrawerOpen(true)}
               >
-                批量同步到面试押题
+                批量同步选中题目
+              </Button>
+              <Button
+                icon={<TagIcon className="w-4 h-4" />}
+                onClick={() => setTagBatchSyncDrawerOpen(true)}
+              >
+                按标签批量同步
               </Button>
               <Button
                 danger
@@ -556,6 +564,17 @@ export default function PresetQuestionsList() {
           jobs={jobs}
           onSuccess={() => {
             setBatchSyncDrawerOpen(false);
+            reloadList();
+          }}
+        />
+
+        <TagBatchSyncDrawer
+          open={tagBatchSyncDrawerOpen}
+          onClose={() => setTagBatchSyncDrawerOpen(false)}
+          tags={tags}
+          jobs={jobs}
+          onSuccess={() => {
+            setTagBatchSyncDrawerOpen(false);
             reloadList();
           }}
         />

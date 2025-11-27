@@ -129,3 +129,30 @@ export async function batchImportPresetQuestions(payload: {
     errors?: string[];
   }>('/preset-questions/batch-import', payload);
 }
+
+// 根据标签获取匹配的题目数量
+export async function countQuestionsByTags(tagIds: string[]): Promise<{ count: number }> {
+  const searchParams = new URLSearchParams();
+  searchParams.set('tagIds', tagIds.join(','));
+  return await http.get<{ count: number }>(`/preset-questions/count-by-tags?${searchParams.toString()}`);
+}
+
+// 按标签批量同步到面试题库
+export async function batchSyncByTags(payload: {
+  tagIds: string[];
+  jobIds: string[];
+}): Promise<{
+  success: boolean;
+  totalQuestions: number;
+  totalJobs: number;
+  syncedCount: number;
+  skippedCount: number;
+}> {
+  return await http.post<{
+    success: boolean;
+    totalQuestions: number;
+    totalJobs: number;
+    syncedCount: number;
+    skippedCount: number;
+  }>('/preset-questions/batch-sync-by-tags', payload);
+}
