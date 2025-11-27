@@ -495,6 +495,188 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
     }),
   );
 
+  // 根据标签获取匹配的题目数量
+  app.get(
+    '/preset-questions/count-by-tags',
+    withErrorLogging(app.log as any, 'preset-questions.count-by-tags', async (req, reply) => {
+      try {
+        await (req as any).jwtVerify();
+        const schema = z.object({
+          tagIds: z.string().min(1), // 逗号分隔的标签 ID
+        });
+
+        const { tagIds } = schema.parse((req as any).query || {});
+        const tagIdList = tagIds.split(',').filter(id => id.trim());
+
+        if (tagIdList.length === 0) {
+          return { count: 0 };
+        }
+
+        // 查询匹配标签的题目数量
+        const placeholders = tagIdList.map(() => '?').join(',');
+        const result = (app as any).db
+          .prepare(
+            `SELECT COUNT(1) as cnt FROM preset_questions WHERE tag_id IN (${placeholders})`,
+          )
+          .get(...tagIdList);
+
+        return { count: result?.cnt ?? 0 };
+      } catch (err) {
+        return reply.code(400).send(buildPrefixedError('查询题目数量失败', err, 400));
+      }
+    }),
+  );
+
+  // 按标签批量同步到面试题库（多标签 + 多岗位）
+  app.post(
+    '/preset-questions/batch-sync-by-tags',
+    withErrorLogging(app.log as any, 'preset-questions.batch-sync-by-tags', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const body = z
+          .object({
+            tagIds: z.array(z.string()).min(1).max(50),
+            jobIds: z.array(z.string()).min(1).max(50),
+          })
+          .parse((req as any).body || {});
+
+        // 校验所有岗位归属
+        const jobPlaceholders = body.jobIds.map(() => '?').join(',');
+        const validJobs = (app as any).db
+          .prepare(`SELECT id FROM jobs WHERE id IN (${jobPlaceholders}) AND user_id = ?`)
+          .all(...body.jobIds, payload.uid);
+
+        if (validJobs.length !== body.jobIds.length) {
+          return reply.code(403).send({ error: '部分岗位不存在或无权限' });
+        }
+
+        // 获取匹配标签的预置题目
+        const tagPlaceholders = body.tagIds.map(() => '?').join(',');
+        const presetQuestions = (app as any).db
+          .prepare(
+            `SELECT * FROM preset_questions WHERE tag_id IN (${tagPlaceholders})`,
+          )
+          .all(...body.tagIds);
+
+        if (presetQuestions.length === 0) {
+          return { success: true, totalQuestions: 0, totalJobs: body.jobIds.length, syncedCount: 0, skippedCount: 0 };
+        }
+
+        const { randomUUID } = await import('crypto');
+        let syncedCount = 0;
+        let skippedCount = 0;
+
+        // 遍历每个岗位进行同步
+        for (const jobId of body.jobIds) {
+          // 获取该岗位已存在的面试题目（避免重复）
+          const existingQuestions = (app as any).db
+            .prepare('SELECT question FROM interview_questions WHERE job_id = ?')
+            .all(jobId)
+            .map((row: any) => row.question);
+
+          const existingSet = new Set(existingQuestions);
+
+          for (const preset of presetQuestions) {
+            // 检查是否已存在相同问题
+            if (existingSet.has(preset.question)) {
+              skippedCount++;
+              continue;
+            }
+
+            try {
+              const questionId = randomUUID();
+              const now = Date.now();
+
+              // 插入到面试题库
+              (app as any).db
+                .prepare(
+                  'INSERT INTO interview_questions (id, job_id, question, answer, created_at, tag_id, vector_status) VALUES (?, ?, ?, ?, ?, ?, 0)',
+                )
+                .run(questionId, jobId, preset.question, preset.answer, now, preset.tag_id);
+
+              // 更新预置题目的同步状态
+              const syncedJobs = preset.synced_jobs ? JSON.parse(preset.synced_jobs) : [];
+              if (!syncedJobs.includes(jobId)) {
+                syncedJobs.push(jobId);
+                (app as any).db
+                  .prepare('UPDATE preset_questions SET synced_jobs = ? WHERE id = ?')
+                  .run(JSON.stringify(syncedJobs), preset.id);
+                // 更新内存中的 preset 对象，避免重复添加
+                preset.synced_jobs = JSON.stringify(syncedJobs);
+              }
+
+              // 同步到向量库
+              try {
+                let tagName = null;
+                if (preset.tag_id) {
+                  const tagRow = (app as any).db
+                    .prepare('SELECT name FROM tags WHERE id = ?')
+                    .get(preset.tag_id);
+                  tagName = tagRow?.name || null;
+                }
+
+                await fetch(
+                  getRagServiceUrl(SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.QUESTIONS_PROCESS),
+                  {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                      question: {
+                        id: questionId,
+                        title: preset.question,
+                        description: preset.answer,
+                        job_id: jobId,
+                        tag_id: preset.tag_id,
+                        tag_name: tagName,
+                        user_id: payload.uid,
+                        created_at: now,
+                      },
+                    }),
+                  },
+                );
+
+                // 更新向量同步状态
+                (app as any).db
+                  .prepare('UPDATE interview_questions SET vector_status = 1 WHERE id = ?')
+                  .run(questionId);
+              } catch (error) {
+                app.log.error({ err: error }, 'Failed to sync question to RAG service');
+              }
+
+              syncedCount++;
+              // 添加到已存在集合，避免同一岗位重复添加
+              existingSet.add(preset.question);
+            } catch (error) {
+              app.log.error({ err: error }, 'Failed to sync preset question to interview questions');
+              skippedCount++;
+            }
+          }
+        }
+
+        // 记录操作日志
+        await logOperation(app, req, {
+          ...OPERATION_MAPPING.PRESET_QUESTION,
+          resourceId: `batch_sync_tags_${body.tagIds.length}_jobs_${body.jobIds.length}`,
+          resourceName: `按标签批量同步${presetQuestions.length}个题目到${body.jobIds.length}个岗位`,
+          operation: OperationType.CREATE,
+          message: `按标签批量同步: ${syncedCount} 条新增, ${skippedCount} 条跳过`,
+          status: 'success',
+          userId: payload.uid
+        });
+
+        return {
+          success: true,
+          totalQuestions: presetQuestions.length,
+          totalJobs: body.jobIds.length,
+          syncedCount,
+          skippedCount
+        };
+      } catch (err: any) {
+        return reply.code(400).send(buildPrefixedError('按标签批量同步失败', err, 400));
+      }
+    }),
+  );
+
   // 批量导入预置题目（从 CSV 或 JSON）
   app.post(
     '/preset-questions/batch-import',
