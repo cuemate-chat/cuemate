@@ -352,6 +352,13 @@ export class InterviewStateMachine {
     if (context.totalQuestions !== undefined) {
       this.context.totalQuestions = context.totalQuestions;
     }
+    // 恢复当前问题和答案
+    if (context.currentQuestion !== undefined) {
+      this.context.currentQuestion = context.currentQuestion;
+    }
+    if (context.currentAnswer !== undefined) {
+      this.context.currentAnswer = context.currentAnswer;
+    }
 
     // 设置状态
     this.setState(state);

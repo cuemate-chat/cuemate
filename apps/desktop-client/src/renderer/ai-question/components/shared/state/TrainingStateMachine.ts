@@ -313,6 +313,13 @@ export class TrainingStateMachine {
     if (context.totalQuestions !== undefined) {
       this.context.totalQuestions = context.totalQuestions;
     }
+    // 恢复当前问题和参考答案
+    if (context.currentQuestion !== undefined) {
+      this.context.currentQuestion = context.currentQuestion;
+    }
+    if (context.referenceAnswer !== undefined) {
+      this.context.referenceAnswer = context.referenceAnswer;
+    }
 
     this.setState(state);
   }
