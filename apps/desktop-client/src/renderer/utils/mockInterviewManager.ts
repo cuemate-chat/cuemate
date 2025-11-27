@@ -1,6 +1,7 @@
 // apps/desktop-client/src/renderer/utils/mockInterviewManager.ts
 
 import { logger } from '../../utils/rendererLogger.js';
+import { getVoiceState } from '../../utils/voiceState';
 import {
   InterviewContext,
   InterviewState,
@@ -20,6 +21,10 @@ interface PersistedMockInterviewData {
   totalQuestions: number;
   state: InterviewState;
   savedAt: number;
+  // 新增：恢复面试时需要的关键数据
+  elapsedTime?: number; // 已用时长（秒）
+  currentQuestion?: string; // 当前面试问题
+  currentAnswer?: string; // AI 参考答案
 }
 
 const STORAGE_KEY = 'cuemate_mock_interview_state';
@@ -71,20 +76,8 @@ function broadcastStateUpdate(state: InterviewState, context: InterviewContext) 
 }
 
 /**
- * 持久化到 localStorage（防抖）
- */
-function schedulePersist() {
-  if (persistTimer) {
-    clearTimeout(persistTimer);
-  }
-
-  persistTimer = setTimeout(() => {
-    persistCurrentState();
-  }, 1000); // 1秒防抖
-}
-
-/**
  * 立即持久化当前状态
+ * 从多个数据源获取最完整的数据，确保恢复时不丢失信息
  */
 function persistCurrentState() {
   if (!globalStateMachine) {
@@ -93,6 +86,23 @@ function persistCurrentState() {
 
   const context = globalStateMachine.getContext();
   const state = globalStateMachine.getState();
+
+  // 获取当前计时器时长
+  const voiceState = getVoiceState();
+  const elapsedTime = voiceState.timerDuration || 0;
+
+  // 从 mockInterviewState 获取 UI 状态中的 AI 回答（作为备用数据源）
+  let aiMessageFromUI = '';
+  try {
+    const mockStateStr = localStorage.getItem('cuemate.mockInterview.state');
+    if (mockStateStr) {
+      const mockState = JSON.parse(mockStateStr);
+      aiMessageFromUI = mockState.aiMessage || '';
+    }
+  } catch {}
+
+  // 优先使用 context.currentAnswer，如果为空则使用 UI 状态中的 aiMessage
+  const currentAnswer = context.currentAnswer || aiMessageFromUI;
 
   const data: PersistedMockInterviewData = {
     interviewId: context.interviewId,
@@ -103,11 +113,14 @@ function persistCurrentState() {
     totalQuestions: context.totalQuestions,
     state,
     savedAt: Date.now(),
+    // 保存恢复面试需要的关键数据
+    elapsedTime,
+    currentQuestion: context.currentQuestion,
+    currentAnswer: currentAnswer, // 优先使用状态机数据，备用 UI 数据
   };
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    console.log('[MockInterviewManager] 状态已持久化:', state);
   } catch (error) {
     logger.error(`[MockInterviewManager] 持久化失败: ${error}`);
   }
@@ -119,7 +132,6 @@ function persistCurrentState() {
 function clearPersistedData() {
   try {
     localStorage.removeItem(STORAGE_KEY);
-    console.log('[MockInterviewManager] 持久化数据已清除');
   } catch (error) {
     logger.error(`[MockInterviewManager] 清除持久化数据失败: ${error}`);
   }
@@ -131,7 +143,6 @@ function clearPersistedData() {
 export function startMockInterview(context: Partial<InterviewContext>): InterviewStateMachine {
   // 如果已有状态机，先停止
   if (globalStateMachine) {
-    console.warn('[MockInterviewManager] 已存在状态机，先停止');
     stopMockInterview();
   }
 
@@ -140,32 +151,21 @@ export function startMockInterview(context: Partial<InterviewContext>): Intervie
 
   // 监听状态变化
   globalStateMachine.onStateChange((state, ctx) => {
-    console.log('[MockInterviewManager] 状态变化:', state);
-
     // 广播给所有窗口
     broadcastStateUpdate(state, ctx);
 
     // 通知订阅者
     subscribers.forEach((callback) => callback(state, ctx));
 
-    // 持久化（防抖）
-    schedulePersist();
-
-    // 关键状态立即持久化
-    if (
-      state === InterviewState.AI_THINKING ||
-      state === InterviewState.AI_SPEAKING ||
-      state === InterviewState.USER_LISTENING ||
-      state === InterviewState.USER_SPEAKING
-    ) {
+    // 所有状态变化都立即持久化，确保数据不丢失
+    // 只有 COMPLETED 和 ERROR 状态不需要持久化（会被清除）
+    if (state !== InterviewState.COMPLETED && state !== InterviewState.ERROR) {
       persistCurrentState();
     }
   });
 
   // 初始化同步通道
   initSyncChannel();
-
-  console.log('[MockInterviewManager] 模拟面试已启动:', context.interviewId);
 
   return globalStateMachine;
 }
@@ -175,8 +175,6 @@ export function startMockInterview(context: Partial<InterviewContext>): Intervie
  */
 export function stopMockInterview() {
   if (globalStateMachine) {
-    console.log('[MockInterviewManager] 停止模拟面试');
-
     // 重置状态机
     globalStateMachine.reset();
     globalStateMachine = null;
@@ -221,7 +219,6 @@ async function handleExpiredInterview(interviewId: string): Promise<void> {
       status: 'mock-interview-expired',
       message: '面试记录已过期（超过24小时），自动终止',
     });
-    console.log('[MockInterviewManager] 已将过期面试标记为 expired:', interviewId);
   } catch (error) {
     logger.error(`[MockInterviewManager] 更新过期面试状态失败: ${error}`);
   } finally {
@@ -280,15 +277,12 @@ export function restoreMockInterview(): InterviewStateMachine | null {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) {
-      console.log('[MockInterviewManager] 没有可恢复的数据');
       return null;
     }
 
     const data: PersistedMockInterviewData = JSON.parse(saved);
 
-    console.log('[MockInterviewManager] 开始恢复模拟面试:', data.interviewId);
-
-    // 重新创建 context
+    // 重新创建 context，包含当前问题和答案
     const context: Partial<InterviewContext> = {
       interviewId: data.interviewId,
       jobPosition: data.jobPosition,
@@ -296,15 +290,15 @@ export function restoreMockInterview(): InterviewStateMachine | null {
       questionsBank: data.questionsBank,
       currentQuestionIndex: data.currentQuestionIndex,
       totalQuestions: data.totalQuestions,
+      currentQuestion: data.currentQuestion || '',
+      currentAnswer: data.currentAnswer || '',
     };
 
     // 创建状态机
     const machine = startMockInterview(context);
 
-    // 恢复状态
+    // 恢复状态（包含 currentQuestion 和 currentAnswer）
     machine.restoreState(data.state, context);
-
-    console.log('[MockInterviewManager] 模拟面试恢复成功');
 
     return machine;
   } catch (error) {

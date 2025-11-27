@@ -1,6 +1,7 @@
 // apps/desktop-client/src/renderer/utils/trainingManager.ts
 
 import { logger } from '../../utils/rendererLogger.js';
+import { getVoiceState } from '../../utils/voiceState';
 import {
   TrainingContext,
   TrainingState,
@@ -23,6 +24,10 @@ interface PersistedTrainingData {
     deviceId: string;
     sessionId: string;
   };
+  // 新增：恢复面试时需要的关键数据
+  elapsedTime?: number; // 已用时长（秒）
+  currentQuestion?: string; // 当前面试问题
+  currentAnswer?: string; // AI 参考答案
 }
 
 const STORAGE_KEY = 'cuemate_interview_training_state';
@@ -93,6 +98,7 @@ function schedulePersist() {
 
 /**
  * 立即持久化当前状态
+ * 从多个数据源获取最完整的数据，确保恢复时不丢失信息
  */
 function persistCurrentState() {
   if (!globalStateMachine) {
@@ -101,6 +107,23 @@ function persistCurrentState() {
 
   const context = globalStateMachine.getContext();
   const state = globalStateMachine.getState();
+
+  // 获取当前计时器时长
+  const voiceState = getVoiceState();
+  const elapsedTime = voiceState.timerDuration || 0;
+
+  // 从 interviewTrainingState 获取 UI 状态中的 AI 回答（作为备用数据源）
+  let aiMessageFromUI = '';
+  try {
+    const trainingStateStr = localStorage.getItem('cuemate.interviewTraining.state');
+    if (trainingStateStr) {
+      const trainingState = JSON.parse(trainingStateStr);
+      aiMessageFromUI = trainingState.aiMessage || '';
+    }
+  } catch {}
+
+  // 优先使用 context.referenceAnswer，如果为空则使用 UI 状态中的 aiMessage
+  const currentAnswer = context.referenceAnswer || aiMessageFromUI;
 
   const data: PersistedTrainingData = {
     interviewId: context.interviewId,
@@ -111,11 +134,14 @@ function persistCurrentState() {
     state,
     savedAt: Date.now(),
     speakerConfig: globalSpeakerConfig || undefined,
+    // 保存恢复面试需要的关键数据
+    elapsedTime,
+    currentQuestion: context.currentQuestion,
+    currentAnswer: currentAnswer, // 优先使用状态机数据，备用 UI 数据
   };
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    console.log('[TrainingManager] 状态已持久化:', state);
   } catch (error) {
     logger.error(`[TrainingManager] 持久化失败: ${error}`);
   }
@@ -127,7 +153,6 @@ function persistCurrentState() {
 function clearPersistedData() {
   try {
     localStorage.removeItem(STORAGE_KEY);
-    console.log('[TrainingManager] 持久化数据已清除');
   } catch (error) {
     logger.error(`[TrainingManager] 清除持久化数据失败: ${error}`);
   }
@@ -138,15 +163,12 @@ function clearPersistedData() {
  */
 export function startInterviewTraining(context: Partial<TrainingContext>): TrainingStateMachine {
   if (globalStateMachine) {
-    console.warn('[TrainingManager] 已存在状态机，先停止');
     stopInterviewTraining();
   }
 
   globalStateMachine = new TrainingStateMachine(context);
 
   globalStateMachine.onStateChange((state, ctx) => {
-    console.log('[TrainingManager] 状态变化:', state);
-
     broadcastStateUpdate(state, ctx);
     subscribers.forEach((callback) => callback(state, ctx));
     schedulePersist();
@@ -164,8 +186,6 @@ export function startInterviewTraining(context: Partial<TrainingContext>): Train
 
   initSyncChannel();
 
-  console.log('[TrainingManager] 面试训练已启动:', context.interviewId);
-
   return globalStateMachine;
 }
 
@@ -174,8 +194,6 @@ export function startInterviewTraining(context: Partial<TrainingContext>): Train
  */
 export function stopInterviewTraining() {
   if (globalStateMachine) {
-    console.log('[TrainingManager] 停止面试训练');
-
     globalStateMachine.reset();
     globalStateMachine = null;
 
@@ -189,7 +207,6 @@ export function stopInterviewTraining() {
 
   // 停止扬声器控制器
   if (globalSpeakerController) {
-    console.log('[TrainingManager] 停止扬声器监听');
     if (typeof globalSpeakerController.stop === 'function') {
       globalSpeakerController.stop().catch((e: any) => logger.error(`停止扬声器失败: ${e}`));
     }
@@ -217,8 +234,6 @@ export function setSpeakerController(
 
   // 立即持久化（保存扬声器配置）
   persistCurrentState();
-
-  console.log('[TrainingManager] 扬声器控制器已设置');
 }
 
 /**
@@ -248,7 +263,6 @@ async function handleExpiredTraining(interviewId: string): Promise<void> {
       status: 'interview-training-expired',
       message: '训练记录已过期（超过24小时），自动终止',
     });
-    console.log('[TrainingManager] 已将过期训练标记为 expired:', interviewId);
   } catch (error) {
     logger.error(`[TrainingManager] 更新过期训练状态失败: ${error}`);
   } finally {
@@ -305,20 +319,20 @@ export async function restoreInterviewTraining(): Promise<TrainingStateMachine |
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) {
-      console.log('[TrainingManager] 没有可恢复的数据');
       return null;
     }
 
     const data: PersistedTrainingData = JSON.parse(saved);
 
-    console.log('[TrainingManager] 开始恢复面试训练:', data.interviewId);
-
+    // 重新创建 context，包含当前问题和答案
     const context: Partial<TrainingContext> = {
       interviewId: data.interviewId,
       jobPosition: data.jobPosition,
       resume: data.resume,
       currentQuestionIndex: data.currentQuestionIndex,
       totalQuestions: data.totalQuestions,
+      currentQuestion: data.currentQuestion || '',
+      referenceAnswer: data.currentAnswer || '', // 持久化用 currentAnswer，TrainingContext 用 referenceAnswer
     };
 
     const machine = startInterviewTraining(context);
@@ -326,11 +340,8 @@ export async function restoreInterviewTraining(): Promise<TrainingStateMachine |
 
     // 恢复扬声器监听配置（实际的扬声器控制器需要组件重新创建）
     if (data.speakerConfig) {
-      console.log('[TrainingManager] 需要恢复扬声器监听，配置:', data.speakerConfig);
       globalSpeakerConfig = data.speakerConfig;
     }
-
-    console.log('[TrainingManager] 面试训练恢复成功');
 
     return machine;
   } catch (error) {
