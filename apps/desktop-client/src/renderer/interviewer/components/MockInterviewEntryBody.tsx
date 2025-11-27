@@ -1,3 +1,99 @@
+/**
+ * ============================================================================
+ * 模拟面试入口组件 - MockInterviewEntryBody
+ * ============================================================================
+ *
+ * 【流程概述】
+ * 模拟面试模式的完整流程分为以下步骤：
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  第一步：初始化                                                           │
+ * │  - 检查是否有可恢复的面试（页面刷新后恢复）                                   │
+ * │  - 加载音频设备配置                                                        │
+ * │  - 检查 Piper TTS 可用性                                                  │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *                                    ↓
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  第二步：用户点击"开始模拟面试"                                            │
+ * │  - 创建面试记录（数据库）                                                  │
+ * │  - 初始化状态机                                                           │
+ * │  - 获取押题题库                                                           │
+ * │  - 【保存】创建 interview_id，持久化到 localStorage                        │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *                                    ↓
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  第三步：初始化面试信息 (INITIALIZING)                                     │
+ * │  - 构建初始化 Prompt                                                      │
+ * │  - 初始化上下文管理服务                                                    │
+ * │  - 【保存】初始化状态持久化                                                │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *                                    ↓
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  第四步：AI 思考问题 (AI_THINKING)                                         │
+ * │  - 调用 LLM 生成面试问题                                                   │
+ * │  - 使用上下文管理服务优化 prompt                                           │
+ * │  - 【保存】当前问题持久化                                                  │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *                                    ↓
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  第五步：AI 朗读问题 (AI_SPEAKING)                                         │
+ * │  - 使用 Piper TTS 朗读问题                                                │
+ * │  - 同时后台生成 AI 参考答案                                                │
+ * │  - 【保存】AI 参考答案持久化                                               │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *                                    ↓
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  第六步：用户准备回答 (USER_LISTENING)                                     │
+ * │  - 显示 AI 参考答案                                                       │
+ * │  - 用户可以开始录音                                                       │
+ * │  - 【保存】用户状态持久化                                                  │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *                                    ↓
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  第七步：用户回答中 (USER_SPEAKING)                                        │
+ * │  - 用户通过语音或文本输入回答                                              │
+ * │  - 用户点击"完成回答"提交                                                  │
+ * │  - 【保存】用户回答持久化                                                  │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *                                    ↓
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  第八步：AI 分析用户回答 (AI_ANALYZING)                                    │
+ * │  - 调用 LLM 分析用户回答（优缺点、建议等）                                   │
+ * │  - 保存分析结果到数据库                                                    │
+ * │  - 【保存】分析结果持久化                                                  │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *                                    ↓
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  第九步：本轮完成 (ROUND_COMPLETE)                                         │
+ * │  - 判断是否继续下一轮                                                      │
+ * │  - 继续：返回第四步                                                        │
+ * │  - 结束：进入第十步                                                        │
+ * │  - 【保存】轮次信息持久化                                                  │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *                                    ↓
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  第十步：生成面试报告 (GENERATING_REPORT)                                  │
+ * │  - 汇总所有轮次的分析结果                                                  │
+ * │  - 调用 LLM 生成综合评分和建议                                             │
+ * │  - 保存报告到数据库                                                        │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *                                    ↓
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  第十一步：面试完成 (COMPLETED)                                            │
+ * │  - 显示完成提示                                                           │
+ * │  - 【清理】只在这一步才清理 localStorage 中的面试数据                        │
+ * │  - 【重要】interview_id 绝对不能在其他任何步骤被清理！                       │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *
+ * 【数据安全规则】
+ * 1. interview_id 只在用户主动停止或面试正常完成时才能清理
+ * 2. 页面刷新不清理任何数据，通过 localStorage 恢复
+ * 3. 任何状态变化都立即保存到 localStorage
+ * 4. 绝对禁止在面试中途清理 interview_id 或重置状态
+ *
+ * ============================================================================
+ */
+
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { logger } from '../../../utils/rendererLogger.js';
@@ -29,11 +125,18 @@ import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
 import { Model } from '../api/modelService';
 import { JobPositionCard } from './JobPositionCard';
+import {
+  loadAudioDevicesWithDefaults,
+  saveMicrophoneDevice,
+  saveSpeakerDevice,
+  generateInterviewReport as generateReport,
+  batchAnalyzeReviews,
+  type AudioDevice
+} from '../utils';
 
-interface AudioDevice {
-  deviceId: string;
-  label: string;
-}
+// ============================================================================
+// 类型定义
+// ============================================================================
 
 interface MockInterviewEntryBodyProps {
   selectedJobId?: string;
@@ -43,135 +146,89 @@ interface MockInterviewEntryBodyProps {
   onAnswerGenerated?: (answer: string) => void;
 }
 
-export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, onQuestionGenerated, onAnswerGenerated }: MockInterviewEntryBodyProps) {
+// 当前问题的临时数据（用于分析时保存到数据库）
+interface CurrentQuestionData {
+  sequence: number;
+  questionId?: string;
+  question?: string;
+  answer?: string;
+  referenceAnswer?: string;
+  candidateAnswer?: string;
+  otherId?: string;
+  otherContent?: string;
+}
+
+// ============================================================================
+// 主组件
+// ============================================================================
+
+export function MockInterviewEntryBody({
+  selectedJobId,
+  onStart,
+  onStateChange,
+  onQuestionGenerated,
+  onAnswerGenerated
+}: MockInterviewEntryBodyProps) {
+  // ---------------------------------------------------------------------------
+  // 状态定义
+  // ---------------------------------------------------------------------------
+
+  // UI 状态
   const [currentLine, setCurrentLine] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [timestamp, setTimestamp] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(false);
+
+  // 选择状态
   const [selectedPosition, setSelectedPosition] = useState<JobPosition | null>(null);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<'zh-CN' | 'zh-TW' | 'en-US'>('zh-CN');
 
-  // 使用 VoiceState 来控制下拉列表状态
-  const voiceState = useVoiceState();
-
-  // 音频设备状态
+  // 音频设备
   const [micDevices, setMicDevices] = useState<AudioDevice[]>([]);
   const [speakerDevices, setSpeakerDevices] = useState<AudioDevice[]>([]);
   const [selectedMic, setSelectedMic] = useState<string>('');
   const [selectedSpeaker, setSelectedSpeaker] = useState<string>('');
   const [piperAvailable, setPiperAvailable] = useState(false);
 
-  // 面试状态管理（使用全局管理器）
+  // 状态机状态（仅用于触发 UI 更新，实际状态由 mockInterviewManager 管理）
   const [_interviewState, setInterviewState] = useState<InterviewState>(InterviewState.IDLE);
-  const [isInitializing, setIsInitializing] = useState(false);
 
-  // 互斥保护：记录阻塞的面试信息（用于未来可能的 UI 扩展）
+  // 互斥保护
   const [_blockingInterview, setBlockingInterview] = useState<OngoingInterviewInfo | null>(null);
 
-  // 当前问题的暂存数据（等待所有数据齐全后一次性 UPDATE）
-  const currentQuestionData = useRef<{
-    sequence: number;
-    questionId?: string;
-    question?: string;
-    answer?: string;
-    referenceAnswer?: string;
-    candidateAnswer?: string;
-    otherId?: string;
-    otherContent?: string;
-  } | null>(null);
+  // 当前问题数据（临时存储，用于分析时保存）
+  const currentQuestionData = useRef<CurrentQuestionData | null>(null);
 
-  // 使用跨窗口状态管理
+  // 全局状态
+  const voiceState = useVoiceState();
   const mockInterviewState = useMockInterviewState();
 
-  // 监听用户回答提交（通过跨窗口状态变化）
+  // ===========================================================================
+  // 第一步：初始化 - 检查恢复 & 加载设备
+  // ===========================================================================
+
+  /**
+   * 【第一步-A】加载音频设备配置
+   */
   useEffect(() => {
-    const candidateAnswer = mockInterviewState.candidateAnswer;
-
-    // 只有当 candidateAnswer 有值且状态机已初始化时才处理
-    const machine = getMockInterviewStateMachine();
-    if (candidateAnswer && machine) {
-      const currentState = machine.getState();
-
-      // 只有在 USER_LISTENING 或 USER_SPEAKING 状态时才接受用户回答
-      if (currentState === InterviewState.USER_LISTENING ||
-          currentState === InterviewState.USER_SPEAKING) {
-
-        // 暂存用户回答
-        if (currentQuestionData.current) {
-          currentQuestionData.current.candidateAnswer = candidateAnswer;
-        }
-
-        // 触发状态机进入 AI 分析阶段
-        machine.send({
-          type: 'USER_FINISHED_SPEAKING',
-          payload: { response: candidateAnswer }
-        });
-
-        // 不立即清空 candidateAnswer,让右侧窗口有时间显示
-        // candidateAnswer 会在下一轮问题开始时清空
-      } else {
-        // 非法状态下提交答案，直接清空避免重复触发
-        console.warn(`用户在非法状态 ${currentState} 下提交了答案，已忽略`);
-        setMockInterviewState({ candidateAnswer: '' });
-      }
-    }
-  }, [mockInterviewState.candidateAnswer]);
-
-  // 初始化面试系统
-  useEffect(() => {
-
     const loadAudioSettings = async () => {
       try {
         // 检查 Piper TTS 可用性
         const piperAvailableResult = await (window as any).electronInterviewerAPI?.piperTTS?.isAvailable?.();
         setPiperAvailable(piperAvailableResult?.success && piperAvailableResult?.available);
 
-        // 获取音频设备列表
-        const devices = await navigator.mediaDevices.enumerateDevices();
+        // 使用公共工具加载音频设备
+        const { devices, selectedMic: mic, selectedSpeaker: speaker } = await loadAudioDevicesWithDefaults();
 
-        const mics = devices
-          .filter(device => device.kind === 'audioinput')
-          .map(device => ({
-            deviceId: device.deviceId,
-            label: device.label || `麦克风 ${device.deviceId.slice(0, 4)}`
-          }));
-
-        const speakers = devices
-          .filter(device => device.kind === 'audiooutput')
-          .map(device => ({
-            deviceId: device.deviceId,
-            label: device.label || `扬声器 ${device.deviceId.slice(0, 4)}`
-          }));
-
-        setMicDevices(mics);
-        setSpeakerDevices(speakers);
-
-        // 读取全局 ASR 配置,尝试回填默认设备
-        const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-        let defaultMic: string | undefined;
-        let defaultSpeaker: string | undefined;
-        try {
-          const res = await api?.asrConfig?.get?.();
-          const cfg = res?.config;
-          if (cfg) {
-            defaultMic = cfg.microphone_device_id;
-            defaultSpeaker = cfg.speaker_device_id;
-          }
-        } catch {}
-
-        // 优先使用配置中的设备,如果不存在则使用第一个
-        if (mics.length > 0) {
-          const exists = defaultMic && mics.some(d => d.deviceId === defaultMic);
-          setSelectedMic(exists && defaultMic ? defaultMic : mics[0].deviceId);
-        }
-        if (speakers.length > 0) {
-          const exists = defaultSpeaker && speakers.some(d => d.deviceId === defaultSpeaker);
-          setSelectedSpeaker(exists && defaultSpeaker ? defaultSpeaker : speakers[0].deviceId);
-        }
+        setMicDevices(devices.microphones);
+        setSpeakerDevices(devices.speakers);
+        setSelectedMic(mic);
+        setSelectedSpeaker(speaker);
 
       } catch (error) {
-        logger.error(`Failed to load audio settings: ${error}`);
+        await logger.error(`[第一步-A] 加载音频设备失败: ${error}`);
         setPiperAvailable(false);
       } finally {
         setLoading(false);
@@ -179,55 +236,48 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     };
 
     loadAudioSettings();
+  }, []);
 
-    // 检查并恢复未完成的面试
+  /**
+   * 【第一步-B】检查并恢复未完成的面试
+   */
+  useEffect(() => {
     const checkAndRecoverInterview = async () => {
       try {
         // 检查是否有可恢复的面试
         if (!hasRecoverableInterview()) {
-          console.log('[MockInterviewEntryBody] 没有可恢复的面试');
           return;
         }
 
         // 获取恢复信息
         const recoverInfo = getRecoverableInterviewInfo();
         if (!recoverInfo) {
-          console.log('[MockInterviewEntryBody] 无法获取恢复信息');
           return;
         }
 
-        console.log('[MockInterviewEntryBody] 检测到未完成的面试，准备恢复', {
-          interviewId: recoverInfo.interviewId,
-          state: recoverInfo.state,
-          currentQuestionIndex: recoverInfo.currentQuestionIndex,
-        });
-
-        // 恢复状态机
+        // 【恢复】状态机
         const machine = restoreMockInterview();
         if (!machine) {
-          logger.error('[MockInterviewEntryBody] 恢复状态机失败');
+          await logger.error('[第一步-B] 恢复状态机失败');
           return;
         }
 
-        // 监听状态机变化（与 handleStartInterview 中相同）
+        // 【恢复】监听状态机变化
         machine.onStateChange(async (state, context) => {
           setInterviewState(state);
           onStateChange?.(state);
           await handleStateChange(state, context);
         });
 
-        // 恢复 currentInterview
+        // 【恢复】currentInterview（绝对不能丢失！）
         currentInterview.set(recoverInfo.interviewId);
 
-        // 恢复 voiceState
+        // 【恢复】voiceState
         const isRecording = recoverInfo.state !== InterviewState.COMPLETED &&
                           recoverInfo.state !== InterviewState.ERROR &&
                           recoverInfo.state !== InterviewState.IDLE;
-
-        // 检查是否有暂停状态
         const pausedStateStr = localStorage.getItem('mock-interview-paused-state');
         const isPaused = pausedStateStr ? JSON.parse(pausedStateStr).interviewId === recoverInfo.interviewId : false;
-
         const subState = isPaused ? 'mock-interview-paused' : (isRecording ? 'mock-interview-recording' : 'idle');
 
         setVoiceState({
@@ -236,87 +286,91 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           interviewId: recoverInfo.interviewId,
         });
 
-        // 恢复 UI 状态 - 设置岗位信息（让 JobPositionCard 显示正确的岗位）
+        // 【恢复】岗位信息
         if (recoverInfo.jobPosition) {
           setSelectedPosition(recoverInfo.jobPosition);
         }
 
-        // 初始化数据服务
+        // 【恢复】数据服务
         interviewDataService.initializeInterview(
           recoverInfo.interviewId,
           recoverInfo.totalQuestions
         );
 
-        // 恢复 mockInterviewState（同步到所有三个窗口：左侧控制窗口、中间 AI 窗口、右侧历史窗口）
+        // 【恢复】跨窗口状态
         setMockInterviewState({
           interviewState: recoverInfo.state,
-          aiMessage: '', // AI 消息需要重新生成
+          aiMessage: recoverInfo.currentAnswer || '',
           speechText: '',
           candidateAnswer: '',
           isLoading: false,
-          isListening: false,
+          isListening: recoverInfo.state === InterviewState.USER_LISTENING,
         });
 
-        // 设置状态提示
-        setCurrentLine(`面试已恢复，当前第 ${recoverInfo.currentQuestionIndex + 1} 题`);
+        // 【恢复】计时器时长
+        if (recoverInfo.elapsedTime && recoverInfo.elapsedTime > 0) {
+          setVoiceState({
+            timerDuration: recoverInfo.elapsedTime,
+          });
+        }
 
-        console.log('[MockInterviewEntryBody] 面试恢复成功，已同步到所有窗口', {
-          interviewId: recoverInfo.interviewId,
-          subState,
-          isPaused,
-          state: recoverInfo.state,
-        });
+        // 【恢复】显示当前问题
+        if (recoverInfo.currentQuestion) {
+          setCurrentLine(recoverInfo.currentQuestion);
+        } else {
+          setCurrentLine(`面试已恢复，当前第 ${recoverInfo.currentQuestionIndex + 1} 题`);
+        }
 
       } catch (error) {
-        logger.error(`[MockInterviewEntryBody] 恢复面试失败: ${error}`);
+        await logger.error(`[第一步-B] 恢复面试失败: ${error}`);
       }
     };
 
     // 延迟执行恢复检查，确保组件完全挂载
     const timer = setTimeout(checkAndRecoverInterview, 200);
-
-    // 清理函数（不清理状态机，让全局管理器管理）
-    return () => {
-      clearTimeout(timer);
-      // 不清理状态机，只取消订阅（如果有的话）
-    };
+    return () => clearTimeout(timer);
   }, []);
 
-  const speak = async (text: string) => {
-    try {
-      if (!piperAvailable) {
-        throw new Error('Piper TTS 不可用');
-      }
+  /**
+   * 监听用户回答提交（通过跨窗口状态变化）
+   */
+  useEffect(() => {
+    const candidateAnswer = mockInterviewState.candidateAnswer;
 
-      // 使用混合语言 TTS，无需指定语音模型
-      const options = { outputDevice: selectedSpeaker };
-      await (window as any).electronInterviewerAPI?.piperTTS?.speak?.(text, options);
-
-      setCurrentLine(`${text}`);
-      setErrorMessage('');
-      setTimestamp(Date.now());
-    } catch (error) {
-      logger.error(`语音播放失败: ${error}`);
-      setCurrentLine('');
-      setErrorMessage(`语音播放失败: ${text}`);
-      setTimestamp(Date.now());
-
-      // 发送错误事件到状态机（只在 AI_SPEAKING 状态时发送）
+    if (candidateAnswer) {
       const machine = getMockInterviewStateMachine();
       if (machine) {
         const currentState = machine.getState();
-        if (currentState === InterviewState.AI_SPEAKING) {
-          // 错误事件直接发送，不使用 transitionToNext（错误不应该被暂停阻塞）
-          machine.send({ type: 'SPEAKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+
+        if (currentState === InterviewState.USER_LISTENING ||
+            currentState === InterviewState.USER_SPEAKING) {
+
+          // 【保存】用户回答
+          if (currentQuestionData.current) {
+            currentQuestionData.current.candidateAnswer = candidateAnswer;
+          }
+
+          machine.send({
+            type: 'USER_FINISHED_SPEAKING',
+            payload: { response: candidateAnswer }
+          });
         } else {
-          console.warn(`语音播放失败，但当前状态为 ${currentState}，无法发送 SPEAKING_ERROR`);
+          // 非法状态下提交，忽略
+          setMockInterviewState({ candidateAnswer: '' });
         }
       }
     }
-  };
+  }, [mockInterviewState.candidateAnswer]);
 
+  // ===========================================================================
+  // 第二步：开始模拟面试
+  // ===========================================================================
+
+  /**
+   * 【第二步】用户点击"开始模拟面试"按钮
+   */
   const handleStartInterview = async () => {
-    // 互斥保护检查：是否有其他类型的面试正在进行
+    // 【检查】互斥保护
     const { canStart, blockingInterview: blocking } = canStartInterview('mock-interview');
     if (!canStart && blocking) {
       setBlockingInterview(blocking);
@@ -328,6 +382,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     }
     setBlockingInterview(null);
 
+    // 【检查】必要参数
     if (!selectedPosition) {
       setErrorMessage('请先选择面试岗位');
       setCurrentLine('');
@@ -343,12 +398,12 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     try {
       setIsInitializing(true);
 
-      // 从全局缓存获取用户数据
+      // 【创建】获取用户信息
       const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
       const userDataResult = await api?.getUserData?.();
       const userData = userDataResult?.success ? userDataResult.userData?.user : null;
 
-      // 创建面试记录
+      // 【创建】面试记录数据
       const interviewData = {
         jobId: selectedPosition.id,
         jobTitle: selectedPosition.title,
@@ -366,13 +421,14 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         selectedModelId: selectedModel?.id
       };
 
+      // 【创建】保存到数据库
       const response = await interviewService.createInterview(interviewData);
 
-      // 先清理旧的 interviewId，再设置新的
+      // 【保存】设置 interview_id
       currentInterview.clear();
       currentInterview.set(response.id);
 
-      // 清空上一次面试的 mockInterviewState
+      // 【保存】初始化跨窗口状态
       setMockInterviewState({
         aiMessage: '',
         speechText: '',
@@ -381,26 +437,29 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         isListening: false,
       });
 
-      // 设置 voiceState 的 interviewId 供右侧窗口和本窗口共同使用
-      setVoiceState({ interviewId: response.id });
+      // 【保存】设置 voiceState
+      setVoiceState({
+        interviewId: response.id,
+        mode: 'mock-interview',
+        subState: 'mock-interview-recording',
+      });
 
       // 获取押题题库
       const questionBank = await mockInterviewService.getQuestionBank(selectedPosition.id);
 
-      // 使用全局管理器初始化状态机(totalQuestions 将在 handleInitializing 中从 prompt 配置获取)
+      // 【初始化】状态机
       const machine = startMockInterview({
         interviewId: response.id,
-        totalQuestions: 10, // 临时默认值,实际值从 InitPrompt 的 extra 配置读取
+        totalQuestions: 10,
       });
 
-      // 监听状态机变化
       machine.onStateChange(async (state, context) => {
         setInterviewState(state);
         onStateChange?.(state);
         await handleStateChange(state, context);
       });
 
-      // 初始化数据服务
+      // 【初始化】数据服务
       interviewDataService.initializeInterview(response.id, interviewData.questionCount);
 
       // 发送开始事件
@@ -417,25 +476,16 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         },
       });
 
-      // 设置 VoiceState
-      setVoiceState({
-        mode: 'mock-interview',
-        subState: 'mock-interview-recording',
-        interviewId: response.id
-      });
-
-      // 调用原始的开始函数
       if (onStart) {
         onStart();
       }
     } catch (error) {
-      logger.error(`开始面试失败: ${error}`);
+      await logger.error(`[第二步] 开始面试失败: ${error}`);
       const errorMsg = `开始面试失败: ${error instanceof Error ? error.message : '未知错误'}`;
       setErrorMessage(errorMsg);
       setCurrentLine('');
       setIsInitializing(false);
 
-      // 如果面试已创建，更新状态为 idle（错误）
       if (voiceState.interviewId) {
         try {
           await interviewService.updateInterview(voiceState.interviewId, {
@@ -443,48 +493,85 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
             message: errorMsg
           });
         } catch (updateError) {
-          logger.error(`更新面试错误状态失败: ${updateError}`);
+          await logger.error(`[第二步] 更新面试错误状态失败: ${updateError}`);
         }
       }
     }
   };
 
-  // 通用暂停检查方法
-  const checkAndHandlePause = (): boolean => {
-    const machine = getMockInterviewStateMachine();
-    if (!machine) return false;
-    const context = machine.getContext();
-    return !!context.isPaused;
+  // ===========================================================================
+  // TTS 朗读
+  // ===========================================================================
+
+  /**
+   * 使用 Piper TTS 朗读文本（带 30 秒超时保护）
+   */
+  const speak = async (text: string) => {
+    try {
+      if (!piperAvailable) {
+        throw new Error('Piper TTS 不可用');
+      }
+
+      const options = { outputDevice: selectedSpeaker };
+
+      // 添加超时机制：30秒超时，防止 TTS 播放卡住
+      const timeoutPromise = new Promise<void>((_, reject) => {
+        setTimeout(() => reject(new Error('TTS 播放超时（30秒）')), 30000);
+      });
+
+      await Promise.race([
+        (window as any).electronInterviewerAPI?.piperTTS?.speak?.(text, options),
+        timeoutPromise
+      ]);
+
+      setCurrentLine(`${text}`);
+      setErrorMessage('');
+      setTimestamp(Date.now());
+    } catch (error) {
+      await logger.error(`[TTS] 语音播放失败: ${error}`);
+      setCurrentLine('');
+      setErrorMessage(`语音播放失败: ${text}`);
+      setTimestamp(Date.now());
+
+      // 发送错误事件到状态机
+      const machine = getMockInterviewStateMachine();
+      if (machine) {
+        const currentState = machine.getState();
+        if (currentState === InterviewState.AI_SPEAKING) {
+          machine.send({ type: 'SPEAKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+        }
+      }
+    }
   };
 
-  // 状态转换包装方法（检查暂停后再发送下一个事件）
+  // ===========================================================================
+  // 状态机事件处理
+  // ===========================================================================
+
   const transitionToNext = (eventType: string, payload?: any): boolean => {
     const machine = getMockInterviewStateMachine();
     if (!machine) return false;
 
-    // 如果已暂停，不发送事件
-    if (checkAndHandlePause()) {
+    const context = machine.getContext();
+    if (context.isPaused) {
       return false;
     }
 
-    // 发送事件
     return machine.send({ type: eventType, payload });
   };
 
-  // 从暂停状态恢复，发送当前状态的完成事件
   const continueFromState = (state: InterviewState): void => {
     const machine = getMockInterviewStateMachine();
     if (!machine) return;
 
-    // 根据暂停时的状态，发送对应的完成事件
     const completionEvents: Record<InterviewState, string | null> = {
       [InterviewState.IDLE]: null,
       [InterviewState.INITIALIZING]: 'INIT_SUCCESS',
       [InterviewState.AI_THINKING]: 'QUESTION_GENERATED',
       [InterviewState.AI_SPEAKING]: 'SPEAKING_COMPLETE',
       [InterviewState.GENERATING_ANSWER]: 'ANSWER_GENERATED',
-      [InterviewState.USER_LISTENING]: null, // 监听状态不需要自动完成
-      [InterviewState.USER_SPEAKING]: null, // 用户说话状态不需要自动完成
+      [InterviewState.USER_LISTENING]: null,
+      [InterviewState.USER_SPEAKING]: null,
       [InterviewState.AI_ANALYZING]: 'ANALYSIS_COMPLETE',
       [InterviewState.ROUND_COMPLETE]: 'CONTINUE_INTERVIEW',
       [InterviewState.INTERVIEW_ENDING]: 'GENERATE_REPORT',
@@ -499,447 +586,10 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     }
   };
 
-  const handlePauseInterview = async () => {
-    const machine = getMockInterviewStateMachine();
-    if (!machine) return;
-
-    // 从 localStorage 获取当前面试 ID
-    const interviewId = currentInterview.get();
-    if (!interviewId) return;
-
-    try {
-      // 1. 设置暂停标志
-      machine.updateContextPartial({ isPaused: true });
-
-      // 2. 保存当前状态到 localStorage
-      const currentState = machine.getState();
-      const currentContext = machine.getContext();
-
-      localStorage.setItem('mock-interview-paused-state', JSON.stringify({
-        interviewId: interviewId,
-        state: currentState,
-        context: currentContext,
-        timestamp: Date.now()
-      }));
-
-      // 3. 更新 interviews 表状态
-      await interviewService.updateInterview(interviewId, {
-        status: 'mock-interview-paused',
-        message: '面试已暂停'
-      });
-
-      // 4. 更新 UI 状态
-      setVoiceState({
-        mode: 'mock-interview',
-        subState: 'mock-interview-paused',
-        interviewId: interviewId
-      });
-      setCurrentLine('面试已暂停');
-
-    } catch (error) {
-      logger.error(`暂停面试失败: ${error}`);
-      setErrorMessage(`暂停面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    }
-  };
-
-  const handleResumeInterview = async () => {
-    const machine = getMockInterviewStateMachine();
-    if (!machine) return;
-
-    // 从 localStorage 获取当前面试 ID
-    const interviewId = currentInterview.get();
-    if (!interviewId) return;
-
-    try {
-      // 1. 从 localStorage 恢复状态
-      const savedStateStr = localStorage.getItem('mock-interview-paused-state');
-      if (!savedStateStr) {
-        throw new Error('未找到暂停的面试状态');
-      }
-
-      const savedState = JSON.parse(savedStateStr);
-
-      // 验证是否是同一场面试
-      if (savedState.interviewId !== interviewId) {
-        throw new Error('暂停状态与当前面试不匹配');
-      }
-
-      // 2. 恢复状态机上下文
-      machine.restoreContext(savedState.context);
-
-      // 3. 清除暂停标志
-      machine.updateContextPartial({ isPaused: false });
-
-      // 4. 更新 interviews 表状态
-      await interviewService.updateInterview(interviewId, {
-        status: 'mock-interview-recording',
-        message: '面试已恢复'
-      });
-
-      // 5. 更新 UI 状态
-      setVoiceState({
-        mode: 'mock-interview',
-        subState: 'mock-interview-playing',
-        interviewId: interviewId
-      });
-      setCurrentLine('面试已恢复');
-
-      // 6. 根据暂停时的状态继续执行
-      continueFromState(savedState.state);
-
-      // 7. 清除 localStorage 中的暂停状态
-      localStorage.removeItem('mock-interview-paused-state');
-
-    } catch (error) {
-      logger.error(`恢复面试失败: ${error}`);
-      setErrorMessage(`恢复面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    }
-  };
-
-  const handleStopInterview = async () => {
-    try {
-      // 从 localStorage 获取当前面试 ID
-      const interviewId = currentInterview.get();
-      if (!interviewId) {
-        return;
-      }
-
-      // 先保存当前的计时器时长,避免异步过程中状态变化
-      const timerDuration = voiceState.timerDuration || 0;
-
-      setCurrentLine('正在结束面试...');
-
-      // 1. 更新 interviews 状态为 mock-interview-completed
-      await interviewService.updateInterview(interviewId, {
-        status: 'mock-interview-completed',
-        duration: timerDuration,
-        message: '用户主动停止面试'
-      });
-
-      // 2. 获取 interview_reviews 记录
-      const reviews = await mockInterviewService.getInterviewReviews(interviewId);
-
-      // 3. 判断是否有记录（至少有 1 条数据）
-      if (!reviews || reviews.length === 0) {
-        // 没有任何回答记录，直接完成
-        setCurrentLine('面试已结束');
-        setVoiceState({
-          mode: 'mock-interview',
-          subState: 'mock-interview-completed',
-          interviewId: interviewId
-        });
-        return;
-      }
-
-      // 4. 检查每条 review
-      const needsAnalysis: any[] = [];
-      const readyForReport: any[] = [];
-
-      for (const review of reviews) {
-        // 如果 candidate_answer 没值，跳过
-        if (!review.candidate_answer) {
-          continue;
-        }
-
-        // 检查分析字段是否都有值
-        const hasAnalysis = review.pros && review.cons && review.suggestions &&
-                           review.key_points && review.assessment;
-
-        if (hasAnalysis) {
-          readyForReport.push(review);
-        } else {
-          needsAnalysis.push(review);
-        }
-      }
-
-      // 5. 先处理需要分析的 review
-      if (needsAnalysis.length > 0) {
-        setCurrentLine(`正在分析 ${needsAnalysis.length} 个回答...`);
-
-        for (const review of needsAnalysis) {
-          await analyzeReview(review);
-        }
-      }
-
-      // 6. 如果有任何有效的回答（不管是否需要分析），生成报告
-      const totalValidReviews = readyForReport.length + needsAnalysis.length;
-      if (totalValidReviews > 0) {
-        setCurrentLine('正在生成面试报告...');
-        await generateInterviewReportOnStop(interviewId);
-      }
-
-      // 7. 完成
-      setCurrentLine('面试已结束');
-      setVoiceState({
-        mode: 'mock-interview',
-        subState: 'mock-interview-completed',
-        interviewId: interviewId
-      });
-
-      // 停止并清理全局状态机
-      stopMockInterview();
-
-    } catch (error) {
-      logger.error(`结束面试失败: ${error}`);
-      setErrorMessage(`结束面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
-      setCurrentLine('');
-      // 即使失败，也要设置状态为完成
-      const interviewId = currentInterview.get();
-      setVoiceState({
-        mode: 'mock-interview',
-        subState: 'mock-interview-completed',
-        interviewId: interviewId
-      });
-
-      // 停止并清理全局状态机
-      stopMockInterview();
-    }
-  };
-
-  // 分析单个 review
-  const analyzeReview = async (review: any) => {
-    try {
-      const askedQuestion = review.asked_question || review.question || '';
-      const candidateAnswer = review.candidate_answer || '';
-      const referenceAnswer = review.reference_answer || '';
-
-      if (!askedQuestion || !candidateAnswer) {
-        return;
-      }
-
-      // 构建分析 prompt
-      const analysisPrompt = await promptService.buildAnalysisPrompt(
-        askedQuestion,
-        candidateAnswer,
-        referenceAnswer
-      );
-
-      const messages = [
-        {
-          role: 'user' as const,
-          content: analysisPrompt,
-        }
-      ];
-
-      // 获取模型配置
-      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-      const userDataResult = await api?.getUserData?.();
-      const selectedModel = userDataResult?.success ? userDataResult.userData?.selected_model : null;
-
-      if (!selectedModel) {
-        throw new Error('未选择模型');
-      }
-
-      const modelConfig: ModelConfig = {
-        provider: selectedModel.provider,
-        model_name: selectedModel.model_name,
-        credentials: selectedModel.credentials || '{}',
-      };
-
-      const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
-
-      let analysisResult = '';
-
-      // 调用 AI 进行分析
-      await aiService.callAIStreamWithCustomModel(messages, modelConfig, modelParams, (chunk: any) => {
-        if (chunk.error) {
-          throw new Error(chunk.error);
-        }
-
-        if (chunk.finished) {
-          // 分析完成，什么都不做，等待下面统一处理
-        } else {
-          analysisResult += chunk.content;
-        }
-      });
-
-      // 解析分析结果
-      const analysis = JSON.parse(analysisResult.trim());
-
-      // 更新 review 记录
-      await mockInterviewService.updateReview(review.id, {
-        pros: analysis.pros || '',
-        cons: analysis.cons || '',
-        suggestions: analysis.suggestions || '',
-        key_points: analysis.key_points || '',
-        assessment: analysis.assessment || '',
-      });
-
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : '分析回答失败';
-      logger.error(`分析回答失败: ${error}`);
-      setErrorMessage(`分析回答失败: ${errorMsg}`);
-      setTimestamp(Date.now());
-      throw error;
-    }
-  };
-
-  // 生成面试报告（停止按钮触发）
-  const generateInterviewReportOnStop = async (interviewId: string) => {
-    try {
-      // 先保存当前的计时器时长
-      const timerDuration = voiceState.timerDuration || 0;
-
-      // 1. 重新获取所有 reviews（包含刚才分析的）
-      const reviews = await mockInterviewService.getInterviewReviews(interviewId);
-
-      if (!reviews || reviews.length === 0) {
-        return;
-      }
-
-      // 2. 获取面试基本信息
-      const jobTitle = selectedPosition?.title || '未知职位';
-      const resumeContent = selectedPosition?.resumeContent || '';
-
-      // 3. 构建汇总数据(不传原始问答,只传已分析的结果)
-      const summaryData = {
-        totalQuestions: reviews.length,
-        questions: reviews.map((r, i) => ({
-          index: i + 1,
-          question: r.asked_question?.substring(0, 100),
-          pros: r.pros || '无',
-          cons: r.cons || '无',
-          suggestions: r.suggestions || '无',
-          keyPoints: r.key_points || '无',
-          assessment: r.assessment || '无'
-        }))
-      };
-      const reviewsData = JSON.stringify(summaryData, null, 2);
-
-      // 4. 生成评分报告(带自动分批处理)
-      let scoreData;
-      try {
-        const scorePrompt = await promptService.buildScorePrompt(jobTitle, resumeContent, reviewsData);
-        scoreData = await aiService.callAIForJson([
-          { role: 'user', content: scorePrompt }
-        ]);
-      } catch (error: any) {
-        if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
-          const batchSize = 1;
-          const batches = [];
-          for (let i = 0; i < reviews.length; i += batchSize) {
-            batches.push(reviews.slice(i, i + batchSize));
-          }
-
-          const batchSettledResults = await Promise.allSettled(batches.map(async (batch) => {
-            const batchSummary = {
-              totalQuestions: batch.length,
-              questions: batch.map((r, i) => ({
-                index: i + 1,
-                question: r.asked_question?.substring(0, 100),
-                pros: r.pros || '无',
-                cons: r.cons || '无',
-                suggestions: r.suggestions || '无',
-              }))
-            };
-            const batchData = JSON.stringify(batchSummary);
-            const prompt = await promptService.buildScorePrompt(jobTitle, resumeContent, batchData);
-            return await aiService.callAIForJson([{ role: 'user', content: prompt }]);
-          }));
-
-          // 过滤出成功的结果
-          const batchResults = batchSettledResults
-            .filter(result => result.status === 'fulfilled')
-            .map(result => (result as PromiseFulfilledResult<any>).value);
-
-          // 如果全部失败,抛出错误
-          if (batchResults.length === 0) {
-            throw new Error('所有批次处理都失败了');
-          }
-
-          scoreData = {
-            total_score: Math.round(batchResults.reduce((sum, r) => sum + (r.total_score || 0), 0) / batchResults.length),
-            num_questions: reviews.length,
-            radar: {
-              interactivity: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.interactivity || 0), 0) / batchResults.length),
-              confidence: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.confidence || 0), 0) / batchResults.length),
-              professionalism: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.professionalism || 0), 0) / batchResults.length),
-              relevance: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.relevance || 0), 0) / batchResults.length),
-              clarity: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.clarity || 0), 0) / batchResults.length),
-            },
-            overall_summary: batchResults.map(r => r.overall_summary).join(' '),
-            pros: batchResults.map(r => r.pros).join('\n'),
-            cons: batchResults.map(r => r.cons).join('\n'),
-            suggestions: batchResults.map(r => r.suggestions).join('\n'),
-          };
-        } else {
-          throw error;
-        }
-      }
-
-      // 5. 生成洞察报告(带自动分批处理)
-      let insightData;
-      try {
-        const insightPrompt = await promptService.buildInsightPrompt(jobTitle, resumeContent, reviewsData);
-        insightData = await aiService.callAIForJson([
-          { role: 'user', content: insightPrompt }
-        ]);
-      } catch (error: any) {
-        if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
-          insightData = {
-            interviewer: { score: 0, summary: '', role: '', mbti: '', personality: '', preference: '' },
-            candidate: { summary: '', mbti: '', personality: '', job_preference: '' },
-            strategy: { prepare_details: '', business_understanding: '', keep_logical: '' }
-          };
-        } else {
-          throw error;
-        }
-      }
-
-      // 6. 保存到后端
-      await interviewService.saveInterviewScore({
-        interviewId,
-        totalScore: scoreData.total_score || 0,
-        durationSec: timerDuration,
-        numQuestions: scoreData.num_questions || 0,
-        overallSummary: scoreData.overall_summary || '',
-        pros: scoreData.pros || '',
-        cons: scoreData.cons || '',
-        suggestions: scoreData.suggestions || '',
-        radarInteractivity: scoreData.radar?.interactivity || 0,
-        radarConfidence: scoreData.radar?.confidence || 0,
-        radarProfessionalism: scoreData.radar?.professionalism || 0,
-        radarRelevance: scoreData.radar?.relevance || 0,
-        radarClarity: scoreData.radar?.clarity || 0,
-      });
-
-      await interviewService.saveInterviewInsight({
-        interviewId,
-        interviewerScore: insightData.interviewer?.score || 0,
-        interviewerSummary: insightData.interviewer?.summary || '',
-        interviewerRole: insightData.interviewer?.role || '',
-        interviewerMbti: insightData.interviewer?.mbti || '',
-        interviewerPersonality: insightData.interviewer?.personality || '',
-        interviewerPreference: insightData.interviewer?.preference || '',
-        candidateSummary: insightData.candidate?.summary || '',
-        candidateMbti: insightData.candidate?.mbti || '',
-        candidatePersonality: insightData.candidate?.personality || '',
-        candidateJobPreference: insightData.candidate?.job_preference || '',
-        strategyPrepareDetails: insightData.strategy?.prepare_details || '',
-        strategyBusinessUnderstanding: insightData.strategy?.business_understanding || '',
-        strategyKeepLogical: insightData.strategy?.keep_logical || '',
-      });
-
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
-      logger.error(`生成面试报告失败: ${error}`);
-      setErrorMessage(`生成面试报告失败: ${errorMsg}`);
-      setTimestamp(Date.now());
-      throw error;
-    }
-  };
-
-  const handlePositionSelect = (position: JobPosition | null) => {
-    setSelectedPosition(position);
-  };
-
-  const handleModelSelect = (model: Model | null) => {
-    setSelectedModel(model);
-  };
-
-  // 处理状态机状态变化
+  /**
+   * 处理状态机状态变化
+   */
   const handleStateChange = async (state: InterviewState, context: any) => {
-    // 更新 mockInterviewState 中的状态机状态
     setMockInterviewState({ interviewState: state });
 
     try {
@@ -963,27 +613,25 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           await handleAIAnalyzing(context);
           break;
         case InterviewState.GENERATING_ANSWER:
-          // 答案已经在 AI_SPEAKING 阶段开始生成，这里不需要处理
           break;
         case InterviewState.ROUND_COMPLETE:
-          handleRoundComplete(context);
+          await handleRoundComplete(context);
           break;
         case InterviewState.INTERVIEW_ENDING:
           await handleInterviewEnding();
           break;
         case InterviewState.GENERATING_REPORT:
-          // 报告生成是异步的,不阻塞状态机,立即进入完成状态
           transitionToNext('REPORT_COMPLETE');
           break;
         case InterviewState.COMPLETED:
-          handleInterviewCompleted();
+          await handleInterviewCompleted();
           break;
         case InterviewState.ERROR:
-          handleError(context);
+          await handleError(context);
           break;
       }
     } catch (error) {
-      logger.error(`Error handling state change: ${error}`);
+      await logger.error(`[状态处理] 错误: ${error}`);
       setErrorMessage(`状态处理错误: ${error instanceof Error ? error.message : '未知错误'}`);
       setCurrentLine('');
     } finally {
@@ -991,29 +639,30 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     }
   };
 
-  // 初始化阶段
+  // ===========================================================================
+  // 各阶段处理函数
+  // ===========================================================================
+
+  /**
+   * 【第三步】初始化阶段
+   */
   const handleInitializing = async (context: any) => {
     setCurrentLine('正在初始化面试信息...');
     setErrorMessage('');
 
     try {
-      // 构建初始化 prompt（用于后续 LLM 调用）并获取配置
       const initPromptData = await promptService.buildInitPrompt(
         context.jobPosition,
         context.resume,
         context.questionsBank
       );
 
-      // 初始化上下文管理服务
       await contextManagementService.initialize({
         interviewId: context.interviewId,
         resume: context.resume?.resumeContent || '',
         jd: context.jobPosition?.description || '',
       });
 
-      console.log('[MockInterview] 上下文管理服务初始化完成');
-
-      // 发送成功事件,并在 payload 中传入 totalQuestions
       getMockInterviewStateMachine()?.send({
         type: 'INIT_SUCCESS',
         payload: {
@@ -1026,7 +675,9 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     }
   };
 
-  // AI 思考阶段
+  /**
+   * 【第四步】AI 思考问题
+   */
   const handleAIThinking = async (context: any) => {
     setCurrentLine('面试官正在思考问题...');
     setErrorMessage('');
@@ -1036,26 +687,15 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         throw new Error('未选择模型');
       }
 
-      // 构建问题生成的用户消息
       const questionPrompt = await promptService.buildQuestionPrompt(context.currentQuestionIndex);
-
-      // 使用上下文管理服务获取优化后的上下文
       const optimizedMessages = await contextManagementService.getOptimizedContext(questionPrompt);
 
-      console.log('[MockInterview] 使用优化后的上下文生成问题', {
-        round: context.currentQuestionIndex + 1,
-        totalMessages: optimizedMessages.length,
-        stats: contextManagementService.getStats(),
-      });
-
-      // 准备模型配置
       const modelConfig: ModelConfig = {
         provider: selectedModel.provider,
         model_name: selectedModel.model_name,
         credentials: selectedModel.credentials || '{}',
       };
 
-      // 获取模型参数
       const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
       const userDataResult = await api?.getUserData?.();
       const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
@@ -1069,7 +709,6 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         }
 
         if (chunk.finished) {
-          // 清理问题文本
           const cleanQuestion = generatedQuestion.trim().replace(/^(问题|Question)\s*[:：]?\s*/, '');
           getMockInterviewStateMachine()?.send({ type: 'QUESTION_GENERATED', payload: { question: cleanQuestion } });
         } else {
@@ -1081,53 +720,53 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     }
   };
 
-  // AI 说话阶段
+  /**
+   * 【第五步】AI 朗读问题
+   */
   const handleAISpeaking = async (context: any) => {
     try {
       const question = context.currentQuestion;
       if (!question) throw new Error('No question to speak');
 
-      // 显示 AI 生成的问题
       setCurrentLine(question);
 
-      // 检查是否已经创建过该问题的记录，避免重复创建
       const existingQuestion = interviewDataService.getQuestionState(context.currentQuestionIndex);
       if (!existingQuestion || !existingQuestion.reviewId) {
-        // 创建问题记录
         await interviewDataService.createQuestionRecord(context.currentQuestionIndex, question);
       }
 
-      // 立即开始生成答案（异步，不等待）
-      // 答案生成会通过 onAnswerGenerated 流式更新 aiMessage,不需要手动清空
+      // 后台生成答案
       generateAnswerInBackground(context);
 
-      // 播放问题
+      // 朗读问题
       await speak(question);
 
-      // 通知上层组件
       onQuestionGenerated?.(question);
 
-      // 发送说话完成事件
       getMockInterviewStateMachine()?.send({ type: 'SPEAKING_COMPLETE' });
     } catch (error) {
       getMockInterviewStateMachine()?.send({ type: 'SPEAKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
   };
 
-  // 用户监听阶段
+  /**
+   * 【第六步】用户监听阶段
+   */
   const handleUserListening = () => {
     setErrorMessage('');
-    // 通知右侧窗口开始语音识别
     setMockInterviewState({ isListening: true, speechText: '' });
   };
 
-  // 用户说话阶段
+  /**
+   * 【第七步】用户说话阶段
+   */
   const handleUserSpeaking = () => {
     setErrorMessage('');
   };
 
-
-  // AI 分析阶段
+  /**
+   * 【第八步】AI 分析用户回答
+   */
   const handleAIAnalyzing = async (context: any) => {
     setErrorMessage('');
 
@@ -1141,7 +780,6 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
       const askedQuestion = context.currentQuestion;
       const referenceAnswer = questionData.referenceAnswer || '';
 
-      // 构建分析 prompt
       const analysisPrompt = await promptService.buildAnalysisPrompt(askedQuestion, candidateAnswer, referenceAnswer);
 
       const messages = [
@@ -1173,16 +811,14 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           analysisResult = analysisResult.trim();
 
           try {
-            // 解析 JSON 结果
             const analysis = JSON.parse(analysisResult);
 
-            // 获取 reviewId
             const questionState = interviewDataService.getQuestionState(context.currentQuestionIndex);
             if (!questionState?.reviewId) {
               throw new Error('Review ID not found');
             }
 
-            // 所有数据齐全，一次性 UPDATE 数据库
+            // 【保存】更新数据库
             await mockInterviewService.updateReview(questionState.reviewId, {
               question_id: questionData.questionId,
               question: questionData.question,
@@ -1198,7 +834,7 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
               other_content: questionData.otherContent,
             });
 
-            // 如果使用了押题或其他文件，同时保存到 ChromaDB（AI 向量记录）
+            // 保存到向量数据库
             if (questionData.questionId || questionData.otherId) {
               await mockInterviewService.saveAIVectorRecord({
                 id: questionState.reviewId,
@@ -1222,13 +858,11 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
               });
             }
 
-            // 更新本地状态
             interviewDataService.markQuestionComplete(context.currentQuestionIndex);
 
-            // 发送分析完成事件
             getMockInterviewStateMachine()?.send({ type: 'ANALYSIS_COMPLETE' });
           } catch (parseError) {
-            logger.error(`Failed to parse analysis result: ${parseError}`);
+            await logger.error(`[第八步] 分析结果解析失败: ${parseError}`);
             getMockInterviewStateMachine()?.send({ type: 'ANALYSIS_ERROR', payload: { error: '分析结果解析失败' } });
           }
         } else {
@@ -1240,7 +874,9 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     }
   };
 
-  // 后台生成答案（在播放问题时并行执行）
+  /**
+   * 后台生成 AI 参考答案
+   */
   const generateAnswerInBackground = async (context: any) => {
     setErrorMessage('');
 
@@ -1249,50 +885,34 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         throw new Error('未选择模型');
       }
 
-      // 从向量知识库中搜索相似问题（押题答案、岗位信息、简历信息、其他文件）
       const similarQuestion = await mockInterviewService.findSimilarQuestion(
         context.currentQuestion,
         context.jobPosition.id,
         0.8
       );
 
-      // 提取各类内容（可能为空字符串）
       const referenceAnswerFromBank = similarQuestion?.answer || '';
       const jobContent = similarQuestion?.jobContent || '';
       const resumeContent = similarQuestion?.resumeContent || '';
       const otherFileContent = similarQuestion?.otherContent || '';
 
-      // 构建答案生成的问题提示
       let answerQuestionPrompt = `请为以下面试问题提供一个专业的参考答案：\n\n问题：${context.currentQuestion}`;
 
       if (referenceAnswerFromBank) {
         answerQuestionPrompt += `\n\n题库参考答案：${referenceAnswerFromBank}`;
       }
-
       if (jobContent) {
         answerQuestionPrompt += `\n\n岗位信息：${jobContent}`;
       }
-
       if (resumeContent) {
         answerQuestionPrompt += `\n\n简历信息：${resumeContent}`;
       }
-
       if (otherFileContent) {
         answerQuestionPrompt += `\n\n相关项目资料：${otherFileContent}`;
       }
 
-      // 使用优化后的上下文（包含简历/JD摘要和对话历史）
       const optimizedMessages = await contextManagementService.getOptimizedContext(answerQuestionPrompt);
 
-      console.log('[MockInterview] 使用优化后的上下文生成答案', {
-        round: context.currentQuestionIndex + 1,
-        totalMessages: optimizedMessages.length,
-        hasQuestionAnswer: !!referenceAnswerFromBank,
-        hasOtherFile: !!otherFileContent,
-        stats: contextManagementService.getStats(),
-      });
-
-      // 准备模型配置
       const modelConfig: ModelConfig = {
         provider: selectedModel.provider,
         model_name: selectedModel.model_name,
@@ -1314,7 +934,13 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         if (chunk.finished) {
           referenceAnswer = referenceAnswer.trim();
 
-          // 暂存押题信息、其他文件信息和参考答案到本地状态（不写数据库）
+          // 【保存】同步更新状态机的 context.currentAnswer
+          const machine = getMockInterviewStateMachine();
+          if (machine) {
+            machine.updateContextPartial({ currentAnswer: referenceAnswer });
+          }
+
+          // 【保存】暂存问题数据
           currentQuestionData.current = {
             sequence: context.currentQuestionIndex,
             questionId: similarQuestion?.questionId,
@@ -1328,7 +954,6 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           onAnswerGenerated?.(referenceAnswer);
 
         } else {
-          // 流式输出：每个 chunk 都实时更新 UI
           referenceAnswer += chunk.content;
           onAnswerGenerated?.(referenceAnswer);
         }
@@ -1338,61 +963,51 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     }
   };
 
-  // 轮次完成
+  /**
+   * 【第九步】本轮完成
+   */
   const handleRoundComplete = async (context: any) => {
     setCurrentLine(`第${context.currentQuestionIndex + 1}个问题已完成`);
     setErrorMessage('');
 
     try {
-      // 记录对话到上下文管理服务
       const question = context.currentQuestion || '';
       const candidateAnswer = currentQuestionData.current?.candidateAnswer || context.userResponse || '';
 
       if (question && candidateAnswer) {
         await contextManagementService.recordConversation(question, candidateAnswer);
-        console.log('[MockInterview] 对话已记录到上下文管理服务', {
-          round: context.currentQuestionIndex + 1,
-          questionLength: question.length,
-          answerLength: candidateAnswer.length,
-        });
       }
     } catch (error) {
-      logger.error(`[MockInterview] 记录对话失败: ${error}`);
-      // 不影响主流程，继续执行
+      await logger.error(`[第九步] 记录对话失败: ${error}`);
     }
 
-    // 标记问题完成
     interviewDataService.markQuestionComplete(context.currentQuestionIndex);
 
-    // 检查是否应该结束面试
     const shouldEnd = getMockInterviewStateMachine()?.shouldEndInterview();
 
     if (shouldEnd) {
       getMockInterviewStateMachine()?.send({ type: 'END_INTERVIEW' });
     } else {
-      // 继续下一个问题（这里使用 transitionToNext 检查暂停）
       setTimeout(() => {
         transitionToNext('CONTINUE_INTERVIEW');
       }, 2000);
     }
   };
 
-  // 面试结束阶段
+  /**
+   * 面试结束阶段
+   */
   const handleInterviewEnding = async () => {
     setCurrentLine('面试即将结束，正在生成报告...');
     setErrorMessage('');
 
     try {
-      // 先保存当前的计时器时长
       const timerDuration = voiceState.timerDuration || 0;
 
-      // 标记面试完成
       interviewDataService.markInterviewComplete();
 
-      // 从 localStorage 获取当前面试 ID
       const interviewId = currentInterview.get();
 
-      // 更新数据库中的面试状态为 mock-interview-completed
       if (interviewId) {
         await interviewService.updateInterview(interviewId, {
           status: 'mock-interview-completed',
@@ -1401,40 +1016,40 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
         });
       }
 
-      // 发送生成报告事件
       transitionToNext('GENERATE_REPORT');
     } catch (error) {
-      logger.error(`面试结束阶段发生错误: ${error}`);
+      await logger.error(`[面试结束] 发生错误: ${error}`);
       transitionToNext('ENDING_ERROR', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 
-  // 面试完成
+  /**
+   * 【第十一步】面试完成
+   */
   const handleInterviewCompleted = async () => {
     setCurrentLine('面试已完成！感谢您的参与。');
     setErrorMessage('');
 
-    // 清理上下文管理服务
     contextManagementService.clear();
-    console.log('[MockInterview] 上下文管理服务已清理');
 
-    // 从 localStorage 获取当前面试 ID
     const interviewId = currentInterview.get();
 
-    // 异步生成面试报告(scores + insights),不阻塞用户
     if (interviewId) {
-      const machine = getMockInterviewStateMachine();
-      if (machine) {
-        generateInterviewReport(interviewId, machine.getContext()).catch(error => {
-          const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
-          logger.error(`生成面试报告失败: ${error}`);
-          setErrorMessage(`后台生成面试报告失败: ${errorMsg}`);
+      // 使用公共报告生成器
+      generateReport({
+        interviewId,
+        jobTitle: selectedPosition?.title || '未知职位',
+        resumeContent: selectedPosition?.resumeContent || '',
+        durationSec: voiceState.timerDuration || 0,
+        onError: (error) => {
+          setErrorMessage(`后台生成面试报告失败: ${error}`);
           setTimestamp(Date.now());
-        });
-      }
+        }
+      }).catch(async (error) => {
+        await logger.error(`[第十一步] 生成面试报告失败: ${error}`);
+      });
     }
 
-    // 更新 VoiceState,保留 interviewId(退出窗口时再清理)
     setVoiceState({
       mode: 'mock-interview',
       subState: 'mock-interview-completed',
@@ -1442,16 +1057,16 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     });
   };
 
-  // 错误处理
+  /**
+   * 错误处理
+   */
   const handleError = async (context: any) => {
     const errorMsg = context.errorMessage || '面试过程中发生错误';
     setErrorMessage(errorMsg);
     setCurrentLine('');
 
-    // 从 localStorage 获取当前面试 ID
     const interviewId = currentInterview.get();
 
-    // 更新面试状态为 idle（错误）并记录错误信息
     if (interviewId) {
       try {
         await interviewService.updateInterview(interviewId, {
@@ -1459,175 +1074,178 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
           message: `错误: ${errorMsg}`
         });
       } catch (error) {
-        logger.error(`更新面试错误状态失败: ${error}`);
+        await logger.error(`[错误处理] 更新面试错误状态失败: ${error}`);
       }
     }
   };
 
-  // 生成面试报告(异步,不阻塞用户)
-  const generateInterviewReport = async (interviewId: string, context: any) => {
+  // ===========================================================================
+  // 暂停/继续/停止
+  // ===========================================================================
+
+  const handlePauseInterview = async () => {
+    const machine = getMockInterviewStateMachine();
+    if (!machine) return;
+
+    const interviewId = currentInterview.get();
+    if (!interviewId) return;
+
     try {
-      // 先保存当前的计时器时长
-      const durationSec = voiceState.timerDuration || 0;
+      machine.updateContextPartial({ isPaused: true });
 
-      // 1. 获取面试数据
-      const jobTitle = context.jobPosition?.title || '未知职位';
-      const resumeContent = context.resume?.resumeContent || '';
+      const currentState = machine.getState();
+      const currentContext = machine.getContext();
 
-      // 2. 从数据库获取所有问答记录(而不是从内存状态)
-      const reviews = await mockInterviewService.getInterviewReviews(interviewId);
+      localStorage.setItem('mock-interview-paused-state', JSON.stringify({
+        interviewId: interviewId,
+        state: currentState,
+        context: currentContext,
+        timestamp: Date.now()
+      }));
 
-      if (!reviews || reviews.length === 0) {
-        logger.error('无面试问答记录');
-        setErrorMessage('无法生成面试报告: 没有面试问答记录');
-        setTimestamp(Date.now());
+      await interviewService.updateInterview(interviewId, {
+        status: 'mock-interview-paused',
+        message: '面试已暂停'
+      });
+
+      setVoiceState({
+        mode: 'mock-interview',
+        subState: 'mock-interview-paused',
+        interviewId: interviewId
+      });
+      setCurrentLine('面试已暂停');
+
+    } catch (error) {
+      await logger.error(`[暂停] 暂停面试失败: ${error}`);
+      setErrorMessage(`暂停面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  };
+
+  const handleResumeInterview = async () => {
+    const machine = getMockInterviewStateMachine();
+    if (!machine) return;
+
+    const interviewId = currentInterview.get();
+    if (!interviewId) return;
+
+    try {
+      const savedStateStr = localStorage.getItem('mock-interview-paused-state');
+      if (!savedStateStr) {
+        throw new Error('未找到暂停的面试状态');
+      }
+
+      const savedState = JSON.parse(savedStateStr);
+
+      if (savedState.interviewId !== interviewId) {
+        throw new Error('暂停状态与当前面试不匹配');
+      }
+
+      machine.restoreContext(savedState.context);
+      machine.updateContextPartial({ isPaused: false });
+
+      await interviewService.updateInterview(interviewId, {
+        status: 'mock-interview-recording',
+        message: '面试已恢复'
+      });
+
+      setVoiceState({
+        mode: 'mock-interview',
+        subState: 'mock-interview-playing',
+        interviewId: interviewId
+      });
+      setCurrentLine('面试已恢复');
+
+      continueFromState(savedState.state);
+
+      localStorage.removeItem('mock-interview-paused-state');
+
+    } catch (error) {
+      await logger.error(`[继续] 恢复面试失败: ${error}`);
+      setErrorMessage(`恢复面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  };
+
+  const handleStopInterview = async () => {
+    try {
+      const interviewId = currentInterview.get();
+      if (!interviewId) {
         return;
       }
 
-      // 构建汇总数据(不传原始问答,只传已分析的结果)
-      const summaryData = {
-        totalQuestions: reviews.length,
-        questions: reviews.map((r, i) => ({
-          index: i + 1,
-          question: r.asked_question?.substring(0, 100), // 只保留问题摘要
-          pros: r.pros || '无',
-          cons: r.cons || '无',
-          suggestions: r.suggestions || '无',
-          keyPoints: r.key_points || '无',
-          assessment: r.assessment || '无'
-        }))
-      };
+      const timerDuration = voiceState.timerDuration || 0;
 
-      let reviewsData = JSON.stringify(summaryData, null, 2);
+      setCurrentLine('正在结束面试...');
 
-      // 3. 生成评分报告(带自动分批处理)
-      let scoreData;
-      try {
-        const scorePrompt = await promptService.buildScorePrompt(jobTitle, resumeContent, reviewsData);
-        scoreData = await aiService.callAIForJson([
-          { role: 'user', content: scorePrompt }
-        ]);
-      } catch (error: any) {
-        // 如果 token 超限,尝试分批处理
-        if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
-          // 分批处理:每批 1 个问题
-          const batchSize = 1;
-          const batches = [];
-          for (let i = 0; i < reviews.length; i += batchSize) {
-            batches.push(reviews.slice(i, i + batchSize));
-          }
-
-          // 并行处理所有批次
-          const batchSettledResults = await Promise.allSettled(batches.map(async (batch) => {
-            const batchSummary = {
-              totalQuestions: batch.length,
-              questions: batch.map((r, i) => ({
-                index: i + 1,
-                question: r.asked_question?.substring(0, 100),
-                pros: r.pros || '无',
-                cons: r.cons || '无',
-                suggestions: r.suggestions || '无',
-              }))
-            };
-            const batchData = JSON.stringify(batchSummary);
-            const prompt = await promptService.buildScorePrompt(jobTitle, resumeContent, batchData);
-            return await aiService.callAIForJson([{ role: 'user', content: prompt }]);
-          }));
-
-          // 过滤出成功的结果
-          const batchResults = batchSettledResults
-            .filter(result => result.status === 'fulfilled')
-            .map(result => (result as PromiseFulfilledResult<any>).value);
-
-          // 如果全部失败,抛出错误
-          if (batchResults.length === 0) {
-            throw new Error('所有批次处理都失败了');
-          }
-
-          // 汇总所有批次结果
-          scoreData = {
-            total_score: Math.round(batchResults.reduce((sum, r) => sum + (r.total_score || 0), 0) / batchResults.length),
-            num_questions: reviews.length,
-            radar: {
-              interactivity: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.interactivity || 0), 0) / batchResults.length),
-              confidence: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.confidence || 0), 0) / batchResults.length),
-              professionalism: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.professionalism || 0), 0) / batchResults.length),
-              relevance: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.relevance || 0), 0) / batchResults.length),
-              clarity: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.clarity || 0), 0) / batchResults.length),
-            },
-            overall_summary: batchResults.map(r => r.overall_summary).join(' '),
-            pros: batchResults.map(r => r.pros).join('\n'),
-            cons: batchResults.map(r => r.cons).join('\n'),
-            suggestions: batchResults.map(r => r.suggestions).join('\n'),
-          };
-        } else {
-          throw error;
-        }
-      }
-
-      // 4. 生成洞察报告(带自动分批处理)
-      let insightData;
-      try {
-        const insightPrompt = await promptService.buildInsightPrompt(jobTitle, resumeContent, reviewsData);
-        insightData = await aiService.callAIForJson([
-          { role: 'user', content: insightPrompt }
-        ]);
-      } catch (error: any) {
-        // 如果 token 超限,返回默认值
-        if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
-          insightData = {
-            interviewer: { score: 0, summary: '', role: '', mbti: '', personality: '', preference: '' },
-            candidate: { summary: '', mbti: '', personality: '', job_preference: '' },
-            strategy: { prepare_details: '', business_understanding: '', keep_logical: '' }
-          };
-        } else {
-          throw error;
-        }
-      }
-
-      // 5. 保存到后端
-      await interviewService.saveInterviewScore({
-        interviewId,
-        totalScore: scoreData.total_score || 0,
-        durationSec,
-        numQuestions: scoreData.num_questions || 0,
-        overallSummary: scoreData.overall_summary || '',
-        pros: scoreData.pros || '',
-        cons: scoreData.cons || '',
-        suggestions: scoreData.suggestions || '',
-        radarInteractivity: scoreData.radar?.interactivity || 0,
-        radarConfidence: scoreData.radar?.confidence || 0,
-        radarProfessionalism: scoreData.radar?.professionalism || 0,
-        radarRelevance: scoreData.radar?.relevance || 0,
-        radarClarity: scoreData.radar?.clarity || 0,
+      await interviewService.updateInterview(interviewId, {
+        status: 'mock-interview-completed',
+        duration: timerDuration,
+        message: '用户主动停止面试'
       });
 
-      await interviewService.saveInterviewInsight({
+      // 使用公共批量分析函数
+      const analyzeResult = await batchAnalyzeReviews({
         interviewId,
-        interviewerScore: insightData.interviewer?.score || 0,
-        interviewerSummary: insightData.interviewer?.summary || '',
-        interviewerRole: insightData.interviewer?.role || '',
-        interviewerMbti: insightData.interviewer?.mbti || '',
-        interviewerPersonality: insightData.interviewer?.personality || '',
-        interviewerPreference: insightData.interviewer?.preference || '',
-        candidateSummary: insightData.candidate?.summary || '',
-        candidateMbti: insightData.candidate?.mbti || '',
-        candidatePersonality: insightData.candidate?.personality || '',
-        candidateJobPreference: insightData.candidate?.job_preference || '',
-        strategyPrepareDetails: insightData.strategy?.prepare_details || '',
-        strategyBusinessUnderstanding: insightData.strategy?.business_understanding || '',
-        strategyKeepLogical: insightData.strategy?.keep_logical || '',
+        onProgress: (msg) => setCurrentLine(msg),
+        onError: (error) => {
+          setErrorMessage(error);
+          setTimestamp(Date.now());
+        }
       });
+
+      if (analyzeResult.analyzed > 0 || analyzeResult.skipped > 0) {
+        setCurrentLine('正在生成面试报告...');
+
+        await generateReport({
+          interviewId,
+          jobTitle: selectedPosition?.title || '未知职位',
+          resumeContent: selectedPosition?.resumeContent || '',
+          durationSec: timerDuration,
+          onError: (error) => {
+            setErrorMessage(error);
+            setTimestamp(Date.now());
+          }
+        });
+      }
+
+      setCurrentLine('面试已结束');
+      setVoiceState({
+        mode: 'mock-interview',
+        subState: 'mock-interview-completed',
+        interviewId: interviewId
+      });
+
+      stopMockInterview();
 
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : '生成面试报告失败';
-      logger.error(`生成面试报告失败: ${error}`);
-      setErrorMessage(`生成面试报告失败: ${errorMsg}`);
-      setTimestamp(Date.now());
-      throw error;
+      await logger.error(`[停止] 结束面试失败: ${error}`);
+      setErrorMessage(`结束面试失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      setCurrentLine('');
+      const interviewId = currentInterview.get();
+      setVoiceState({
+        mode: 'mock-interview',
+        subState: 'mock-interview-completed',
+        interviewId: interviewId
+      });
+
+      stopMockInterview();
     }
   };
 
+  // ===========================================================================
+  // 事件处理
+  // ===========================================================================
+
+  const handlePositionSelect = (position: JobPosition | null) => {
+    setSelectedPosition(position);
+  };
+
+  const handleModelSelect = (model: Model | null) => {
+    setSelectedModel(model);
+  };
+
+  // ===========================================================================
+  // 渲染
+  // ===========================================================================
 
   return (
     <div className="interviewer-mode-panel">
@@ -1666,15 +1284,9 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
                 onChange={async (e) => {
                   const value = e.target.value;
                   setSelectedMic(value);
-                  try {
-                    const selected = micDevices.find(d => d.deviceId === value);
-                    const name = selected?.label || '默认麦克风';
-                    const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-                    await api?.asrConfig?.updateDevices?.({
-                      microphone_device_id: value,
-                      microphone_device_name: name,
-                    });
-                  } catch {}
+                  const selected = micDevices.find(d => d.deviceId === value);
+                  const name = selected?.label || '默认麦克风';
+                  await saveMicrophoneDevice(value, name);
                 }}
                 disabled={loading || (voiceState.subState === 'mock-interview-recording' ||
                          voiceState.subState === 'mock-interview-paused' ||
@@ -1705,15 +1317,9 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
                 onChange={async (e) => {
                   const value = e.target.value;
                   setSelectedSpeaker(value);
-                  try {
-                    const selected = speakerDevices.find(d => d.deviceId === value);
-                    const name = selected?.label || '默认扬声器';
-                    const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-                    await api?.asrConfig?.updateDevices?.({
-                      speaker_device_id: value,
-                      speaker_device_name: name,
-                    });
-                  } catch {}
+                  const selected = speakerDevices.find(d => d.deviceId === value);
+                  const name = selected?.label || '默认扬声器';
+                  await saveSpeakerDevice(value, name);
                 }}
                 disabled={loading || (voiceState.subState === 'mock-interview-recording' ||
                          voiceState.subState === 'mock-interview-paused' ||
@@ -1802,6 +1408,3 @@ export function MockInterviewEntryBody({ selectedJobId, onStart, onStateChange, 
     </div>
   );
 }
-
-
-
