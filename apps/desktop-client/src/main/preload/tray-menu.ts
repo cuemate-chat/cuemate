@@ -55,6 +55,16 @@ const trayMenuAPI = {
     return await ipcRenderer.invoke('set-dock-icon-visible', visible);
   },
 
+  // 获取 Docker 退出时是否关闭设置
+  getStopDockerOnQuit: async () => {
+    return await ipcRenderer.invoke('get-stop-docker-on-quit');
+  },
+
+  // 设置 Docker 退出时是否关闭
+  setStopDockerOnQuit: async (stop: boolean) => {
+    return await ipcRenderer.invoke('set-stop-docker-on-quit', stop);
+  },
+
   // 监听点击穿透模式变化
   onClickThroughChanged: (callback: (enabled: boolean) => void) => {
     const handler = (_e: any, enabled: boolean) => callback(enabled);

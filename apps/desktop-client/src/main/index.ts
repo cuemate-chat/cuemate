@@ -272,11 +272,17 @@ class CueMateApp {
   }
 
   private async cleanup(): Promise<void> {
-    // 停止 Docker 服务
-    try {
-      await DockerServiceManager.stop();
-    } catch (error) {
-      logger.error({ error }, 'Docker 服务停止失败');
+    // 根据设置决定是否停止 Docker 服务
+    const shouldStopDocker = (global as any).stopDockerOnQuit ?? false;
+    if (shouldStopDocker) {
+      logger.info('退出时关闭 Docker 服务（用户设置）');
+      try {
+        await DockerServiceManager.stop();
+      } catch (error) {
+        logger.error({ error }, 'Docker 服务停止失败');
+      }
+    } else {
+      logger.info('退出时保持 Docker 服务运行（用户设置）');
     }
 
     // 清理菜单栏图标

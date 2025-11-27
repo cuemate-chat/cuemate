@@ -25,8 +25,10 @@ export function TrayMenuApp() {
 
   // 用户设置
   const [currentLocale, setCurrentLocale] = useState('zh-CN');
-  const [currentTheme, setCurrentTheme] = useState('light');
   const [currentModelId, setCurrentModelId] = useState('');
+
+  // Docker 退出设置（本地存储）
+  const [stopDockerOnQuit, setStopDockerOnQuit] = useState(false);
 
   // 模型列表
   const [modelList, setModelList] = useState<any[]>([]);
@@ -50,6 +52,11 @@ export function TrayMenuApp() {
         const visible = await (window as any).electronAPI.getDockIconVisible();
         setShowDockIcon(visible);
       }
+      // 获取 Docker 退出设置
+      if ((window as any).electronAPI?.getStopDockerOnQuit) {
+        const stopDocker = await (window as any).electronAPI.getStopDockerOnQuit();
+        setStopDockerOnQuit(stopDocker);
+      }
     } catch (error) {
       logger.error(`获取应用状态失败: ${error}`);
     }
@@ -68,7 +75,6 @@ export function TrayMenuApp() {
     // 获取用户设置
     const settings = await getUserSettings();
     setCurrentLocale(settings.locale || 'zh-CN');
-    setCurrentTheme(settings.theme || 'light');
     setCurrentModelId(settings.selected_model_id || '');
 
     // 获取模型列表
@@ -343,36 +349,27 @@ export function TrayMenuApp() {
               </div>
             </div>
 
-            {/* 主题 */}
+            {/* Docker 镜像退出设置 */}
             <div className="setting-row">
-              <span className="setting-label">主题:</span>
+              <span className="setting-label">Docker 镜像:</span>
               <div className="theme-buttons">
                 <button
-                  className={`theme-btn ${currentTheme === 'light' ? 'active' : ''}`}
+                  className={`theme-btn ${!stopDockerOnQuit ? 'active' : ''}`}
                   onClick={async () => {
-                    setCurrentTheme('light');
-                    await updateUserSettings({ theme: 'light' });
+                    setStopDockerOnQuit(false);
+                    await (window as any).electronAPI?.setStopDockerOnQuit?.(false);
                   }}
                 >
-                  浅色
+                  退出不关闭
                 </button>
                 <button
-                  className={`theme-btn ${currentTheme === 'dark' ? 'active' : ''}`}
+                  className={`theme-btn ${stopDockerOnQuit ? 'active' : ''}`}
                   onClick={async () => {
-                    setCurrentTheme('dark');
-                    await updateUserSettings({ theme: 'dark' });
+                    setStopDockerOnQuit(true);
+                    await (window as any).electronAPI?.setStopDockerOnQuit?.(true);
                   }}
                 >
-                  深色
-                </button>
-                <button
-                  className={`theme-btn ${currentTheme === 'system' ? 'active' : ''}`}
-                  onClick={async () => {
-                    setCurrentTheme('system');
-                    await updateUserSettings({ theme: 'system' });
-                  }}
-                >
-                  自动
+                  退出关闭
                 </button>
               </div>
             </div>

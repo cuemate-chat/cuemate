@@ -87,6 +87,8 @@ export function setupIPC(windowManager: WindowManager): void {
   let clickThroughEnabled = false;
   // === Dock 图标显示状态 ===
   let dockIconVisible = false;
+  // === Docker 退出时是否关闭（默认 false，即退出不关闭）===
+  let stopDockerOnQuit = false;
   function getSettingsFilePath(): string {
     const path = require('path');
     return path.join(app.getPath('userData'), 'settings.json');
@@ -101,6 +103,7 @@ export function setupIPC(windowManager: WindowManager): void {
         stealthModeEnabled = !!json.stealthModeEnabled;
         clickThroughEnabled = !!json.clickThroughEnabled;
         dockIconVisible = !!json.dockIconVisible;
+        stopDockerOnQuit = !!json.stopDockerOnQuit;
       }
     } catch {}
   }
@@ -117,6 +120,7 @@ export function setupIPC(windowManager: WindowManager): void {
             stealthModeEnabled,
             clickThroughEnabled,
             dockIconVisible,
+            stopDockerOnQuit,
           },
           null,
           2,
@@ -170,6 +174,7 @@ export function setupIPC(windowManager: WindowManager): void {
     (global as any).stealthModeEnabled = stealthModeEnabled;
     (global as any).clickThroughEnabled = clickThroughEnabled;
     (global as any).dockIconVisible = dockIconVisible;
+    (global as any).stopDockerOnQuit = stopDockerOnQuit;
   } catch {}
   if (stealthModeEnabled) {
     applyStealthModeToAllWindows(true);
@@ -1622,6 +1627,38 @@ export function setupIPC(windowManager: WindowManager): void {
       return { success: true, visible: dockIconVisible };
     } catch (error) {
       logger.error({ error }, '设置 Dock 图标显示状态失败');
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
+  // 获取 Docker 退出时是否关闭设置
+  ipcMain.handle('get-stop-docker-on-quit', async () => {
+    try {
+      return stopDockerOnQuit;
+    } catch (error) {
+      logger.error({ error }, '获取 Docker 退出设置失败');
+      return false;
+    }
+  });
+
+  // 设置 Docker 退出时是否关闭
+  ipcMain.handle('set-stop-docker-on-quit', async (_event, stop: boolean) => {
+    try {
+      stopDockerOnQuit = !!stop;
+      try {
+        (global as any).stopDockerOnQuit = stopDockerOnQuit;
+      } catch {}
+
+      // 保存到配置文件
+      saveSettings();
+
+      logger.info({ stopDockerOnQuit }, 'Docker 退出设置已更新');
+      return { success: true, stopDockerOnQuit };
+    } catch (error) {
+      logger.error({ error }, '设置 Docker 退出设置失败');
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
