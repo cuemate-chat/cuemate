@@ -67,12 +67,16 @@ export function registerReviewRoutes(app: FastifyInstance) {
                   s.pros AS overall_pros,
                   s.cons AS overall_cons,
                   s.suggestions AS overall_suggestions,
+                  m.name AS model_name,
+                  m.provider AS model_provider,
+                  m.icon AS model_icon,
                   (SELECT ia.content FROM interview_advantages ia WHERE ia.interview_id = i.id AND ia.type = 0 ORDER BY ia.created_at ASC LIMIT 1) AS advantage_content,
                   (SELECT ia.content FROM interview_advantages ia WHERE ia.interview_id = i.id AND ia.type = 1 ORDER BY ia.created_at ASC LIMIT 1) AS disadvantage_content,
                   (SELECT COUNT(1) FROM interview_advantages ia WHERE ia.interview_id = i.id) AS advantages_total
              FROM interviews i
         LEFT JOIN jobs j ON j.id = i.job_id
         LEFT JOIN interview_scores s ON s.interview_id = i.id
+        LEFT JOIN models m ON m.id = i.selected_model_id
             WHERE i.user_id = ?
             ORDER BY i.started_at DESC
             `,

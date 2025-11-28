@@ -155,6 +155,10 @@ export function registerLogRoutes(app: FastifyInstance) {
       const lines = content.split(/\r?\n/);
       const start = Math.max(0, lines.length - tail);
       const tailLines = lines.slice(start).filter((l) => l.length > 0);
+      // cuemate-asr 日志是正序写入的（tee 追加），需要倒序显示；其他服务用 prepend 写入，已经是倒序
+      if (service === 'cuemate-asr') {
+        tailLines.reverse();
+      }
       return { level, service, date, lines: tailLines };
     } catch (err: any) {
       (req as any).log.error({ err: err }, 'read-log-failed');

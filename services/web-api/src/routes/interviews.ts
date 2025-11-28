@@ -121,6 +121,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
 
         return { id };
       } catch (err: any) {
+        app.log.error({ err, endpoint: 'POST /interview-scores' }, '创建面试评分失败');
         return reply.code(400).send(buildPrefixedError('创建面试评分失败', err, 400));
       }
     }),
@@ -235,6 +236,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
 
         return { success: true };
       } catch (err: any) {
+        app.log.error({ err, endpoint: 'PUT /interview-scores/:id' }, '更新面试评分失败');
         return reply.code(400).send(buildPrefixedError('更新面试评分失败', err, 400));
       }
     }),
@@ -338,6 +340,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
 
         return { id };
       } catch (err: any) {
+        app.log.error({ err, endpoint: 'POST /interview-reviews' }, '创建面试复盘条目失败');
         return reply.code(400).send(buildPrefixedError('创建面试复盘条目失败', err, 400));
       }
     }),
@@ -407,6 +410,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           limit,
         };
       } catch (err: any) {
+        app.log.error({ err, endpoint: 'GET /interview-reviews' }, '查询面试复盘条目失败');
         return reply.code(400).send(buildPrefixedError('查询面试复盘条目失败', err, 400));
       }
     }),
@@ -536,6 +540,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
 
         return { success: true };
       } catch (err: any) {
+        app.log.error({ err, endpoint: 'PUT /interview-reviews/:id' }, '更新面试复盘条目失败');
         return reply.code(400).send(buildPrefixedError('更新面试复盘条目失败', err, 400));
       }
     }),
@@ -638,6 +643,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
 
         return { id };
       } catch (err: any) {
+        app.log.error({ err, endpoint: 'POST /interview-insights' }, '创建面试剖析失败');
         return reply.code(400).send(buildPrefixedError('创建面试剖析失败', err, 400));
       }
     }),
@@ -757,6 +763,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
 
         return { success: true };
       } catch (err: any) {
+        app.log.error({ err, endpoint: 'PUT /interview-insights/:id' }, '更新面试剖析失败');
         return reply.code(400).send(buildPrefixedError('更新面试剖析失败', err, 400));
       }
     }),
@@ -810,6 +817,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           },
         };
       } catch (err: any) {
+        app.log.error({ err, endpoint: 'GET /user-training-stats' }, '获取用户训练统计数据失败');
         return reply.code(400).send(buildPrefixedError('获取用户训练统计数据失败', err, 400));
       }
     }),
