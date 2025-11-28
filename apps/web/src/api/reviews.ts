@@ -5,6 +5,9 @@ export interface InterviewListItem {
   started_at: number;
   ended_at: number | null;
   selected_model_id?: string | null;
+  model_name?: string | null;
+  model_provider?: string | null;
+  model_icon?: string | null;
   job_title: string;
   job_content?: string | null;
   question_count: number;

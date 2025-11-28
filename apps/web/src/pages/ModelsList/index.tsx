@@ -1,18 +1,18 @@
 import {
-    DeleteOutlined,
-    EditOutlined,
-    LinkOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
 import { Button, Input, Modal, Tree } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { storage } from '../../api/http';
 import {
-    deleteModel,
-    getModel,
-    listModels,
-    selectUserModel,
-    testModelConnectivity,
-    upsertModel,
+  deleteModel,
+  getModel,
+  listModels,
+  selectUserModel,
+  testModelConnectivity,
+  upsertModel,
 } from '../../api/models';
 import CollapsibleSidebar from '../../components/CollapsibleSidebar';
 import FullScreenOverlay from '../../components/FullScreenOverlay';

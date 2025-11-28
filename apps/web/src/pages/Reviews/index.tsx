@@ -7,6 +7,7 @@ import { deleteInterview, listInterviews } from '../../api/reviews';
 import { message as globalMessage } from '../../components/Message';
 import PageLoading from '../../components/PageLoading';
 import { useLoading } from '../../hooks/useLoading';
+import { findProvider } from '../../providers';
 
 export default function Reviews() {
   const nav = useNavigate();
@@ -108,6 +109,19 @@ export default function Reviews() {
                   </div>
                   {/* 右上角标签区域 */}
                   <div className="absolute right-3 top-2 flex items-center gap-2">
+                    {it.model_name && (
+                      <Tag color="purple" className="!m-0 flex items-center gap-1">
+                        {(() => {
+                          const icon = it.model_provider ? findProvider(it.model_provider)?.icon : null;
+                          if (icon) {
+                            const src = `data:image/svg+xml;utf8,${encodeURIComponent(icon)}`;
+                            return <img src={src} alt="" className="w-4 h-4" />;
+                          }
+                          return null;
+                        })()}
+                        {it.model_name}
+                      </Tag>
+                    )}
                     {it.duration > 0 && (
                       <Tag color="orange" className="!m-0">
                         时长: {Math.floor(it.duration / 60)}分{it.duration % 60}秒
