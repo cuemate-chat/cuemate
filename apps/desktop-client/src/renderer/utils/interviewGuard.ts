@@ -1,5 +1,5 @@
 // apps/desktop-client/src/renderer/utils/interviewGuard.ts
-// 面试互斥保护工具，确保同一时间只能进行一种面试模式
+// 面试互斥保护工具，确保全局同一时间只能有一个正在进行的面试
 
 import { hasRecoverableInterview, getRecoverableInterviewInfo } from './mockInterviewManager';
 import { hasRecoverableTraining, getRecoverableTrainingInfo } from './trainingManager';
@@ -15,15 +15,28 @@ export interface OngoingInterviewInfo {
 }
 
 /**
- * 检查是否有正在进行的面试（包括模拟面试和面试训练）
- * @param excludeType 排除的类型（用于在自己的入口页面排除自己的类型）
+ * 检查面试状态是否为"进行中"
+ * 只有非 IDLE、COMPLETED、ERROR 状态才算进行中
+ */
+function isInProgressState(state: string | undefined): boolean {
+  if (!state) return false;
+  // 这些状态不算"进行中"
+  const finishedStates = ['idle', 'completed', 'error'];
+  return !finishedStates.includes(state.toLowerCase());
+}
+
+/**
+ * 获取当前正在进行的面试（全局唯一）
+ * 【重要】全局只能有一个正在进行的面试，无论是模拟面试还是面试训练
+ * 只检查真正"进行中"的状态，不包括已完成或错误状态
  * @returns 正在进行的面试信息，如果没有则返回 null
  */
-export function getOngoingInterview(excludeType?: InterviewType): OngoingInterviewInfo | null {
-  // 检查模拟面试
-  if (excludeType !== 'mock-interview' && hasRecoverableInterview()) {
+export function getOngoingInterview(): OngoingInterviewInfo | null {
+  // 优先检查模拟面试（按时间顺序，先检查哪个都可以）
+  if (hasRecoverableInterview()) {
     const info = getRecoverableInterviewInfo();
-    if (info) {
+    // 只有状态为"进行中"才算正在进行的面试
+    if (info && isInProgressState(info.state)) {
       return {
         type: 'mock-interview',
         interviewId: info.interviewId,
@@ -35,9 +48,10 @@ export function getOngoingInterview(excludeType?: InterviewType): OngoingIntervi
   }
 
   // 检查面试训练
-  if (excludeType !== 'interview-training' && hasRecoverableTraining()) {
+  if (hasRecoverableTraining()) {
     const info = getRecoverableTrainingInfo();
-    if (info) {
+    // 只有状态为"进行中"才算正在进行的面试
+    if (info && isInProgressState(info.state)) {
       return {
         type: 'interview-training',
         interviewId: info.interviewId,
@@ -53,15 +67,16 @@ export function getOngoingInterview(excludeType?: InterviewType): OngoingIntervi
 
 /**
  * 检查是否可以开始新的面试
- * @param targetType 要开始的面试类型
+ * 【重要】只有当没有任何正在进行的面试时才能开始新面试
+ * @param _targetType 要开始的面试类型（保留参数以兼容现有调用）
  * @returns { canStart: boolean, blockingInterview?: OngoingInterviewInfo }
  */
-export function canStartInterview(targetType: InterviewType): {
+export function canStartInterview(_targetType: InterviewType): {
   canStart: boolean;
   blockingInterview?: OngoingInterviewInfo;
 } {
-  // 检查是否有其他类型的面试正在进行
-  const ongoingInterview = getOngoingInterview(targetType);
+  // 检查是否有任何正在进行的面试（不区分类型）
+  const ongoingInterview = getOngoingInterview();
 
   if (ongoingInterview) {
     return {
