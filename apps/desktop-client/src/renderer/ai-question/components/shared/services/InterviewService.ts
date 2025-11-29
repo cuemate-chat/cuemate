@@ -300,13 +300,6 @@ export class InterviewService {
         result.otherContent = data.otherContent;
       }
 
-      console.log('[InterviewService] 查询结果', {
-        hasQuestion: !!result.questionId,
-        hasJob: !!result.jobId,
-        hasResume: !!result.resumeId,
-        hasOther: !!result.otherId,
-      });
-
       return result;
     } catch (error) {
       console.warn('RAG 服务不可用:', error);
@@ -350,7 +343,7 @@ export class InterviewService {
       const data = await response.json();
 
       if (!data.success || !data.match) {
-        console.log('[InterviewService] 未找到匹配结果');
+        console.debug('[InterviewService] 未找到匹配结果');
         return {};
       }
 
@@ -365,7 +358,7 @@ export class InterviewService {
         otherContent: match.otherContent || '',
       };
 
-      console.log('[InterviewService] 查询所有 ChromaDB 集合结果', {
+      console.debug('[InterviewService] 查询所有 ChromaDB 集合结果', {
         hasQuestion: !!result.questionId,
         hasOtherContent: !!result.otherContent,
         similarity: result.similarity,
@@ -423,7 +416,6 @@ export class InterviewService {
       return false;
     }
   }
-
 }
 
 // 导出单例 - 向后兼容，保留 mockInterviewService

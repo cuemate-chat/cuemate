@@ -65,12 +65,6 @@ export class ConversationVectorService {
         return false;
       }
 
-      console.log('[ConversationVector] 存储成功', {
-        interviewId,
-        sequence,
-        contentLength: content.length,
-      });
-
       return true;
     } catch (error) {
       logger.error(`[ConversationVector] 存储异常: ${error}`);
@@ -121,11 +115,6 @@ export class ConversationVectorService {
         return false;
       }
 
-      console.log('[ConversationVector] 批量存储成功', {
-        interviewId,
-        count: conversations.length,
-      });
-
       return true;
     } catch (error) {
       logger.error(`[ConversationVector] 批量存储异常: ${error}`);
@@ -173,12 +162,6 @@ export class ConversationVectorService {
         answer: result.metadata?.answer || '',
         similarity: result.similarity || 0,
       }));
-
-      console.log('[ConversationVector] 检索成功', {
-        interviewId,
-        query: currentQuestion,
-        foundCount: conversations.length,
-      });
 
       return conversations;
     } catch (error) {
@@ -247,7 +230,7 @@ export class ConversationVectorService {
         return false;
       }
 
-      console.log('[ConversationVector] 简历/JD存储成功', {
+      console.debug('[ConversationVector] 简历/JD存储成功', {
         interviewId,
         resumeChunks: resumeChunks.length,
         jdChunks: jdChunks.length,
@@ -292,7 +275,7 @@ export class ConversationVectorService {
 
       const chunks = results.map((result: any) => result.content || '');
 
-      console.log('[ConversationVector] 检索简历/JD片段成功', {
+      console.debug('[ConversationVector] 检索简历/JD片段成功', {
         interviewId,
         foundCount: chunks.length,
       });
@@ -346,7 +329,7 @@ export class ConversationVectorService {
         method: 'DELETE',
       });
 
-      console.log('[ConversationVector] 删除面试数据成功', { interviewId });
+      console.debug('[ConversationVector] 删除面试数据成功', { interviewId });
       return true;
     } catch (error) {
       logger.error(`[ConversationVector] 删除面试数据异常: ${error}`);

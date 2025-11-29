@@ -9,17 +9,17 @@
  * 4. ChromaDB：长期记忆，语义检索
  */
 
-import type { ChatMessage } from '../../../../utils/ai/aiService';
 import { logger } from '../../../../../utils/rendererLogger.js';
+import type { ChatMessage } from '../../../../utils/ai/aiService';
 import { aiService } from '../../../../utils/ai/aiService';
 import { conversationVectorService } from './ConversationVectorService';
 
 // 上下文管理配置
 interface ContextConfig {
-  windowSize: number;           // 滑动窗口大小（保留最近几轮完整对话）
-  summaryInterval: number;       // 摘要生成间隔（每几轮生成一次摘要）
+  windowSize: number; // 滑动窗口大小（保留最近几轮完整对话）
+  summaryInterval: number; // 摘要生成间隔（每几轮生成一次摘要）
   resumeSummaryMaxLength: number; // 简历摘要最大长度
-  jdSummaryMaxLength: number;     // JD摘要最大长度
+  jdSummaryMaxLength: number; // JD摘要最大长度
   conversationSummaryMaxLength: number; // 对话摘要最大长度
 }
 
@@ -52,10 +52,10 @@ interface ContextState {
 
 export class ContextManagementService {
   private config: ContextConfig = {
-    windowSize: 3,              // 保留最近3轮
-    summaryInterval: 5,          // 每5轮生成一次摘要
+    windowSize: 3, // 保留最近3轮
+    summaryInterval: 5, // 每5轮生成一次摘要
     resumeSummaryMaxLength: 200, // 简历摘要200字
-    jdSummaryMaxLength: 100,     // JD摘要100字
+    jdSummaryMaxLength: 100, // JD摘要100字
     conversationSummaryMaxLength: 500, // 对话摘要500字
   };
 
@@ -64,11 +64,7 @@ export class ContextManagementService {
   /**
    * 初始化上下文管理
    */
-  async initialize(params: {
-    interviewId: string;
-    resume: string;
-    jd: string;
-  }): Promise<void> {
+  async initialize(params: { interviewId: string; resume: string; jd: string }): Promise<void> {
     this.state = {
       interviewId: params.interviewId,
       resume: params.resume,
@@ -77,12 +73,6 @@ export class ContextManagementService {
       lastSummaryIndex: 0,
       currentRound: 0,
     };
-
-    console.log('[ContextManagement] 初始化完成', {
-      interviewId: params.interviewId,
-      resumeLength: params.resume.length,
-      jdLength: params.jd.length,
-    });
 
     // 异步存储简历/JD到ChromaDB（不阻塞初始化）
     conversationVectorService
@@ -136,13 +126,6 @@ export class ContextManagementService {
       content: currentQuestion,
     });
 
-    console.log('[ContextManagement] 生成优化上下文', {
-      round: this.state.currentRound + 1,
-      systemLength: systemContent.length,
-      windowSize: windowConversations.length,
-      totalMessages: messages.length,
-    });
-
     return messages;
   }
 
@@ -163,12 +146,6 @@ export class ContextManagementService {
 
     this.state.conversations.push(round);
     this.state.currentRound++;
-
-    console.log('[ContextManagement] 记录对话', {
-      sequence: round.sequence,
-      questionLength: question.length,
-      answerLength: answer.length,
-    });
 
     // 第1轮结束后，生成简历/JD摘要
     if (this.state.currentRound === 1) {
@@ -260,7 +237,7 @@ export class ContextManagementService {
     const { summaryInterval } = this.config;
 
     // 每N轮生成一次摘要
-    return (currentRound - lastSummaryIndex) >= summaryInterval;
+    return currentRound - lastSummaryIndex >= summaryInterval;
   }
 
   /**
@@ -270,8 +247,6 @@ export class ContextManagementService {
     if (!this.state) {
       return;
     }
-
-    console.log('[ContextManagement] 开始生成简历/JD摘要...');
 
     try {
       // 生成简历摘要
@@ -303,13 +278,6 @@ export class ContextManagementService {
 
       const jdSummary = await aiService.callAI(jdSummaryPrompt);
       this.state.jdSummary = jdSummary;
-
-      console.log('[ContextManagement] 简历/JD摘要生成完成', {
-        resumeOriginal: this.state.resume.length,
-        resumeSummary: resumeSummary.length,
-        jdOriginal: this.state.jd.length,
-        jdSummary: jdSummary.length,
-      });
     } catch (error) {
       logger.error(`[ContextManagement] 生成简历/JD摘要失败: ${error}`);
       // 失败时使用原文
@@ -324,13 +292,11 @@ export class ContextManagementService {
       return;
     }
 
-    console.log('[ContextManagement] 开始生成对话摘要...');
-
     try {
       // 获取需要摘要的对话（从上次摘要位置到当前位置之前的对话）
       const conversationsToSummarize = this.state.conversations.slice(
         this.state.lastSummaryIndex,
-        this.state.currentRound - this.config.windowSize
+        this.state.currentRound - this.config.windowSize,
       );
 
       if (conversationsToSummarize.length === 0) {
@@ -339,7 +305,10 @@ export class ContextManagementService {
 
       // 构建对话文本
       const conversationText = conversationsToSummarize
-        .map((conv) => `Q${conv.sequence + 1}: ${conv.question}\nA${conv.sequence + 1}: ${conv.answer}`)
+        .map(
+          (conv) =>
+            `Q${conv.sequence + 1}: ${conv.question}\nA${conv.sequence + 1}: ${conv.answer}`,
+        )
         .join('\n\n');
 
       const summaryPrompt: ChatMessage[] = [
@@ -376,12 +345,6 @@ export class ContextManagementService {
       }
 
       this.state.lastSummaryIndex = this.state.currentRound - this.config.windowSize;
-
-      console.log('[ContextManagement] 对话摘要生成完成', {
-        summarizedRounds: conversationsToSummarize.length,
-        summaryLength: this.state.conversationSummary?.length || 0,
-        lastSummaryIndex: this.state.lastSummaryIndex,
-      });
     } catch (error) {
       logger.error(`[ContextManagement] 生成对话摘要失败: ${error}`);
     }
@@ -392,7 +355,6 @@ export class ContextManagementService {
    */
   clear(): void {
     this.state = null;
-    console.log('[ContextManagement] 状态已清理');
   }
 
   /**
