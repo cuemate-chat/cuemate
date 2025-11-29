@@ -12,11 +12,13 @@ export type InterviewStatus =
   | 'mock-interview-completed'
   | 'mock-interview-playing'
   | 'mock-interview-expired'
+  | 'mock-interview-error'
   | 'interview-training-recording'
   | 'interview-training-paused'
   | 'interview-training-completed'
   | 'interview-training-playing'
-  | 'interview-training-expired';
+  | 'interview-training-expired'
+  | 'interview-training-error';
 
 export interface InterviewData {
   jobId: string;

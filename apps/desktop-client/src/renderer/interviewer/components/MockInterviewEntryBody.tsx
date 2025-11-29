@@ -1155,7 +1155,7 @@ export function MockInterviewEntryBody({
     if (interviewId) {
       try {
         await interviewService.updateInterview(interviewId, {
-          status: 'idle',
+          status: 'mock-interview-error',
           message: `错误: ${errorMsg}`
         });
       } catch (error) {

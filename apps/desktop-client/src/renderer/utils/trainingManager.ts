@@ -300,8 +300,8 @@ export async function validateTrainingWithDatabase(): Promise<{
 
     const dbStatus = result.interview.status;
 
-    // 检查数据库中的状态是否已完成
-    if (dbStatus === 'interview-training-completed' || dbStatus === 'interview-training-expired') {
+    // 检查数据库中的状态是否已完成或出错
+    if (dbStatus === 'interview-training-completed' || dbStatus === 'interview-training-expired' || dbStatus === 'interview-training-error') {
       logger.info(`[TrainingManager] 数据库显示训练已完成，更新本地状态: ${dbStatus}`);
       // 更新本地状态为已完成，但不清除数据（让用户可以查看）
       data.state = TrainingState.COMPLETED;

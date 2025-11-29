@@ -142,11 +142,13 @@ export default function Reviews() {
                         color={
                           it.status.includes('completed')
                             ? 'green'
-                            : it.status.includes('recording')
+                            : it.status.includes('error')
                               ? 'red'
-                              : it.status.includes('paused')
-                                ? 'orange'
-                                : 'default'
+                              : it.status.includes('recording')
+                                ? 'blue'
+                                : it.status.includes('paused')
+                                  ? 'orange'
+                                  : 'default'
                         }
                         className="!m-0"
                       >
@@ -157,10 +159,12 @@ export default function Reviews() {
                             'mock-interview-paused': '暂停',
                             'mock-interview-completed': '已完成',
                             'mock-interview-playing': '继续进行',
+                            'mock-interview-error': '错误',
                             'interview-training-recording': '进行中',
                             'interview-training-paused': '暂停',
                             'interview-training-completed': '已完成',
                             'interview-training-playing': '继续进行',
+                            'interview-training-error': '错误',
                           };
                           return statusMap[it.status] || it.status;
                         })()}
@@ -231,7 +235,11 @@ export default function Reviews() {
                           className="!m-0 !px-3 !py-1 font-medium flex-1 min-w-0 overflow-hidden"
                         >
                           <div className="truncate">
-                            {it.advantage_content || it.overall_suggestions || '—'}
+                            {it.advantage_content || it.overall_suggestions || (() => {
+                              if (it.status?.includes('error')) return '因发生错误，未生成建议';
+                              if (it.status?.includes('recording') || it.status?.includes('paused')) return '面试进行中，稍后生成';
+                              return '暂未生成建议';
+                            })()}
                           </div>
                         </Tag>
                         <Tag
@@ -239,7 +247,11 @@ export default function Reviews() {
                           className="!m-0 !px-3 !py-1 font-medium flex-1 min-w-0 overflow-hidden"
                         >
                           <div className="truncate">
-                            {it.disadvantage_content || it.overall_cons || '—'}
+                            {it.disadvantage_content || it.overall_cons || (() => {
+                              if (it.status?.includes('error')) return '因发生错误，未生成分析';
+                              if (it.status?.includes('recording') || it.status?.includes('paused')) return '面试进行中，稍后生成';
+                              return '暂未生成分析';
+                            })()}
                           </div>
                         </Tag>
                       </div>

@@ -26,7 +26,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
   // - resumes_content: 简历内容 (快照数据)
   // - duration: 面试持续时长 (秒)
   // - interview_type: 面试类型 ('mock'/'training')
-  // - status: 面试状态 ('idle','mock-interview-recording','mock-interview-paused','mock-interview-completed','mock-interview-playing','interview-training-recording','interview-training-paused','interview-training-completed','interview-training-playing')
+  // - status: 面试状态 ('idle','mock-interview-recording','mock-interview-paused','mock-interview-completed','mock-interview-playing','mock-interview-error','interview-training-recording','interview-training-paused','interview-training-completed','interview-training-playing','interview-training-error')
   // - message: 备注信息或报错信息
   // - vector_status: 向量库同步状态
 
@@ -190,10 +190,12 @@ export function registerReviewRoutes(app: FastifyInstance) {
               'mock-interview-paused',
               'mock-interview-completed',
               'mock-interview-playing',
+              'mock-interview-error',
               'interview-training-recording',
               'interview-training-paused',
               'interview-training-completed',
-              'interview-training-playing'
+              'interview-training-playing',
+              'interview-training-error'
             ]).optional(),
             message: z.string().optional(),
             locale: z.string().optional(),
@@ -294,10 +296,12 @@ export function registerReviewRoutes(app: FastifyInstance) {
               'mock-interview-paused',
               'mock-interview-completed',
               'mock-interview-playing',
+              'mock-interview-error',
               'interview-training-recording',
               'interview-training-paused',
               'interview-training-completed',
-              'interview-training-playing'
+              'interview-training-playing',
+              'interview-training-error'
             ]).optional(),
             message: z.string().optional(),
           })

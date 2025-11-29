@@ -38,8 +38,8 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
 
       // 如果是 mock-interview 或 interview-training 模式，还需要处理语音状态
       if (isMI || isIT) {
-        // 从 idle 或 completed 状态开始录制
-        if (vState.subState === 'idle' || vState.subState === 'mock-interview-completed' || vState.subState === 'interview-training-completed') {
+        // 从 idle、completed 或 error 状态开始录制
+        if (vState.subState === 'idle' || vState.subState === 'mock-interview-completed' || vState.subState === 'interview-training-completed' || vState.subState === 'mock-interview-error' || vState.subState === 'interview-training-error') {
           setVoiceState({ subState: isMI ? 'mock-interview-recording' : 'interview-training-recording' });
         }
         // 从 recording 状态暂停录制

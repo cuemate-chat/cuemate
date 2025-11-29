@@ -279,8 +279,8 @@ export async function validateWithDatabase(): Promise<{
 
     const dbStatus = result.interview.status;
 
-    // 检查数据库中的状态是否已完成
-    if (dbStatus === 'mock-interview-completed' || dbStatus === 'mock-interview-expired') {
+    // 检查数据库中的状态是否已完成或出错
+    if (dbStatus === 'mock-interview-completed' || dbStatus === 'mock-interview-expired' || dbStatus === 'mock-interview-error') {
       logger.info(`[MockInterviewManager] 数据库显示面试已完成，更新本地状态: ${dbStatus}`);
       // 更新本地状态为已完成，但不清除数据（让用户可以查看）
       data.state = InterviewState.COMPLETED;

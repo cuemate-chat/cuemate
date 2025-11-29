@@ -1269,7 +1269,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     if (interviewId) {
       try {
         await interviewService.updateInterview(interviewId, {
-          status: 'idle',
+          status: 'interview-training-error',
           message: `错误: ${errorMsg}`
         });
       } catch (error) {

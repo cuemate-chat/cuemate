@@ -23,11 +23,13 @@ export type VoiceSubState =
   | 'mock-interview-paused'
   | 'mock-interview-completed'
   | 'mock-interview-playing'
+  | 'mock-interview-error'
   // 面试训练（interview-training）
   | 'interview-training-recording'
   | 'interview-training-paused'
   | 'interview-training-completed'
   | 'interview-training-playing'
+  | 'interview-training-error'
   // 训练模式特定状态
   | 'training-listening'
   | 'training-paused'

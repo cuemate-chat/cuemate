@@ -142,10 +142,12 @@ export interface Interview {
     | 'mock-interview-paused'
     | 'mock-interview-completed'
     | 'mock-interview-playing'
+    | 'mock-interview-error'
     | 'interview-training-recording'
     | 'interview-training-paused'
     | 'interview-training-completed'
-    | 'interview-training-playing';
+    | 'interview-training-playing'
+    | 'interview-training-error';
   message?: string | null;
   vector_status: number;
 }

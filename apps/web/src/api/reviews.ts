@@ -16,7 +16,7 @@ export interface InterviewListItem {
   resumes_content?: string | null;
   duration: number;
   interview_type: 'mock' | 'training';
-  status: 'idle' | 'mock-interview-recording' | 'mock-interview-paused' | 'mock-interview-completed' | 'mock-interview-playing' | 'interview-training-recording' | 'interview-training-paused' | 'interview-training-completed' | 'interview-training-playing';
+  status: 'idle' | 'mock-interview-recording' | 'mock-interview-paused' | 'mock-interview-completed' | 'mock-interview-playing' | 'mock-interview-error' | 'interview-training-recording' | 'interview-training-paused' | 'interview-training-completed' | 'interview-training-playing' | 'interview-training-error';
   message?: string | null;
   original_job_title?: string;
   total_score?: number;
