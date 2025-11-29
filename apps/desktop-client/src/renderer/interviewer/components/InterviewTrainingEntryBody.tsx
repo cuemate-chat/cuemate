@@ -90,8 +90,8 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ChevronDown, CornerDownLeft, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { logger } from '../../../utils/rendererLogger.js';
 import { startSpeakerRecognition } from '../../../utils/audioRecognition';
+import { logger } from '../../../utils/rendererLogger.js';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { interviewDataService } from '../../ai-question/components/shared/data/InterviewDataService';
 import { contextManagementService } from '../../ai-question/components/shared/services/ContextManagementService';
@@ -101,6 +101,12 @@ import { promptService } from '../../prompts/promptService';
 import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { aiService } from '../../utils/ai/aiService';
 import { currentInterview } from '../../utils/currentInterview';
+import {
+  canStartInterview,
+  formatTimeSince,
+  getInterviewTypeName,
+  type OngoingInterviewInfo,
+} from '../../utils/interviewGuard';
 import { setInterviewTrainingState, useInterviewTrainingState } from '../../utils/interviewTrainingState';
 import {
   getRecoverableTrainingInfo,
@@ -110,28 +116,24 @@ import {
   restoreInterviewTraining,
   setSpeakerController,
   startInterviewTraining,
-  stopInterviewTraining
+  stopInterviewTraining,
+  validateTrainingWithDatabase
 } from '../../utils/trainingManager';
-import {
-  canStartInterview,
-  getInterviewTypeName,
-  formatTimeSince,
-  type OngoingInterviewInfo,
-} from '../../utils/interviewGuard';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
 import { Model } from '../api/modelService';
-import { JobPositionCard } from './JobPositionCard';
 import {
+  analyzeReview,
+  batchAnalyzeReviews,
+  generateInterviewReport as generateReport,
+  getCurrentModelConfig,
   loadAudioDevicesWithDefaults,
   saveMicrophoneDevice,
   saveSpeakerDevice,
-  generateInterviewReport as generateReport,
-  batchAnalyzeReviews,
-  analyzeReview,
-  getCurrentModelConfig,
   type AudioDevice
 } from '../utils';
+import { onInterviewCommand } from '../utils/interviewCommandChannel';
+import { JobPositionCard } from './JobPositionCard';
 
 // ============================================================================
 // 类型定义
@@ -332,6 +334,14 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
    * - 开始监听扬声器
    */
   const handleStartInterview = async () => {
+    // 【重要】先与数据库同步状态，确保本地状态与数据库一致
+    // 这样可以避免 localStorage 残留数据导致的误判
+    try {
+      await validateTrainingWithDatabase();
+    } catch (e) {
+      console.warn('[InterviewTrainingEntryBody] 数据库验证失败，继续使用本地状态', e);
+    }
+
     // 【检查】互斥保护：是否有其他类型的面试正在进行
     const { canStart, blockingInterview: blocking } = canStartInterview('interview-training');
     if (!canStart && blocking) {
@@ -801,7 +811,10 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         }
       });
     } catch (error) {
-      getTrainingStateMachine()?.send({ type: 'GENERATION_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+      console.error(`[ERROR] generateAnswerInBackground 失败:`, error);
+      // 显示错误消息给用户
+      const errorMsg = `AI 参考答案生成失败: ${error instanceof Error ? error.message : '未知错误'}`;
+      setInterviewTrainingState({ aiMessage: errorMsg });
     }
   };
 
@@ -839,6 +852,32 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       }
     }
   }, [trainingState.candidateAnswer]);
+
+  /**
+   * 监听来自 control-bar 的面试控制命令
+   */
+  useEffect(() => {
+    const unsubscribe = onInterviewCommand((cmd) => {
+      // 只处理面试训练的命令
+      if (cmd.mode !== 'interview-training') return;
+
+      switch (cmd.type) {
+        case 'pause':
+          handlePauseInterview();
+          break;
+        case 'resume':
+          handleResumeInterview();
+          break;
+        case 'stop':
+          handleStopInterview();
+          break;
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // ===========================================================================
   // 状态机事件处理
@@ -961,6 +1000,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
    */
   const handleAIAnalyzing = async (context: any) => {
     setErrorMessage('');
+    // 用户回答结束，停止录音（确保麦克风不会录到后续的 AI 说话声音）
+    setInterviewTrainingState({ isListening: false });
 
     try {
       if (!selectedModel || !currentQuestionData.current) {
@@ -1003,7 +1044,23 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           analysisResult = analysisResult.trim();
 
           try {
-            const analysis = JSON.parse(analysisResult);
+            const rawAnalysis = JSON.parse(analysisResult);
+
+            // 将 AI 返回的结果统一转换为字符串（AI 可能返回数组格式）
+            const ensureStr = (v: unknown): string => {
+              if (typeof v === 'string') return v;
+              if (Array.isArray(v)) return v.map((item, i) => `${i + 1}. ${String(item)}`).join('\n');
+              if (typeof v === 'object' && v !== null) return JSON.stringify(v, null, 2);
+              return String(v ?? '');
+            };
+
+            const analysis = {
+              pros: ensureStr(rawAnalysis.pros),
+              cons: ensureStr(rawAnalysis.cons),
+              suggestions: ensureStr(rawAnalysis.suggestions),
+              key_points: ensureStr(rawAnalysis.key_points),
+              assessment: ensureStr(rawAnalysis.assessment),
+            };
 
             const questionState = interviewDataService.getQuestionState(context.currentQuestionIndex);
             if (!questionState?.reviewId) {
@@ -1017,11 +1074,11 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
               answer: questionData.answer,
               reference_answer: questionData.referenceAnswer || '',
               candidate_answer: candidateAnswer,
-              pros: analysis.pros || '',
-              cons: analysis.cons || '',
-              suggestions: analysis.suggestions || '',
-              key_points: analysis.key_points || '',
-              assessment: analysis.assessment || '',
+              pros: analysis.pros,
+              cons: analysis.cons,
+              suggestions: analysis.suggestions,
+              key_points: analysis.key_points,
+              assessment: analysis.assessment,
               other_id: questionData.otherId,
               other_content: questionData.otherContent,
             });
@@ -1421,9 +1478,22 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         message: '用户主动停止面试训练'
       });
 
-      // 分析未分析的回答
+      // 构造模型配置，使用组件状态中的 selectedModel
+      const modelConfig = selectedModel ? {
+        provider: selectedModel.provider,
+        model_name: selectedModel.model_name,
+        credentials: selectedModel.credentials || '{}',
+      } : undefined;
+
+      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const userDataResult = await api?.getUserData?.();
+      const modelParams = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+
+      // 分析未分析的回答，传入模型配置
       const analyzeResult = await batchAnalyzeReviews({
         interviewId,
+        modelConfig,
+        modelParams,
         onProgress: (message) => setCurrentLine(message),
         onError: (error) => {
           setErrorMessage(error);
@@ -1458,7 +1528,12 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         interviewId: interviewId
       });
 
-      // 【清理】用户主动停止，清理状态机和 localStorage
+      // 先将状态机状态设置为 COMPLETED，触发 persistCurrentState 更新 localStorage
+      const machine = getTrainingStateMachine();
+      if (machine) {
+        machine.setState(TrainingState.COMPLETED);
+      }
+
       stopInterviewTraining();
 
     } catch (error) {
@@ -1472,7 +1547,12 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         interviewId: interviewId
       });
 
-      // 即使出错也要清理
+      // 先将状态机状态设置为 COMPLETED，触发 persistCurrentState 更新 localStorage
+      const machineInCatch = getTrainingStateMachine();
+      if (machineInCatch) {
+        machineInCatch.setState(TrainingState.COMPLETED);
+      }
+
       stopInterviewTraining();
     }
   };
