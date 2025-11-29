@@ -50,7 +50,7 @@ export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }:
 
   return (
     <div className="ai-window-body" ref={contentRef} style={{ position: 'relative' }}>
-      {!candidateAnswer && !displayAiMessage && !isLoading ? (
+      {!displayAiMessage && !isLoading ? (
         // 空状态显示
         <div className="ai-empty-state">
           <div className="ai-empty-icon">
@@ -79,8 +79,8 @@ export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }:
             </div>
           )}
 
-          {/* 用户回答气泡（靠右） - 仅在非历史记录模式下显示 */}
-          {!isShowingHistory && candidateAnswer && (
+          {/* 用户回答气泡（靠右） - 仅在查看历史记录时显示 */}
+          {isShowingHistory && candidateAnswer && (
             <div className="ai-message ai-message-user animate__animated animate__fadeInUp">
               <div className="ai-message-content">
                 {candidateAnswer.split('\n').map((line, index) => (
