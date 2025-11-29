@@ -39,18 +39,12 @@ export async function createQuestionRoutes(
       const embeddings = await deps.embeddingService.embed(chunks);
 
       // 准备文档数据
-      const documents = chunks.map((content, index) => ({
-        id:
-          chunks.length === 1
-            ? `question:${question.id}`
-            : `question:${question.id}:chunk:${index}`,
-        content,
-        metadata: {
+      // 注意：ChromaDB 不接受 metadata 中的 null 值，需要过滤掉
+      const documents = chunks.map((content, index) => {
+        const metadata: Record<string, any> = {
           type: 'questions',
           questionId: question.id,
           jobId: question.job_id,
-          tagId: question.tag_id || null,
-          tagName: question.tag_name || null,
           userId: question.user_id,
           title: question.title,
           description: question.description,
@@ -58,9 +52,21 @@ export async function createQuestionRoutes(
           totalChunks: chunks.length,
           createdAt: question.created_at,
           source: 'interview_question',
-        },
-        embedding: embeddings[index],
-      }));
+        };
+        // 只有当 tagId 和 tagName 有值时才添加到 metadata
+        if (question.tag_id) metadata.tagId = question.tag_id;
+        if (question.tag_name) metadata.tagName = question.tag_name;
+
+        return {
+          id:
+            chunks.length === 1
+              ? `question:${question.id}`
+              : `question:${question.id}:chunk:${index}`,
+          content,
+          metadata,
+          embedding: embeddings[index],
+        };
+      });
 
       // 存入向量数据库
       await deps.vectorStore.addDocuments(documents, deps.config.vectorStore.questionsCollection);
