@@ -32,7 +32,7 @@ export default function UpdateConfirmModal({
       onCancel={onCancel}
       okText="确认更新"
       cancelText="取消"
-      width={500}
+      width="40%"
     >
       <div className="space-y-4 py-4">
         {/* 版本信息 */}
