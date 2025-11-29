@@ -124,7 +124,7 @@ import {
 import { setMockInterviewState, useMockInterviewState } from '../../utils/mockInterviewState';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
-import { Model } from '../api/modelService';
+import { Model, modelService } from '../api/modelService';
 import {
   batchAnalyzeReviews,
   generateInterviewReport as generateReport,
@@ -744,9 +744,8 @@ export function MockInterviewEntryBody({
         credentials: selectedModel.credentials || '{}',
       };
 
-      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-      const userDataResult = await api?.getUserData?.();
-      const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+      // 获取当前选中模型的参数，而不是用户默认模型的参数
+      const modelParams: ModelParam[] = await modelService.getModelParams(selectedModel.id);
 
       let generatedQuestion = '';
 
@@ -863,9 +862,8 @@ export function MockInterviewEntryBody({
         credentials: selectedModel.credentials || '{}',
       };
 
-      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-      const userDataResult = await api?.getUserData?.();
-      const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+      // 获取当前选中模型的参数
+      const modelParams: ModelParam[] = await modelService.getModelParams(selectedModel.id);
 
       let analysisResult = '';
 
@@ -1003,9 +1001,8 @@ export function MockInterviewEntryBody({
         credentials: selectedModel.credentials || '{}',
       };
 
-      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-      const userDataResult = await api?.getUserData?.();
-      const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+      // 获取当前选中模型的参数
+      const modelParams: ModelParam[] = await modelService.getModelParams(selectedModel.id);
 
       let referenceAnswer = '';
 
@@ -1277,9 +1274,8 @@ export function MockInterviewEntryBody({
         credentials: selectedModel.credentials || '{}',
       } : undefined;
 
-      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-      const userDataResult = await api?.getUserData?.();
-      const modelParams = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+      // 获取当前选中模型的参数
+      const modelParams = selectedModel ? await modelService.getModelParams(selectedModel.id) : [];
 
       // 使用公共批量分析函数，传入模型配置
       const analyzeResult = await batchAnalyzeReviews({

@@ -121,7 +121,7 @@ import {
 } from '../../utils/trainingManager';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
-import { Model } from '../api/modelService';
+import { Model, modelService } from '../api/modelService';
 import {
   analyzeReview,
   batchAnalyzeReviews,
@@ -765,9 +765,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         credentials: selectedModel.credentials || '{}',
       };
 
-      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-      const userDataResult = await api?.getUserData?.();
-      const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+      // 获取当前选中模型的参数
+      const modelParams: ModelParam[] = await modelService.getModelParams(selectedModel.id);
 
       let referenceAnswer = '';
 
@@ -1028,9 +1027,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         credentials: selectedModel.credentials || '{}',
       };
 
-      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-      const userDataResult = await api?.getUserData?.();
-      const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+      // 获取当前选中模型的参数
+      const modelParams: ModelParam[] = await modelService.getModelParams(selectedModel.id);
 
       let analysisResult = '';
 
@@ -1485,9 +1483,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         credentials: selectedModel.credentials || '{}',
       } : undefined;
 
-      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-      const userDataResult = await api?.getUserData?.();
-      const modelParams = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+      // 获取当前选中模型的参数
+      const modelParams = selectedModel ? await modelService.getModelParams(selectedModel.id) : [];
 
       // 分析未分析的回答，传入模型配置
       const analyzeResult = await batchAnalyzeReviews({
