@@ -183,7 +183,14 @@ export default function EditPromptDrawer({
                     上一版本 ({prompt.history_pre.length} 字)
                   </div>
                   <div className="flex-1 px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 text-center">
-                    当前版本 ({editedContent.length} 字)
+                    当前版本 ({(() => {
+                      // 还原变量后计算字数，保持与上一版本统计口径一致
+                      let content = editedContent;
+                      variables.forEach((v, i) => {
+                        content = content.replace(`[变量${i + 1}:不可修改]`, v);
+                      });
+                      return content.length;
+                    })()} 字)
                   </div>
                 </div>
                 <div className="max-h-80 overflow-auto">
