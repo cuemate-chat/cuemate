@@ -299,8 +299,6 @@ export class TrainingStateMachine {
    * 恢复状态
    */
   restoreState(state: TrainingState, context: Partial<TrainingContext>): void {
-    console.log('[TrainingStateMachine] 恢复状态:', state, context);
-
     if (context.jobPosition !== undefined) {
       this.context.jobPosition = context.jobPosition;
     }

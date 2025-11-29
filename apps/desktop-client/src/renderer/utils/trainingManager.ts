@@ -84,19 +84,6 @@ function broadcastStateUpdate(state: TrainingState, context: TrainingContext) {
 }
 
 /**
- * 持久化到 localStorage（防抖）
- */
-function schedulePersist() {
-  if (persistTimer) {
-    clearTimeout(persistTimer);
-  }
-
-  persistTimer = setTimeout(() => {
-    persistCurrentState();
-  }, 1000);
-}
-
-/**
  * 立即持久化当前状态
  * 从多个数据源获取最完整的数据，确保恢复时不丢失信息
  */
@@ -166,22 +153,19 @@ export function startInterviewTraining(context: Partial<TrainingContext>): Train
     stopInterviewTraining();
   }
 
+  // 新建训练时，强制清除旧的持久化数据
+  clearPersistedData();
+
   globalStateMachine = new TrainingStateMachine(context);
 
   globalStateMachine.onStateChange((state, ctx) => {
     broadcastStateUpdate(state, ctx);
     subscribers.forEach((callback) => callback(state, ctx));
-    schedulePersist();
 
-    // 关键状态立即持久化
-    if (
-      state === TrainingState.LISTENING_INTERVIEWER ||
-      state === TrainingState.GENERATING_ANSWER ||
-      state === TrainingState.USER_LISTENING ||
-      state === TrainingState.USER_SPEAKING
-    ) {
-      persistCurrentState();
-    }
+    // 所有状态变化都立即持久化，确保数据不丢失
+    // 包括 COMPLETED 和 ERROR 状态也要持久化
+    // 数据只有在用户新建新的训练时才会被清除
+    persistCurrentState();
   });
 
   initSyncChannel();
@@ -190,14 +174,17 @@ export function startInterviewTraining(context: Partial<TrainingContext>): Train
 }
 
 /**
- * 停止面试训练
+ * 停止面试训练（不清除持久化数据，数据保留供查看）
+ * 注意：不调用 reset()，避免发送 IDLE 状态通知导致 UI 被清空
+ * 数据只在用户点击"开始训练"时才被清除（在 startInterviewTraining 中调用 clearPersistedData）
  */
 export function stopInterviewTraining() {
   if (globalStateMachine) {
-    globalStateMachine.reset();
+    // 直接释放状态机引用，不调用 reset()
+    // reset() 会发送 IDLE 状态通知，导致 UI 被错误清空
     globalStateMachine = null;
 
-    clearPersistedData();
+    // 注意：不清除持久化数据，数据只在新建训练时清除
 
     if (persistTimer) {
       clearTimeout(persistTimer);
@@ -272,7 +259,76 @@ async function handleExpiredTraining(interviewId: string): Promise<void> {
 }
 
 /**
+ * 与数据库校验并同步本地状态
+ * 确保本地暂存的训练数据与数据库一致
+ * @returns 返回校验后的状态：
+ *   - 'valid': 本地数据有效且训练未完成
+ *   - 'completed': 训练已完成（数据库状态）
+ *   - 'not_found': 训练记录不存在（已被删除）
+ *   - 'no_local_data': 本地没有暂存数据
+ *   - 'expired': 本地数据已过期
+ */
+export async function validateTrainingWithDatabase(): Promise<{
+  status: 'valid' | 'completed' | 'not_found' | 'no_local_data' | 'expired';
+  localData?: PersistedTrainingData;
+  dbStatus?: string;
+}> {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) {
+      return { status: 'no_local_data' };
+    }
+
+    const data: PersistedTrainingData = JSON.parse(saved);
+
+    // 检查是否过期（24小时）
+    const age = Date.now() - data.savedAt;
+    if (age > MAX_AGE) {
+      await handleExpiredTraining(data.interviewId);
+      return { status: 'expired', localData: data };
+    }
+
+    // 查询数据库中的训练状态
+    const result = await interviewService.getInterview(data.interviewId);
+
+    // 训练记录不存在（可能已被删除）
+    if (!result || !result.interview) {
+      logger.info(`[TrainingManager] 训练记录不存在，清除本地数据: ${data.interviewId}`);
+      clearPersistedData();
+      return { status: 'not_found', localData: data };
+    }
+
+    const dbStatus = result.interview.status;
+
+    // 检查数据库中的状态是否已完成
+    if (dbStatus === 'interview-training-completed' || dbStatus === 'interview-training-expired') {
+      logger.info(`[TrainingManager] 数据库显示训练已完成，更新本地状态: ${dbStatus}`);
+      // 更新本地状态为已完成，但不清除数据（让用户可以查看）
+      data.state = TrainingState.COMPLETED;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      return { status: 'completed', localData: data, dbStatus };
+    }
+
+    // 训练仍在进行中
+    return { status: 'valid', localData: data, dbStatus };
+  } catch (error) {
+    logger.error(`[TrainingManager] 数据库校验失败: ${error}`);
+    // 校验失败时，返回本地数据状态（不清除，让用户自己决定）
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data: PersistedTrainingData = JSON.parse(saved);
+        return { status: 'valid', localData: data };
+      }
+    } catch {}
+    return { status: 'no_local_data' };
+  }
+}
+
+/**
  * 检查是否有可恢复的训练
+ * 所有状态都可以恢复，包括 COMPLETED 和 ERROR，让用户可以查看历史记录
+ * 数据只在用户点击"开始训练"时才被清除
  */
 export function hasRecoverableTraining(): boolean {
   try {
@@ -288,11 +344,8 @@ export function hasRecoverableTraining(): boolean {
       return false;
     }
 
-    if (data.state === TrainingState.COMPLETED || data.state === TrainingState.ERROR) {
-      clearPersistedData();
-      return false;
-    }
-
+    // 所有状态都可以恢复，包括 COMPLETED 和 ERROR
+    // 数据只在用户点击"开始训练"时才被清除（在 startInterviewTraining 中调用 clearPersistedData）
     return true;
   } catch {
     return false;
