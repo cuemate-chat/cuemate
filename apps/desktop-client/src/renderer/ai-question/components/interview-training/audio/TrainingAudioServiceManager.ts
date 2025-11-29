@@ -96,8 +96,6 @@ export class TrainingAudioServiceManager extends EventTarget {
 
   async initialize(): Promise<void> {
     try {
-      console.debug('初始化面试训练音频服务...');
-
       // 初始化语音协调器
       await this.voiceCoordinator.initialize();
 
@@ -107,7 +105,6 @@ export class TrainingAudioServiceManager extends EventTarget {
       }
 
       this._isInitialized = true;
-      console.debug('面试训练音频服务初始化完成');
 
       this.dispatchEvent(new CustomEvent('serviceInitialized'));
     } catch (error) {
@@ -362,7 +359,9 @@ export class TrainingAudioServiceManager extends EventTarget {
     // 如果系统音频配置变化，重新初始化
     if (this._isInitialized && newConfig.enableSystemAudioCapture !== undefined) {
       if (newConfig.enableSystemAudioCapture) {
-        this.initializeSystemAudioCapture().catch((error) => logger.error(`系统音频捕获初始化失败: ${error}`));
+        this.initializeSystemAudioCapture().catch((error) =>
+          logger.error(`系统音频捕获初始化失败: ${error}`),
+        );
       } else {
         this.stopSystemAudioListening();
       }
