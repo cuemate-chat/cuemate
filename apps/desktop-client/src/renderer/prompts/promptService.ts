@@ -302,6 +302,82 @@ class PromptService {
     });
   }
 
+  /**
+   * 构建 AI 提问面试分析 Prompt
+   */
+  async buildAIQuestionAnalysisPrompt(analysisData: {
+    interviewId: string;
+    durationMinutes: number;
+    totalQuestions: number;
+    totalAnswers: number;
+    positionJson: string;
+    qaText: string;
+  }): Promise<string> {
+    const promptData = await this.fetchPromptWithConfig('AIQuestionAnalysisPrompt');
+
+    // 从 extra 字段解析配置参数
+    let overallScoreMin = 1;
+    let overallScoreMax = 100;
+    let summaryMinWords = 150;
+    let summaryMaxWords = 200;
+    let prosMinWords = 100;
+    let prosMaxWords = 150;
+    let consMinWords = 100;
+    let consMaxWords = 150;
+    let suggestionsMinWords = 150;
+    let suggestionsMaxWords = 200;
+    let radarScoreMin = 1;
+    let radarScoreMax = 10;
+    let interviewerSummaryWords = 100;
+    let candidateSummaryWords = 100;
+    let strategyWords = 80;
+    let qaFeedbackWords = 80;
+
+    try {
+      if (promptData.extra) {
+        const config = JSON.parse(promptData.extra);
+        overallScoreMin = config.overallScoreMin ?? 1;
+        overallScoreMax = config.overallScoreMax || 100;
+        summaryMinWords = config.summaryMinWords || 150;
+        summaryMaxWords = config.summaryMaxWords || 200;
+        prosMinWords = config.prosMinWords || 100;
+        prosMaxWords = config.prosMaxWords || 150;
+        consMinWords = config.consMinWords || 100;
+        consMaxWords = config.consMaxWords || 150;
+        suggestionsMinWords = config.suggestionsMinWords || 150;
+        suggestionsMaxWords = config.suggestionsMaxWords || 200;
+        radarScoreMin = config.radarScoreMin ?? 1;
+        radarScoreMax = config.radarScoreMax || 10;
+        interviewerSummaryWords = config.interviewerSummaryWords || 100;
+        candidateSummaryWords = config.candidateSummaryWords || 100;
+        strategyWords = config.strategyWords || 80;
+        qaFeedbackWords = config.qaFeedbackWords || 80;
+      }
+    } catch (error) {
+      logger.error(`Failed to parse AIQuestionAnalysisPrompt extra config: ${error}`);
+    }
+
+    return this.renderTemplate(promptData.content, {
+      ...analysisData,
+      overallScoreMin,
+      overallScoreMax,
+      summaryMinWords,
+      summaryMaxWords,
+      prosMinWords,
+      prosMaxWords,
+      consMinWords,
+      consMaxWords,
+      suggestionsMinWords,
+      suggestionsMaxWords,
+      radarScoreMin,
+      radarScoreMax,
+      interviewerSummaryWords,
+      candidateSummaryWords,
+      strategyWords,
+      qaFeedbackWords,
+    });
+  }
+
 }
 
 export const promptService = new PromptService();

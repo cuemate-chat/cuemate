@@ -5,6 +5,7 @@
 
 import { logger } from '../../../../../utils/rendererLogger.js';
 import { InterviewScore, InterviewInsight } from '../data/InterviewDataService';
+import { promptService } from '../../../../prompts/promptService.js';
 
 // 面试分析请求接口
 export interface AnalysisRequest {
@@ -173,7 +174,7 @@ export class InterviewAnalysisService {
    * 执行 AI 分析
    */
   private async performAIAnalysis(analysisData: any): Promise<any> {
-    const prompt = this.buildAnalysisPrompt(analysisData);
+    const prompt = await this.buildAnalysisPrompt(analysisData);
 
     try {
       const response = await fetch(`${this.llmRouterURL}/chat/completions`, {
@@ -226,7 +227,7 @@ export class InterviewAnalysisService {
   /**
    * 构建分析提示词
    */
-  private buildAnalysisPrompt(analysisData: any): string {
+  private async buildAnalysisPrompt(analysisData: any): Promise<string> {
     const qaText = analysisData.qaData
       .map((qa: any, index: number) => `
 第${index + 1}题：
@@ -236,6 +237,27 @@ export class InterviewAnalysisService {
 `)
       .join('\n');
 
+    try {
+      // 使用 promptService 从数据库获取参数化的 prompt
+      return await promptService.buildAIQuestionAnalysisPrompt({
+        interviewId: analysisData.interview.id,
+        durationMinutes: Math.round(analysisData.interview.duration / 60),
+        totalQuestions: analysisData.interview.totalQuestions,
+        totalAnswers: analysisData.interview.totalAnswers,
+        positionJson: JSON.stringify(analysisData.interview.position || {}),
+        qaText,
+      });
+    } catch (error) {
+      logger.error(`Failed to build analysis prompt from promptService: ${error}`);
+      // 如果 promptService 失败，使用 fallback
+      return this.buildFallbackAnalysisPrompt(analysisData, qaText);
+    }
+  }
+
+  /**
+   * 构建 fallback 分析提示词（当 promptService 不可用时）
+   */
+  private buildFallbackAnalysisPrompt(analysisData: any, qaText: string): string {
     return `请分析以下面试训练数据，并返回 JSON 格式的详细分析报告：
 
 【面试基本信息】

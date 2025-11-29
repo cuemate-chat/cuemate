@@ -677,6 +677,153 @@ export function up(db: any): void {
       '{"scoreMin": 0, "scoreMax": 100, "summaryMaxWords": 100}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
+    ),
+    (
+      'AIQuestionAnalysisPrompt',
+      '请分析以下面试训练数据，并返回 JSON 格式的详细分析报告：
+
+【面试基本信息】
+面试 ID：\${interviewId}
+面试时长：\${durationMinutes}分钟
+问题总数：\${totalQuestions}
+回答总数：\${totalAnswers}
+职位信息：\${positionJson}
+
+【问答对话记录】
+\${qaText}
+
+请返回以下 JSON 格式的分析结果：
+
+{
+  "overallScore": 数字(\${overallScoreMin}-\${overallScoreMax}),
+  "summary": "总体评价（\${summaryMinWords}-\${summaryMaxWords}字）",
+  "pros": "优点分析（\${prosMinWords}-\${prosMaxWords}字）",
+  "cons": "不足分析（\${consMinWords}-\${consMaxWords}字）",
+  "suggestions": "改进建议（\${suggestionsMinWords}-\${suggestionsMaxWords}字）",
+  "radarScores": {
+    "interactivity": 数字(\${radarScoreMin}-\${radarScoreMax}),
+    "confidence": 数字(\${radarScoreMin}-\${radarScoreMax}),
+    "professionalism": 数字(\${radarScoreMin}-\${radarScoreMax}),
+    "relevance": 数字(\${radarScoreMin}-\${radarScoreMax}),
+    "clarity": 数字(\${radarScoreMin}-\${radarScoreMax})
+  },
+  "insights": {
+    "interviewerAnalysis": {
+      "score": 数字(\${radarScoreMin}-\${radarScoreMax}),
+      "summary": "面试官分析（\${interviewerSummaryWords}字）",
+      "role": "面试官角色判断",
+      "mbti": "推测 MBTI 类型",
+      "personality": "性格特点",
+      "preference": "面试偏好"
+    },
+    "candidateAnalysis": {
+      "summary": "候选人表现分析（\${candidateSummaryWords}字）",
+      "mbti": "推测 MBTI 类型",
+      "personality": "性格特点展现",
+      "jobPreference": "职业倾向分析"
+    },
+    "strategies": {
+      "prepareDetails": "准备策略建议（\${strategyWords}字）",
+      "businessUnderstanding": "业务理解建议（\${strategyWords}字）",
+      "keepLogical": "逻辑表达建议（\${strategyWords}字）"
+    }
+  },
+  "qaAnalysis": [
+    {
+      "questionId": "问题 ID",
+      "question": "问题内容",
+      "answer": "回答内容",
+      "score": 数字(\${radarScoreMin}-\${radarScoreMax}),
+      "feedback": "具体反馈（\${qaFeedbackWords}字）",
+      "keyPoints": ["关键点 1", "关键点 2"],
+      "improvements": ["改进点 1", "改进点 2"]
+    }
+  ]
+}
+
+分析要求：
+1. 基于真实面试标准进行评分
+2. 考虑回答的专业性、逻辑性、完整性
+3. 分析候选人的沟通能力和表达清晰度
+4. 评估面试官的提问质量和风格
+5. 提供具体可行的改进建议
+6. 雷达图评分要客观公正
+7. 确保返回标准 JSON 格式',
+      'AI提问面试分析提示词',
+      '["interviewId","durationMinutes","totalQuestions","totalAnswers","positionJson","qaText","overallScoreMin","overallScoreMax","summaryMinWords","summaryMaxWords","prosMinWords","prosMaxWords","consMinWords","consMaxWords","suggestionsMinWords","suggestionsMaxWords","radarScoreMin","radarScoreMax","interviewerSummaryWords","candidateSummaryWords","strategyWords","qaFeedbackWords"]',
+      'desktop',
+      '请分析以下面试训练数据，并返回 JSON 格式的详细分析报告：
+
+【面试基本信息】
+面试 ID：\${interviewId}
+面试时长：\${durationMinutes}分钟
+问题总数：\${totalQuestions}
+回答总数：\${totalAnswers}
+职位信息：\${positionJson}
+
+【问答对话记录】
+\${qaText}
+
+请返回以下 JSON 格式的分析结果：
+
+{
+  "overallScore": 数字(\${overallScoreMin}-\${overallScoreMax}),
+  "summary": "总体评价（\${summaryMinWords}-\${summaryMaxWords}字）",
+  "pros": "优点分析（\${prosMinWords}-\${prosMaxWords}字）",
+  "cons": "不足分析（\${consMinWords}-\${consMaxWords}字）",
+  "suggestions": "改进建议（\${suggestionsMinWords}-\${suggestionsMaxWords}字）",
+  "radarScores": {
+    "interactivity": 数字(\${radarScoreMin}-\${radarScoreMax}),
+    "confidence": 数字(\${radarScoreMin}-\${radarScoreMax}),
+    "professionalism": 数字(\${radarScoreMin}-\${radarScoreMax}),
+    "relevance": 数字(\${radarScoreMin}-\${radarScoreMax}),
+    "clarity": 数字(\${radarScoreMin}-\${radarScoreMax})
+  },
+  "insights": {
+    "interviewerAnalysis": {
+      "score": 数字(\${radarScoreMin}-\${radarScoreMax}),
+      "summary": "面试官分析（\${interviewerSummaryWords}字）",
+      "role": "面试官角色判断",
+      "mbti": "推测 MBTI 类型",
+      "personality": "性格特点",
+      "preference": "面试偏好"
+    },
+    "candidateAnalysis": {
+      "summary": "候选人表现分析（\${candidateSummaryWords}字）",
+      "mbti": "推测 MBTI 类型",
+      "personality": "性格特点展现",
+      "jobPreference": "职业倾向分析"
+    },
+    "strategies": {
+      "prepareDetails": "准备策略建议（\${strategyWords}字）",
+      "businessUnderstanding": "业务理解建议（\${strategyWords}字）",
+      "keepLogical": "逻辑表达建议（\${strategyWords}字）"
+    }
+  },
+  "qaAnalysis": [
+    {
+      "questionId": "问题 ID",
+      "question": "问题内容",
+      "answer": "回答内容",
+      "score": 数字(\${radarScoreMin}-\${radarScoreMax}),
+      "feedback": "具体反馈（\${qaFeedbackWords}字）",
+      "keyPoints": ["关键点 1", "关键点 2"],
+      "improvements": ["改进点 1", "改进点 2"]
+    }
+  ]
+}
+
+分析要求：
+1. 基于真实面试标准进行评分
+2. 考虑回答的专业性、逻辑性、完整性
+3. 分析候选人的沟通能力和表达清晰度
+4. 评估面试官的提问质量和风格
+5. 提供具体可行的改进建议
+6. 雷达图评分要客观公正
+7. 确保返回标准 JSON 格式',
+      '{"overallScoreMin": 1, "overallScoreMax": 100, "summaryMinWords": 150, "summaryMaxWords": 200, "prosMinWords": 100, "prosMaxWords": 150, "consMinWords": 100, "consMaxWords": 150, "suggestionsMinWords": 150, "suggestionsMaxWords": 200, "radarScoreMin": 1, "radarScoreMax": 10, "interviewerSummaryWords": 100, "candidateSummaryWords": 100, "strategyWords": 80, "qaFeedbackWords": 80}',
+      strftime('%s', 'now') * 1000,
+      strftime('%s', 'now') * 1000
     );
   `);
 }
