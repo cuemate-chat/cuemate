@@ -107,32 +107,34 @@ import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { aiService } from '../../utils/ai/aiService';
 import { currentInterview } from '../../utils/currentInterview';
 import {
+  canStartInterview,
+  formatTimeSince,
+  getInterviewTypeName,
+  type OngoingInterviewInfo,
+} from '../../utils/interviewGuard';
+import {
   getMockInterviewStateMachine,
   getRecoverableInterviewInfo,
   hasRecoverableInterview,
   restoreMockInterview,
   startMockInterview,
-  stopMockInterview
+  stopMockInterview,
+  validateWithDatabase
 } from '../../utils/mockInterviewManager';
-import {
-  canStartInterview,
-  getInterviewTypeName,
-  formatTimeSince,
-  type OngoingInterviewInfo,
-} from '../../utils/interviewGuard';
 import { setMockInterviewState, useMockInterviewState } from '../../utils/mockInterviewState';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
 import { Model } from '../api/modelService';
-import { JobPositionCard } from './JobPositionCard';
 import {
+  batchAnalyzeReviews,
+  generateInterviewReport as generateReport,
   loadAudioDevicesWithDefaults,
   saveMicrophoneDevice,
   saveSpeakerDevice,
-  generateInterviewReport as generateReport,
-  batchAnalyzeReviews,
   type AudioDevice
 } from '../utils';
+import { JobPositionCard } from './JobPositionCard';
+import { onInterviewCommand } from '../utils/interviewCommandChannel';
 
 // ============================================================================
 // 类型定义
@@ -200,6 +202,10 @@ export function MockInterviewEntryBody({
 
   // 当前问题数据（临时存储，用于分析时保存）
   const currentQuestionData = useRef<CurrentQuestionData | null>(null);
+
+  // 防重入标志
+  const isSpeakingRef = useRef<boolean>(false);
+  const lastSpeakingQuestionIndex = useRef<number>(-1);
 
   // 全局状态
   const voiceState = useVoiceState();
@@ -362,6 +368,34 @@ export function MockInterviewEntryBody({
     }
   }, [mockInterviewState.candidateAnswer]);
 
+  /**
+   * 监听来自 control-bar 的面试控制命令
+   */
+  useEffect(() => {
+    const unsubscribe = onInterviewCommand((cmd) => {
+      // 只处理模拟面试的命令
+      if (cmd.mode !== 'mock-interview') return;
+
+      console.debug(`[MockInterviewEntryBody] 收到控制命令: ${cmd.type}`);
+
+      switch (cmd.type) {
+        case 'pause':
+          handlePauseInterview();
+          break;
+        case 'resume':
+          handleResumeInterview();
+          break;
+        case 'stop':
+          handleStopInterview();
+          break;
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   // ===========================================================================
   // 第二步：开始模拟面试
   // ===========================================================================
@@ -370,6 +404,14 @@ export function MockInterviewEntryBody({
    * 【第二步】用户点击"开始模拟面试"按钮
    */
   const handleStartInterview = async () => {
+    // 【重要】先与数据库同步状态，确保本地状态与数据库一致
+    // 这样可以避免 localStorage 残留数据导致的误判
+    try {
+      await validateWithDatabase();
+    } catch (e) {
+      console.warn('[MockInterviewEntryBody] 数据库验证失败，继续使用本地状态', e);
+    }
+
     // 【检查】互斥保护
     const { canStart, blockingInterview: blocking } = canStartInterview('mock-interview');
     if (!canStart && blocking) {
@@ -514,9 +556,9 @@ export function MockInterviewEntryBody({
 
       const options = { outputDevice: selectedSpeaker };
 
-      // 添加超时机制：30秒超时，防止 TTS 播放卡住
+      // 添加超时机制：60秒超时，防止 TTS 播放卡住
       const timeoutPromise = new Promise<void>((_, reject) => {
-        setTimeout(() => reject(new Error('TTS 播放超时（30秒）')), 30000);
+        setTimeout(() => reject(new Error('TTS 播放超时（60秒）')), 60000);
       });
 
       await Promise.race([
@@ -528,6 +570,7 @@ export function MockInterviewEntryBody({
       setErrorMessage('');
       setTimestamp(Date.now());
     } catch (error) {
+      console.error(`[ERROR] TTS 播放失败:`, error);
       await logger.error(`[TTS] 语音播放失败: ${error}`);
       setCurrentLine('');
       setErrorMessage(`语音播放失败: ${text}`);
@@ -537,6 +580,7 @@ export function MockInterviewEntryBody({
       const machine = getMockInterviewStateMachine();
       if (machine) {
         const currentState = machine.getState();
+        console.error(`[ERROR] TTS 错误时状态: ${currentState}, 发送 SPEAKING_ERROR`);
         if (currentState === InterviewState.AI_SPEAKING) {
           machine.send({ type: 'SPEAKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
         }
@@ -590,6 +634,8 @@ export function MockInterviewEntryBody({
    * 处理状态机状态变化
    */
   const handleStateChange = async (state: InterviewState, context: any) => {
+    console.debug(`[MockInterview] 状态变化: ${state}, questionIndex=${context.currentQuestionIndex}`);
+
     setMockInterviewState({ interviewState: state });
 
     try {
@@ -631,6 +677,7 @@ export function MockInterviewEntryBody({
           break;
       }
     } catch (error) {
+      console.error(`[ERROR] handleStateChange 错误 (state=${state}):`, error);
       await logger.error(`[状态处理] 错误: ${error}`);
       setErrorMessage(`状态处理错误: ${error instanceof Error ? error.message : '未知错误'}`);
       setCurrentLine('');
@@ -671,6 +718,7 @@ export function MockInterviewEntryBody({
         }
       });
     } catch (error) {
+      console.error(`[ERROR] handleInitializing 错误:`, error);
       getMockInterviewStateMachine()?.send({ type: 'INIT_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
   };
@@ -704,6 +752,7 @@ export function MockInterviewEntryBody({
 
       await aiService.callAIStreamWithCustomModel(optimizedMessages, modelConfig, modelParams, (chunk) => {
         if (chunk.error) {
+          console.error(`[ERROR] AI 生成问题错误:`, chunk.error);
           getMockInterviewStateMachine()?.send({ type: 'THINKING_ERROR', payload: { error: chunk.error } });
           return;
         }
@@ -716,6 +765,7 @@ export function MockInterviewEntryBody({
         }
       });
     } catch (error) {
+      console.error(`[ERROR] handleAIThinking 错误:`, error);
       getMockInterviewStateMachine()?.send({ type: 'THINKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
   };
@@ -724,9 +774,19 @@ export function MockInterviewEntryBody({
    * 【第五步】AI 朗读问题
    */
   const handleAISpeaking = async (context: any) => {
+    // 防重入检查：同一个问题不重复播放
+    if (isSpeakingRef.current && lastSpeakingQuestionIndex.current === context.currentQuestionIndex) {
+      console.debug(`[MockInterview] TTS 跳过：已在播放中 (index=${context.currentQuestionIndex})`);
+      return;
+    }
+
     try {
       const question = context.currentQuestion;
       if (!question) throw new Error('No question to speak');
+
+      // 设置防重入标志
+      isSpeakingRef.current = true;
+      lastSpeakingQuestionIndex.current = context.currentQuestionIndex;
 
       setCurrentLine(question);
 
@@ -735,17 +795,23 @@ export function MockInterviewEntryBody({
         await interviewDataService.createQuestionRecord(context.currentQuestionIndex, question);
       }
 
-      // 后台生成答案
-      generateAnswerInBackground(context);
+      // 同时启动 TTS 播放和后台生成答案（并行执行提高效率）
+      const speakPromise = speak(question);
+      const answerPromise = generateAnswerInBackground(context);
 
-      // 朗读问题
-      await speak(question);
+      // 等待两者都完成：AI 播报完毕 且 答案生成完毕，才允许用户开始录音
+      // 这样可以避免麦克风录到扬声器播放的 AI 提问声音
+      await Promise.all([speakPromise, answerPromise]);
 
       onQuestionGenerated?.(question);
 
       getMockInterviewStateMachine()?.send({ type: 'SPEAKING_COMPLETE' });
     } catch (error) {
+      console.error(`[ERROR] handleAISpeaking 错误:`, error);
       getMockInterviewStateMachine()?.send({ type: 'SPEAKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+    } finally {
+      // 清除防重入标志
+      isSpeakingRef.current = false;
     }
   };
 
@@ -769,6 +835,8 @@ export function MockInterviewEntryBody({
    */
   const handleAIAnalyzing = async (context: any) => {
     setErrorMessage('');
+    // 用户回答结束，停止录音（确保麦克风不会录到后续的 AI 说话声音）
+    setMockInterviewState({ isListening: false });
 
     try {
       if (!selectedModel || !currentQuestionData.current) {
@@ -811,7 +879,23 @@ export function MockInterviewEntryBody({
           analysisResult = analysisResult.trim();
 
           try {
-            const analysis = JSON.parse(analysisResult);
+            const rawAnalysis = JSON.parse(analysisResult);
+
+            // 将 AI 返回的结果统一转换为字符串（AI 可能返回数组格式）
+            const ensureStr = (v: unknown): string => {
+              if (typeof v === 'string') return v;
+              if (Array.isArray(v)) return v.map((item, i) => `${i + 1}. ${String(item)}`).join('\n');
+              if (typeof v === 'object' && v !== null) return JSON.stringify(v, null, 2);
+              return String(v ?? '');
+            };
+
+            const analysis = {
+              pros: ensureStr(rawAnalysis.pros),
+              cons: ensureStr(rawAnalysis.cons),
+              suggestions: ensureStr(rawAnalysis.suggestions),
+              key_points: ensureStr(rawAnalysis.key_points),
+              assessment: ensureStr(rawAnalysis.assessment),
+            };
 
             const questionState = interviewDataService.getQuestionState(context.currentQuestionIndex);
             if (!questionState?.reviewId) {
@@ -825,11 +909,11 @@ export function MockInterviewEntryBody({
               answer: questionData.answer,
               reference_answer: questionData.referenceAnswer || '',
               candidate_answer: candidateAnswer,
-              pros: analysis.pros || '',
-              cons: analysis.cons || '',
-              suggestions: analysis.suggestions || '',
-              key_points: analysis.key_points || '',
-              assessment: analysis.assessment || '',
+              pros: analysis.pros,
+              cons: analysis.cons,
+              suggestions: analysis.suggestions,
+              key_points: analysis.key_points,
+              assessment: analysis.assessment,
               other_id: questionData.otherId,
               other_content: questionData.otherContent,
             });
@@ -927,6 +1011,7 @@ export function MockInterviewEntryBody({
 
       await aiService.callAIStreamWithCustomModel(optimizedMessages, modelConfig, modelParams, async (chunk) => {
         if (chunk.error) {
+          console.error(`[ERROR] 生成答案错误:`, chunk.error);
           getMockInterviewStateMachine()?.send({ type: 'GENERATION_ERROR', payload: { error: chunk.error } });
           return;
         }
@@ -959,7 +1044,10 @@ export function MockInterviewEntryBody({
         }
       });
     } catch (error) {
-      getMockInterviewStateMachine()?.send({ type: 'GENERATION_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+      console.error(`[ERROR] generateAnswerInBackground 失败:`, error);
+      // 显示错误消息给用户（因为当前状态是 AI_SPEAKING，GENERATION_ERROR 事件无法处理）
+      const errorMsg = `AI 参考答案生成失败: ${error instanceof Error ? error.message : '未知错误'}`;
+      onAnswerGenerated?.(errorMsg);
     }
   };
 
@@ -1182,9 +1270,22 @@ export function MockInterviewEntryBody({
         message: '用户主动停止面试'
       });
 
-      // 使用公共批量分析函数
+      // 构造模型配置，使用组件状态中的 selectedModel
+      const modelConfig = selectedModel ? {
+        provider: selectedModel.provider,
+        model_name: selectedModel.model_name,
+        credentials: selectedModel.credentials || '{}',
+      } : undefined;
+
+      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const userDataResult = await api?.getUserData?.();
+      const modelParams = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+
+      // 使用公共批量分析函数，传入模型配置
       const analyzeResult = await batchAnalyzeReviews({
         interviewId,
+        modelConfig,
+        modelParams,
         onProgress: (msg) => setCurrentLine(msg),
         onError: (error) => {
           setErrorMessage(error);
@@ -1214,6 +1315,12 @@ export function MockInterviewEntryBody({
         interviewId: interviewId
       });
 
+      // 先将状态机状态设置为 COMPLETED，触发 persistCurrentState 更新 localStorage
+      const machine = getMockInterviewStateMachine();
+      if (machine) {
+        machine.setState(InterviewState.COMPLETED);
+      }
+
       stopMockInterview();
 
     } catch (error) {
@@ -1226,6 +1333,12 @@ export function MockInterviewEntryBody({
         subState: 'mock-interview-completed',
         interviewId: interviewId
       });
+
+      // 先将状态机状态设置为 COMPLETED，触发 persistCurrentState 更新 localStorage
+      const machine = getMockInterviewStateMachine();
+      if (machine) {
+        machine.setState(InterviewState.COMPLETED);
+      }
 
       stopMockInterview();
     }
