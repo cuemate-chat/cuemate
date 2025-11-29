@@ -25,7 +25,7 @@ export async function startMicrophone(type: InterviewType, controller: any): Pro
   }
 
   microphoneControllers.set(type, controller);
-  console.log(`[AudioManager] 麦克风已启动: ${type}`);
+  console.debug(`[AudioManager] 麦克风已启动: ${type}`);
 }
 
 /**
@@ -37,7 +37,7 @@ export async function stopMicrophone(type: InterviewType): Promise<void> {
     if (typeof controller.stop === 'function') {
       await controller.stop();
     }
-    console.log(`[AudioManager] 麦克风已停止: ${type}`);
+    console.debug(`[AudioManager] 麦克风已停止: ${type}`);
   }
 }
 
@@ -51,7 +51,7 @@ export async function destroyMicrophone(type: InterviewType): Promise<void> {
       await controller.stop();
     }
     microphoneControllers.delete(type);
-    console.log(`[AudioManager] 麦克风已销毁: ${type}`);
+    console.debug(`[AudioManager] 麦克风已销毁: ${type}`);
   }
 }
 
@@ -75,7 +75,7 @@ export function initVoiceCoordinator(type: InterviewType, coordinator: any): voi
   }
 
   voiceCoordinators.set(type, coordinator);
-  console.log(`[AudioManager] 音量检测器已初始化: ${type}`);
+  console.debug(`[AudioManager] 音量检测器已初始化: ${type}`);
 }
 
 /**
@@ -95,7 +95,7 @@ export function destroyVoiceCoordinator(type: InterviewType): void {
       coordinator.destroy();
     }
     voiceCoordinators.delete(type);
-    console.log(`[AudioManager] 音量检测器已销毁: ${type}`);
+    console.debug(`[AudioManager] 音量检测器已销毁: ${type}`);
   }
 }
 
@@ -119,5 +119,5 @@ export async function cleanup(): Promise<void> {
   }
   voiceCoordinators.clear();
 
-  console.log('[AudioManager] 所有资源已清理');
+  console.debug('[AudioManager] 所有资源已清理');
 }
