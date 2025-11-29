@@ -133,8 +133,10 @@ export class InterviewStateMachine {
     const transitions = stateTransitions[this.currentState];
     const nextState = transitions[event.type];
 
+    console.debug(`[InterviewStateMachine] ${this.currentState} + ${event.type} -> ${nextState || 'INVALID'}`);
+
     if (!nextState) {
-      console.warn(`Invalid transition: ${event.type} from state ${this.currentState}`);
+      console.error(`[ERROR] 无效状态转换: ${event.type} 从 ${this.currentState}`);
       return false;
     }
 
@@ -171,9 +173,10 @@ export class InterviewStateMachine {
   }
 
   // 部分更新上下文（用于设置暂停标志等）
+  // 注意：不触发 notifyStateChange，避免循环
   updateContextPartial(partial: Partial<InterviewContext>): void {
     this.context = { ...this.context, ...partial };
-    this.notifyStateChange();
+    // 不调用 notifyStateChange()，只更新上下文数据
   }
 
   // 更新上下文
@@ -334,7 +337,7 @@ export class InterviewStateMachine {
    * 恢复状态（从持久化数据恢复）
    */
   restoreState(state: InterviewState, context: Partial<InterviewContext>): void {
-    console.log('[InterviewStateMachine] 恢复状态:', state, context);
+    console.debug('[InterviewStateMachine] 恢复状态:', state);
 
     // 更新 context
     if (context.jobPosition !== undefined) {
