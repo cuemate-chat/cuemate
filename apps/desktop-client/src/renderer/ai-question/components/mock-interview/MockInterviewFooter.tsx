@@ -4,11 +4,11 @@ import { useEffect, useRef } from 'react';
 import { logger } from '../../../../utils/rendererLogger.js';
 import { startMicrophoneRecognition } from '../../../../utils/audioRecognition';
 import {
+  destroyMicrophone,
   getMicrophoneController,
   getVoiceCoordinator,
   initVoiceCoordinator,
   startMicrophone,
-  stopMicrophone,
 } from '../../../utils/audioManager';
 import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
 import { VoiceCoordinator } from '../shared/voice/VoiceCoordinator';
@@ -40,19 +40,42 @@ export function MockInterviewFooter({
   // 使用跨窗口状态
   const mockInterviewState = useMockInterviewState();
 
+  // 使用 ref 保存最新的回调和状态，避免闭包陷阱
+  const isAutoModeRef = useRef(mockInterviewState.isAutoMode);
+  const onResponseCompleteRef = useRef(onResponseComplete);
+
+  // 保持 ref 与最新值同步
+  useEffect(() => {
+    isAutoModeRef.current = mockInterviewState.isAutoMode;
+  }, [mockInterviewState.isAutoMode]);
+
+  useEffect(() => {
+    onResponseCompleteRef.current = onResponseComplete;
+  }, [onResponseComplete]);
+
   // 只有存在 interviewId 才显示数据,否则显示空白
   const speechText = interviewId ? mockInterviewState.speechText : '';
   const isLoading = interviewId ? mockInterviewState.isLoading : false;
-  const isListening = interviewId ? mockInterviewState.isListening : false;
   // isAutoMode 是用户偏好设置,始终显示真实值,不依赖 interviewId
   const isAutoMode = mockInterviewState.isAutoMode;
+  // 面试状态
+  const interviewState = mockInterviewState.interviewState;
+  // 是否正在提交/分析中
+  const isSubmitting = interviewState === 'ai_analyzing';
+
+  // 【关键修复】只有当状态机真正进入 USER_LISTENING 或 USER_SPEAKING 状态时，才启动录音
+  // 这样可以避免状态更新的时序竞争导致在 AI_SPEAKING 阶段就开始录音
+  const isListening = interviewId
+    ? mockInterviewState.isListening &&
+      (interviewState === 'user_listening' || interviewState === 'user_speaking')
+    : false;
 
   // 初始化 VoiceCoordinator（只初始化一次，使用全局管理器）
   useEffect(() => {
     const initCoordinator = async () => {
       // 检查是否已经初始化
       if (getVoiceCoordinator('mock-interview')) {
-        console.log('[MockInterviewFooter] VoiceCoordinator 已存在，跳过初始化');
+        console.debug('[MockInterviewFooter] VoiceCoordinator 已存在，跳过初始化');
         return;
       }
 
@@ -73,9 +96,11 @@ export function MockInterviewFooter({
 
         // 监听用户说话结束(自动模式)
         coordinator.addEventListener('userFinishedSpeaking', ((_event: CustomEvent) => {
-          if (isAutoMode) {
+          // 使用 ref 获取最新值，避免闭包陷阱
+          if (isAutoModeRef.current) {
             // 自动模式下,静音 5 秒后自动触发回答完成
-            onResponseComplete();
+            console.debug('[MockInterviewFooter] 自动模式检测到用户说话结束，触发回答完成');
+            onResponseCompleteRef.current();
             // 停止监听,保留 speechText 供状态机使用
             setMockInterviewState({ isListening: false });
           }
@@ -119,10 +144,10 @@ export function MockInterviewFooter({
             coordinator.startASRListening();
           }
 
-          // 启动语音识别
+          // 启动语音识别（每次从空开始，不继承旧文本）
           const controller = await startMicrophoneRecognition({
             deviceId: micDeviceId,
-            initialText: speechText || '',
+            initialText: '',
             onText: (text) => {
               // 更新跨窗口状态
               setMockInterviewState({ speechText: text });
@@ -146,8 +171,8 @@ export function MockInterviewFooter({
           coordinator.stopASRListening();
         }
 
-        // 停止语音识别（但不销毁）
-        await stopMicrophone('mock-interview');
+        // 销毁麦克风控制器（从 Map 中删除，以便下次 isListening 变为 true 时重新创建）
+        await destroyMicrophone('mock-interview');
       }
     };
 
@@ -166,9 +191,9 @@ export function MockInterviewFooter({
         <FlashingCircle isActive={isListening} />
         <span
           ref={speechRef}
-          className="speech-text"
+          className={`speech-text${isSubmitting ? ' submitting' : ''}`}
         >
-          {speechText || '等待语音输入...'}
+          {isSubmitting ? '已提交本次回答，面试官分析中...' : (speechText || '等待语音输入...')}
         </span>
       </div>
 
@@ -203,15 +228,15 @@ export function MockInterviewFooter({
                   // 停止监听,保留 speechText 供状态机使用
                   setMockInterviewState({ isListening: false });
                 }}
-                disabled={isAutoMode || isLoading || !speechText}
-                className="response-complete-btn"
+                disabled={isAutoMode || isLoading || !speechText || isSubmitting}
+                className={`response-complete-btn${isSubmitting ? ' submitting' : ''}`}
               >
-                <span className="response-text">回答完毕</span>
+                <span className="response-text">{isSubmitting ? '提交中...' : '回答完毕'}</span>
                 <CornerDownLeft size={16} />
               </button>
             </Tooltip.Trigger>
             <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
-              {isAutoMode ? '自动模式下不可用' : '标记当前回答完毕'}
+              {isSubmitting ? '正在分析您的回答...' : (isAutoMode ? '自动模式下不可用' : '标记当前回答完毕')}
               <Tooltip.Arrow className="radix-tooltip-arrow" />
             </Tooltip.Content>
           </Tooltip.Root>
