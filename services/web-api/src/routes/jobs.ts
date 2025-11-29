@@ -17,8 +17,8 @@ export function registerJobRoutes(app: FastifyInstance) {
     title: z.string().min(1).max(200),
     description: z.string().min(1).max(5000),
     resumeTitle: z.string().max(200).optional(),
-    resumeContent: z.string().min(1).max(5000),
-    resumeFilePath: z.string().optional(),
+    resumeContent: z.string().min(1).max(20000),
+    resumeFilePath: z.string().nullish(),
   });
   const updateSchema = createSchema;
 
@@ -294,7 +294,14 @@ export function registerJobRoutes(app: FastifyInstance) {
       return { success: true };
     } catch (err: any) {
       app.log.error({ err }, '更新岗位失败');
-      return reply.code(401).send(buildPrefixedError('更新岗位失败', err, 401));
+      // 区分不同类型的错误
+      if (err.name === 'ZodError') {
+        return reply.code(400).send(buildPrefixedError('请求参数错误', err, 400));
+      }
+      if (err.code === 'FST_JWT_NO_AUTHORIZATION_IN_HEADER' || err.code === 'FST_JWT_AUTHORIZATION_TOKEN_EXPIRED') {
+        return reply.code(401).send(buildPrefixedError('认证失败', err, 401));
+      }
+      return reply.code(500).send(buildPrefixedError('更新岗位失败', err, 500));
     }
   });
 
