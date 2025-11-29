@@ -27,6 +27,18 @@ export interface ModelOption {
   value: string;
 }
 
+export interface ModelParam {
+  id: string;
+  model_id: string;
+  label: string;
+  param_key: string;
+  ui_type: string;
+  value: string | number;
+  default_value: string | number;
+  required?: number;
+  extra?: string;
+}
+
 export class ModelService {
   private baseURL = 'http://localhost:3001';
 
@@ -116,6 +128,29 @@ export class ModelService {
     } catch (error) {
       logger.error(`获取模型详情失败: ${error}`);
       return null;
+    }
+  }
+
+  /**
+   * 获取模型参数
+   */
+  async getModelParams(id: string): Promise<ModelParam[]> {
+    try {
+      const headers = await this.getHeaders();
+      const response = await fetch(`${this.baseURL}/models/${id}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`获取模型参数失败: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.params || [];
+    } catch (error) {
+      logger.error(`获取模型参数失败: ${error}`);
+      return [];
     }
   }
 }
