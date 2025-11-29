@@ -78,25 +78,21 @@ export function MainControlBar({}: MainControlBarProps) {
 
       // 检查模拟面试
       if (hasRecoverableInterview()) {
-        console.log('[MainControlBar] 检测到未完成的模拟面试，自动恢复');
 
         const machine = restoreMockInterview();
         if (machine) {
           // 自动打开面试窗口
           await (window as any).electronAPI?.openInterviewerWindow?.();
-          console.log('[MainControlBar] 模拟面试窗口已打开');
         }
       }
 
       // 检查面试训练
       if (hasRecoverableTraining()) {
-        console.log('[MainControlBar] 检测到未完成的面试训练，自动恢复');
 
         const machine = await restoreInterviewTraining();
         if (machine) {
           // 自动打开训练窗口
           await (window as any).electronAPI?.openInterviewTrainingWindow?.();
-          console.log('[MainControlBar] 面试训练窗口已打开');
         }
       }
     };

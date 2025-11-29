@@ -7,6 +7,8 @@ import { logger } from '../../../utils/rendererLogger.js';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 import { userSettingsService } from '../api/userSettingsService';
+import { sendInterviewCommand } from '../../interviewer/utils/interviewCommandChannel';
+import { getOngoingInterview } from '../../utils/interviewGuard';
 
 interface LoggedInControlBarProps {
   // 暂时不添加任何 props
@@ -69,30 +71,81 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
     }
   };
 
-  const handlePauseClick = () => {
-    // 暂停面试
-    if (vState.mode === 'mock-interview') {
-      setVoiceState({ subState: 'mock-interview-paused' });
-    } else if (vState.mode === 'interview-training') {
-      setVoiceState({ subState: 'interview-training-paused' });
+  /**
+   * 获取当前活跃的面试模式
+   * 优先使用 getOngoingInterview()，这样更可靠
+   */
+  const getActiveInterviewMode = (): 'mock-interview' | 'interview-training' | null => {
+    // 优先从互斥保护机制获取（最可靠的来源）
+    const ongoing = getOngoingInterview();
+    if (ongoing) {
+      return ongoing.type;
+    }
+    // 回退到 voiceState
+    if (vState.mode === 'mock-interview' || vState.mode === 'interview-training') {
+      return vState.mode;
+    }
+    return null;
+  };
+
+  const handlePauseClick = async () => {
+    // 暂停面试 - 发送命令到面试窗口
+    const mode = getActiveInterviewMode();
+    if (mode) {
+      // 发送暂停命令
+      sendInterviewCommand('pause', mode);
+      // 切换到对应模式并打开面试窗口
+      try {
+        if ((window as any).electronAPI) {
+          // 先切换模式，让 Interviewer 窗口显示正在进行的面试页面
+          await (window as any).electronAPI.switchToMode(mode);
+          await (window as any).electronAPI.showInterviewer();
+          setIsInterviewerWindowOpen(true);
+        }
+      } catch (error) {
+        logger.error(`打开面试窗口失败: ${error}`);
+      }
     }
   };
 
-  const handlePlayClick = () => {
-    // 继续面试
-    if (vState.mode === 'mock-interview') {
-      setVoiceState({ subState: 'mock-interview-playing' });
-    } else if (vState.mode === 'interview-training') {
-      setVoiceState({ subState: 'interview-training-playing' });
+  const handlePlayClick = async () => {
+    // 继续面试 - 发送命令到面试窗口
+    const mode = getActiveInterviewMode();
+    if (mode) {
+      // 发送继续命令
+      sendInterviewCommand('resume', mode);
+      // 切换到对应模式并打开面试窗口
+      try {
+        if ((window as any).electronAPI) {
+          // 先切换模式，让 Interviewer 窗口显示正在进行的面试页面
+          await (window as any).electronAPI.switchToMode(mode);
+          await (window as any).electronAPI.showInterviewer();
+          setIsInterviewerWindowOpen(true);
+        }
+      } catch (error) {
+        logger.error(`打开面试窗口失败: ${error}`);
+      }
     }
   };
 
-  const handleDoneClick = () => {
-    // 完成并保存，回到 idle 状态
-    setIsInterviewerWindowOpen(false);
-
-    // 直接回到语音识别状态
-    setVoiceState({ subState: 'idle' });
+  const handleDoneClick = async () => {
+    // 停止面试 - 发送命令到面试窗口
+    const mode = getActiveInterviewMode();
+    if (mode) {
+      // 发送停止命令
+      sendInterviewCommand('stop', mode);
+      // 切换到对应模式并打开面试窗口
+      try {
+        if ((window as any).electronAPI) {
+          // 先切换模式，让 Interviewer 窗口显示正在进行的面试页面
+          await (window as any).electronAPI.switchToMode(mode);
+          await (window as any).electronAPI.showInterviewer();
+          setIsInterviewerWindowOpen(true);
+        }
+      } catch (error) {
+        logger.error(`打开面试窗口失败: ${error}`);
+      }
+    }
   };
 
   const handleAskQuestionClick = async () => {
