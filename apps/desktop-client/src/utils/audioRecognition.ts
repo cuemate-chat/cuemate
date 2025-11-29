@@ -102,10 +102,12 @@ export async function startMicrophoneRecognition(
       },
     };
     stream = await navigator.mediaDevices.getUserMedia(constraints);
+    logger.info(`麦克风识别: 成功获取麦克风流, deviceId=${resolvedDeviceId || 'default'}`);
 
     websocket = new WebSocket(url);
 
     websocket.onopen = async () => {
+      logger.info(`麦克风识别: WebSocket 连接成功, url=${url}, sessionId=${sessionId}`);
       onOpen?.();
 
       const config = {
@@ -154,7 +156,8 @@ export async function startMicrophoneRecognition(
             }
           };
           source.connect(workletNode);
-        } catch (err) {
+        } catch (err: any) {
+          logger.warn(`麦克风识别 AudioWorklet 加载失败，降级使用 ScriptProcessor: error=${err?.message || err}`);
           const processor = audioContext.createScriptProcessor(4096, 1, 1);
           processor.onaudioprocess = (event) => {
             if (websocket && websocket.readyState === WebSocket.OPEN) {
@@ -189,16 +192,21 @@ export async function startMicrophoneRecognition(
       }
     };
 
-    websocket.onerror = () => {
+    websocket.onerror = (event) => {
+      logger.error(`麦克风识别 WebSocket 连接错误: url=${url}, sessionId=${sessionId}, event=${JSON.stringify(event)}`);
       onError?.('麦克风识别 WebSocket 连接错误');
       void cleanup();
     };
 
-    websocket.onclose = () => {
+    websocket.onclose = (event) => {
+      if (event.code !== 1000) {
+        logger.warn(`麦克风识别 WebSocket 非正常关闭: code=${event.code}, reason=${event.reason}, sessionId=${sessionId}`);
+      }
       onClose?.();
     };
   } catch (error: any) {
     const message = error?.message || '启动麦克风识别失败';
+    logger.error(`启动麦克风识别失败: message=${message}, error=${error?.name || 'unknown'}, stack=${error?.stack || 'no stack'}`);
     onError?.(message);
     await cleanup();
   }
@@ -270,13 +278,16 @@ export async function startSpeakerRecognition(
     }
     const electronAPI = (window as any).electronInterviewerAPI;
     if (!electronAPI || !electronAPI.audioTest) {
+      logger.error(`扬声器识别失败: 音频测试服务不可用, electronAPI=${!!electronAPI}, audioTest=${!!electronAPI?.audioTest}`);
       onError?.('音频测试服务不可用');
       return { stop: async () => {} };
     }
 
     websocket = new WebSocket(url);
+    logger.info(`扬声器识别: 开始连接 WebSocket, url=${url}, sessionId=${sessionId}, deviceId=${resolvedDeviceId || 'default'}`);
 
     websocket.onopen = async () => {
+      logger.info(`扬声器识别: WebSocket 连接成功, url=${url}, sessionId=${sessionId}`);
       onOpen?.();
 
       // 发送 FunASR 配置参数
@@ -326,7 +337,8 @@ export async function startSpeakerRecognition(
             websocket.send(event.data.data);
           }
         };
-      } catch (err) {
+      } catch (err: any) {
+        logger.error(`扬声器识别 AudioWorklet 初始化失败: error=${err?.message || err}, stack=${err?.stack || 'no stack'}`);
         onError?.('AudioWorklet 初始化失败');
         await cleanup();
         return { stop: async () => {} };
@@ -335,6 +347,7 @@ export async function startSpeakerRecognition(
       const result = await electronAPI.audioTest.startSpeakerTest({ deviceId: resolvedDeviceId });
 
       if (!result.success) {
+        logger.error(`扬声器识别启动扬声器捕获失败: error=${result.error}, deviceId=${resolvedDeviceId}`);
         onError?.(result.error || '启动扬声器捕获失败');
         await cleanup();
         return { stop: async () => {} };
@@ -382,12 +395,16 @@ export async function startSpeakerRecognition(
       }
     };
 
-    websocket.onerror = () => {
+    websocket.onerror = (event) => {
+      logger.error(`扬声器识别 WebSocket 连接错误: url=${url}, sessionId=${sessionId}, event=${JSON.stringify(event)}`);
       onError?.('连接扬声器识别服务失败');
       void cleanup();
     };
 
-    websocket.onclose = () => {
+    websocket.onclose = (event) => {
+      if (event.code !== 1000) {
+        logger.warn(`扬声器识别 WebSocket 非正常关闭: code=${event.code}, reason=${event.reason}, sessionId=${sessionId}`);
+      }
       onClose?.();
     };
   } catch (error: any) {
@@ -395,6 +412,7 @@ export async function startSpeakerRecognition(
       error?.name === 'SecurityError'
         ? '安全权限错误，请确保已授予屏幕录制权限'
         : `扬声器识别启动失败：${error?.message}`;
+    logger.error(`启动扬声器识别失败: message=${errorMsg}, error=${error?.name || 'unknown'}, stack=${error?.stack || 'no stack'}`);
     onError?.(errorMsg);
     await cleanup();
   }
