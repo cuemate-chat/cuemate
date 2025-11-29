@@ -21,6 +21,9 @@ export function MockInterviewHistoryBody({
   const containerRef = useRef<HTMLDivElement>(null);
   const [reviews, setReviews] = useState<InterviewReview[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const isFirstLoadRef = useRef(true);
+  // 保存最后一个有效的 interviewId，用于刷新时使用
+  const lastValidInterviewIdRef = useRef<string | undefined>(undefined);
 
   // 处理点击历史记录卡片
   const handleReviewClick = (review: InterviewReview) => {
@@ -37,28 +40,47 @@ export function MockInterviewHistoryBody({
 
   // 加载模拟面试记录
   useEffect(() => {
-    const loadReviews = async () => {
-      setIsLoading(true);
+    // 更新最后有效的 interviewId
+    if (interviewId) {
+      lastValidInterviewIdRef.current = interviewId;
+    }
+
+    // 使用有效的 interviewId（当前的或缓存的）
+    const effectiveInterviewId = interviewId || lastValidInterviewIdRef.current;
+
+    const loadReviews = async (showLoading = false) => {
+      // 如果没有有效的 interviewId，不执行加载，也不清空现有数据
+      if (!effectiveInterviewId) {
+        return;
+      }
+
+      if (showLoading) {
+        setIsLoading(true);
+      }
       try {
-        const data = !interviewId ? [] : await conversationHistoryService.getInterviewReviews(interviewId);
+        const data = await conversationHistoryService.getInterviewReviews(effectiveInterviewId);
         setReviews(data);
         // 通知父组件原始数据
         onDataLoaded?.(data);
       } catch (error) {
         logger.error(`加载模拟面试记录失败: ${error}`);
-        setReviews([]);
-        onDataLoaded?.([]);
+        // 加载失败时也不清空现有数据
       } finally {
-        setIsLoading(false);
+        if (showLoading) {
+          setIsLoading(false);
+        }
       }
     };
 
-    loadReviews();
+    // 首次加载显示 loading，后续静默刷新
+    const isFirstLoad = isFirstLoadRef.current;
+    isFirstLoadRef.current = false;
+    loadReviews(isFirstLoad);
 
-    // 设置 5 秒自动刷新
+    // 设置 30 秒自动刷新（静默刷新，不显示 loading）
     const refreshInterval = setInterval(() => {
-      loadReviews();
-    }, 5000);
+      loadReviews(false);
+    }, 30000);
 
     // 清理定时器
     return () => {
