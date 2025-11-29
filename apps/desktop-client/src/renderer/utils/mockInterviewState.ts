@@ -37,7 +37,16 @@ function getPersistedAutoMode(): boolean {
 }
 
 function getDefaultState(): MockInterviewState {
-  return { aiMessage: '', speechText: '', candidateAnswer: '', isLoading: false, isListening: false, isAutoMode: getPersistedAutoMode(), interviewState: undefined, updatedAt: Date.now() };
+  return {
+    aiMessage: '',
+    speechText: '',
+    candidateAnswer: '',
+    isLoading: false,
+    isListening: false,
+    isAutoMode: getPersistedAutoMode(),
+    interviewState: undefined,
+    updatedAt: Date.now(),
+  };
 }
 
 export function getMockInterviewState(): MockInterviewState {
@@ -105,7 +114,7 @@ export function clearMockInterviewState(): MockInterviewState {
     isListening: false,
     isAutoMode: currentAutoMode, // 保留用户偏好
     interviewState: undefined,
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cleared));
