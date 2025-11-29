@@ -194,6 +194,7 @@ export default function UpdateProgressModal({
     <Modal
       title={`正在更新到 ${version}`}
       open={open}
+      zIndex={10000}
       footer={null}
       closable={false}
       maskClosable={false}
