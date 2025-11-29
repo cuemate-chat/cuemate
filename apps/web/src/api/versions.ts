@@ -51,8 +51,8 @@ export function parseCommitType(desc: string): {
   scope?: string;
   message: string;
 } {
-  // 匹配 type(scope): message 格式
-  const match = desc.match(/^(feat|fix|refactor|chore|docs|style|perf|test)\(([^)]+)\):\s*(.+)$/);
+  // 匹配 type(scope): message 格式，支持前面有序号如 "1. feat(install): ..."
+  const match = desc.match(/^(?:\d+\.\s*)?(feat|fix|refactor|chore|docs|style|perf|test)\(([^)]+)\):\s*(.+)$/);
 
   if (match) {
     return {
