@@ -25,34 +25,6 @@ interface InterviewQuestion {
 
 class PromptService {
   private baseUrl = 'http://localhost:3001';
-  private cache: Map<string, string> = new Map();
-
-  /**
-   * 从数据库获取 prompt 模板
-   */
-  private async fetchPrompt(id: string): Promise<string> {
-    // 检查缓存
-    if (this.cache.has(id)) {
-      return this.cache.get(id)!;
-    }
-
-    try {
-      const response = await fetch(`${this.baseUrl}/prompts/${id}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch prompt: ${response.statusText}`);
-      }
-      const data = await response.json();
-      const prompt: Prompt = data.prompt;
-
-      // 缓存 prompt
-      this.cache.set(id, prompt.content);
-      return prompt.content;
-    } catch (error) {
-      logger.error(`Failed to fetch prompt ${id}, using fallback: ${error}`);
-      // 如果获取失败，返回空字符串，调用方应该使用本地 fallback
-      throw error;
-    }
-  }
 
   /**
    * 从数据库获取 prompt 完整数据(包含 extra 配置)
@@ -129,13 +101,28 @@ class PromptService {
     question: string,
     referenceAnswer?: string,
   ): Promise<string> {
-    const template = await this.fetchPrompt('AnswerPrompt');
+    const promptData = await this.fetchPromptWithConfig('AnswerPrompt');
 
-    return this.renderTemplate(template, {
+    // 从 extra 字段解析配置参数
+    let minWords = 1000; // 默认值
+    let maxWords = 2000; // 默认值
+    try {
+      if (promptData.extra) {
+        const config = JSON.parse(promptData.extra);
+        minWords = config.minWords || 1000;
+        maxWords = config.maxWords || 2000;
+      }
+    } catch (error) {
+      logger.error(`Failed to parse AnswerPrompt extra config: ${error}`);
+    }
+
+    return this.renderTemplate(promptData.content, {
       jobPosition,
       resume,
       question,
       referenceAnswer,
+      minWords,
+      maxWords,
     });
   }
 
@@ -143,10 +130,40 @@ class PromptService {
    * 构建问题生成 Prompt
    */
   async buildQuestionPrompt(currentQuestionIndex: number): Promise<string> {
-    const template = await this.fetchPrompt('QuestionPrompt');
+    const promptData = await this.fetchPromptWithConfig('QuestionPrompt');
 
-    return this.renderTemplate(template, {
+    // 从 extra 字段解析配置参数
+    let projectStageStart = 2;
+    let projectStageEnd = 3;
+    let techStageStart = 4;
+    let techStageEnd = 6;
+    let scenarioStageStart = 7;
+    let scenarioStageEnd = 8;
+    let endStageStart = 9;
+    try {
+      if (promptData.extra) {
+        const config = JSON.parse(promptData.extra);
+        projectStageStart = config.projectStageStart || 2;
+        projectStageEnd = config.projectStageEnd || 3;
+        techStageStart = config.techStageStart || 4;
+        techStageEnd = config.techStageEnd || 6;
+        scenarioStageStart = config.scenarioStageStart || 7;
+        scenarioStageEnd = config.scenarioStageEnd || 8;
+        endStageStart = config.endStageStart || 9;
+      }
+    } catch (error) {
+      logger.error(`Failed to parse QuestionPrompt extra config: ${error}`);
+    }
+
+    return this.renderTemplate(promptData.content, {
       currentQuestionIndex,
+      projectStageStart,
+      projectStageEnd,
+      techStageStart,
+      techStageEnd,
+      scenarioStageStart,
+      scenarioStageEnd,
+      endStageStart,
     });
   }
 
@@ -158,12 +175,42 @@ class PromptService {
     candidateAnswer: string,
     referenceAnswer: string,
   ): Promise<string> {
-    const template = await this.fetchPrompt('AnalysisPrompt');
+    const promptData = await this.fetchPromptWithConfig('AnalysisPrompt');
 
-    return this.renderTemplate(template, {
+    // 从 extra 字段解析配置参数
+    let scoreMin = 1;
+    let scoreMax = 10;
+    let passScore = 7;
+    let relevanceWeight = 30;
+    let professionalWeight = 30;
+    let completenessWeight = 20;
+    let expressionWeight = 20;
+    try {
+      if (promptData.extra) {
+        const config = JSON.parse(promptData.extra);
+        scoreMin = config.scoreMin || 1;
+        scoreMax = config.scoreMax || 10;
+        passScore = config.passScore || 7;
+        relevanceWeight = config.relevanceWeight || 30;
+        professionalWeight = config.professionalWeight || 30;
+        completenessWeight = config.completenessWeight || 20;
+        expressionWeight = config.expressionWeight || 20;
+      }
+    } catch (error) {
+      logger.error(`Failed to parse AnalysisPrompt extra config: ${error}`);
+    }
+
+    return this.renderTemplate(promptData.content, {
       askedQuestion,
       candidateAnswer,
       referenceAnswer,
+      scoreMin,
+      scoreMax,
+      passScore,
+      relevanceWeight,
+      professionalWeight,
+      completenessWeight,
+      expressionWeight,
     });
   }
 
@@ -175,12 +222,48 @@ class PromptService {
     resumeContent: string,
     reviewsData: string,
   ): Promise<string> {
-    const template = await this.fetchPrompt('ScorePrompt');
+    const promptData = await this.fetchPromptWithConfig('ScorePrompt');
 
-    return this.renderTemplate(template, {
+    // 从 extra 字段解析配置参数
+    let scoreMin = 0;
+    let scoreMax = 100;
+    let summaryMaxWords = 200;
+    let prosMin = 3;
+    let prosMax = 5;
+    let consMin = 3;
+    let consMax = 5;
+    let suggestionsMin = 3;
+    let suggestionsMax = 5;
+    try {
+      if (promptData.extra) {
+        const config = JSON.parse(promptData.extra);
+        scoreMin = config.scoreMin ?? 0;
+        scoreMax = config.scoreMax || 100;
+        summaryMaxWords = config.summaryMaxWords || 200;
+        prosMin = config.prosMin || 3;
+        prosMax = config.prosMax || 5;
+        consMin = config.consMin || 3;
+        consMax = config.consMax || 5;
+        suggestionsMin = config.suggestionsMin || 3;
+        suggestionsMax = config.suggestionsMax || 5;
+      }
+    } catch (error) {
+      logger.error(`Failed to parse ScorePrompt extra config: ${error}`);
+    }
+
+    return this.renderTemplate(promptData.content, {
       jobTitle,
       resumeContent,
       reviewsData,
+      scoreMin,
+      scoreMax,
+      summaryMaxWords,
+      prosMin,
+      prosMax,
+      consMin,
+      consMax,
+      suggestionsMin,
+      suggestionsMax,
     });
   }
 
@@ -192,21 +275,33 @@ class PromptService {
     resumeContent: string,
     reviewsData: string,
   ): Promise<string> {
-    const template = await this.fetchPrompt('InsightPrompt');
+    const promptData = await this.fetchPromptWithConfig('InsightPrompt');
 
-    return this.renderTemplate(template, {
+    // 从 extra 字段解析配置参数
+    let scoreMin = 0;
+    let scoreMax = 100;
+    let summaryMaxWords = 100;
+    try {
+      if (promptData.extra) {
+        const config = JSON.parse(promptData.extra);
+        scoreMin = config.scoreMin ?? 0;
+        scoreMax = config.scoreMax || 100;
+        summaryMaxWords = config.summaryMaxWords || 100;
+      }
+    } catch (error) {
+      logger.error(`Failed to parse InsightPrompt extra config: ${error}`);
+    }
+
+    return this.renderTemplate(promptData.content, {
       jobTitle,
       resumeContent,
       reviewsData,
+      scoreMin,
+      scoreMax,
+      summaryMaxWords,
     });
   }
 
-  /**
-   * 清除缓存
-   */
-  clearCache(): void {
-    this.cache.clear();
-  }
 }
 
 export const promptService = new PromptService();

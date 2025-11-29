@@ -115,9 +115,16 @@ export function up(db: any): void {
    - 专业、具体、有条理
    - 必须结合简历中的实际项目和经验（不要编造）
    - 体现岗位要求的相关技能
-   - 控制在 1500 字以内
+   - 控制在\${minWords}-\${maxWords}字
    - 去除 AI 味道，使用口语化表达
-   - 直接输出答案，不要包含"参考答案："等前缀\` : \`【任务要求】
+   - 直接输出答案，不要包含"参考答案："等前缀
+
+【重要提醒】
+- 岗位信息和简历内容是必须参考的，不是摆设
+- 答案要体现候选人的个人特色，不要泛泛而谈
+- 如果是自我介绍类问题，必须基于简历内容组织回答
+
+请生成答案：\` : \`【任务要求】
 1. 为以上面试问题生成一个优秀的参考答案
 2. 必须结合上面提供的【岗位信息】和【候选人简历】
 3. 答案中要引用简历里的具体项目/经验作为案例支撑
@@ -125,18 +132,18 @@ export function up(db: any): void {
    - 紧扣问题，符合岗位要求
    - 结合简历中的实际经验和项目（不要编造）
    - 专业、具体、有条理
-   - 控制在 1500 字以内
+   - 控制在\${minWords}-\${maxWords}字
    - 去除 AI 味道，使用口语化表达
-   - 直接输出答案，不要包含"参考答案："等前缀\`}
+   - 直接输出答案，不要包含"参考答案："等前缀
 
 【重要提醒】
 - 岗位信息和简历内容是必须参考的，不是摆设
 - 答案要体现候选人的个人特色，不要泛泛而谈
 - 如果是自我介绍类问题，必须基于简历内容组织回答
 
-请生成答案：',
+请生成答案：\`}',
       '生成参考答案提示词',
-      '["jobPosition","resume","question","referenceAnswer"]',
+      '["jobPosition","resume","question","referenceAnswer","minWords","maxWords"]',
       'desktop',
       '你是一名面试辅导专家，需要为面试者生成优质的参考答案。
 
@@ -167,9 +174,16 @@ export function up(db: any): void {
    - 专业、具体、有条理
    - 必须结合简历中的实际项目和经验（不要编造）
    - 体现岗位要求的相关技能
-   - 控制在 1500 字以内
+   - 控制在\${minWords}-\${maxWords}字
    - 去除 AI 味道，使用口语化表达
-   - 直接输出答案，不要包含"参考答案："等前缀\` : \`【任务要求】
+   - 直接输出答案，不要包含"参考答案："等前缀
+
+【重要提醒】
+- 岗位信息和简历内容是必须参考的，不是摆设
+- 答案要体现候选人的个人特色，不要泛泛而谈
+- 如果是自我介绍类问题，必须基于简历内容组织回答
+
+请生成答案：\` : \`【任务要求】
 1. 为以上面试问题生成一个优秀的参考答案
 2. 必须结合上面提供的【岗位信息】和【候选人简历】
 3. 答案中要引用简历里的具体项目/经验作为案例支撑
@@ -177,17 +191,17 @@ export function up(db: any): void {
    - 紧扣问题，符合岗位要求
    - 结合简历中的实际经验和项目（不要编造）
    - 专业、具体、有条理
-   - 控制在 1500 字以内
+   - 控制在\${minWords}-\${maxWords}字
    - 去除 AI 味道，使用口语化表达
-   - 直接输出答案，不要包含"参考答案："等前缀\`}
+   - 直接输出答案，不要包含"参考答案："等前缀
 
 【重要提醒】
 - 岗位信息和简历内容是必须参考的，不是摆设
 - 答案要体现候选人的个人特色，不要泛泛而谈
 - 如果是自我介绍类问题，必须基于简历内容组织回答
 
-请生成答案：',
-      NULL,
+请生成答案：\`}',
+      '{"minWords": 1000, "maxWords": 2000}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -199,15 +213,15 @@ export function up(db: any): void {
 \${currentQuestionIndex === 0 ? \`▸ 这是面试的第一轮，必须进行自我介绍引导
 ▸ 用友好的开场白欢迎候选人，然后请他/她简单介绍自己
 ▸ 示例："你好，欢迎参加今天的面试。首先请简单介绍一下自己吧，包括你的工作经历和技术背景。"
-▸ 禁止跳过自我介绍直接问技术问题\` : currentQuestionIndex <= 2 ? \`▸ 这是项目经历阶段（第 2-3 轮）
+▸ 禁止跳过自我介绍直接问技术问题\` : currentQuestionIndex <= projectStageEnd ? \`▸ 这是项目经历阶段（第\${projectStageStart}-\${projectStageEnd}轮）
 ▸ 从候选人的简历或之前的回答中，挑选一个具体项目深入提问
 ▸ 重点关注：项目背景、个人职责、技术方案、遇到的挑战和解决方法
-▸ 示例："看到你简历里提到了 XX 项目，能详细说说你在里面负责什么，用了哪些技术吗？"\` : currentQuestionIndex <= 5 ? \`▸ 这是技术深入阶段（第 4-6 轮）
+▸ 示例："看到你简历里提到了 XX 项目，能详细说说你在里面负责什么，用了哪些技术吗？"\` : currentQuestionIndex <= techStageEnd ? \`▸ 这是技术深入阶段（第\${techStageStart}-\${techStageEnd}轮）
 ▸ 结合岗位要求和押题库，提出技术性问题
 ▸ 如果押题库中有相关问题，优先使用或改编
-▸ 可以结合候选人之前的回答进行追问\` : currentQuestionIndex <= 7 ? \`▸ 这是场景设计阶段（第 7-8 轮）
+▸ 可以结合候选人之前的回答进行追问\` : currentQuestionIndex <= scenarioStageEnd ? \`▸ 这是场景设计阶段（第\${scenarioStageStart}-\${scenarioStageEnd}轮）
 ▸ 给出具体的业务场景或技术场景，考察解决实际问题的能力
-▸ 示例："假设你需要设计一个高并发的 XX 系统，你会怎么考虑？"\` : \`▸ 这是收尾阶段（第 9 轮及之后）
+▸ 示例："假设你需要设计一个高并发的 XX 系统，你会怎么考虑？"\` : \`▸ 这是收尾阶段（第\${endStageStart}轮及之后）
 ▸ 可以问开放性问题，如职业规划、对团队/公司的期望
 ▸ 或者问候选人是否有什么想了解的\`}
 
@@ -221,7 +235,7 @@ export function up(db: any): void {
 
 请生成第\${currentQuestionIndex + 1}个面试问题：',
       '生成面试问题提示词',
-      '["currentQuestionIndex"]',
+      '["currentQuestionIndex","projectStageStart","projectStageEnd","techStageStart","techStageEnd","scenarioStageStart","scenarioStageEnd","endStageStart"]',
       'desktop',
       '你正在进行第\${currentQuestionIndex + 1}轮面试提问。
 
@@ -229,15 +243,15 @@ export function up(db: any): void {
 \${currentQuestionIndex === 0 ? \`▸ 这是面试的第一轮，必须进行自我介绍引导
 ▸ 用友好的开场白欢迎候选人，然后请他/她简单介绍自己
 ▸ 示例："你好，欢迎参加今天的面试。首先请简单介绍一下自己吧，包括你的工作经历和技术背景。"
-▸ 禁止跳过自我介绍直接问技术问题\` : currentQuestionIndex <= 2 ? \`▸ 这是项目经历阶段（第 2-3 轮）
+▸ 禁止跳过自我介绍直接问技术问题\` : currentQuestionIndex <= projectStageEnd ? \`▸ 这是项目经历阶段（第\${projectStageStart}-\${projectStageEnd}轮）
 ▸ 从候选人的简历或之前的回答中，挑选一个具体项目深入提问
 ▸ 重点关注：项目背景、个人职责、技术方案、遇到的挑战和解决方法
-▸ 示例："看到你简历里提到了 XX 项目，能详细说说你在里面负责什么，用了哪些技术吗？"\` : currentQuestionIndex <= 5 ? \`▸ 这是技术深入阶段（第 4-6 轮）
+▸ 示例："看到你简历里提到了 XX 项目，能详细说说你在里面负责什么，用了哪些技术吗？"\` : currentQuestionIndex <= techStageEnd ? \`▸ 这是技术深入阶段（第\${techStageStart}-\${techStageEnd}轮）
 ▸ 结合岗位要求和押题库，提出技术性问题
 ▸ 如果押题库中有相关问题，优先使用或改编
-▸ 可以结合候选人之前的回答进行追问\` : currentQuestionIndex <= 7 ? \`▸ 这是场景设计阶段（第 7-8 轮）
+▸ 可以结合候选人之前的回答进行追问\` : currentQuestionIndex <= scenarioStageEnd ? \`▸ 这是场景设计阶段（第\${scenarioStageStart}-\${scenarioStageEnd}轮）
 ▸ 给出具体的业务场景或技术场景，考察解决实际问题的能力
-▸ 示例："假设你需要设计一个高并发的 XX 系统，你会怎么考虑？"\` : \`▸ 这是收尾阶段（第 9 轮及之后）
+▸ 示例："假设你需要设计一个高并发的 XX 系统，你会怎么考虑？"\` : \`▸ 这是收尾阶段（第\${endStageStart}轮及之后）
 ▸ 可以问开放性问题，如职业规划、对团队/公司的期望
 ▸ 或者问候选人是否有什么想了解的\`}
 
@@ -250,7 +264,7 @@ export function up(db: any): void {
 6. 直接输出问题内容，不要包含"问题："等前缀或其他解释
 
 请生成第\${currentQuestionIndex + 1}个面试问题：',
-      NULL,
+      '{"projectStageStart": 2, "projectStageEnd": 3, "techStageStart": 4, "techStageEnd": 6, "scenarioStageStart": 7, "scenarioStageEnd": 8, "endStageStart": 9}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -292,9 +306,9 @@ export function up(db: any): void {
    - 面试官通过这个问题想了解什么
 
 5. **综合评分 (assessment)**
-   - 1-10 分评分（7 分为及格线）
+   - \${scoreMin}-\${scoreMax}分评分（\${passScore}分为及格线）
    - 必须说明扣分/加分的具体理由
-   - 评分标准：切题度 30% + 专业度 30% + 完整度 20% + 表达 20%
+   - 评分标准：切题度\${relevanceWeight}% + 专业度\${professionalWeight}% + 完整度\${completenessWeight}% + 表达\${expressionWeight}%
 
 【输出格式】
 请严格按以下 JSON 格式输出，不要包含其他内容：
@@ -303,7 +317,7 @@ export function up(db: any): void {
   "cons": "具体的不足，用分点列举",
   "suggestions": "具体的改进建议，用分点列举",
   "key_points": "这个问题的考察要点",
-  "assessment": "X 分。评分理由：..."
+  "assessment": "X分。评分理由：..."
 }
 
 【重要提醒】
@@ -312,7 +326,7 @@ export function up(db: any): void {
 - 评分要客观，好的地方肯定，不足的地方指出
 - 建议要可操作，候选人看了知道怎么改进',
       '分析候选人回答提示词',
-      '["askedQuestion","candidateAnswer","referenceAnswer"]',
+      '["askedQuestion","candidateAnswer","referenceAnswer","scoreMin","scoreMax","passScore","relevanceWeight","professionalWeight","completenessWeight","expressionWeight"]',
       'desktop',
       '你是一名资深的面试辅导专家，需要对候选人的面试回答进行专业、深入的分析和评价。
 
@@ -350,9 +364,9 @@ export function up(db: any): void {
    - 面试官通过这个问题想了解什么
 
 5. **综合评分 (assessment)**
-   - 1-10 分评分（7 分为及格线）
+   - \${scoreMin}-\${scoreMax}分评分（\${passScore}分为及格线）
    - 必须说明扣分/加分的具体理由
-   - 评分标准：切题度 30% + 专业度 30% + 完整度 20% + 表达 20%
+   - 评分标准：切题度\${relevanceWeight}% + 专业度\${professionalWeight}% + 完整度\${completenessWeight}% + 表达\${expressionWeight}%
 
 【输出格式】
 请严格按以下 JSON 格式输出，不要包含其他内容：
@@ -361,7 +375,7 @@ export function up(db: any): void {
   "cons": "具体的不足，用分点列举",
   "suggestions": "具体的改进建议，用分点列举",
   "key_points": "这个问题的考察要点",
-  "assessment": "X 分。评分理由：..."
+  "assessment": "X分。评分理由：..."
 }
 
 【重要提醒】
@@ -369,7 +383,7 @@ export function up(db: any): void {
 - 对比参考答案找出差距，但不要照搬参考答案
 - 评分要客观，好的地方肯定，不足的地方指出
 - 建议要可操作，候选人看了知道怎么改进',
-      NULL,
+      '{"scoreMin": 1, "scoreMax": 10, "passScore": 7, "relevanceWeight": 30, "professionalWeight": 30, "completenessWeight": 20, "expressionWeight": 20}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -391,8 +405,8 @@ export function up(db: any): void {
 \${resumeContent}
 
 **请提供：**
-1. **优化建议**：列出 5-10 条具体的优化建议，说明为什么要这样改进
-2. **优化后的完整简历**：基于原简历进行全面优化，确保内容丰富详细，字数不少于原简历的 80%
+1. **优化建议**：列出\${suggestionMin}-\${suggestionMax}条具体的优化建议，说明为什么要这样改进
+2. **优化后的完整简历**：基于原简历进行全面优化，确保内容丰富详细，字数不少于原简历的\${minContentRatio}%
 
 **输出格式（JSON）：**
 {
@@ -411,7 +425,7 @@ export function up(db: any): void {
 2. 必须严格按照 JSON 格式输出，suggestions 是字符串（不是数组）
 3. 不要添加 markdown 代码块标记（如 \`\`\`json）',
       '简历优化提示词',
-      '["jobDescription","resumeContent"]',
+      '["jobDescription","resumeContent","suggestionMin","suggestionMax","minContentRatio"]',
       'web',
       '作为一名专业的简历优化师，请根据目标岗位要求对以下简历进行全面优化。
 
@@ -429,8 +443,8 @@ export function up(db: any): void {
 \${resumeContent}
 
 **请提供：**
-1. **优化建议**：列出 5-10 条具体的优化建议，说明为什么要这样改进
-2. **优化后的完整简历**：基于原简历进行全面优化，确保内容丰富详细，字数不少于原简历的 80%
+1. **优化建议**：列出\${suggestionMin}-\${suggestionMax}条具体的优化建议，说明为什么要这样改进
+2. **优化后的完整简历**：基于原简历进行全面优化，确保内容丰富详细，字数不少于原简历的\${minContentRatio}%
 
 **输出格式（JSON）：**
 {
@@ -448,79 +462,36 @@ export function up(db: any): void {
 1. 优化后的简历必须保持原有的详细程度，在此基础上进行改进，绝不能简化或缩短内容。
 2. 必须严格按照 JSON 格式输出，suggestions 是字符串（不是数组）
 3. 不要添加 markdown 代码块标记（如 \`\`\`json）',
-      NULL,
+      '{"suggestionMin": 5, "suggestionMax": 10, "minContentRatio": 80}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
     (
       'ScorePrompt',
-      '你是一名资深的面试评估专家，具备丰富的人力资源和技术面试经验。你需要根据候选人的面试问答记录生成一份专业、客观、有建设性的评分报告。
+      '你是一名专业的面试评估专家,需要根据面试问答记录生成详细的评分报告。
 
-**面试背景信息:**
-- 目标职位: \${jobTitle}
-- 候选人简历: \${resumeContent}
+**面试信息:**
+职位: \${jobTitle}
+候选人简历: \${resumeContent}
 
-**面试问答记录:**
+**问答记录:**
 \${reviewsData}
 
----
+**评分要求:**
+1. 总分(totalScore): \${scoreMin}-\${scoreMax}分,综合评价候选人表现
+2. 雷达图评分(各项\${scoreMin}-\${scoreMax}分):
+   - radarInteractivity: 互动性,回答是否积极主动
+   - radarConfidence: 自信度,表达是否自信清晰
+   - radarProfessionalism: 专业性,技术深度和广度
+   - radarRelevance: 相关性,回答是否切题
+   - radarClarity: 流畅性,表达是否清晰流畅
+3. 文字评价:
+   - overallSummary: 整体表现总结(\${summaryMaxWords}字以内)
+   - pros: 优点(列举\${prosMin}-\${prosMax}条)
+   - cons: 缺点和不足(列举\${consMin}-\${consMax}条)
+   - suggestions: 改进建议(列举\${suggestionsMin}-\${suggestionsMax}条具体建议)
 
-## 评分原则
-
-1. **客观公正**: 基于实际回答内容评分，不做主观臆测
-2. **纵向对比**: 将候选人表现与该职位的典型要求进行对比
-3. **具体细化**: 每项评价都要有具体的证据支撑（引用具体回答）
-4. **建设性**: 提出的建议要具体可行，而非泛泛而谈
-
----
-
-## 评分标准详解
-
-### 总分 (totalScore: 0-100)
-- **90-100**: 优秀候选人，强烈推荐录用
-- **80-89**: 良好候选人，可以考虑录用
-- **70-79**: 中等候选人，需要进一步评估
-- **60-69**: 略有不足，有较大提升空间
-- **60 以下**: 不推荐，与职位要求差距较大
-
-### 雷达图维度评分 (各项 0-100)
-
-1. **互动性 (radarInteractivity)**
-   - 90-100: 主动提问、积极讨论、展现强烈兴趣
-   - 70-89: 回答积极，有一定互动意识
-   - 50-69: 仅被动回答，互动较少
-   - 50 以下: 消极应对，缺乏互动
-
-2. **自信度 (radarConfidence)**
-   - 90-100: 表达坚定、从容不迫、有理有据
-   - 70-89: 表达较自信，偶有犹豫
-   - 50-69: 有些紧张，表达不够坚定
-   - 50 以下: 明显紧张、含糊其辞
-
-3. **专业性 (radarProfessionalism)**
-   - 90-100: 专业知识扎实，能深入分析复杂问题
-   - 70-89: 具备必要的专业知识，能正确回答
-   - 50-69: 专业知识有欠缺，部分问题无法深入
-   - 50 以下: 专业基础薄弱，多数问题回答不当
-
-4. **相关性 (radarRelevance)**
-   - 90-100: 回答紧扣问题，逻辑清晰，例证恰当
-   - 70-89: 基本切题，偶有偏离
-   - 50-69: 部分答非所问或过于发散
-   - 50 以下: 经常跑题，无法把握重点
-
-5. **流畅性 (radarClarity)**
-   - 90-100: 表达清晰流畅，结构化强，易于理解
-   - 70-89: 表达较清晰，基本能传达要点
-   - 50-69: 表达有些混乱，需要追问才能理解
-   - 50 以下: 表达混乱，难以理解其意图
-
----
-
-## 输出要求
-
-**必须严格按照以下 JSON 格式输出:**
-
+**输出格式(JSON):**
 {
   "totalScore": 85,
   "radarInteractivity": 80,
@@ -528,87 +499,38 @@ export function up(db: any): void {
   "radarProfessionalism": 90,
   "radarRelevance": 85,
   "radarClarity": 80,
-  "overallSummary": "基于本次面试的表现，候选人展现了...（200 字以内，概括性总结）",
-  "pros": "1. [证据] 具体优点描述\\n2. [证据] 具体优点描述\\n3. [证据] 具体优点描述",
-  "cons": "1. [证据] 具体不足描述\\n2. [证据] 具体不足描述\\n3. [证据] 具体不足描述",
-  "suggestions": "1. [具体建议] 如何改进的详细说明\\n2. [具体建议] 如何改进的详细说明\\n3. [具体建议] 如何改进的详细说明"
-}
-
-**注意事项:**
-- pros/cons/suggestions 各列举 3-5 条，每条都要有具体证据或理由
-- overallSummary 需要简洁有力，突出核心结论
-- 评分要与文字评价保持一致，不能出现"说的很好但分很低"的矛盾
-- 只输出 JSON，不要有其他内容',
+  "overallSummary": "候选人整体表现...",
+  "pros": "1. 技术基础扎实...\\n2. ...",
+  "cons": "1. 某些问题回答不够深入...\\n2. ...",
+  "suggestions": "1. 建议加强...\\n2. ..."
+}',
       '面试评分生成提示词',
-      '["jobTitle","resumeContent","reviewsData"]',
+      '["jobTitle","resumeContent","reviewsData","scoreMin","scoreMax","summaryMaxWords","prosMin","prosMax","consMin","consMax","suggestionsMin","suggestionsMax"]',
       'desktop',
-      '你是一名资深的面试评估专家，具备丰富的人力资源和技术面试经验。你需要根据候选人的面试问答记录生成一份专业、客观、有建设性的评分报告。
+      '你是一名专业的面试评估专家,需要根据面试问答记录生成详细的评分报告。
 
-**面试背景信息:**
-- 目标职位: \${jobTitle}
-- 候选人简历: \${resumeContent}
+**面试信息:**
+职位: \${jobTitle}
+候选人简历: \${resumeContent}
 
-**面试问答记录:**
+**问答记录:**
 \${reviewsData}
 
----
+**评分要求:**
+1. 总分(totalScore): \${scoreMin}-\${scoreMax}分,综合评价候选人表现
+2. 雷达图评分(各项\${scoreMin}-\${scoreMax}分):
+   - radarInteractivity: 互动性,回答是否积极主动
+   - radarConfidence: 自信度,表达是否自信清晰
+   - radarProfessionalism: 专业性,技术深度和广度
+   - radarRelevance: 相关性,回答是否切题
+   - radarClarity: 流畅性,表达是否清晰流畅
+3. 文字评价:
+   - overallSummary: 整体表现总结(\${summaryMaxWords}字以内)
+   - pros: 优点(列举\${prosMin}-\${prosMax}条)
+   - cons: 缺点和不足(列举\${consMin}-\${consMax}条)
+   - suggestions: 改进建议(列举\${suggestionsMin}-\${suggestionsMax}条具体建议)
 
-## 评分原则
-
-1. **客观公正**: 基于实际回答内容评分，不做主观臆测
-2. **纵向对比**: 将候选人表现与该职位的典型要求进行对比
-3. **具体细化**: 每项评价都要有具体的证据支撑（引用具体回答）
-4. **建设性**: 提出的建议要具体可行，而非泛泛而谈
-
----
-
-## 评分标准详解
-
-### 总分 (totalScore: 0-100)
-- **90-100**: 优秀候选人，强烈推荐录用
-- **80-89**: 良好候选人，可以考虑录用
-- **70-79**: 中等候选人，需要进一步评估
-- **60-69**: 略有不足，有较大提升空间
-- **60 以下**: 不推荐，与职位要求差距较大
-
-### 雷达图维度评分 (各项 0-100)
-
-1. **互动性 (radarInteractivity)**
-   - 90-100: 主动提问、积极讨论、展现强烈兴趣
-   - 70-89: 回答积极，有一定互动意识
-   - 50-69: 仅被动回答，互动较少
-   - 50 以下: 消极应对，缺乏互动
-
-2. **自信度 (radarConfidence)**
-   - 90-100: 表达坚定、从容不迫、有理有据
-   - 70-89: 表达较自信，偶有犹豫
-   - 50-69: 有些紧张，表达不够坚定
-   - 50 以下: 明显紧张、含糊其辞
-
-3. **专业性 (radarProfessionalism)**
-   - 90-100: 专业知识扎实，能深入分析复杂问题
-   - 70-89: 具备必要的专业知识，能正确回答
-   - 50-69: 专业知识有欠缺，部分问题无法深入
-   - 50 以下: 专业基础薄弱，多数问题回答不当
-
-4. **相关性 (radarRelevance)**
-   - 90-100: 回答紧扣问题，逻辑清晰，例证恰当
-   - 70-89: 基本切题，偶有偏离
-   - 50-69: 部分答非所问或过于发散
-   - 50 以下: 经常跑题，无法把握重点
-
-5. **流畅性 (radarClarity)**
-   - 90-100: 表达清晰流畅，结构化强，易于理解
-   - 70-89: 表达较清晰，基本能传达要点
-   - 50-69: 表达有些混乱，需要追问才能理解
-   - 50 以下: 表达混乱，难以理解其意图
-
----
-
-## 输出要求
-
-**必须严格按照以下 JSON 格式输出:**
-
+**输出格式(JSON):**
 {
   "totalScore": 85,
   "radarInteractivity": 80,
@@ -616,18 +538,12 @@ export function up(db: any): void {
   "radarProfessionalism": 90,
   "radarRelevance": 85,
   "radarClarity": 80,
-  "overallSummary": "基于本次面试的表现，候选人展现了...（200 字以内，概括性总结）",
-  "pros": "1. [证据] 具体优点描述\\n2. [证据] 具体优点描述\\n3. [证据] 具体优点描述",
-  "cons": "1. [证据] 具体不足描述\\n2. [证据] 具体不足描述\\n3. [证据] 具体不足描述",
-  "suggestions": "1. [具体建议] 如何改进的详细说明\\n2. [具体建议] 如何改进的详细说明\\n3. [具体建议] 如何改进的详细说明"
-}
-
-**注意事项:**
-- pros/cons/suggestions 各列举 3-5 条，每条都要有具体证据或理由
-- overallSummary 需要简洁有力，突出核心结论
-- 评分要与文字评价保持一致，不能出现"说的很好但分很低"的矛盾
-- 只输出 JSON，不要有其他内容',
-      NULL,
+  "overallSummary": "候选人整体表现...",
+  "pros": "1. 技术基础扎实...\\n2. ...",
+  "cons": "1. 某些问题回答不够深入...\\n2. ...",
+  "suggestions": "1. 建议加强...\\n2. ..."
+}',
+      '{"scoreMin": 0, "scoreMax": 100, "summaryMaxWords": 200, "prosMin": 3, "prosMax": 5, "consMin": 3, "consMax": 5, "suggestionsMin": 3, "suggestionsMax": 5}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -646,8 +562,8 @@ export function up(db: any): void {
 
 **一、面试官画像分析**
 基于面试官的提问风格、问题类型、追问方式进行分析：
-- interviewerScore：提问质量评分（0-100），考虑问题的专业度、深度、覆盖面
-- interviewerSummary：面试官风格总结（100 字以内），包括提问特点、关注重点
+- interviewerScore：提问质量评分（\${scoreMin}-\${scoreMax}），考虑问题的专业度、深度、覆盖面
+- interviewerSummary：面试官风格总结（\${summaryMaxWords}字以内），包括提问特点、关注重点
 - interviewerRole：推测面试官角色（技术专家/技术经理/HR/部门负责人等）
 - interviewerMbti：基于提问风格推测 MBTI 类型
 - interviewerPersonality：性格特征描述（如：严谨、注重细节/开放、鼓励表达等）
@@ -655,7 +571,7 @@ export function up(db: any): void {
 
 **二、候选人画像分析**
 基于候选人的回答内容、表达方式、思维模式进行分析：
-- candidateSummary：候选人特征总结（100 字以内），包括技术能力、表达能力、思维特点
+- candidateSummary：候选人特征总结（\${summaryMaxWords}字以内），包括技术能力、表达能力、思维特点
 - candidateMbti：基于回答风格推测 MBTI 类型
 - candidatePersonality：性格特征描述
 - candidateJobPreference：职业偏好分析（适合什么类型的岗位/团队）
@@ -695,7 +611,7 @@ export function up(db: any): void {
 - 建议要具体、可操作，让候选人知道如何改进
 - MBTI 推测要有依据，说明是基于什么特征判断的',
       '面试洞察生成提示词',
-      '["jobTitle","resumeContent","reviewsData"]',
+      '["jobTitle","resumeContent","reviewsData","scoreMin","scoreMax","summaryMaxWords"]',
       'desktop',
       '你是一名资深的职业分析师和面试顾问，需要根据面试问答记录深度分析面试双方的特征，并给出针对性的应对策略。
 
@@ -710,8 +626,8 @@ export function up(db: any): void {
 
 **一、面试官画像分析**
 基于面试官的提问风格、问题类型、追问方式进行分析：
-- interviewerScore：提问质量评分（0-100），考虑问题的专业度、深度、覆盖面
-- interviewerSummary：面试官风格总结（100 字以内），包括提问特点、关注重点
+- interviewerScore：提问质量评分（\${scoreMin}-\${scoreMax}），考虑问题的专业度、深度、覆盖面
+- interviewerSummary：面试官风格总结（\${summaryMaxWords}字以内），包括提问特点、关注重点
 - interviewerRole：推测面试官角色（技术专家/技术经理/HR/部门负责人等）
 - interviewerMbti：基于提问风格推测 MBTI 类型
 - interviewerPersonality：性格特征描述（如：严谨、注重细节/开放、鼓励表达等）
@@ -719,7 +635,7 @@ export function up(db: any): void {
 
 **二、候选人画像分析**
 基于候选人的回答内容、表达方式、思维模式进行分析：
-- candidateSummary：候选人特征总结（100 字以内），包括技术能力、表达能力、思维特点
+- candidateSummary：候选人特征总结（\${summaryMaxWords}字以内），包括技术能力、表达能力、思维特点
 - candidateMbti：基于回答风格推测 MBTI 类型
 - candidatePersonality：性格特征描述
 - candidateJobPreference：职业偏好分析（适合什么类型的岗位/团队）
@@ -758,7 +674,7 @@ export function up(db: any): void {
 - 所有分析必须基于问答记录中的实际内容，不要凭空臆测
 - 建议要具体、可操作，让候选人知道如何改进
 - MBTI 推测要有依据，说明是基于什么特征判断的',
-      NULL,
+      '{"scoreMin": 0, "scoreMax": 100, "summaryMaxWords": 100}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     );

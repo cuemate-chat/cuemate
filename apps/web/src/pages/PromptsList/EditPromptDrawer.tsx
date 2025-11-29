@@ -1,5 +1,6 @@
 import { Button, Input } from 'antd';
 import { useEffect, useState } from 'react';
+import ReactDiffViewer from 'react-diff-viewer-continued';
 import { Prompt } from '../../api/prompts';
 import DrawerProvider, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProvider';
 import { message } from '../../components/Message';
@@ -154,15 +155,73 @@ export default function EditPromptDrawer({
             </div>
           </div>
 
-          {/* 历史记录 */}
+          {/* 新旧版本对比 */}
           {prompt.history_pre && (
             <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
-              <div className="text-sm font-medium text-slate-700 dark:text-white mb-2">
-                上一版本内容（仅供参考）
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-medium text-slate-700 dark:text-white">
+                  新旧版本对比
+                </div>
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1">
+                    <span className="w-3 h-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded"></span>
+                    <span className="text-red-600 dark:text-red-400">删除</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="w-3 h-3 bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700 rounded"></span>
+                    <span className="text-green-600 dark:text-green-400">新增</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="w-3 h-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 rounded"></span>
+                    <span className="text-yellow-600 dark:text-yellow-400">修改</span>
+                  </div>
+                </div>
               </div>
-              <pre className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">
-                {prompt.history_pre}
-              </pre>
+              <div className="border border-slate-200 dark:border-slate-600 rounded-lg overflow-hidden">
+                <div className="flex bg-slate-100 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600">
+                  <div className="flex-1 px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 text-center border-r border-slate-200 dark:border-slate-600">
+                    上一版本 ({prompt.history_pre.length} 字)
+                  </div>
+                  <div className="flex-1 px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 text-center">
+                    当前版本 ({editedContent.length} 字)
+                  </div>
+                </div>
+                <div className="max-h-80 overflow-auto">
+                  <ReactDiffViewer
+                    oldValue={prompt.history_pre}
+                    newValue={(() => {
+                      // 将占位符替换回原始变量进行对比
+                      let content = editedContent;
+                      variables.forEach((v, i) => {
+                        content = content.replace(`[变量${i + 1}:不可修改]`, v);
+                      });
+                      return content;
+                    })()}
+                    splitView={true}
+                    showDiffOnly={false}
+                    useDarkTheme={document.documentElement.classList.contains('dark')}
+                    leftTitle=""
+                    rightTitle=""
+                    styles={{
+                      diffContainer: {
+                        fontSize: '12px',
+                      },
+                      diffRemoved: {
+                        backgroundColor: document.documentElement.classList.contains('dark') ? '#450a0a' : '#fee2e2',
+                        color: document.documentElement.classList.contains('dark') ? '#fca5a5' : '#dc2626'
+                      },
+                      diffAdded: {
+                        backgroundColor: document.documentElement.classList.contains('dark') ? '#052e16' : '#dcfce7',
+                        color: document.documentElement.classList.contains('dark') ? '#86efac' : '#16a34a'
+                      },
+                      wordDiff: {
+                        backgroundColor: document.documentElement.classList.contains('dark') ? '#713f12' : '#fef3c7',
+                        color: document.documentElement.classList.contains('dark') ? '#fcd34d' : '#d97706'
+                      }
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           )}
         </div>
