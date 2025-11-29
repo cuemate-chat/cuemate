@@ -83,12 +83,55 @@ export class InterviewDataService {
   }
 
   /**
+   * 从数据库查询指定 interview 的所有 reviews，检查是否存在指定 sequence 的记录
+   * 用于幂等性保护，避免暂停/恢复后重复创建记录
+   */
+  async findExistingReviewBySequence(interviewId: string, sequence: number): Promise<{ reviewId: string; question: string } | null> {
+    try {
+      const reviews = await interviewService.getInterviewReviews(interviewId);
+      // 按创建时间排序，sequence 对应创建顺序（第 0 个问题是第一个创建的 review）
+      const sortedReviews = reviews.sort((a, b) => a.created_at - b.created_at);
+
+      if (sequence < sortedReviews.length) {
+        const review = sortedReviews[sequence];
+        return {
+          reviewId: review.id || '',
+          question: review.asked_question || review.content || '',
+        };
+      }
+      return null;
+    } catch (error) {
+      console.warn(`[InterviewDataService] 查询已存在 review 失败: ${error}`);
+      return null;
+    }
+  }
+
+  /**
    * 创建问题记录（AI 提问阶段）
    * 只创建最基本的记录，其他字段后续一次性 UPDATE
+   *
+   * 幂等性保护：先查询数据库检查是否已存在，避免重复创建
    */
   async createQuestionRecord(sequence: number, askedQuestion: string): Promise<string> {
     if (!this.dataState) {
       throw new Error('Interview data state not initialized');
+    }
+
+    // 幂等性检查：先查数据库，看该 sequence 是否已有记录
+    const existing = await this.findExistingReviewBySequence(this.dataState.interviewId, sequence);
+    if (existing && existing.reviewId) {
+      // 已存在，更新本地状态并返回现有 ID
+      const questionState: QuestionState = {
+        reviewId: existing.reviewId,
+        sequence,
+        phase: 'question_generated',
+        question: existing.question,
+      };
+      this.dataState.questions.set(sequence, questionState);
+      this.dataState.currentSequence = sequence;
+
+      console.debug(`[InterviewDataService] 跳过创建，使用已存在的 review: ${existing.reviewId}`);
+      return existing.reviewId;
     }
 
     const reviewData: CreateReviewData = {

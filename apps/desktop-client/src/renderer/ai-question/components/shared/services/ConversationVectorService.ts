@@ -6,6 +6,7 @@
 import { logger } from '../../../../../utils/rendererLogger.js';
 
 interface ConversationDocument {
+  id?: string;  // 唯一标识符，用于幂等性保护（upsert）
   content: string;
   metadata: {
     type: string;
@@ -22,6 +23,9 @@ export class ConversationVectorService {
 
   /**
    * 将一轮对话存入 ChromaDB
+   *
+   * 幂等性保护：使用 `{interviewId}_conv_{sequence}` 作为唯一 ID，
+   * 后端应实现 upsert 逻辑，相同 ID 的文档会更新而非重复插入
    */
   async storeConversation(params: {
     interviewId: string;
@@ -35,7 +39,11 @@ export class ConversationVectorService {
       // 构建文档内容（包含问题和答案）
       const content = `问题: ${question}\n回答: ${answer}`;
 
+      // 生成唯一标识符，用于幂等性保护
+      const documentId = `${interviewId}_conv_${sequence}`;
+
       const document: ConversationDocument = {
+        id: documentId,
         content,
         metadata: {
           type: 'conversation',
@@ -47,7 +55,7 @@ export class ConversationVectorService {
         },
       };
 
-      // 调用 RAG 服务存储
+      // 调用 RAG 服务存储（后端应根据 id 做 upsert）
       const response = await fetch(`${this.ragServiceURL}/ingest/batch`, {
         method: 'POST',
         headers: {
@@ -74,6 +82,8 @@ export class ConversationVectorService {
 
   /**
    * 批量存储对话历史
+   *
+   * 幂等性保护：每个文档使用 `{interviewId}_conv_{sequence}` 作为唯一 ID
    */
   async batchStoreConversations(params: {
     interviewId: string;
@@ -87,6 +97,7 @@ export class ConversationVectorService {
       const { interviewId, conversations } = params;
 
       const documents: ConversationDocument[] = conversations.map((conv) => ({
+        id: `${interviewId}_conv_${conv.sequence}`,
         content: `问题: ${conv.question}\n回答: ${conv.answer}`,
         metadata: {
           type: 'conversation',
