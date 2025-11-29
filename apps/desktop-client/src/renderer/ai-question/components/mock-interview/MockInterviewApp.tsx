@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { logger } from '../../../../utils/rendererLogger.js';
 import { useVoiceState } from '../../../../utils/voiceState';
-import { getMockInterviewStateMachine, subscribeMockInterview } from '../../../utils/mockInterviewManager';
+import { subscribeMockInterview } from '../../../utils/mockInterviewManager';
 import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
 import { MockInterviewBody } from './MockInterviewBody.tsx';
 import { MockInterviewFooter } from './MockInterviewFooter.tsx';
@@ -22,7 +22,6 @@ export function MockInterviewApp() {
   // 订阅全局状态机变化
   useEffect(() => {
     const unsubscribe = subscribeMockInterview((state) => {
-      console.log('[MockInterviewApp] 收到状态更新:', state);
       // 更新 UI 状态
       setMockInterviewState({ interviewState: state });
     });
@@ -30,54 +29,24 @@ export function MockInterviewApp() {
     return unsubscribe;
   }, []);
 
-  // 监听 interviewId 变化，只在真正变化时才清理
+  // 监听 interviewId 变化，记录日志但不清理状态
+  // 关键原则：永远不主动清理数据，数据只在用户开始新面试时才清理
   useEffect(() => {
     if (interviewId && interviewId !== previousInterviewId.current) {
-      console.log('[MockInterviewApp] interviewId 变化:', previousInterviewId.current, '->', interviewId);
-
-      // 从全局管理器获取当前状态
-      const machine = getMockInterviewStateMachine();
-      if (machine) {
-        const context = machine.getContext();
-
-        // 如果 interviewId 匹配，从状态机获取状态，不清理
-        if (context.interviewId === interviewId) {
-          console.log('[MockInterviewApp] interviewId 匹配，从状态机获取状态');
-          // 不清理，面试正在进行中
-        } else {
-          // 不同的 interviewId，清理旧状态
-          console.log('[MockInterviewApp] interviewId 不匹配，清理旧状态');
-          setMockInterviewState({
-            aiMessage: '',
-            speechText: '',
-            candidateAnswer: '',
-            isLoading: false,
-            isListening: false,
-            interviewState: undefined,
-          });
-        }
-      } else {
-        // 没有状态机，清理状态
-        setMockInterviewState({
-          aiMessage: '',
-          speechText: '',
-          candidateAnswer: '',
-          isLoading: false,
-          isListening: false,
-          interviewState: undefined,
-        });
-      }
-
+      console.debug('[MockInterviewApp] interviewId 变化:', previousInterviewId.current, '->', interviewId);
+      // 不清理任何状态，保持当前数据
+      // 数据清理只在 startMockInterview() 中进行
       previousInterviewId.current = interviewId;
     }
   }, [interviewId]);
 
-  // 只有存在 interviewId 才显示数据,否则显示空白
-  const aiMessage = interviewId ? mockInterviewState.aiMessage : '';
-  const speechText = interviewId ? mockInterviewState.speechText : '';
-  const candidateAnswer = interviewId ? mockInterviewState.candidateAnswer : '';
-  const isLoading = interviewId ? mockInterviewState.isLoading : false;
-  const interviewState = interviewId ? mockInterviewState.interviewState : undefined;
+  // 始终显示 localStorage 中的数据，不因 interviewId 为空而隐藏
+  // 这样即使发生错误，用户也能看到之前的数据
+  const aiMessage = mockInterviewState.aiMessage;
+  const speechText = mockInterviewState.speechText;
+  const candidateAnswer = mockInterviewState.candidateAnswer;
+  const isLoading = mockInterviewState.isLoading;
+  const interviewState = mockInterviewState.interviewState;
 
   // 组件初始化时加载高度设置和监听外部事件
   useEffect(() => {
