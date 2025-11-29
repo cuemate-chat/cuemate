@@ -215,6 +215,79 @@ export class VectorStore {
     }
   }
 
+  /**
+   * Add documents with idempotency check
+   * If document with same ID exists, skip it; otherwise, insert it.
+   * This prevents duplicate insertions without overwriting existing data.
+   */
+  async addDocumentsIdempotent(documents: Document[], collectionName?: string): Promise<string[]> {
+    const collection = await this.getOrCreateCollection(
+      collectionName || this.config.defaultCollection,
+    );
+
+    const ids = documents.map((doc) => doc.id || uuidv4());
+
+    try {
+      // Check which IDs already exist
+      const existingResult = await (collection as any).get({ ids });
+      const existingIds = new Set(existingResult?.ids || []);
+
+      // Filter out documents that already exist
+      const newDocuments = documents.filter((_, index) => !existingIds.has(ids[index]));
+      const newIds = newDocuments.map((doc) => doc.id || uuidv4());
+
+      if (newDocuments.length === 0) {
+        logger.info(`All ${documents.length} documents already exist, skipping`);
+        return ids;
+      }
+
+      logger.info(
+        `Adding ${newDocuments.length} new documents (${documents.length - newDocuments.length} already exist)`,
+      );
+
+      const contents = newDocuments.map((doc) => doc.content);
+      const metadatas = newDocuments.map((doc) => doc.metadata);
+      const embeddings = newDocuments.filter((doc) => doc.embedding).map((doc) => doc.embedding!);
+
+      if (embeddings.length > 0 && embeddings.length === newDocuments.length) {
+        await (collection as any).add({
+          ids: newIds,
+          documents: contents,
+          metadatas,
+          embeddings,
+        });
+      } else if (embeddings.length === 0) {
+        await (collection as any).add({
+          ids: newIds,
+          documents: contents,
+          metadatas,
+        });
+      } else {
+        // Partial embeddings - only add documents with embeddings
+        const validDocs = newDocuments.filter((doc) => doc.embedding);
+        const validIds = validDocs.map((doc) => doc.id || uuidv4());
+        const validContents = validDocs.map((doc) => doc.content);
+        const validMetadatas = validDocs.map((doc) => doc.metadata);
+        const validEmbeddings = validDocs.map((doc) => doc.embedding!);
+
+        if (validDocs.length > 0) {
+          await (collection as any).add({
+            ids: validIds,
+            documents: validContents,
+            metadatas: validMetadatas,
+            embeddings: validEmbeddings,
+          });
+        }
+      }
+
+      logger.info(`Successfully added ${newDocuments.length} documents`);
+      return ids;
+    } catch (error) {
+      logger.error({ err: error as any }, 'Failed to add documents idempotently');
+      throw error;
+    }
+  }
+
   async search(
     _query: string,
     _topK: number = 5,

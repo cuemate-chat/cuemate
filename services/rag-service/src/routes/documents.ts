@@ -151,9 +151,11 @@ export async function createDocumentRoutes(
   });
 
   // 批量处理文档
+  // 支持幂等性：如果文档包含 id 字段，使用 upsert 逻辑避免重复插入
   app.post('/ingest/batch', async (req) => {
     const body = (req as any).body as {
       documents: Array<{
+        id?: string;  // 可选的唯一标识符，用于幂等性保护
         content: string;
         metadata?: Record<string, any>;
       }>;
@@ -173,8 +175,10 @@ export async function createDocumentRoutes(
           const embeddings = await deps.embeddingService.embed(chunks);
 
           // 准备文档数据
+          // 如果文档有 id，使用它（适用于单 chunk 场景）；否则生成随机 ID
+          const baseId = doc.id || `batch:${Date.now()}:${Math.random().toString(36).substr(2, 9)}`;
           const docData = chunks.map((chunk, index) => ({
-            id: `batch:${Date.now()}:${Math.random().toString(36).substr(2, 9)}:chunk:${index}`,
+            id: chunks.length === 1 ? baseId : `${baseId}:chunk:${index}`,
             content: chunk,
             metadata: {
               ...doc.metadata,
@@ -185,8 +189,8 @@ export async function createDocumentRoutes(
             embedding: embeddings[index],
           }));
 
-          // 存入向量数据库
-          await deps.vectorStore.addDocuments(docData, collection);
+          // 存入向量数据库（幂等性：相同 ID 已存在则跳过）
+          await deps.vectorStore.addDocumentsIdempotent(docData, collection);
 
           results.push({
             success: true,

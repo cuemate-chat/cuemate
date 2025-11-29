@@ -98,8 +98,8 @@ export async function createAIVectorRecordsRoutes(
       if (record.other_id) metadata.other_id = record.other_id;
       if (record.other_content) metadata.other_content = record.other_content;
 
-      // 保存到 ChromaDB
-      await vectorStore.addDocuments(
+      // 保存到 ChromaDB（幂等性：相同 ID 已存在则跳过，不重复插入）
+      await vectorStore.addDocumentsIdempotent(
         [
           {
             id: record.id,
