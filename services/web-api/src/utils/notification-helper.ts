@@ -167,6 +167,8 @@ export function notifyKnowledgeSynced(
   syncResult: {
     success: boolean;
     count?: number;
+    successCount?: number;
+    failedCount?: number;
     error?: string;
     sourceName?: string;
     totalSize?: number;
@@ -177,8 +179,26 @@ export function notifyKnowledgeSynced(
     ? `（总大小 ${(syncResult.totalSize / 1024 / 1024).toFixed(2)} MB）`
     : '';
 
+  const successCount = syncResult.successCount ?? 0;
+  const failedCount = syncResult.failedCount ?? 0;
+
+  // 部分成功的情况：有成功也有失败
+  if (successCount > 0 && failedCount > 0) {
+    return createNotification(db, {
+      userId,
+      title: '知识库同步完成',
+      content: `${sourceText}同步到向量数据库已完成${sizeText}。本次同步成功 ${successCount} 条，失败 ${failedCount} 条。部分知识条目同步失败，可能是由于数据格式问题。成功同步的知识将用于面试过程中的智能检索和答案生成。`,
+      summary: `知识库同步完成：成功 ${successCount} 条，失败 ${failedCount} 条`,
+      type: 'knowledge_synced',
+      category: 'knowledge',
+      priority: 'normal',
+      actionUrl: '/settings/vector-knowledge',
+      actionText: '查看知识库详情',
+    });
+  }
+
   if (syncResult.success) {
-    const count = syncResult.count || 0;
+    const count = syncResult.count || successCount || 0;
     return createNotification(db, {
       userId,
       title: '知识库同步成功',

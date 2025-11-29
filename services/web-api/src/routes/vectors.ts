@@ -277,7 +277,10 @@ export function registerVectorRoutes(app: FastifyInstance) {
                   }),
                 },
               );
-              if (!resp.ok) throw new Error('rag write failed');
+              if (!resp.ok) throw new Error('rag write failed: HTTP ' + resp.status);
+              // 同时检查响应体的 success 字段
+              const respBody = (await resp.json()) as { success?: boolean; error?: string };
+              if (!respBody.success) throw new Error('rag write failed: ' + (respBody.error || 'unknown'));
               (app as any).db
                 .prepare('UPDATE interview_questions SET vector_status=1 WHERE id=?')
                 .run(r.id);
@@ -363,27 +366,18 @@ export function registerVectorRoutes(app: FastifyInstance) {
             ? `岗位: ${jobs[0]?.title || body.jobId}`
             : '所有岗位';
           const totalSize = (jobs.length * 10 + totalSuccess) * 1024; // 粗略估计大小
-          // 总数量 = 岗位数 + 简历数 + 押题数 (每个岗位对应一个简历)
+          // 总数量 = 岗位数 + 简历数 + 押题成功数 (每个岗位对应一个简历)
           const totalCount = jobs.length * 2 + totalSuccess;
 
-          if (totalFailed > 0) {
-            // 同步失败通知
-            notifyKnowledgeSynced((app as any).db, payload.uid, {
-              success: false,
-              count: totalCount,
-              error: `${totalFailed} 个题目同步失败`,
-              sourceName,
-              totalSize,
-            });
-          } else {
-            // 同步成功通知
-            notifyKnowledgeSynced((app as any).db, payload.uid, {
-              success: true,
-              count: totalCount,
-              sourceName,
-              totalSize,
-            });
-          }
+          // 传递成功和失败数量，让通知函数决定如何显示
+          notifyKnowledgeSynced((app as any).db, payload.uid, {
+            success: totalFailed === 0,
+            count: totalCount,
+            successCount: totalSuccess,
+            failedCount: totalFailed,
+            sourceName,
+            totalSize,
+          });
         } catch (notifyError) {
           app.log.error({ err: notifyError }, '发送知识库同步通知失败');
         }
