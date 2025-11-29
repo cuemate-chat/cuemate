@@ -90,6 +90,33 @@ export class InterviewService {
   }
 
   /**
+   * 获取面试详情
+   */
+  async getInterview(interviewId: string): Promise<{ interview: { id: string; status: InterviewStatus } } | null> {
+    await this.ensureAuth();
+
+    try {
+      const response = await fetch(`${this.baseURL}/interviews/${interviewId}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        throw new Error(`获取面试详情失败: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      logger.error(`获取面试详情失败: ${error}`);
+      return null;
+    }
+  }
+
+  /**
    * 创建面试
    */
   async createInterview(data: InterviewData): Promise<CreateInterviewResponse> {

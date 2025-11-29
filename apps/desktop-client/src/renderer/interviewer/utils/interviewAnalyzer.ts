@@ -55,8 +55,34 @@ export interface AnalyzeReviewParams {
 
 export interface BatchAnalyzeParams {
   interviewId: string;
+  modelConfig?: ModelConfig;  // 可选，如果提供则使用此配置，否则从 userData 获取
+  modelParams?: ModelParam[];
   onProgress?: (message: string) => void;
   onError?: (error: string) => void;
+}
+
+// ============================================================================
+// 工具函数
+// ============================================================================
+
+/**
+ * 将数组或对象转换为字符串
+ * AI 可能返回数组格式的分析结果，需要转换为字符串
+ */
+function ensureString(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    // 数组转换为换行分隔的字符串
+    return value.map((item, index) => `${index + 1}. ${String(item)}`).join('\n');
+  }
+  if (typeof value === 'object' && value !== null) {
+    // 对象转换为 JSON 字符串
+    return JSON.stringify(value, null, 2);
+  }
+  // 其他类型直接转字符串
+  return String(value ?? '');
 }
 
 // ============================================================================
@@ -103,15 +129,24 @@ export async function analyzeReview(params: AnalyzeReviewParams): Promise<Analys
       }
     });
 
-    const analysis: AnalysisResult = JSON.parse(analysisResult.trim());
+    const rawAnalysis = JSON.parse(analysisResult.trim());
+
+    // 将 AI 返回的结果统一转换为字符串（AI 可能返回数组格式）
+    const analysis: AnalysisResult = {
+      pros: ensureString(rawAnalysis.pros),
+      cons: ensureString(rawAnalysis.cons),
+      suggestions: ensureString(rawAnalysis.suggestions),
+      key_points: ensureString(rawAnalysis.key_points),
+      assessment: ensureString(rawAnalysis.assessment),
+    };
 
     // 更新数据库
     await mockInterviewService.updateReview(review.id, {
-      pros: analysis.pros || '',
-      cons: analysis.cons || '',
-      suggestions: analysis.suggestions || '',
-      key_points: analysis.key_points || '',
-      assessment: analysis.assessment || '',
+      pros: analysis.pros,
+      cons: analysis.cons,
+      suggestions: analysis.suggestions,
+      key_points: analysis.key_points,
+      assessment: analysis.assessment,
       other_id: review.other_id,
       other_content: review.other_content,
     });
@@ -143,22 +178,32 @@ export async function batchAnalyzeReviews(params: BatchAnalyzeParams): Promise<{
   };
 
   try {
-    // 获取用户选择的模型
-    const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
-    const userDataResult = await api?.getUserData?.();
-    const selectedModelData = userDataResult?.success ? userDataResult.userData?.selected_model : null;
+    // 优先使用传入的 modelConfig，否则从 userData 获取
+    let modelConfig: ModelConfig;
+    let modelParams: ModelParam[];
 
-    if (!selectedModelData) {
-      throw new Error('未选择模型');
+    if (params.modelConfig) {
+      // 使用调用方传入的模型配置
+      modelConfig = params.modelConfig;
+      modelParams = params.modelParams || [];
+    } else {
+      // 从 userData 获取模型配置（兜底逻辑）
+      const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+      const userDataResult = await api?.getUserData?.();
+      const selectedModelData = userDataResult?.success ? userDataResult.userData?.selected_model : null;
+
+      if (!selectedModelData) {
+        throw new Error('未选择模型');
+      }
+
+      modelConfig = {
+        provider: selectedModelData.provider,
+        model_name: selectedModelData.model_name,
+        credentials: selectedModelData.credentials || '{}',
+      };
+
+      modelParams = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
     }
-
-    const modelConfig: ModelConfig = {
-      provider: selectedModelData.provider,
-      model_name: selectedModelData.model_name,
-      credentials: selectedModelData.credentials || '{}',
-    };
-
-    const modelParams: ModelParam[] = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
 
     // 获取所有回答记录
     const reviews = await mockInterviewService.getInterviewReviews(interviewId);

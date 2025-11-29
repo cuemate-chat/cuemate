@@ -116,10 +116,22 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard, selectedJobI
   ];
 
   const handleCardClick = (cardTitle: string) => {
-    // 点击模拟面试或面试训练卡片时,清除之前的 interviewId
+    // 点击模拟面试或面试训练卡片时,只有在没有进行中的面试时才清除之前的 interviewId
+    // 保护正在进行中的面试数据，避免误清除导致数据丢失
     if (cardTitle === '模拟面试' || cardTitle === '面试训练') {
-      currentInterview.clear(); // 清理 localStorage 中的 interviewId
-      setVoiceState({ interviewId: undefined }); // 清理 VoiceState 中的 interviewId
+      const isInterviewInProgress =
+        vState.subState === 'mock-interview-recording' ||
+        vState.subState === 'mock-interview-paused' ||
+        vState.subState === 'mock-interview-playing' ||
+        vState.subState === 'interview-training-recording' ||
+        vState.subState === 'interview-training-paused' ||
+        vState.subState === 'interview-training-playing';
+
+      // 只有在没有进行中的面试时才清除
+      if (!isInterviewInProgress) {
+        currentInterview.clear(); // 清理 localStorage 中的 interviewId
+        setVoiceState({ interviewId: undefined }); // 清理 VoiceState 中的 interviewId
+      }
     }
     onSelectCard(cardTitle);
   };

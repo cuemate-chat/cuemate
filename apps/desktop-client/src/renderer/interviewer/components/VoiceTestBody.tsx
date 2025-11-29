@@ -162,9 +162,11 @@ export function VoiceTestBody() {
             cleanup().finally(() => setMicStatus('success'));
           }
         },
-        onError: () => {
+        onError: (errorMessage) => {
+          const errorMsg = errorMessage || '连接麦克风识别服务失败';
+          logger.error(`麦克风测试失败: ${errorMsg}`);
           setMicStatus('failed');
-          setMicRecognitionResult(prev => ({ ...prev, error: '连接麦克风识别服务失败', timestamp: Date.now() }));
+          setMicRecognitionResult(prev => ({ ...prev, error: errorMsg, timestamp: Date.now() }));
           void cleanup();
         },
       });
@@ -174,8 +176,10 @@ export function VoiceTestBody() {
         cleanup().finally(() => {
           if (hasRecognitionResult) setMicStatus('success');
           else {
+            const errorMsg = '连接或识别超时，30 秒内未收到任何识别结果，请检查麦克风和 ASR 服务';
+            logger.error(`麦克风测试超时: ${errorMsg}, deviceId=${selectedMic}`);
             setMicStatus('failed');
-            setMicRecognitionResult(prev => ({ ...prev, error: '连接或识别超时，30 秒内未收到任何识别结果，请检查麦克风和 ASR 服务', timestamp: Date.now() }));
+            setMicRecognitionResult(prev => ({ ...prev, error: errorMsg, timestamp: Date.now() }));
           }
         });
       }, 30000);
@@ -185,6 +189,7 @@ export function VoiceTestBody() {
       if (error?.name === 'NotAllowedError') errorMsg = '麦克风权限被拒绝，请在设置中允许麦克风访问';
       else if (error?.name === 'NotFoundError') errorMsg = '未找到麦克风设备，请检查设备连接';
       else errorMsg = `麦克风测试失败：${error?.message}`;
+      logger.error(`麦克风测试异常: ${errorMsg}, error=${error?.name || 'unknown'}, message=${error?.message || 'no message'}, deviceId=${selectedMic}`);
       setMicRecognitionResult(prev => ({ ...prev, error: errorMsg, timestamp: Date.now() }));
       try {
         await micControllerRef.current?.stop();
@@ -225,8 +230,10 @@ export function VoiceTestBody() {
           }
         },
         onError: (errorMessage) => {
+          const errorMsg = errorMessage || '连接扬声器识别服务失败';
+          logger.error(`扬声器测试失败: ${errorMsg}, deviceId=${selectedSpeaker}`);
           setSpeakerStatus('failed');
-          setSpeakerRecognitionResult(prev => ({ ...prev, error: errorMessage, timestamp: Date.now() }));
+          setSpeakerRecognitionResult(prev => ({ ...prev, error: errorMsg, timestamp: Date.now() }));
           void cleanup();
         },
       });
@@ -236,14 +243,18 @@ export function VoiceTestBody() {
         cleanup().finally(() => {
           if (hasRecognitionResult) setSpeakerStatus('success');
           else {
+            const errorMsg = '连接或识别超时，30 秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务';
+            logger.error(`扬声器测试超时: ${errorMsg}, deviceId=${selectedSpeaker}`);
             setSpeakerStatus('failed');
-            setSpeakerRecognitionResult(prev => ({ ...prev, error: '连接或识别超时，30 秒内未收到任何识别结果，请检查扬声器播放内容和 ASR 服务', timestamp: Date.now() }));
+            setSpeakerRecognitionResult(prev => ({ ...prev, error: errorMsg, timestamp: Date.now() }));
           }
         });
       }, 30000);
     } catch (error: any) {
+      const errorMsg = `扬声器测试失败：${error?.message}`;
+      logger.error(`扬声器测试异常: ${errorMsg}, error=${error?.name || 'unknown'}, message=${error?.message || 'no message'}, deviceId=${selectedSpeaker}`);
       setSpeakerStatus('failed');
-      setSpeakerRecognitionResult(prev => ({ ...prev, error: `扬声器测试失败：${error?.message}`, timestamp: Date.now() }));
+      setSpeakerRecognitionResult(prev => ({ ...prev, error: errorMsg, timestamp: Date.now() }));
       try {
         await speakerControllerRef.current?.stop();
       } catch {}

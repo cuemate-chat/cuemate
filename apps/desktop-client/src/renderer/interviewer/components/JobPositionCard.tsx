@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { logger } from '../../../utils/rendererLogger.js';
 import { userSettingsService } from '../../control-bar/api/userSettingsService';
 import { getInterviewTrainingState, setInterviewTrainingState } from '../../utils/interviewTrainingState';
+import { setMockInterviewState } from '../../utils/mockInterviewState';
 import { JobPosition, jobPositionService } from '../api/jobPositionService';
 import { Model, modelService } from '../api/modelService';
 
@@ -126,8 +127,9 @@ export function JobPositionCard({ selectedJobId, onPositionSelect, onModelSelect
   const handleModeChange = (mode: 'manual' | 'auto') => {
     setInterviewMode(mode);
     const isAutoMode = mode === 'auto';
-    // 保存到 localStorage
+    // 同时更新面试训练和模拟面试的状态（两个功能共享模式设置）
     setInterviewTrainingState({ isAutoMode });
+    setMockInterviewState({ isAutoMode });
     onModeSelect?.(isAutoMode);
   };
 
