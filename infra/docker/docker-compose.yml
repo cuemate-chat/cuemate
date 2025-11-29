@@ -35,7 +35,7 @@ services:
     restart: unless-stopped
     command: [
       "bash", "-c",
-      "LOG_DATE=$(date +%Y-%m-%d) && mkdir -p /opt/cuemate/logs/cuemate-asr/$LOG_DATE && cd /workspace/FunASR/runtime/websocket/build/bin && ./funasr-wss-server-2pass --download-model-dir /workspace/models --model-dir damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-onnx --online-model-dir damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online-onnx --vad-dir damo/speech_fsmn_vad_zh-cn-16k-common-onnx --punc-dir damo/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727-onnx --itn-dir thuduj12/fst_itn_zh --lm-dir damo/speech_ngram_lm_zh-cn-ai-wesp-fst --decoder-thread-num 4 --model-thread-num 1 --io-thread-num 2 --port 10095 --certfile \"\" 2>&1 | tee /opt/cuemate/logs/cuemate-asr/$LOG_DATE/info.log"
+      "LOG_DATE=$(date +%Y-%m-%d) && mkdir -p /opt/cuemate/logs/cuemate-asr/$$LOG_DATE && cd /workspace/FunASR/runtime/websocket/build/bin && ./funasr-wss-server-2pass --download-model-dir /workspace/models --model-dir damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-onnx --online-model-dir damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online-onnx --vad-dir damo/speech_fsmn_vad_zh-cn-16k-common-onnx --punc-dir damo/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727-onnx --itn-dir thuduj12/fst_itn_zh --lm-dir damo/speech_ngram_lm_zh-cn-ai-wesp-fst --decoder-thread-num 4 --model-thread-num 1 --io-thread-num 2 --port 10095 --certfile \"\" 2>&1 | tee /opt/cuemate/logs/cuemate-asr/$$LOG_DATE/info.log"
     ]
 
   # Web API (SQLite)

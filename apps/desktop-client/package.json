@@ -88,6 +88,7 @@
     "appId": "com.cuemate.desktop",
     "productName": "CueMate",
     "npmRebuild": false,
+    "afterPack": "./build/afterPack.js",
     "directories": {
       "output": "release"
     },
@@ -124,6 +125,7 @@
       "extendInfo": {
         "LSUIElement": true,
         "NSMicrophoneUsageDescription": "CueMate 需要麦克风权限，用于访问麦克风进行语音识别功能",
+        "NSAudioCaptureUsageDescription": "CueMate 需要系统音频录制权限，用于捕获扬声器输出进行语音识别",
         "NSScreenCaptureDescription": "CueMate 需要系统录音权限，用于捕获系统音频（扬声器）进行场景器盘试",
         "NSSpeechRecognitionUsageDescription": "CueMate 需要语音识别权限，以将语音转为文本内容",
         "NSCameraUsageDescription": "CueMate 需要访问摄像头以进行视频或连续互通相机功能",
