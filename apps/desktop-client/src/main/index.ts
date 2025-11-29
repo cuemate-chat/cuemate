@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { app, globalShortcut, Menu, nativeImage, Tray } from 'electron';
+import { app, globalShortcut, Menu, nativeImage, session, Tray } from 'electron';
 import type { LogLevel } from '../shared/types.js';
 import { logger } from '../utils/logger.js';
 import { broadcastAppVisibilityChanged, setupIPC } from './ipc/handlers.js';
@@ -58,6 +58,26 @@ class CueMateApp {
   private setupAppEvents(): void {
     // 当应用准备就绪时
     app.whenReady().then(async () => {
+      // 设置权限请求处理器，允许麦克风、摄像头等权限请求
+      session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+        const allowedPermissions = ['media', 'mediaKeySystem', 'audioCapture', 'videoCapture'];
+        if (allowedPermissions.includes(permission)) {
+          logger.info(`权限请求: ${permission} - 已允许`);
+          callback(true);
+        } else {
+          logger.warn(`权限请求: ${permission} - 已拒绝`);
+          callback(false);
+        }
+      });
+
+      // 设置权限检查处理器
+      session.defaultSession.setPermissionCheckHandler((_webContents, permission) => {
+        const allowedPermissions = ['media', 'mediaKeySystem', 'audioCapture', 'videoCapture'];
+        return allowedPermissions.includes(permission);
+      });
+
+      logger.info('权限处理器已设置');
+
       // 检查未完成的更新并回滚
       try {
         await AppUpdateManager.checkIncompleteUpdate();

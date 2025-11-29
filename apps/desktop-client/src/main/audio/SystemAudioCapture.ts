@@ -39,6 +39,9 @@ export class SystemAudioCapture {
   private onDataCallback: ((audioData: Buffer) => void) | null = null;
   private onErrorCallback: ((error: Error) => void) | null = null;
   private options: Required<SystemAudioCaptureOptions>;
+  private silentChunkCount = 0; // 连续静音块计数
+  private hasReceivedAudio = false; // 是否收到过有效音频
+  private silenceCheckTimer: NodeJS.Timeout | null = null; // 静音检查定时器
 
   constructor(options: SystemAudioCaptureOptions = {}) {
     this.options = {
@@ -208,11 +211,21 @@ export class SystemAudioCapture {
           if (hasSound && this.onDataCallback) {
             logger.debug('AudioTee 发送音频数据到回调');
             this.onDataCallback(audioData);
+            // 收到有效音频，重置静音计数
+            this.silentChunkCount = 0;
+            this.hasReceivedAudio = true;
           } else {
-            logger.debug(`AudioTee 跳过静音数据: 最大振幅=${maxAmplitude} < 阈值=${threshold}`);
+            // 连续静音计数
+            this.silentChunkCount++;
+            logger.debug(
+              `AudioTee 跳过静音数据: 最大振幅=${maxAmplitude} < 阈值=${threshold}, 连续静音块=${this.silentChunkCount}`,
+            );
           }
         }
       });
+
+      // 启动静音检测定时器 - 每 5 秒检查一次是否持续静音
+      this.startSilenceCheckTimer();
 
       // 监听开始事件
       this.audioTeeCapture.on('start', () => {
@@ -274,6 +287,78 @@ export class SystemAudioCapture {
   }
 
   /**
+   * 启动静音检测定时器
+   * 每 5 秒检查一次，如果持续 10 秒（50 个 200ms 块）没有收到有效音频，报错
+   */
+  private startSilenceCheckTimer(): void {
+    // 清理之前的定时器
+    this.stopSilenceCheckTimer();
+    // 重置计数器
+    this.silentChunkCount = 0;
+    this.hasReceivedAudio = false;
+
+    const SILENCE_CHECK_INTERVAL = 5000; // 5 秒检查一次
+    const MAX_SILENT_CHUNKS = 50; // 50 个 200ms 块 = 10 秒持续静音
+
+    this.silenceCheckTimer = setInterval(() => {
+      // 如果已经不在捕获状态，停止定时器
+      if (!this.isCapturing) {
+        this.stopSilenceCheckTimer();
+        return;
+      }
+
+      // 检查是否持续静音
+      if (this.silentChunkCount >= MAX_SILENT_CHUNKS) {
+        // 持续 10 秒没有收到有效音频数据
+        const errorMsg = this.hasReceivedAudio
+          ? 'AudioTee 持续 10 秒未收到有效音频数据，音频源可能已停止'
+          : 'AudioTee 启动后 10 秒内未收到任何有效音频数据，可能是系统音频权限未授权或 audiotee 进程无法获取音频';
+
+        logger.error(
+          {
+            silentChunkCount: this.silentChunkCount,
+            hasReceivedAudio: this.hasReceivedAudio,
+            isCapturing: this.isCapturing,
+          },
+          errorMsg,
+        );
+
+        // 触发错误回调
+        if (this.onErrorCallback) {
+          const error = new Error(errorMsg);
+          this.onErrorCallback(error);
+        }
+
+        // 重置计数器，避免重复报错
+        this.silentChunkCount = 0;
+      } else if (this.silentChunkCount > 0) {
+        // 有静音但还没达到阈值，记录警告
+        logger.warn(
+          {
+            silentChunkCount: this.silentChunkCount,
+            hasReceivedAudio: this.hasReceivedAudio,
+            secondsOfSilence: (this.silentChunkCount * 200) / 1000,
+          },
+          `AudioTee 检测到连续静音: ${(this.silentChunkCount * 200) / 1000} 秒`,
+        );
+      }
+    }, SILENCE_CHECK_INTERVAL);
+
+    logger.info('静音检测定时器已启动');
+  }
+
+  /**
+   * 停止静音检测定时器
+   */
+  private stopSilenceCheckTimer(): void {
+    if (this.silenceCheckTimer) {
+      clearInterval(this.silenceCheckTimer);
+      this.silenceCheckTimer = null;
+      logger.debug('静音检测定时器已停止');
+    }
+  }
+
+  /**
    * 停止捕获
    */
   public stopCapture(): void {
@@ -284,6 +369,9 @@ export class SystemAudioCapture {
 
     logger.info('停止系统音频扬声器捕获...');
 
+    // 停止静音检测定时器
+    this.stopSilenceCheckTimer();
+
     // 停止 AudioTee 捕获
     if (this.audioTeeCapture) {
       logger.info('停止 AudioTee 捕获...');
@@ -293,6 +381,9 @@ export class SystemAudioCapture {
       this.audioTeeCapture = null;
     }
 
+    // 重置状态
+    this.silentChunkCount = 0;
+    this.hasReceivedAudio = false;
     this.isCapturing = false;
     logger.info('系统音频扬声器捕获已停止');
   }

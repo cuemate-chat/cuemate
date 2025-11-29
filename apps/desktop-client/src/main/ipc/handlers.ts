@@ -1335,17 +1335,29 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   // === Piper TTS 相关 IPC 处理器 ===
-  let piperTTS: PiperTTS | null = null;
+  // 使用单例模式，确保全局只有一个 PiperTTS 实例
+
+  // 应用启动时预热 Piper TTS 服务（模型加载一次，后续毫秒级响应）
+  (async () => {
+    try {
+      const piperTTS = PiperTTS.getInstance();
+      const isAvailable = await piperTTS.isAvailable();
+      if (isAvailable) {
+        logger.info('Piper TTS 预热：开始加载模型...');
+        await piperTTS.startService();
+        logger.info('Piper TTS 预热完成：服务已就绪');
+      }
+    } catch (error) {
+      logger.warn({ error }, 'Piper TTS 预热失败（将在首次使用时重试）');
+    }
+  })();
 
   /**
    * 获取可用的 Piper TTS 语音模型
    */
   ipcMain.handle('piper-get-voices', async () => {
     try {
-      if (!piperTTS) {
-        piperTTS = new PiperTTS();
-      }
-      const voices = piperTTS.getAvailableVoices();
+      const voices = PiperTTS.getInstance().getAvailableVoices();
       return { success: true, voices };
     } catch (error) {
       logger.error({ error }, 'IPC: 获取 Piper TTS 语音模型失败');
@@ -1358,10 +1370,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('piper-is-available', async () => {
     try {
-      if (!piperTTS) {
-        piperTTS = new PiperTTS();
-      }
-      const available = await piperTTS.isAvailable();
+      const available = await PiperTTS.getInstance().isAvailable();
       return { success: true, available };
     } catch (error) {
       logger.error({ error }, 'IPC: 检查 Piper TTS 可用性失败');
@@ -1374,10 +1383,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('piper-synthesize', async (_event, text: string, options?: any) => {
     try {
-      if (!piperTTS) {
-        piperTTS = new PiperTTS();
-      }
-      const audioData = await piperTTS.synthesize(text, options);
+      const audioData = await PiperTTS.getInstance().synthesize(text, options);
       return { success: true, audioData: audioData.toString('base64') };
     } catch (error) {
       logger.error({ error }, 'IPC: Piper TTS 语音合成失败');
@@ -1390,10 +1396,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('piper-speak', async (_event, text: string, options?: any) => {
     try {
-      if (!piperTTS) {
-        piperTTS = new PiperTTS();
-      }
-      await piperTTS.speak(text, options);
+      await PiperTTS.getInstance().speak(text, options);
       return { success: true };
     } catch (error) {
       logger.error({ error }, 'IPC: Piper TTS 语音播放失败');
@@ -1408,11 +1411,8 @@ export function setupIPC(windowManager: WindowManager): void {
     'piper-play-to-device',
     async (_event, audioDataBase64: string, deviceId?: string) => {
       try {
-        if (!piperTTS) {
-          piperTTS = new PiperTTS();
-        }
         const audioData = Buffer.from(audioDataBase64, 'base64');
-        await piperTTS.playToDevice(audioData, deviceId);
+        await PiperTTS.getInstance().playToDevice(audioData, deviceId);
         return { success: true };
       } catch (error) {
         logger.error({ error }, 'IPC: Piper TTS 播放音频失败');

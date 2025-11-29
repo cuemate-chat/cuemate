@@ -18,7 +18,8 @@ export class StreamingTTS {
   private options: Required<StreamingTTSOptions>;
 
   constructor(options: StreamingTTSOptions = {}) {
-    this.piperTTS = new PiperTTS();
+    // 使用单例模式获取 PiperTTS 实例
+    this.piperTTS = PiperTTS.getInstance();
     this.options = {
       chunkSize: options.chunkSize || 5, // 每 5 个中文字符为一块
       bufferSize: options.bufferSize || 2, // 保持 2 个音频块的缓冲

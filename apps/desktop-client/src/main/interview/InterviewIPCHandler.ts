@@ -4,8 +4,8 @@
  */
 
 import { BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
-import { logger } from '../../utils/logger.js';
 import { InterviewIPCEvents } from '../../renderer/ai-question/components/mock-interview/ipc/InterviewIPCService';
+import { logger } from '../../utils/logger.js';
 
 interface WindowReference {
   id: number;
@@ -29,7 +29,6 @@ export class InterviewIPCHandler {
       // 注册所有面试相关的 IPC 处理器
       this.registerEventHandlers();
       this.isInitialized = true;
-      console.debug('Interview IPC Handler initialized successfully');
     } catch (error) {
       logger.error(`Failed to initialize Interview IPC Handler: ${error}`);
     }
@@ -236,7 +235,6 @@ export class InterviewIPCHandler {
     const webContentsId = event.sender.id;
     if (this.windows.has(webContentsId)) {
       this.windows.delete(webContentsId);
-      console.debug(`Unregistered window with ID: ${webContentsId}`);
     }
   }
 

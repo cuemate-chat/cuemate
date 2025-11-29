@@ -1,7 +1,8 @@
-import { spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 import { app } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as readline from 'readline';
 import { logger } from '../../utils/logger.js';
 
 export interface PiperVoice {
@@ -20,27 +21,61 @@ export interface PiperTTSOptions {
   volume?: number; // 0-1
 }
 
+interface PiperResponse {
+  status: 'ready' | 'ok' | 'error';
+  message?: string;
+  audio?: string; // base64 encoded PCM
+  sample_rate?: number;
+}
+
+/**
+ * Piper TTS 服务
+ *
+ * 设计原则：像 AudioTee 一样，应用启动时初始化，保持进程常驻
+ * - 模型只加载一次，后续请求毫秒级响应
+ * - 通过 stdin/stdout JSON 协议通信
+ * - 应用退出时自动关闭进程
+ */
 export class PiperTTS {
+  // 单例模式：确保全局只有一个 PiperTTS 实例
+  private static instance: PiperTTS | null = null;
+
+  /**
+   * 获取 PiperTTS 单例实例
+   * 全局只有一个实例，服务只启动一次
+   */
+  static getInstance(): PiperTTS {
+    if (!PiperTTS.instance) {
+      PiperTTS.instance = new PiperTTS();
+    }
+    return PiperTTS.instance;
+  }
+
   private pythonPath: string;
   private wrapperScript: string;
   private piperBinaryPath: string | null = null;
   private modelsPath: string;
   private voices: Map<string, PiperVoice> = new Map();
 
-  constructor() {
-    // 优先检查是否存在打包的 Piper 二进制文件（无需 Python 环境）
+  // 服务模式相关
+  private serviceProcess: ChildProcess | null = null;
+  private isServiceReady: boolean = false;
+  private isServiceStarting: boolean = false;
+  private serviceStartPromise: Promise<void> | null = null;
+  private pendingRequests: Map<number, { resolve: (value: void) => void; reject: (error: Error) => void }> = new Map();
+  private requestId: number = 0;
+  private responseReader: readline.Interface | null = null;
+
+  private constructor() {
     this.piperBinaryPath = this.findPiperBinary();
 
     if (this.piperBinaryPath) {
       logger.info(`使用打包的 Piper 二进制文件: ${this.piperBinaryPath}`);
-      // 设置占位值（不会被使用）
       this.pythonPath = '';
       this.wrapperScript = '';
     } else {
-      // 回退到 Python 脚本方式
       logger.info('未找到打包的 Piper 二进制文件，回退到 Python 脚本');
       this.pythonPath = this.findPythonPath();
-      // 开发环境和生产环境的路径处理
       if (!app.isPackaged) {
         this.wrapperScript = path.join(process.cwd(), 'resources', 'piper', 'piper_wrapper.py');
       } else {
@@ -53,7 +88,6 @@ export class PiperTTS {
       }
     }
 
-    // 设置模型路径
     if (!app.isPackaged) {
       this.modelsPath = path.join(process.cwd(), 'resources', 'piper');
     } else {
@@ -61,25 +95,24 @@ export class PiperTTS {
     }
 
     this.initializeVoices();
+
+    // 应用退出时关闭服务进程
+    app.on('before-quit', () => {
+      this.stopService();
+    });
   }
 
-  /**
-   * 查找打包的 Piper 二进制文件
-   */
   private findPiperBinary(): string | null {
     const possiblePaths = [
-      // 生产环境：打包到应用内的二进制文件
       ...(app.isPackaged
         ? [path.join(process.resourcesPath, 'resources', 'piper-bin', 'piper')]
         : []),
-      // 开发环境：本地构建的二进制文件
       path.join(process.cwd(), 'resources', 'piper-bin', 'piper'),
     ];
 
     for (const binPath of possiblePaths) {
       if (fs.existsSync(binPath)) {
         try {
-          // 确保二进制文件有执行权限
           fs.chmodSync(binPath, 0o755);
           logger.info(`找到 Piper 二进制文件: ${binPath}`);
           return binPath;
@@ -92,35 +125,26 @@ export class PiperTTS {
     return null;
   }
 
-  /**
-   * 查找可用的 Python 路径，优先检查 piper 包是否可用
-   */
   private findPythonPath(): string {
     const possiblePaths = [
-      // pipx 虚拟环境路径 (最优先)
       path.join(require('os').homedir(), '.local', 'pipx', 'venvs', 'piper-tts', 'bin', 'python'),
       path.join(require('os').homedir(), '.local', 'pipx', 'venvs', 'piper-tts', 'bin', 'python3'),
-      // 打包的 Python 环境 (生产环境)
       ...(app.isPackaged
         ? [
             path.join(process.resourcesPath, 'python', 'bin', 'python'),
             path.join(process.resourcesPath, 'python', 'bin', 'python3'),
           ]
         : []),
-      // 全局 Python 路径
       'python3',
       'python',
-      // macOS 常见路径
       '/usr/bin/python3',
       '/usr/local/bin/python3',
-      // Homebrew 路径
       '/opt/homebrew/bin/python3',
     ];
 
     for (const pythonPath of possiblePaths) {
       try {
         if (fs.existsSync(pythonPath) || pythonPath === 'python' || pythonPath === 'python3') {
-          // 验证该 Python 环境是否有 piper 包
           if (this.validatePythonEnvironment(pythonPath)) {
             return pythonPath;
           }
@@ -134,9 +158,6 @@ export class PiperTTS {
     return 'python3';
   }
 
-  /**
-   * 验证 Python 环境是否包含 piper 包
-   */
   private validatePythonEnvironment(pythonPath: string): boolean {
     try {
       const { execSync } = require('child_process');
@@ -150,12 +171,8 @@ export class PiperTTS {
     }
   }
 
-  /**
-   * 初始化可用的语音模型
-   */
   private initializeVoices() {
     const voices: PiperVoice[] = [
-      // 中文语音
       {
         id: 'zh-CN-female-huayan',
         name: '中文女声（花颜）',
@@ -164,7 +181,6 @@ export class PiperTTS {
         quality: 'medium',
         modelPath: path.join(this.modelsPath, 'zh_CN-huayan-medium.onnx'),
       },
-      // 英文语音
       {
         id: 'en-US-female-amy',
         name: '英文女声（Amy）',
@@ -175,7 +191,6 @@ export class PiperTTS {
       },
     ];
 
-    // 只添加模型文件存在的语音
     voices.forEach((voice) => {
       if (fs.existsSync(voice.modelPath)) {
         this.voices.set(voice.id, voice);
@@ -189,16 +204,10 @@ export class PiperTTS {
     }
   }
 
-  /**
-   * 获取可用的语音列表
-   */
   getAvailableVoices(): PiperVoice[] {
     return Array.from(this.voices.values());
   }
 
-  /**
-   * 设置用户语言偏好
-   */
   static setUserLanguage(locale: 'zh-CN' | 'zh-TW' | 'en-US') {
     try {
       (global as any).userLocale = locale;
@@ -207,15 +216,10 @@ export class PiperTTS {
     }
   }
 
-  /**
-   * 获取用户的语言偏好（优先 ASR 配置中的 piper_default_language）
-   */
   private getUserLanguage(): 'zh-CN' | 'en-US' {
-    // 默认使用中文
     let userLanguage: 'zh-CN' | 'en-US' = 'zh-CN';
 
     try {
-      // 优先从全局缓存读取（由 IPC 首次获取时设置）
       const cfg = (global as any).asrConfigCache;
       if (cfg?.piper_default_language === 'en-US') return 'en-US';
       if (cfg?.piper_default_language === 'zh-CN') return 'zh-CN';
@@ -230,34 +234,211 @@ export class PiperTTS {
   }
 
   /**
-   * 语音合成 - 根据用户语言偏好选择语音模型
+   * 启动 Piper TTS 服务进程
+   * 应用启动时调用，模型只加载一次
+   * 支持并发调用：多个调用者会等待同一个启动 Promise
    */
-  async synthesize(text: string, options: PiperTTSOptions = {}): Promise<Buffer> {
+  async startService(): Promise<void> {
+    // 服务已就绪，直接返回
+    if (this.isServiceReady) {
+      logger.info('Piper TTS 服务已在运行');
+      return;
+    }
+
+    // 正在启动中，等待现有的启动 Promise
+    if (this.isServiceStarting && this.serviceStartPromise) {
+      logger.info('Piper TTS 服务正在启动中，等待...');
+      return this.serviceStartPromise;
+    }
+
+    // 标记为正在启动
+    this.isServiceStarting = true;
+
+    const userLanguage = this.getUserLanguage();
+    const availableVoices = Array.from(this.voices.values()).filter((v) => v.language === userLanguage);
+    if (availableVoices.length === 0) {
+      throw new Error(`没有找到${userLanguage}语言的语音模型`);
+    }
+
+    const voice = availableVoices[0];
+
+    // 创建启动 Promise 并保存，供并发调用者等待
+    this.serviceStartPromise = new Promise<void>((resolve, reject) => {
+      let command: string;
+      let args: string[];
+
+      if (this.piperBinaryPath) {
+        command = this.piperBinaryPath;
+        args = ['-m', voice.modelPath, '--service'];
+      } else {
+        command = this.pythonPath;
+        args = [this.wrapperScript, '--model', voice.modelPath, '--service'];
+      }
+
+      logger.info(`启动 Piper TTS 服务: ${command} ${args.join(' ')}`);
+
+      this.serviceProcess = spawn(command, args, {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      // 读取 stdout（JSON 响应）
+      this.responseReader = readline.createInterface({
+        input: this.serviceProcess.stdout!,
+        crlfDelay: Infinity,
+      });
+
+      this.responseReader.on('line', (line: string) => {
+        try {
+          const response: PiperResponse = JSON.parse(line);
+
+          if (response.status === 'ready') {
+            logger.info(`Piper TTS 服务就绪: ${response.message}`);
+            this.isServiceReady = true;
+            this.isServiceStarting = false;
+            resolve();
+          } else if (response.status === 'ok' || response.status === 'error') {
+            // 处理普通响应（当前实现是串行的，所以直接处理最新的请求）
+            const pending = this.pendingRequests.values().next().value;
+            if (pending) {
+              this.pendingRequests.clear();
+              if (response.status === 'ok') {
+                pending.resolve();
+              } else {
+                pending.reject(new Error(response.message || '未知错误'));
+              }
+            }
+          }
+        } catch (e) {
+          logger.warn(`Piper TTS 服务输出解析失败: ${line}`);
+        }
+      });
+
+      // 读取 stderr（错误信息）
+      this.serviceProcess.stderr?.on('data', (data: Buffer) => {
+        logger.warn(`Piper TTS stderr: ${data.toString()}`);
+      });
+
+      this.serviceProcess.on('error', (error) => {
+        logger.error({ err: error }, 'Piper TTS 服务进程错误');
+        this.isServiceReady = false;
+        this.isServiceStarting = false;
+        reject(error);
+      });
+
+      this.serviceProcess.on('close', (code) => {
+        logger.info(`Piper TTS 服务进程退出: code=${code}`);
+        this.isServiceReady = false;
+        this.isServiceStarting = false;
+        this.serviceProcess = null;
+        this.responseReader = null;
+        this.serviceStartPromise = null;
+      });
+
+      // 超时处理（模型加载最多等待 60 秒）
+      setTimeout(() => {
+        if (!this.isServiceReady) {
+          this.isServiceStarting = false;
+          reject(new Error('Piper TTS 服务启动超时（60秒）'));
+        }
+      }, 60000);
+    });
+
+    return this.serviceStartPromise;
+  }
+
+  /**
+   * 停止 Piper TTS 服务进程
+   */
+  stopService(): void {
+    if (this.serviceProcess) {
+      try {
+        // 发送退出命令
+        this.serviceProcess.stdin?.write(JSON.stringify({ action: 'quit' }) + '\n');
+
+        // 给进程一点时间优雅退出
+        setTimeout(() => {
+          if (this.serviceProcess) {
+            this.serviceProcess.kill();
+          }
+        }, 1000);
+      } catch (error) {
+        logger.warn({ err: error }, 'Piper TTS 服务停止失败');
+        this.serviceProcess.kill();
+      }
+
+      this.isServiceReady = false;
+      this.serviceProcess = null;
+      this.responseReader = null;
+      logger.info('Piper TTS 服务已停止');
+    }
+  }
+
+  /**
+   * 通过服务模式播放语音
+   * 毫秒级响应（模型已预加载）
+   */
+  private async speakViaService(text: string): Promise<void> {
+    if (!this.serviceProcess || !this.isServiceReady) {
+      // 自动启动服务
+      await this.startService();
+    }
+
+    return new Promise((resolve, reject) => {
+      const id = ++this.requestId;
+      this.pendingRequests.set(id, { resolve, reject });
+
+      const request = JSON.stringify({ text, action: 'play' });
+      this.serviceProcess!.stdin!.write(request + '\n');
+
+      // 播放超时（单次播放最多 30 秒）
+      setTimeout(() => {
+        if (this.pendingRequests.has(id)) {
+          this.pendingRequests.delete(id);
+          reject(new Error('TTS 播放超时（30秒）'));
+        }
+      }, 30000);
+    });
+  }
+
+  /**
+   * 便捷的说话方法 - 使用服务模式
+   */
+  async speak(text: string, options: PiperTTSOptions = {}): Promise<void> {
     if (!text.trim()) {
       throw new Error('文本不能为空');
     }
 
-    // 根据用户语言偏好选择语音模型
-    const userLanguage = this.getUserLanguage();
-    return this.synthesizeSingleLanguage(text, userLanguage, options);
+    // 优先使用服务模式（毫秒级响应）
+    // 如果服务已就绪、正在启动、或进程已存在，都使用服务模式
+    if (this.isServiceReady || this.isServiceStarting || this.serviceProcess) {
+      return this.speakViaService(text);
+    }
+
+    // 回退到单次模式（首次使用时）
+    logger.info('Piper TTS 服务未就绪，使用单次模式并启动服务');
+
+    // 异步启动服务（下次使用时就能用服务模式）
+    this.startService().catch((err) => {
+      logger.error({ err }, 'Piper TTS 服务启动失败');
+    });
+
+    // 使用单次模式
+    return this.speakSingleMode(text, options);
   }
 
   /**
-   * 单一语言语音合成
+   * 单次模式（向后兼容）
    */
-  private async synthesizeSingleLanguage(
-    text: string,
-    language: 'zh-CN' | 'en-US',
-    options: PiperTTSOptions = {},
-  ): Promise<Buffer> {
-    // 根据语言选择对应的语音模型
-    const availableVoices = Array.from(this.voices.values()).filter((v) => v.language === language);
-    if (availableVoices.length === 0) {
-      throw new Error(`没有找到${language}语言的语音模型`);
-    }
+  private async speakSingleMode(text: string, options: PiperTTSOptions = {}): Promise<void> {
+    const userLanguage = this.getUserLanguage();
+    let voiceId = options.voice;
 
-    // 使用第一个匹配的语音模型
-    const voiceId = availableVoices[0].id;
+    if (!voiceId) {
+      const availableVoices = Array.from(this.voices.values()).filter(
+        (v) => v.language === userLanguage,
+      );
+      voiceId = availableVoices.length > 0 ? availableVoices[0].id : Array.from(this.voices.keys())[0];
+    }
 
     const voice = this.voices.get(voiceId);
     if (!voice) {
@@ -269,21 +450,102 @@ export class PiperTTS {
       let args: string[];
 
       if (this.piperBinaryPath) {
-        // 使用打包的二进制文件
         command = this.piperBinaryPath;
-        args = [
-          '-m',
-          voice.modelPath,
-          '--output-raw', // 输出原始 PCM 数据
-          text,
-        ];
+        args = ['-m', voice.modelPath, '--play', text];
       } else {
-        // 回退到 Python 脚本
+        command = this.pythonPath;
+        args = [this.wrapperScript, '--model', voice.modelPath, '--play', text];
+      }
+
+      if (options.speed && options.speed !== 1.0) {
+        args.push('--length-scale', (1 / options.speed).toString());
+      }
+
+      const piperProcess = spawn(command, args);
+      let errorOutput = '';
+
+      piperProcess.stderr.on('data', (data: Buffer) => {
+        errorOutput += data.toString();
+      });
+
+      piperProcess.on('close', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          logger.error(`Piper TTS 播放失败: code=${code}, error=${errorOutput}`);
+          reject(new Error(`Piper TTS 播放失败: ${errorOutput || `退出码 ${code}`}`));
+        }
+      });
+
+      piperProcess.on('error', (error) => {
+        logger.error({ err: error }, 'Piper TTS 进程错误:');
+        reject(error);
+      });
+    });
+  }
+
+  async isAvailable(): Promise<boolean> {
+    try {
+      if (this.piperBinaryPath) {
+        return fs.existsSync(this.piperBinaryPath) && this.voices.size > 0;
+      }
+
+      return (
+        fs.existsSync(this.pythonPath) && fs.existsSync(this.wrapperScript) && this.voices.size > 0
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 检查服务是否就绪
+   */
+  isServiceRunning(): boolean {
+    return this.isServiceReady;
+  }
+
+  // ============================================
+  // 以下是旧的 synthesize/playToDevice 方法（保留向后兼容）
+  // ============================================
+
+  async synthesize(text: string, options: PiperTTSOptions = {}): Promise<Buffer> {
+    if (!text.trim()) {
+      throw new Error('文本不能为空');
+    }
+
+    const userLanguage = this.getUserLanguage();
+    return this.synthesizeSingleLanguage(text, userLanguage, options);
+  }
+
+  private async synthesizeSingleLanguage(
+    text: string,
+    language: 'zh-CN' | 'en-US',
+    options: PiperTTSOptions = {},
+  ): Promise<Buffer> {
+    const availableVoices = Array.from(this.voices.values()).filter((v) => v.language === language);
+    if (availableVoices.length === 0) {
+      throw new Error(`没有找到${language}语言的语音模型`);
+    }
+
+    const voiceId = availableVoices[0].id;
+    const voice = this.voices.get(voiceId);
+    if (!voice) {
+      throw new Error(`语音模型不存在: ${voiceId}`);
+    }
+
+    return new Promise((resolve, reject) => {
+      let command: string;
+      let args: string[];
+
+      if (this.piperBinaryPath) {
+        command = this.piperBinaryPath;
+        args = ['-m', voice.modelPath, '--output-raw', text];
+      } else {
         command = this.pythonPath;
         args = [this.wrapperScript, '--model', voice.modelPath, '--output-raw', text];
       }
 
-      // 语速控制
       if (options.speed && options.speed !== 1.0) {
         args.push('--length-scale', (1 / options.speed).toString());
       }
@@ -292,12 +554,10 @@ export class PiperTTS {
       const audioChunks: Buffer[] = [];
       let errorOutput = '';
 
-      // 收集音频数据
       piperProcess.stdout.on('data', (chunk: Buffer) => {
         audioChunks.push(chunk);
       });
 
-      // 收集错误信息
       piperProcess.stderr.on('data', (data: Buffer) => {
         errorOutput += data.toString();
       });
@@ -319,60 +579,46 @@ export class PiperTTS {
     });
   }
 
-  /**
-   * 将 PCM 数据转换为 WAV 格式
-   */
   private pcmToWav(pcmData: Buffer, sampleRate: number = 22050): Buffer {
     const wavHeader = Buffer.alloc(44);
     const fileSize = pcmData.length + 44 - 8;
 
-    // WAV 文件头
     wavHeader.write('RIFF', 0);
     wavHeader.writeUInt32LE(fileSize, 4);
     wavHeader.write('WAVE', 8);
     wavHeader.write('fmt ', 12);
-    wavHeader.writeUInt32LE(16, 16); // PCM format size
-    wavHeader.writeUInt16LE(1, 20); // PCM format
-    wavHeader.writeUInt16LE(1, 22); // Mono
-    wavHeader.writeUInt32LE(sampleRate, 24); // Sample rate
-    wavHeader.writeUInt32LE(sampleRate * 2, 28); // Byte rate
-    wavHeader.writeUInt16LE(2, 32); // Block align
-    wavHeader.writeUInt16LE(16, 34); // Bits per sample
+    wavHeader.writeUInt32LE(16, 16);
+    wavHeader.writeUInt16LE(1, 20);
+    wavHeader.writeUInt16LE(1, 22);
+    wavHeader.writeUInt32LE(sampleRate, 24);
+    wavHeader.writeUInt32LE(sampleRate * 2, 28);
+    wavHeader.writeUInt16LE(2, 32);
+    wavHeader.writeUInt16LE(16, 34);
     wavHeader.write('data', 36);
     wavHeader.writeUInt32LE(pcmData.length, 40);
 
     return Buffer.concat([wavHeader, pcmData]);
   }
 
-  /**
-   * 播放音频到指定设备
-   */
   async playToDevice(audioData: Buffer, deviceId?: string): Promise<void> {
     const wavData = this.pcmToWav(audioData);
-
-    // 创建临时文件
     const tempFile = path.join(app.getPath('temp'), `piper_${Date.now()}.wav`);
 
     try {
-      // 写入临时文件
       fs.writeFileSync(tempFile, wavData);
 
-      // 使用系统播放器播放
       const platform = process.platform;
       let playCommand: string;
       let playArgs: string[];
 
       if (platform === 'darwin') {
-        // macOS: 使用 afplay
         playCommand = 'afplay';
         playArgs = [tempFile];
 
-        // 如果指定了设备，尝试使用 -d 参数（需要设备 ID）
         if (deviceId && deviceId !== 'default') {
           playArgs.unshift('-d', deviceId);
         }
       } else if (platform === 'win32') {
-        // Windows: 使用 powershell 播放
         playCommand = 'powershell';
         playArgs = ['-Command', `(New-Object System.Media.SoundPlayer "${tempFile}").PlaySync()`];
       } else {
@@ -395,7 +641,6 @@ export class PiperTTS {
         });
       });
     } finally {
-      // 清理临时文件
       try {
         if (fs.existsSync(tempFile)) {
           fs.unlinkSync(tempFile);
@@ -403,110 +648,6 @@ export class PiperTTS {
       } catch (error) {
         logger.warn({ err: error }, '清理临时音频文件失败:');
       }
-    }
-  }
-
-  /**
-   * 便捷的说话方法 - 根据用户语言偏好选择语音模型
-   */
-  async speak(text: string, options: PiperTTSOptions = {}): Promise<void> {
-    if (!text.trim()) {
-      throw new Error('文本不能为空');
-    }
-
-    // 根据用户语言偏好选择语音模型
-    const userLanguage = this.getUserLanguage();
-
-    return this.speakSingleLanguage(text, userLanguage, options);
-  }
-
-  /**
-   * 单一语言直接播放
-   */
-  private async speakSingleLanguage(
-    text: string,
-    language: 'zh-CN' | 'en-US',
-    options: PiperTTSOptions = {},
-  ): Promise<void> {
-    // 选择合适的语音模型
-    let voiceId = options.voice;
-    if (!voiceId) {
-      const availableVoices = Array.from(this.voices.values()).filter(
-        (v) => v.language === language,
-      );
-      voiceId =
-        availableVoices.length > 0 ? availableVoices[0].id : Array.from(this.voices.keys())[0];
-    }
-
-    const voice = this.voices.get(voiceId);
-    if (!voice) {
-      throw new Error(`语音模型不存在: ${voiceId}`);
-    }
-
-    return new Promise((resolve, reject) => {
-      let command: string;
-      let args: string[];
-
-      if (this.piperBinaryPath) {
-        // 使用打包的二进制文件
-        command = this.piperBinaryPath;
-        args = [
-          '-m',
-          voice.modelPath,
-          '--play', // 直接播放
-          text,
-        ];
-      } else {
-        // 回退到 Python 脚本
-        command = this.pythonPath;
-        args = [this.wrapperScript, '--model', voice.modelPath, '--play', text];
-      }
-
-      // 语速控制
-      if (options.speed && options.speed !== 1.0) {
-        args.push('--length-scale', (1 / options.speed).toString());
-      }
-
-      const piperProcess = spawn(command, args);
-      let errorOutput = '';
-
-      // 收集错误信息
-      piperProcess.stderr.on('data', (data: Buffer) => {
-        errorOutput += data.toString();
-      });
-
-      piperProcess.on('close', (code) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          logger.error(`Piper TTS 播放失败: code=${code}, error=${errorOutput}`);
-          reject(new Error(`Piper TTS 播放失败: ${errorOutput || `退出码 ${code}`}`));
-        }
-      });
-
-      piperProcess.on('error', (error) => {
-        logger.error({ err: error }, 'Piper TTS 进程错误:');
-        reject(error);
-      });
-    });
-  }
-
-  /**
-   * 检查 Piper TTS 是否可用
-   */
-  async isAvailable(): Promise<boolean> {
-    try {
-      // 如果使用打包的二进制文件
-      if (this.piperBinaryPath) {
-        return fs.existsSync(this.piperBinaryPath) && this.voices.size > 0;
-      }
-
-      // 否则检查 Python 环境
-      return (
-        fs.existsSync(this.pythonPath) && fs.existsSync(this.wrapperScript) && this.voices.size > 0
-      );
-    } catch {
-      return false;
     }
   }
 }
