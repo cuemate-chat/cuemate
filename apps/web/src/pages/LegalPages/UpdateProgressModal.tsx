@@ -1,4 +1,5 @@
 import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { ClockIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { Modal, Progress } from 'antd';
 import { useEffect, useState } from 'react';
 
@@ -150,7 +151,7 @@ export default function UpdateProgressModal({
         maskClosable={false}
       >
         <div className="py-8 text-center">
-          <div className="text-6xl mb-4">⏱️</div>
+          <ClockIcon className="w-16 h-16 text-blue-500 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
             {countdown}
           </h3>
@@ -281,8 +282,9 @@ export default function UpdateProgressModal({
 
         {/* 提示信息 */}
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-          <p className="text-xs text-amber-700 dark:text-amber-300">
-            ⚠️ 请勿关闭此窗口,更新过程中可以继续使用应用
+          <p className="text-xs text-amber-700 dark:text-amber-300 flex items-center gap-1">
+            <ExclamationTriangleIcon className="w-4 h-4" />
+            请勿关闭此窗口,更新过程中可以继续使用应用
           </p>
         </div>
       </div>
