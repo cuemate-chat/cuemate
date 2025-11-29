@@ -1728,7 +1728,13 @@ const SyncStatusOverview = ({
             // 不传 jobId 同步所有数据
             const result = await syncAll('');
             if (result.success) {
-              message.success('同步完成！');
+              const failedCount = result.questions?.failed || 0;
+              const successCount = result.questions?.success || 0;
+              if (failedCount > 0) {
+                message.warning(`同步完成：成功 ${successCount} 条，失败 ${failedCount} 条`);
+              } else {
+                message.success('同步完成！');
+              }
               loadSyncStatus(); // 重新加载状态
             } else {
               message.error('同步失败：' + (result.error || '未知错误'));
