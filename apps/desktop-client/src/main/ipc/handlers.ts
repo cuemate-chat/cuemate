@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron';
 import WebSocket from 'ws';
 import type { FrontendLogMessage } from '../../shared/types.js';
 import { logger } from '../../utils/logger.js';
@@ -245,6 +245,32 @@ export function setupIPC(windowManager: WindowManager): void {
       }
     } catch {}
   }
+
+  /**
+   * 剪贴板操作 - 写入文本
+   */
+  ipcMain.handle('clipboard-write-text', async (_event, text: string) => {
+    try {
+      clipboard.writeText(text);
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 写入剪贴板失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 剪贴板操作 - 读取文本
+   */
+  ipcMain.handle('clipboard-read-text', async () => {
+    try {
+      const text = clipboard.readText();
+      return { success: true, text };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 读取剪贴板失败');
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
 
   /**
    * 显示浮动窗口

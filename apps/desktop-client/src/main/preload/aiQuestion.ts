@@ -127,6 +127,12 @@ const aiQuestionAPI = {
     chrome: process.versions.chrome,
     electron: process.versions.electron,
   },
+
+  // === 剪贴板 API (通过 IPC 调用主进程) ===
+  clipboard: {
+    writeText: (text: string) => ipcRenderer.invoke('clipboard-write-text', text),
+    readText: () => ipcRenderer.invoke('clipboard-read-text'),
+  },
 };
 
 // 日志功能的便捷方法
