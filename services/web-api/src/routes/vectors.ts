@@ -174,7 +174,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
         const processOneJob = async (job: any) => {
           const resume = (app as any).db
             .prepare(
-              'SELECT id, title, content, created_at FROM resumes WHERE job_id=? ORDER BY created_at DESC LIMIT 1',
+              'SELECT id, title, content, file_path, created_at FROM resumes WHERE job_id=? ORDER BY created_at DESC LIMIT 1',
             )
             .get(job.id) as any;
 
@@ -202,6 +202,7 @@ export function registerVectorRoutes(app: FastifyInstance) {
                     id: resume.id,
                     title: resume.title || `${job.title}-简历`,
                     content: resume.content || '',
+                    file_path: resume.file_path || '',
                     job_id: job.id,
                     user_id: payload.uid,
                     created_at: resume.created_at || Date.now(),
