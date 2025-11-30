@@ -1,6 +1,6 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import 'animate.css/animate.min.css';
-import { RotateCcw } from 'lucide-react';
+import { Copy, Check, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface WindowBodyProps {
@@ -13,6 +13,19 @@ export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }:
   const contentRef = useRef<HTMLDivElement>(null);
   const [historyAiMessage, setHistoryAiMessage] = useState<string>('');
   const [isShowingHistory, setIsShowingHistory] = useState(false);
+  const [isHoveringMessage, setIsHoveringMessage] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  // 复制文本内容
+  const handleCopyContent = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      console.error('复制失败:', error);
+    }
+  };
 
   // 自动滚动到底部
   useEffect(() => {
@@ -68,7 +81,12 @@ export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }:
         <div className="ai-messages">
           {/* 参考答案气泡（靠左） */}
           {displayAiMessage && (
-            <div className="ai-message ai-message-ai ai-message-reference animate__animated animate__fadeInUp">
+            <div
+              className="ai-message ai-message-ai ai-message-reference animate__animated animate__fadeInUp"
+              style={{ position: 'relative' }}
+              onMouseEnter={() => setIsHoveringMessage(true)}
+              onMouseLeave={() => setIsHoveringMessage(false)}
+            >
               <div className="ai-message-content">
                 {displayAiMessage.split('\n').map((line, index) => (
                   <div key={index} className="message-line">
@@ -76,6 +94,55 @@ export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }:
                   </div>
                 ))}
               </div>
+              {/* 复制按钮 - 鼠标悬浮时显示 */}
+              {isHoveringMessage && (
+                <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <button
+                        onClick={() => handleCopyContent(displayAiMessage)}
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          backgroundColor: isCopied ? 'rgba(34, 197, 94, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+                          color: isCopied ? 'white' : '#666',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isCopied) {
+                            e.currentTarget.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+                            e.currentTarget.style.color = '#007bff';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isCopied) {
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                            e.currentTarget.style.color = '#666';
+                          }
+                        }}
+                      >
+                        {isCopied ? <Check size={14} /> : <Copy size={14} />}
+                      </button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content className="radix-tooltip-content" side="top" sideOffset={6}>
+                        {isCopied ? '已复制' : '复制内容'}
+                        <Tooltip.Arrow className="radix-tooltip-arrow" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                </Tooltip.Provider>
+              )}
             </div>
           )}
 
