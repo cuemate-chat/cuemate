@@ -378,6 +378,14 @@ class PromptService {
     });
   }
 
+  /**
+   * 获取指定 ID 的 prompt 内容（用于 system prompt 等简单场景）
+   */
+  async getPromptContent(id: string): Promise<string> {
+    const promptData = await this.fetchPromptWithConfig(id);
+    return promptData.content;
+  }
+
 }
 
 export const promptService = new PromptService();

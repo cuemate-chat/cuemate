@@ -824,6 +824,17 @@ export function up(db: any): void {
       '{"overallScoreMin": 1, "overallScoreMax": 100, "summaryMinWords": 150, "summaryMaxWords": 200, "prosMinWords": 100, "prosMaxWords": 150, "consMinWords": 100, "consMaxWords": 150, "suggestionsMinWords": 150, "suggestionsMaxWords": 200, "radarScoreMin": 1, "radarScoreMax": 10, "interviewerSummaryWords": 100, "candidateSummaryWords": 100, "strategyWords": 80, "qaFeedbackWords": 80}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
+    ),
+    (
+      'AIQuestionAnalysisSystemPrompt',
+      '你是一位资深的 HR 专家和面试分析师，具有丰富的面试评估经验。请基于提供的面试训练数据进行专业分析。',
+      'AI提问面试分析系统提示词',
+      '[]',
+      'desktop',
+      '你是一位资深的 HR 专家和面试分析师，具有丰富的面试评估经验。请基于提供的面试训练数据进行专业分析。',
+      NULL,
+      strftime('%s', 'now') * 1000,
+      strftime('%s', 'now') * 1000
     );
   `);
 }

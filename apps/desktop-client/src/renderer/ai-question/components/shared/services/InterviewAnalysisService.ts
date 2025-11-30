@@ -4,8 +4,9 @@
  */
 
 import { logger } from '../../../../../utils/rendererLogger.js';
-import { InterviewScore, InterviewInsight } from '../data/InterviewDataService';
+import { ModelParam, modelService } from '../../../../interviewer/api/modelService.js';
 import { promptService } from '../../../../prompts/promptService.js';
+import { InterviewInsight, InterviewScore } from '../data/InterviewDataService';
 
 // 面试分析请求接口
 export interface AnalysisRequest {
@@ -36,11 +37,11 @@ export interface AnalysisResult {
 
   // 雷达图评分（1-10 分）
   radarScores: {
-    interactivity: number;    // 互动性
-    confidence: number;       // 自信度
-    professionalism: number;  // 专业性
-    relevance: number;        // 相关性
-    clarity: number;          // 表达清晰度
+    interactivity: number; // 互动性
+    confidence: number; // 自信度
+    professionalism: number; // 专业性
+    relevance: number; // 相关性
+    clarity: number; // 表达清晰度
   };
 
   // 面试洞察
@@ -133,7 +134,6 @@ export class InterviewAnalysisService {
 
       console.debug('面试分析完成');
       return formattedResult;
-
     } catch (error: unknown) {
       logger.error(`面试分析失败: ${error}`);
       throw new Error(`面试分析失败: ${error instanceof Error ? error.message : String(error)}`);
@@ -144,14 +144,14 @@ export class InterviewAnalysisService {
    * 准备分析数据
    */
   private prepareAnalysisData(request: AnalysisRequest): any {
-    const qaData = request.userAnswers.map(answer => {
-      const question = request.interviewerQuestions.find(q => q.id === answer.questionId);
+    const qaData = request.userAnswers.map((answer) => {
+      const question = request.interviewerQuestions.find((q) => q.id === answer.questionId);
       return {
         question: question?.content || '未知问题',
         answer: answer.content,
         questionTime: question?.timestamp || 0,
         answerTime: answer.timestamp,
-        responseTime: answer.timestamp - (question?.timestamp || 0)
+        responseTime: answer.timestamp - (question?.timestamp || 0),
       };
     });
 
@@ -162,12 +162,48 @@ export class InterviewAnalysisService {
         totalQuestions: request.interviewerQuestions.length,
         totalAnswers: request.userAnswers.length,
         position: request.jobPosition,
-        candidate: request.candidateProfile
+        candidate: request.candidateProfile,
       },
       qaData,
       interviewerQuestions: request.interviewerQuestions,
-      userAnswers: request.userAnswers
+      userAnswers: request.userAnswers,
     };
+  }
+
+  /**
+   * 获取用户的默认 LLM 模型配置
+   */
+  private async getDefaultModelConfig(): Promise<{
+    modelName: string;
+    modelParams: Record<string, any>;
+  }> {
+    try {
+      // 获取用户的 LLM 模型列表
+      const { list: models } = await modelService.getModels({ type: 'llm' });
+      if (!models || models.length === 0) {
+        throw new Error('没有可用的 LLM 模型');
+      }
+
+      // 使用第一个启用的模型
+      const enabledModel = models.find((m) => m.is_enabled === 1) || models[0];
+
+      // 获取模型参数
+      const params: ModelParam[] = await modelService.getModelParams(enabledModel.id);
+
+      // 将参数数组转换为对象
+      const modelParams: Record<string, any> = {};
+      for (const param of params) {
+        modelParams[param.param_key] = param.value ?? param.default_value;
+      }
+
+      return {
+        modelName: enabledModel.model_name,
+        modelParams,
+      };
+    } catch (error) {
+      logger.error(`获取默认模型配置失败: ${error}`);
+      throw new Error('获取模型配置失败，请先在设置中配置 LLM 模型');
+    }
   }
 
   /**
@@ -175,6 +211,18 @@ export class InterviewAnalysisService {
    */
   private async performAIAnalysis(analysisData: any): Promise<any> {
     const prompt = await this.buildAnalysisPrompt(analysisData);
+
+    // 从数据库获取 system prompt，失败时使用 fallback
+    let systemPrompt =
+      '你是一位资深的 HR 专家和面试分析师，具有丰富的面试评估经验。请基于提供的面试训练数据进行专业分析。';
+    try {
+      systemPrompt = await promptService.getPromptContent('AIQuestionAnalysisSystemPrompt');
+    } catch (error) {
+      logger.error(`Failed to fetch AIQuestionAnalysisSystemPrompt, using fallback: ${error}`);
+    }
+
+    // 获取用户的模型配置
+    const { modelName, modelParams } = await this.getDefaultModelConfig();
 
     try {
       const response = await fetch(`${this.llmRouterURL}/chat/completions`, {
@@ -186,16 +234,15 @@ export class InterviewAnalysisService {
           messages: [
             {
               role: 'system',
-              content: '你是一位资深的 HR 专家和面试分析师，具有丰富的面试评估经验。请基于提供的面试训练数据进行专业分析。'
+              content: systemPrompt,
             },
             {
               role: 'user',
-              content: prompt
-            }
+              content: prompt,
+            },
           ],
-          model: 'gpt-4o',
-          max_tokens: 3000,
-          temperature: 0.7,
+          model: modelName,
+          ...modelParams,
         }),
       });
 
@@ -217,7 +264,6 @@ export class InterviewAnalysisService {
         // 如果不是 JSON 格式，尝试从文本中提取信息
         return this.parseTextAnalysis(content);
       }
-
     } catch (error) {
       logger.error(`AI 分析调用失败: ${error}`);
       throw error;
@@ -229,12 +275,14 @@ export class InterviewAnalysisService {
    */
   private async buildAnalysisPrompt(analysisData: any): Promise<string> {
     const qaText = analysisData.qaData
-      .map((qa: any, index: number) => `
+      .map(
+        (qa: any, index: number) => `
 第${index + 1}题：
 问题：${qa.question}
 回答：${qa.answer}
 响应时间：${Math.round(qa.responseTime / 1000)}秒
-`)
+`,
+      )
       .join('\n');
 
     try {
@@ -346,7 +394,7 @@ ${qaText}
         confidence: 7,
         professionalism: 7,
         relevance: 7,
-        clarity: 7
+        clarity: 7,
       },
       insights: {
         interviewerAnalysis: {
@@ -355,21 +403,21 @@ ${qaText}
           role: '技术面试官',
           mbti: 'ESTJ',
           personality: '严谨务实',
-          preference: '重视技术能力'
+          preference: '重视技术能力',
         },
         candidateAnalysis: {
           summary: '候选人基础表现',
           mbti: 'ISFJ',
           personality: '谨慎稳重',
-          jobPreference: '技术开发'
+          jobPreference: '技术开发',
         },
         strategies: {
           prepareDetails: '充分准备常见问题',
           businessUnderstanding: '加强业务理解',
-          keepLogical: '保持逻辑清晰'
-        }
+          keepLogical: '保持逻辑清晰',
+        },
       },
-      qaAnalysis: []
+      qaAnalysis: [],
     };
   }
 
@@ -390,7 +438,7 @@ ${qaText}
         confidence: Math.max(1, Math.min(10, aiAnalysis.radarScores?.confidence || 7)),
         professionalism: Math.max(1, Math.min(10, aiAnalysis.radarScores?.professionalism || 7)),
         relevance: Math.max(1, Math.min(10, aiAnalysis.radarScores?.relevance || 7)),
-        clarity: Math.max(1, Math.min(10, aiAnalysis.radarScores?.clarity || 7))
+        clarity: Math.max(1, Math.min(10, aiAnalysis.radarScores?.clarity || 7)),
       },
 
       insights: {
@@ -400,35 +448,38 @@ ${qaText}
           role: aiAnalysis.insights?.interviewerAnalysis?.role || '技术面试官',
           mbti: aiAnalysis.insights?.interviewerAnalysis?.mbti || 'ESTJ',
           personality: aiAnalysis.insights?.interviewerAnalysis?.personality || '专业严谨',
-          preference: aiAnalysis.insights?.interviewerAnalysis?.preference || '重视技术能力'
+          preference: aiAnalysis.insights?.interviewerAnalysis?.preference || '重视技术能力',
         },
         candidateAnalysis: {
           summary: aiAnalysis.insights?.candidateAnalysis?.summary || '候选人基础表现良好',
           mbti: aiAnalysis.insights?.candidateAnalysis?.mbti || 'ISFJ',
           personality: aiAnalysis.insights?.candidateAnalysis?.personality || '稳重认真',
-          jobPreference: aiAnalysis.insights?.candidateAnalysis?.jobPreference || '技术开发'
+          jobPreference: aiAnalysis.insights?.candidateAnalysis?.jobPreference || '技术开发',
         },
         strategies: {
           prepareDetails: aiAnalysis.insights?.strategies?.prepareDetails || '深入准备技术细节',
-          businessUnderstanding: aiAnalysis.insights?.strategies?.businessUnderstanding || '加强业务理解能力',
-          keepLogical: aiAnalysis.insights?.strategies?.keepLogical || '保持回答逻辑清晰'
-        }
+          businessUnderstanding:
+            aiAnalysis.insights?.strategies?.businessUnderstanding || '加强业务理解能力',
+          keepLogical: aiAnalysis.insights?.strategies?.keepLogical || '保持回答逻辑清晰',
+        },
       },
 
-      qaAnalysis: Array.isArray(aiAnalysis.qaAnalysis) ? aiAnalysis.qaAnalysis.map((qa: any) => ({
-        questionId: qa.questionId || '',
-        question: qa.question || '',
-        answer: qa.answer || '',
-        score: Math.max(1, Math.min(10, qa.score || 7)),
-        feedback: qa.feedback || '回答基本符合要求',
-        keyPoints: Array.isArray(qa.keyPoints) ? qa.keyPoints : ['基础知识'],
-        improvements: Array.isArray(qa.improvements) ? qa.improvements : ['提高表达清晰度']
-      })) : []
+      qaAnalysis: Array.isArray(aiAnalysis.qaAnalysis)
+        ? aiAnalysis.qaAnalysis.map((qa: any) => ({
+            questionId: qa.questionId || '',
+            question: qa.question || '',
+            answer: qa.answer || '',
+            score: Math.max(1, Math.min(10, qa.score || 7)),
+            feedback: qa.feedback || '回答基本符合要求',
+            keyPoints: Array.isArray(qa.keyPoints) ? qa.keyPoints : ['基础知识'],
+            improvements: Array.isArray(qa.improvements) ? qa.improvements : ['提高表达清晰度'],
+          }))
+        : [],
     };
 
     console.debug('分析结果格式化完成:', {
       overallScore: result.overallScore,
-      qaCount: result.qaAnalysis.length
+      qaCount: result.qaAnalysis.length,
     });
 
     return result;
@@ -439,7 +490,7 @@ ${qaText}
    */
   async saveAnalysisToDatabase(
     interviewId: string,
-    analysisResult: AnalysisResult
+    analysisResult: AnalysisResult,
   ): Promise<{ scoreId: string; insightId: string }> {
     await this.ensureAuth();
 
@@ -458,7 +509,7 @@ ${qaText}
         radar_confidence: analysisResult.radarScores.confidence,
         radar_professionalism: analysisResult.radarScores.professionalism,
         radar_relevance: analysisResult.radarScores.relevance,
-        radar_clarity: analysisResult.radarScores.clarity
+        radar_clarity: analysisResult.radarScores.clarity,
       };
 
       const scoreResponse = await fetch(`${this.baseURL}/interview-scores`, {
@@ -466,7 +517,7 @@ ${qaText}
         headers: this.getHeaders(),
         body: JSON.stringify({
           ...scoreData,
-          created_at: Date.now()
+          created_at: Date.now(),
         }),
       });
 
@@ -492,7 +543,7 @@ ${qaText}
         candidate_job_preference: analysisResult.insights.candidateAnalysis.jobPreference,
         strategy_prepare_details: analysisResult.insights.strategies.prepareDetails,
         strategy_business_understanding: analysisResult.insights.strategies.businessUnderstanding,
-        strategy_keep_logical: analysisResult.insights.strategies.keepLogical
+        strategy_keep_logical: analysisResult.insights.strategies.keepLogical,
       };
 
       const insightResponse = await fetch(`${this.baseURL}/interview-insights`, {
@@ -500,7 +551,7 @@ ${qaText}
         headers: this.getHeaders(),
         body: JSON.stringify({
           ...insightData,
-          created_at: Date.now()
+          created_at: Date.now(),
         }),
       });
 
@@ -514,7 +565,6 @@ ${qaText}
       console.debug('分析结果已保存到数据库:', { scoreId, insightId });
 
       return { scoreId, insightId };
-
     } catch (error) {
       logger.error(`保存分析结果失败: ${error}`);
       throw error;
@@ -526,7 +576,7 @@ ${qaText}
    */
   async saveQAAnalysisToDatabase(
     interviewId: string,
-    qaAnalysis: AnalysisResult['qaAnalysis']
+    qaAnalysis: AnalysisResult['qaAnalysis'],
   ): Promise<string[]> {
     await this.ensureAuth();
 
@@ -545,7 +595,7 @@ ${qaText}
           suggestions: qa.improvements.join('; '),
           pros: qa.score >= 7 ? '回答质量良好' : '',
           cons: qa.score < 7 ? '回答需要改进' : '',
-          created_at: Date.now()
+          created_at: Date.now(),
         };
 
         const response = await fetch(`${this.baseURL}/interview-reviews`, {
@@ -565,7 +615,6 @@ ${qaText}
 
       console.debug(`保存了${reviewIds.length}条问答分析记录`);
       return reviewIds;
-
     } catch (error) {
       logger.error(`保存问答分析失败: ${error}`);
       throw error;
@@ -575,9 +624,7 @@ ${qaText}
   /**
    * 执行完整的分析和保存流程
    */
-  async analyzeAndSave(
-    request: AnalysisRequest
-  ): Promise<{
+  async analyzeAndSave(request: AnalysisRequest): Promise<{
     analysis: AnalysisResult;
     scoreId: string;
     insightId: string;
@@ -592,13 +639,13 @@ ${qaText}
       // 2. 保存核心分析结果
       const { scoreId, insightId } = await this.saveAnalysisToDatabase(
         request.interviewId,
-        analysis
+        analysis,
       );
 
       // 3. 保存问答详细分析
       const reviewIds = await this.saveQAAnalysisToDatabase(
         request.interviewId,
-        analysis.qaAnalysis
+        analysis.qaAnalysis,
       );
 
       console.debug('面试分析和保存流程完成');
@@ -607,9 +654,8 @@ ${qaText}
         analysis,
         scoreId,
         insightId,
-        reviewIds
+        reviewIds,
       };
-
     } catch (error) {
       logger.error(`面试分析和保存流程失败: ${error}`);
       throw error;
