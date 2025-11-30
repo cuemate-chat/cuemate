@@ -50,9 +50,10 @@ export const ScrollFadeMessage: React.FC<ScrollFadeMessageProps> = ({
     ? customRender(message, renderOptions)
     : renderContentByLines(message.content, renderOptions);
 
-  const handleCopy = async () => {
+  const handleCopy = () => {
     try {
-      await navigator.clipboard.writeText(message.content);
+      // 使用 Electron 原生剪贴板 API
+      (window as any).electronAPI?.clipboard?.writeText(message.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {

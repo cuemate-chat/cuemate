@@ -25,7 +25,8 @@ export function VoiceQABody({ messages, isLoading, onNewChat, onAskMore, onCopyL
     try {
       const lastAIMessage = messages.filter(m => m.type === 'ai').pop();
       if (lastAIMessage) {
-        await navigator.clipboard.writeText(lastAIMessage.content);
+        // 使用 Electron 原生剪贴板 API
+        (window as any).electronAPI?.clipboard?.writeText(lastAIMessage.content);
       }
     } catch (e) {
       logger.error(`复制 AI 回答失败: ${e}`);
@@ -161,12 +162,13 @@ export function VoiceQABody({ messages, isLoading, onNewChat, onAskMore, onCopyL
                 <Tooltip.Trigger asChild>
                   <button
                     className="ai-segmented-btn ai-segmented-btn-right"
-                    onClick={async () => {
+                    onClick={() => {
                       try {
                         const text = messages
                           .map(m => `${m.type === 'user' ? '用户' : 'AI'}: ${m.content}`)
                           .join('\n\n');
-                        await navigator.clipboard.writeText(text);
+                        // 使用 Electron 原生剪贴板 API
+                        (window as any).electronAPI?.clipboard?.writeText(text);
                       } catch (e) {
                         logger.error(`复制对话失败: ${e}`);
                       }
