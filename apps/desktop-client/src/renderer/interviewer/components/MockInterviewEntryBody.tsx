@@ -978,22 +978,27 @@ export function MockInterviewEntryBody({
       const resumeContent = similarQuestion?.resumeContent || '';
       const otherFileContent = similarQuestion?.otherContent || '';
 
-      let answerQuestionPrompt = `请为以下面试问题提供一个专业的参考答案：\n\n问题：${context.currentQuestion}`;
+      // 使用数据库中的 AnswerPrompt 模板
+      const answerQuestionPrompt = await promptService.buildAnswerPrompt(
+        {
+          title: context.jobPosition?.title || '',
+          description: jobContent || context.jobPosition?.description || '',
+        },
+        {
+          resumeTitle: context.jobPosition?.resumeTitle || '',
+          resumeContent: resumeContent || context.jobPosition?.resumeContent || '',
+        },
+        context.currentQuestion,
+        referenceAnswerFromBank || undefined,
+      );
 
-      if (referenceAnswerFromBank) {
-        answerQuestionPrompt += `\n\n题库参考答案：${referenceAnswerFromBank}`;
-      }
-      if (jobContent) {
-        answerQuestionPrompt += `\n\n岗位信息：${jobContent}`;
-      }
-      if (resumeContent) {
-        answerQuestionPrompt += `\n\n简历信息：${resumeContent}`;
-      }
+      // 如果有其他文件内容，追加到 prompt
+      let finalPrompt = answerQuestionPrompt;
       if (otherFileContent) {
-        answerQuestionPrompt += `\n\n相关项目资料：${otherFileContent}`;
+        finalPrompt += `\n\n【相关项目资料】\n${otherFileContent}`;
       }
 
-      const optimizedMessages = await contextManagementService.getOptimizedContext(answerQuestionPrompt);
+      const optimizedMessages = await contextManagementService.getOptimizedContext(finalPrompt);
 
       const modelConfig: ModelConfig = {
         provider: selectedModel.provider,
