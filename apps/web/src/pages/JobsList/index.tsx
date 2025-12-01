@@ -519,6 +519,10 @@ export default function JobsList() {
             setSelectedOptimization(newOptimization as ResumeOptimization);
             setOptimizationDetailVisible(true);
           }}
+          onApplyResume={(content) => {
+            setResumeContent(content);
+            setOptimizationListVisible(false);
+          }}
         />
       )}
 
@@ -540,6 +544,14 @@ export default function JobsList() {
           onOptimizationCreated={(newOptimization) => {
             // 显示新创建的优化记录
             setSelectedOptimization(newOptimization as ResumeOptimization);
+          }}
+          onApplyResume={(content) => {
+            setResumeContent(content);
+          }}
+          onCloseAll={() => {
+            setOptimizationDetailVisible(false);
+            setSelectedOptimization(null);
+            setOptimizationListVisible(false);
           }}
         />
       )}

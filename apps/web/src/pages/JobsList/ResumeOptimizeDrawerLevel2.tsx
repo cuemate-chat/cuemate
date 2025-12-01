@@ -16,6 +16,8 @@ interface ResumeOptimizeDrawerLevel2Props {
   jobId?: string;
   jobDescription?: string;
   onOptimizationCreated?: (optimization: ResumeOptimization) => void;
+  onApplyResume?: (content: string) => void;
+  onCloseAll?: () => void;
 }
 
 const ResumeOptimizeDrawerLevel2: React.FC<ResumeOptimizeDrawerLevel2Props> = ({
@@ -26,6 +28,8 @@ const ResumeOptimizeDrawerLevel2: React.FC<ResumeOptimizeDrawerLevel2Props> = ({
   jobId,
   jobDescription,
   onOptimizationCreated,
+  onApplyResume,
+  onCloseAll,
 }) => {
   const [viewMode, setViewMode] = useState<'diff' | 'edit'>('diff');
   const [tempOriginalResume, setTempOriginalResume] = useState(optimization.original_resume);
@@ -44,8 +48,17 @@ const ResumeOptimizeDrawerLevel2: React.FC<ResumeOptimizeDrawerLevel2Props> = ({
 
   // 应用简历内容
   const handleApplyResumeContent = (type: 'original' | 'optimized') => {
-    // TODO: 实现应用简历内容到岗位的逻辑
-    console.log('应用简历内容:', type);
+    const content = type === 'original' ? tempOriginalResume : tempOptimizedResume;
+    if (onApplyResume) {
+      onApplyResume(content);
+      globalMessage.success('简历内容已应用');
+      // 关闭所有抽屉
+      if (onCloseAll) {
+        onCloseAll();
+      } else {
+        onClose();
+      }
+    }
   };
 
   // 新建简历优化

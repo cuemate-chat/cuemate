@@ -1,6 +1,6 @@
-import { Button, Tag } from 'antd';
+import { Button, Modal, Tag } from 'antd';
 import { useEffect, useState } from 'react';
-import { listResumeOptimizations, type ResumeOptimization } from '../../api/jobs';
+import { deleteResumeOptimization, listResumeOptimizations, type ResumeOptimization } from '../../api/jobs';
 import DrawerProvider, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProvider';
 import { message as globalMessage } from '../../components/Message';
 import ResumeOptimizeDrawerLevel2 from './ResumeOptimizeDrawerLevel2';
@@ -12,6 +12,7 @@ interface ResumeOptimizationListDrawerProps {
   jobDescription: string;
   onCreateNew: () => void;
   onOptimizationCreated: (optimization: ResumeOptimization) => void;
+  onApplyResume?: (content: string) => void;
 }
 
 export default function ResumeOptimizationListDrawer({
@@ -21,11 +22,13 @@ export default function ResumeOptimizationListDrawer({
   jobDescription,
   onCreateNew,
   onOptimizationCreated: _onOptimizationCreated,
+  onApplyResume,
 }: ResumeOptimizationListDrawerProps) {
   const [optimizations, setOptimizations] = useState<ResumeOptimization[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedOptimization, setSelectedOptimization] = useState<ResumeOptimization | null>(null);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
 
   // 加载简历优化记录列表
   useEffect(() => {
@@ -84,6 +87,38 @@ export default function ResumeOptimizationListDrawer({
   const handleCloseDetailDrawer = () => {
     setDetailDrawerOpen(false);
     setSelectedOptimization(null);
+  };
+
+  // 关闭所有抽屉
+  const handleCloseAll = () => {
+    setDetailDrawerOpen(false);
+    setSelectedOptimization(null);
+    onClose();
+  };
+
+  // 删除优化记录
+  const handleDeleteOptimization = (e: React.MouseEvent, optimization: ResumeOptimization) => {
+    e.stopPropagation();
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除这条优化记录吗？此操作不可恢复。`,
+      okText: '确认删除',
+      okType: 'danger',
+      cancelText: '取消',
+      zIndex: 10000,
+      onOk: async () => {
+        setDeleteLoading(optimization.id);
+        try {
+          await deleteResumeOptimization(optimization.id);
+          globalMessage.success('删除成功');
+          loadOptimizations();
+        } catch (error: any) {
+          globalMessage.error(error?.message || '删除失败');
+        } finally {
+          setDeleteLoading(null);
+        }
+      },
+    });
   };
 
   return (
@@ -191,9 +226,20 @@ export default function ResumeOptimizationListDrawer({
                     </div>
                   </div>
 
-                  {/* 悬停效果指示 */}
-                  <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-xs text-blue-600 dark:text-blue-400">点击查看详情 →</span>
+                  {/* 操作按钮 */}
+                  <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                    <span className="text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                      点击查看详情 →
+                    </span>
+                    <Button
+                      size="small"
+                      danger
+                      loading={deleteLoading === optimization.id}
+                      onClick={(e) => handleDeleteOptimization(e, optimization)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      删除
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -222,6 +268,8 @@ export default function ResumeOptimizationListDrawer({
             // 显示新创建的优化记录
             setSelectedOptimization(newOptimization);
           }}
+          onApplyResume={onApplyResume}
+          onCloseAll={handleCloseAll}
         />
       )}
     </>
