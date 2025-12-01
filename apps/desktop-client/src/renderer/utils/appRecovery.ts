@@ -3,10 +3,10 @@
 // This module runs immediately on import, independent of React component lifecycle
 
 import { logger } from '../../utils/rendererLogger.js';
-import { getVoiceState, setVoiceState, clearVoiceState } from '../../utils/voiceState';
+import { clearVoiceState, getVoiceState, setVoiceState } from '../../utils/voiceState';
+import { interviewService } from '../interviewer/api/interviewService';
 import { validateWithDatabase } from './mockInterviewManager';
 import { validateTrainingWithDatabase } from './trainingManager';
-import { interviewService } from '../interviewer/api/interviewService';
 
 // Session flag to prevent duplicate recovery runs
 const SESSION_KEY = 'cuemate.recovery.session';
@@ -49,7 +49,7 @@ async function runRecoveryInternal(): Promise<void> {
     // Validate mock interview and training data in parallel
     const [mockResult, trainingResult] = await Promise.all([
       validateWithDatabase(),
-      validateTrainingWithDatabase()
+      validateTrainingWithDatabase(),
     ]);
 
     // Handle mock interview recovery
@@ -64,7 +64,7 @@ async function runRecoveryInternal(): Promise<void> {
       setVoiceState({
         mode: 'mock-interview',
         subState: 'mock-interview-paused',
-        interviewId
+        interviewId,
       });
 
       // 3. Open the three windows and switch to mock-interview mode
@@ -90,7 +90,7 @@ async function runRecoveryInternal(): Promise<void> {
       setVoiceState({
         mode: 'interview-training',
         subState: 'interview-training-paused',
-        interviewId
+        interviewId,
       });
 
       // 3. Open the three windows and switch to interview-training mode
@@ -104,9 +104,16 @@ async function runRecoveryInternal(): Promise<void> {
       return;
     }
 
-    // 如果 interviewId 对应的面试已完成或不存在，清除 voiceState
-    if (mockResult.status === 'completed' || mockResult.status === 'not_found' || mockResult.status === 'expired' ||
-        trainingResult.status === 'completed' || trainingResult.status === 'not_found' || trainingResult.status === 'expired') {
+    // 如果有任何一个是 completed 状态，保留数据不清除
+    if (mockResult.status === 'completed' || trainingResult.status === 'completed') {
+      return;
+    }
+
+    // 只有当两个都返回无效状态（not_found/expired）时才清除
+    const mockInvalid = mockResult.status === 'not_found' || mockResult.status === 'expired';
+    const trainingInvalid =
+      trainingResult.status === 'not_found' || trainingResult.status === 'expired';
+    if (mockInvalid && trainingInvalid) {
       clearVoiceState();
     }
   } catch (error) {
