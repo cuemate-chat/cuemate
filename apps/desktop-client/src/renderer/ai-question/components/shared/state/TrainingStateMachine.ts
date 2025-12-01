@@ -18,6 +18,7 @@ export interface TrainingContext {
   interviewId: string;
   jobPosition: any;
   resume: any;
+  questionsBank: any[]; // 问题历史（从数据库恢复）
   currentQuestionIndex: number;
   totalQuestions: number;
   currentQuestion: string; // 面试官的问题(从扬声器识别)
@@ -26,6 +27,16 @@ export interface TrainingContext {
   conversationHistory: any[];
   errorMessage?: string;
   isPaused?: boolean;
+  // 面试配置（恢复时必须）
+  selectedModelId?: string;
+  status?: string;
+  interviewState?: string;
+  interviewType?: 'mock' | 'training';
+  locale?: string;
+  timezone?: string;
+  theme?: string;
+  message?: string;
+  duration?: number; // 面试时长（秒），恢复时用于继续计时
 }
 
 export interface TrainingEvent {
@@ -94,6 +105,7 @@ export class TrainingStateMachine {
       interviewId: '',
       jobPosition: null,
       resume: null,
+      questionsBank: [],
       currentQuestionIndex: 0,
       totalQuestions: 10,
       currentQuestion: '',
@@ -233,6 +245,7 @@ export class TrainingStateMachine {
       interviewId: '',
       jobPosition: null,
       resume: null,
+      questionsBank: [],
       currentQuestionIndex: 0,
       totalQuestions: 10,
       currentQuestion: '',

@@ -30,6 +30,16 @@ export interface InterviewContext {
   errorMessage?: string;
   initPrompt?: string;
   isPaused?: boolean;
+  // 面试配置（恢复时必须）
+  selectedModelId?: string;
+  status?: string;
+  interviewState?: string;
+  interviewType?: 'mock' | 'training';
+  locale?: string;
+  timezone?: string;
+  theme?: string;
+  message?: string;
+  duration?: number; // 面试时长（秒），恢复时用于继续计时
 }
 
 export interface InterviewEvent {
