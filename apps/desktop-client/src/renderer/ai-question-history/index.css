@@ -167,6 +167,10 @@ html, body, #root {
   background: transparent;
   position: relative;
   color: white; /* 中间区域文字颜色 */
+  /* 强制独立 GPU 合成层，避免组件切换时的渲染残留 */
+  will-change: contents;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .ai-messages {

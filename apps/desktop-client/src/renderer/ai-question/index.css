@@ -626,6 +626,10 @@ input[type="search"]::-webkit-search-cancel-button {
   background: transparent;
   position: relative;
   min-height: 0; /* 确保 flex 子元素可以正确收缩 */
+  /* 强制独立 GPU 合成层，避免组件切换时的渲染残留 */
+  will-change: contents;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* 空状态样式 */
