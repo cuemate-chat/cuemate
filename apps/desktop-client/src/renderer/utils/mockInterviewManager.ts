@@ -9,25 +9,6 @@ import {
 } from '../ai-question/components/shared/state/InterviewStateMachine';
 import { interviewService } from '../interviewer/api/interviewService';
 
-/**
- * 持久化数据结构
- */
-interface PersistedMockInterviewData {
-  interviewId: string;
-  jobPosition: any;
-  resume: any;
-  questionsBank: any[];
-  currentQuestionIndex: number;
-  totalQuestions: number;
-  state: InterviewState;
-  savedAt: number;
-  // 新增：恢复面试时需要的关键数据
-  elapsedTime?: number; // 已用时长（秒）
-  currentQuestion?: string; // 当前面试问题
-  currentAnswer?: string; // AI 参考答案
-}
-
-const STORAGE_KEY = 'cuemate_mock_interview_state';
 const MAX_AGE = 24 * 60 * 60 * 1000; // 24小时
 
 /**
@@ -45,11 +26,6 @@ let syncChannel: BroadcastChannel | null = null;
  */
 type StateSubscriber = (state: InterviewState, context: InterviewContext) => void;
 const subscribers: Set<StateSubscriber> = new Set();
-
-/**
- * 持久化定时器
- */
-let persistTimer: NodeJS.Timeout | null = null;
 
 /**
  * 初始化跨窗口同步
@@ -76,68 +52,6 @@ function broadcastStateUpdate(state: InterviewState, context: InterviewContext) 
 }
 
 /**
- * 立即持久化当前状态
- * 从多个数据源获取最完整的数据，确保恢复时不丢失信息
- */
-function persistCurrentState() {
-  if (!globalStateMachine) {
-    return;
-  }
-
-  const context = globalStateMachine.getContext();
-  const state = globalStateMachine.getState();
-
-  // 获取当前计时器时长
-  const voiceState = getVoiceState();
-  const elapsedTime = voiceState.timerDuration || 0;
-
-  // 从 mockInterviewState 获取 UI 状态中的 AI 回答（作为备用数据源）
-  let aiMessageFromUI = '';
-  try {
-    const mockStateStr = localStorage.getItem('cuemate.mockInterview.state');
-    if (mockStateStr) {
-      const mockState = JSON.parse(mockStateStr);
-      aiMessageFromUI = mockState.aiMessage || '';
-    }
-  } catch {}
-
-  // 优先使用 context.currentAnswer，如果为空则使用 UI 状态中的 aiMessage
-  const currentAnswer = context.currentAnswer || aiMessageFromUI;
-
-  const data: PersistedMockInterviewData = {
-    interviewId: context.interviewId,
-    jobPosition: context.jobPosition,
-    resume: context.resume,
-    questionsBank: context.questionsBank,
-    currentQuestionIndex: context.currentQuestionIndex,
-    totalQuestions: context.totalQuestions,
-    state,
-    savedAt: Date.now(),
-    // 保存恢复面试需要的关键数据
-    elapsedTime,
-    currentQuestion: context.currentQuestion,
-    currentAnswer: currentAnswer, // 优先使用状态机数据，备用 UI 数据
-  };
-
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (error) {
-    logger.error(`[MockInterviewManager] 持久化失败: ${error}`);
-  }
-}
-
-/**
- * 清除持久化数据
- */
-function clearPersistedData() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (error) {
-    logger.error(`[MockInterviewManager] 清除持久化数据失败: ${error}`);
-  }
-}
-
-/**
  * 启动模拟面试
  */
 export function startMockInterview(context: Partial<InterviewContext>): InterviewStateMachine {
@@ -145,9 +59,6 @@ export function startMockInterview(context: Partial<InterviewContext>): Intervie
   if (globalStateMachine) {
     stopMockInterview();
   }
-
-  // 新建面试时，强制清除旧的持久化数据
-  clearPersistedData();
 
   // 创建新的状态机
   globalStateMachine = new InterviewStateMachine(context);
@@ -160,10 +71,8 @@ export function startMockInterview(context: Partial<InterviewContext>): Intervie
     // 通知订阅者
     subscribers.forEach((callback) => callback(state, ctx));
 
-    // 所有状态变化都立即持久化，确保数据不丢失
-    // 包括 COMPLETED 和 ERROR 状态也要持久化
-    // 数据只有在用户新建新的面试时才会被清除
-    persistCurrentState();
+    // 注意：状态持久化由 MockInterviewEntryBody.tsx 的 handleStateChange 负责
+    // 它会调用 interviewService.updateInterview() 存入数据库
   });
 
   // 初始化同步通道
@@ -173,31 +82,12 @@ export function startMockInterview(context: Partial<InterviewContext>): Intervie
 }
 
 /**
- * 停止模拟面试（不清除持久化数据，数据保留供查看）
- * 注意：不调用 reset()，避免发送 IDLE 状态通知导致 UI 被清空
- * 数据只在用户点击"开始面试"时才被清除（在 startMockInterview 中调用 clearPersistedData）
+ * 停止模拟面试
  */
 export function stopMockInterview() {
   if (globalStateMachine) {
-    // 直接释放状态机引用，不调用 reset()
-    // reset() 会发送 IDLE 状态通知，导致 UI 被错误清空
     globalStateMachine = null;
-
-    // 注意：不清除持久化数据，数据只在新建面试时清除
-
-    // 清除定时器
-    if (persistTimer) {
-      clearTimeout(persistTimer);
-      persistTimer = null;
-    }
   }
-}
-
-/**
- * 强制清除持久化数据（只在新建面试时调用）
- */
-export function forceClearPersistedData() {
-  clearPersistedData();
 }
 
 /**
@@ -220,167 +110,189 @@ export function subscribeMockInterview(callback: StateSubscriber): () => void {
 }
 
 /**
- * 处理过期的面试记录（更新数据库状态并清除本地数据）
+ * 处理过期的面试记录（更新数据库状态）
  */
-async function handleExpiredInterview(interviewId: string): Promise<void> {
+export async function handleExpiredInterview(interviewId: string): Promise<void> {
   try {
-    // 更新数据库状态为过期
     await interviewService.updateInterview(interviewId, {
       status: 'mock-interview-expired',
       message: '面试记录已过期（超过24小时），自动终止',
     });
   } catch (error) {
     logger.error(`[MockInterviewManager] 更新过期面试状态失败: ${error}`);
-  } finally {
-    // 无论数据库更新是否成功，都清除本地数据
-    clearPersistedData();
   }
 }
 
 /**
- * 与数据库校验并同步本地状态
- * 确保本地暂存的面试数据与数据库一致
+ * 与数据库校验面试状态
+ * 从 voiceState 获取 interviewId，然后查询数据库
  * @returns 返回校验后的状态：
- *   - 'valid': 本地数据有效且面试未完成
- *   - 'completed': 面试已完成（数据库状态）
- *   - 'not_found': 面试记录不存在（已被删除）
- *   - 'no_local_data': 本地没有暂存数据
- *   - 'expired': 本地数据已过期
+ *   - 'valid': 面试未完成，可以恢复
+ *   - 'completed': 面试已完成
+ *   - 'not_found': 面试记录不存在
+ *   - 'no_interview_id': voiceState 中没有 interviewId
+ *   - 'expired': 面试已过期
  */
 export async function validateWithDatabase(): Promise<{
-  status: 'valid' | 'completed' | 'not_found' | 'no_local_data' | 'expired';
-  localData?: PersistedMockInterviewData;
+  status: 'valid' | 'completed' | 'not_found' | 'no_interview_id' | 'expired';
+  interviewId?: string;
+  dbData?: any;
   dbStatus?: string;
 }> {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) {
-      return { status: 'no_local_data' };
-    }
+    // 从 voiceState 获取 interviewId
+    const voiceState = getVoiceState();
+    const interviewId = voiceState.interviewId;
 
-    const data: PersistedMockInterviewData = JSON.parse(saved);
-
-    // 检查是否过期（24小时）
-    const age = Date.now() - data.savedAt;
-    if (age > MAX_AGE) {
-      await handleExpiredInterview(data.interviewId);
-      return { status: 'expired', localData: data };
+    if (!interviewId) {
+      return { status: 'no_interview_id' };
     }
 
     // 查询数据库中的面试状态
-    const result = await interviewService.getInterview(data.interviewId);
+    const result = await interviewService.getInterview(interviewId);
 
     // 面试记录不存在（可能已被删除）
     if (!result || !result.interview) {
-      logger.info(`[MockInterviewManager] 面试记录不存在，清除本地数据: ${data.interviewId}`);
-      clearPersistedData();
-      return { status: 'not_found', localData: data };
+      logger.info(`[MockInterviewManager] 面试记录不存在: ${interviewId}`);
+      return { status: 'not_found', interviewId };
     }
 
     const dbStatus = result.interview.status;
+    const startedAt = result.interview.started_at;
+
+    // 检查是否过期（24小时）
+    if (startedAt) {
+      const age = Date.now() - startedAt;
+      if (age > MAX_AGE) {
+        await handleExpiredInterview(interviewId);
+        return { status: 'expired', interviewId, dbStatus };
+      }
+    }
 
     // 检查数据库中的状态是否已完成或出错
     if (dbStatus === 'mock-interview-completed' || dbStatus === 'mock-interview-expired' || dbStatus === 'mock-interview-error') {
-      logger.info(`[MockInterviewManager] 数据库显示面试已完成，更新本地状态: ${dbStatus}`);
-      // 更新本地状态为已完成，但不清除数据（让用户可以查看）
-      data.state = InterviewState.COMPLETED;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      return { status: 'completed', localData: data, dbStatus };
+      return { status: 'completed', interviewId, dbData: result.interview, dbStatus };
+    }
+
+    // 只有模拟面试类型才返回 valid
+    if (result.interview.interview_type !== 'mock') {
+      return { status: 'not_found', interviewId };
     }
 
     // 面试仍在进行中
-    return { status: 'valid', localData: data, dbStatus };
+    return { status: 'valid', interviewId, dbData: result.interview, dbStatus };
   } catch (error) {
     logger.error(`[MockInterviewManager] 数据库校验失败: ${error}`);
-    // 校验失败时，返回本地数据状态（不清除，让用户自己决定）
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const data: PersistedMockInterviewData = JSON.parse(saved);
-        return { status: 'valid', localData: data };
-      }
-    } catch {}
-    return { status: 'no_local_data' };
+    return { status: 'no_interview_id' };
   }
 }
 
 /**
  * 检查是否有可恢复的面试
- * 所有状态都可以恢复，包括 COMPLETED 和 ERROR，让用户可以查看历史记录
- * 数据只在用户点击"开始面试"时才被清除
+ * 从 voiceState 检查是否有 interviewId
  */
 export function hasRecoverableInterview(): boolean {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return false;
-
-    const data: PersistedMockInterviewData = JSON.parse(saved);
-
-    // 检查是否过期（24小时）
-    const age = Date.now() - data.savedAt;
-    if (age > MAX_AGE) {
-      // 异步处理过期面试（更新数据库状态）
-      handleExpiredInterview(data.interviewId);
-      return false;
-    }
-
-    // 所有状态都可以恢复，包括 COMPLETED 和 ERROR
-    // 数据只在用户点击"开始面试"时才被清除（在 startMockInterview 中调用 clearPersistedData）
-    return true;
-  } catch {
-    return false;
-  }
+  const voiceState = getVoiceState();
+  return !!voiceState.interviewId;
 }
 
 /**
- * 获取可恢复的面试信息
+ * 从数据库恢复模拟面试
+ * 使用 voiceState 中的 interviewId 查询数据库获取完整数据
  */
-export function getRecoverableInterviewInfo(): PersistedMockInterviewData | null {
+export async function restoreMockInterview(): Promise<InterviewStateMachine | null> {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return null;
-    return JSON.parse(saved);
-  } catch {
-    return null;
-  }
-}
+    const voiceState = getVoiceState();
+    const interviewId = voiceState.interviewId;
 
-/**
- * 从 localStorage 恢复模拟面试
- */
-export function restoreMockInterview(): InterviewStateMachine | null {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) {
+    if (!interviewId) {
+      logger.info('[MockInterviewManager] 没有可恢复的面试 ID');
       return null;
     }
 
-    const data: PersistedMockInterviewData = JSON.parse(saved);
+    // 从数据库获取面试数据
+    const result = await interviewService.getInterview(interviewId);
 
-    // 重新创建 context，包含当前问题和答案
+    if (!result || !result.interview) {
+      logger.info(`[MockInterviewManager] 面试记录不存在: ${interviewId}`);
+      return null;
+    }
+
+    const interview = result.interview;
+
+    // 只恢复模拟面试类型
+    if (interview.interview_type !== 'mock') {
+      logger.info(`[MockInterviewManager] 不是模拟面试类型: ${interview.interview_type}`);
+      return null;
+    }
+
+    // 检查状态是否可恢复
+    if (interview.status === 'mock-interview-completed' ||
+        interview.status === 'mock-interview-expired' ||
+        interview.status === 'mock-interview-error') {
+      logger.info(`[MockInterviewManager] 面试已结束，状态: ${interview.status}`);
+      return null;
+    }
+
+    // 从数据库数据构建 context
     const context: Partial<InterviewContext> = {
-      interviewId: data.interviewId,
-      jobPosition: data.jobPosition,
-      resume: data.resume,
-      questionsBank: data.questionsBank,
-      currentQuestionIndex: data.currentQuestionIndex,
-      totalQuestions: data.totalQuestions,
-      currentQuestion: data.currentQuestion || '',
-      currentAnswer: data.currentAnswer || '',
+      interviewId: interview.id,
+      jobPosition: {
+        id: interview.job_id,
+        title: interview.job_title,
+        description: interview.job_content,
+        resumeId: interview.resumes_id,
+        resumeTitle: interview.resumes_title,
+        resumeContent: interview.resumes_content,
+      },
+      resume: {
+        resumeTitle: interview.resumes_title,
+        resumeContent: interview.resumes_content,
+      },
+      totalQuestions: interview.question_count,
+      duration: interview.duration || 0,
+      // 面试配置
+      selectedModelId: interview.selected_model_id,
+      status: interview.status,
+      interviewState: interview.interview_state,
+      interviewType: interview.interview_type,
+      locale: interview.locale,
+      timezone: interview.timezone,
+      theme: interview.theme,
+      message: interview.message,
+      // 恢复问题历史
+      currentQuestionIndex: result.questions?.length || 0,
+      questionsBank: result.questions || [],
+      conversationHistory: result.questions?.map((q) => ({
+        question: q.asked_question || q.question,
+        answer: q.candidate_answer,
+        referenceAnswer: q.reference_answer,
+        assessment: q.assessment,
+      })) || [],
     };
 
     // 创建状态机
     const machine = startMockInterview(context);
 
-    // 恢复状态（包含 currentQuestion 和 currentAnswer）
-    machine.restoreState(data.state, context);
+    // 恢复状态（从数据库的 interview_state 字段）
+    if (interview.interview_state) {
+      const state = interview.interview_state as InterviewState;
+      machine.restoreState(state, context);
+    }
 
+    logger.info(`[MockInterviewManager] 面试恢复成功: ${interviewId}`);
     return machine;
   } catch (error) {
     logger.error(`[MockInterviewManager] 恢复失败: ${error}`);
-    clearPersistedData();
     return null;
   }
+}
+
+/**
+ * 获取 MAX_AGE 常量（24小时）
+ */
+export function getMaxAge(): number {
+  return MAX_AGE;
 }
 
 /**
@@ -390,11 +302,6 @@ export function cleanup() {
   if (syncChannel) {
     syncChannel.close();
     syncChannel = null;
-  }
-
-  if (persistTimer) {
-    clearTimeout(persistTimer);
-    persistTimer = null;
   }
 
   subscribers.clear();
