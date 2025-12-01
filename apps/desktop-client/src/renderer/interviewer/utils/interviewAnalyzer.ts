@@ -129,7 +129,19 @@ export async function analyzeReview(params: AnalyzeReviewParams): Promise<Analys
       }
     });
 
-    const rawAnalysis = JSON.parse(analysisResult.trim());
+    // 清理 markdown 代码块标记（AI 可能返回 ```json ... ```）
+    let jsonStr = analysisResult.trim();
+    if (jsonStr.startsWith('```json')) {
+      jsonStr = jsonStr.slice(7);
+    } else if (jsonStr.startsWith('```')) {
+      jsonStr = jsonStr.slice(3);
+    }
+    if (jsonStr.endsWith('```')) {
+      jsonStr = jsonStr.slice(0, -3);
+    }
+    jsonStr = jsonStr.trim();
+
+    const rawAnalysis = JSON.parse(jsonStr);
 
     // 将 AI 返回的结果统一转换为字符串（AI 可能返回数组格式）
     const analysis: AnalysisResult = {

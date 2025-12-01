@@ -71,29 +71,30 @@ export function MainControlBar({}: MainControlBarProps) {
   }, []);
 
   // 自动恢复未完成的面试
+  // 核心逻辑：从 voiceState 获取 interviewId，然后从数据库查询数据恢复
   useEffect(() => {
     const autoRecover = async () => {
       // 延迟 100ms 执行，确保应用完全启动
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // 检查模拟面试
+      // 检查并恢复模拟面试（从 voiceState 检查，从数据库获取数据）
       if (hasRecoverableInterview()) {
-
-        const machine = restoreMockInterview();
+        const machine = await restoreMockInterview();
         if (machine) {
           // 自动打开面试窗口
           await (window as any).electronAPI?.openInterviewerWindow?.();
         }
+        // 注意：如果数据库显示面试已完成/错误/过期，restoreMockInterview 会自动清除 voiceState
       }
 
-      // 检查面试训练
+      // 检查并恢复面试训练（从 voiceState 检查，从数据库获取数据）
       if (hasRecoverableTraining()) {
-
         const machine = await restoreInterviewTraining();
         if (machine) {
           // 自动打开训练窗口
           await (window as any).electronAPI?.openInterviewTrainingWindow?.();
         }
+        // 注意：如果数据库显示训练已完成/错误/过期，restoreInterviewTraining 会自动清除 voiceState
       }
     };
 

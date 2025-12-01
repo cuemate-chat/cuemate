@@ -1,9 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { logger } from '../../utils/rendererLogger.js';
 import { currentInterview } from '../utils/currentInterview';
-import { clearVoiceState, getVoiceState, setVoiceState } from '../../utils/voiceState';
-import { validateWithDatabase } from '../utils/mockInterviewManager';
-import { validateTrainingWithDatabase } from '../utils/trainingManager';
+import { getVoiceState, setVoiceState } from '../../utils/voiceState';
 import { InterviewerWindowBody } from './components/InterviewerWindowBody';
 import { InterviewerWindowFooter } from './components/InterviewerWindowFooter';
 import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
@@ -12,37 +10,6 @@ export function InterviewerApp() {
   const [currentSectionTitle, setCurrentSectionTitle] = useState<string | null>(null);
 
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(undefined);
-
-  // 应用启动时同步本地数据与数据库（只执行一次）
-  const hasSyncedRef = useRef(false);
-  useEffect(() => {
-    if (hasSyncedRef.current) return;
-    hasSyncedRef.current = true;
-
-    const syncLocalDataWithDatabase = async () => {
-      try {
-        // 并行验证模拟面试和面试训练的本地数据
-        const [mockResult, trainingResult] = await Promise.all([
-          validateWithDatabase(),
-          validateTrainingWithDatabase()
-        ]);
-
-        // 记录同步结果
-        if (mockResult.status !== 'no_local_data') {
-          logger.info(`[启动同步] 模拟面试: ${mockResult.status}, 数据库状态: ${mockResult.dbStatus || '无'}`);
-        }
-        if (trainingResult.status !== 'no_local_data') {
-          logger.info(`[启动同步] 面试训练: ${trainingResult.status}, 数据库状态: ${trainingResult.dbStatus || '无'}`);
-        }
-      } catch (error) {
-        logger.error(`[启动同步] 同步本地数据失败: ${error}`);
-      }
-    };
-
-    // 延迟 500ms 执行，确保其他初始化完成
-    const timer = setTimeout(syncLocalDataWithDatabase, 500);
-    return () => clearTimeout(timer);
-  }, []);
 
   // 监听模式切换事件
   useEffect(() => {
@@ -97,15 +64,6 @@ export function InterviewerApp() {
     try {
       await (window as any).electronAPI?.hideInterviewer?.();
     } catch {}
-
-    // 只有在没有进行中的面试时才清除状态
-    const voiceState = getVoiceState();
-    if (voiceState.subState !== 'mock-interview-recording' &&
-        voiceState.subState !== 'mock-interview-paused' &&
-        voiceState.subState !== 'interview-training-recording' &&
-        voiceState.subState !== 'interview-training-paused') {
-      clearVoiceState();
-    }
   };
 
   const handleSelectCard = async (title: string) => {

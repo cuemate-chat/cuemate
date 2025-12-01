@@ -8,7 +8,7 @@ import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 import { userSettingsService } from '../api/userSettingsService';
 import { sendInterviewCommand } from '../../interviewer/utils/interviewCommandChannel';
-import { getOngoingInterview } from '../../utils/interviewGuard';
+import { getOngoingInterviewSync } from '../../utils/interviewGuard';
 
 interface LoggedInControlBarProps {
   // 暂时不添加任何 props
@@ -17,10 +17,10 @@ interface LoggedInControlBarProps {
 export function LoggedInControlBar({}: LoggedInControlBarProps) {
   const [isListenHovered, setIsListenHovered] = useState(false);
   const [isClickThrough, setIsClickThrough] = useState(false);
-  
+
   const [isInterviewerWindowOpen, setIsInterviewerWindowOpen] = useState(false);
   const vState = useVoiceState();
-  
+
   // "提问 AI"按钮的禁用状态
   const [isAskAIDisabled, setIsAskAIDisabled] = useState(false);
   
@@ -73,15 +73,15 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
 
   /**
    * 获取当前活跃的面试模式
-   * 优先使用 getOngoingInterview()，这样更可靠
+   * 优先使用 getOngoingInterviewSync()，这样更可靠
    */
   const getActiveInterviewMode = (): 'mock-interview' | 'interview-training' | null => {
-    // 优先从互斥保护机制获取（最可靠的来源）
-    const ongoing = getOngoingInterview();
+    // 优先从 voiceState 获取（最可靠的来源）
+    const ongoing = getOngoingInterviewSync();
     if (ongoing) {
       return ongoing.type;
     }
-    // 回退到 voiceState
+    // 回退到 voiceState hook
     if (vState.mode === 'mock-interview' || vState.mode === 'interview-training') {
       return vState.mode;
     }
