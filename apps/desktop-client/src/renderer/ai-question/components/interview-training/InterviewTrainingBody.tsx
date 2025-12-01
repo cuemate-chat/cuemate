@@ -66,77 +66,79 @@ export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }:
   const displayAiMessage = isShowingHistory ? historyAiMessage : aiMessage;
 
   return (
-    <div className="ai-window-body" ref={contentRef} style={{ position: 'relative' }}>
-      {!displayAiMessage && !isLoading ? (
-        // 空状态显示
-        <div className="ai-empty-state">
-          <div className="ai-empty-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+    <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div className="ai-window-body" ref={contentRef} style={{ flex: 1, overflow: 'auto' }}>
+        {!displayAiMessage && !isLoading ? (
+          // 空状态显示
+          <div className="ai-empty-state">
+            <div className="ai-empty-icon">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="ai-empty-title">等待训练开始</div>
+            <div className="ai-empty-description">
+              AI 分析结果和您的回答将在这里显示
+            </div>
           </div>
-          <div className="ai-empty-title">等待训练开始</div>
-          <div className="ai-empty-description">
-            AI 分析结果和您的回答将在这里显示
+        ) : (
+          // 消息气泡显示
+          <div className="ai-messages">
+            {/* 参考答案气泡（靠左） */}
+            {displayAiMessage && (
+              <div
+                className="ai-message ai-message-ai ai-message-reference animate__animated animate__fadeInUp"
+                style={{ position: 'relative' }}
+                onMouseEnter={() => setIsHoveringMessage(true)}
+                onMouseLeave={() => setIsHoveringMessage(false)}
+              >
+                <div className="ai-message-content">
+                  {displayAiMessage.split('\n').map((line, index) => (
+                    <div key={index} className="message-line">
+                      {line || '\u00A0'}
+                    </div>
+                  ))}
+                </div>
+                {/* 复制按钮 - 鼠标悬浮时显示 */}
+                {isHoveringMessage && (
+                  <button
+                    className="message-copy-btn"
+                    onClick={() => handleCopyContent(displayAiMessage)}
+                    title={isCopied ? '已复制' : '复制内容'}
+                    style={isCopied ? { background: 'rgba(34, 197, 94, 0.8)' } : undefined}
+                  >
+                    {isCopied ? <Check size={12} /> : <Copy size={12} />}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* 用户回答气泡（靠右） - 仅在查看历史记录时显示 */}
+            {isShowingHistory && candidateAnswer && (
+              <div className="ai-message ai-message-user animate__animated animate__fadeInUp">
+                <div className="ai-message-content">
+                  {candidateAnswer.split('\n').map((line, index) => (
+                    <div key={index} className="message-line">
+                      {line || '\u00A0'}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 加载状态 */}
+            {isLoading && (
+              <div className="ai-message ai-message-ai">
+                <div className="ai-message-content">
+                  <div className="ai-loading-spinner" />
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      ) : (
-        // 消息气泡显示
-        <div className="ai-messages">
-          {/* 参考答案气泡（靠左） */}
-          {displayAiMessage && (
-            <div
-              className="ai-message ai-message-ai ai-message-reference animate__animated animate__fadeInUp"
-              style={{ position: 'relative' }}
-              onMouseEnter={() => setIsHoveringMessage(true)}
-              onMouseLeave={() => setIsHoveringMessage(false)}
-            >
-              <div className="ai-message-content">
-                {displayAiMessage.split('\n').map((line, index) => (
-                  <div key={index} className="message-line">
-                    {line || '\u00A0'}
-                  </div>
-                ))}
-              </div>
-              {/* 复制按钮 - 鼠标悬浮时显示 */}
-              {isHoveringMessage && (
-                <button
-                  className="message-copy-btn"
-                  onClick={() => handleCopyContent(displayAiMessage)}
-                  title={isCopied ? '已复制' : '复制内容'}
-                  style={isCopied ? { background: 'rgba(34, 197, 94, 0.8)' } : undefined}
-                >
-                  {isCopied ? <Check size={12} /> : <Copy size={12} />}
-                </button>
-              )}
-            </div>
-          )}
+        )}
+      </div>
 
-          {/* 用户回答气泡（靠右） - 仅在查看历史记录时显示 */}
-          {isShowingHistory && candidateAnswer && (
-            <div className="ai-message ai-message-user animate__animated animate__fadeInUp">
-              <div className="ai-message-content">
-                {candidateAnswer.split('\n').map((line, index) => (
-                  <div key={index} className="message-line">
-                    {line || '\u00A0'}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 加载状态 */}
-          {isLoading && (
-            <div className="ai-message ai-message-ai">
-              <div className="ai-message-content">
-                <div className="ai-loading-spinner" />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 恢复当前对话按钮 - 固定在右下角，仅在查看历史记录时显示 */}
+      {/* 恢复当前对话按钮 - 固定在右下角（相对于外层容器），仅在查看历史记录时显示 */}
       {isShowingHistory && (
         <div style={{
           position: 'absolute',
