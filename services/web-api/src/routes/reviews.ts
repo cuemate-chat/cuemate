@@ -58,6 +58,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
                   i.interview_type,
                   i.status,
                   i.message,
+                  i.interview_state,
                   i.locale,
                   i.timezone,
                   i.theme,
@@ -101,7 +102,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
             `SELECT id, job_id, started_at, ended_at, selected_model_id,
                     job_title, job_content, question_count, resumes_id,
                     resumes_title, resumes_content, duration, interview_type,
-                    status, message
+                    status, message, interview_state
              FROM interviews WHERE id=? AND user_id=?`,
           )
           .get(id, payload.uid);
@@ -202,6 +203,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
             timezone: z.string().optional(),
             theme: z.string().optional(),
             selectedModelId: z.string().optional(),
+            interviewState: z.string().optional(),
           })
           .parse((req as any).body || {});
 
@@ -231,8 +233,8 @@ export function registerReviewRoutes(app: FastifyInstance) {
               id, job_id, user_id, theme, started_at,
               selected_model_id, locale, timezone, job_title, job_content,
               question_count, resumes_id, resumes_title, resumes_content,
-              duration, interview_type, status, message
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              duration, interview_type, status, message, interview_state
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .run(
             id,
@@ -253,6 +255,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
             body.interviewType,
             body.status || 'active',
             body.message || null,
+            body.interviewState || 'idle',
           );
 
         // 记录操作日志
@@ -304,6 +307,7 @@ export function registerReviewRoutes(app: FastifyInstance) {
               'interview-training-error'
             ]).optional(),
             message: z.string().optional(),
+            interviewState: z.string().optional(),
           })
           .parse((req as any).body || {});
 
@@ -355,6 +359,10 @@ export function registerReviewRoutes(app: FastifyInstance) {
         if (body.message !== undefined) {
           updateFields.push('message = ?');
           updateValues.push(body.message);
+        }
+        if (body.interviewState !== undefined) {
+          updateFields.push('interview_state = ?');
+          updateValues.push(body.interviewState);
         }
 
         // 如果状态变更为 completed,自动设置 ended_at 为当前时间

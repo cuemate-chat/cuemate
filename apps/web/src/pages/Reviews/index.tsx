@@ -170,6 +170,30 @@ export default function Reviews() {
                         })()}
                       </Tag>
                     )}
+                    {/* 面试进行中时显示 interview_state */}
+                    {it.interview_state && !it.status?.includes('completed') && !it.status?.includes('error') && (
+                      <Tag color="processing" className="!m-0">
+                        {(() => {
+                          const stateMap: Record<string, string> = {
+                            'idle': '空闲',
+                            'initializing': '初始化中',
+                            'ai_thinking': 'AI 思考中',
+                            'ai_speaking': 'AI 提问中',
+                            'user_listening': '等待回答',
+                            'user_speaking': '用户回答中',
+                            'ai_analyzing': 'AI 分析中',
+                            'generating_answer': '生成答案中',
+                            'round_complete': '本轮完成',
+                            'interview_ending': '面试结束中',
+                            'generating_report': '生成报告中',
+                            'completed': '已完成',
+                            'error': '错误',
+                            'listening_interviewer': '监听面试官',
+                          };
+                          return stateMap[it.interview_state] || it.interview_state;
+                        })()}
+                      </Tag>
+                    )}
                     <Badge count={it.advantages_total || 0} overflowCount={99}>
                       <span className="inline-flex items-center h-6 px-2 text-[11px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded-full shadow-sm">
                         优缺点
