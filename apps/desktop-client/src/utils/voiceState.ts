@@ -39,45 +39,69 @@ export interface VoiceState {
   mode: VoiceMode;
   subState: VoiceSubState;
   updatedAt: number;
-  // 计时器相关状态
-  timerDuration?: number; // 计时器时长（秒）
-  timerStarted?: boolean; // 计时器是否已开始
-  // 面试相关状态
   interviewId?: string; // 当前面试 ID
 }
 
-const STORAGE_KEY = 'cuemate.voiceState';
+// localStorage 只存 interviewId
+const STORAGE_KEY = 'cuemate.interviewId';
 const CHANNEL_NAME = 'cuemate.voiceState.channel';
+
+// 内存中的全局状态（不持久化）
+let memoryState: VoiceState = {
+  mode: 'none',
+  subState: 'idle',
+  updatedAt: Date.now(),
+  interviewId: undefined,
+};
+
+// 初始化时从 localStorage 读取 interviewId
+try {
+  const savedInterviewId = localStorage.getItem(STORAGE_KEY);
+  if (savedInterviewId) {
+    memoryState.interviewId = savedInterviewId;
+  }
+} catch {}
 
 let channel: BroadcastChannel | null = null;
 try {
   channel = new BroadcastChannel(CHANNEL_NAME);
+  // 监听其他窗口的状态更新
+  channel.onmessage = (e: MessageEvent<VoiceState>) => {
+    memoryState = e.data;
+    // 通知同窗口内的监听器
+    listeners.forEach((listener) => {
+      try {
+        listener(memoryState);
+      } catch {}
+    });
+  };
 } catch {}
 
 export function getVoiceState(): VoiceState {
-  // 直接从 localStorage 读取状态，不自动重置
-  // interviewId 只有在用户主动开始新面试时才会被清空
-  try {
-    const cached = localStorage.getItem(STORAGE_KEY);
-    if (cached) return JSON.parse(cached) as VoiceState;
-  } catch {}
-  return { mode: 'none', subState: 'idle', updatedAt: Date.now() };
+  return { ...memoryState };
 }
 
 export function setVoiceState(next: Partial<VoiceState> | VoiceState): VoiceState {
-  const current = getVoiceState();
   const merged: VoiceState = {
-    mode: next.mode ?? current.mode,
-    subState: next.subState ?? current.subState,
-    timerDuration: next.timerDuration ?? current.timerDuration,
-    timerStarted: next.timerStarted ?? current.timerStarted,
-    interviewId: 'interviewId' in next ? next.interviewId : current.interviewId,
+    mode: next.mode ?? memoryState.mode,
+    subState: next.subState ?? memoryState.subState,
+    interviewId: 'interviewId' in next ? next.interviewId : memoryState.interviewId,
     updatedAt: Date.now(),
-  } as VoiceState;
+  };
 
+  // 更新内存状态
+  memoryState = merged;
+
+  // 只持久化 interviewId 到 localStorage
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    if (merged.interviewId) {
+      localStorage.setItem(STORAGE_KEY, merged.interviewId);
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   } catch {}
+
+  // 通过 BroadcastChannel 同步完整状态到其他窗口
   try {
     channel?.postMessage(merged);
   } catch {}
@@ -93,10 +117,22 @@ export function setVoiceState(next: Partial<VoiceState> | VoiceState): VoiceStat
 }
 
 export function clearVoiceState(): VoiceState {
-  const cleared: VoiceState = { mode: 'none', subState: 'idle', updatedAt: Date.now() };
+  const cleared: VoiceState = {
+    mode: 'none',
+    subState: 'idle',
+    updatedAt: Date.now(),
+    interviewId: undefined,
+  };
+
+  // 更新内存状态
+  memoryState = cleared;
+
+  // 清除 localStorage 中的 interviewId
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleared));
+    localStorage.removeItem(STORAGE_KEY);
   } catch {}
+
+  // 通过 BroadcastChannel 同步到其他窗口
   try {
     channel?.postMessage(cleared);
   } catch {}
@@ -119,24 +155,8 @@ export function useVoiceState(): VoiceState {
     const immediateListener = (newState: VoiceState) => setState(newState);
     listeners.add(immediateListener);
 
-    // 跨窗口的事件监听器
-    const onMessage = (e: MessageEvent<VoiceState>) => setState(e.data);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          setState(JSON.parse(e.newValue));
-        } catch {}
-      }
-    };
-    channel?.addEventListener('message', onMessage as any);
-    window.addEventListener('storage', onStorage);
-
     return () => {
       listeners.delete(immediateListener);
-      try {
-        channel?.removeEventListener('message', onMessage as any);
-      } catch {}
-      window.removeEventListener('storage', onStorage);
     };
   }, []);
 
