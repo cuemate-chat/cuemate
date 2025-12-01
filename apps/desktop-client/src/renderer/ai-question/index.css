@@ -722,13 +722,12 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 .ai-message-user .ai-message-content {
-  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.5), rgba(59, 130, 246, 0.2));
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.15));
   color: white;
-  border: 1px solid rgba(3, 56, 142, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 12px;
   padding: 8px 12px;
   line-height: 1.5;
-  max-width: 70%;
   backdrop-filter: blur(10px);
 }
 
@@ -739,6 +738,44 @@ input[type="search"]::-webkit-search-cancel-button {
   padding: 0;
   line-height: 1.6;
   width: 100%;
+}
+
+/* 面试官问题气泡样式 */
+.ai-message-interviewer {
+  align-items: flex-start;
+}
+
+.ai-message-interviewer .ai-message-content {
+  background: linear-gradient(to bottom, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.12));
+  color: white;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 12px;
+  padding: 8px 12px;
+  line-height: 1.5;
+  backdrop-filter: blur(10px);
+}
+
+/* 消息标签样式 */
+.ai-message-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+/* 历史模式下 AI 回答气泡样式 */
+.ai-message-history-ai {
+  align-items: flex-end;
+}
+
+.ai-message-history-ai .ai-message-content {
+  background: linear-gradient(to bottom, rgba(34, 197, 94, 0.25), rgba(34, 197, 94, 0.12));
+  color: white;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 12px;
+  padding: 8px 12px;
+  line-height: 1.5;
+  backdrop-filter: blur(10px);
 }
 
 .ai-inline-code {

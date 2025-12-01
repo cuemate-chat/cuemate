@@ -819,6 +819,11 @@ html, body, #root {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+.interview-review-card-selected {
+  background: rgba(64, 132, 254, 0.2);
+  border-color: rgba(64, 132, 254, 0.4);
+}
+
 .review-section {
   margin-bottom: 8px;
 }
