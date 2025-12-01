@@ -9,6 +9,13 @@ const api = {
   getUserData: () => ipcRenderer.invoke('get-user-data'),
   loadConversation: (data: any) => ipcRenderer.invoke('load-conversation', data),
 
+  // === interviewId 持久化 API ===
+  interviewId: {
+    get: () => ipcRenderer.invoke('interview-id-get'),
+    set: (interviewId: string | null) => ipcRenderer.invoke('interview-id-set', interviewId),
+    clear: () => ipcRenderer.invoke('interview-id-clear'),
+  },
+
   // === 模式切换 API ===
   switchToMode: (mode: 'voice-qa' | 'mock-interview' | 'interview-training') =>
     ipcRenderer.invoke('switch-to-mode', mode),

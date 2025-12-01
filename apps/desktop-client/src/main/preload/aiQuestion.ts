@@ -16,6 +16,13 @@ const aiQuestionAPI = {
   // === 用户数据 API ===
   getUserData: () => ipcRenderer.invoke('get-user-data'),
 
+  // === interviewId 持久化 API ===
+  interviewId: {
+    get: () => ipcRenderer.invoke('interview-id-get'),
+    set: (interviewId: string | null) => ipcRenderer.invoke('interview-id-set', interviewId),
+    clear: () => ipcRenderer.invoke('interview-id-clear'),
+  },
+
   // === 历史窗口 API ===
   showAIQuestionHistory: () => ipcRenderer.invoke('show-ai-question-history'),
 

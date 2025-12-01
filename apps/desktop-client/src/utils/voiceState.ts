@@ -24,12 +24,14 @@ export type VoiceSubState =
   | 'mock-interview-completed'
   | 'mock-interview-playing'
   | 'mock-interview-error'
+  | 'mock-interview-expired'
   // 面试训练（interview-training）
   | 'interview-training-recording'
   | 'interview-training-paused'
   | 'interview-training-completed'
   | 'interview-training-playing'
   | 'interview-training-error'
+  | 'interview-training-expired'
   // 训练模式特定状态
   | 'training-listening'
   | 'training-paused'
@@ -42,11 +44,9 @@ export interface VoiceState {
   interviewId?: string; // 当前面试 ID
 }
 
-// localStorage 只存 interviewId
-const STORAGE_KEY = 'cuemate.interviewId';
 const CHANNEL_NAME = 'cuemate.voiceState.channel';
 
-// 内存中的全局状态（不持久化）
+// 内存中的全局状态（不持久化到 localStorage，使用主进程文件存储）
 let memoryState: VoiceState = {
   mode: 'none',
   subState: 'idle',
@@ -54,13 +54,41 @@ let memoryState: VoiceState = {
   interviewId: undefined,
 };
 
-// 初始化时从 localStorage 读取 interviewId
-try {
-  const savedInterviewId = localStorage.getItem(STORAGE_KEY);
-  if (savedInterviewId) {
-    memoryState.interviewId = savedInterviewId;
+// 标记是否已完成初始化
+let initialized = false;
+
+// 获取 electronAPI（不同窗口可能有不同的 API 对象名）
+function getElectronAPI(): any {
+  const win = window as any;
+  // 按优先级尝试获取 API
+  return win.electronAPI || win.electronInterviewerAPI || win.electronHistoryAPI || null;
+}
+
+// 异步初始化：从主进程加载 interviewId
+export async function initVoiceState(): Promise<VoiceState> {
+  if (initialized) {
+    return getVoiceState();
   }
-} catch {}
+
+  try {
+    const api = getElectronAPI();
+    if (api?.interviewId?.get) {
+      const result = await api.interviewId.get();
+      // IPC 返回的是 { success: boolean, interviewId: string | null }
+      if (result?.success && result.interviewId) {
+        memoryState.interviewId = result.interviewId;
+      }
+    }
+  } catch {
+    // 初始化失败时忽略
+  }
+
+  initialized = true;
+  return getVoiceState();
+}
+
+// 在模块加载时尝试异步初始化（不阻塞）
+initVoiceState().catch(() => {});
 
 let channel: BroadcastChannel | null = null;
 try {
@@ -92,12 +120,11 @@ export function setVoiceState(next: Partial<VoiceState> | VoiceState): VoiceStat
   // 更新内存状态
   memoryState = merged;
 
-  // 只持久化 interviewId 到 localStorage
+  // 持久化 interviewId 到主进程文件存储（fire and forget）
   try {
-    if (merged.interviewId) {
-      localStorage.setItem(STORAGE_KEY, merged.interviewId);
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
+    const api = getElectronAPI();
+    if (api?.interviewId?.set) {
+      api.interviewId.set(merged.interviewId || null).catch(() => {});
     }
   } catch {}
 
@@ -127,9 +154,12 @@ export function clearVoiceState(): VoiceState {
   // 更新内存状态
   memoryState = cleared;
 
-  // 清除 localStorage 中的 interviewId
+  // 清除主进程文件存储中的 interviewId（fire and forget）
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    const api = getElectronAPI();
+    if (api?.interviewId?.clear) {
+      api.interviewId.clear().catch(() => {});
+    }
   } catch {}
 
   // 通过 BroadcastChannel 同步到其他窗口

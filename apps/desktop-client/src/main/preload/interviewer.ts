@@ -36,6 +36,13 @@ const interviewerAPI = {
   // === 用户数据 API ===
   getUserData: () => ipcRenderer.invoke('get-user-data'),
 
+  // === interviewId 持久化 API ===
+  interviewId: {
+    get: () => ipcRenderer.invoke('interview-id-get'),
+    set: (interviewId: string | null) => ipcRenderer.invoke('interview-id-set', interviewId),
+    clear: () => ipcRenderer.invoke('interview-id-clear'),
+  },
+
   // === 开发工具 API ===
   openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
 

@@ -51,6 +51,13 @@ const controlBarAPI = {
   checkLoginStatus: () => ipcRenderer.invoke('check-login-status'),
   getUserData: () => ipcRenderer.invoke('get-user-data'),
 
+  // === interviewId 持久化 API ===
+  interviewId: {
+    get: () => ipcRenderer.invoke('interview-id-get'),
+    set: (interviewId: string | null) => ipcRenderer.invoke('interview-id-set', interviewId),
+    clear: () => ipcRenderer.invoke('interview-id-clear'),
+  },
+
   // === 隐身模式（内容保护）API ===
   visibility: {
     get: () => ipcRenderer.invoke('visibility-get'),

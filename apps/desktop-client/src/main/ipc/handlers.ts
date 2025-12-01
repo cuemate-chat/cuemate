@@ -6,7 +6,7 @@ import { PiperTTS } from '../audio/PiperTTS.js';
 import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
 import { DockerServiceManager } from '../services/DockerServiceManager.js';
 import { ensureDockActiveAndIcon } from '../utils/dock.js';
-import { type AppSettings, loadSettings, saveSettings } from '../utils/settings.js';
+import { type AppSettings, loadSettings, saveSettings, loadInterviewId, saveInterviewId, clearInterviewId } from '../utils/settings.js';
 import { WindowManager } from '../windows/WindowManager.js';
 import { registerASRWebSocketHandlers } from './asrWebSocketHandlers.js';
 
@@ -281,6 +281,39 @@ export function setupIPC(windowManager: WindowManager): void {
     } catch (error) {
       logger.error({ error }, 'IPC: 设置 AI 窗口高度失败');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  // === interviewId 持久化相关 IPC ===
+  ipcMain.handle('interview-id-get', async () => {
+    try {
+      const interviewId = loadInterviewId();
+      return { success: true, interviewId };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 获取 interviewId 失败');
+      return { success: false, interviewId: null };
+    }
+  });
+  ipcMain.handle('interview-id-set', async (_event, interviewId: string | null) => {
+    try {
+      if (interviewId) {
+        saveInterviewId(interviewId);
+      } else {
+        clearInterviewId();
+      }
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 保存 interviewId 失败');
+      return { success: false };
+    }
+  });
+  ipcMain.handle('interview-id-clear', async () => {
+    try {
+      clearInterviewId();
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, 'IPC: 清除 interviewId 失败');
+      return { success: false };
     }
   });
 
