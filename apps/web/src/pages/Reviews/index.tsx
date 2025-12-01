@@ -144,11 +144,13 @@ export default function Reviews() {
                             ? 'green'
                             : it.status.includes('error')
                               ? 'red'
-                              : it.status.includes('recording')
-                                ? 'blue'
-                                : it.status.includes('paused')
-                                  ? 'orange'
-                                  : 'default'
+                              : it.status.includes('expired')
+                                ? 'default'
+                                : it.status.includes('recording')
+                                  ? 'blue'
+                                  : it.status.includes('paused')
+                                    ? 'orange'
+                                    : 'default'
                         }
                         className="!m-0"
                       >
@@ -160,18 +162,20 @@ export default function Reviews() {
                             'mock-interview-completed': '已完成',
                             'mock-interview-playing': '继续进行',
                             'mock-interview-error': '错误',
+                            'mock-interview-expired': '已过期',
                             'interview-training-recording': '进行中',
                             'interview-training-paused': '暂停',
                             'interview-training-completed': '已完成',
                             'interview-training-playing': '继续进行',
                             'interview-training-error': '错误',
+                            'interview-training-expired': '已过期',
                           };
                           return statusMap[it.status] || it.status;
                         })()}
                       </Tag>
                     )}
                     {/* 面试进行中时显示 interview_state */}
-                    {it.interview_state && !it.status?.includes('completed') && !it.status?.includes('error') && (
+                    {it.interview_state && !it.status?.includes('completed') && !it.status?.includes('error') && !it.status?.includes('expired') && (
                       <Tag color="processing" className="!m-0">
                         {(() => {
                           const stateMap: Record<string, string> = {
@@ -261,6 +265,7 @@ export default function Reviews() {
                           <div className="truncate">
                             {it.advantage_content || it.overall_suggestions || (() => {
                               if (it.status?.includes('error')) return '因发生错误，未生成建议';
+                              if (it.status?.includes('expired')) return '面试已过期，未生成建议';
                               if (it.status?.includes('recording') || it.status?.includes('paused')) return '面试进行中，稍后生成';
                               return '暂未生成建议';
                             })()}
@@ -273,6 +278,7 @@ export default function Reviews() {
                           <div className="truncate">
                             {it.disadvantage_content || it.overall_cons || (() => {
                               if (it.status?.includes('error')) return '因发生错误，未生成分析';
+                              if (it.status?.includes('expired')) return '面试已过期，未生成分析';
                               if (it.status?.includes('recording') || it.status?.includes('paused')) return '面试进行中，稍后生成';
                               return '暂未生成分析';
                             })()}

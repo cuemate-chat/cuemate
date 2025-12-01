@@ -143,11 +143,13 @@ export interface Interview {
     | 'mock-interview-completed'
     | 'mock-interview-playing'
     | 'mock-interview-error'
+    | 'mock-interview-expired'
     | 'interview-training-recording'
     | 'interview-training-paused'
     | 'interview-training-completed'
     | 'interview-training-playing'
-    | 'interview-training-error';
+    | 'interview-training-error'
+    | 'interview-training-expired';
   message?: string | null;
   vector_status: number;
 }
