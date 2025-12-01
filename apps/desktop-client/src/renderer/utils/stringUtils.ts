@@ -21,8 +21,15 @@ export function ensureString(value: unknown): string {
     return value;
   }
   if (Array.isArray(value)) {
-    // 数组转换为编号列表格式的字符串
-    return value.map((item, index) => `${index + 1}. ${String(item)}`).join('\n');
+    // 数组转换为字符串，检查元素是否已有序号
+    return value.map((item, index) => {
+      const str = String(item);
+      // 检查是否已经以数字序号开头（如 "1. xxx" 或 "1、xxx"）
+      if (/^\d+[.、)）]\s*/.test(str)) {
+        return str;
+      }
+      return `${index + 1}. ${str}`;
+    }).join('\n');
   }
   if (typeof value === 'object' && value !== null) {
     // 对象转换为 JSON 字符串
