@@ -4,6 +4,10 @@ import { logger } from '../../utils/rendererLogger.js';
 import { ControlBarApp } from './ControlBarApp';
 import './index.css';
 
+// Import appRecovery to trigger interview state recovery on app startup
+// This runs immediately on import, independent of React component lifecycle
+import '../utils/appRecovery';
+
 // 确保 DOM 已加载
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeApp);
