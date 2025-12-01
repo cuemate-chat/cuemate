@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { History, X } from 'lucide-react';
 import { useState } from 'react';
 import CueMateLogo from '../../../../assets/CueMate.png';
+import { useTimerState } from '../../../../utils/timerState';
 import { useVoiceState } from '../../../../utils/voiceState';
 
 // 头部内的加载动画
@@ -40,10 +41,11 @@ interface WindowHeaderProps {
 export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightPercentage, onHeightChange, interviewState }: WindowHeaderProps) {
   const [showControls, setShowControls] = useState(false);
   const globalState = useVoiceState();
+  const timerState = useTimerState();
 
-  // 从全局状态获取计时器数据 - 只用于显示，不做计时逻辑
-  const timerDuration = globalState.timerDuration || 0;
-  const timerStarted = globalState.timerStarted || false;
+  // 从 timerState 获取计时器数据 - 只用于显示，不做计时逻辑
+  const timerDuration = timerState.duration || 0;
+  const timerStarted = timerState.isRunning || false;
 
   // 格式化时间显示 (时:分:秒) - 复制自 InterviewerWindowHeader
   const formatDuration = (seconds: number) => {

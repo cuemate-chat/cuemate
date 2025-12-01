@@ -2,7 +2,8 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { MessageSquare, Mic, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { logger } from '../../../utils/rendererLogger.js';
-import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
+import { getTimerState, setTimerState, resetTimerState } from '../../../utils/timerState';
+import { useVoiceState } from '../../../utils/voiceState';
 import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 
 interface InterviewerWindowHeaderProps {
@@ -46,17 +47,17 @@ export function InterviewerWindowHeader({
       // 只在 recording/playing 状态下初始化计时器,completed/paused 状态保持现有值
       if (!hasStarted && shouldRunTimer) {
         setHasStarted(true);
-        setDuration(0); // 重新开始时重置时间为 0
-        // 同步到全局状态(不设置 interviewId，避免触发右侧窗口清空数据)
-        setVoiceState({ timerStarted: true, timerDuration: 0 });
+        // 恢复面试时使用 timerState.duration 作为起始时间，否则从 0 开始
+        const initialDuration = getTimerState().duration || 0;
+        setDuration(initialDuration);
+        setTimerState({ isRunning: true, duration: initialDuration });
       }
 
       if (shouldRunTimer) {
         interval = setInterval(() => {
           setDuration(prev => {
             const newDuration = prev + 1;
-            // 同步到全局状态(不设置 interviewId，避免触发右侧窗口清空数据)
-            setVoiceState({ timerDuration: newDuration });
+            setTimerState({ duration: newDuration });
             return newDuration;
           });
         }, 1000);
@@ -65,8 +66,7 @@ export function InterviewerWindowHeader({
       // idle 状态或非面试模式时重置计时器
       setHasStarted(false);
       setDuration(0);
-      // 同步到全局状态(不设置 interviewId，避免触发右侧窗口清空数据)
-      setVoiceState({ timerStarted: false, timerDuration: 0 });
+      resetTimerState();
     }
 
     return () => {
