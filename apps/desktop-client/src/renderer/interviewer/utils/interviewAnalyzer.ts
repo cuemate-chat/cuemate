@@ -17,6 +17,7 @@ import { logger } from '../../../utils/rendererLogger.js';
 import { promptService } from '../../prompts/promptService';
 import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { aiService } from '../../utils/ai/aiService';
+import { ensureString, cleanJsonWrapper } from '../../utils/stringUtils';
 import { mockInterviewService } from '../../ai-question/components/shared/services/InterviewService';
 
 // ============================================================================
@@ -59,30 +60,6 @@ export interface BatchAnalyzeParams {
   modelParams?: ModelParam[];
   onProgress?: (message: string) => void;
   onError?: (error: string) => void;
-}
-
-// ============================================================================
-// 工具函数
-// ============================================================================
-
-/**
- * 将数组或对象转换为字符串
- * AI 可能返回数组格式的分析结果，需要转换为字符串
- */
-function ensureString(value: unknown): string {
-  if (typeof value === 'string') {
-    return value;
-  }
-  if (Array.isArray(value)) {
-    // 数组转换为换行分隔的字符串
-    return value.map((item, index) => `${index + 1}. ${String(item)}`).join('\n');
-  }
-  if (typeof value === 'object' && value !== null) {
-    // 对象转换为 JSON 字符串
-    return JSON.stringify(value, null, 2);
-  }
-  // 其他类型直接转字符串
-  return String(value ?? '');
 }
 
 // ============================================================================
@@ -130,17 +107,7 @@ export async function analyzeReview(params: AnalyzeReviewParams): Promise<Analys
     });
 
     // 清理 markdown 代码块标记（AI 可能返回 ```json ... ```）
-    let jsonStr = analysisResult.trim();
-    if (jsonStr.startsWith('```json')) {
-      jsonStr = jsonStr.slice(7);
-    } else if (jsonStr.startsWith('```')) {
-      jsonStr = jsonStr.slice(3);
-    }
-    if (jsonStr.endsWith('```')) {
-      jsonStr = jsonStr.slice(0, -3);
-    }
-    jsonStr = jsonStr.trim();
-
+    const jsonStr = cleanJsonWrapper(analysisResult);
     const rawAnalysis = JSON.parse(jsonStr);
 
     // 将 AI 返回的结果统一转换为字符串（AI 可能返回数组格式）

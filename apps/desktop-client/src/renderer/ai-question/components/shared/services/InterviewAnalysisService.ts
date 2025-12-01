@@ -6,6 +6,7 @@
 import { logger } from '../../../../../utils/rendererLogger.js';
 import { ModelParam, modelService } from '../../../../interviewer/api/modelService.js';
 import { promptService } from '../../../../prompts/promptService.js';
+import { ensureString } from '../../../../utils/stringUtils';
 import { InterviewInsight, InterviewScore } from '../data/InterviewDataService';
 
 // 面试分析请求接口
@@ -425,13 +426,13 @@ ${qaText}
    * 格式化分析结果
    */
   private formatAnalysisResult(aiAnalysis: any, _request: AnalysisRequest): AnalysisResult {
-    // 确保所有字段都有默认值
+    // 确保所有字段都有默认值（使用 ensureString 处理可能的数组格式）
     const result: AnalysisResult = {
       overallScore: Math.max(1, Math.min(100, aiAnalysis.overallScore || 75)),
-      summary: aiAnalysis.summary || '面试分析完成',
-      pros: aiAnalysis.pros || '展现了基本的面试素养',
-      cons: aiAnalysis.cons || '在表达和逻辑方面还有提升空间',
-      suggestions: aiAnalysis.suggestions || '建议多进行面试练习，提高沟通技巧',
+      summary: ensureString(aiAnalysis.summary) || '面试分析完成',
+      pros: ensureString(aiAnalysis.pros) || '展现了基本的面试素养',
+      cons: ensureString(aiAnalysis.cons) || '在表达和逻辑方面还有提升空间',
+      suggestions: ensureString(aiAnalysis.suggestions) || '建议多进行面试练习，提高沟通技巧',
 
       radarScores: {
         interactivity: Math.max(1, Math.min(10, aiAnalysis.radarScores?.interactivity || 7)),
@@ -444,23 +445,23 @@ ${qaText}
       insights: {
         interviewerAnalysis: {
           score: Math.max(1, Math.min(10, aiAnalysis.insights?.interviewerAnalysis?.score || 7)),
-          summary: aiAnalysis.insights?.interviewerAnalysis?.summary || '面试官表现正常',
-          role: aiAnalysis.insights?.interviewerAnalysis?.role || '技术面试官',
-          mbti: aiAnalysis.insights?.interviewerAnalysis?.mbti || 'ESTJ',
-          personality: aiAnalysis.insights?.interviewerAnalysis?.personality || '专业严谨',
-          preference: aiAnalysis.insights?.interviewerAnalysis?.preference || '重视技术能力',
+          summary: ensureString(aiAnalysis.insights?.interviewerAnalysis?.summary) || '面试官表现正常',
+          role: ensureString(aiAnalysis.insights?.interviewerAnalysis?.role) || '技术面试官',
+          mbti: ensureString(aiAnalysis.insights?.interviewerAnalysis?.mbti) || 'ESTJ',
+          personality: ensureString(aiAnalysis.insights?.interviewerAnalysis?.personality) || '专业严谨',
+          preference: ensureString(aiAnalysis.insights?.interviewerAnalysis?.preference) || '重视技术能力',
         },
         candidateAnalysis: {
-          summary: aiAnalysis.insights?.candidateAnalysis?.summary || '候选人基础表现良好',
-          mbti: aiAnalysis.insights?.candidateAnalysis?.mbti || 'ISFJ',
-          personality: aiAnalysis.insights?.candidateAnalysis?.personality || '稳重认真',
-          jobPreference: aiAnalysis.insights?.candidateAnalysis?.jobPreference || '技术开发',
+          summary: ensureString(aiAnalysis.insights?.candidateAnalysis?.summary) || '候选人基础表现良好',
+          mbti: ensureString(aiAnalysis.insights?.candidateAnalysis?.mbti) || 'ISFJ',
+          personality: ensureString(aiAnalysis.insights?.candidateAnalysis?.personality) || '稳重认真',
+          jobPreference: ensureString(aiAnalysis.insights?.candidateAnalysis?.jobPreference) || '技术开发',
         },
         strategies: {
-          prepareDetails: aiAnalysis.insights?.strategies?.prepareDetails || '深入准备技术细节',
+          prepareDetails: ensureString(aiAnalysis.insights?.strategies?.prepareDetails) || '深入准备技术细节',
           businessUnderstanding:
-            aiAnalysis.insights?.strategies?.businessUnderstanding || '加强业务理解能力',
-          keepLogical: aiAnalysis.insights?.strategies?.keepLogical || '保持回答逻辑清晰',
+            ensureString(aiAnalysis.insights?.strategies?.businessUnderstanding) || '加强业务理解能力',
+          keepLogical: ensureString(aiAnalysis.insights?.strategies?.keepLogical) || '保持回答逻辑清晰',
         },
       },
 
@@ -470,7 +471,7 @@ ${qaText}
             question: qa.question || '',
             answer: qa.answer || '',
             score: Math.max(1, Math.min(10, qa.score || 7)),
-            feedback: qa.feedback || '回答基本符合要求',
+            feedback: ensureString(qa.feedback) || '回答基本符合要求',
             keyPoints: Array.isArray(qa.keyPoints) ? qa.keyPoints : ['基础知识'],
             improvements: Array.isArray(qa.improvements) ? qa.improvements : ['提高表达清晰度'],
           }))

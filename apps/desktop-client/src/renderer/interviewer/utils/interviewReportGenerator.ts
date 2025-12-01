@@ -16,6 +16,7 @@
 import { logger } from '../../../utils/rendererLogger.js';
 import { promptService } from '../../prompts/promptService';
 import { aiService } from '../../utils/ai/aiService';
+import { ensureString } from '../../utils/stringUtils';
 import { interviewService } from '../api/interviewService';
 import { mockInterviewService } from '../../ai-question/components/shared/services/InterviewService';
 
@@ -102,16 +103,16 @@ export async function generateInterviewReport(params: ReportGeneratorParams): Pr
     // 生成洞察报告
     const insightData = await generateInsightReport(jobTitle, resumeContent, reviewsData);
 
-    // 保存评分报告
+    // 保存评分报告（使用 ensureString 处理可能的数组格式）
     await interviewService.saveInterviewScore({
       interviewId,
       totalScore: scoreData.total_score || 0,
       durationSec,
       numQuestions: scoreData.num_questions || 0,
-      overallSummary: scoreData.overall_summary || '',
-      pros: scoreData.pros || '',
-      cons: scoreData.cons || '',
-      suggestions: scoreData.suggestions || '',
+      overallSummary: ensureString(scoreData.overall_summary) || '',
+      pros: ensureString(scoreData.pros) || '',
+      cons: ensureString(scoreData.cons) || '',
+      suggestions: ensureString(scoreData.suggestions) || '',
       radarInteractivity: scoreData.radar?.interactivity || 0,
       radarConfidence: scoreData.radar?.confidence || 0,
       radarProfessionalism: scoreData.radar?.professionalism || 0,
@@ -119,22 +120,22 @@ export async function generateInterviewReport(params: ReportGeneratorParams): Pr
       radarClarity: scoreData.radar?.clarity || 0,
     });
 
-    // 保存洞察报告
+    // 保存洞察报告（使用 ensureString 处理可能的数组格式）
     await interviewService.saveInterviewInsight({
       interviewId,
       interviewerScore: insightData.interviewer?.score || 0,
-      interviewerSummary: insightData.interviewer?.summary || '',
-      interviewerRole: insightData.interviewer?.role || '',
-      interviewerMbti: insightData.interviewer?.mbti || '',
-      interviewerPersonality: insightData.interviewer?.personality || '',
-      interviewerPreference: insightData.interviewer?.preference || '',
-      candidateSummary: insightData.candidate?.summary || '',
-      candidateMbti: insightData.candidate?.mbti || '',
-      candidatePersonality: insightData.candidate?.personality || '',
-      candidateJobPreference: insightData.candidate?.job_preference || '',
-      strategyPrepareDetails: insightData.strategy?.prepare_details || '',
-      strategyBusinessUnderstanding: insightData.strategy?.business_understanding || '',
-      strategyKeepLogical: insightData.strategy?.keep_logical || '',
+      interviewerSummary: ensureString(insightData.interviewer?.summary) || '',
+      interviewerRole: ensureString(insightData.interviewer?.role) || '',
+      interviewerMbti: ensureString(insightData.interviewer?.mbti) || '',
+      interviewerPersonality: ensureString(insightData.interviewer?.personality) || '',
+      interviewerPreference: ensureString(insightData.interviewer?.preference) || '',
+      candidateSummary: ensureString(insightData.candidate?.summary) || '',
+      candidateMbti: ensureString(insightData.candidate?.mbti) || '',
+      candidatePersonality: ensureString(insightData.candidate?.personality) || '',
+      candidateJobPreference: ensureString(insightData.candidate?.job_preference) || '',
+      strategyPrepareDetails: ensureString(insightData.strategy?.prepare_details) || '',
+      strategyBusinessUnderstanding: ensureString(insightData.strategy?.business_understanding) || '',
+      strategyKeepLogical: ensureString(insightData.strategy?.keep_logical) || '',
     });
 
     onProgress?.('面试报告生成完成');
@@ -253,7 +254,7 @@ async function processBatchScore(
     throw new Error('所有批次处理都失败了');
   }
 
-  // 合并结果
+  // 合并结果（使用 ensureString 处理可能的数组格式）
   return {
     total_score: Math.round(batchResults.reduce((sum, r) => sum + (r.total_score || 0), 0) / batchResults.length),
     num_questions: reviews.length,
@@ -264,9 +265,9 @@ async function processBatchScore(
       relevance: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.relevance || 0), 0) / batchResults.length),
       clarity: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.clarity || 0), 0) / batchResults.length),
     },
-    overall_summary: batchResults.map(r => r.overall_summary).join(' '),
-    pros: batchResults.map(r => r.pros).join('\n'),
-    cons: batchResults.map(r => r.cons).join('\n'),
-    suggestions: batchResults.map(r => r.suggestions).join('\n'),
+    overall_summary: batchResults.map(r => ensureString(r.overall_summary)).join(' '),
+    pros: batchResults.map(r => ensureString(r.pros)).join('\n'),
+    cons: batchResults.map(r => ensureString(r.cons)).join('\n'),
+    suggestions: batchResults.map(r => ensureString(r.suggestions)).join('\n'),
   };
 }
