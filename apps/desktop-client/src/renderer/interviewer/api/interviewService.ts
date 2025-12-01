@@ -35,6 +35,7 @@ export interface InterviewData {
   timezone?: string;
   theme?: string;
   selectedModelId?: string;
+  interviewState?: string;
 }
 
 export interface CreateInterviewResponse {
@@ -52,6 +53,69 @@ export interface UpdateInterviewData {
   interviewType?: 'training' | 'mock';
   status?: InterviewStatus;
   message?: string;
+  interviewState?: string;
+}
+
+// 面试详情返回类型
+export interface InterviewDetail {
+  id: string;
+  job_id: string;
+  started_at: number;
+  ended_at?: number;
+  selected_model_id?: string;
+  job_title: string;
+  job_content: string;
+  question_count: number;
+  resumes_id?: string;
+  resumes_title?: string;
+  resumes_content?: string;
+  duration?: number;
+  interview_type: 'mock' | 'training';
+  status: InterviewStatus;
+  message?: string;
+  interview_state?: string;
+  locale?: string;
+  timezone?: string;
+  theme?: string;
+}
+
+export interface InterviewQuestion {
+  id: string;
+  question_id?: string;
+  question?: string;
+  answer?: string;
+  asked_question?: string;
+  candidate_answer?: string;
+  key_points?: string;
+  assessment?: string;
+  reference_answer?: string;
+  pros?: string;
+  cons?: string;
+  suggestions?: string;
+  created_at: number;
+}
+
+export interface InterviewSummary {
+  total_score?: number;
+  duration_sec?: number;
+  num_questions?: number;
+  overall_summary?: string;
+  pros?: string;
+  cons?: string;
+  suggestions?: string;
+  radar_interactivity?: number;
+  radar_confidence?: number;
+  radar_professionalism?: number;
+  radar_relevance?: number;
+  radar_clarity?: number;
+}
+
+export interface InterviewDetailResponse {
+  interview: InterviewDetail;
+  summary?: InterviewSummary;
+  questions: InterviewQuestion[];
+  insights?: any;
+  advantages?: any[];
 }
 
 export class InterviewService {
@@ -92,9 +156,9 @@ export class InterviewService {
   }
 
   /**
-   * 获取面试详情
+   * 获取面试详情（完整数据，包含问答记录）
    */
-  async getInterview(interviewId: string): Promise<{ interview: { id: string; status: InterviewStatus } } | null> {
+  async getInterview(interviewId: string): Promise<InterviewDetailResponse | null> {
     await this.ensureAuth();
 
     try {

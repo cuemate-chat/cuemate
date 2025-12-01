@@ -14,6 +14,7 @@ export function up(db: any): void {
     ALTER TABLE interviews ADD COLUMN interview_type TEXT DEFAULT 'mock' CHECK(interview_type IN ('mock','training'));
     ALTER TABLE interviews ADD COLUMN status TEXT DEFAULT 'idle';
     ALTER TABLE interviews ADD COLUMN message TEXT;
+    ALTER TABLE interviews ADD COLUMN interview_state TEXT DEFAULT 'idle';
 
     -- 修改 interview_reviews 表的 score_id 字段为 interview_id
     ALTER TABLE interview_reviews RENAME COLUMN score_id TO interview_id;
