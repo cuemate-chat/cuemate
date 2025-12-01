@@ -34,16 +34,27 @@ export interface ReportGeneratorParams {
 }
 
 export interface ScoreData {
-  total_score: number;
-  num_questions: number;
-  radar: {
+  // LLM 返回的 camelCase 格式（ScorePrompt 定义的格式）
+  totalScore?: number;
+  numQuestions?: number;
+  radarInteractivity?: number;
+  radarConfidence?: number;
+  radarProfessionalism?: number;
+  radarRelevance?: number;
+  radarClarity?: number;
+  overallSummary?: string;
+  // 兼容旧的 snake_case 格式
+  total_score?: number;
+  num_questions?: number;
+  radar?: {
     interactivity: number;
     confidence: number;
     professionalism: number;
     relevance: number;
     clarity: number;
   };
-  overall_summary: string;
+  overall_summary?: string;
+  // 通用字段
   pros: string;
   cons: string;
   suggestions: string;
@@ -104,20 +115,21 @@ export async function generateInterviewReport(params: ReportGeneratorParams): Pr
     const insightData = await generateInsightReport(jobTitle, resumeContent, reviewsData);
 
     // 保存评分报告（使用 ensureString 处理可能的数组格式）
+    // 注意：LLM 返回的字段名是 totalScore/radarInteractivity 等格式
     await interviewService.saveInterviewScore({
       interviewId,
-      totalScore: scoreData.total_score || 0,
+      totalScore: scoreData.totalScore || scoreData.total_score || 0,
       durationSec,
-      numQuestions: scoreData.num_questions || 0,
-      overallSummary: ensureString(scoreData.overall_summary) || '',
+      numQuestions: scoreData.numQuestions || scoreData.num_questions || reviews.length,
+      overallSummary: ensureString(scoreData.overallSummary || scoreData.overall_summary) || '',
       pros: ensureString(scoreData.pros) || '',
       cons: ensureString(scoreData.cons) || '',
       suggestions: ensureString(scoreData.suggestions) || '',
-      radarInteractivity: scoreData.radar?.interactivity || 0,
-      radarConfidence: scoreData.radar?.confidence || 0,
-      radarProfessionalism: scoreData.radar?.professionalism || 0,
-      radarRelevance: scoreData.radar?.relevance || 0,
-      radarClarity: scoreData.radar?.clarity || 0,
+      radarInteractivity: scoreData.radarInteractivity || scoreData.radar?.interactivity || 0,
+      radarConfidence: scoreData.radarConfidence || scoreData.radar?.confidence || 0,
+      radarProfessionalism: scoreData.radarProfessionalism || scoreData.radar?.professionalism || 0,
+      radarRelevance: scoreData.radarRelevance || scoreData.radar?.relevance || 0,
+      radarClarity: scoreData.radarClarity || scoreData.radar?.clarity || 0,
     });
 
     // 保存洞察报告（使用 ensureString 处理可能的数组格式）
@@ -255,17 +267,16 @@ async function processBatchScore(
   }
 
   // 合并结果（使用 ensureString 处理可能的数组格式）
+  // 注意：LLM 返回的字段名是 totalScore/radarInteractivity 等格式
   return {
-    total_score: Math.round(batchResults.reduce((sum, r) => sum + (r.total_score || 0), 0) / batchResults.length),
-    num_questions: reviews.length,
-    radar: {
-      interactivity: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.interactivity || 0), 0) / batchResults.length),
-      confidence: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.confidence || 0), 0) / batchResults.length),
-      professionalism: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.professionalism || 0), 0) / batchResults.length),
-      relevance: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.relevance || 0), 0) / batchResults.length),
-      clarity: Math.round(batchResults.reduce((sum, r) => sum + (r.radar?.clarity || 0), 0) / batchResults.length),
-    },
-    overall_summary: batchResults.map(r => ensureString(r.overall_summary)).join(' '),
+    totalScore: Math.round(batchResults.reduce((sum, r) => sum + (r.totalScore || r.total_score || 0), 0) / batchResults.length),
+    numQuestions: reviews.length,
+    radarInteractivity: Math.round(batchResults.reduce((sum, r) => sum + (r.radarInteractivity || r.radar?.interactivity || 0), 0) / batchResults.length),
+    radarConfidence: Math.round(batchResults.reduce((sum, r) => sum + (r.radarConfidence || r.radar?.confidence || 0), 0) / batchResults.length),
+    radarProfessionalism: Math.round(batchResults.reduce((sum, r) => sum + (r.radarProfessionalism || r.radar?.professionalism || 0), 0) / batchResults.length),
+    radarRelevance: Math.round(batchResults.reduce((sum, r) => sum + (r.radarRelevance || r.radar?.relevance || 0), 0) / batchResults.length),
+    radarClarity: Math.round(batchResults.reduce((sum, r) => sum + (r.radarClarity || r.radar?.clarity || 0), 0) / batchResults.length),
+    overallSummary: batchResults.map(r => ensureString(r.overallSummary || r.overall_summary)).join(' '),
     pros: batchResults.map(r => ensureString(r.pros)).join('\n'),
     cons: batchResults.map(r => ensureString(r.cons)).join('\n'),
     suggestions: batchResults.map(r => ensureString(r.suggestions)).join('\n'),
