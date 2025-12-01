@@ -5,6 +5,8 @@ import { logger } from '../../utils/logger.js';
 import { PiperTTS } from '../audio/PiperTTS.js';
 import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
 import { DockerServiceManager } from '../services/DockerServiceManager.js';
+import { ensureDockActiveAndIcon } from '../utils/dock.js';
+import { type AppSettings, loadSettings, saveSettings } from '../utils/settings.js';
 import { WindowManager } from '../windows/WindowManager.js';
 import { registerASRWebSocketHandlers } from './asrWebSocketHandlers.js';
 
@@ -80,53 +82,24 @@ export function setupIPC(windowManager: WindowManager): void {
   // 全局缓存 ASR 配置
   let asrConfigCache: any | null = null;
 
-  // === 隐身模式（内容保护）全局状态与持久化 ===
-  let stealthModeEnabled = false;
+  // === 使用公共设置模块 ===
+  let currentSettings: AppSettings = loadSettings();
 
-  // === 点击穿透模式全局状态与持久化 ===
-  let clickThroughEnabled = false;
-  // === Dock 图标显示状态 ===
-  let dockIconVisible = false;
-  // === Docker 退出时是否关闭（默认 false，即退出不关闭）===
-  let stopDockerOnQuit = false;
-  function getSettingsFilePath(): string {
-    const path = require('path');
-    return path.join(app.getPath('userData'), 'settings.json');
-  }
-  function loadSettings(): void {
-    try {
-      const fs = require('fs');
-      const file = getSettingsFilePath();
-      if (fs.existsSync(file)) {
-        const raw = fs.readFileSync(file, 'utf-8');
-        const json = JSON.parse(raw || '{}');
-        stealthModeEnabled = !!json.stealthModeEnabled;
-        clickThroughEnabled = !!json.clickThroughEnabled;
-        dockIconVisible = !!json.dockIconVisible;
-        stopDockerOnQuit = !!json.stopDockerOnQuit;
-      }
-    } catch {}
-  }
-  function saveSettings(): void {
-    try {
-      const fs = require('fs');
-      const file = getSettingsFilePath();
-      const dir = require('path').dirname(file);
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(
-        file,
-        JSON.stringify(
-          {
-            stealthModeEnabled,
-            clickThroughEnabled,
-            dockIconVisible,
-            stopDockerOnQuit,
-          },
-          null,
-          2,
-        ),
-      );
-    } catch {}
+  // 便捷访问器
+  let stealthModeEnabled = currentSettings.stealthModeEnabled;
+  let clickThroughEnabled = currentSettings.clickThroughEnabled;
+  let dockIconVisible = currentSettings.dockIconVisible;
+  let stopDockerOnQuit = currentSettings.stopDockerOnQuit;
+
+  // 保存当前设置
+  function persistSettings(): void {
+    currentSettings = {
+      stealthModeEnabled,
+      clickThroughEnabled,
+      dockIconVisible,
+      stopDockerOnQuit,
+    };
+    saveSettings(currentSettings);
   }
   function applyStealthModeToAllWindows(enabled: boolean): void {
     try {
@@ -168,8 +141,7 @@ export function setupIPC(windowManager: WindowManager): void {
     }
   }
 
-  // 初始化加载并应用一次（若已开启）
-  loadSettings();
+  // 初始化应用设置（设置已在上面通过 loadSettings() 加载）
   try {
     (global as any).stealthModeEnabled = stealthModeEnabled;
     (global as any).clickThroughEnabled = clickThroughEnabled;
@@ -181,18 +153,6 @@ export function setupIPC(windowManager: WindowManager): void {
   }
   if (clickThroughEnabled) {
     applyClickThroughToAllWindows(true);
-  }
-  // 应用 Dock 图标显示状态（仅在 macOS 上）
-  if (process.platform === 'darwin') {
-    try {
-      if (dockIconVisible) {
-        app.dock?.show();
-      } else {
-        app.dock?.hide();
-      }
-    } catch (error) {
-      logger.error({ error }, '应用 Dock 图标显示状态失败');
-    }
   }
 
   async function fetchAsrConfigFromServer(): Promise<any | null> {
@@ -335,7 +295,7 @@ export function setupIPC(windowManager: WindowManager): void {
         (global as any).stealthModeEnabled = stealthModeEnabled;
       } catch {}
       applyStealthModeToAllWindows(stealthModeEnabled);
-      saveSettings();
+      persistSettings();
       broadcastStealthChanged(stealthModeEnabled);
       return { success: true, enabled: stealthModeEnabled };
     } catch (error) {
@@ -355,7 +315,7 @@ export function setupIPC(windowManager: WindowManager): void {
         (global as any).clickThroughEnabled = clickThroughEnabled;
       } catch {}
       applyClickThroughToAllWindows(clickThroughEnabled);
-      saveSettings();
+      persistSettings();
       broadcastClickThroughChanged(clickThroughEnabled);
 
       // 通知主进程更新托盘菜单
@@ -1456,7 +1416,7 @@ export function setupIPC(windowManager: WindowManager): void {
         (global as any).clickThroughEnabled = clickThroughEnabled;
       } catch {}
       applyClickThroughToAllWindows(clickThroughEnabled);
-      saveSettings();
+      persistSettings();
       broadcastClickThroughChanged(clickThroughEnabled);
 
       // 同步到后端数据库
@@ -1641,14 +1601,19 @@ export function setupIPC(windowManager: WindowManager): void {
       // 仅在 macOS 上执行
       if (process.platform === 'darwin') {
         if (dockIconVisible) {
-          app.dock?.show();
+          // 使用 ensureDockActiveAndIcon 确保 Dock 图标正确显示（包括黑点）
+          await ensureDockActiveAndIcon('setDockIconVisible');
         } else {
+          // 隐藏 Dock 图标（先 accessory 再 hide）
+          if (typeof (app as any).setActivationPolicy === 'function') {
+            (app as any).setActivationPolicy('accessory');
+          }
           app.dock?.hide();
         }
       }
 
       // 保存到配置文件
-      saveSettings();
+      persistSettings();
 
       return { success: true, visible: dockIconVisible };
     } catch (error) {
@@ -1679,7 +1644,7 @@ export function setupIPC(windowManager: WindowManager): void {
       } catch {}
 
       // 保存到配置文件
-      saveSettings();
+      persistSettings();
 
       logger.info({ stopDockerOnQuit }, 'Docker 退出设置已更新');
       return { success: true, stopDockerOnQuit };

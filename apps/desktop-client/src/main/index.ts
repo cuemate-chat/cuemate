@@ -5,7 +5,9 @@ import { logger } from '../utils/logger.js';
 import { broadcastAppVisibilityChanged, setupIPC } from './ipc/handlers.js';
 import { AppUpdateManager } from './services/AppUpdateManager.js';
 import { DockerServiceManager } from './services/DockerServiceManager.js';
+import { ensureDockActiveAndIcon } from './utils/dock.js';
 import { getAppIconPath } from './utils/paths.js';
+import { loadSettings } from './utils/settings.js';
 import { setupGlobalShortcuts } from './utils/shortcuts.js';
 import { WindowManager } from './windows/WindowManager.js';
 
@@ -92,29 +94,39 @@ class CueMateApp {
         logger.error({ error }, 'Docker 服务启动失败，应用将继续运行');
       }
 
-      // 设置应用图标 & 确保 Dock 常驻
+      // 创建菜单栏图标（任务栏图标）
       try {
-        // 在 macOS 上隐藏 Dock 图标但保留菜单栏
-        if (process.platform === 'darwin') {
-          app.dock?.hide();
-        }
-
-        // 创建菜单栏图标（任务栏图标）
         this.createTrayIcon();
       } catch (error) {
-        logger.warn({ error }, '设置应用图标失败');
+        logger.warn({ error }, '创建菜单栏图标失败');
       }
 
       // 设置全局快捷键（必须在 app ready 之后）
       setupGlobalShortcuts(this.windowManager);
 
       // 初始化窗口管理器
-      this.windowManager
-        .initialize()
-        .then(() => {})
-        .catch((error) => {
-          logger.error({ err: error }, '窗口管理器初始化失败:');
-        });
+      await this.windowManager.initialize();
+
+      // 窗口创建完成后，再设置 Dock 状态（避免被 LSUIElement 覆盖）
+      try {
+        if (process.platform === 'darwin') {
+          const settings = loadSettings();
+          if (settings.dockIconVisible) {
+            // 用户设置为显示 Dock 图标
+            await ensureDockActiveAndIcon('startup');
+            logger.info('Dock 图标已显示（根据用户设置）');
+          } else {
+            // 用户设置为隐藏 Dock 图标（先 accessory 再 hide）
+            if (typeof (app as any).setActivationPolicy === 'function') {
+              (app as any).setActivationPolicy('accessory');
+            }
+            app.dock?.hide();
+            logger.info('Dock 图标已隐藏（根据用户设置）');
+          }
+        }
+      } catch (error) {
+        logger.warn({ error }, '设置 Dock 状态失败');
+      }
 
       // macOS: 当点击 dock 图标时重新激活（虽然 dock 图标已隐藏，但保留处理逻辑）
       app.on('activate', () => {
