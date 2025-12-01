@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { logger } from '../../utils/rendererLogger.js';
 
 // 面试训练阶段状态
 export type TrainingPhase =
@@ -7,24 +6,22 @@ export type TrainingPhase =
   | 'ai-generating'          // AI 生成答案中
   | 'listening-candidate';   // 监听面试者（麦克风）
 
-// 跨窗口共享的面试训练状态
+// 跨窗口共享的面试训练状态（只用于运行时同步，不存 localStorage）
 export interface InterviewTrainingState {
-  aiMessage: string;
-  speechText: string;
-  candidateAnswer: string; // 用户提交的回答（用于跨窗口触发 AI 分析）
-  interviewerQuestion: string; // 面试官问题（从扬声器识别）
-  isLoading: boolean;
-  isListening: boolean;
-  isAutoMode: boolean; // 自动/手动模式
-  currentPhase?: TrainingPhase; // 当前阶段
-  interviewState?: string; // 面试状态机状态
-  lastInterviewerSpeechTime: number; // 面试官最后一次说话时间
-  currentRoundReviewId: string | null; // 当前轮次的评审 ID
+  aiMessage: string;                    // AI 参考答案（从数据库获取）
+  speechText: string;                   // 实时语音转文字（运行时）
+  candidateAnswer: string;              // 用户回答（从数据库获取）
+  interviewerQuestion: string;          // 面试官问题（从数据库获取）
+  isLoading: boolean;                   // 加载中（运行时）
+  isListening: boolean;                 // 麦克风录音中（运行时）
+  isAutoMode: boolean;                  // 自动/手动模式（运行时）
+  currentPhase?: TrainingPhase;         // 当前阶段（运行时）
+  interviewState?: string;              // 面试状态（从数据库获取）
+  lastInterviewerSpeechTime: number;    // 面试官最后说话时间（运行时）
+  currentRoundReviewId: string | null;  // 当前轮次评审 ID（运行时）
   updatedAt: number;
 }
 
-const STORAGE_KEY = 'cuemate.interviewTraining.state';
-const AUTO_MODE_KEY = 'cuemate.interviewTraining.autoMode';
 const CHANNEL_NAME = 'cuemate.interviewTraining.channel';
 
 type ChannelMessage = { type: 'state'; payload: InterviewTrainingState };
@@ -34,134 +31,99 @@ try {
   channel = new BroadcastChannel(CHANNEL_NAME);
 } catch {}
 
+// 内存中的当前状态
+let currentState: InterviewTrainingState = getDefaultState();
+
 // 监听器（同窗口）
 const listeners = new Set<(s: InterviewTrainingState) => void>();
 
-// 获取持久化的自动模式设置
-function getPersistedAutoMode(): boolean {
-  try {
-    const saved = localStorage.getItem(AUTO_MODE_KEY);
-    if (saved !== null) return saved === 'true';
-  } catch {}
-  return false; // 默认手动模式
-}
-
 function getDefaultState(): InterviewTrainingState {
-  return { aiMessage: '', speechText: '', candidateAnswer: '', interviewerQuestion: '', isLoading: false, isListening: false, isAutoMode: getPersistedAutoMode(), currentPhase: undefined, interviewState: undefined, lastInterviewerSpeechTime: 0, currentRoundReviewId: null, updatedAt: Date.now() };
-}
-
-export function getInterviewTrainingState(): InterviewTrainingState {
-  try {
-    const cached = localStorage.getItem(STORAGE_KEY);
-    if (cached) {
-      const state = JSON.parse(cached) as InterviewTrainingState;
-      // 确保 isAutoMode 使用持久化的值
-      state.isAutoMode = getPersistedAutoMode();
-      return state;
-    }
-  } catch {}
-  return getDefaultState();
-}
-
-export function setInterviewTrainingState(next: Partial<InterviewTrainingState>): InterviewTrainingState {
-  const current = getInterviewTrainingState();
-  const merged: InterviewTrainingState = {
-    aiMessage: next.aiMessage ?? current.aiMessage,
-    speechText: next.speechText ?? current.speechText,
-    candidateAnswer: next.candidateAnswer ?? current.candidateAnswer,
-    interviewerQuestion: next.interviewerQuestion ?? current.interviewerQuestion,
-    isLoading: next.isLoading ?? current.isLoading,
-    isListening: next.isListening ?? current.isListening,
-    isAutoMode: next.isAutoMode ?? current.isAutoMode,
-    currentPhase: next.currentPhase ?? current.currentPhase,
-    interviewState: next.interviewState ?? current.interviewState,
-    lastInterviewerSpeechTime: next.lastInterviewerSpeechTime ?? current.lastInterviewerSpeechTime,
-    currentRoundReviewId: next.currentRoundReviewId ?? current.currentRoundReviewId,
-    updatedAt: Date.now(),
-  };
-
-  // 如果 isAutoMode 发生变化,持久化保存
-  if (next.isAutoMode !== undefined && next.isAutoMode !== current.isAutoMode) {
-    try {
-      localStorage.setItem(AUTO_MODE_KEY, String(merged.isAutoMode));
-    } catch (e) {
-      logger.error(`Failed to persist autoMode: ${e}`);
-    }
-  }
-
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-  } catch (e) {
-    logger.error(`Failed to update localStorage: ${e}`);
-  }
-  try {
-    channel?.postMessage({ type: 'state', payload: merged } as ChannelMessage);
-  } catch (e) {
-    logger.error(`Failed to send BroadcastChannel message: ${e}`);
-  }
-  // 同窗口立即通知
-  listeners.forEach((l) => {
-    try {
-      l(merged);
-    } catch {}
-  });
-  return merged;
-}
-
-export function clearInterviewTrainingState(): InterviewTrainingState {
-  // 保留用户的模式偏好设置
-  const currentAutoMode = getPersistedAutoMode();
-  const cleared: InterviewTrainingState = {
+  return {
     aiMessage: '',
     speechText: '',
     candidateAnswer: '',
     interviewerQuestion: '',
     isLoading: false,
     isListening: false,
-    isAutoMode: currentAutoMode, // 保留用户偏好
+    isAutoMode: false,
     currentPhase: undefined,
     interviewState: undefined,
     lastInterviewerSpeechTime: 0,
     currentRoundReviewId: null,
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
   };
+}
+
+export function getInterviewTrainingState(): InterviewTrainingState {
+  return currentState;
+}
+
+export function setInterviewTrainingState(next: Partial<InterviewTrainingState>): InterviewTrainingState {
+  currentState = {
+    aiMessage: next.aiMessage ?? currentState.aiMessage,
+    speechText: next.speechText ?? currentState.speechText,
+    candidateAnswer: next.candidateAnswer ?? currentState.candidateAnswer,
+    interviewerQuestion: next.interviewerQuestion ?? currentState.interviewerQuestion,
+    isLoading: next.isLoading ?? currentState.isLoading,
+    isListening: next.isListening ?? currentState.isListening,
+    isAutoMode: next.isAutoMode ?? currentState.isAutoMode,
+    currentPhase: next.currentPhase ?? currentState.currentPhase,
+    interviewState: next.interviewState ?? currentState.interviewState,
+    lastInterviewerSpeechTime: next.lastInterviewerSpeechTime ?? currentState.lastInterviewerSpeechTime,
+    currentRoundReviewId: next.currentRoundReviewId ?? currentState.currentRoundReviewId,
+    updatedAt: Date.now(),
+  };
+
+  // 通过 BroadcastChannel 同步到其他窗口
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleared));
+    channel?.postMessage({ type: 'state', payload: currentState } as ChannelMessage);
   } catch {}
-  try {
-    channel?.postMessage({ type: 'state', payload: cleared } as ChannelMessage);
-  } catch {}
+
+  // 同窗口立即通知
   listeners.forEach((l) => {
     try {
-      l(cleared);
+      l(currentState);
     } catch {}
   });
-  return cleared;
+
+  return currentState;
+}
+
+export function clearInterviewTrainingState(): InterviewTrainingState {
+  currentState = getDefaultState();
+
+  try {
+    channel?.postMessage({ type: 'state', payload: currentState } as ChannelMessage);
+  } catch {}
+
+  listeners.forEach((l) => {
+    try {
+      l(currentState);
+    } catch {}
+  });
+
+  return currentState;
 }
 
 export function useInterviewTrainingState(): InterviewTrainingState {
-  const [state, setState] = useState<InterviewTrainingState>(getInterviewTrainingState());
+  const [state, setState] = useState<InterviewTrainingState>(currentState);
 
   useEffect(() => {
     const onMessage = (e: MessageEvent<ChannelMessage>) => {
-      if (e.data?.type === 'state') setState(e.data.payload);
-    };
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          setState(JSON.parse(e.newValue));
-        } catch {}
+      if (e.data?.type === 'state') {
+        currentState = e.data.payload;
+        setState(e.data.payload);
       }
     };
+
     listeners.add(setState as any);
     channel?.addEventListener('message', onMessage as any);
-    window.addEventListener('storage', onStorage);
+
     return () => {
       listeners.delete(setState as any);
       try {
         channel?.removeEventListener('message', onMessage as any);
       } catch {}
-      window.removeEventListener('storage', onStorage);
     };
   }, []);
 

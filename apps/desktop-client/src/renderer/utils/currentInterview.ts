@@ -1,9 +1,9 @@
 /**
  * 当前面试 ID 管理工具
- * 使用 localStorage 存储,所有窗口共享,避免 React 闭包问题
+ * 直接使用 voiceState，不再单独存 localStorage
  */
 
-const CURRENT_INTERVIEW_KEY = 'current-interview-id';
+import { clearVoiceState, getVoiceState, setVoiceState } from '../../utils/voiceState';
 
 export const currentInterview = {
   /**
@@ -11,9 +11,11 @@ export const currentInterview = {
    */
   set(interviewId: string | undefined): void {
     if (interviewId) {
-      localStorage.setItem(CURRENT_INTERVIEW_KEY, interviewId);
-    } else {
-      localStorage.removeItem(CURRENT_INTERVIEW_KEY);
+      const current = getVoiceState();
+      setVoiceState({
+        ...current,
+        interviewId,
+      });
     }
   },
 
@@ -21,21 +23,22 @@ export const currentInterview = {
    * 获取当前面试 ID
    */
   get(): string | undefined {
-    const id = localStorage.getItem(CURRENT_INTERVIEW_KEY);
-    return id || undefined;
+    const voiceState = getVoiceState();
+    return voiceState.interviewId || undefined;
   },
 
   /**
    * 清除当前面试 ID
    */
   clear(): void {
-    localStorage.removeItem(CURRENT_INTERVIEW_KEY);
+    clearVoiceState();
   },
 
   /**
    * 检查是否存在当前面试
    */
   exists(): boolean {
-    return !!localStorage.getItem(CURRENT_INTERVIEW_KEY);
+    const voiceState = getVoiceState();
+    return !!voiceState.interviewId;
   },
 };
