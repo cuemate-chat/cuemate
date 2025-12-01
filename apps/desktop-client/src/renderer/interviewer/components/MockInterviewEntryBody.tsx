@@ -3,12 +3,15 @@
  * 模拟面试入口组件 - MockInterviewEntryBody
  * ============================================================================
  *
+ * 【核心原则】
+ * voiceState 只存 interviewId，所有数据 100% 从数据库获取
+ *
  * 【流程概述】
  * 模拟面试模式的完整流程分为以下步骤：
  *
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第一步：初始化                                                           │
- * │  - 检查是否有可恢复的面试（页面刷新后恢复）                                   │
+ * │  - 检查是否有可恢复的面试（从 voiceState 获取 interviewId，查数据库恢复）     │
  * │  - 加载音频设备配置                                                        │
  * │  - 检查 Piper TTS 可用性                                                  │
  * └─────────────────────────────────────────────────────────────────────────┘
@@ -18,49 +21,46 @@
  * │  - 创建面试记录（数据库）                                                  │
  * │  - 初始化状态机                                                           │
  * │  - 获取押题题库                                                           │
- * │  - 【保存】创建 interview_id，持久化到 localStorage                        │
+ * │  - 保存 interviewId 到 voiceState                                        │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第三步：初始化面试信息 (INITIALIZING)                                     │
  * │  - 构建初始化 Prompt                                                      │
  * │  - 初始化上下文管理服务                                                    │
- * │  - 【保存】初始化状态持久化                                                │
+ * │  - 更新数据库状态                                                         │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第四步：AI 思考问题 (AI_THINKING)                                         │
  * │  - 调用 LLM 生成面试问题                                                   │
  * │  - 使用上下文管理服务优化 prompt                                           │
- * │  - 【保存】当前问题持久化                                                  │
+ * │  - 创建问答记录到数据库                                                    │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第五步：AI 朗读问题 (AI_SPEAKING)                                         │
  * │  - 使用 Piper TTS 朗读问题                                                │
  * │  - 同时后台生成 AI 参考答案                                                │
- * │  - 【保存】AI 参考答案持久化                                               │
+ * │  - 更新问答记录（参考答案）                                                │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第六步：用户准备回答 (USER_LISTENING)                                     │
  * │  - 显示 AI 参考答案                                                       │
  * │  - 用户可以开始录音                                                       │
- * │  - 【保存】用户状态持久化                                                  │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第七步：用户回答中 (USER_SPEAKING)                                        │
  * │  - 用户通过语音或文本输入回答                                              │
  * │  - 用户点击"完成回答"提交                                                  │
- * │  - 【保存】用户回答持久化                                                  │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第八步：AI 分析用户回答 (AI_ANALYZING)                                    │
  * │  - 调用 LLM 分析用户回答（优缺点、建议等）                                   │
- * │  - 保存分析结果到数据库                                                    │
- * │  - 【保存】分析结果持久化                                                  │
+ * │  - 更新问答记录（用户回答、分析结果）                                       │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
@@ -68,7 +68,6 @@
  * │  - 判断是否继续下一轮                                                      │
  * │  - 继续：返回第四步                                                        │
  * │  - 结束：进入第十步                                                        │
- * │  - 【保存】轮次信息持久化                                                  │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
@@ -81,15 +80,14 @@
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第十一步：面试完成 (COMPLETED)                                            │
  * │  - 显示完成提示                                                           │
- * │  - 【清理】只在这一步才清理 localStorage 中的面试数据                        │
- * │  - 【重要】interview_id 绝对不能在其他任何步骤被清理！                       │
+ * │  - 清理 voiceState                                                       │
  * └─────────────────────────────────────────────────────────────────────────┘
  *
  * 【数据安全规则】
- * 1. interview_id 只在用户主动停止或面试正常完成时才能清理
- * 2. 页面刷新不清理任何数据，通过 localStorage 恢复
- * 3. 任何状态变化都立即保存到 localStorage
- * 4. 绝对禁止在面试中途清理 interview_id 或重置状态
+ * 1. voiceState 只存 interviewId，所有数据从数据库获取
+ * 2. 页面刷新后通过 interviewId 查询数据库恢复
+ * 3. 数据库是唯一数据源，不存在数据不一致问题
+ * 4. interviewId 只在用户主动停止或面试正常完成时才清理
  *
  * ============================================================================
  */
@@ -97,6 +95,7 @@
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { logger } from '../../../utils/rendererLogger.js';
+import { getTimerState, setTimerState } from '../../../utils/timerState';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { interviewDataService } from '../../ai-question/components/shared/data/InterviewDataService';
 import { contextManagementService } from '../../ai-question/components/shared/services/ContextManagementService';
@@ -107,19 +106,17 @@ import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { aiService } from '../../utils/ai/aiService';
 import { currentInterview } from '../../utils/currentInterview';
 import {
-  canStartInterview,
-  formatTimeSince,
+  canStartInterviewAsync,
   getInterviewTypeName,
   type OngoingInterviewInfo,
 } from '../../utils/interviewGuard';
 import {
   getMockInterviewStateMachine,
-  getRecoverableInterviewInfo,
   hasRecoverableInterview,
   restoreMockInterview,
   startMockInterview,
   stopMockInterview,
-  validateWithDatabase
+  validateWithDatabase,
 } from '../../utils/mockInterviewManager';
 import { setMockInterviewState, useMockInterviewState } from '../../utils/mockInterviewState';
 import { interviewService } from '../api/interviewService';
@@ -133,8 +130,8 @@ import {
   saveSpeakerDevice,
   type AudioDevice
 } from '../utils';
-import { JobPositionCard } from './JobPositionCard';
 import { onInterviewCommand } from '../utils/interviewCommandChannel';
+import { JobPositionCard } from './JobPositionCard';
 
 // ============================================================================
 // 类型定义
@@ -250,81 +247,79 @@ export function MockInterviewEntryBody({
   useEffect(() => {
     const checkAndRecoverInterview = async () => {
       try {
-        // 检查是否有可恢复的面试
+        // 检查是否有可恢复的面试（从 voiceState 检查）
         if (!hasRecoverableInterview()) {
           return;
         }
 
-        // 获取恢复信息
-        const recoverInfo = getRecoverableInterviewInfo();
-        if (!recoverInfo) {
+        // 先从数据库获取面试状态
+        const validationResult = await validateWithDatabase();
+        if (validationResult.status !== 'valid') {
           return;
         }
 
-        // 【恢复】状态机
-        const machine = restoreMockInterview();
+        // 【恢复】状态机（100% 从数据库获取数据）
+        const machine = await restoreMockInterview();
         if (!machine) {
           await logger.error('[第一步-B] 恢复状态机失败');
           return;
         }
 
+        // 从状态机获取恢复后的数据（100% 来自数据库）
+        const context = machine.getContext();
+        const currentState = machine.getState();
+
         // 【恢复】监听状态机变化
-        machine.onStateChange(async (state, context) => {
+        machine.onStateChange(async (state, ctx) => {
           setInterviewState(state);
           onStateChange?.(state);
-          await handleStateChange(state, context);
+          await handleStateChange(state, ctx);
         });
 
         // 【恢复】currentInterview（绝对不能丢失！）
-        currentInterview.set(recoverInfo.interviewId);
+        currentInterview.set(context.interviewId);
 
-        // 【恢复】voiceState
-        const isRecording = recoverInfo.state !== InterviewState.COMPLETED &&
-                          recoverInfo.state !== InterviewState.ERROR &&
-                          recoverInfo.state !== InterviewState.IDLE;
-        const pausedStateStr = localStorage.getItem('mock-interview-paused-state');
-        const isPaused = pausedStateStr ? JSON.parse(pausedStateStr).interviewId === recoverInfo.interviewId : false;
+        // 【恢复】voiceState（从数据库状态判断是否暂停）
+        const isPaused = validationResult.dbStatus === 'mock-interview-paused';
+        const isRecording = currentState !== InterviewState.COMPLETED &&
+                          currentState !== InterviewState.ERROR &&
+                          currentState !== InterviewState.IDLE;
         const subState = isPaused ? 'mock-interview-paused' : (isRecording ? 'mock-interview-recording' : 'idle');
 
         setVoiceState({
           mode: 'mock-interview',
           subState: subState,
-          interviewId: recoverInfo.interviewId,
+          interviewId: context.interviewId,
         });
+        // 恢复计时器时长
+        setTimerState({ duration: context.duration || 0, isRunning: !isPaused });
 
         // 【恢复】岗位信息
-        if (recoverInfo.jobPosition) {
-          setSelectedPosition(recoverInfo.jobPosition);
+        if (context.jobPosition) {
+          setSelectedPosition(context.jobPosition);
         }
 
         // 【恢复】数据服务
         interviewDataService.initializeInterview(
-          recoverInfo.interviewId,
-          recoverInfo.totalQuestions
+          context.interviewId,
+          context.totalQuestions
         );
 
         // 【恢复】跨窗口状态
         setMockInterviewState({
-          interviewState: recoverInfo.state,
-          aiMessage: recoverInfo.currentAnswer || '',
+          interviewState: currentState,
+          aiMessage: context.currentAnswer || '',
           speechText: '',
           candidateAnswer: '',
           isLoading: false,
-          isListening: recoverInfo.state === InterviewState.USER_LISTENING,
+          isListening: currentState === InterviewState.USER_LISTENING,
         });
 
-        // 【恢复】计时器时长
-        if (recoverInfo.elapsedTime && recoverInfo.elapsedTime > 0) {
-          setVoiceState({
-            timerDuration: recoverInfo.elapsedTime,
-          });
-        }
-
         // 【恢复】显示当前问题
-        if (recoverInfo.currentQuestion) {
-          setCurrentLine(recoverInfo.currentQuestion);
+        if (context.currentQuestion) {
+          setCurrentLine(context.currentQuestion);
         } else {
-          setCurrentLine(`面试已恢复，当前第 ${recoverInfo.currentQuestionIndex + 1} 题`);
+          setCurrentLine(`面试已恢复，当前第 ${context.currentQuestionIndex + 1} 题`);
         }
 
       } catch (error) {
@@ -404,21 +399,12 @@ export function MockInterviewEntryBody({
    * 【第二步】用户点击"开始模拟面试"按钮
    */
   const handleStartInterview = async () => {
-    // 【重要】先与数据库同步状态，确保本地状态与数据库一致
-    // 这样可以避免 localStorage 残留数据导致的误判
-    try {
-      await validateWithDatabase();
-    } catch (e) {
-      console.warn('[MockInterviewEntryBody] 数据库验证失败，继续使用本地状态', e);
-    }
-
-    // 【检查】互斥保护
-    const { canStart, blockingInterview: blocking } = canStartInterview('mock-interview');
+    // 【检查】互斥保护（异步查询数据库确认是否有进行中的面试）
+    const { canStart, blockingInterview: blocking } = await canStartInterviewAsync('mock-interview');
     if (!canStart && blocking) {
       setBlockingInterview(blocking);
       const typeName = getInterviewTypeName(blocking.type);
-      const timeSince = formatTimeSince(blocking.savedAt);
-      setErrorMessage(`无法开始模拟面试：您有一个未完成的${typeName}（${blocking.jobPositionTitle || '未知岗位'}，${timeSince}开始）。请先完成或结束该面试。`);
+      setErrorMessage(`无法开始模拟面试：您有一个未完成的${typeName}（${blocking.jobPositionTitle || '未知岗位'}）。请先完成或结束该面试。`);
       setCurrentLine('');
       return;
     }
@@ -637,6 +623,18 @@ export function MockInterviewEntryBody({
     console.debug(`[MockInterview] 状态变化: ${state}, questionIndex=${context.currentQuestionIndex}`);
 
     setMockInterviewState({ interviewState: state });
+
+    // 保存状态和时长到数据库（恢复时可以继续计时）
+    if (context.interviewId) {
+      try {
+        await interviewService.updateInterview(context.interviewId, {
+          interviewState: state,
+          duration: getTimerState().duration || 0,
+        });
+      } catch (error) {
+        console.error('[MockInterview] 保存 interviewState/duration 到数据库失败:', error);
+      }
+    }
 
     try {
       switch (state) {
@@ -877,7 +875,19 @@ export function MockInterviewEntryBody({
           analysisResult = analysisResult.trim();
 
           try {
-            const rawAnalysis = JSON.parse(analysisResult);
+            // 清理 markdown 代码块标记（AI 可能返回 ```json ... ```）
+            let jsonStr = analysisResult;
+            if (jsonStr.startsWith('```json')) {
+              jsonStr = jsonStr.slice(7);
+            } else if (jsonStr.startsWith('```')) {
+              jsonStr = jsonStr.slice(3);
+            }
+            if (jsonStr.endsWith('```')) {
+              jsonStr = jsonStr.slice(0, -3);
+            }
+            jsonStr = jsonStr.trim();
+
+            const rawAnalysis = JSON.parse(jsonStr);
 
             // 将 AI 返回的结果统一转换为字符串（AI 可能返回数组格式）
             const ensureStr = (v: unknown): string => {
@@ -979,14 +989,16 @@ export function MockInterviewEntryBody({
       const otherFileContent = similarQuestion?.otherContent || '';
 
       // 使用数据库中的 AnswerPrompt 模板
+      // 注意：优先使用当前面试的简历数据 context.resume，而不是向量数据库返回的可能过时的数据
+      // 向量数据库的 resumeContent 仅作为备用（当当前面试没有简历数据时）
       const answerQuestionPrompt = await promptService.buildAnswerPrompt(
         {
           title: context.jobPosition?.title || '',
           description: jobContent || context.jobPosition?.description || '',
         },
         {
-          resumeTitle: context.jobPosition?.resumeTitle || '',
-          resumeContent: resumeContent || context.jobPosition?.resumeContent || '',
+          resumeTitle: context.resume?.resumeTitle || '',
+          resumeContent: context.resume?.resumeContent || resumeContent || '',
         },
         context.currentQuestion,
         referenceAnswerFromBank || undefined,
@@ -1092,7 +1104,7 @@ export function MockInterviewEntryBody({
     setErrorMessage('');
 
     try {
-      const timerDuration = voiceState.timerDuration || 0;
+      const timerDuration = getTimerState().duration || 0;
 
       interviewDataService.markInterviewComplete();
 
@@ -1130,7 +1142,7 @@ export function MockInterviewEntryBody({
         interviewId,
         jobTitle: selectedPosition?.title || '未知职位',
         resumeContent: selectedPosition?.resumeContent || '',
-        durationSec: voiceState.timerDuration || 0,
+        durationSec: getTimerState().duration || 0,
         onError: (error) => {
           setErrorMessage(`后台生成面试报告失败: ${error}`);
           setTimestamp(Date.now());
@@ -1183,16 +1195,6 @@ export function MockInterviewEntryBody({
     try {
       machine.updateContextPartial({ isPaused: true });
 
-      const currentState = machine.getState();
-      const currentContext = machine.getContext();
-
-      localStorage.setItem('mock-interview-paused-state', JSON.stringify({
-        interviewId: interviewId,
-        state: currentState,
-        context: currentContext,
-        timestamp: Date.now()
-      }));
-
       await interviewService.updateInterview(interviewId, {
         status: 'mock-interview-paused',
         message: '面试已暂停'
@@ -1219,18 +1221,8 @@ export function MockInterviewEntryBody({
     if (!interviewId) return;
 
     try {
-      const savedStateStr = localStorage.getItem('mock-interview-paused-state');
-      if (!savedStateStr) {
-        throw new Error('未找到暂停的面试状态');
-      }
-
-      const savedState = JSON.parse(savedStateStr);
-
-      if (savedState.interviewId !== interviewId) {
-        throw new Error('暂停状态与当前面试不匹配');
-      }
-
-      machine.restoreContext(savedState.context);
+      // 状态机还在内存中，直接使用当前 context
+      const currentState = machine.getState();
       machine.updateContextPartial({ isPaused: false });
 
       await interviewService.updateInterview(interviewId, {
@@ -1245,9 +1237,7 @@ export function MockInterviewEntryBody({
       });
       setCurrentLine('面试已恢复');
 
-      continueFromState(savedState.state);
-
-      localStorage.removeItem('mock-interview-paused-state');
+      continueFromState(currentState);
 
     } catch (error) {
       await logger.error(`[继续] 恢复面试失败: ${error}`);
@@ -1262,7 +1252,7 @@ export function MockInterviewEntryBody({
         return;
       }
 
-      const timerDuration = voiceState.timerDuration || 0;
+      const timerDuration = getTimerState().duration || 0;
 
       setCurrentLine('正在结束面试...');
 

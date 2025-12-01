@@ -3,12 +3,15 @@
  * 面试训练模式入口组件 - InterviewTrainingEntryBody
  * ============================================================================
  *
+ * 【核心原则】
+ * voiceState 只存 interviewId，所有数据 100% 从数据库获取
+ *
  * 【流程概述】
  * 面试训练模式的完整流程分为以下步骤：
  *
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第一步：初始化                                                           │
- * │  - 检查是否有可恢复的训练（页面刷新后恢复）                                   │
+ * │  - 检查是否有可恢复的训练（从 voiceState 获取 interviewId，查数据库恢复）     │
  * │  - 加载音频设备配置                                                        │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
@@ -17,7 +20,7 @@
  * │  - 创建面试记录（数据库）                                                  │
  * │  - 初始化状态机                                                           │
  * │  - 开始监听扬声器（面试官语音）                                             │
- * │  - 【保存】创建 interview_id，持久化到 localStorage                        │
+ * │  - 保存 interviewId 到 voiceState                                        │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
@@ -25,35 +28,31 @@
  * │  - 扬声器实时识别面试官语音                                                │
  * │  - 手动模式：用户点击"提问完毕"                                            │
  * │  - 自动模式：5秒静音+>=5字自动触发                                         │
- * │  - 【保存】当前问题文本持久化                                              │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
- * │  第四步：生成AI参考答案 (GENERATING_ANSWER)                                │
+ * │  第四步：生成 AI 参考答案 (GENERATING_ANSWER)                              │
  * │  - 调用向量知识库搜索相似问题                                              │
- * │  - 调用LLM生成参考答案                                                    │
- * │  - 【保存】AI参考答案持久化                                               │
+ * │  - 调用 LLM 生成参考答案                                                  │
+ * │  - 【数据库】创建问答记录 (createReview)                                   │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第五步：用户查看答案并准备回答 (USER_LISTENING)                            │
- * │  - 显示AI参考答案                                                         │
+ * │  - 显示 AI 参考答案                                                       │
  * │  - 用户可以开始录音回答                                                    │
- * │  - 【保存】用户状态持久化                                                  │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第六步：用户回答中 (USER_SPEAKING)                                        │
  * │  - 用户通过语音或文本输入回答                                              │
  * │  - 用户点击"完成回答"提交                                                  │
- * │  - 【保存】用户回答持久化                                                  │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
- * │  第七步：AI分析用户回答 (AI_ANALYZING)                                     │
- * │  - 调用LLM分析用户回答（优缺点、建议等）                                     │
- * │  - 保存分析结果到数据库                                                    │
- * │  - 【保存】分析结果持久化                                                  │
+ * │  第七步：AI 分析用户回答 (AI_ANALYZING)                                    │
+ * │  - 调用 LLM 分析用户回答（优缺点、建议等）                                   │
+ * │  - 【数据库】更新问答记录 (updateReview: 用户回答 + 分析结果)               │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
@@ -61,28 +60,27 @@
  * │  - 判断是否继续下一轮                                                      │
  * │  - 继续：返回第三步                                                        │
  * │  - 结束：进入第九步                                                        │
- * │  - 【保存】轮次信息持久化                                                  │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第九步：生成面试报告 (GENERATING_REPORT)                                   │
  * │  - 汇总所有轮次的分析结果                                                  │
- * │  - 调用LLM生成综合评分和建议                                               │
- * │  - 保存报告到数据库                                                        │
+ * │  - 调用 LLM 生成综合评分和建议                                             │
+ * │  - 【数据库】保存报告 (saveInterviewScore + saveInterviewInsight)          │
  * └─────────────────────────────────────────────────────────────────────────┘
  *                                    ↓
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │  第十步：面试训练完成 (COMPLETED)                                          │
  * │  - 显示完成提示                                                           │
- * │  - 【清理】只在这一步才清理 localStorage 中的训练数据                        │
- * │  - 【重要】interview_id 绝对不能在其他任何步骤被清理！                       │
+ * │  - 【数据库】更新面试状态为 completed                                      │
+ * │  - 清理 voiceState                                                       │
  * └─────────────────────────────────────────────────────────────────────────┘
  *
  * 【数据安全规则】
- * 1. interview_id 只在用户主动停止或面试正常完成时才能清理
- * 2. 页面刷新不清理任何数据，通过 localStorage 恢复
- * 3. 任何状态变化都立即保存到 localStorage
- * 4. 绝对禁止在面试中途清理 interview_id 或重置状态
+ * 1. voiceState 只存 interviewId，所有数据从数据库获取
+ * 2. 页面刷新后通过 interviewId 查询数据库恢复
+ * 3. 数据库是唯一数据源，不存在数据不一致问题
+ * 4. interviewId 只在用户主动停止或面试正常完成时才清理
  *
  * ============================================================================
  */
@@ -92,6 +90,7 @@ import { ChevronDown, CornerDownLeft, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { startSpeakerRecognition } from '../../../utils/audioRecognition';
 import { logger } from '../../../utils/rendererLogger.js';
+import { getTimerState, setTimerState } from '../../../utils/timerState';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { interviewDataService } from '../../ai-question/components/shared/data/InterviewDataService';
 import { contextManagementService } from '../../ai-question/components/shared/services/ContextManagementService';
@@ -102,14 +101,12 @@ import type { ModelConfig, ModelParam } from '../../utils/ai/aiService';
 import { aiService } from '../../utils/ai/aiService';
 import { currentInterview } from '../../utils/currentInterview';
 import {
-  canStartInterview,
-  formatTimeSince,
+  canStartInterviewAsync,
   getInterviewTypeName,
   type OngoingInterviewInfo,
 } from '../../utils/interviewGuard';
 import { setInterviewTrainingState, useInterviewTrainingState } from '../../utils/interviewTrainingState';
 import {
-  getRecoverableTrainingInfo,
   getSpeakerController,
   getTrainingStateMachine,
   hasRecoverableTraining,
@@ -117,7 +114,7 @@ import {
   setSpeakerController,
   startInterviewTraining,
   stopInterviewTraining,
-  validateTrainingWithDatabase
+  validateTrainingWithDatabase,
 } from '../../utils/trainingManager';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
@@ -234,82 +231,80 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   useEffect(() => {
     const checkAndRecoverTraining = async () => {
       try {
-        // 检查是否有可恢复的训练
+        // 检查是否有可恢复的训练（从 voiceState 检查）
         if (!hasRecoverableTraining()) {
           return;
         }
 
-        // 获取恢复信息
-        const recoverInfo = getRecoverableTrainingInfo();
-        if (!recoverInfo) {
+        // 先从数据库获取训练状态
+        const validationResult = await validateTrainingWithDatabase();
+        if (validationResult.status !== 'valid') {
           return;
         }
 
-        // 【恢复】状态机
+        // 【恢复】状态机（100% 从数据库获取数据）
         const machine = await restoreInterviewTraining();
         if (!machine) {
           await logger.error('[第一步-B] 恢复状态机失败');
           return;
         }
 
+        // 从状态机获取恢复后的数据（100% 来自数据库）
+        const context = machine.getContext();
+        const currentState = machine.getState();
+
         // 【恢复】监听状态机变化
-        machine.onStateChange(async (state, context) => {
+        machine.onStateChange(async (state, ctx) => {
           setInterviewState(state);
-          await handleStateChange(state, context);
+          await handleStateChange(state, ctx);
         });
 
         // 【恢复】currentInterview（绝对不能丢失！）
-        currentInterview.set(recoverInfo.interviewId);
+        currentInterview.set(context.interviewId);
 
-        // 【恢复】voiceState
-        const isRecording = recoverInfo.state !== TrainingState.COMPLETED &&
-                          recoverInfo.state !== TrainingState.ERROR &&
-                          recoverInfo.state !== TrainingState.IDLE;
-        const pausedStateStr = localStorage.getItem('training-paused-state');
-        const isPaused = pausedStateStr ? JSON.parse(pausedStateStr).interviewId === recoverInfo.interviewId : false;
+        // 【恢复】voiceState（从数据库状态判断是否暂停）
+        const isPaused = validationResult.dbStatus === 'interview-training-paused';
+        const isRecording = currentState !== TrainingState.COMPLETED &&
+                          currentState !== TrainingState.ERROR &&
+                          currentState !== TrainingState.IDLE;
         const subState = isPaused ? 'interview-training-paused' : (isRecording ? 'interview-training-recording' : 'idle');
 
         setVoiceState({
           mode: 'interview-training',
           subState: subState,
-          interviewId: recoverInfo.interviewId,
+          interviewId: context.interviewId,
         });
+        // 恢复计时器时长
+        setTimerState({ duration: context.duration || 0, isRunning: !isPaused });
 
         // 【恢复】岗位信息
-        if (recoverInfo.jobPosition) {
-          setSelectedPosition(recoverInfo.jobPosition);
+        if (context.jobPosition) {
+          setSelectedPosition(context.jobPosition);
         }
 
         // 【恢复】数据服务
         interviewDataService.initializeInterview(
-          recoverInfo.interviewId,
-          recoverInfo.totalQuestions
+          context.interviewId,
+          context.totalQuestions
         );
 
         // 【恢复】跨窗口状态（AI参考答案、面试官问题等）
         setInterviewTrainingState({
-          interviewState: recoverInfo.state,
-          aiMessage: recoverInfo.currentAnswer || '',
+          interviewState: currentState,
+          aiMessage: context.referenceAnswer || '',
           speechText: '',
           candidateAnswer: '',
-          interviewerQuestion: recoverInfo.currentQuestion || '',
+          interviewerQuestion: context.currentQuestion || '',
           isLoading: false,
-          isListening: recoverInfo.state === TrainingState.USER_LISTENING,
-          currentPhase: recoverInfo.state === TrainingState.LISTENING_INTERVIEWER ? 'listening-interviewer' : undefined,
+          isListening: currentState === TrainingState.USER_LISTENING,
+          currentPhase: currentState === TrainingState.LISTENING_INTERVIEWER ? 'listening-interviewer' : undefined,
         });
 
-        // 【恢复】计时器时长
-        if (recoverInfo.elapsedTime && recoverInfo.elapsedTime > 0) {
-          setVoiceState({
-            timerDuration: recoverInfo.elapsedTime,
-          });
-        }
-
         // 【恢复】显示当前问题
-        if (recoverInfo.currentQuestion) {
-          setCurrentLine(recoverInfo.currentQuestion);
+        if (context.currentQuestion) {
+          setCurrentLine(context.currentQuestion);
         } else {
-          setCurrentLine(`训练已恢复，当前第 ${recoverInfo.currentQuestionIndex + 1} 题`);
+          setCurrentLine(`训练已恢复，当前第 ${context.currentQuestionIndex + 1} 题`);
         }
 
       } catch (error) {
@@ -334,21 +329,12 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
    * - 开始监听扬声器
    */
   const handleStartInterview = async () => {
-    // 【重要】先与数据库同步状态，确保本地状态与数据库一致
-    // 这样可以避免 localStorage 残留数据导致的误判
-    try {
-      await validateTrainingWithDatabase();
-    } catch (e) {
-      console.warn('[InterviewTrainingEntryBody] 数据库验证失败，继续使用本地状态', e);
-    }
-
-    // 【检查】互斥保护：是否有其他类型的面试正在进行
-    const { canStart, blockingInterview: blocking } = canStartInterview('interview-training');
+    // 【检查】互斥保护（异步查询数据库确认是否有进行中的面试）
+    const { canStart, blockingInterview: blocking } = await canStartInterviewAsync('interview-training');
     if (!canStart && blocking) {
       setBlockingInterview(blocking);
       const typeName = getInterviewTypeName(blocking.type);
-      const timeSince = formatTimeSince(blocking.savedAt);
-      setErrorMessage(`无法开始面试训练：您有一个未完成的${typeName}（${blocking.jobPositionTitle || '未知岗位'}，${timeSince}开始）。请先完成或结束该面试。`);
+      setErrorMessage(`无法开始面试训练：您有一个未完成的${typeName}（${blocking.jobPositionTitle || '未知岗位'}）。请先完成或结束该面试。`);
       setCurrentLine('');
       return;
     }
@@ -741,14 +727,16 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       const otherFileContent = similarQuestion?.otherContent || '';
 
       // 使用数据库中的 AnswerPrompt 模板
+      // 注意：优先使用当前面试的简历数据 context.resume，而不是向量数据库返回的可能过时的数据
+      // 向量数据库的 resumeContent 仅作为备用（当当前面试没有简历数据时）
       const answerQuestionPrompt = await promptService.buildAnswerPrompt(
         {
           title: context.jobPosition?.title || '',
           description: jobContent || context.jobPosition?.description || '',
         },
         {
-          resumeTitle: context.jobPosition?.resumeTitle || '',
-          resumeContent: resumeContent || context.jobPosition?.resumeContent || '',
+          resumeTitle: context.resume?.resumeTitle || '',
+          resumeContent: context.resume?.resumeContent || resumeContent || '',
         },
         context.currentQuestion,
         referenceAnswerFromBank || undefined,
@@ -893,6 +881,18 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   const handleStateChange = async (state: TrainingState, context: any) => {
     // 【保存】更新跨窗口状态
     setInterviewTrainingState({ interviewState: state });
+
+    // 保存状态和时长到数据库（恢复时可以继续计时）
+    if (context.interviewId) {
+      try {
+        await interviewService.updateInterview(context.interviewId, {
+          interviewState: state,
+          duration: getTimerState().duration || 0,
+        });
+      } catch (error) {
+        console.error('[InterviewTraining] 保存 interviewState/duration 到数据库失败:', error);
+      }
+    }
 
     try {
       switch (state) {
@@ -1046,7 +1046,19 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           analysisResult = analysisResult.trim();
 
           try {
-            const rawAnalysis = JSON.parse(analysisResult);
+            // 清理 markdown 代码块标记（AI 可能返回 ```json ... ```）
+            let jsonStr = analysisResult;
+            if (jsonStr.startsWith('```json')) {
+              jsonStr = jsonStr.slice(7);
+            } else if (jsonStr.startsWith('```')) {
+              jsonStr = jsonStr.slice(3);
+            }
+            if (jsonStr.endsWith('```')) {
+              jsonStr = jsonStr.slice(0, -3);
+            }
+            jsonStr = jsonStr.trim();
+
+            const rawAnalysis = JSON.parse(jsonStr);
 
             // 将 AI 返回的结果统一转换为字符串（AI 可能返回数组格式）
             const ensureStr = (v: unknown): string => {
@@ -1192,7 +1204,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     setErrorMessage('');
 
     try {
-      const timerDuration = voiceState.timerDuration || 0;
+      const timerDuration = getTimerState().duration || 0;
 
       interviewDataService.markInterviewComplete();
 
@@ -1232,7 +1244,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         const context = machine.getContext();
         const jobTitle = context.jobPosition?.title || '未知职位';
         const resumeContent = context.resume?.resumeContent || '';
-        const durationSec = voiceState.timerDuration || 0;
+        const durationSec = getTimerState().duration || 0;
 
         generateReport({
           interviewId,
@@ -1379,17 +1391,6 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     try {
       machine.updateContextPartial({ isPaused: true });
 
-      const currentState = machine.getState();
-      const currentContext = machine.getContext();
-
-      // 【保存】暂停状态
-      localStorage.setItem('training-paused-state', JSON.stringify({
-        interviewId: interviewId,
-        state: currentState,
-        context: currentContext,
-        timestamp: Date.now()
-      }));
-
       await interviewService.updateInterview(interviewId, {
         status: 'interview-training-paused',
         message: '面试训练已暂停'
@@ -1419,18 +1420,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     if (!interviewId) return;
 
     try {
-      const savedStateStr = localStorage.getItem('training-paused-state');
-      if (!savedStateStr) {
-        throw new Error('未找到暂停的训练状态');
-      }
-
-      const savedState = JSON.parse(savedStateStr);
-
-      if (savedState.interviewId !== interviewId) {
-        throw new Error('暂停状态与当前训练不匹配');
-      }
-
-      machine.restoreContext(savedState.context);
+      // 状态机还在内存中，直接使用当前 context
+      const currentState = machine.getState();
       machine.updateContextPartial({ isPaused: false });
 
       await interviewService.updateInterview(interviewId, {
@@ -1445,9 +1436,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       });
       setCurrentLine('面试训练已恢复');
 
-      continueFromState(savedState.state);
-
-      localStorage.removeItem('training-paused-state');
+      continueFromState(currentState);
 
     } catch (error) {
       await logger.error(`[继续] 恢复面试失败: ${error}`);
@@ -1469,7 +1458,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       // 停止扬声器监听
       await stopListeningInterviewer();
 
-      const timerDuration = voiceState.timerDuration || 0;
+      const timerDuration = getTimerState().duration || 0;
 
       setCurrentLine('正在结束面试训练...');
 
