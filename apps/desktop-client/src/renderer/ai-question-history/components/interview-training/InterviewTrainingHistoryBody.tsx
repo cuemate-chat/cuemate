@@ -21,22 +21,41 @@ export function InterviewTrainingHistoryBody({
   const containerRef = useRef<HTMLDivElement>(null);
   const [reviews, setReviews] = useState<InterviewReview[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
   const isFirstLoadRef = useRef(true);
   // 保存最后一个有效的 interviewId，用于刷新时使用
   const lastValidInterviewIdRef = useRef<string | undefined>(undefined);
 
   // 处理点击历史记录卡片
   const handleReviewClick = (review: InterviewReview) => {
+    setSelectedReviewId(review.id);
     // 通过 BroadcastChannel 发送消息到 AI Question 窗口
     const channel = new BroadcastChannel('interview-training-history-click');
     channel.postMessage({
       type: 'LOAD_HISTORY_REVIEW',
       data: {
+        askedQuestion: review.asked_question,
         aiMessage: review.reference_answer,
+        candidateAnswer: review.candidate_answer,
       }
     });
     channel.close();
   };
+
+  // 监听中间窗口的取消选中消息
+  useEffect(() => {
+    const channel = new BroadcastChannel('interview-training-history-click');
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'CLEAR_SELECTION') {
+        setSelectedReviewId(null);
+      }
+    };
+    channel.addEventListener('message', handleMessage);
+    return () => {
+      channel.removeEventListener('message', handleMessage);
+      channel.close();
+    };
+  }, []);
 
   // 加载面试训练记录
   useEffect(() => {
@@ -131,7 +150,7 @@ export function InterviewTrainingHistoryBody({
           {displayReviews.map((review, index) => (
             <Tooltip.Provider key={review.id}>
               <div
-                className="interview-review-card"
+                className={`interview-review-card ${selectedReviewId === review.id ? 'interview-review-card-selected' : ''}`}
                 onClick={() => handleReviewClick(review)}
                 style={{ cursor: 'pointer' }}
               >

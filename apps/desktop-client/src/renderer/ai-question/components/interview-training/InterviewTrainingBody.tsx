@@ -12,7 +12,9 @@ interface WindowBodyProps {
 
 export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }: WindowBodyProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [historyAskedQuestion, setHistoryAskedQuestion] = useState<string>('');
   const [historyAiMessage, setHistoryAiMessage] = useState<string>('');
+  const [historyCandidateAnswer, setHistoryCandidateAnswer] = useState<string>('');
   const [isShowingHistory, setIsShowingHistory] = useState(false);
   const [isHoveringMessage, setIsHoveringMessage] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -43,7 +45,9 @@ export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }:
     const channel = new BroadcastChannel('interview-training-history-click');
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'LOAD_HISTORY_REVIEW') {
-        setHistoryAiMessage(event.data.data.aiMessage);
+        setHistoryAskedQuestion(event.data.data.askedQuestion || '');
+        setHistoryAiMessage(event.data.data.aiMessage || '');
+        setHistoryCandidateAnswer(event.data.data.candidateAnswer || '');
         setIsShowingHistory(true);
       }
     };
@@ -58,15 +62,21 @@ export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }:
 
   // 恢复当前对话
   const handleRestoreCurrentConversation = () => {
+    setHistoryAskedQuestion('');
     setHistoryAiMessage('');
+    setHistoryCandidateAnswer('');
     setIsShowingHistory(false);
+    // 通知历史窗口取消选中状态
+    const channel = new BroadcastChannel('interview-training-history-click');
+    channel.postMessage({ type: 'CLEAR_SELECTION' });
+    channel.close();
   };
 
   // 决定显示哪个消息：历史记录优先
   const displayAiMessage = isShowingHistory ? historyAiMessage : aiMessage;
 
   return (
-    <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
       <div className="ai-window-body" ref={contentRef} style={{ flex: 1, overflow: 'auto' }}>
         {!displayAiMessage && !isLoading ? (
           // 空状态显示
@@ -81,10 +91,77 @@ export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }:
               AI 分析结果和您的回答将在这里显示
             </div>
           </div>
-        ) : (
-          // 消息气泡显示
+        ) : isShowingHistory ? (
+          // 历史记录模式：显示面试官问题、AI 回答、我的回答
           <div className="ai-messages">
-            {/* 参考答案气泡（靠左） */}
+            {/* 面试官问题（靠左，90% 宽度） */}
+            {historyAskedQuestion && (
+              <div
+                className="ai-message ai-message-interviewer animate__animated animate__fadeInUp"
+                style={{ width: '90%', alignSelf: 'flex-start' }}
+              >
+                <div className="ai-message-label">面试官问题</div>
+                <div className="ai-message-content">
+                  {historyAskedQuestion.split('\n').map((line, index) => (
+                    <div key={index} className="message-line">
+                      {line || '\u00A0'}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* AI 回答（靠右，90% 宽度） */}
+            {historyAiMessage && (
+              <div
+                className="ai-message ai-message-history-ai animate__animated animate__fadeInUp"
+                style={{ width: '90%', alignSelf: 'flex-end', position: 'relative' }}
+                onMouseEnter={() => setIsHoveringMessage(true)}
+                onMouseLeave={() => setIsHoveringMessage(false)}
+              >
+                <div className="ai-message-label">AI 回答</div>
+                <div className="ai-message-content">
+                  {historyAiMessage.split('\n').map((line, index) => (
+                    <div key={index} className="message-line">
+                      {line || '\u00A0'}
+                    </div>
+                  ))}
+                </div>
+                {/* 复制按钮 */}
+                {isHoveringMessage && (
+                  <button
+                    className="message-copy-btn"
+                    onClick={() => handleCopyContent(historyAiMessage)}
+                    title={isCopied ? '已复制' : '复制内容'}
+                    style={isCopied ? { background: 'rgba(34, 197, 94, 0.8)' } : undefined}
+                  >
+                    {isCopied ? <Check size={12} /> : <Copy size={12} />}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* 我的回答（靠右，90% 宽度） */}
+            {historyCandidateAnswer && (
+              <div
+                className="ai-message ai-message-user animate__animated animate__fadeInUp"
+                style={{ width: '90%', alignSelf: 'flex-end' }}
+              >
+                <div className="ai-message-label">我的回答</div>
+                <div className="ai-message-content">
+                  {historyCandidateAnswer.split('\n').map((line, index) => (
+                    <div key={index} className="message-line">
+                      {line || '\u00A0'}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          // 正常模式：显示当前 AI 回答
+          <div className="ai-messages">
+            {/* AI 参考答案气泡（靠左） */}
             {displayAiMessage && (
               <div
                 className="ai-message ai-message-ai ai-message-reference animate__animated animate__fadeInUp"
@@ -110,19 +187,6 @@ export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }:
                     {isCopied ? <Check size={12} /> : <Copy size={12} />}
                   </button>
                 )}
-              </div>
-            )}
-
-            {/* 用户回答气泡（靠右） - 仅在查看历史记录时显示 */}
-            {isShowingHistory && candidateAnswer && (
-              <div className="ai-message ai-message-user animate__animated animate__fadeInUp">
-                <div className="ai-message-content">
-                  {candidateAnswer.split('\n').map((line, index) => (
-                    <div key={index} className="message-line">
-                      {line || '\u00A0'}
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
 
