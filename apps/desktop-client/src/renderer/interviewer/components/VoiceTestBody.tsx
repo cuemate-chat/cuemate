@@ -11,23 +11,71 @@ interface RecognitionResult {
   timestamp: number;
 }
 
+type TestStatus = 'untested' | 'testing' | 'success' | 'failed';
+
+// localStorage key
+const VOICE_TEST_STORAGE_KEY = 'cuemate_voice_test_result';
+
+interface VoiceTestStorageData {
+  micStatus: TestStatus;
+  speakerStatus: TestStatus;
+  micRecognitionResult: RecognitionResult;
+  speakerRecognitionResult: RecognitionResult;
+}
+
+// 从 localStorage 读取上次测试结果
+function loadVoiceTestResult(): VoiceTestStorageData | null {
+  try {
+    const data = localStorage.getItem(VOICE_TEST_STORAGE_KEY);
+    if (data) {
+      const parsed = JSON.parse(data) as VoiceTestStorageData;
+      // testing 状态不保留，重置为上次的最终状态
+      if (parsed.micStatus === 'testing') parsed.micStatus = 'untested';
+      if (parsed.speakerStatus === 'testing') parsed.speakerStatus = 'untested';
+      return parsed;
+    }
+  } catch {}
+  return null;
+}
+
+// 保存测试结果到 localStorage
+function saveVoiceTestResult(data: VoiceTestStorageData): void {
+  try {
+    localStorage.setItem(VOICE_TEST_STORAGE_KEY, JSON.stringify(data));
+  } catch {}
+}
 
 export function VoiceTestBody() {
+  // 初始化时从 localStorage 读取上次结果
+  const savedResult = loadVoiceTestResult();
+
   const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([]);
   const [speakerDevices, setSpeakerDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedMic, setSelectedMic] = useState<string>('');
   const [selectedSpeaker, setSelectedSpeaker] = useState<string>('');
-  const [micStatus, setMicStatus] = useState<'untested' | 'testing' | 'success' | 'failed'>('untested');
-  const [speakerStatus, setSpeakerStatus] = useState<'untested' | 'testing' | 'success' | 'failed'>('untested');
-  const [showingMicResult, setShowingMicResult] = useState(false);
-  const [showingSpeakerResult, setShowingSpeakerResult] = useState(false);
-  const [micRecognitionResult, setMicRecognitionResult] = useState<RecognitionResult>({ text: '', error: '', timestamp: 0 });
-  const [speakerRecognitionResult, setSpeakerRecognitionResult] = useState<RecognitionResult>({ text: '', error: '', timestamp: 0 });
+  const [micStatus, setMicStatus] = useState<TestStatus>(savedResult?.micStatus || 'untested');
+  const [speakerStatus, setSpeakerStatus] = useState<TestStatus>(savedResult?.speakerStatus || 'untested');
+  const [showingMicResult, setShowingMicResult] = useState(savedResult?.micStatus === 'success' || savedResult?.micStatus === 'failed');
+  const [showingSpeakerResult, setShowingSpeakerResult] = useState(savedResult?.speakerStatus === 'success' || savedResult?.speakerStatus === 'failed');
+  const [micRecognitionResult, setMicRecognitionResult] = useState<RecognitionResult>(savedResult?.micRecognitionResult || { text: '', error: '', timestamp: 0 });
+  const [speakerRecognitionResult, setSpeakerRecognitionResult] = useState<RecognitionResult>(savedResult?.speakerRecognitionResult || { text: '', error: '', timestamp: 0 });
   const micControllerRef = useRef<MicrophoneRecognitionController | null>(null);
   const speakerControllerRef = useRef<SpeakerRecognitionController | null>(null);
 
   // 使用 VoiceState 来控制下拉列表状态
   const voiceState = useVoiceState();
+
+  // 状态变化时保存到 localStorage（仅保存最终状态，不保存 testing）
+  useEffect(() => {
+    if (micStatus !== 'testing' && speakerStatus !== 'testing') {
+      saveVoiceTestResult({
+        micStatus,
+        speakerStatus,
+        micRecognitionResult,
+        speakerRecognitionResult,
+      });
+    }
+  }, [micStatus, speakerStatus, micRecognitionResult, speakerRecognitionResult]);
 
   useEffect(() => {
     (async () => {
@@ -356,7 +404,7 @@ export function VoiceTestBody() {
           <h5>麦克风识别结果：</h5>
           {micRecognitionResult.text && (<div className="recognized-text">{micRecognitionResult.text}</div>)}
           {micRecognitionResult.error && (<div className="error-text" style={{ color: '#ff6b6b', marginTop: '8px' }}>{micRecognitionResult.error}</div>)}
-          {micRecognitionResult.timestamp > 0 && (<div className="timestamp" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{new Date(micRecognitionResult.timestamp).toLocaleTimeString()}</div>)}
+          {micRecognitionResult.timestamp > 0 && (<div className="timestamp" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{new Date(micRecognitionResult.timestamp).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>)}
         </div>
       )}
 
@@ -365,7 +413,7 @@ export function VoiceTestBody() {
           <h5>扬声器识别结果：</h5>
           {speakerRecognitionResult.text && (<div className="recognized-text">{speakerRecognitionResult.text}</div>)}
           {speakerRecognitionResult.error && (<div className="error-text" style={{ color: '#ff6b6b', marginTop: '8px' }}>{speakerRecognitionResult.error}</div>)}
-          {speakerRecognitionResult.timestamp > 0 && (<div className="timestamp" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{new Date(speakerRecognitionResult.timestamp).toLocaleTimeString()}</div>)}
+          {speakerRecognitionResult.timestamp > 0 && (<div className="timestamp" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{new Date(speakerRecognitionResult.timestamp).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>)}
         </div>
       )}
     </div>
