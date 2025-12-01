@@ -160,3 +160,8 @@ export async function uploadJobResume(
 export async function deleteJobResume(jobId: string): Promise<{ success: boolean; message: string }> {
   return await http.delete<{ success: boolean; message: string }>(`/jobs/${jobId}/resume-file`);
 }
+
+// 删除简历优化记录
+export async function deleteResumeOptimization(optimizationId: string): Promise<{ success: boolean; message: string }> {
+  return await http.delete<{ success: boolean; message: string }>(`/resume-optimizations/${optimizationId}`);
+}
