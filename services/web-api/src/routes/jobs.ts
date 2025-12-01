@@ -974,6 +974,48 @@ export function registerJobRoutes(app: FastifyInstance) {
     }
   });
 
+  // 删除简历优化记录 DELETE /resume-optimizations/:id
+  app.delete('/resume-optimizations/:id', async (req, reply) => {
+    try {
+      const payload = await req.jwtVerify();
+      const id = (req.params as any)?.id as string;
+
+      if (!id) {
+        return reply
+          .code(400)
+          .send(buildPrefixedError('删除失败', new Error('优化记录 ID 不能为空'), 400));
+      }
+
+      // 检查记录是否存在且属于当前用户
+      const existing = app.db
+        .prepare('SELECT id FROM resume_optimizations WHERE id = ? AND user_id = ?')
+        .get(id, payload.uid);
+
+      if (!existing) {
+        return reply.code(404).send({ error: '简历优化记录不存在' });
+      }
+
+      // 删除记录
+      const result = app.db
+        .prepare('DELETE FROM resume_optimizations WHERE id = ? AND user_id = ?')
+        .run(id, payload.uid);
+
+      if (result.changes === 0) {
+        return reply.code(404).send({ error: '简历优化记录不存在或已被删除' });
+      }
+
+      app.log.info({ optimizationId: id, userId: payload.uid }, '简历优化记录已删除');
+
+      return {
+        success: true,
+        message: '简历优化记录删除成功'
+      };
+    } catch (err: any) {
+      app.log.error({ err }, '删除简历优化记录失败');
+      return reply.code(500).send(buildPrefixedError('删除简历优化记录失败', err, 500));
+    }
+  });
+
   // 简历优化接口
   app.post(
     '/jobs/optimize-resume',
