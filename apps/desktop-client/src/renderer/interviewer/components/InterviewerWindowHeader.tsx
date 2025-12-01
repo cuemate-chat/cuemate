@@ -31,10 +31,12 @@ export function InterviewerWindowHeader({
       globalState.subState === 'mock-interview-paused' ||
       globalState.subState === 'mock-interview-playing' ||
       globalState.subState === 'mock-interview-completed' ||
+      globalState.subState === 'mock-interview-expired' ||
       globalState.subState === 'interview-training-recording' ||
       globalState.subState === 'interview-training-paused' ||
       globalState.subState === 'interview-training-playing' ||
-      globalState.subState === 'interview-training-completed'
+      globalState.subState === 'interview-training-completed' ||
+      globalState.subState === 'interview-training-expired'
     );
     const shouldRunTimer = isInterviewMode && (
       globalState.subState === 'mock-interview-recording' ||

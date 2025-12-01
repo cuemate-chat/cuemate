@@ -5,10 +5,10 @@ import { ChevronDown, ChevronUp, CornerDownLeft, MousePointer, MousePointerClick
 import { useEffect, useState } from 'react';
 import { logger } from '../../../utils/rendererLogger.js';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
-import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
-import { userSettingsService } from '../api/userSettingsService';
 import { sendInterviewCommand } from '../../interviewer/utils/interviewCommandChannel';
+import { LottieAudioLines } from '../../shared/components/LottieAudioLines';
 import { getOngoingInterviewSync } from '../../utils/interviewGuard';
+import { userSettingsService } from '../api/userSettingsService';
 
 interface LoggedInControlBarProps {
   // 暂时不添加任何 props
@@ -38,9 +38,9 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
 
       // 如果是 mock-interview 或 interview-training 模式，还需要处理语音状态
       if (isMI || isIT) {
-        // 从 idle、completed 或 error 状态开始录制
-        if (vState.subState === 'idle' || vState.subState === 'mock-interview-completed' || vState.subState === 'interview-training-completed' || vState.subState === 'mock-interview-error' || vState.subState === 'interview-training-error') {
-          setVoiceState({ subState: isMI ? 'mock-interview-recording' : 'interview-training-recording' });
+        // completed、error 或 expired 状态：只打开窗口，不改变状态（面试已结束）
+        if (vState.subState === 'mock-interview-completed' || vState.subState === 'interview-training-completed' || vState.subState === 'mock-interview-error' || vState.subState === 'interview-training-error' || vState.subState === 'mock-interview-expired' || vState.subState === 'interview-training-expired') {
+          // 不做任何状态改变，只打开窗口显示已完成状态
         }
         // 从 recording 状态暂停录制
         else if (vState.subState === 'mock-interview-recording' || vState.subState === 'interview-training-recording') {

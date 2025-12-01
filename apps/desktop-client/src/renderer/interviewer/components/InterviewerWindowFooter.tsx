@@ -154,6 +154,16 @@ export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
               tooltipText = '面试训练已完成';
               IconComponent = CheckCircle;
               break;
+            case 'mock-interview-expired':
+              statusText = '模拟面试已过期';
+              tooltipText = '模拟面试已过期（超过24小时）';
+              IconComponent = CheckCircle;
+              break;
+            case 'interview-training-expired':
+              statusText = '面试训练已过期';
+              tooltipText = '面试训练已过期（超过24小时）';
+              IconComponent = CheckCircle;
+              break;
             case 'idle':
             default:
               statusText = '暂未开始';
