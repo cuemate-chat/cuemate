@@ -254,6 +254,30 @@ export function MockInterviewEntryBody({
 
         // 先从数据库获取面试状态
         const validationResult = await validateWithDatabase();
+
+        // 已完成的面试也需要显示数据（不是恢复状态机，而是显示已完成状态）
+        if (validationResult.status === 'completed' && validationResult.interviewId) {
+          // 设置 voiceState 为已完成状态
+          setVoiceState({
+            mode: 'mock-interview',
+            subState: 'mock-interview-completed',
+            interviewId: validationResult.interviewId,
+          });
+          // 从数据库获取最后一个问题显示
+          try {
+            const result = await interviewService.getInterview(validationResult.interviewId);
+            if (result?.questions && result.questions.length > 0) {
+              const lastQuestion = result.questions[result.questions.length - 1];
+              setCurrentLine(lastQuestion.asked_question || lastQuestion.question || '面试已完成');
+            } else {
+              setCurrentLine('面试已完成');
+            }
+          } catch {
+            setCurrentLine('面试已完成');
+          }
+          return;
+        }
+
         if (validationResult.status !== 'valid') {
           return;
         }
