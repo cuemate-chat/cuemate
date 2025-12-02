@@ -7,6 +7,7 @@ import type {
   User,
 } from '../types';
 import { http, storage } from './http';
+import { getWebSocketBridge } from '../utils/websocketBridge';
 
 // 默认用户表单数据
 export const defaultUserForm = {
@@ -61,10 +62,7 @@ export async function signin(account: string, password: string): Promise<LoginRe
 
   // 通过 WebSocket 通知桌面应用登录状态已变化
   try {
-    // 检查是否在 Electron 环境中
     if (typeof window !== 'undefined' && (window as any).process?.versions?.electron) {
-      // 使用 WebSocket 通信
-      const { getWebSocketBridge } = await import('../utils/websocketBridge');
       const bridge = getWebSocketBridge();
       bridge.notifyLoginSuccess(response.user);
     }
@@ -110,15 +108,11 @@ export async function signout(): Promise<void> {
 
   // 通过 WebSocket 通知桌面应用登录状态已变化（登出）
   try {
-    // 检查是否在 Electron 环境中
     if (typeof window !== 'undefined' && (window as any).process?.versions?.electron) {
-      // 使用 WebSocket 通信
-      const { getWebSocketBridge } = await import('../utils/websocketBridge');
       const bridge = getWebSocketBridge();
       bridge.notifyLogout();
     }
   } catch (error) {
-    // 静默处理通知失败
     console.warn('通知桌面应用登录状态变化失败:', error);
   }
 

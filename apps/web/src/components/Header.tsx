@@ -17,6 +17,7 @@ import { fetchUnreadCount } from '../api/notifications';
 import { storage } from '../api/http';
 import UserMenu from './UserMenu';
 import LanguageSelector from './LanguageSelector';
+import { getWebSocketBridge } from '../utils/websocketBridge';
 
 export default function Header() {
   const { pathname } = useLocation();
@@ -108,19 +109,15 @@ export default function Header() {
       ),
       okText: '确认跳转',
       cancelText: '取消',
-      onOk: async () => {
+      onOk: () => {
         if (isElectron()) {
           try {
-            // 使用 WebSocket 通信方式
-            const { getWebSocketBridge } = await import('../utils/websocketBridge');
             const bridge = getWebSocketBridge();
             bridge.openExternal(helpUrl);
           } catch {
-            // WebSocket 通信失败，使用降级方案
             window.open(helpUrl, '_blank');
           }
         } else {
-          // 在普通浏览器中，打开新标签页
           window.open(helpUrl, '_blank', 'noopener,noreferrer');
         }
       }
