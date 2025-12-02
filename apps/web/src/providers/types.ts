@@ -33,6 +33,7 @@ export interface ProviderManifest {
   kind: ModelKind; // 模型类型
   icon?: string; // 图标 URL(可选)
   icon_url?: string; // 图标文件路径,用于存储到数据库
+  jump_link?: string; // 跳转到官方文档的链接
   modelNamePlaceholder?: string;
   baseModels?: (string | BaseModel)[]; // 该提供商支持的"基础模型/版本"列表,可以是简单字符串或包含参数配置的对象
   credentialFieldsPerModel?: Record<string, ProviderField[]>; // 针对不同基础模型定制凭据字段
