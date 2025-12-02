@@ -9,7 +9,6 @@ import AdsPixel from './pages/AdsPixel';
 import AIRecords from './pages/AIRecords';
 import Asr from './pages/Asr';
 import DockerMonitorList from './pages/DockerMonitorList';
-import Help from './pages/Help';
 import Home from './pages/Home';
 import JobsList from './pages/JobsList';
 import JobsNew from './pages/JobsNew';
@@ -49,7 +48,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/settings/preset-questions" element={<PresetQuestionsList />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/reviews/:id" element={<ReviewDetail />} />
-          <Route path="/help" element={<Help />} />
           <Route path="/legal/user-agreement" element={<UserAgreement />} />
           <Route path="/legal/privacy" element={<PrivacyPolicy />} />
           <Route path="/settings" element={<Settings />} />
