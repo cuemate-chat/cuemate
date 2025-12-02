@@ -1,8 +1,8 @@
 import {
-    EyeInvisibleOutlined,
-    EyeOutlined
+  EyeInvisibleOutlined,
+  EyeOutlined
 } from '@ant-design/icons';
-import { Button, Input, Select, Switch, Tabs } from 'antd';
+import { Button, Input, Modal, Select, Switch, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
 import { testModelConfig } from '../../api/models';
 import DrawerProviderLevel2, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProviderLevel2';
@@ -19,6 +19,14 @@ interface ModelEditDrawerProps {
   onTestingChange?: (testing: boolean) => void; // 通知父组件测试状态
 }
 
+// 判断是否运行在 Electron 容器
+const isElectron = () => {
+  return (
+    typeof window !== 'undefined' &&
+    (window as any).electronAPI !== undefined
+  );
+};
+
 export default function ModelEditDrawer({
   open,
   onClose,
@@ -31,6 +39,46 @@ export default function ModelEditDrawer({
   const [form, setForm] = useState<any>(data || { scope: 'public', type: 'llm', params: [] });
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+
+  // 处理跳转到配置文档
+  const handleJumpToDoc = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const provider = findProvider(form.provider);
+    const jumpLink = provider?.jump_link;
+    if (!jumpLink) return;
+
+    Modal.confirm({
+      title: '确认跳转到外部网站',
+      content: (
+        <div className="space-y-3">
+          <div className="text-sm text-slate-600 dark:text-slate-200">
+            即将跳转到 {provider?.name || ''} 模型配置页面：
+          </div>
+          <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-100 break-all">
+            {jumpLink}
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-300">
+            链接将在{isElectron() ? '外部浏览器' : '新标签页'}中打开
+          </div>
+        </div>
+      ),
+      okText: '确认跳转',
+      cancelText: '取消',
+      onOk: async () => {
+        if (isElectron()) {
+          try {
+            const { getWebSocketBridge } = await import('../../utils/websocketBridge');
+            const bridge = getWebSocketBridge();
+            bridge.openExternal(jumpLink);
+          } catch {
+            window.open(jumpLink, '_blank');
+          }
+        } else {
+          window.open(jumpLink, '_blank', 'noopener,noreferrer');
+        }
+      }
+    });
+  };
 
   useEffect(() => {
     const base = data || { scope: 'public', type: 'llm', params: [] };
@@ -244,8 +292,18 @@ export default function ModelEditDrawer({
                   <div className="space-y-5 pt-2 w-full overflow-y-auto flex-1">
                     {/* 模型名称：上下结构 */}
                     <div className="w-full">
-                      <div className="mb-1 text-slate-700 dark:text-slate-200">
-                        模型名称<span className="text-red-500"> *</span>
+                      <div className="mb-1 flex items-center justify-between">
+                        <div className="text-slate-700 dark:text-slate-200">
+                          模型名称<span className="text-red-500"> *</span>
+                        </div>
+                        {findProvider(form.provider)?.jump_link && (
+                          <button
+                            onClick={handleJumpToDoc}
+                            className="text-xs text-blue-500 hover:text-blue-600 hover:underline"
+                          >
+                            查看配置文档
+                          </button>
+                        )}
                       </div>
                       <Input
                         value={form.name}
