@@ -34,6 +34,9 @@ const mainContentAPI = {
 
   // 通知托盘菜单设置已变更
   notifySettingsChanged: () => ipcRenderer.invoke('notify-settings-changed'),
+
+  // 在外部浏览器中打开链接
+  openExternalUrl: (url: string) => ipcRenderer.invoke('open-external-url', url),
 };
 
 // 通过 contextBridge 安全地暴露 API
