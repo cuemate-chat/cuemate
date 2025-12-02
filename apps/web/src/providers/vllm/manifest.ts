@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/vllm_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/vllm.html',
   modelNamePlaceholder: '如 Qwen/Qwen2.5-7B-Instruct / meta-llama/Meta-Llama-3.1-8B-Instruct',
   baseModels: [
     {

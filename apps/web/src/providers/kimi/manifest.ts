@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/kimi_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/kimi.html',
   modelNamePlaceholder: '如 moonshot-v1-128k / moonshot-v1-32k / moonshot-v1-8k',
   baseModels: [
     {

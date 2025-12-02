@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/tencent_cloud_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/tencent-cloud.html',
   modelNamePlaceholder: '如 deepseek-v3.1 / deepseek-r1-0528 / deepseek-v3-0324',
   baseModels: [
     {

@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/regolo_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/regolo.html',
   modelNamePlaceholder: '如 deepseek-r1-70b / Llama-3.3-70B-Instruct',
   baseModels: [
     {

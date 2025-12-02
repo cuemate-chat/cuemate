@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/ollama_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/ollama.html',
   modelNamePlaceholder: '如 deepseek-r1:8b / qwen3:8b / gemma3:12b / qwen3-coder:30b',
   baseModels: [
     {

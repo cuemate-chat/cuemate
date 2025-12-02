@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/bedrock_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/bedrock.html',
   modelNamePlaceholder:
     '如 anthropic.claude-sonnet-4-5-20250929-v1:0 / amazon.nova-pro-v1:0',
   baseModels: [

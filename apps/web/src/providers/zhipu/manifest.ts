@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/zhipuai_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/zhipu.html',
   modelNamePlaceholder: '如 glm-4 / glm-4v / glm-3-turbo',
   baseModels: [
   {

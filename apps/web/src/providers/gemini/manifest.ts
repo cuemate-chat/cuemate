@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/gemini_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/gemini.html',
   modelNamePlaceholder: '如 gemini-2.0-flash-001 / gemini-1.5-pro-002 / gemini-1.5-flash-002',
   baseModels: [
   {

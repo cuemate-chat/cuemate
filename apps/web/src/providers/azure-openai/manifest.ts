@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/azure_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/azure-openai.html',
   modelNamePlaceholder: '部署名称，如 gpt-4o-mini 部署',
   baseModels: [
   {

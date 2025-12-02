@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/volcanic_engine_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/volcengine.html',
   modelNamePlaceholder:
     '在控制台开通后填写完整模型名称（如 doubao-seed-1-6-251015）或接入点 ID（ep-xxx）',
   baseModels: [

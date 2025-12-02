@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/minimax_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/minimax.html',
   modelNamePlaceholder: '如 MiniMax-M2, abab6.5s-chat, abab6.5t-chat 等',
   baseModels: [
     {

@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/siliconCloud_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/siliconflow.html',
   modelNamePlaceholder: '如 deepseek-ai/DeepSeek-R1 / Qwen/Qwen2.5-72B-Instruct',
   baseModels: [
     {

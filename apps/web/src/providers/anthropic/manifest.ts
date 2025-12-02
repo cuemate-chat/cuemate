@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/anthropic_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/anthropic.html',
   modelNamePlaceholder: '如 claude-sonnet-4-5-20250929 / claude-sonnet-4-20250514 / claude-3-5-sonnet-20241022',
   baseModels: [
     {

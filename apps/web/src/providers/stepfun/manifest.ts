@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/stepfun_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/stepfun.html',
   modelNamePlaceholder: '如 step-2-mini, step-2-16k, step-1-8k, step-1-256k 等',
   baseModels: [
     {

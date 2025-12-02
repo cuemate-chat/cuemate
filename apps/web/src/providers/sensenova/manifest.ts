@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/sensenova_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/sensenova.html',
   modelNamePlaceholder: '如 SenseNova-V6-5-Omni, Qwen2-5-Coder, SenseChat-5 等',
   baseModels: [
     {

@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/openai_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/openai.html',
   modelNamePlaceholder: '如 gpt-5, gpt-4o, gpt-3.5-turbo 等',
   baseModels: [
   {

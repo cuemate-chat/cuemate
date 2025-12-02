@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/aliyun_bai_lian_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/aliyun-bailian.html',
   modelNamePlaceholder: '如 qwen3-max / qwen-plus / qwen-flash',
   baseModels: [
     {

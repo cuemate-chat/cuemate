@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/baidu_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/baidu.html',
   modelNamePlaceholder: '如 ERNIE-4.5-Turbo, DeepSeek-V3, Kimi-K2-Instruct 等',
   baseModels: [
     // ERNIE 系列（百度自家模型）

@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/tencent_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/tencent.html',
   modelNamePlaceholder: '如 hunyuan-turbos-latest / hunyuan-t1-latest / hunyuan-lite',
   baseModels: [
     {

@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/deepseek_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/deepseek.html',
   modelNamePlaceholder: '如 deepseek-reasoner / deepseek-chat',
   baseModels: [
     {

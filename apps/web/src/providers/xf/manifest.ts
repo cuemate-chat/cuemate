@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/xf_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/xf.html',
   modelNamePlaceholder: '如 x1 / 4.0Ultra / max-32k / generalv3.5',
   baseModels: [
     {

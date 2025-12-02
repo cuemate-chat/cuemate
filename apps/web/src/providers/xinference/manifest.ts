@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/xinference_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/xinference.html',
   modelNamePlaceholder: '如 qwen2.5-7b-instruct / deepseek-r1-8b / llama-3.1-8b-instruct',
   baseModels: [
     {

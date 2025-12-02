@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/baichuan_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/baichuan.html',
   modelNamePlaceholder: '如 Baichuan4, Baichuan3-Turbo, Baichuan3-Turbo-128k 等',
   baseModels: [
     {

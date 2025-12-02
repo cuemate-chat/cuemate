@@ -8,6 +8,7 @@ const manifest: ProviderManifest = {
   kind: 'llm',
   icon: Icon,
   icon_url: 'assets/llm/local_icon_svg',
+  jump_link: 'https://cuemate.chat/guide/models/providers/local.html',
   modelNamePlaceholder: '如 llama3.1:8b（配合 Ollama/vLLM/xInference 等）',
   baseModels: [
     {
