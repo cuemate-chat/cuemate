@@ -8,6 +8,7 @@ import { testModelConfig } from '../../api/models';
 import DrawerProviderLevel2, { DrawerContent, DrawerFooter, DrawerHeader } from '../../components/DrawerProviderLevel2';
 import { message } from '../../components/Message';
 import { findProvider } from '../../providers';
+import { getWebSocketBridge } from '../../utils/websocketBridge';
 
 interface ModelEditDrawerProps {
   open: boolean;
@@ -19,11 +20,11 @@ interface ModelEditDrawerProps {
   onTestingChange?: (testing: boolean) => void; // 通知父组件测试状态
 }
 
-// 判断是否运行在 Electron 容器
+// 判断是否运行在 Electron 环境中
 const isElectron = () => {
   return (
-    typeof window !== 'undefined' &&
-    (window as any).electronAPI !== undefined
+    (typeof navigator !== 'undefined' && /Electron/i.test(navigator.userAgent)) ||
+    (typeof window !== 'undefined' && (window as any).process?.versions?.electron)
   );
 };
 
@@ -64,10 +65,9 @@ export default function ModelEditDrawer({
       ),
       okText: '确认跳转',
       cancelText: '取消',
-      onOk: async () => {
+      onOk: () => {
         if (isElectron()) {
           try {
-            const { getWebSocketBridge } = await import('../../utils/websocketBridge');
             const bridge = getWebSocketBridge();
             bridge.openExternal(jumpLink);
           } catch {
