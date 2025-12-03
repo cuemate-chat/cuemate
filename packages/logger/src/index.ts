@@ -113,6 +113,113 @@ function safeJson(input: unknown) {
 export { fastifyLoggingHooks } from './fastify.js';
 export { getLoggerTimeZone, setLoggerTimeZone } from './tz.js';
 
+/**
+ * 日志数据类型
+ */
+export interface LogData {
+  [key: string]: unknown;
+}
+
+/**
+ * 模块级别 logger 接口
+ */
+export interface ModuleLogger {
+  info: (func: string, message: string, data?: LogData, step?: string) => void;
+  warn: (func: string, message: string, data?: LogData, step?: string) => void;
+  error: (func: string, message: string, data?: LogData, error?: unknown, step?: string) => void;
+  debug: (func: string, message: string, data?: LogData, step?: string) => void;
+  http: {
+    request: (func: string, url: string, method: string, body?: unknown) => void;
+    response: (func: string, url: string, status: number, data?: unknown) => void;
+    error: (func: string, url: string, error: unknown, requestData?: unknown, responseData?: unknown) => void;
+  };
+}
+
+/**
+ * 创建模块级别的 logger（推荐使用）
+ *
+ * @example
+ * const log = createModuleLogger(logger, 'UserService');
+ *
+ * log.info('getUser', '获取用户', { userId: 1 });
+ * log.error('getUser', '获取用户失败', { userId: 1 }, error, '数据库查询');
+ * log.http.request('fetchData', '/api/data', 'POST', { id: 1 });
+ * log.http.error('fetchData', '/api/data', error, requestBody, responseBody);
+ */
+export function createModuleLogger(baseLogger: pino.Logger, module: string): ModuleLogger {
+  const formatMsg = (func: string, message: string, step?: string): string => {
+    return step ? `[${module}][${func}][${step}] ${message}` : `[${module}][${func}] ${message}`;
+  };
+
+  const formatData = (data?: LogData, error?: unknown): Record<string, unknown> => {
+    const result: Record<string, unknown> = {};
+
+    if (error) {
+      if (error instanceof Error) {
+        result.error = { name: error.name, message: error.message, stack: error.stack };
+      } else {
+        result.error = String(error);
+      }
+    }
+
+    if (data && Object.keys(data).length > 0) {
+      result.data = data;
+    }
+
+    return result;
+  };
+
+  return {
+    info: (func: string, message: string, data?: LogData, step?: string) => {
+      baseLogger.info(formatData(data), formatMsg(func, message, step));
+    },
+
+    warn: (func: string, message: string, data?: LogData, step?: string) => {
+      baseLogger.warn(formatData(data), formatMsg(func, message, step));
+    },
+
+    error: (func: string, message: string, data?: LogData, error?: unknown, step?: string) => {
+      baseLogger.error(formatData(data, error), formatMsg(func, message, step));
+    },
+
+    debug: (func: string, message: string, data?: LogData, step?: string) => {
+      baseLogger.debug(formatData(data), formatMsg(func, message, step));
+    },
+
+    http: {
+      request: (func: string, url: string, method: string, body?: unknown) => {
+        baseLogger.info(
+          { data: body ? { requestBody: body } : undefined },
+          formatMsg(func, `HTTP ${method} ${url}`),
+        );
+      },
+
+      response: (func: string, url: string, status: number, data?: unknown) => {
+        baseLogger.info(
+          { data: data ? { responseData: data } : undefined },
+          formatMsg(func, `HTTP Response ${status} from ${url}`),
+        );
+      },
+
+      error: (func: string, url: string, error: unknown, requestData?: unknown, responseData?: unknown) => {
+        const errorInfo = error instanceof Error
+          ? { name: error.name, message: error.message }
+          : { message: String(error) };
+        baseLogger.error(
+          {
+            error: errorInfo,
+            data: {
+              ...(requestData ? { request: requestData } : {}),
+              ...(responseData ? { response: responseData } : {}),
+            },
+          },
+          formatMsg(func, `HTTP Error from ${url}`),
+        );
+      },
+    },
+  };
+}
+
 // Banner 工具函数
 export function printBanner(serviceName: string, version?: string, port?: number) {
   const serviceVersion = version || process.env.VERSION || 'N/A';
