@@ -230,9 +230,16 @@ function QATab({ data }: any) {
             </div>
             <div className="w-0 h-0 border-t-8 border-t-blue-700 border-r-8 border-r-transparent"></div>
           </div>
-          {/* 右上角时间 */}
-          <div className="absolute right-3 top-2 text-xs text-slate-400">
-            {dayjs(q.created_at).format('YYYY-MM-DD HH:mm')}
+          {/* 右上角时间和时长 */}
+          <div className="absolute right-3 top-2 text-xs text-slate-400 flex items-center gap-2">
+            {q.duration != null && q.duration > 0 && (
+              <span className="text-blue-500">
+                {q.duration >= 60
+                  ? `${Math.floor(q.duration / 60)}分${q.duration % 60 > 0 ? `${q.duration % 60}秒` : ''}`
+                  : `${q.duration}秒`}
+              </span>
+            )}
+            <span>{dayjs(q.created_at).format('YYYY-MM-DD HH:mm')}</span>
           </div>
           <div className="pl-4 md:pl-6">
             {/* 问题标题行 */}
