@@ -88,7 +88,7 @@
     "appId": "com.cuemate.desktop",
     "productName": "CueMate",
     "npmRebuild": false,
-    "afterPack": "./build/afterPack.js",
+    "afterPack": "./build/afterPack.cjs",
     "directories": {
       "output": "release"
     },
