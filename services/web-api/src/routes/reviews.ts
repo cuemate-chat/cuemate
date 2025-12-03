@@ -141,7 +141,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
                   r.pros,
                   r.cons,
                   r.suggestions,
-                  r.created_at
+                  r.created_at,
+                  r.end_at,
+                  r.duration
              FROM interview_reviews r
         LEFT JOIN interviews i2 ON r.interview_id = i2.id
             WHERE r.interview_id=?

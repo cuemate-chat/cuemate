@@ -260,6 +260,8 @@ export function registerInterviewRoutes(app: FastifyInstance) {
   // - assessment: 对这个问题回答的评价
   // - reference_answer: 这个问题的参考答案
   // - created_at: 创建时间戳 (毫秒)
+  // - end_at: 问题结束时间戳 (毫秒)
+  // - duration: 问题回答时长 (秒)
 
   // 创建面试复盘条目
   app.post(
@@ -285,6 +287,8 @@ export function registerInterviewRoutes(app: FastifyInstance) {
             referenceAnswer: z.string().optional(),
             otherId: z.string().optional(),
             otherContent: z.string().optional(),
+            endAt: z.number().optional(),
+            duration: z.number().optional(),
           })
           .parse((req as any).body || {});
 
@@ -303,8 +307,8 @@ export function registerInterviewRoutes(app: FastifyInstance) {
             `INSERT INTO interview_reviews (
               id, interview_id, note_type, content, question_id, question,
               answer, asked_question, candidate_answer, pros, cons,
-              suggestions, key_points, assessment, reference_answer, other_id, other_content, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              suggestions, key_points, assessment, reference_answer, other_id, other_content, created_at, end_at, duration
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .run(
             id,
@@ -325,6 +329,8 @@ export function registerInterviewRoutes(app: FastifyInstance) {
             body.otherId || null,
             body.otherContent || null,
             now,
+            body.endAt || null,
+            body.duration || null,
           );
 
         // 记录操作日志
@@ -394,7 +400,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           SELECT
             r.id, r.interview_id, r.note_type, r.content, r.question_id, r.question,
             r.answer, r.asked_question, r.candidate_answer, r.pros, r.cons,
-            r.suggestions, r.key_points, r.assessment, r.reference_answer, r.other_id, r.other_content, r.created_at
+            r.suggestions, r.key_points, r.assessment, r.reference_answer, r.other_id, r.other_content, r.created_at, r.end_at, r.duration
           FROM interview_reviews r
           JOIN interviews i ON r.interview_id = i.id
           ${whereClause}
@@ -440,6 +446,8 @@ export function registerInterviewRoutes(app: FastifyInstance) {
             referenceAnswer: z.string().optional(),
             otherId: z.string().optional(),
             otherContent: z.string().optional(),
+            endAt: z.number().optional(),
+            duration: z.number().optional(),
           })
           .parse((req as any).body || {});
 
@@ -518,6 +526,14 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         if (body.otherContent !== undefined) {
           updateFields.push('other_content = ?');
           updateValues.push(body.otherContent);
+        }
+        if (body.endAt !== undefined) {
+          updateFields.push('end_at = ?');
+          updateValues.push(body.endAt);
+        }
+        if (body.duration !== undefined) {
+          updateFields.push('duration = ?');
+          updateValues.push(body.duration);
         }
 
         if (updateFields.length > 0) {
