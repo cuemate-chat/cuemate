@@ -1,10 +1,8 @@
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 
-# 配置镜像源
-RUN sed -i 's|deb.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources && \
-    sed -i 's|security.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources && \
-    npm config set registry https://registry.npmmirror.com && \
+# 配置 npm/pnpm 镜像源
+RUN npm config set registry https://registry.npmmirror.com && \
     npm install -g pnpm && \
     pnpm config set registry https://registry.npmmirror.com
 
@@ -20,14 +18,14 @@ RUN pnpm -r --filter @cuemate/logger --filter @cuemate/llm-router build
 FROM node:22-bookworm-slim
 WORKDIR /app
 
-# 配置镜像源
-RUN sed -i 's|deb.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources && \
-    sed -i 's|security.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources && \
-    npm config set registry https://registry.npmmirror.com && \
+# 配置 npm/pnpm 镜像源
+RUN npm config set registry https://registry.npmmirror.com && \
     npm install -g pnpm && \
     pnpm config set registry https://registry.npmmirror.com
 
 # 使用 cache mount 加速 apt 包下载
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y dumb-init tzdata
