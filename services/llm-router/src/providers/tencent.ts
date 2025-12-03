@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('TencentProvider');
 
 export class TencentProvider extends BaseLLMProvider {
   constructor() {
@@ -74,7 +76,7 @@ export class TencentProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Tencent completion failed:');
+      log.error('complete', 'Tencent completion failed', {}, error);
       throw error;
     }
   }
@@ -140,7 +142,7 @@ export class TencentProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Tencent stream failed:');
+      log.error('stream', 'Tencent stream failed', {}, error);
       throw error;
     }
   }
@@ -175,11 +177,11 @@ export class TencentProvider extends BaseLLMProvider {
         });
         return true;
       } catch (e) {
-        logger.error('Tencent healthCheck failed', e as any);
+        log.error('healthCheck', 'Tencent healthCheck failed', {}, e);
         return false;
       }
     } catch (error) {
-      logger.error({ err: error }, 'Tencent healthCheck client creation failed:');
+      log.error('healthCheck', 'Tencent healthCheck client creation failed', {}, error);
       return false;
     }
   }

@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('StepFunProvider');
 
 export class StepFunProvider extends BaseLLMProvider {
   constructor() {
@@ -51,7 +53,7 @@ export class StepFunProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'StepFun completion failed');
+      log.error('complete', 'StepFun completion failed', {}, error);
       throw error;
     }
   }
@@ -99,7 +101,7 @@ export class StepFunProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'StepFun stream failed');
+      log.error('stream', 'StepFun stream failed', {}, error);
       throw error;
     }
   }
@@ -126,7 +128,7 @@ export class StepFunProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, `StepFun health check failed for model ${config.model}`);
+      log.error('healthCheck', `StepFun health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

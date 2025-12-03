@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('DeepSeekProvider');
 
 export class DeepSeekProvider extends BaseLLMProvider {
   constructor() {
@@ -54,7 +56,7 @@ export class DeepSeekProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'DeepSeek completion failed:');
+      log.error('complete', 'DeepSeek completion failed', {}, error);
       throw error;
     }
   }
@@ -102,7 +104,7 @@ export class DeepSeekProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'DeepSeek stream failed:');
+      log.error('stream', 'DeepSeek stream failed', {}, error);
       throw error;
     }
   }
@@ -129,7 +131,7 @@ export class DeepSeekProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, `DeepSeek health check failed for model ${config.model}:`);
+      log.error('healthCheck', `DeepSeek health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

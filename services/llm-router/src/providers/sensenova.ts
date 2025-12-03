@@ -1,5 +1,7 @@
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('SenseNovaProvider');
 
 export class SenseNovaProvider extends BaseLLMProvider {
   constructor() {
@@ -59,7 +61,7 @@ export class SenseNovaProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'SenseNova completion failed');
+      log.error('complete', 'SenseNova completion failed', {}, error);
       throw error;
     }
   }
@@ -137,13 +139,13 @@ export class SenseNovaProvider extends BaseLLMProvider {
                 });
               }
             } catch (e) {
-              logger.warn({ err: e, data }, 'Failed to parse SSE data');
+              log.warn('stream', 'Failed to parse SSE data', { data });
             }
           }
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'SenseNova stream failed');
+      log.error('stream', 'SenseNova stream failed', {}, error);
       throw error;
     }
   }
@@ -180,7 +182,7 @@ export class SenseNovaProvider extends BaseLLMProvider {
 
       return true;
     } catch (error) {
-      logger.error({ err: error }, `SenseNova health check failed for model ${config.model}`);
+      log.error('healthCheck', `SenseNova health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

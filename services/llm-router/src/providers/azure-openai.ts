@@ -1,6 +1,8 @@
 import { AzureOpenAI } from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('AzureOpenAIProvider');
 
 export class AzureOpenAIProvider extends BaseLLMProvider {
   constructor() {
@@ -62,7 +64,7 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Azure OpenAI completion failed:');
+      log.error('complete', 'Azure OpenAI completion failed', {}, error);
       throw error;
     }
   }
@@ -118,7 +120,7 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Azure OpenAI stream failed:');
+      log.error('stream', 'Azure OpenAI stream failed', {}, error);
       throw error;
     }
   }
@@ -159,7 +161,7 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
         });
         return true;
       } catch (e) {
-        logger.error('Azure OpenAI healthCheck failed', e as any);
+        log.error('healthCheck', 'Azure OpenAI healthCheck failed', {}, e);
         return false;
       }
     } catch {

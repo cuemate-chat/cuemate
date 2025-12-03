@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('TencentCloudProvider');
 
 export class TencentCloudProvider extends BaseLLMProvider {
   constructor() {
@@ -51,7 +53,7 @@ export class TencentCloudProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Tencent Cloud completion failed:');
+      log.error('complete', 'Tencent Cloud completion failed', {}, error);
       throw error;
     }
   }
@@ -99,7 +101,7 @@ export class TencentCloudProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Tencent Cloud stream failed:');
+      log.error('stream', 'Tencent Cloud stream failed', {}, error);
       throw error;
     }
   }
@@ -126,7 +128,7 @@ export class TencentCloudProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, `Tencent Cloud health check failed for model ${config.model}:`);
+      log.error('healthCheck', `Tencent Cloud health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

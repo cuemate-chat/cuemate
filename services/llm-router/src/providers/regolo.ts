@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('RegoloProvider');
 
 export class RegoloProvider extends BaseLLMProvider {
   constructor() {
@@ -51,7 +53,7 @@ export class RegoloProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Regolo completion failed:');
+      log.error('complete', 'Regolo completion failed', {}, error);
       throw error;
     }
   }
@@ -99,7 +101,7 @@ export class RegoloProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Regolo stream failed:');
+      log.error('stream', 'Regolo stream failed', {}, error);
       throw error;
     }
   }
@@ -126,7 +128,7 @@ export class RegoloProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, `Regolo health check failed for model ${config.model}:`);
+      log.error('healthCheck', `Regolo health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

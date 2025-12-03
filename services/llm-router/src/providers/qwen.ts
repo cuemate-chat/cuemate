@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('QwenProvider');
 
 export class QwenProvider extends BaseLLMProvider {
   constructor() {
@@ -54,7 +56,7 @@ export class QwenProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Qwen completion failed:');
+      log.error('complete', 'Qwen completion failed', {}, error);
       throw error;
     }
   }
@@ -102,7 +104,7 @@ export class QwenProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Qwen stream failed:');
+      log.error('stream', 'Qwen stream failed', {}, error);
       throw error;
     }
   }
@@ -134,7 +136,7 @@ export class QwenProvider extends BaseLLMProvider {
         });
         return true;
       } catch (e) {
-        logger.error('Qwen healthCheck failed', e as any);
+        log.error('healthCheck', 'Qwen healthCheck failed', {}, e);
         return false;
       }
     } catch {

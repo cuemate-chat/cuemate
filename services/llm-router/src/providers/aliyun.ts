@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('AliyunProvider');
 
 export class AliyunProvider extends BaseLLMProvider {
   constructor() {
@@ -56,7 +58,7 @@ export class AliyunProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Aliyun completion failed:');
+      log.error('complete', 'Aliyun completion failed', {}, error);
       throw error;
     }
   }
@@ -106,7 +108,7 @@ export class AliyunProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Aliyun stream failed:');
+      log.error('stream', 'Aliyun stream failed', {}, error);
       throw error;
     }
   }
@@ -137,7 +139,7 @@ export class AliyunProvider extends BaseLLMProvider {
       } as any);
       return true;
     } catch (error) {
-      logger.error({ err: error }, `Aliyun health check failed for model ${config.model}:`);
+      log.error('healthCheck', `Aliyun health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

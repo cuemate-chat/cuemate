@@ -1,6 +1,8 @@
 import axios from 'axios';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('MoonshotProvider');
 
 export class MoonshotProvider extends BaseLLMProvider {
   constructor() {
@@ -57,7 +59,7 @@ export class MoonshotProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Moonshot completion failed:');
+      log.error('complete', 'Moonshot completion failed', {}, error);
       throw error;
     }
   }
@@ -131,7 +133,7 @@ export class MoonshotProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Moonshot stream failed:');
+      log.error('stream', 'Moonshot stream failed', {}, error);
       throw error;
     }
   }
@@ -153,7 +155,7 @@ export class MoonshotProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, 'Moonshot health check failed:');
+      log.error('healthCheck', 'Moonshot health check failed', {}, error);
       return false;
     }
   }

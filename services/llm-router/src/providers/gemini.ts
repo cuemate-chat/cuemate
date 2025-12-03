@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('GeminiProvider');
 
 export class GeminiProvider extends BaseLLMProvider {
   constructor() {
@@ -81,7 +83,7 @@ export class GeminiProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Gemini completion failed:');
+      log.error('complete', 'Gemini completion failed', {}, error);
       throw error;
     }
   }
@@ -161,7 +163,7 @@ export class GeminiProvider extends BaseLLMProvider {
         });
       }
     } catch (error) {
-      logger.error({ err: error }, 'Gemini stream failed:');
+      log.error('stream', 'Gemini stream failed', {}, error);
       throw error;
     }
   }
@@ -180,7 +182,7 @@ export class GeminiProvider extends BaseLLMProvider {
       await model.generateContent('ping');
       return true;
     } catch (error) {
-      logger.error({ err: error }, 'Gemini healthCheck failed:');
+      log.error('healthCheck', 'Gemini healthCheck failed', {}, error);
       throw error;
     }
   }

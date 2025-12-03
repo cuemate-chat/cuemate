@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('BaichuanProvider');
 
 export class BaichuanProvider extends BaseLLMProvider {
   constructor() {
@@ -51,7 +53,7 @@ export class BaichuanProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Baichuan completion failed');
+      log.error('complete', 'Baichuan completion failed', {}, error);
       throw error;
     }
   }
@@ -99,7 +101,7 @@ export class BaichuanProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Baichuan stream failed');
+      log.error('stream', 'Baichuan stream failed', {}, error);
       throw error;
     }
   }
@@ -126,7 +128,7 @@ export class BaichuanProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, `Baichuan health check failed for model ${config.model}`);
+      log.error('healthCheck', `Baichuan health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

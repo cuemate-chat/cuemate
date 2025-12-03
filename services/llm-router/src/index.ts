@@ -4,7 +4,9 @@ import Fastify from 'fastify';
 import { config } from './config/index.js';
 import { LLMManager } from './managers/llm-manager.js';
 import { createRoutes } from './routes/index.js';
-import { logger } from './utils/logger.js';
+import { logger, createModuleLogger } from './utils/logger.js';
+
+const log = createModuleLogger('Server');
 
 async function buildServer() {
   const fastify: any = Fastify({
@@ -55,7 +57,7 @@ async function start() {
 
     await fastify.listen({ port, host });
 
-    logger.info(`LLM Router running at http://${host}:${port}`);
+    log.info('start', `LLM Router running at http://${host}:${port}`);
 
     // 打印成功启动信息
     printSuccessInfo('LLM Router', port, {
@@ -66,19 +68,19 @@ async function start() {
         'openai, anthropic, azure-openai, moonshot, qwen, deepseek, kimi, gemini, zhipu, siliconflow, tencent, volcengine, vllm, ollama, bedrock, aliyun-bailian, tencent-cloud, xf, xinference, regolo, baidu, yi, minimax, stepfun, sensenova, baichuan',
     });
   } catch (err) {
-    logger.error(err);
+    log.error('start', 'Failed to start server', {}, err);
     process.exit(1);
   }
 }
 
 // 优雅关闭
 process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, shutting down gracefully...');
+  log.info('shutdown', 'SIGTERM received, shutting down gracefully...');
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  logger.info('SIGINT received, shutting down gracefully...');
+  log.info('shutdown', 'SIGINT received, shutting down gracefully...');
   process.exit(0);
 });
 

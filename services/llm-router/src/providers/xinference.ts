@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('XinferenceProvider');
 
 export class XinferenceProvider extends BaseLLMProvider {
   constructor() {
@@ -51,7 +53,7 @@ export class XinferenceProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Xinference completion failed:');
+      log.error('complete', 'Xinference completion failed', {}, error);
       throw error;
     }
   }
@@ -99,7 +101,7 @@ export class XinferenceProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Xinference stream failed:');
+      log.error('stream', 'Xinference stream failed', {}, error);
       throw error;
     }
   }
@@ -126,7 +128,7 @@ export class XinferenceProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, `Xinference health check failed for model ${config.model}:`);
+      log.error('healthCheck', `Xinference health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('KimiProvider');
 
 export class KimiProvider extends BaseLLMProvider {
   constructor() {
@@ -54,7 +56,7 @@ export class KimiProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Kimi completion failed:');
+      log.error('complete', 'Kimi completion failed', {}, error);
       throw error;
     }
   }
@@ -102,7 +104,7 @@ export class KimiProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Kimi stream failed:');
+      log.error('stream', 'Kimi stream failed', {}, error);
       throw error;
     }
   }
@@ -134,7 +136,7 @@ export class KimiProvider extends BaseLLMProvider {
         });
         return true;
       } catch (e) {
-        logger.error('Kimi healthCheck failed', e as any);
+        log.error('healthCheck', 'Kimi healthCheck failed', {}, e);
         return false;
       }
     } catch {

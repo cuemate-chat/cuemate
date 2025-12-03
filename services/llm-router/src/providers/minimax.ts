@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('MiniMaxProvider');
 
 export class MiniMaxProvider extends BaseLLMProvider {
   constructor() {
@@ -51,7 +53,7 @@ export class MiniMaxProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'MiniMax completion failed');
+      log.error('complete', 'MiniMax completion failed', {}, error);
       throw error;
     }
   }
@@ -99,7 +101,7 @@ export class MiniMaxProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'MiniMax stream failed');
+      log.error('stream', 'MiniMax stream failed', {}, error);
       throw error;
     }
   }
@@ -126,7 +128,7 @@ export class MiniMaxProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, `MiniMax health check failed for model ${config.model}`);
+      log.error('healthCheck', `MiniMax health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

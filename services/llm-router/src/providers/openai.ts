@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('OpenAIProvider');
 
 export class OpenAIProvider extends BaseLLMProvider {
   constructor() {
@@ -54,7 +56,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'OpenAI completion failed');
+      log.error('complete', 'OpenAI completion failed', {}, error);
       throw error;
     }
   }
@@ -105,7 +107,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'OpenAI stream failed');
+      log.error('stream', 'OpenAI stream failed', {}, error);
       throw error;
     }
   }
@@ -139,7 +141,7 @@ export class OpenAIProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, `OpenAI health check failed for model ${config.model}`);
+      log.error('healthCheck', `OpenAI health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

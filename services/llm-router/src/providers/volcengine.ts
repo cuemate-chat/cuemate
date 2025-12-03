@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('VolcEngineProvider');
 
 export class VolcEngineProvider extends BaseLLMProvider {
   constructor() {
@@ -74,7 +76,7 @@ export class VolcEngineProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'VolcEngine completion failed:');
+      log.error('complete', 'VolcEngine completion failed', {}, error);
       throw error;
     }
   }
@@ -140,7 +142,7 @@ export class VolcEngineProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'VolcEngine stream failed:');
+      log.error('stream', 'VolcEngine stream failed', {}, error);
       throw error;
     }
   }
@@ -175,11 +177,11 @@ export class VolcEngineProvider extends BaseLLMProvider {
         });
         return true;
       } catch (e) {
-        logger.error('VolcEngine healthCheck failed', e as any);
+        log.error('healthCheck', 'VolcEngine healthCheck failed', {}, e);
         return false;
       }
     } catch (error) {
-      logger.error({ err: error }, 'VolcEngine healthCheck client creation failed:');
+      log.error('healthCheck', 'VolcEngine healthCheck client creation failed', {}, error);
       return false;
     }
   }

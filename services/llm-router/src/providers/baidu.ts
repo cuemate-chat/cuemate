@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('BaiduProvider');
 
 export class BaiduProvider extends BaseLLMProvider {
   constructor() {
@@ -51,7 +53,7 @@ export class BaiduProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Baidu completion failed');
+      log.error('complete', 'Baidu completion failed', {}, error);
       throw error;
     }
   }
@@ -99,7 +101,7 @@ export class BaiduProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Baidu stream failed');
+      log.error('stream', 'Baidu stream failed', {}, error);
       throw error;
     }
   }
@@ -126,7 +128,7 @@ export class BaiduProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, `Baidu health check failed for model ${config.model}`);
+      log.error('healthCheck', `Baidu health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

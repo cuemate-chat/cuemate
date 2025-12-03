@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('VllmProvider');
 
 export class VllmProvider extends BaseLLMProvider {
   constructor() {
@@ -74,7 +76,7 @@ export class VllmProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'vLLM completion failed:');
+      log.error('complete', 'vLLM completion failed', {}, error);
       throw error;
     }
   }
@@ -140,7 +142,7 @@ export class VllmProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'vLLM stream failed:');
+      log.error('stream', 'vLLM stream failed', {}, error);
       throw error;
     }
   }
@@ -175,11 +177,11 @@ export class VllmProvider extends BaseLLMProvider {
         });
         return true;
       } catch (e) {
-        logger.error('vLLM healthCheck failed:', e);
+        log.error('healthCheck', 'vLLM healthCheck failed', {}, e);
         return false;
       }
     } catch (error) {
-      logger.error({ err: error }, 'vLLM healthCheck client creation failed:');
+      log.error('healthCheck', 'vLLM healthCheck client creation failed', {}, error);
       return false;
     }
   }

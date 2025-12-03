@@ -1,6 +1,8 @@
 import { config, type Config } from '../config/index.js';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { AliyunProvider } from './aliyun.js';
+
+const log = createModuleLogger('Providers');
 import { AnthropicProvider } from './anthropic.js';
 import { AzureOpenAIProvider } from './azure-openai.js';
 import { BaichuanProvider } from './baichuan.js';
@@ -66,9 +68,9 @@ export async function initializeProviders(
       providers.set(provider.getName(), provider);
     });
 
-    logger.info(`Initialized ${providers.size} providers: ${Array.from(providers.keys()).join(', ')}`);
+    log.info('initializeProviders', `Initialized ${providers.size} providers`, { providers: Array.from(providers.keys()) });
   } catch (error) {
-    logger.error({ err: error }, 'Failed to initialize providers:');
+    log.error('initializeProviders', 'Failed to initialize providers', {}, error);
   }
 
   return providers;

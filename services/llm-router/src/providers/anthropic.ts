@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('AnthropicProvider');
 
 export class AnthropicProvider extends BaseLLMProvider {
   constructor() {
@@ -58,7 +60,7 @@ export class AnthropicProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Anthropic completion failed:');
+      log.error('complete', 'Anthropic completion failed', {}, error);
       throw error;
     }
   }
@@ -114,7 +116,7 @@ export class AnthropicProvider extends BaseLLMProvider {
         });
       }
     } catch (error) {
-      logger.error({ err: error }, 'Anthropic stream failed:');
+      log.error('stream', 'Anthropic stream failed', {}, error);
       throw error;
     }
   }
@@ -140,7 +142,7 @@ export class AnthropicProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, 'Anthropic healthCheck failed:');
+      log.error('healthCheck', 'Anthropic healthCheck failed', {}, error);
       throw error;
     }
   }

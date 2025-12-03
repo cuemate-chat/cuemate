@@ -26,7 +26,9 @@ import { VolcEngineProvider } from '../providers/volcengine.js';
 import { XfProvider } from '../providers/xf.js';
 import { XinferenceProvider } from '../providers/xinference.js';
 import { ZhipuProvider } from '../providers/zhipu.js';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
+
+const log = createModuleLogger('Routes');
 
 export async function createRoutes(fastify: FastifyInstance, llmManager: LLMManager) {
   // 生成完整答案
@@ -56,7 +58,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       const response = await llmManager.complete(cleanedBody, runtimeConfig);
       return response;
     } catch (error) {
-      logger.error({ err: error }, 'Completion request failed');
+      log.error('completion', 'Completion request failed', {}, error);
       return reply.code(500).send({
         error: 'Completion failed',
         message: error instanceof Error ? error.message : String(error),
@@ -104,7 +106,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         reply.raw.write('data: [DONE]\n\n');
         reply.raw.end();
       } catch (streamError) {
-        logger.error({ err: streamError }, 'Stream processing failed');
+        log.error('stream', 'Stream processing failed', {}, streamError);
         // Headers already sent, write error as SSE event
         reply.raw.write(
           `data: ${JSON.stringify({ error: streamError instanceof Error ? streamError.message : 'Stream failed' })}\n\n`,
@@ -113,7 +115,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       }
       return;
     } catch (error) {
-      logger.error({ err: error }, 'Stream request failed');
+      log.error('stream', 'Stream request failed', {}, error);
       // Only send error response if headers not yet sent
       if (!reply.raw.headersSent) {
         return reply.code(500).send({
@@ -169,7 +171,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         latency: response.latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Outline generation failed:');
+      log.error('outline', 'Outline generation failed', {}, error);
       return reply.code(500).send({ error: 'Outline generation failed' });
     }
   });
@@ -217,7 +219,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       });
 
       // 调试日志：显示映射后的配置
-      logger.info(`Field mapping result:`, {
+      log.info('probe', 'Field mapping result', {
         originalFields: Object.keys(body).filter(
           (key) => !['provider', 'id', 'model_name', 'model', 'mode', 'allParams'].includes(key),
         ),
@@ -228,7 +230,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       Object.assign(config, allParams);
 
       // 调试日志
-      logger.info(`Probe config for ${providerId}:`, { config, body });
+      log.info('probe', `Probe config for ${providerId}`, { config, body });
 
       let chatOk: boolean | undefined;
       let chatError: string | undefined;
@@ -328,7 +330,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         };
         chatOk = await provider.healthCheck(runtimeConfig);
       } catch (error) {
-        logger.error({ err: error }, 'Chat health check failed');
+        log.error('probe', 'Chat health check failed', {}, error);
         chatOk = false;
         chatError = error instanceof Error ? error.message : String(error);
       }

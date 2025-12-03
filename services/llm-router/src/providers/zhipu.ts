@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('ZhipuProvider');
 
 export class ZhipuProvider extends BaseLLMProvider {
   constructor() {
@@ -74,7 +76,7 @@ export class ZhipuProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Zhipu completion failed:');
+      log.error('complete', 'Zhipu completion failed', {}, error);
       throw error;
     }
   }
@@ -140,7 +142,7 @@ export class ZhipuProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Zhipu stream failed:');
+      log.error('stream', 'Zhipu stream failed', {}, error);
       throw error;
     }
   }
@@ -175,11 +177,11 @@ export class ZhipuProvider extends BaseLLMProvider {
         });
         return true;
       } catch (e) {
-        logger.error('Zhipu healthCheck failed', e as any);
+        log.error('healthCheck', 'Zhipu healthCheck failed', {}, e);
         return false;
       }
     } catch (error) {
-      logger.error({ err: error }, 'Zhipu healthCheck client creation failed:');
+      log.error('healthCheck', 'Zhipu healthCheck client creation failed', {}, error);
       return false;
     }
   }

@@ -32,8 +32,10 @@ import { VolcEngineProvider } from '../providers/volcengine.js';
 import { XfProvider } from '../providers/xf.js';
 import { XinferenceProvider } from '../providers/xinference.js';
 import { ZhipuProvider } from '../providers/zhipu.js';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 // import { UserProviderRegistry } from './user-provider-registry.js';
+
+const log = createModuleLogger('LLMManager');
 
 export interface ProviderStatus {
   id: string;
@@ -101,9 +103,7 @@ export class LLMManager extends EventEmitter {
     providers.set('sensenova', new SenseNovaProvider());
     providers.set('baichuan', new BaichuanProvider());
 
-    logger.info(
-      `Registered ${providers.size} providers: ${Array.from(providers.keys()).join(', ')}`,
-    );
+    log.info('initializeAllProviders', `Registered ${providers.size} providers`, { providers: Array.from(providers.keys()) });
 
     return providers;
   }
@@ -175,7 +175,7 @@ export class LLMManager extends EventEmitter {
     try {
       return await provider.stream(request, runtimeConfig);
     } catch (error) {
-      logger.error({ err: error }, `Stream failed for ${runtimeConfig.provider}:`);
+      log.error('stream', `Stream failed for ${runtimeConfig.provider}`, {}, error);
       throw error;
     }
   }

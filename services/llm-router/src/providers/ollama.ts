@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('OllamaProvider');
 
 export class OllamaProvider extends BaseLLMProvider {
   constructor() {
@@ -62,7 +64,7 @@ export class OllamaProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'Ollama completion failed:');
+      log.error('complete', 'Ollama completion failed', {}, error);
       throw error;
     }
   }
@@ -117,7 +119,7 @@ export class OllamaProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'Ollama stream failed:');
+      log.error('stream', 'Ollama stream failed', {}, error);
       throw error;
     }
   }
@@ -149,7 +151,7 @@ export class OllamaProvider extends BaseLLMProvider {
         });
         return true;
       } catch (e) {
-        logger.error('Ollama healthCheck failed', e as any);
+        log.error('healthCheck', 'Ollama healthCheck failed', {}, e);
         return false;
       }
     } catch {

@@ -3,8 +3,10 @@ import {
   ConverseCommand,
   ConverseStreamCommand,
 } from '@aws-sdk/client-bedrock-runtime';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('BedrockProvider');
 
 export class BedrockProvider extends BaseLLMProvider {
   constructor() {
@@ -80,7 +82,7 @@ export class BedrockProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'AWS Bedrock completion failed:');
+      log.error('complete', 'AWS Bedrock completion failed', {}, error);
       throw error;
     }
   }
@@ -143,7 +145,7 @@ export class BedrockProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'AWS Bedrock stream failed:');
+      log.error('stream', 'AWS Bedrock stream failed', {}, error);
       throw error;
     }
   }
@@ -176,7 +178,7 @@ export class BedrockProvider extends BaseLLMProvider {
       await client.send(command);
       return true;
     } catch (error) {
-      logger.error({ err: error }, `AWS Bedrock health check failed for model ${config.model}:`);
+      log.error('healthCheck', `AWS Bedrock health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }

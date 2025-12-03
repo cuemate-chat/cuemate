@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('SiliconFlowProvider');
 
 export class SiliconFlowProvider extends BaseLLMProvider {
   constructor() {
@@ -65,7 +67,7 @@ export class SiliconFlowProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, 'SiliconFlow completion failed:');
+      log.error('complete', 'SiliconFlow completion failed', {}, error);
       throw error;
     }
   }
@@ -123,7 +125,7 @@ export class SiliconFlowProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, 'SiliconFlow stream failed:');
+      log.error('stream', 'SiliconFlow stream failed', {}, error);
       throw error;
     }
   }
@@ -158,11 +160,11 @@ export class SiliconFlowProvider extends BaseLLMProvider {
         });
         return true;
       } catch (e) {
-        logger.error('SiliconFlow healthCheck failed', e as any);
+        log.error('healthCheck', 'SiliconFlow healthCheck failed', {}, e);
         return false;
       }
     } catch (error) {
-      logger.error({ err: error }, 'SiliconFlow healthCheck client creation failed:');
+      log.error('healthCheck', 'SiliconFlow healthCheck client creation failed', {}, error);
       return false;
     }
   }

@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
+
+const log = createModuleLogger('XfProvider');
 
 export class XfProvider extends BaseLLMProvider {
   constructor() {
@@ -55,7 +57,7 @@ export class XfProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      logger.error({ err: error }, '讯飞星火 completion failed:');
+      log.error('complete', '讯飞星火 completion failed', {}, error);
       throw error;
     }
   }
@@ -107,7 +109,7 @@ export class XfProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, '讯飞星火 stream failed:');
+      log.error('stream', '讯飞星火 stream failed', {}, error);
       throw error;
     }
   }
@@ -138,7 +140,7 @@ export class XfProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      logger.error({ err: error }, `讯飞星火 health check failed for model ${config.model}:`);
+      log.error('healthCheck', `讯飞星火 health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }
