@@ -1,8 +1,10 @@
 import { Config } from '../config/index.js';
 import { DocumentProcessor } from '../processors/document-processor.js';
 import { VectorStore } from '../stores/vector-store.js';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
 import { EmbeddingService } from './embedding-service.js';
+
+const log = createModuleLogger('JobResumeService');
 
 export interface JobData {
   id: string;
@@ -43,12 +45,10 @@ export class JobResumeService {
       const embeddings = await this.embeddingService.embed(chunks);
 
       // 调试日志
-      logger.info(
-        `Job ${job.id}: Generated ${chunks.length} chunks, ${embeddings.length} embeddings`,
-      );
+      log.info('processJob', `Job ${job.id}: Generated ${chunks.length} chunks, ${embeddings.length} embeddings`);
       if (embeddings.length > 0) {
-        logger.info(`First embedding dimensions: ${embeddings[0].length}`);
-        logger.info(`First embedding sample: [${embeddings[0].slice(0, 5).join(', ')}...]`);
+        log.info('processJob', `First embedding dimensions: ${embeddings[0].length}`);
+        log.debug('processJob', `First embedding sample: [${embeddings[0].slice(0, 5).join(', ')}...]`);
       }
 
       // 准备文档数据
@@ -71,9 +71,9 @@ export class JobResumeService {
       // 存入向量数据库
       await this.vectorStore.addDocuments(documents, this.config.vectorStore.jobsCollection);
 
-      logger.info(`Processed job ${job.id} into ${chunks.length} chunks`);
+      log.info('processJob', `Processed job ${job.id} into ${chunks.length} chunks`);
     } catch (error) {
-      logger.error({ err: error as any }, `Failed to process job ${job.id}`);
+      log.error('processJob', `Failed to process job ${job.id}`, {}, error);
       throw error;
     }
   }
@@ -91,12 +91,10 @@ export class JobResumeService {
       const embeddings = await this.embeddingService.embed(chunks);
 
       // 调试日志
-      logger.info(
-        `Resume ${resume.id}: Generated ${chunks.length} chunks, ${embeddings.length} embeddings`,
-      );
+      log.info('processResume', `Resume ${resume.id}: Generated ${chunks.length} chunks, ${embeddings.length} embeddings`);
       if (embeddings.length > 0) {
-        logger.info(`First embedding dimensions: ${embeddings[0].length}`);
-        logger.info(`First embedding sample: [${embeddings[0].slice(0, 5).join(', ')}...]`);
+        log.info('processResume', `First embedding dimensions: ${embeddings[0].length}`);
+        log.debug('processResume', `First embedding sample: [${embeddings[0].slice(0, 5).join(', ')}...]`);
       }
 
       // 准备文档数据
@@ -120,9 +118,9 @@ export class JobResumeService {
       // 存入向量数据库
       await this.vectorStore.addDocuments(documents, this.config.vectorStore.resumesCollection);
 
-      logger.info(`Processed resume ${resume.id} into ${chunks.length} chunks`);
+      log.info('processResume', `Processed resume ${resume.id} into ${chunks.length} chunks`);
     } catch (error) {
-      logger.error({ err: error as any }, `Failed to process resume ${resume.id}`);
+      log.error('processResume', `Failed to process resume ${resume.id}`, {}, error);
       throw error;
     }
   }
@@ -135,12 +133,9 @@ export class JobResumeService {
       // 并行处理岗位和简历
       await Promise.all([this.processJob(job), this.processResume(resume)]);
 
-      logger.info(`Successfully processed job ${job.id} and resume ${resume.id}`);
+      log.info('processJobAndResume', `Successfully processed job ${job.id} and resume ${resume.id}`);
     } catch (error) {
-      logger.error(
-        { err: error as any },
-        `Failed to process job ${job.id} and resume ${resume.id}`,
-      );
+      log.error('processJobAndResume', `Failed to process job ${job.id} and resume ${resume.id}`, {}, error);
       throw error;
     }
   }
@@ -155,9 +150,9 @@ export class JobResumeService {
       await this.vectorStore.deleteByFilter({ jobId }, this.config.vectorStore.resumesCollection);
       await this.vectorStore.deleteByFilter({ jobId }, this.config.vectorStore.questionsCollection);
 
-      logger.info(`Deleted all vector data (jobs, resumes, questions) for job ${jobId}`);
+      log.info('deleteJobData', `Deleted all vector data (jobs, resumes, questions) for job ${jobId}`);
     } catch (error) {
-      logger.error({ err: error as any }, `Failed to delete job data for ${jobId}`);
+      log.error('deleteJobData', `Failed to delete job data for ${jobId}`, {}, error);
       throw error;
     }
   }
@@ -205,7 +200,7 @@ export class JobResumeService {
 
       return allResults.slice(0, topK);
     } catch (error) {
-      logger.error({ err: error as any }, 'Search failed');
+      log.error('searchJobResume', 'Search failed', {}, error);
       throw error;
     }
   }
@@ -245,7 +240,7 @@ export class JobResumeService {
 
       return resumeResults;
     } catch (error) {
-      logger.error({ err: error as any }, 'Resume search failed');
+      log.error('searchResumes', 'Resume search failed', {}, error);
       throw error;
     }
   }

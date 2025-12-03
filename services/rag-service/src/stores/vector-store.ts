@@ -2,7 +2,9 @@ import { ChromaClient } from 'chromadb';
 import { v4 as uuidv4 } from 'uuid';
 import { Config } from '../config/index.js';
 import { EmbeddingService } from '../services/embedding-service.js';
-import { logger } from '../utils/logger.js';
+import { createModuleLogger } from '../utils/logger.js';
+
+const log = createModuleLogger('VectorStore');
 
 export interface Document {
   id?: string;
@@ -43,12 +45,12 @@ export class VectorStore {
         // 获取或创建默认集合
         await this.getOrCreateCollection(this.config.defaultCollection);
 
-        logger.info('Vector store initialized');
+        log.info('initialize', 'Vector store initialized');
       } else {
         throw new Error(`Vector store type ${this.config.type} not implemented`);
       }
     } catch (error) {
-      logger.error({ err: error as any }, 'Failed to initialize vector store');
+      log.error('initialize', 'Failed to initialize vector store', {}, error);
       throw error;
     }
   }
@@ -90,13 +92,13 @@ export class VectorStore {
             },
           });
           this.collections.set(name, collection);
-          logger.info(`Created new collection ${name} with cosine distance`);
+          log.info('getOrCreateCollection', `Created new collection ${name} with cosine distance`);
           return collection;
         }
         throw getError;
       }
     } catch (error) {
-      logger.error({ err: error as any }, `Failed to get/create collection ${name}`);
+      log.error('getOrCreateCollection', `Failed to get/create collection ${name}`, {}, error);
       throw error;
     }
   }
@@ -156,13 +158,11 @@ export class VectorStore {
     const embeddings = documents.filter((doc) => doc.embedding).map((doc) => doc.embedding!);
 
     try {
-      logger.info(
-        `Adding ${documents.length} documents to collection ${collectionName || this.config.defaultCollection}`,
-      );
-      logger.info(`Document IDs: ${ids.join(', ')}`);
-      logger.info(
-        `Has embeddings: ${embeddings.length > 0}, Embedding dimensions: ${embeddings.length > 0 ? embeddings[0]?.length : 'N/A'}`,
-      );
+      log.info('addDocuments', `Adding ${documents.length} documents to collection ${collectionName || this.config.defaultCollection}`, {
+        ids: ids.join(', '),
+        hasEmbeddings: embeddings.length > 0,
+        embeddingDimensions: embeddings.length > 0 ? embeddings[0]?.length : 'N/A'
+      });
 
       if (embeddings.length > 0 && embeddings.length === documents.length) {
         // 所有文档都有嵌入向量
@@ -181,9 +181,7 @@ export class VectorStore {
         });
       } else {
         // 部分文档有嵌入向量，这种情况不应该发生，记录警告
-        logger.warn(
-          `Partial embeddings detected: ${embeddings.length}/${documents.length} documents have embeddings`,
-        );
+        log.warn('addDocuments', `Partial embeddings detected: ${embeddings.length}/${documents.length} documents have embeddings`);
         // 移除没有嵌入向量的文档，只添加有嵌入向量的
         const validDocs = documents.filter((doc) => doc.embedding);
         const validIds = validDocs.map((doc) => doc.id || uuidv4());
@@ -198,19 +196,18 @@ export class VectorStore {
             metadatas: validMetadatas,
             embeddings: validEmbeddings,
           });
-          logger.info(`Added ${validDocs.length} documents with embeddings`);
+          log.info('addDocuments', `Added ${validDocs.length} documents with embeddings`);
         }
       }
 
-      logger.info(
-        `Successfully added ${documents.length} documents to ${collectionName || this.config.defaultCollection}`,
-      );
+      log.info('addDocuments', `Successfully added ${documents.length} documents to ${collectionName || this.config.defaultCollection}`);
       return ids;
     } catch (error) {
-      logger.error({ err: error as any }, 'Failed to add documents');
-      logger.error(`Collection: ${collectionName || this.config.defaultCollection}`);
-      logger.error(`Documents count: ${documents.length}`);
-      logger.error(`Embeddings count: ${embeddings.length}`);
+      log.error('addDocuments', 'Failed to add documents', {
+        collection: collectionName || this.config.defaultCollection,
+        documentsCount: documents.length,
+        embeddingsCount: embeddings.length
+      }, error);
       throw error;
     }
   }
@@ -237,13 +234,11 @@ export class VectorStore {
       const newIds = newDocuments.map((doc) => doc.id || uuidv4());
 
       if (newDocuments.length === 0) {
-        logger.info(`All ${documents.length} documents already exist, skipping`);
+        log.info('addDocumentsIdempotent', `All ${documents.length} documents already exist, skipping`);
         return ids;
       }
 
-      logger.info(
-        `Adding ${newDocuments.length} new documents (${documents.length - newDocuments.length} already exist)`,
-      );
+      log.info('addDocumentsIdempotent', `Adding ${newDocuments.length} new documents (${documents.length - newDocuments.length} already exist)`);
 
       const contents = newDocuments.map((doc) => doc.content);
       const metadatas = newDocuments.map((doc) => doc.metadata);
@@ -280,10 +275,10 @@ export class VectorStore {
         }
       }
 
-      logger.info(`Successfully added ${newDocuments.length} documents`);
+      log.info('addDocumentsIdempotent', `Successfully added ${newDocuments.length} documents`);
       return ids;
     } catch (error) {
-      logger.error({ err: error as any }, 'Failed to add documents idempotently');
+      log.error('addDocumentsIdempotent', 'Failed to add documents idempotently', {}, error);
       throw error;
     }
   }
@@ -361,7 +356,7 @@ export class VectorStore {
           .sort((a, b) => b.score - a.score)
       );
     } catch (error) {
-      logger.error({ err: error as any }, 'Embedding search failed');
+      log.error('searchByEmbedding', 'Embedding search failed', {}, error);
       // 出错时返回空结果，避免误导性的满分
       return [];
     }
@@ -374,9 +369,9 @@ export class VectorStore {
 
     try {
       await (collection as any).delete({ ids });
-      logger.info(`Deleted ${ids.length} documents from ${collectionName}`);
+      log.info('deleteDocuments', `Deleted ${ids.length} documents from ${collectionName}`);
     } catch (error) {
-      logger.error({ err: error as any }, 'Failed to delete documents');
+      log.error('deleteDocuments', 'Failed to delete documents', {}, error);
       throw error;
     }
   }
@@ -390,17 +385,17 @@ export class VectorStore {
       // 如果过滤条件是 ID，直接使用 ids 删除
       if (filter.id) {
         await (collection as any).delete({ ids: [filter.id] });
-        logger.info(`Deleted document with ID ${filter.id} from ${collectionName}`);
+        log.info('deleteByFilter', `Deleted document with ID ${filter.id} from ${collectionName}`);
       } else if (filter && Object.keys(filter).length > 0) {
         // ChromaDB 1.1.0+ 要求 where 参数有至少一个操作符，空对象会报错
         await (collection as any).delete({ where: filter });
-        logger.info(`Deleted documents by filter from ${collectionName}`);
+        log.info('deleteByFilter', `Deleted documents by filter from ${collectionName}`);
       } else {
         // 空过滤器，不执行删除操作
-        logger.warn('Empty filter provided for deleteByFilter, no documents deleted');
+        log.warn('deleteByFilter', 'Empty filter provided for deleteByFilter, no documents deleted');
       }
     } catch (error) {
-      logger.error({ err: error as any }, 'Failed to delete by filter');
+      log.error('deleteByFilter', 'Failed to delete by filter', {}, error);
       throw error;
     }
   }
@@ -421,9 +416,9 @@ export class VectorStore {
         metadatas: document.metadata ? [document.metadata] : undefined,
         embeddings: document.embedding ? [document.embedding] : undefined,
       });
-      logger.info(`Updated document ${id} in ${collectionName}`);
+      log.info('updateDocument', `Updated document ${id} in ${collectionName}`);
     } catch (error) {
-      logger.error({ err: error as any }, 'Failed to update document');
+      log.error('updateDocument', 'Failed to update document', {}, error);
       throw error;
     }
   }
@@ -438,7 +433,7 @@ export class VectorStore {
       const collections: any[] = await clientAny.listCollections();
       return collections.map((c: any) => (typeof c === 'string' ? c : c.name));
     } catch (error) {
-      logger.error({ err: error as any }, 'Failed to list collections');
+      log.error('listCollections', 'Failed to list collections', {}, error);
       throw error;
     }
   }
@@ -452,9 +447,9 @@ export class VectorStore {
       const clientAny = this.client as any;
       await clientAny.deleteCollection({ name });
       this.collections.delete(name);
-      logger.info(`Deleted collection ${name}`);
+      log.info('deleteCollection', `Deleted collection ${name}`);
     } catch (error) {
-      logger.error({ err: error as any }, `Failed to delete collection ${name}`);
+      log.error('deleteCollection', `Failed to delete collection ${name}`, {}, error);
       throw error;
     }
   }
@@ -508,7 +503,7 @@ export class VectorStore {
         };
       });
     } catch (error) {
-      logger.error({ err: error as any }, 'Get all documents failed');
+      log.error('getAllDocuments', 'Get all documents failed', {}, error);
       throw error;
     }
   }
@@ -523,7 +518,7 @@ export class VectorStore {
         documentCount: count,
       };
     } catch (error) {
-      logger.error({ err: error as any }, 'Failed to get collection stats');
+      log.error('getCollectionStats', 'Failed to get collection stats', {}, error);
       throw error;
     }
   }

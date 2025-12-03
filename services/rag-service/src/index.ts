@@ -7,7 +7,9 @@ import { DocumentProcessor } from './processors/document-processor.js';
 import { createRoutes } from './routes/index.js';
 import { EmbeddingService } from './services/embedding-service.js';
 import { VectorStore } from './stores/vector-store.js';
-import { logger } from './utils/logger.js';
+import { createModuleLogger } from './utils/logger.js';
+
+const log = createModuleLogger('Server');
 
 async function buildServer() {
   const fastify: any = Fastify({
@@ -82,7 +84,7 @@ async function start() {
 
     await fastify.listen({ port, host });
 
-    logger.info(`RAG Service running at http://${host}:${port}`);
+    log.info('start', `RAG Service running at http://${host}:${port}`);
 
     // 打印成功启动信息
     printSuccessInfo('RAG Service', port, {
@@ -93,19 +95,19 @@ async function start() {
       'Chroma 地址': config.vectorStore.chromaPath || 'http://cuemate-chroma:8000',
     });
   } catch (err) {
-    logger.error(err);
+    log.error('start', 'Failed to start server', {}, err);
     process.exit(1);
   }
 }
 
 // 优雅关闭
 process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, shutting down gracefully...');
+  log.info('shutdown', 'SIGTERM received, shutting down gracefully...');
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  logger.info('SIGINT received, shutting down gracefully...');
+  log.info('shutdown', 'SIGINT received, shutting down gracefully...');
   process.exit(0);
 });
 
