@@ -101,6 +101,7 @@ services:
   # RAG Service
   rag-service:
     image: ${REGISTRY:-registry.cn-beijing.aliyuncs.com/cuemate}/cuemate-rag-service:${VERSION}
+    platform: linux/amd64
     build:
       context: ../..
       dockerfile: infra/docker/rag-service/Dockerfile
