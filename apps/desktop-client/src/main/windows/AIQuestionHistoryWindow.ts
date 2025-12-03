@@ -1,6 +1,8 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('AIQuestionHistoryWindow');
 import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
 
 export class AIQuestionHistoryWindow {
@@ -89,7 +91,7 @@ export class AIQuestionHistoryWindow {
         this.window.webContents.openDevTools({ mode: 'detach' });
       }
     } catch (error) {
-      logger.error({ error }, '创建 ai-question-history 窗口失败');
+      log.error('create', '创建 ai-question-history 窗口失败', {}, error);
       throw error;
     }
   }

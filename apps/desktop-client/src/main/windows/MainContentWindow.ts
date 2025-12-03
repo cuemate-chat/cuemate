@@ -1,6 +1,8 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('MainContentWindow');
 import { getPreloadPath, getWindowIconPath } from '../utils/paths.js';
 
 /**
@@ -96,7 +98,7 @@ export class MainContentWindow {
       // 页面加载完成事件，无需记录 info
       this.window.webContents.once('did-finish-load', () => {});
     } catch (error) {
-      logger.error({ error }, '创建 main-content 窗口失败');
+      log.error('create', '创建 main-content 窗口失败', {}, error);
       throw error;
     }
   }
@@ -181,13 +183,13 @@ export class MainContentWindow {
 
     // 处理渲染进程崩溃
     this.window.webContents.on('render-process-gone', (_event, details) => {
-      logger.error({ reason: details.reason, exitCode: details.exitCode }, 'main-content 渲染进程崩溃');
+      log.error('setupEvents', 'main-content 渲染进程崩溃', { reason: details.reason, exitCode: details.exitCode });
       // 可以在这里添加崩溃恢复逻辑
     });
 
     // 处理未响应
     this.window.on('unresponsive', () => {
-      logger.warn('main-content 窗口无响应');
+      log.warn('setupEvents', 'main-content 窗口无响应');
     });
 
     // 恢复响应

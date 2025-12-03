@@ -1,7 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('UpdateStateManager');
 
 interface UpdateState {
   version: string;
@@ -28,9 +30,9 @@ export class UpdateStateManager {
   public static saveState(state: UpdateState): void {
     try {
       fs.writeFileSync(this.STATE_FILE, JSON.stringify(state, null, 2));
-      logger.info({ state }, '更新状态已保存');
+      log.info('saveState', '更新状态已保存', { ...state });
     } catch (error) {
-      logger.error({ error }, '保存更新状态失败');
+      log.error('saveState', '保存更新状态失败', {}, error);
     }
   }
 
@@ -44,7 +46,7 @@ export class UpdateStateManager {
         return JSON.parse(content);
       }
     } catch (error) {
-      logger.error({ error }, '读取更新状态失败');
+      log.error('loadState', '读取更新状态失败', {}, error);
     }
     return null;
   }
@@ -56,10 +58,10 @@ export class UpdateStateManager {
     try {
       if (fs.existsSync(this.STATE_FILE)) {
         fs.unlinkSync(this.STATE_FILE);
-        logger.info('更新状态已清除');
+        log.info('clearState', '更新状态已清除');
       }
     } catch (error) {
-      logger.error({ error }, '清除更新状态失败');
+      log.error('clearState', '清除更新状态失败', {}, error);
     }
   }
 

@@ -1,8 +1,10 @@
 import { execSync } from 'child_process';
 import { app, globalShortcut, Menu, nativeImage, session, Tray } from 'electron';
 import type { LogLevel } from '../shared/types.js';
-import { logger } from '../utils/logger.js';
+import { createLogger, logger } from '../utils/logger.js';
 import { broadcastAppVisibilityChanged, setupIPC } from './ipc/handlers.js';
+
+const log = createLogger('CueMateApp');
 import { AppUpdateManager } from './services/AppUpdateManager.js';
 import { DockerServiceManager } from './services/DockerServiceManager.js';
 import { ensureDockActiveAndIcon } from './utils/dock.js';
@@ -29,7 +31,7 @@ class CueMateApp {
     // 设置日志环境变量
     this.setupLoggingEnvironment();
 
-    logger.info(`运行模式: ${this.isDevelopment ? '开发模式' : '生产模式'}`);
+    log.info('constructor', `运行模式: ${this.isDevelopment ? '开发模式' : '生产模式'}`);
     this.windowManager = new WindowManager(this.isDevelopment);
 
     this.initialize();
@@ -48,7 +50,7 @@ class CueMateApp {
   }
 
   private initialize(): void {
-    logger.info('CueMate Desktop Client 启动');
+    log.info('initialize', 'CueMate Desktop Client 启动');
 
     // 设置应用程序事件监听器
     this.setupAppEvents();
@@ -64,10 +66,10 @@ class CueMateApp {
       session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
         const allowedPermissions = ['media', 'mediaKeySystem', 'audioCapture', 'videoCapture'];
         if (allowedPermissions.includes(permission)) {
-          logger.info(`权限请求: ${permission} - 已允许`);
+          log.info('setupAppEvents', `权限请求: ${permission} - 已允许`);
           callback(true);
         } else {
-          logger.warn(`权限请求: ${permission} - 已拒绝`);
+          log.warn('setupAppEvents', `权限请求: ${permission} - 已拒绝`);
           callback(false);
         }
       });
@@ -78,27 +80,27 @@ class CueMateApp {
         return allowedPermissions.includes(permission);
       });
 
-      logger.info('权限处理器已设置');
+      log.info('setupAppEvents', '权限处理器已设置');
 
       // 检查未完成的更新并回滚
       try {
         await AppUpdateManager.checkIncompleteUpdate();
       } catch (error) {
-        logger.error({ error }, '检查更新状态失败');
+        log.error('setupAppEvents', '检查更新状态失败', {}, error);
       }
 
       // 启动 Docker 服务
       try {
         await DockerServiceManager.start();
       } catch (error) {
-        logger.error({ error }, 'Docker 服务启动失败，应用将继续运行');
+        log.error('setupAppEvents', 'Docker 服务启动失败，应用将继续运行', {}, error);
       }
 
       // 创建菜单栏图标（任务栏图标）
       try {
         this.createTrayIcon();
       } catch (error) {
-        logger.warn({ error }, '创建菜单栏图标失败');
+        log.error('setupAppEvents', '创建菜单栏图标失败', {}, error);
       }
 
       // 设置全局快捷键（必须在 app ready 之后）
@@ -114,18 +116,18 @@ class CueMateApp {
           if (settings.dockIconVisible) {
             // 用户设置为显示 Dock 图标
             await ensureDockActiveAndIcon('startup');
-            logger.info('Dock 图标已显示（根据用户设置）');
+            log.info('setupAppEvents', 'Dock 图标已显示（根据用户设置）');
           } else {
             // 用户设置为隐藏 Dock 图标（先 accessory 再 hide）
             if (typeof (app as any).setActivationPolicy === 'function') {
               (app as any).setActivationPolicy('accessory');
             }
             app.dock?.hide();
-            logger.info('Dock 图标已隐藏（根据用户设置）');
+            log.info('setupAppEvents', 'Dock 图标已隐藏（根据用户设置）');
           }
         }
       } catch (error) {
-        logger.warn({ error }, '设置 Dock 状态失败');
+        log.error('setupAppEvents', '设置 Dock 状态失败', {}, error);
       }
 
       // macOS: 当点击 dock 图标时重新激活（虽然 dock 图标已隐藏，但保留处理逻辑）
@@ -149,15 +151,14 @@ class CueMateApp {
               commands.forEach((cmd) => {
                 try {
                   execSync(cmd);
-                } catch (error) {
+                } catch {
                   // pkill 找不到进程时会报错，这是正常的
-                  logger.debug(`停止命令结果: ${cmd} - ${(error as Error).message}`);
                 }
               });
 
-              logger.info('开发服务已停止');
+              log.info('setupAppEvents', '开发服务已停止');
             } catch (error) {
-              logger.warn({ error }, '停止开发服务时出错');
+              log.error('setupAppEvents', '停止开发服务时出错', {}, error);
             }
           }
         });
@@ -180,11 +181,11 @@ class CueMateApp {
         // 异步执行清理操作
         this.cleanup()
           .then(() => {
-            logger.info('清理完成，退出应用');
+            log.info('cleanup', '清理完成，退出应用');
             app.quit();
           })
           .catch((error) => {
-            logger.error({ error }, '清理失败，强制退出应用');
+            log.error('cleanup', '清理失败，强制退出应用', {}, error);
             app.quit();
           });
       }
@@ -219,7 +220,7 @@ class CueMateApp {
       const image = nativeImage.createFromPath(iconPath);
 
       if (image.isEmpty()) {
-        logger.error('图标为空，无法创建菜单栏图标');
+        log.error('createTrayIcon', '图标为空，无法创建菜单栏图标');
         return;
       }
 
@@ -299,7 +300,7 @@ class CueMateApp {
         this.tray!.popUpContextMenu(contextMenu);
       });
     } catch (error) {
-      logger.error({ error }, '创建菜单栏图标失败');
+      log.error('createTrayIcon', '创建菜单栏图标失败', {}, error);
     }
   }
 
@@ -307,14 +308,14 @@ class CueMateApp {
     // 根据设置决定是否停止 Docker 服务
     const shouldStopDocker = (global as any).stopDockerOnQuit ?? false;
     if (shouldStopDocker) {
-      logger.info('退出时关闭 Docker 服务（用户设置）');
+      log.info('cleanup', '退出时关闭 Docker 服务（用户设置）');
       try {
         await DockerServiceManager.stop();
       } catch (error) {
-        logger.error({ error }, 'Docker 服务停止失败');
+        log.error('cleanup', 'Docker 服务停止失败', {}, error);
       }
     } else {
-      logger.info('退出时保持 Docker 服务运行（用户设置）');
+      log.info('cleanup', '退出时保持 Docker 服务运行（用户设置）');
     }
 
     // 清理菜单栏图标
@@ -370,9 +371,9 @@ if (process.env.NODE_ENV === 'development') {
 
 // 处理未捕获的异常
 process.on('uncaughtException', (error) => {
-  logger.error({ error }, '未捕获的异常');
+  log.error('uncaughtException', '未捕获的异常', {}, error);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error({ reason, promise }, '未处理的 Promise 拒绝');
+  log.error('unhandledRejection', '未处理的 Promise 拒绝', { promise }, reason);
 });

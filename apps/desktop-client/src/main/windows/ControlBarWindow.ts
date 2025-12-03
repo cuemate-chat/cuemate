@@ -1,7 +1,9 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
+
+const log = createLogger('ControlBarWindow');
 
 /**
  * 控制条窗口 - 应用主窗口和控制中心
@@ -70,6 +72,7 @@ export class ControlBarWindow {
           nodeIntegration: false,
           contextIsolation: true,
           webSecurity: false, // 强制禁用以确保透明效果
+          devTools: this.isDevelopment,
           preload: getPreloadPath('controlBar'),
         },
       });
@@ -97,10 +100,10 @@ export class ControlBarWindow {
 
       // 开发环境下自动打开独立的 DevTools
       // if (this.isDevelopment) {
-      //   this.window.webContents.openDevTools({ mode: 'detach' });
+      this.window.webContents.openDevTools({ mode: 'detach' });
       // }
     } catch (error) {
-      logger.error({ error }, '创建 control-bar 窗口失败');
+      log.error('create', '创建 control-bar 窗口失败', {}, error);
       throw error;
     }
   }

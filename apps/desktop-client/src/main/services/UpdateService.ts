@@ -1,8 +1,10 @@
 import { app } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 import type { WebSocketClient } from '../websocket/WebSocketClient.js';
+
+const log = createLogger('UpdateService');
 
 /**
  * 更新状态类型
@@ -35,7 +37,7 @@ export class UpdateService {
    */
   public async startUpdate(version: string): Promise<void> {
     try {
-      logger.info({ version }, 'UpdateService: 开始更新流程');
+      log.info('startUpdate', 'UpdateService: 开始更新流程', { version });
 
       // 发送初始状态
       this.sendProgress('downloading', 0, '正在准备更新');
@@ -49,7 +51,7 @@ export class UpdateService {
 
       await this.executeUpdateWithWebSocket(version);
     } catch (error) {
-      logger.error({ error }, 'UpdateService: 更新失败');
+      log.error('startUpdate', 'UpdateService: 更新失败', {}, error);
       this.sendProgress('error', 0, undefined, (error as Error).message);
     }
   }
@@ -61,38 +63,51 @@ export class UpdateService {
     try {
       // 获取平台信息
       const { platform, arch } = this.detectPlatform();
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] 开始更新流程，平台信息', { platform, arch, version });
 
       // 步骤 1: 下载更新包 (0% → 25%)
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] ========== 步骤 1/6: 下载更新包 ==========');
       this.sendProgress('downloading', 0, '正在下载更新包');
       const tempDir = await this.downloadWithProgress(version, platform, arch);
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] 下载完成，临时目录', { tempDir });
 
       // 步骤 2: 解压并验证 (25% → 40%)
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] ========== 步骤 2/6: 解压更新包 ==========');
       this.sendProgress('extracting', 25, '正在解压更新包');
       await this.extractWithProgress(tempDir);
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] 解压完成');
 
       // 步骤 3: 替换应用文件 (40% → 60%)
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] ========== 步骤 3/6: 替换应用文件 ==========');
       this.sendProgress('installing', 40, '正在替换应用文件');
       await this.replaceApplicationFiles(tempDir, platform);
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] 应用文件替换完成');
 
       // 步骤 4: 拉取 Docker 镜像 (60% → 90%)
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] ========== 步骤 4/6: 拉取 Docker 镜像 ==========');
       this.sendProgress('pulling-images', 60, '正在拉取 Docker 镜像');
       await this.pullImagesWithProgress(tempDir);
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] Docker 镜像拉取完成');
 
       // 步骤 5: 准备重启 (90% → 100%)
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] ========== 步骤 5/6: 准备重启 ==========');
       this.sendProgress('ready', 90, '更新完成，准备重启');
 
       // 等待 3 秒
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] 等待 3 秒后重启...');
       await this.sleep(3000);
 
       // 步骤 6: 重启应用
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] ========== 步骤 6/6: 重启应用 ==========');
       this.sendProgress('restarting', 100, '正在重启应用');
       await this.sleep(1000);
 
       // 重启
+      log.info('executeUpdateWithWebSocket', '[UPDATE-TEST] 执行 app.relaunch() 和 app.quit()');
       app.relaunch();
       app.quit();
     } catch (error) {
-      logger.error({ error }, 'UpdateService: 更新执行失败');
+      log.error('executeUpdateWithWebSocket', 'UpdateService: 更新执行失败', {}, error);
       throw error;
     }
   }
@@ -115,7 +130,7 @@ export class UpdateService {
         fs.mkdirSync(tempDir, { recursive: true });
       }
 
-      logger.info({ url, downloadPath }, 'UpdateService: 开始下载更新包');
+      log.info('downloadWithProgress', 'UpdateService: 开始下载更新包', { url, downloadPath });
 
       const file = fs.createWriteStream(downloadPath);
       let downloadedBytes = 0;
@@ -130,7 +145,7 @@ export class UpdateService {
           }
 
           totalBytes = parseInt(response.headers['content-length'] || '0', 10);
-          logger.info({ totalBytes }, 'UpdateService: 更新包总大小');
+          log.info('downloadWithProgress', 'UpdateService: 更新包总大小', { totalBytes });
 
           response.on('data', (chunk: Buffer) => {
             downloadedBytes += chunk.length;
@@ -155,7 +170,7 @@ export class UpdateService {
 
           response.on('end', () => {
             file.end();
-            logger.info({ downloadPath }, 'UpdateService: 下载完成');
+            log.info('downloadWithProgress', 'UpdateService: 下载完成', { downloadPath });
             resolve(tempDir);
           });
 
@@ -178,7 +193,7 @@ export class UpdateService {
     const downloadPath = path.join(tempDir, 'update.tar.gz');
 
     try {
-      logger.info({ tempDir }, 'UpdateService: 开始解压更新包');
+      log.info('extractWithProgress', 'UpdateService: 开始解压更新包', { tempDir });
 
       // 解压 tar.gz
       execSync(`tar -xzf "${downloadPath}" -C "${tempDir}"`, {
@@ -196,9 +211,9 @@ export class UpdateService {
       // TODO: 验证 SHA256 校验和
 
       this.sendProgress('extracting', 40, '更新包验证完成');
-      logger.info('UpdateService: 解压完成');
+      log.info('extractWithProgress', 'UpdateService: 解压完成');
     } catch (error) {
-      logger.error({ error }, 'UpdateService: 解压失败');
+      log.error('extractWithProgress', 'UpdateService: 解压失败', {}, error);
       throw new Error(`解压失败: ${(error as Error).message}`);
     }
   }
@@ -208,7 +223,7 @@ export class UpdateService {
    */
   private async replaceApplicationFiles(tempDir: string, platform: string): Promise<void> {
     try {
-      logger.info('UpdateService: 开始替换应用文件');
+      log.info('replaceApplicationFiles', 'UpdateService: 开始替换应用文件');
 
       // 确定应用路径
       const appPath = platform === 'macos' ? '/Applications/CueMate.app' : app.getAppPath();
@@ -241,9 +256,9 @@ export class UpdateService {
       await this.disableAsarIntegrityCheck(appPath);
 
       this.sendProgress('installing', 60, '应用文件替换完成');
-      logger.info('UpdateService: 应用文件替换完成');
+      log.info('replaceApplicationFiles', 'UpdateService: 应用文件替换完成');
     } catch (error) {
-      logger.error({ error }, 'UpdateService: 替换应用文件失败');
+      log.error('replaceApplicationFiles', 'UpdateService: 替换应用文件失败', {}, error);
       throw new Error(`替换应用文件失败: ${(error as Error).message}`);
     }
   }
@@ -256,7 +271,7 @@ export class UpdateService {
       const plistPath = path.join(appPath, 'Contents', 'Info.plist');
 
       if (!fs.existsSync(plistPath)) {
-        logger.warn('Info.plist 不存在，跳过');
+        log.warn('disableAsarIntegrityCheck', 'Info.plist 不存在，跳过');
         return;
       }
 
@@ -265,7 +280,7 @@ export class UpdateService {
 
       // 检查是否已经存在 ElectronAsarIntegrity 配置
       if (plistContent.includes('ElectronAsarIntegrity')) {
-        logger.info('ElectronAsarIntegrity 已禁用');
+        log.info('disableAsarIntegrityCheck', 'ElectronAsarIntegrity 已禁用');
         return;
       }
 
@@ -285,9 +300,9 @@ export class UpdateService {
       // 写回文件
       fs.writeFileSync(plistPath, plistContent, 'utf-8');
 
-      logger.info('ElectronAsarIntegrity 已禁用');
+      log.info('disableAsarIntegrityCheck', 'ElectronAsarIntegrity 已禁用');
     } catch (error) {
-      logger.error({ error }, 'UpdateService: 禁用 asar integrity check 失败');
+      log.error('disableAsarIntegrityCheck', 'UpdateService: 禁用 asar integrity check 失败', {}, error);
       throw error;
     }
   }
@@ -297,7 +312,7 @@ export class UpdateService {
    */
   private async pullImagesWithProgress(tempDir: string): Promise<void> {
     try {
-      logger.info('UpdateService: 开始拉取 Docker 镜像');
+      log.info('pullImagesWithProgress', 'UpdateService: 开始拉取 Docker 镜像');
 
       // 读取 manifest
       const manifestPath = path.join(tempDir, 'update-manifest.json');
@@ -307,7 +322,7 @@ export class UpdateService {
       const totalImages = images.length;
 
       if (totalImages === 0) {
-        logger.warn('UpdateService: manifest 中没有 Docker 镜像');
+        log.warn('pullImagesWithProgress', 'UpdateService: manifest 中没有 Docker 镜像');
         this.sendProgress('pulling-images', 90, '没有需要拉取的镜像');
         return;
       }
@@ -338,18 +353,18 @@ export class UpdateService {
             stdio: 'pipe',
           });
         } catch (error) {
-          logger.error({ error, image: image.name }, 'UpdateService: 拉取镜像失败');
+          log.error('pullImagesWithProgress', `UpdateService: 拉取镜像失败: ${image.name}`, { image: image.name }, error);
           throw new Error(`拉取镜像 ${image.name} 失败`);
         }
       }
 
       this.sendProgress('pulling-images', 90, '所有镜像拉取完成');
-      logger.info('UpdateService: 所有镜像拉取完成');
+      log.info('pullImagesWithProgress', 'UpdateService: 所有镜像拉取完成');
 
       // 清理旧版本镜像
       await this.cleanupOldImages(manifest.version);
     } catch (error) {
-      logger.error({ error }, 'UpdateService: 拉取 Docker 镜像失败');
+      log.error('pullImagesWithProgress', 'UpdateService: 拉取 Docker 镜像失败', {}, error);
       throw new Error(`拉取 Docker 镜像失败: ${(error as Error).message}`);
     }
   }
@@ -372,22 +387,22 @@ export class UpdateService {
         .filter((line: string) => !line.includes(currentVersion) && !line.includes('<none>'));
 
       if (images.length === 0) {
-        logger.info('UpdateService: 没有旧版本镜像需要清理');
+        log.info('cleanupOldImages', 'UpdateService: 没有旧版本镜像需要清理');
         return;
       }
 
-      logger.info({ images, currentVersion }, 'UpdateService: 清理旧版本镜像');
+      log.info('cleanupOldImages', 'UpdateService: 清理旧版本镜像', { images, currentVersion });
 
       for (const image of images) {
         try {
           execSync(`docker rmi ${image}`, { stdio: 'pipe' });
-          logger.info({ image }, 'UpdateService: 已删除旧镜像');
+          log.info('cleanupOldImages', 'UpdateService: 已删除旧镜像', { image });
         } catch (error) {
-          logger.warn({ error, image }, 'UpdateService: 删除旧镜像失败，可能仍在使用');
+          log.warn('cleanupOldImages', 'UpdateService: 删除旧镜像失败，可能仍在使用', { image });
         }
       }
     } catch (error) {
-      logger.error({ error }, 'UpdateService: 清理旧镜像失败');
+      log.error('cleanupOldImages', 'UpdateService: 清理旧镜像失败', {}, error);
       // 清理失败不影响更新流程
     }
   }
@@ -430,9 +445,9 @@ export class UpdateService {
         error,
       });
 
-      logger.info({ status, progress, currentStep, error }, 'UpdateService: 进度更新');
-    } catch (error) {
-      logger.error({ error }, 'UpdateService: 发送进度失败');
+      log.info('sendProgress', 'UpdateService: 进度更新', { status, progress, currentStep, error });
+    } catch (err) {
+      log.error('sendProgress', 'UpdateService: 发送进度失败', {}, err);
     }
   }
 

@@ -1,5 +1,7 @@
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 import { PiperTTS } from './PiperTTS.js';
+
+const log = createLogger('StreamingTTS');
 
 interface StreamingTTSOptions {
   chunkSize?: number; // 每次处理的文本块大小（字符数）
@@ -172,7 +174,7 @@ export class StreamingTTS {
         try {
           await this.processTextChunk(textChunk);
         } catch (error) {
-          logger.error({ err: error }, '处理文本块失败:');
+          log.error('startProcessing', '处理文本块失败', {}, error);
           this.options.onError(error as Error);
         }
       }
@@ -207,7 +209,7 @@ export class StreamingTTS {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, '文本转语音失败:');
+      log.error('processTextChunk', '文本转语音失败', {}, error);
       throw error;
     }
   }
@@ -229,7 +231,7 @@ export class StreamingTTS {
         this.playNextAudioChunk();
       }
     } catch (error) {
-      logger.error({ err: error }, '音频播放失败:');
+      log.error('playNextAudioChunk', '音频播放失败', {}, error);
       this.options.onError(error as Error);
     }
   }

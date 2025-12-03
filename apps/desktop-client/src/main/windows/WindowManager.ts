@@ -1,7 +1,9 @@
 import type { BrowserWindow, Tray } from 'electron';
 import { screen } from 'electron';
 import type { AppState } from '../../shared/types.js';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('WindowManager');
 import { ScreenshotWatcher } from '../utils/screenshotWatcher.js';
 import { WebSocketClient } from '../websocket/WebSocketClient.js';
 import { AIQuestionHistoryWindow } from './AIQuestionHistoryWindow.js';
@@ -122,7 +124,7 @@ export class WindowManager {
       });
       this.screenshotWatcher.start();
     } catch (error) {
-      logger.error({ error }, '窗口管理器初始化失败');
+      log.error('initialize', '窗口管理器初始化失败', {}, error);
       throw error;
     }
   }
@@ -623,10 +625,10 @@ export class WindowManager {
       if (typeof toggleFn === 'function') {
         toggleFn();
       } else {
-        logger.error('toggleClickThroughMode 函数未找到');
+        log.error('toggleClickThroughMode', 'toggleClickThroughMode 函数未找到');
       }
     } catch (error) {
-      logger.error({ error }, '调用点击穿透切换函数失败');
+      log.error('toggleClickThroughMode', '调用点击穿透切换函数失败', {}, error);
     }
   }
 

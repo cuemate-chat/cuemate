@@ -1,7 +1,9 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
+
+const log = createLogger('InterviewerWindow');
 
 export class InterviewerWindow {
   private window: BrowserWindow | null = null;
@@ -85,7 +87,7 @@ export class InterviewerWindow {
       // 语音识别窗口始终打开开发者工具（用于调试音频问题）
       this.window.webContents.openDevTools({ mode: 'detach' });
     } catch (error) {
-      logger.error({ error }, '创建 interviewer 窗口失败');
+      log.error('create', '创建 interviewer 窗口失败', {}, error);
       throw error;
     }
   }

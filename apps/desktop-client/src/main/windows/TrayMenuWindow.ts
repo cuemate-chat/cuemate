@@ -1,6 +1,8 @@
 import { BrowserWindow, screen, Tray } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('TrayMenuWindow');
 import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
 
 export class TrayMenuWindow {
@@ -74,9 +76,9 @@ export class TrayMenuWindow {
 
       this.setupEvents();
 
-      logger.info('托盘菜单窗口创建成功');
+      log.info('create', '托盘菜单窗口创建成功');
     } catch (error) {
-      logger.error({ error }, '创建托盘菜单窗口失败');
+      log.error('create', '创建托盘菜单窗口失败', {}, error);
       throw error;
     }
   }

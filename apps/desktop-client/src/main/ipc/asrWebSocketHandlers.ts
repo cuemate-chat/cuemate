@@ -1,6 +1,8 @@
 import { ipcMain } from 'electron';
 import { asrWebSocketService } from '../services/ASRWebSocketService.js';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('ASRWebSocketHandlers');
 
 /**
  * 注册 ASR WebSocket IPC 处理器
@@ -17,7 +19,7 @@ export function registerASRWebSocketHandlers(): void {
       });
       return { success: true };
     } catch (error) {
-      logger.error({ sessionId, error }, '[IPC] ASR WebSocket 连接失败');
+      log.error('asr-websocket:connect', '[IPC] ASR WebSocket 连接失败', { sessionId }, error);
       return { success: false, error: String(error) };
     }
   });
@@ -28,7 +30,7 @@ export function registerASRWebSocketHandlers(): void {
       asrWebSocketService.sendConfig(sessionId, config);
       return { success: true };
     } catch (error) {
-      logger.error({ sessionId, error }, '[IPC] 发送配置失败');
+      log.error('asr-websocket:send-config', '[IPC] 发送配置失败', { sessionId }, error);
       return { success: false, error: String(error) };
     }
   });
@@ -36,48 +38,47 @@ export function registerASRWebSocketHandlers(): void {
   // 发送音频数据
   ipcMain.handle('asr-websocket:send-audio', (_event, sessionId: string, audioData: ArrayBuffer) => {
     try {
-      logger.info({
+      log.info('asr-websocket:send-audio', '[IPC] 收到音频数据发送请求', {
         sessionId,
         byteLength: audioData?.byteLength,
         type: typeof audioData,
         isArrayBuffer: audioData instanceof ArrayBuffer,
         constructorName: audioData?.constructor?.name
-      }, '[IPC] 收到音频数据发送请求');
+      });
 
       // 验证参数
       if (!sessionId) {
-        logger.error({ sessionId, audioData }, '[IPC] sessionId 为空');
+        log.error('asr-websocket:send-audio', '[IPC] sessionId 为空', { sessionId, audioData });
         return { success: false, error: 'sessionId 为空' };
       }
 
       if (!audioData) {
-        logger.error({ sessionId }, '[IPC] audioData 为空或 undefined');
+        log.error('asr-websocket:send-audio', '[IPC] audioData 为空或 undefined', { sessionId });
         return { success: false, error: 'audioData 为空' };
       }
 
       if (!(audioData instanceof ArrayBuffer)) {
-        logger.error({
+        log.error('asr-websocket:send-audio', '[IPC] audioData 不是 ArrayBuffer 类型', {
           sessionId,
           actualType: Object.prototype.toString.call(audioData),
           constructorName: (audioData as any)?.constructor?.name
-        }, '[IPC] audioData 不是 ArrayBuffer 类型');
+        });
         return { success: false, error: `audioData 类型错误: ${Object.prototype.toString.call(audioData)}` };
       }
 
       if (audioData.byteLength === 0) {
-        logger.error({ sessionId }, '[IPC] audioData 长度为 0');
+        log.error('asr-websocket:send-audio', '[IPC] audioData 长度为 0', { sessionId });
         return { success: false, error: 'audioData 长度为 0' };
       }
 
-      logger.debug({ sessionId, byteLength: audioData.byteLength }, '[IPC] 准备调用 asrWebSocketService.sendAudioData');
+      log.debug('asr-websocket:send-audio', '[IPC] 准备调用 asrWebSocketService.sendAudioData', { sessionId, byteLength: audioData.byteLength });
       asrWebSocketService.sendAudioData(sessionId, audioData);
-      logger.debug({ sessionId }, '[IPC] asrWebSocketService.sendAudioData 调用完成');
+      log.debug('asr-websocket:send-audio', '[IPC] asrWebSocketService.sendAudioData 调用完成', { sessionId });
 
       return { success: true };
     } catch (error) {
-      logger.error({
+      log.error('asr-websocket:send-audio', '[IPC] 发送音频数据失败', {
         sessionId,
-        error,
         errorMessage: error instanceof Error ? error.message : String(error),
         errorStack: error instanceof Error ? error.stack : undefined,
         audioDataInfo: {
@@ -85,7 +86,7 @@ export function registerASRWebSocketHandlers(): void {
           type: typeof audioData,
           constructorName: (audioData as any)?.constructor?.name
         }
-      }, '[IPC] 发送音频数据失败');
+      }, error);
       return { success: false, error: String(error) };
     }
   });
@@ -93,7 +94,7 @@ export function registerASRWebSocketHandlers(): void {
   // 监听消息 - 已废弃，消息监听在 connect 时设置
   // 保留此处理器仅为了兼容渲染进程的调用，直接返回成功
   ipcMain.handle('asr-websocket:on-message', (_event, sessionId: string) => {
-    logger.debug({ sessionId }, '[IPC] asr-websocket:on-message 被调用（消息监听已在 connect 时设置）');
+    log.debug('asr-websocket:on-message', '[IPC] asr-websocket:on-message 被调用（消息监听已在 connect 时设置）', { sessionId });
     return { success: true };
   });
 
@@ -103,7 +104,7 @@ export function registerASRWebSocketHandlers(): void {
       asrWebSocketService.close(sessionId);
       return { success: true };
     } catch (error) {
-      logger.error({ sessionId, error }, '[IPC] 关闭连接失败');
+      log.error('asr-websocket:close', '[IPC] 关闭连接失败', { sessionId }, error);
       return { success: false, error: String(error) };
     }
   });
@@ -114,7 +115,7 @@ export function registerASRWebSocketHandlers(): void {
       const readyState = asrWebSocketService.getReadyState(sessionId);
       return { success: true, readyState };
     } catch (error) {
-      logger.error({ sessionId, error }, '[IPC] 获取连接状态失败');
+      log.error('asr-websocket:get-ready-state', '[IPC] 获取连接状态失败', { sessionId }, error);
       return { success: false, error: String(error) };
     }
   });
@@ -175,7 +176,7 @@ export function registerASRWebSocketHandlers(): void {
           };
         }
       } catch (dockerError) {
-        logger.error({ error: dockerError }, '[IPC] Docker 状态检查失败');
+        log.error('asr-websocket:check-service', '[IPC] Docker 状态检查失败', {}, dockerError);
         return {
           ready: false,
           status: 'docker_error',
@@ -183,7 +184,7 @@ export function registerASRWebSocketHandlers(): void {
         };
       }
     } catch (error) {
-      logger.error({ error }, '[IPC] ASR 服务状态检查失败');
+      log.error('asr-websocket:check-service', '[IPC] ASR 服务状态检查失败', {}, error);
       return {
         ready: false,
         status: 'unknown_error',
@@ -192,5 +193,5 @@ export function registerASRWebSocketHandlers(): void {
     }
   });
 
-  logger.info('[IPC] ASR WebSocket 处理器已注册');
+  log.info('registerASRWebSocketHandlers', '[IPC] ASR WebSocket 处理器已注册');
 }

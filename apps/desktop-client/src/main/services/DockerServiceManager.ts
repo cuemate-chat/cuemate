@@ -2,7 +2,9 @@ import { execSync } from 'child_process';
 import { app } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('DockerServiceManager');
 import { getDockerEnv } from '../utils/dockerPath.js';
 
 /**
@@ -34,7 +36,7 @@ export class DockerServiceManager {
     if (process.env.NODE_ENV === 'development') {
       const devDir = path.resolve(app.getAppPath(), '../../infra/docker');
       if (fs.existsSync(path.join(devDir, 'docker-compose.yml'))) {
-        logger.info({ devDir }, '开发环境：使用项目 infra/docker 目录');
+        log.info('getDockerComposeDir', '开发环境：使用项目 infra/docker 目录', { devDir });
         return devDir;
       }
     }
@@ -49,21 +51,21 @@ export class DockerServiceManager {
       const appComposePath = path.join(appResourcesDir, 'docker-compose.yml');
 
       if (fs.existsSync(appComposePath)) {
-        logger.info({ from: appResourcesDir, to: userDataDir }, '首次初始化：复制 docker-compose.yml 到用户数据目录');
+        log.info('getDockerComposeDir', '首次初始化：复制 docker-compose.yml 到用户数据目录', { from: appResourcesDir, to: userDataDir });
         // 确保目录存在
         if (!fs.existsSync(userDataDir)) {
           fs.mkdirSync(userDataDir, { recursive: true });
         }
         // 复制文件
         fs.copyFileSync(appComposePath, userComposePath);
-        logger.info('docker-compose.yml 复制成功');
+        log.info('getDockerComposeDir', 'docker-compose.yml 复制成功');
       } else {
         throw new Error(`找不到 docker-compose.yml 文件，应用资源目录: ${appResourcesDir}`);
       }
     }
 
     // 返回用户数据目录
-    logger.info({ userDataDir }, '生产环境：使用用户数据目录');
+    log.info('getDockerComposeDir', '生产环境：使用用户数据目录', { userDataDir });
     return userDataDir;
   }
 
@@ -73,7 +75,7 @@ export class DockerServiceManager {
   private static areAllContainersRunning(): boolean {
     try {
       const command = `docker ps --filter "name=${this.CONTAINER_PREFIX}" --filter "status=running" --format "{{.Names}}"`;
-      logger.debug({ command }, 'Docker: 检查容器运行状态');
+      log.debug('areAllContainersRunning', 'Docker: 检查容器运行状态', { command });
 
       const output = execSync(command, {
         encoding: 'utf-8',
@@ -106,16 +108,15 @@ export class DockerServiceManager {
         const missingContainers = requiredContainers.filter(required =>
           !runningContainers.some(running => running === required)
         );
-        logger.warn({ missingContainers, runningContainers }, '部分容器未运行');
+        log.warn('areAllContainersRunning', '部分容器未运行', { missingContainers, runningContainers });
       }
 
       return allRunning;
     } catch (error: any) {
-      logger.warn({
-        error,
+      log.warn('areAllContainersRunning', 'Docker 容器状态检查失败', {
         stderr: error.stderr?.toString(),
         stdout: error.stdout?.toString()
-      }, 'Docker 容器状态检查失败');
+      }, error);
       return false;
     }
   }
@@ -126,7 +127,7 @@ export class DockerServiceManager {
   private static areContainersExist(): boolean {
     try {
       const command = `docker ps -a --filter "name=${this.CONTAINER_PREFIX}-" --format "{{.Names}}"`;
-      logger.debug({ command }, 'Docker: 检查容器是否存在');
+      log.debug('areContainersExist', 'Docker: 检查容器是否存在', { command });
 
       const output = execSync(command, {
         encoding: 'utf-8',
@@ -157,11 +158,10 @@ export class DockerServiceManager {
 
       return hasAnyRequired;
     } catch (error: any) {
-      logger.warn({
-        error,
+      log.warn('areContainersExist', 'Docker 容器存在性检查失败', {
         stderr: error.stderr?.toString(),
         stdout: error.stdout?.toString()
-      }, 'Docker 容器存在性检查失败');
+      }, error);
       return false;
     }
   }
@@ -171,20 +171,20 @@ export class DockerServiceManager {
    */
   public static async start(): Promise<void> {
     try {
-      logger.info({
+      log.info('start', '开始启动 Docker 服务...', {
         cwd: process.cwd(),
         cwdExists: fs.existsSync(process.cwd())
-      }, '开始启动 Docker 服务...');
+      });
 
       // 检查容器是否已经在运行
       if (this.areAllContainersRunning()) {
-        logger.info('Docker 服务已在运行，无需重复启动');
+        log.info('start', 'Docker 服务已在运行，无需重复启动');
         return;
       }
 
       // 获取 docker-compose 目录
       const dockerComposeDir = this.getDockerComposeDir();
-      logger.info({ dockerComposeDir }, '使用 docker-compose 目录');
+      log.info('start', '使用 docker-compose 目录', { dockerComposeDir });
 
       // 检查容器是否存在
       const containersExist = this.areContainersExist();
@@ -209,9 +209,9 @@ export class DockerServiceManager {
 
       if (containersExist) {
         // 容器已存在但未运行，使用 docker compose start
-        logger.info({ dockerComposeDir, envVars, composeEnv }, 'Docker 容器已存在，正在启动...');
+        log.info('start', 'Docker 容器已存在，正在启动...', { dockerComposeDir, envVars, composeEnv });
         const command = `docker compose -p ${this.PROJECT_NAME} -f docker-compose.yml start`;
-        logger.debug({ command, cwd: dockerComposeDir }, 'Docker: 执行启动命令');
+        log.debug('start', 'Docker: 执行启动命令', { command, cwd: dockerComposeDir });
 
         try {
           const output = execSync(command, {
@@ -221,22 +221,21 @@ export class DockerServiceManager {
             env: composeEnv
           });
           if (output) {
-            logger.info({ output: output.trim() }, 'Docker compose start 输出');
+            log.info('start', 'Docker compose start 输出', { output: output.trim() });
           }
         } catch (error: any) {
-          logger.error({
-            error,
+          log.error('start', 'Docker compose start 失败', {
             stderr: error.stderr?.toString(),
             stdout: error.stdout?.toString(),
             cwd: dockerComposeDir
-          }, 'Docker compose start 失败');
+          }, error);
           throw error;
         }
       } else {
         // 容器不存在，使用 docker compose up -d
-        logger.info({ dockerComposeDir, envVars, composeEnv }, 'Docker 容器不存在，正在创建并启动...');
+        log.info('start', 'Docker 容器不存在，正在创建并启动...', { dockerComposeDir, envVars, composeEnv });
         const command = `docker compose -p ${this.PROJECT_NAME} -f docker-compose.yml up -d`;
-        logger.debug({ command, cwd: dockerComposeDir }, 'Docker: 执行创建命令');
+        log.debug('start', 'Docker: 执行创建命令', { command, cwd: dockerComposeDir });
 
         try {
           const output = execSync(command, {
@@ -246,22 +245,21 @@ export class DockerServiceManager {
             env: composeEnv
           });
           if (output) {
-            logger.info({ output: output.trim() }, 'Docker compose up 输出');
+            log.info('start', 'Docker compose up 输出', { output: output.trim() });
           }
         } catch (error: any) {
-          logger.error({
-            error,
+          log.error('start', 'Docker compose up 失败', {
             stderr: error.stderr?.toString(),
             stdout: error.stdout?.toString(),
             cwd: dockerComposeDir
-          }, 'Docker compose up 失败');
+          }, error);
           throw error;
         }
       }
 
-      logger.info('Docker 服务启动成功');
+      log.info('start', 'Docker 服务启动成功');
     } catch (error) {
-      logger.error({ error }, 'Docker 服务启动失败');
+      log.error('start', 'Docker 服务启动失败', {}, error);
       throw error;
     }
   }
@@ -271,11 +269,11 @@ export class DockerServiceManager {
    */
   public static async stop(): Promise<void> {
     try {
-      logger.info('开始停止 Docker 服务...');
+      log.info('stop', '开始停止 Docker 服务...');
 
       // 检查是否有容器存在（无论是否全部运行）
       if (!this.areContainersExist()) {
-        logger.info('Docker 容器不存在，无需停止');
+        log.info('stop', 'Docker 容器不存在，无需停止');
         return;
       }
 
@@ -284,7 +282,7 @@ export class DockerServiceManager {
 
       // 验证目录存在
       if (!fs.existsSync(dockerComposeDir)) {
-        logger.warn({ dockerComposeDir }, 'Docker compose 目录不存在，跳过停止');
+        log.warn('stop', 'Docker compose 目录不存在，跳过停止', { dockerComposeDir });
         return;
       }
 
@@ -296,9 +294,9 @@ export class DockerServiceManager {
       };
 
       // 停止容器
-      logger.info({ dockerComposeDir, composeEnv }, '正在停止 Docker 服务...');
+      log.info('stop', '正在停止 Docker 服务...', { dockerComposeDir, composeEnv });
       const command = `docker compose -p ${this.PROJECT_NAME} -f docker-compose.yml stop`;
-      logger.debug({ command, cwd: dockerComposeDir }, 'Docker: 执行停止命令');
+      log.debug('stop', 'Docker: 执行停止命令', { command, cwd: dockerComposeDir });
 
       try {
         const output = execSync(command, {
@@ -308,21 +306,20 @@ export class DockerServiceManager {
           env: composeEnv
         });
         if (output) {
-          logger.info({ output: output.trim() }, 'Docker compose stop 输出');
+          log.info('stop', 'Docker compose stop 输出', { output: output.trim() });
         }
       } catch (error: any) {
-        logger.error({
-          error,
+        log.error('stop', 'Docker compose stop 失败', {
           stderr: error.stderr?.toString(),
           stdout: error.stdout?.toString(),
           cwd: dockerComposeDir
-        }, 'Docker compose stop 失败');
+        }, error);
         throw error;
       }
 
-      logger.info('Docker 服务停止成功');
+      log.info('stop', 'Docker 服务停止成功');
     } catch (error) {
-      logger.error({ error }, 'Docker 服务停止失败');
+      log.error('stop', 'Docker 服务停止失败', {}, error);
       // 停止失败不抛出异常，避免阻塞应用退出
     }
   }

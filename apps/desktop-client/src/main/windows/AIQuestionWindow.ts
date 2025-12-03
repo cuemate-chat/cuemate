@@ -1,7 +1,9 @@
 import { BrowserWindow, screen } from 'electron';
 import type { WindowConfig } from '../../shared/types.js';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 import { getPreloadPath, getRendererPath, getWindowIconPath } from '../utils/paths.js';
+
+const log = createLogger('AIQuestionWindow');
 
 /**
  * AI 问答窗口 - 透明的悬浮窗口
@@ -122,11 +124,6 @@ export class AIQuestionWindow {
       this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       this.window.setFullScreenable(false);
 
-      // 开发模式下自动打开开发者工具
-      if (this.isDevelopment) {
-        this.window.webContents.openDevTools({ mode: 'detach' });
-      }
-
       // 加载页面
       if (this.isDevelopment) {
         await this.window.loadURL('http://localhost:3000/src/renderer/ai-question/');
@@ -136,8 +133,13 @@ export class AIQuestionWindow {
 
       // 设置窗口事件监听
       this.setupEvents();
+
+      // 开发模式下自动打开开发者工具
+      // if (this.isDevelopment) {
+      this.window.webContents.openDevTools({ mode: 'detach' });
+      // }
     } catch (error) {
-      logger.error({ error }, '创建 ai-question 窗口失败');
+      log.error('create', '创建 ai-question 窗口失败', {}, error);
       throw error;
     }
   }
@@ -160,7 +162,7 @@ export class AIQuestionWindow {
    */
   public show(): void {
     if (!this.window) {
-      logger.warn('ai-question 窗口不存在，无法显示');
+      log.warn('show', 'ai-question 窗口不存在，无法显示');
       return;
     }
 
@@ -186,7 +188,7 @@ export class AIQuestionWindow {
         }
       }, 50);
     } catch (error) {
-      logger.error({ error }, '显示 ai-question 窗口失败');
+      log.error('show', '显示 ai-question 窗口失败', {}, error);
     }
   }
 
@@ -195,14 +197,14 @@ export class AIQuestionWindow {
    */
   public hide(): void {
     if (!this.window) {
-      logger.warn('ai-question 窗口不存在，无法隐藏');
+      log.warn('hide', 'ai-question 窗口不存在，无法隐藏');
       return;
     }
 
     try {
       this.window.hide();
     } catch (error) {
-      logger.error({ error }, '隐藏 ai-question 窗口失败');
+      log.error('hide', '隐藏 ai-question 窗口失败', {}, error);
     }
   }
 
@@ -211,7 +213,7 @@ export class AIQuestionWindow {
    */
   public toggle(): void {
     if (!this.window) {
-      logger.warn('ai-question 窗口不存在，无法切换');
+      log.warn('toggle', 'ai-question 窗口不存在，无法切换');
       return;
     }
 
@@ -267,7 +269,7 @@ export class AIQuestionWindow {
    */
   public updateWindowSize(): void {
     if (!this.window) {
-      logger.warn('ai-question 窗口不存在，无法更新尺寸');
+      log.warn('updateWindowSize', 'ai-question 窗口不存在，无法更新尺寸');
       return;
     }
 
@@ -293,7 +295,7 @@ export class AIQuestionWindow {
         heightPercentage: this.heightPercentage,
       });
     } catch (error) {
-      logger.error({ error }, '更新 ai-question 窗口尺寸失败');
+      log.error('updateWindowSize', '更新 ai-question 窗口尺寸失败', {}, error);
     }
   }
 }

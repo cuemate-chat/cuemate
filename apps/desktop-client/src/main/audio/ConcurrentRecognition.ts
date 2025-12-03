@@ -1,5 +1,7 @@
 import { startMicrophoneRecognition, startSpeakerRecognition, MicrophoneRecognitionController, SpeakerRecognitionController } from '../../utils/audioRecognition.js';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('ConcurrentRecognition');
 
 interface ConcurrentRecognitionOptions {
   micDeviceId?: string;
@@ -24,7 +26,7 @@ export class ConcurrentRecognition {
       throw new Error('并发识别已在运行中');
     }
 
-    logger.info('开始启动并发语音识别');
+    log.info('start', '开始启动并发语音识别');
 
     try {
       // 并发启动两个识别服务
@@ -37,9 +39,9 @@ export class ConcurrentRecognition {
       this.speakerController = speakerController;
       this.isActive = true;
 
-      logger.info('并发语音识别启动成功');
+      log.info('start', '并发语音识别启动成功');
     } catch (error) {
-      logger.error({ err: error }, '启动并发语音识别失败:');
+      log.error('start', '启动并发语音识别失败', {}, error);
       await this.stop();
       throw error;
     }
@@ -49,7 +51,7 @@ export class ConcurrentRecognition {
    * 停止所有识别
    */
   public async stop(): Promise<void> {
-    logger.info('停止并发语音识别');
+    log.info('stop', '停止并发语音识别');
 
     this.isActive = false;
 
@@ -57,20 +59,20 @@ export class ConcurrentRecognition {
 
     if (this.micController) {
       stopPromises.push(this.micController.stop().catch(err =>
-        logger.error({ err: err }, '停止麦克风识别失败')
+        log.error('stop', '停止麦克风识别失败', {}, err)
       ));
       this.micController = null;
     }
 
     if (this.speakerController) {
       stopPromises.push(this.speakerController.stop().catch(err =>
-        logger.error({ err: err }, '停止扬声器识别失败')
+        log.error('stop', '停止扬声器识别失败', {}, err)
       ));
       this.speakerController = null;
     }
 
     await Promise.all(stopPromises);
-    logger.info('并发语音识别已停止');
+    log.info('stop', '并发语音识别已停止');
   }
 
   /**
@@ -91,14 +93,14 @@ export class ConcurrentRecognition {
         this.options.onUserSpeech?.(text, isFinal || false);
       },
       onError: (errorMessage) => {
-        logger.error('麦克风识别错误:', errorMessage);
+        log.error('startMicrophoneRecognition', `麦克风识别错误: ${errorMessage}`);
         this.options.onError?.('microphone', errorMessage);
       },
       onOpen: () => {
-        logger.debug('麦克风识别连接已建立');
+        log.debug('startMicrophoneRecognition', '麦克风识别连接已建立');
       },
       onClose: () => {
-        logger.debug('麦克风识别连接已关闭');
+        log.debug('startMicrophoneRecognition', '麦克风识别连接已关闭');
       },
     });
   }
@@ -114,14 +116,14 @@ export class ConcurrentRecognition {
         this.options.onInterviewerSpeech?.(text, isFinal || false);
       },
       onError: (errorMessage) => {
-        logger.error('扬声器识别错误:', errorMessage);
+        log.error('startSpeakerRecognition', `扬声器识别错误: ${errorMessage}`);
         this.options.onError?.('speaker', errorMessage);
       },
       onOpen: () => {
-        logger.debug('扬声器识别连接已建立');
+        log.debug('startSpeakerRecognition', '扬声器识别连接已建立');
       },
       onClose: () => {
-        logger.debug('扬声器识别连接已关闭');
+        log.debug('startSpeakerRecognition', '扬声器识别连接已关闭');
       },
     });
   }

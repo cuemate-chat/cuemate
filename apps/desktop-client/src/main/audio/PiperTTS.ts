@@ -3,7 +3,9 @@ import { app } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('PiperTTS');
 
 export interface PiperVoice {
   id: string;
@@ -70,11 +72,11 @@ export class PiperTTS {
     this.piperBinaryPath = this.findPiperBinary();
 
     if (this.piperBinaryPath) {
-      logger.info(`使用打包的 Piper 二进制文件: ${this.piperBinaryPath}`);
+      log.info('constructor', `使用打包的 Piper 二进制文件: ${this.piperBinaryPath}`);
       this.pythonPath = '';
       this.wrapperScript = '';
     } else {
-      logger.info('未找到打包的 Piper 二进制文件，回退到 Python 脚本');
+      log.info('constructor', '未找到打包的 Piper 二进制文件，回退到 Python 脚本');
       this.pythonPath = this.findPythonPath();
       if (!app.isPackaged) {
         this.wrapperScript = path.join(process.cwd(), 'resources', 'piper', 'piper_wrapper.py');
@@ -114,10 +116,10 @@ export class PiperTTS {
       if (fs.existsSync(binPath)) {
         try {
           fs.chmodSync(binPath, 0o755);
-          logger.info(`找到 Piper 二进制文件: ${binPath}`);
+          log.info('findPiperBinary', `找到 Piper 二进制文件: ${binPath}`);
           return binPath;
         } catch (error) {
-          logger.warn({ err: error }, `设置 Piper 二进制文件权限失败: ${binPath}`);
+          log.warn('findPiperBinary', `设置 Piper 二进制文件权限失败: ${binPath}`, { err: error });
         }
       }
     }
@@ -154,7 +156,7 @@ export class PiperTTS {
       }
     }
 
-    logger.warn('未找到包含 piper-tts 的 Python 环境，使用默认 python3');
+    log.warn('findPythonPath', '未找到包含 piper-tts 的 Python 环境，使用默认 python3');
     return 'python3';
   }
 
@@ -195,12 +197,12 @@ export class PiperTTS {
       if (fs.existsSync(voice.modelPath)) {
         this.voices.set(voice.id, voice);
       } else {
-        logger.warn(`Piper 语音模型不存在: ${voice.modelPath}`);
+        log.warn('initializeVoices', `Piper 语音模型不存在: ${voice.modelPath}`);
       }
     });
 
     if (this.voices.size === 0) {
-      logger.error('未找到任何 Piper 语音模型');
+      log.error('initializeVoices', '未找到任何 Piper 语音模型');
     }
   }
 
@@ -212,7 +214,7 @@ export class PiperTTS {
     try {
       (global as any).userLocale = locale;
     } catch (error) {
-      logger.error({ err: error }, '设置用户语言偏好失败:');
+      log.error('setUserLanguage', '设置用户语言偏好失败', {}, error);
     }
   }
 
@@ -241,13 +243,13 @@ export class PiperTTS {
   async startService(): Promise<void> {
     // 服务已就绪，直接返回
     if (this.isServiceReady) {
-      logger.info('Piper TTS 服务已在运行');
+      log.info('startService', 'Piper TTS 服务已在运行');
       return;
     }
 
     // 正在启动中，等待现有的启动 Promise
     if (this.isServiceStarting && this.serviceStartPromise) {
-      logger.info('Piper TTS 服务正在启动中，等待...');
+      log.info('startService', 'Piper TTS 服务正在启动中，等待...');
       return this.serviceStartPromise;
     }
 
@@ -275,7 +277,7 @@ export class PiperTTS {
         args = [this.wrapperScript, '--model', voice.modelPath, '--service'];
       }
 
-      logger.info(`启动 Piper TTS 服务: ${command} ${args.join(' ')}`);
+      log.info('startService', `启动 Piper TTS 服务: ${command} ${args.join(' ')}`);
 
       this.serviceProcess = spawn(command, args, {
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -292,7 +294,7 @@ export class PiperTTS {
           const response: PiperResponse = JSON.parse(line);
 
           if (response.status === 'ready') {
-            logger.info(`Piper TTS 服务就绪: ${response.message}`);
+            log.info('startService', `Piper TTS 服务就绪: ${response.message}`);
             this.isServiceReady = true;
             this.isServiceStarting = false;
             resolve();
@@ -309,24 +311,24 @@ export class PiperTTS {
             }
           }
         } catch (e) {
-          logger.warn(`Piper TTS 服务输出解析失败: ${line}`);
+          log.warn('startService', `Piper TTS 服务输出解析失败: ${line}`);
         }
       });
 
       // 读取 stderr（错误信息）
       this.serviceProcess.stderr?.on('data', (data: Buffer) => {
-        logger.warn(`Piper TTS stderr: ${data.toString()}`);
+        log.warn('startService', `Piper TTS stderr: ${data.toString()}`);
       });
 
       this.serviceProcess.on('error', (error) => {
-        logger.error({ err: error }, 'Piper TTS 服务进程错误');
+        log.error('startService', 'Piper TTS 服务进程错误', {}, error);
         this.isServiceReady = false;
         this.isServiceStarting = false;
         reject(error);
       });
 
       this.serviceProcess.on('close', (code) => {
-        logger.info(`Piper TTS 服务进程退出: code=${code}`);
+        log.info('startService', `Piper TTS 服务进程退出: code=${code}`);
         this.isServiceReady = false;
         this.isServiceStarting = false;
         this.serviceProcess = null;
@@ -362,14 +364,14 @@ export class PiperTTS {
           }
         }, 1000);
       } catch (error) {
-        logger.warn({ err: error }, 'Piper TTS 服务停止失败');
+        log.warn('stopService', 'Piper TTS 服务停止失败', { err: error });
         this.serviceProcess.kill();
       }
 
       this.isServiceReady = false;
       this.serviceProcess = null;
       this.responseReader = null;
-      logger.info('Piper TTS 服务已停止');
+      log.info('stopService', 'Piper TTS 服务已停止');
     }
   }
 
@@ -415,11 +417,11 @@ export class PiperTTS {
     }
 
     // 回退到单次模式（首次使用时）
-    logger.info('Piper TTS 服务未就绪，使用单次模式并启动服务');
+    log.info('speak', 'Piper TTS 服务未就绪，使用单次模式并启动服务');
 
     // 异步启动服务（下次使用时就能用服务模式）
     this.startService().catch((err) => {
-      logger.error({ err }, 'Piper TTS 服务启动失败');
+      log.error('speak', 'Piper TTS 服务启动失败', {}, err);
     });
 
     // 使用单次模式
@@ -472,13 +474,13 @@ export class PiperTTS {
         if (code === 0) {
           resolve();
         } else {
-          logger.error(`Piper TTS 播放失败: code=${code}, error=${errorOutput}`);
+          log.error('speakSingleMode', `Piper TTS 播放失败: code=${code}, error=${errorOutput}`);
           reject(new Error(`Piper TTS 播放失败: ${errorOutput || `退出码 ${code}`}`));
         }
       });
 
       piperProcess.on('error', (error) => {
-        logger.error({ err: error }, 'Piper TTS 进程错误:');
+        log.error('speakSingleMode', 'Piper TTS 进程错误', {}, error);
         reject(error);
       });
     });
@@ -567,13 +569,13 @@ export class PiperTTS {
           const audioBuffer = Buffer.concat(audioChunks);
           resolve(audioBuffer);
         } else {
-          logger.error(`Piper TTS 合成失败: code=${code}, error=${errorOutput}`);
+          log.error('synthesizeSingleLanguage', `Piper TTS 合成失败: code=${code}, error=${errorOutput}`);
           reject(new Error(`Piper TTS 失败: ${errorOutput || `退出码 ${code}`}`));
         }
       });
 
       piperProcess.on('error', (error) => {
-        logger.error({ err: error }, 'Piper TTS 进程错误:');
+        log.error('synthesizeSingleLanguage', 'Piper TTS 进程错误', {}, error);
         reject(error);
       });
     });
@@ -646,7 +648,7 @@ export class PiperTTS {
           fs.unlinkSync(tempFile);
         }
       } catch (error) {
-        logger.warn({ err: error }, '清理临时音频文件失败:');
+        log.warn('playToDevice', '清理临时音频文件失败', { err: error });
       }
     }
   }

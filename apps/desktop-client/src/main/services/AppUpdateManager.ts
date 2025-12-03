@@ -3,7 +3,9 @@ import { app, BrowserWindow } from 'electron';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as path from 'path';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('AppUpdateManager');
 import { getDockerEnv } from '../utils/dockerPath.js';
 import type { WindowManager } from '../windows/WindowManager.js';
 import { DockerServiceManager } from './DockerServiceManager.js';
@@ -47,7 +49,7 @@ export class AppUpdateManager {
    */
   public static async startUpdate(version: string, _windowManager: WindowManager): Promise<void> {
     try {
-      logger.info({ version }, '开始更新流程');
+      log.info('startUpdate', '开始更新流程', { version });
 
       // 1. 创建独立的更新进度窗口
       this.createProgressWindow();
@@ -74,7 +76,7 @@ export class AppUpdateManager {
       // 5. 成功后清除状态
       UpdateStateManager.clearState();
     } catch (error) {
-      logger.error({ error }, '更新失败，开始回滚');
+      log.error('startUpdate', '更新失败，开始回滚', {}, error);
       await this.rollback();
       this.showError(error);
     }
@@ -139,7 +141,7 @@ export class AppUpdateManager {
         `window.updateProgress(${JSON.stringify(data)})`,
       );
     }
-    logger.info(data, '更新进度');
+    log.info('updateProgress', '更新进度', { ...data });
   }
 
   /**
@@ -239,7 +241,7 @@ export class AppUpdateManager {
         fs.mkdirSync(tempDir, { recursive: true });
       }
 
-      logger.info({ url, downloadPath }, '开始下载更新包');
+      log.info('downloadUpdatePackage', '开始下载更新包', { url, downloadPath });
 
       const file = fs.createWriteStream(downloadPath);
       let downloadedBytes = 0;
@@ -271,7 +273,7 @@ export class AppUpdateManager {
 
           file.on('finish', () => {
             file.close();
-            logger.info('更新包下载完成');
+            log.info('downloadUpdatePackage', '更新包下载完成');
             resolve(tempDir);
           });
         })
@@ -380,7 +382,7 @@ export class AppUpdateManager {
         message: `正在拉取镜像 ${image.name} (${i + 1}/${totalImages})`,
       });
 
-      logger.info({ image }, `拉取镜像: ${image.remote}`);
+      log.info('pullDockerImages', `拉取镜像: ${image.remote}`, { image });
 
       try {
         // 拉取镜像
@@ -397,9 +399,9 @@ export class AppUpdateManager {
           env: getDockerEnv(),
         });
 
-        logger.info(`镜像拉取并标记成功: ${image.local}`);
+        log.info('pullDockerImages', `镜像拉取并标记成功: ${image.local}`);
       } catch (error) {
-        logger.error({ error, image }, `镜像拉取失败`);
+        log.error('pullDockerImages', `镜像拉取失败`, { image }, error);
         throw new Error(`镜像 ${image.name} 拉取失败`);
       }
     }
@@ -450,13 +452,13 @@ export class AppUpdateManager {
       const installedAppPath = '/Applications/CueMate.app';
 
       if (fs.existsSync(newAppPath)) {
-        logger.info('更新应用内部文件（保持签名不变）');
+        log.info('replaceApplication', '更新应用内部文件（保持签名不变）');
 
         // 1. 替换 app.asar
         const newAsarPath = path.join(newAppPath, 'Contents/Resources/app.asar');
         const installedAsarPath = path.join(installedAppPath, 'Contents/Resources/app.asar');
         if (fs.existsSync(newAsarPath)) {
-          logger.info('替换 app.asar');
+          log.info('replaceApplication', '替换 app.asar');
           if (fs.existsSync(installedAsarPath)) {
             execSync(`rm -f "${installedAsarPath}"`, { stdio: 'pipe' });
           }
@@ -470,7 +472,7 @@ export class AppUpdateManager {
           'Contents/Resources/app.asar.unpacked',
         );
         if (fs.existsSync(newUnpackedPath)) {
-          logger.info('替换 app.asar.unpacked');
+          log.info('replaceApplication', '替换 app.asar.unpacked');
           if (fs.existsSync(installedUnpackedPath)) {
             execSync(`rm -rf "${installedUnpackedPath}"`, { stdio: 'pipe' });
           }
@@ -481,7 +483,7 @@ export class AppUpdateManager {
         const newBinPath = path.join(newAppPath, 'Contents/Resources/bin');
         const installedBinPath = path.join(installedAppPath, 'Contents/Resources/bin');
         if (fs.existsSync(newBinPath)) {
-          logger.info('替换 Resources/bin');
+          log.info('replaceApplication', '替换 Resources/bin');
           if (fs.existsSync(installedBinPath)) {
             execSync(`rm -rf "${installedBinPath}"`, { stdio: 'pipe' });
           }
@@ -492,7 +494,7 @@ export class AppUpdateManager {
         const newPiperPath = path.join(newAppPath, 'Contents/Resources/piper');
         const installedPiperPath = path.join(installedAppPath, 'Contents/Resources/piper');
         if (fs.existsSync(newPiperPath)) {
-          logger.info('替换 Resources/piper');
+          log.info('replaceApplication', '替换 Resources/piper');
           if (fs.existsSync(installedPiperPath)) {
             execSync(`rm -rf "${installedPiperPath}"`, { stdio: 'pipe' });
           }
@@ -503,7 +505,7 @@ export class AppUpdateManager {
         // 说明：因为替换了 asar 文件但不重新签名，必须禁用完整性校验
         // 否则 Electron 会因为 hash 不匹配而拒绝加载
         const infoPlistPath = path.join(installedAppPath, 'Contents/Info.plist');
-        logger.info('禁用 asar 完整性校验');
+        log.info('replaceApplication', '禁用 asar 完整性校验');
         execSync(
           `/usr/libexec/PlistBuddy -c "Delete :ElectronAsarIntegrity" "${infoPlistPath}" 2>/dev/null || true`,
           { stdio: 'pipe' },
@@ -526,7 +528,7 @@ export class AppUpdateManager {
     const installedComposePath = path.join(dockerDir, 'docker-compose.yml');
 
     if (fs.existsSync(newComposePath)) {
-      logger.info('更新 docker-compose.yml');
+      log.info('replaceApplication', '更新 docker-compose.yml');
 
       // 确保目录存在
       if (!fs.existsSync(dockerDir)) {
@@ -597,9 +599,9 @@ export class AppUpdateManager {
         throw new Error(`更新版本失败: ${response.statusText}`);
       }
 
-      logger.info({ version }, '数据库版本更新成功');
+      log.info('updateDatabaseVersion', '数据库版本更新成功', { version });
     } catch (error) {
-      logger.error({ error }, '数据库版本更新失败');
+      log.error('updateDatabaseVersion', '数据库版本更新失败', {}, error);
       throw error;
     }
 
@@ -619,10 +621,10 @@ export class AppUpdateManager {
       try {
         const response = await fetch('http://localhost:3001/health');
         if (response.ok) {
-          logger.info('Web API 服务已就绪');
+          log.info('waitForWebAPI', 'Web API 服务已就绪');
           return;
         }
-      } catch (error) {
+      } catch {
         // 继续重试
       }
 
@@ -648,7 +650,7 @@ export class AppUpdateManager {
         fs.rmSync(tempDir, { recursive: true, force: true });
       }
     } catch (error) {
-      logger.warn({ error }, '清理临时文件失败');
+      log.error('cleanup', '清理临时文件失败', {}, error);
     }
   }
 
@@ -658,11 +660,11 @@ export class AppUpdateManager {
   private static async rollback(): Promise<void> {
     const state = UpdateStateManager.loadState();
     if (!state) {
-      logger.warn('没有找到更新状态，无法回滚');
+      log.warn('rollback', '没有找到更新状态，无法回滚');
       return;
     }
 
-    logger.info({ state }, '开始回滚更新');
+    log.info('rollback', '开始回滚更新', { state });
 
     try {
       // 恢复 docker-compose.yml
@@ -670,21 +672,21 @@ export class AppUpdateManager {
         const dockerDir = path.join(app.getPath('userData'), 'docker');
         const composePath = path.join(dockerDir, 'docker-compose.yml');
         fs.copyFileSync(state.backups.dockerCompose, composePath);
-        logger.info('docker-compose.yml 已恢复');
+        log.info('rollback', 'docker-compose.yml 已恢复');
       }
 
       // 尝试启动 Docker 服务
       try {
         await DockerServiceManager.start();
-        logger.info('Docker 服务已恢复');
+        log.info('rollback', 'Docker 服务已恢复');
       } catch (error) {
-        logger.error({ error }, 'Docker 服务恢复失败');
+        log.error('rollback', 'Docker 服务恢复失败', {}, error);
       }
 
       UpdateStateManager.clearState();
-      logger.info('回滚完成');
+      log.info('rollback', '回滚完成');
     } catch (error) {
-      logger.error({ error }, '回滚失败');
+      log.error('rollback', '回滚失败', {}, error);
     }
   }
 
@@ -693,7 +695,7 @@ export class AppUpdateManager {
    */
   public static async checkIncompleteUpdate(): Promise<void> {
     if (UpdateStateManager.hasIncompleteUpdate()) {
-      logger.warn('检测到未完成的更新，开始回滚');
+      log.warn('checkIncompleteUpdate', '检测到未完成的更新，开始回滚');
       await this.rollback();
     }
   }

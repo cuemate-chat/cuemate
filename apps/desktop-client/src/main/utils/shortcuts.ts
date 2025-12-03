@@ -1,7 +1,9 @@
 import { globalShortcut } from 'electron';
 import type { ShortcutConfig } from '../../shared/types.js';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 import { WindowManager } from '../windows/WindowManager.js';
+
+const log = createLogger('Shortcuts');
 
 /**
  * 设置全局快捷键
@@ -70,11 +72,11 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
       if (success) {
         registeredCount++;
       } else {
-        logger.error(`快捷键注册失败: ${shortcut.accelerator} (可能已被其他应用占用)`);
+        log.error('setupGlobalShortcuts', `快捷键注册失败: ${shortcut.accelerator} (可能已被其他应用占用)`);
         failedCount++;
       }
     } catch (error) {
-      logger.error({ error }, `快捷键注册异常: ${shortcut.accelerator}`);
+      log.error('setupGlobalShortcuts', `快捷键注册异常: ${shortcut.accelerator}`, {}, error);
       failedCount++;
     }
   });
@@ -88,10 +90,10 @@ export function setupGlobalShortcuts(windowManager: WindowManager): void {
 export function registerShortcut(accelerator: string, callback: () => void): boolean {
   try {
     const success = globalShortcut.register(accelerator, callback);
-    if (!success) logger.error(`动态注册快捷键失败: ${accelerator}`);
+    if (!success) log.error('registerShortcut', `动态注册快捷键失败: ${accelerator}`);
     return success;
   } catch (error) {
-    logger.error({ error }, `动态注册快捷键异常: ${accelerator}`);
+    log.error('registerShortcut', `动态注册快捷键异常: ${accelerator}`, {}, error);
     return false;
   }
 }
@@ -103,7 +105,7 @@ export function unregisterShortcut(accelerator: string): void {
   try {
     globalShortcut.unregister(accelerator);
   } catch (error) {
-    logger.error({ error }, `注销快捷键失败: ${accelerator}`);
+    log.error('unregisterShortcut', `注销快捷键失败: ${accelerator}`, {}, error);
   }
 }
 
@@ -114,7 +116,7 @@ export function unregisterAllShortcuts(): void {
   try {
     globalShortcut.unregisterAll();
   } catch (error) {
-    logger.error({ error }, '注销所有快捷键失败');
+    log.error('unregisterAllShortcuts', '注销所有快捷键失败', {}, error);
   }
 }
 
@@ -125,7 +127,7 @@ export function isShortcutRegistered(accelerator: string): boolean {
   try {
     return globalShortcut.isRegistered(accelerator);
   } catch (error) {
-    logger.error({ error }, `检查快捷键注册状态失败: ${accelerator}`);
+    log.error('isShortcutRegistered', `检查快捷键注册状态失败: ${accelerator}`, {}, error);
     return false;
   }
 }
@@ -184,7 +186,7 @@ export function validateShortcut(accelerator: string): boolean {
     }
     return false;
   } catch (error) {
-    logger.error({ error }, `快捷键格式验证失败: ${accelerator}`);
+    log.error('validateShortcut', `快捷键格式验证失败: ${accelerator}`, {}, error);
     return false;
   }
 }

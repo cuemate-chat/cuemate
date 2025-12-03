@@ -1,8 +1,10 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron';
 import WebSocket from 'ws';
 import type { FrontendLogMessage } from '../../shared/types.js';
-import { logger } from '../../utils/logger.js';
+import { createLogger, logger } from '../../utils/logger.js';
 import { PiperTTS } from '../audio/PiperTTS.js';
+
+const log = createLogger('IPCHandlers');
 import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
 import { DockerServiceManager } from '../services/DockerServiceManager.js';
 import { ensureDockActiveAndIcon } from '../utils/dock.js';
@@ -133,11 +135,11 @@ export function setupIPC(windowManager: WindowManager): void {
           }
           win.setIgnoreMouseEvents(enabled, { forward: true });
         } catch (error) {
-          logger.error({ error }, `设置窗口穿透失败: ${win.getTitle()}`);
+          log.error('applyClickThroughToAllWindows', `设置窗口穿透失败: ${win.getTitle()}`, {}, error);
         }
       }
     } catch (error) {
-      logger.error({ error }, '应用点击穿透到所有窗口失败');
+      log.error('applyClickThroughToAllWindows', '应用点击穿透到所有窗口失败', {}, error);
     }
   }
 
@@ -163,13 +165,13 @@ export function setupIPC(windowManager: WindowManager): void {
         signal: AbortSignal.timeout(5000),
       });
       if (!response.ok) {
-        logger.warn({ status: response.status }, 'IPC: 获取 ASR 配置失败');
+        log.warn('fetchAsrConfigFromServer', '获取 ASR 配置失败', { status: response.status });
         return null;
       }
       const data = await response.json();
       return data?.config ?? null;
     } catch (error) {
-      logger.error({ error }, 'IPC: 拉取 ASR 配置异常');
+      log.error('fetchAsrConfigFromServer', '拉取 ASR 配置异常', {}, error);
       return null;
     }
   }
@@ -214,7 +216,7 @@ export function setupIPC(windowManager: WindowManager): void {
       clipboard.writeText(text);
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 写入剪贴板失败');
+      log.error('clipboard-write-text', '写入剪贴板失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -227,7 +229,7 @@ export function setupIPC(windowManager: WindowManager): void {
       const text = clipboard.readText();
       return { success: true, text };
     } catch (error) {
-      logger.error({ error }, 'IPC: 读取剪贴板失败');
+      log.error('clipboard-read-text', '读取剪贴板失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -240,7 +242,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.showFloatingWindows();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 显示浮动窗口失败');
+      log.error('show-floating-windows', '显示浮动窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -253,7 +255,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.hideFloatingWindows();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 隐藏浮动窗口失败');
+      log.error('hide-floating-windows', '隐藏浮动窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -266,7 +268,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.toggleFloatingWindows();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 切换浮动窗口失败');
+      log.error('toggle-floating-windows', '切换浮动窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -279,7 +281,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.setAIWindowHeightPercentage(percentage);
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 设置 AI 窗口高度失败');
+      log.error('set-ai-window-height', '设置 AI 窗口高度失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -290,7 +292,7 @@ export function setupIPC(windowManager: WindowManager): void {
       const interviewId = loadInterviewId();
       return { success: true, interviewId };
     } catch (error) {
-      logger.error({ error }, 'IPC: 获取 interviewId 失败');
+      log.error('interview-id-get', '获取 interviewId 失败', {}, error);
       return { success: false, interviewId: null };
     }
   });
@@ -303,7 +305,7 @@ export function setupIPC(windowManager: WindowManager): void {
       }
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 保存 interviewId 失败');
+      log.error('interview-id-set', '保存 interviewId 失败', {}, error);
       return { success: false };
     }
   });
@@ -312,7 +314,7 @@ export function setupIPC(windowManager: WindowManager): void {
       clearInterviewId();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 清除 interviewId 失败');
+      log.error('interview-id-clear', '清除 interviewId 失败', {}, error);
       return { success: false };
     }
   });
@@ -332,7 +334,7 @@ export function setupIPC(windowManager: WindowManager): void {
       broadcastStealthChanged(stealthModeEnabled);
       return { success: true, enabled: stealthModeEnabled };
     } catch (error) {
-      logger.error({ error }, 'IPC: 切换隐身模式失败');
+      log.error('visibility-set', '切换隐身模式失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -357,7 +359,7 @@ export function setupIPC(windowManager: WindowManager): void {
 
       return { success: true, enabled: clickThroughEnabled };
     } catch (error) {
-      logger.error({ error }, 'IPC: 切换点击穿透模式失败');
+      log.error('click-through-set', '切换点击穿透模式失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -370,7 +372,7 @@ export function setupIPC(windowManager: WindowManager): void {
       const percentage = windowManager.getAIWindowHeightPercentage();
       return { success: true, percentage };
     } catch (error) {
-      logger.error({ error }, 'IPC: 获取 AI 窗口高度失败');
+      log.error('get-ai-window-height', '获取 AI 窗口高度失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -385,7 +387,7 @@ export function setupIPC(windowManager: WindowManager): void {
         windowManager.switchToMode(mode);
         return { success: true };
       } catch (error) {
-        logger.error({ error }, 'IPC: 切换 AI 窗口模式失败');
+        log.error('switch-to-mode', '切换 AI 窗口模式失败', {}, error);
         return { success: false, error: error instanceof Error ? error.message : String(error) };
       }
     },
@@ -399,7 +401,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.setAskAIButtonDisabled(disabled);
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 设置提问 AI 按钮禁用状态失败');
+      log.error('set-ask-ai-button-disabled', '设置提问 AI 按钮禁用状态失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -412,7 +414,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.showCloseButton();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 显示关闭按钮失败');
+      log.error('show-close-button', '显示关闭按钮失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -425,7 +427,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.hideCloseButton();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 隐藏关闭按钮失败');
+      log.error('hide-close-button', '隐藏关闭按钮失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -438,7 +440,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.showMainContent();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 显示主内容窗口失败');
+      log.error('show-main-content', '显示主内容窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -451,7 +453,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.hideMainContent();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 隐藏主内容窗口失败');
+      log.error('hide-main-content', '隐藏主内容窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -464,7 +466,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.toggleMainContent();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 切换主内容窗口失败');
+      log.error('toggle-main-content', '切换主内容窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -477,7 +479,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.showAIQuestion();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 显示 AI 问答窗口失败');
+      log.error('show-ai-question', '显示 AI 问答窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -490,7 +492,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.hideAIQuestion();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 隐藏 AI 问答窗口失败');
+      log.error('hide-ai-question', '隐藏 AI 问答窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -503,7 +505,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.toggleAIQuestion();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 切换 AI 问答窗口失败');
+      log.error('toggle-ai-question', '切换 AI 问答窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -514,7 +516,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.showAIQuestionHistoryNextToAI();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 显示 AI 问答历史窗口失败');
+      log.error('show-ai-question-history', '显示 AI 问答历史窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -524,7 +526,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.hideAIQuestionHistory();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 隐藏 AI 问答历史窗口失败');
+      log.error('hide-ai-question-history', '隐藏 AI 问答历史窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -534,7 +536,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.toggleAIQuestionHistoryNextToAI();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 切换 AI 问答历史窗口失败');
+      log.error('toggle-ai-question-history', '切换 AI 问答历史窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -545,7 +547,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.showInterviewerNextToAI();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 显示 Interviewer 窗口失败');
+      log.error('show-interviewer', '显示 Interviewer 窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -555,7 +557,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.hideInterviewer();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 隐藏 Interviewer 窗口失败');
+      log.error('hide-interviewer', '隐藏 Interviewer 窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -565,7 +567,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.toggleInterviewerNextToAI();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 切换 Interviewer 窗口失败');
+      log.error('toggle-interviewer', '切换 Interviewer 窗口失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -585,7 +587,7 @@ export function setupIPC(windowManager: WindowManager): void {
         },
       };
     } catch (error) {
-      logger.error({ error }, 'IPC: 获取应用状态失败');
+      log.error('get-app-state', '获取应用状态失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -600,7 +602,7 @@ export function setupIPC(windowManager: WindowManager): void {
       app.quit();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 退出应用失败');
+      log.error('quit-app', '退出应用失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -614,7 +616,7 @@ export function setupIPC(windowManager: WindowManager): void {
       app.quit();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 重启应用失败');
+      log.error('restart-app', '重启应用失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -635,7 +637,7 @@ export function setupIPC(windowManager: WindowManager): void {
       };
       return { success: true, data: appInfo };
     } catch (error) {
-      logger.error({ error }, 'IPC: 获取应用信息失败');
+      log.error('get-app-info', '获取应用信息失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -650,7 +652,7 @@ export function setupIPC(windowManager: WindowManager): void {
       await shell.openExternal(url);
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 打开外部链接失败');
+      log.error('open-external-url', '打开外部链接失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -673,7 +675,7 @@ export function setupIPC(windowManager: WindowManager): void {
         },
       };
     } catch (error) {
-      logger.error({ error }, 'IPC: 文件夹对话框失败');
+      log.error('show-folder-dialog', '文件夹对话框失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -700,7 +702,7 @@ export function setupIPC(windowManager: WindowManager): void {
         },
       };
     } catch (error) {
-      logger.error({ error }, 'IPC: 文件对话框失败');
+      log.error('show-file-dialog', '文件对话框失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -723,9 +725,10 @@ export function setupIPC(windowManager: WindowManager): void {
           const isLastAttempt = attempt === maxRetries;
 
           if (isLastAttempt) {
-            logger.error(
+            log.error(
+              'check-login-status',
+              'Docker 服务未运行，无法检查登录状态（所有重试已失败）',
               { attempt, maxRetries, dockerStatus },
-              'IPC: Docker 服务未运行，无法检查登录状态（所有重试已失败）',
             );
             return {
               success: false,
@@ -733,9 +736,10 @@ export function setupIPC(windowManager: WindowManager): void {
               error: 'Docker 服务未启动。请等待 Docker 服务启动完成后重试。',
             };
           } else {
-            logger.debug(
+            log.debug(
+              'check-login-status',
+              `Docker 服务未运行，等待启动（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
               { attempt, maxRetries, dockerStatus },
-              `IPC: Docker 服务未运行，等待启动（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
             );
             await new Promise((resolve) => setTimeout(resolve, retryDelay));
             continue;
@@ -762,7 +766,7 @@ export function setupIPC(windowManager: WindowManager): void {
           } else {
             cachedUserData = null;
             cachedToken = null;
-            logger.info('IPC: 用户未登录，清空缓存');
+            log.info('check-login-status', '用户未登录，清空缓存');
           }
 
           return {
@@ -771,7 +775,7 @@ export function setupIPC(windowManager: WindowManager): void {
             user: data.user,
           };
         } else if (response.status === 401) {
-          logger.info('IPC: 用户未登录');
+          log.info('check-login-status', '用户未登录');
           cachedUserData = null; // 清空缓存
           cachedToken = null; // 清空 token 缓存
           return {
@@ -779,7 +783,7 @@ export function setupIPC(windowManager: WindowManager): void {
             isLoggedIn: false,
           };
         } else {
-          logger.warn({ status: response.status }, 'IPC: 登录检查返回异常状态码');
+          log.warn('check-login-status', '登录检查返回异常状态码', { status: response.status });
           // 不误判为未登录：仅返回失败，不改变状态
           return {
             success: false,
@@ -800,28 +804,34 @@ export function setupIPC(windowManager: WindowManager): void {
             if (dockerStatus.running) {
               errorMessage = 'Web API 服务正在启动中，请稍候...';
               if (isLastAttempt) {
-                logger.error(
-                  { error, errorCode: errCode, attempt, maxRetries, dockerStatus },
-                  'IPC: Web API 服务启动超时（所有重试已失败）',
+                log.error(
+                  'check-login-status',
+                  'Web API 服务启动超时（所有重试已失败）',
+                  { errorCode: errCode, attempt, maxRetries, dockerStatus },
+                  error,
                 );
               } else {
-                logger.warn(
-                  { error, errorCode: errCode, attempt, maxRetries, dockerStatus },
-                  `IPC: Web API 服务正在启动（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+                log.warn(
+                  'check-login-status',
+                  `Web API 服务正在启动（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+                  { errorCode: errCode, attempt, maxRetries, dockerStatus },
                 );
               }
             } else {
               errorMessage =
                 'Docker 服务未启动或 Web API 服务不可用。请确保 Docker 服务已正常运行。';
               if (isLastAttempt) {
-                logger.error(
-                  { error, errorCode: errCode, attempt, maxRetries, dockerStatus },
-                  'IPC: 无法连接到 Web API 服务 - Docker 服务未运行（所有重试已失败）',
+                log.error(
+                  'check-login-status',
+                  '无法连接到 Web API 服务 - Docker 服务未运行（所有重试已失败）',
+                  { errorCode: errCode, attempt, maxRetries, dockerStatus },
+                  error,
                 );
               } else {
-                logger.warn(
-                  { error, errorCode: errCode, attempt, maxRetries, dockerStatus },
-                  `IPC: 无法连接到 Web API 服务 - Docker 服务未运行（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+                log.warn(
+                  'check-login-status',
+                  `无法连接到 Web API 服务 - Docker 服务未运行（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+                  { errorCode: errCode, attempt, maxRetries, dockerStatus },
                 );
               }
             }
@@ -829,28 +839,34 @@ export function setupIPC(windowManager: WindowManager): void {
             errorMessage = '连接 Web API 服务超时。请检查 Docker 服务是否正常运行。';
 
             if (isLastAttempt) {
-              logger.error(
-                { error, attempt, maxRetries, dockerStatus },
-                'IPC: Web API 服务连接超时（所有重试已失败）',
+              log.error(
+                'check-login-status',
+                'Web API 服务连接超时（所有重试已失败）',
+                { attempt, maxRetries, dockerStatus },
+                error,
               );
             } else {
-              logger.warn(
-                { error, attempt, maxRetries, dockerStatus },
-                `IPC: Web API 服务连接超时（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+              log.warn(
+                'check-login-status',
+                `Web API 服务连接超时（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+                { attempt, maxRetries, dockerStatus },
               );
             }
           } else {
             errorMessage = error.message;
 
             if (isLastAttempt) {
-              logger.error(
-                { error, attempt, maxRetries, dockerStatus },
-                'IPC: 登录状态检查失败（所有重试已失败）',
+              log.error(
+                'check-login-status',
+                '登录状态检查失败（所有重试已失败）',
+                { attempt, maxRetries, dockerStatus },
+                error,
               );
             } else {
-              logger.warn(
-                { error, attempt, maxRetries, dockerStatus },
-                `IPC: 登录状态检查失败（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+              log.warn(
+                'check-login-status',
+                `登录状态检查失败（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+                { attempt, maxRetries, dockerStatus },
               );
             }
           }
@@ -858,14 +874,17 @@ export function setupIPC(windowManager: WindowManager): void {
           errorMessage = String(error);
 
           if (isLastAttempt) {
-            logger.error(
-              { error, attempt, maxRetries, dockerStatus },
-              'IPC: 登录状态检查失败（所有重试已失败）',
+            log.error(
+              'check-login-status',
+              '登录状态检查失败（所有重试已失败）',
+              { attempt, maxRetries, dockerStatus },
+              error,
             );
           } else {
-            logger.warn(
-              { error, attempt, maxRetries, dockerStatus },
-              `IPC: 登录状态检查失败（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+            log.warn(
+              'check-login-status',
+              `登录状态检查失败（尝试 ${attempt}/${maxRetries}，将在 ${retryDelay}ms 后重试）`,
+              { attempt, maxRetries, dockerStatus },
             );
           }
         }
@@ -921,7 +940,7 @@ export function setupIPC(windowManager: WindowManager): void {
 
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 前端日志处理失败');
+      log.error('frontend-log', '前端日志处理失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -933,12 +952,12 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('close-button-clicked', async () => {
     try {
-      logger.debug('IPC: 关闭按钮被点击');
+      log.debug('close-button-clicked', '关闭按钮被点击');
       // 隐藏所有浮动窗口
       windowManager.hideFloatingWindows();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 关闭按钮点击处理失败');
+      log.error('close-button-clicked', '关闭按钮点击处理失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -954,15 +973,15 @@ export function setupIPC(windowManager: WindowManager): void {
     try {
       if (windowId) {
         // 为指定窗口打开开发者工具（功能暂未实现）
-        logger.debug({ windowId }, 'IPC: 尝试为窗口打开开发者工具（功能待实现）');
+        log.debug('open-dev-tools', '尝试为窗口打开开发者工具（功能待实现）', { windowId });
       } else {
         // 为发送请求的窗口打开开发者工具
         event.sender.openDevTools();
-        logger.debug('IPC: 为当前窗口打开开发者工具');
+        log.debug('open-dev-tools', '为当前窗口打开开发者工具');
       }
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 打开开发者工具失败');
+      log.error('open-dev-tools', '打开开发者工具失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -978,7 +997,7 @@ export function setupIPC(windowManager: WindowManager): void {
       }
       return { success: true, config: asrConfigCache };
     } catch (error) {
-      logger.error({ error }, 'IPC: 获取 ASR 配置失败');
+      log.error('asr-config-get', '获取 ASR 配置失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -1014,7 +1033,7 @@ export function setupIPC(windowManager: WindowManager): void {
 
         return { success: false, error: result.error || '更新 ASR 配置失败' };
       } catch (error) {
-        logger.error({ error }, 'IPC: 更新 ASR 设备配置失败');
+        log.error('asr-config-update-devices', '更新 ASR 设备配置失败', {}, error);
         return { success: false, error: error instanceof Error ? error.message : String(error) };
       }
     },
@@ -1025,7 +1044,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('load-conversation', async (_event, conversationData: any) => {
     try {
-      logger.info('IPC: 收到加载对话命令', conversationData);
+      log.info('load-conversation', '收到加载对话命令', { conversationData });
 
       // 获取 AI 问答窗口实例
       const aiQuestionWindow = windowManager.getAIQuestionWindow();
@@ -1033,14 +1052,14 @@ export function setupIPC(windowManager: WindowManager): void {
       if (browserWindow) {
         // 发送对话数据到 AI 问答窗口
         browserWindow.webContents.send('load-conversation-data', conversationData);
-        logger.info('IPC: 对话数据已发送到 AI 问答窗口');
+        log.info('load-conversation', '对话数据已发送到 AI 问答窗口');
         return { success: true };
       } else {
-        logger.warn('IPC: AI 问答窗口未找到或未创建');
+        log.warn('load-conversation', 'AI 问答窗口未找到或未创建');
         return { success: false, error: 'AI 问答窗口未找到' };
       }
     } catch (error) {
-      logger.error({ error }, 'IPC: 加载对话失败');
+      log.error('load-conversation', '加载对话失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -1077,7 +1096,7 @@ export function setupIPC(windowManager: WindowManager): void {
     'system-audio-capture-start',
     async (event, options?: { sampleRate?: number; channels?: number }) => {
       try {
-        logger.info('开始系统音频扬声器捕获');
+        log.info('system-audio-capture-start', '开始系统音频扬声器捕获');
 
         if (systemAudioCapture && systemAudioCapture.isCaptureActive()) {
           return { success: false, error: '系统音频扬声器捕获已在进行中' };
@@ -1094,7 +1113,7 @@ export function setupIPC(windowManager: WindowManager): void {
 
         // 设置错误回调
         systemAudioCapture.onError((error: Error) => {
-          logger.error({ err: error }, '系统音频扬声器捕获错误:');
+          log.error('system-audio-capture-start', '系统音频扬声器捕获错误', {}, error);
           event.sender.send('system-audio-error', error.message);
         });
 
@@ -1103,7 +1122,7 @@ export function setupIPC(windowManager: WindowManager): void {
 
         return { success: true };
       } catch (error) {
-        logger.error({ error }, 'IPC: 开始系统音频扬声器捕获失败');
+        log.error('system-audio-capture-start', '开始系统音频扬声器捕获失败', {}, error);
         return { success: false, error: error instanceof Error ? error.message : String(error) };
       }
     },
@@ -1117,13 +1136,13 @@ export function setupIPC(windowManager: WindowManager): void {
       if (systemAudioCapture) {
         systemAudioCapture.stopCapture();
         systemAudioCapture = null;
-        logger.info('系统音频扬声器捕获已停止');
+        log.info('system-audio-capture-stop', '系统音频扬声器捕获已停止');
         return { success: true };
       } else {
         return { success: false, error: '没有正在进行的系统音频扬声器捕获任务' };
       }
     } catch (error) {
-      logger.error({ error }, 'IPC: 停止系统音频扬声器捕获失败');
+      log.error('system-audio-capture-stop', '停止系统音频扬声器捕获失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -1137,7 +1156,7 @@ export function setupIPC(windowManager: WindowManager): void {
       const devices = await SystemAudioCapture.getAudioDevices();
       return devices.length > 0;
     } catch (error) {
-      logger.error({ error }, 'IPC: 检查系统音频扬声器捕获可用性失败');
+      log.error('system-audio-capture-available', '检查系统音频扬声器捕获可用性失败', {}, error);
       return false;
     }
   });
@@ -1150,23 +1169,23 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('mic-test-start', async (event, _options?: { deviceId?: string }) => {
     try {
-      logger.info('开始麦克风测试');
+      log.info('mic-test-start', '开始麦克风测试');
 
-      logger.info('开始麦克风测试，连接 cuemate-asr 服务');
+      log.info('mic-test-start', '连接 cuemate-asr 服务');
 
       // 创建到 ASR 服务的 WebSocket 连接
       const asrServiceUrl = 'ws://localhost:10095';
       micAsrWebSocket = new WebSocket(asrServiceUrl);
 
       micAsrWebSocket!.on('open', () => {
-        logger.info('麦克风 ASR 服务连接成功');
+        log.info('mic-test-start', '麦克风 ASR 服务连接成功');
         // 不发送状态消息，只记录日志
       });
 
       micAsrWebSocket!.on('message', (data: any) => {
         try {
           const result = JSON.parse(data.toString());
-          logger.info('麦克风 ASR 识别结果:', result);
+          log.info('mic-test-start', '麦克风 ASR 识别结果', { result });
 
           // 构建显示文本
           let displayText = '';
@@ -1190,12 +1209,12 @@ export function setupIPC(windowManager: WindowManager): void {
             });
           }
         } catch (error) {
-          logger.error({ err: error }, '处理麦克风 ASR 结果失败:');
+          log.error('mic-test-start', '处理麦克风 ASR 结果失败', {}, error);
         }
       });
 
       micAsrWebSocket!.on('error', (error: any) => {
-        logger.error({ err: error }, '麦克风 ASR WebSocket 错误:');
+        log.error('mic-test-start', '麦克风 ASR WebSocket 错误', {}, error);
         event.sender.send('mic-test-result', {
           success: false,
           error: '连接麦克风识别服务失败，请确保 cuemate-asr 服务已启动',
@@ -1203,13 +1222,13 @@ export function setupIPC(windowManager: WindowManager): void {
       });
 
       micAsrWebSocket!.on('close', () => {
-        logger.info('麦克风 ASR WebSocket 连接关闭');
+        log.info('mic-test-start', '麦克风 ASR WebSocket 连接关闭');
         micAsrWebSocket = null;
       });
 
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 麦克风测试启动失败');
+      log.error('mic-test-start', '麦克风测试启动失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -1226,7 +1245,7 @@ export function setupIPC(windowManager: WindowManager): void {
         return { success: false, error: 'ASR 服务未连接' };
       }
     } catch (error) {
-      logger.error({ error }, 'IPC: 发送麦克风音频数据失败');
+      log.error('mic-send-audio', '发送麦克风音频数据失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -1236,7 +1255,7 @@ export function setupIPC(windowManager: WindowManager): void {
    */
   ipcMain.handle('speaker-test-start', async (event, _options?: { deviceId?: string }) => {
     try {
-      logger.info('开始扬声器音频捕获');
+      log.info('speaker-test-start', '开始扬声器音频捕获');
 
       if (systemAudioCapture && systemAudioCapture.isCaptureActive()) {
         return { success: false, error: '系统音频捕获已在进行中' };
@@ -1254,23 +1273,23 @@ export function setupIPC(windowManager: WindowManager): void {
         );
       });
 
-      logger.info('speaker-test pipeline ready');
+      log.info('speaker-test-start', 'speaker-test pipeline ready');
       // 设置错误回调
       systemAudioCapture.onError((error: Error) => {
-        logger.error({ err: error }, '扬声器测试音频捕获错误:');
+        log.error('speaker-test-start', '扬声器测试音频捕获错误', {}, error);
         event.sender.send('speaker-test-result', {
           success: false,
           error: `音频捕获失败: ${error.message}`,
         });
       });
 
-      logger.info('speaker-test startCapture');
+      log.info('speaker-test-start', 'speaker-test startCapture');
       // 启动捕获
       await systemAudioCapture.startCapture();
 
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 扬声器测试启动失败');
+      log.error('speaker-test-start', '扬声器测试启动失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -1283,11 +1302,11 @@ export function setupIPC(windowManager: WindowManager): void {
       if (systemAudioCapture) {
         systemAudioCapture.stopCapture();
         systemAudioCapture = null;
-        logger.info('音频测试已停止');
+        log.info('test-stop', '音频测试已停止');
       }
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: 停止测试失败');
+      log.error('test-stop', '停止测试失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -1302,7 +1321,7 @@ export function setupIPC(windowManager: WindowManager): void {
         available: true,
       };
     } catch (error) {
-      logger.error({ error }, 'IPC: 获取系统音频扬声器捕获状态失败');
+      log.error('system-audio-capture-status', '获取系统音频扬声器捕获状态失败', {}, error);
       return { active: false, available: false };
     }
   });
@@ -1315,7 +1334,7 @@ export function setupIPC(windowManager: WindowManager): void {
       const devices = await SystemAudioCapture.getAudioDevices();
       return { success: true, devices };
     } catch (error) {
-      logger.error({ error }, 'IPC: 获取音频设备列表失败');
+      log.error('system-audio-get-devices', '获取音频设备列表失败', {}, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -1342,10 +1361,10 @@ export function setupIPC(windowManager: WindowManager): void {
       const filePath = path.join(dataDir, fileName);
       fs.writeFileSync(filePath, Buffer.from(audioData));
 
-      logger.info(`音频文件已保存: ${filePath}, ${audioData.length} 字节`);
+      log.info('save-audio-file', `音频文件已保存: ${filePath}, ${audioData.length} 字节`);
       return { success: true, filePath, size: audioData.length };
     } catch (error) {
-      logger.error({ error }, 'IPC: 保存音频文件失败');
+      log.error('save-audio-file', '保存音频文件失败', {}, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -1362,12 +1381,12 @@ export function setupIPC(windowManager: WindowManager): void {
       const piperTTS = PiperTTS.getInstance();
       const isAvailable = await piperTTS.isAvailable();
       if (isAvailable) {
-        logger.info('Piper TTS 预热：开始加载模型...');
+        log.info('setupIPCHandlers', 'Piper TTS 预热：开始加载模型...');
         await piperTTS.startService();
-        logger.info('Piper TTS 预热完成：服务已就绪');
+        log.info('setupIPCHandlers', 'Piper TTS 预热完成：服务已就绪');
       }
     } catch (error) {
-      logger.warn({ error }, 'Piper TTS 预热失败（将在首次使用时重试）');
+      log.error('setupIPCHandlers', 'Piper TTS 预热失败（将在首次使用时重试）', {}, error);
     }
   })();
 
@@ -1379,7 +1398,7 @@ export function setupIPC(windowManager: WindowManager): void {
       const voices = PiperTTS.getInstance().getAvailableVoices();
       return { success: true, voices };
     } catch (error) {
-      logger.error({ error }, 'IPC: 获取 Piper TTS 语音模型失败');
+      log.error('piper-get-voices', '获取 Piper TTS 语音模型失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -1392,7 +1411,7 @@ export function setupIPC(windowManager: WindowManager): void {
       const available = await PiperTTS.getInstance().isAvailable();
       return { success: true, available };
     } catch (error) {
-      logger.error({ error }, 'IPC: 检查 Piper TTS 可用性失败');
+      log.error('piper-is-available', '检查 Piper TTS 可用性失败', {}, error);
       return { success: false, available: false };
     }
   });
@@ -1405,7 +1424,7 @@ export function setupIPC(windowManager: WindowManager): void {
       const audioData = await PiperTTS.getInstance().synthesize(text, options);
       return { success: true, audioData: audioData.toString('base64') };
     } catch (error) {
-      logger.error({ error }, 'IPC: Piper TTS 语音合成失败');
+      log.error('piper-synthesize', 'Piper TTS 语音合成失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -1418,7 +1437,7 @@ export function setupIPC(windowManager: WindowManager): void {
       await PiperTTS.getInstance().speak(text, options);
       return { success: true };
     } catch (error) {
-      logger.error({ error }, 'IPC: Piper TTS 语音播放失败');
+      log.error('piper-speak', 'Piper TTS 语音播放失败', {}, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
@@ -1434,7 +1453,7 @@ export function setupIPC(windowManager: WindowManager): void {
         await PiperTTS.getInstance().playToDevice(audioData, deviceId);
         return { success: true };
       } catch (error) {
-        logger.error({ error }, 'IPC: Piper TTS 播放音频失败');
+        log.error('piper-play-to-device', 'Piper TTS 播放音频失败', {}, error);
         return { success: false, error: error instanceof Error ? error.message : String(error) };
       }
     },
@@ -1463,7 +1482,7 @@ export function setupIPC(windowManager: WindowManager): void {
           },
           body: JSON.stringify({ floating_window_visible }),
         }).catch((error) => {
-          logger.error({ error }, '同步点击穿透模式到后端失败');
+          log.error('toggleClickThroughMode', '同步点击穿透模式到后端失败', {}, error);
         });
       }
 
@@ -1471,7 +1490,7 @@ export function setupIPC(windowManager: WindowManager): void {
       const { ipcMain } = require('electron');
       ipcMain.emit('update-tray-menu');
     } catch (error) {
-      logger.error({ error }, '快捷键切换点击穿透模式失败');
+      log.error('toggleClickThroughMode', '快捷键切换点击穿透模式失败', {}, error);
     }
   }
 
@@ -1485,14 +1504,15 @@ export function setupIPC(windowManager: WindowManager): void {
     const fs = require('fs');
     const path = require('path');
 
-    logger.info(
+    log.info(
+      'get-asar-unpacked-path',
+      '收到获取 AudioWorklet 处理器文件请求',
       { filename, isPackaged: app.isPackaged },
-      'IPC: 收到获取 AudioWorklet 处理器文件请求',
     );
 
     // 只允许访问 pcm-processor.js 和 speaker-pcm-processor.js
     if (filename !== 'pcm-processor.js' && filename !== 'speaker-pcm-processor.js') {
-      logger.error({ filename }, 'IPC: 不允许访问该文件');
+      log.error('get-asar-unpacked-path', '不允许访问该文件', { filename });
       return { success: false, error: '不允许访问该文件' };
     }
 
@@ -1502,27 +1522,27 @@ export function setupIPC(windowManager: WindowManager): void {
       if (!app.isPackaged) {
         // 开发环境：从 public 目录读取
         filePath = path.join(process.cwd(), 'public', filename);
-        logger.info({ filePath }, 'IPC: 开发环境文件路径');
+        log.info('get-asar-unpacked-path', '开发环境文件路径', { filePath });
       } else {
         // 生产环境：从 app.asar.unpacked/dist 目录读取
         filePath = path.join(process.resourcesPath, 'app.asar.unpacked', 'dist', filename);
-        logger.info({ filePath }, 'IPC: 生产环境文件路径');
+        log.info('get-asar-unpacked-path', '生产环境文件路径', { filePath });
       }
 
       // 检查文件是否存在
       if (!fs.existsSync(filePath)) {
-        logger.error({ filePath }, 'IPC: 文件不存在');
+        log.error('get-asar-unpacked-path', '文件不存在', { filePath });
         return { success: false, error: `文件不存在: ${filePath}` };
       }
 
       // 读取文件内容
       const fileContent = fs.readFileSync(filePath, 'utf-8');
-      logger.info({ filename, contentLength: fileContent.length }, 'IPC: 文件读取成功');
+      log.info('get-asar-unpacked-path', '文件读取成功', { filename, contentLength: fileContent.length });
 
       // 返回文件内容（前端将使用 Blob URL）
       return { success: true, content: fileContent };
     } catch (error) {
-      logger.error({ error, filename }, 'IPC: 读取 AudioWorklet 处理器文件失败');
+      log.error('get-asar-unpacked-path', '读取 AudioWorklet 处理器文件失败', { filename }, error);
       return { success: false, error: (error as Error).message };
     }
   });
@@ -1543,7 +1563,7 @@ export function setupIPC(windowManager: WindowManager): void {
         },
       };
     } catch (error) {
-      logger.error({ error }, '获取用户统计数据失败');
+      log.error('get-user-stats', '获取用户统计数据失败', {}, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -1558,7 +1578,7 @@ export function setupIPC(windowManager: WindowManager): void {
       broadcastAppVisibilityChanged(true);
       return { success: true };
     } catch (error) {
-      logger.error({ error }, '显示应用失败');
+      log.error('show-app', '显示应用失败', {}, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -1573,7 +1593,7 @@ export function setupIPC(windowManager: WindowManager): void {
       broadcastAppVisibilityChanged(false);
       return { success: true };
     } catch (error) {
-      logger.error({ error }, '隐藏应用失败');
+      log.error('hide-app', '隐藏应用失败', {}, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -1589,7 +1609,7 @@ export function setupIPC(windowManager: WindowManager): void {
       }
       return { success: true };
     } catch (error) {
-      logger.error({ error }, '设置交互模式失败');
+      log.error('set-interactive-mode', '设置交互模式失败', {}, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -1605,7 +1625,7 @@ export function setupIPC(windowManager: WindowManager): void {
       }
       return { success: true };
     } catch (error) {
-      logger.error({ error }, '设置穿透模式失败');
+      log.error('set-click-through-mode', '设置穿透模式失败', {}, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -1618,7 +1638,7 @@ export function setupIPC(windowManager: WindowManager): void {
     try {
       return dockIconVisible;
     } catch (error) {
-      logger.error({ error }, '获取 Dock 图标显示状态失败');
+      log.error('get-dock-icon-visible', '获取 Dock 图标显示状态失败', {}, error);
       return false;
     }
   });
@@ -1650,7 +1670,7 @@ export function setupIPC(windowManager: WindowManager): void {
 
       return { success: true, visible: dockIconVisible };
     } catch (error) {
-      logger.error({ error }, '设置 Dock 图标显示状态失败');
+      log.error('set-dock-icon-visible', '设置 Dock 图标显示状态失败', {}, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -1663,7 +1683,7 @@ export function setupIPC(windowManager: WindowManager): void {
     try {
       return stopDockerOnQuit;
     } catch (error) {
-      logger.error({ error }, '获取 Docker 退出设置失败');
+      log.error('get-stop-docker-on-quit', '获取 Docker 退出设置失败', {}, error);
       return false;
     }
   });
@@ -1679,10 +1699,10 @@ export function setupIPC(windowManager: WindowManager): void {
       // 保存到配置文件
       persistSettings();
 
-      logger.info({ stopDockerOnQuit }, 'Docker 退出设置已更新');
+      log.info('set-stop-docker-on-quit', 'Docker 退出设置已更新', { stopDockerOnQuit });
       return { success: true, stopDockerOnQuit };
     } catch (error) {
-      logger.error({ error }, '设置 Docker 退出设置失败');
+      log.error('set-stop-docker-on-quit', '设置 Docker 退出设置失败', {}, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -1696,7 +1716,7 @@ export function setupIPC(windowManager: WindowManager): void {
       windowManager.notifyTrayMenuSettingsChanged();
       return { success: true };
     } catch (error) {
-      logger.error({ error }, '通知托盘菜单设置变更失败');
+      log.error('notify-settings-changed', '通知托盘菜单设置变更失败', {}, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -1707,5 +1727,5 @@ export function setupIPC(windowManager: WindowManager): void {
   // 注册 ASR WebSocket IPC 处理器
   registerASRWebSocketHandlers();
 
-  logger.info('IPC 通信处理器设置完成');
+  log.info('setupIPCHandlers', 'IPC 通信处理器设置完成');
 }

@@ -5,7 +5,9 @@
 
 import { BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { InterviewIPCEvents } from '../../renderer/ai-question/components/mock-interview/ipc/InterviewIPCService';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('InterviewIPCHandler');
 
 interface WindowReference {
   id: number;
@@ -30,7 +32,7 @@ export class InterviewIPCHandler {
       this.registerEventHandlers();
       this.isInitialized = true;
     } catch (error) {
-      logger.error(`Failed to initialize Interview IPC Handler: ${error}`);
+      log.error('initialize', `Failed to initialize Interview IPC Handler: ${error}`);
     }
   }
 
@@ -73,7 +75,7 @@ export class InterviewIPCHandler {
     const senderWindow = this.getWindowByWebContentsId(ipcEvent.sender.id);
 
     if (!senderWindow) {
-      console.warn(`Unknown sender for interview event: ${event}`);
+      log.warn('handleInterviewEvent', `Unknown sender for interview event: ${event}`);
       return;
     }
 
@@ -204,7 +206,7 @@ export class InterviewIPCHandler {
     const browserWindow = BrowserWindow.fromWebContents(webContents);
 
     if (!browserWindow) {
-      logger.error('Cannot register window: BrowserWindow not found');
+      log.error('registerWindow', 'Cannot register window: BrowserWindow not found');
       return;
     }
 
@@ -260,7 +262,7 @@ export class InterviewIPCHandler {
     try {
       windowRef.window.webContents.send(`interview:${event}`, data);
     } catch (error) {
-      logger.error(`Failed to send event ${event} to window ${windowRef.id}: ${error}`);
+      log.error('sendToWindow', `Failed to send event ${event} to window ${windowRef.id}: ${error}`);
     }
   }
 

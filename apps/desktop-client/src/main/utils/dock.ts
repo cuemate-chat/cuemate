@@ -1,6 +1,8 @@
 import { app, nativeImage } from 'electron';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 import { getAppIconPath } from './paths.js';
+
+const log = createLogger('Dock');
 
 let lastEnsureAt = 0;
 
@@ -21,8 +23,8 @@ export async function ensureDockActiveAndIcon(_reason: string = 'ensure'): Promi
     // 显示 Dock（返回 Promise，需要 await）
     try {
       await app.dock.show();
-    } catch (e) {
-      logger.debug({ e }, 'app.dock.show 失败（可忽略）');
+    } catch {
+      // app.dock.show 失败（可忽略）
     }
 
     // macOS 激活策略（必须在 dock.show 之后设置，否则会被 LSUIElement 覆盖）：
@@ -32,8 +34,8 @@ export async function ensureDockActiveAndIcon(_reason: string = 'ensure'): Promi
       if (typeof (app as any).setActivationPolicy === 'function') {
         (app as any).setActivationPolicy('regular');
       }
-    } catch (e) {
-      logger.debug({ e }, 'setActivationPolicy 失败（可忽略）');
+    } catch {
+      // setActivationPolicy 失败（可忽略）
     }
 
     // 设置 Dock 图标
@@ -42,15 +44,15 @@ export async function ensureDockActiveAndIcon(_reason: string = 'ensure'): Promi
       const img = nativeImage.createFromPath(iconPath);
 
       if (!img || img.isEmpty()) {
-        logger.warn({ iconPath }, '无法加载 Dock 图标');
+        log.warn('ensureDockActiveAndIcon', '无法加载 Dock 图标', { iconPath });
         return;
       }
 
       app.dock.setIcon(img);
     } catch (e) {
-      logger.warn({ e }, '设置 Dock 图标失败');
+      log.error('ensureDockActiveAndIcon', '设置 Dock 图标失败', {}, e);
     }
   } catch (error) {
-    logger.warn({ error }, 'ensureDockActiveAndIcon 执行异常');
+    log.error('ensureDockActiveAndIcon', '执行异常', {}, error);
   }
 }

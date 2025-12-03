@@ -1,5 +1,7 @@
 import { execFile } from 'child_process';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('ScreenshotWatcher');
 
 export type ScreenshotStateListener = (isCapturing: boolean) => void;
 
@@ -47,12 +49,12 @@ export class ScreenshotWatcher {
         ['-laf', 'screencapture|screencaptureui|ScreenShotUIServer'],
         (err, stdout) => {
           if (err && (err as any).code !== 1) {
-            logger.debug({ err }, 'ScreenshotWatcher: pgrep system error');
+            log.debug('poll', 'pgrep system error', { err });
           }
           const hasSystemCapture = typeof stdout === 'string' && stdout.trim().length > 0;
 
           if (hasSystemCapture) {
-            logger.debug('System screenshot process detected');
+            log.debug('poll', 'System screenshot process detected');
             this.emit(true);
           } else {
             this.emit(false);
@@ -60,7 +62,7 @@ export class ScreenshotWatcher {
         },
       );
     } catch (error) {
-      logger.debug({ error }, 'ScreenshotWatcher: poll failed');
+      log.debug('poll', 'poll failed', { error });
       this.emit(false);
     }
   }

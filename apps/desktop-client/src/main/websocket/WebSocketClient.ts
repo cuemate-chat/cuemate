@@ -1,10 +1,12 @@
 import { shell } from 'electron';
 import WebSocket from 'ws';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 import { getVoiceState } from '../../utils/voiceState.js';
 import { PiperTTS } from '../audio/PiperTTS.js';
 import type { WindowManager } from '../windows/WindowManager.js';
 import { setCachedAuth, clearCachedAuth } from '../ipc/handlers.js';
+
+const log = createLogger('WebSocketClient');
 
 interface WebSocketMessage {
   type: string;
@@ -53,20 +55,20 @@ export class WebSocketClient {
           const message: WebSocketMessage = JSON.parse(data.toString());
           this.handleMessage(message);
         } catch (error) {
-          logger.error({ error }, 'WebSocket 消息解析失败');
+          log.error('connect', 'WebSocket 消息解析失败', {}, error);
         }
       });
 
       this.ws.on('close', (code, reason) => {
-        logger.warn({ code, reason: reason.toString() }, 'WebSocket 连接关闭');
+        log.warn('connect', 'WebSocket 连接关闭', { code, reason: reason.toString() });
         this.handleReconnect();
       });
 
       this.ws.on('error', (error) => {
-        logger.error({ error }, 'WebSocket 连接错误');
+        log.error('connect', 'WebSocket 连接错误', {}, error);
       });
     } catch (error) {
-      logger.error({ error }, 'WebSocket 连接初始化失败');
+      log.error('connect', 'WebSocket 连接初始化失败', {}, error);
       this.handleReconnect();
     }
   }
@@ -109,11 +111,11 @@ export class WebSocketClient {
             const data = await response.json();
             if (data.isLoggedIn && data.user && data.token) {
               setCachedAuth(data.user, data.token);
-              logger.info('WebSocket: 登录状态缓存已更新');
+              log.info('handleMessage', '登录状态缓存已更新');
             }
           }
         } catch (error) {
-          logger.error({ error }, 'WebSocket: 刷新登录状态缓存失败');
+          log.error('handleMessage', '刷新登录状态缓存失败', {}, error);
         }
 
         // 通知 control-bar 登录成功
@@ -130,9 +132,9 @@ export class WebSocketClient {
         // 清空登录状态缓存
         try {
           clearCachedAuth();
-          logger.info('WebSocket: 登录状态缓存已清空');
+          log.info('handleMessage', '登录状态缓存已清空');
         } catch (error) {
-          logger.error({ error }, 'WebSocket: 清空登录状态缓存失败');
+          log.error('handleMessage', '清空登录状态缓存失败', {}, error);
         }
 
         // 通知 control-bar 登出
@@ -173,7 +175,7 @@ export class WebSocketClient {
             this.send({ type: 'ASR_DEVICES', data });
           });
         } catch (error) {
-          logger.error({ error }, '上报 ASR 设备失败');
+          log.error('handleMessage', '上报 ASR 设备失败', {}, error);
         }
         break;
       }
@@ -188,7 +190,7 @@ export class WebSocketClient {
           currentState.subState !== 'idle' &&
           (currentState.mode === 'mock-interview' || currentState.mode === 'interview-training')
         ) {
-          logger.warn('当前正在面试中，忽略打开窗口请求');
+          log.warn('handleMessage', '当前正在面试中，忽略打开窗口请求');
           break;
         }
 
@@ -201,7 +203,7 @@ export class WebSocketClient {
           // 在隐藏状态下，准备面试窗口状态，等待恢复时显示
           this.windowManager.switchToMode(mode, jobId);
           this.windowManager.prepareInterviewWindowsWhileHidden();
-          logger.info({ mode, jobId }, '窗口处于隐藏状态，已准备面试窗口，等待恢复显示');
+          log.info('handleMessage', '窗口处于隐藏状态，已准备面试窗口，等待恢复显示', { mode, jobId });
           break;
         }
 
@@ -210,7 +212,7 @@ export class WebSocketClient {
         const isAIQuestionVisible = appState.isAIQuestionVisible;
 
         if (isInterviewerVisible && isAIQuestionVisible) {
-          logger.warn('面试窗口已经打开，忽略重复请求');
+          log.warn('handleMessage', '面试窗口已经打开，忽略重复请求');
           break;
         }
 
@@ -220,33 +222,33 @@ export class WebSocketClient {
         this.windowManager.showAIQuestionHistoryNextToAI();
         this.windowManager.showInterviewerNextToAI();
 
-        logger.info({ mode, jobId }, '已打开面试窗口');
+        log.info('handleMessage', '已打开面试窗口', { mode, jobId });
         break;
       }
 
       case 'UPDATE_VERSION': {
         if (!message.version) {
-          logger.warn('WebSocket: UPDATE_VERSION 消息缺少版本号');
+          log.warn('handleMessage', 'UPDATE_VERSION 消息缺少版本号');
           break;
         }
 
         const targetVersion = message.version;
-        logger.info({ version: targetVersion }, '收到版本更新请求');
+        log.info('handleMessage', '收到版本更新请求', { version: targetVersion });
 
         // 动态导入 UpdateService
         import('../services/UpdateService.js').then(({ UpdateService }) => {
           const updateService = new UpdateService(this);
           updateService.startUpdate(targetVersion).catch((error) => {
-            logger.error({ error }, '版本更新失败');
+            log.error('handleMessage', '版本更新失败', {}, error);
           });
         }).catch((error) => {
-          logger.error({ error }, '加载 UpdateService 失败');
+          log.error('handleMessage', '加载 UpdateService 失败', {}, error);
         });
         break;
       }
 
       default:
-        logger.warn({ messageType: message.type }, 'WebSocket: 未知消息类型');
+        log.warn('handleMessage', '未知消息类型', { messageType: message.type });
     }
   }
 
@@ -258,10 +260,10 @@ export class WebSocketClient {
       try {
         this.ws.send(JSON.stringify(message));
       } catch (error) {
-        logger.error({ error }, 'WebSocket 消息发送失败');
+        log.error('send', 'WebSocket 消息发送失败', {}, error);
       }
     } else {
-      logger.warn('WebSocket 未连接，无法发送消息');
+      log.warn('send', 'WebSocket 未连接，无法发送消息');
     }
   }
 
@@ -280,7 +282,7 @@ export class WebSocketClient {
         this.connect();
       }, this.reconnectDelay);
     } else {
-      logger.error('WebSocket 重连次数超过限制，停止重连');
+      log.error('handleReconnect', 'WebSocket 重连次数超过限制，停止重连');
     }
   }
 

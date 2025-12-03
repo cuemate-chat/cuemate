@@ -1,5 +1,7 @@
 import WebSocket from 'ws';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('ASRWebSocketService');
 
 /**
  * ASR WebSocket 服务 - 在主进程中处理 WebSocket 连接
@@ -16,7 +18,7 @@ export class ASRWebSocketService {
   public connect(sessionId: string, url: string, onMessage?: (message: string) => void): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        logger.info({ sessionId, url }, '[ASR WebSocket] 创建连接');
+        log.info('connect', '[ASR WebSocket] 创建连接', { sessionId, url });
 
         // 创建 WebSocket 连接，禁用压缩以提高性能
         const ws = new WebSocket(url, {
@@ -25,46 +27,46 @@ export class ASRWebSocketService {
         });
         this.connections.set(sessionId, ws);
 
-        logger.info({
+        log.info('connect', '[ASR WebSocket] WebSocket 配置', {
           sessionId,
           perMessageDeflate: false,
           maxPayload: 100 * 1024 * 1024
-        }, '[ASR WebSocket] WebSocket 配置');
+        });
 
         // 如果提供了消息回调，立即保存并设置监听器
         if (onMessage) {
           this.messageCallbacks.set(sessionId, onMessage);
-          logger.info({ sessionId }, '[ASR WebSocket] 消息监听器已在连接时设置');
+          log.info('connect', '[ASR WebSocket] 消息监听器已在连接时设置', { sessionId });
           ws.on('message', (data: WebSocket.RawData) => {
             try {
               const message = data.toString();
-              logger.debug({ sessionId, messagePreview: message.substring(0, 100) }, '[ASR WebSocket] 收到消息');
+              log.debug('connect', '[ASR WebSocket] 收到消息', { sessionId, messagePreview: message.substring(0, 100) });
               onMessage(message);
             } catch (error) {
-              logger.error({ sessionId, error }, '[ASR WebSocket] 处理消息失败');
+              log.error('connect', '[ASR WebSocket] 处理消息失败', { sessionId }, error);
             }
           });
         }
 
         ws.on('open', () => {
-          logger.info({ sessionId }, '[ASR WebSocket] 连接已打开');
+          log.info('connect', '[ASR WebSocket] 连接已打开', { sessionId });
           resolve();
         });
 
         ws.on('error', (error) => {
-          logger.error({ sessionId, error }, '[ASR WebSocket] 连接错误');
+          log.error('connect', '[ASR WebSocket] 连接错误', { sessionId }, error);
           this.connections.delete(sessionId);
           this.messageCallbacks.delete(sessionId);
           reject(error);
         });
 
         ws.on('close', () => {
-          logger.info({ sessionId }, '[ASR WebSocket] 连接已关闭');
+          log.info('connect', '[ASR WebSocket] 连接已关闭', { sessionId });
           this.connections.delete(sessionId);
           this.messageCallbacks.delete(sessionId);
         });
       } catch (error) {
-        logger.error({ sessionId, error }, '[ASR WebSocket] 创建连接失败');
+        log.error('connect', '[ASR WebSocket] 创建连接失败', { sessionId }, error);
         reject(error);
       }
     });
@@ -76,12 +78,12 @@ export class ASRWebSocketService {
   public sendConfig(sessionId: string, config: any): void {
     const ws = this.connections.get(sessionId);
     if (!ws) {
-      logger.error({ sessionId }, '[ASR WebSocket] 连接不存在，无法发送配置');
+      log.error('sendConfig', '[ASR WebSocket] 连接不存在，无法发送配置', { sessionId });
       return;
     }
 
     if (ws.readyState !== WebSocket.OPEN) {
-      logger.error({ sessionId, readyState: ws.readyState }, '[ASR WebSocket] 连接未打开，无法发送配置');
+      log.error('sendConfig', '[ASR WebSocket] 连接未打开，无法发送配置', { sessionId, readyState: ws.readyState });
       return;
     }
 
@@ -89,15 +91,14 @@ export class ASRWebSocketService {
     const configStr = JSON.stringify(config);
     ws.send(configStr, (error) => {
       if (error) {
-        logger.error({
+        log.error('sendConfig', '[ASR WebSocket] 发送配置失败', {
           sessionId,
-          error,
           config,
           errorMessage: error.message,
           errorStack: error.stack
-        }, '[ASR WebSocket] 发送配置失败');
+        }, error);
       } else {
-        logger.info({ sessionId, config }, '[ASR WebSocket] 配置已发送');
+        log.info('sendConfig', '[ASR WebSocket] 配置已发送', { sessionId, config });
       }
     });
   }
@@ -107,37 +108,37 @@ export class ASRWebSocketService {
    * 关键：在主进程中 ArrayBuffer 可以正常发送，不受 V8 Sandbox 限制
    */
   public sendAudioData(sessionId: string, audioData: ArrayBuffer): void {
-    logger.debug({ sessionId, byteLength: audioData?.byteLength, type: typeof audioData }, '[ASR WebSocket] sendAudioData 被调用');
+    log.debug('sendAudioData', '[ASR WebSocket] sendAudioData 被调用', { sessionId, byteLength: audioData?.byteLength, type: typeof audioData });
 
     const ws = this.connections.get(sessionId);
     if (!ws) {
-      logger.error({ sessionId, availableSessions: Array.from(this.connections.keys()) }, '[ASR WebSocket] 连接不存在，无法发送音频数据');
+      log.error('sendAudioData', '[ASR WebSocket] 连接不存在，无法发送音频数据', { sessionId, availableSessions: Array.from(this.connections.keys()) });
       return;
     }
 
     if (ws.readyState !== WebSocket.OPEN) {
-      logger.error({ sessionId, readyState: ws.readyState, readyStateMapping: {
+      log.error('sendAudioData', '[ASR WebSocket] 连接未打开，无法发送音频数据', { sessionId, readyState: ws.readyState, readyStateMapping: {
         0: 'CONNECTING',
         1: 'OPEN',
         2: 'CLOSING',
         3: 'CLOSED'
-      }[ws.readyState] }, '[ASR WebSocket] 连接未打开，无法发送音频数据');
+      }[ws.readyState] });
       return;
     }
 
     // 验证 audioData 是否有效
     if (!audioData) {
-      logger.error({ sessionId }, '[ASR WebSocket] audioData 为空或 undefined');
+      log.error('sendAudioData', '[ASR WebSocket] audioData 为空或 undefined', { sessionId });
       return;
     }
 
     if (!(audioData instanceof ArrayBuffer)) {
-      logger.error({ sessionId, actualType: Object.prototype.toString.call(audioData) }, '[ASR WebSocket] audioData 不是 ArrayBuffer 类型');
+      log.error('sendAudioData', '[ASR WebSocket] audioData 不是 ArrayBuffer 类型', { sessionId, actualType: Object.prototype.toString.call(audioData) });
       return;
     }
 
     if (audioData.byteLength === 0) {
-      logger.error({ sessionId }, '[ASR WebSocket] audioData 长度为 0');
+      log.error('sendAudioData', '[ASR WebSocket] audioData 长度为 0', { sessionId });
       return;
     }
 
@@ -152,7 +153,7 @@ export class ASRWebSocketService {
       `${dataView.getUint8(0)} ${dataView.getUint8(1)} ${dataView.getUint8(2)} ${dataView.getUint8(3)}` :
       'empty';
 
-    logger.debug({
+    log.debug('sendAudioData', '[ASR WebSocket] 准备发送音频数据', {
       sessionId,
       bufferedAmount,
       byteLength: audioData.byteLength,
@@ -160,13 +161,12 @@ export class ASRWebSocketService {
       isRealArrayBuffer,
       constructorName,
       first4Bytes
-    }, '[ASR WebSocket] 准备发送音频数据');
+    });
 
     ws.send(audioData, (error) => {
       if (error) {
-        logger.error({
+        log.error('sendAudioData', '[ASR WebSocket] 发送音频数据失败', {
           sessionId,
-          error,
           byteLength: audioData.byteLength,
           bufferedAmountBefore: bufferedAmount,
           bufferedAmountAfter: ws.bufferedAmount,
@@ -174,7 +174,7 @@ export class ASRWebSocketService {
           errorStack: error.stack,
           errorName: error.name,
           errorCode: (error as any).code
-        }, '[ASR WebSocket] 发送音频数据失败');
+        }, error);
       }
     });
   }
@@ -184,10 +184,10 @@ export class ASRWebSocketService {
    * 保留此方法仅为了向后兼容
    */
   public onMessage(sessionId: string, callback: (data: string) => void): void {
-    logger.warn({ sessionId }, '[ASR WebSocket] onMessage 方法已废弃，消息监听器应在 connect 时设置');
+    log.warn('onMessage', '[ASR WebSocket] onMessage 方法已废弃，消息监听器应在 connect 时设置', { sessionId });
     const ws = this.connections.get(sessionId);
     if (!ws) {
-      logger.error({ sessionId }, '[ASR WebSocket] 连接不存在，无法监听消息');
+      log.error('onMessage', '[ASR WebSocket] 连接不存在，无法监听消息', { sessionId });
       return;
     }
 
@@ -199,7 +199,7 @@ export class ASRWebSocketService {
           const message = data.toString();
           callback(message);
         } catch (error) {
-          logger.error({ sessionId, error }, '[ASR WebSocket] 处理消息失败');
+          log.error('onMessage', '[ASR WebSocket] 处理消息失败', { sessionId }, error);
         }
       });
     }
@@ -211,16 +211,16 @@ export class ASRWebSocketService {
   public close(sessionId: string): void {
     const ws = this.connections.get(sessionId);
     if (!ws) {
-      logger.warn({ sessionId }, '[ASR WebSocket] 连接不存在，无需关闭');
+      log.warn('close', '[ASR WebSocket] 连接不存在，无需关闭', { sessionId });
       return;
     }
 
     try {
       ws.close();
       this.connections.delete(sessionId);
-      logger.info({ sessionId }, '[ASR WebSocket] 连接已关闭');
+      log.info('close', '[ASR WebSocket] 连接已关闭', { sessionId });
     } catch (error) {
-      logger.error({ sessionId, error }, '[ASR WebSocket] 关闭连接失败');
+      log.error('close', '[ASR WebSocket] 关闭连接失败', { sessionId }, error);
     }
   }
 
@@ -228,12 +228,12 @@ export class ASRWebSocketService {
    * 关闭所有连接
    */
   public closeAll(): void {
-    logger.info({ count: this.connections.size }, '[ASR WebSocket] 关闭所有连接');
+    log.info('closeAll', '[ASR WebSocket] 关闭所有连接', { count: this.connections.size });
     for (const [sessionId, ws] of this.connections.entries()) {
       try {
         ws.close();
       } catch (error) {
-        logger.error({ sessionId, error }, '[ASR WebSocket] 关闭连接失败');
+        log.error('closeAll', '[ASR WebSocket] 关闭连接失败', { sessionId }, error);
       }
     }
     this.connections.clear();

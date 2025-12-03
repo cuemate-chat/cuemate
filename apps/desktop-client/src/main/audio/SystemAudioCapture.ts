@@ -1,7 +1,9 @@
 import { app } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
-import { logger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
+
+const log = createLogger('SystemAudioCapture');
 
 let ScreenCaptureAudio: any = null;
 let nativeTried = false;
@@ -22,7 +24,7 @@ function ensureNativeLoaded(): void {
     const nativeModule = require(nativeModulePath);
     ScreenCaptureAudio = nativeModule.ScreenCaptureAudio || nativeModule;
   } catch (error) {
-    logger.error({ err: error }, '加载音频设备列表模块失败:');
+    log.error('ensureNativeLoaded', '加载音频设备列表模块失败', {}, error);
   }
 }
 
@@ -68,7 +70,7 @@ export class SystemAudioCapture {
         __dirname,
         '../../../../node_modules/.pnpm/audiotee@0.0.6/node_modules/audiotee/dist/index.js',
       );
-      logger.info({ audioTeePath, __dirname, isPackaged }, '开发环境 AudioTee 路径');
+      log.info('loadAudioTeeModule', '开发环境 AudioTee 路径', { audioTeePath, __dirname, isPackaged });
       return await import(audioTeePath);
     } else {
       // 生产环境：使用 app.asar.unpacked
@@ -80,16 +82,13 @@ export class SystemAudioCapture {
 
       // 检查文件是否存在
       const exists = fs.existsSync(audioTeePath);
-      logger.info(
-        {
-          audioTeePath,
-          resourcesPath,
-          appPath,
-          fileExists: exists,
-          isPackaged,
-        },
-        '生产环境 AudioTee 路径',
-      );
+      log.info('loadAudioTeeModule', '生产环境 AudioTee 路径', {
+        audioTeePath,
+        resourcesPath,
+        appPath,
+        fileExists: exists,
+        isPackaged,
+      });
 
       if (!exists) {
         throw new Error(`AudioTee 模块文件不存在: ${audioTeePath}`);
@@ -105,25 +104,19 @@ export class SystemAudioCapture {
   private async shouldUseAudioTee(): Promise<boolean> {
     try {
       const audioTeeModule = await this.loadAudioTeeModule();
-      logger.info(
-        {
-          hasModule: !!audioTeeModule,
-          hasAudioTee: !!(audioTeeModule && audioTeeModule.AudioTee),
-          moduleKeys: audioTeeModule ? Object.keys(audioTeeModule) : [],
-        },
-        'AudioTee 模块加载结果',
-      );
+      log.info('shouldUseAudioTee', 'AudioTee 模块加载结果', {
+        hasModule: !!audioTeeModule,
+        hasAudioTee: !!(audioTeeModule && audioTeeModule.AudioTee),
+        moduleKeys: audioTeeModule ? Object.keys(audioTeeModule) : [],
+      });
 
       if (audioTeeModule && audioTeeModule.AudioTee) {
         return true;
       }
-      logger.warn({ audioTeeModule }, 'AudioTee 模块结构不正确');
+      log.warn('shouldUseAudioTee', 'AudioTee 模块结构不正确', { audioTeeModule });
       return false;
     } catch (error) {
-      logger.error(
-        { err: error, stack: error instanceof Error ? error.stack : undefined },
-        'AudioTee 加载失败:',
-      );
+      log.error('shouldUseAudioTee', 'AudioTee 加载失败', { stack: error instanceof Error ? error.stack : undefined }, error);
       return false;
     }
   }
@@ -133,7 +126,7 @@ export class SystemAudioCapture {
    */
   public async startCapture(): Promise<void> {
     if (this.isCapturing) {
-      logger.warn('系统音频扬声器捕获已在进行中');
+      log.warn('startCapture', '系统音频扬声器捕获已在进行中');
       return;
     }
 
@@ -150,11 +143,11 @@ export class SystemAudioCapture {
    * 使用 AudioTee 开始捕获
    */
   private async startCaptureWithAudioTee(): Promise<void> {
-    logger.debug('开始启动 AudioTee 系统音频捕获...');
+    log.debug('startCaptureWithAudioTee', '开始启动 AudioTee 系统音频捕获...');
 
     // 设置错误回调
     this.onErrorCallback = (error: Error) => {
-      logger.error({ err: error }, 'AudioTee 系统音频捕获错误回调:');
+      log.error('startCaptureWithAudioTee', 'AudioTee 系统音频捕获错误回调', {}, error);
       throw error;
     };
 
@@ -163,7 +156,7 @@ export class SystemAudioCapture {
       const audioTeeModule = await this.loadAudioTeeModule();
       const AudioTee = audioTeeModule.AudioTee;
 
-      logger.debug('创建 AudioTee 实例，配置:', {
+      log.debug('startCaptureWithAudioTee', '创建 AudioTee 实例，配置', {
         sampleRate: this.options.sampleRate,
         chunkDurationMs: 200,
         mute: false,
@@ -175,7 +168,7 @@ export class SystemAudioCapture {
         mute: false,
       });
 
-      logger.debug('AudioTee 实例创建完成，开始设置事件监听器');
+      log.debug('startCaptureWithAudioTee', 'AudioTee 实例创建完成，开始设置事件监听器');
 
       // 监听音频数据
       this.audioTeeCapture.on('data', (chunk: { data: Buffer }) => {
@@ -203,13 +196,11 @@ export class SystemAudioCapture {
             }
           }
 
-          logger.debug(
-            `AudioTee 音频数据分析: 长度=${audioData.length}bytes, 最大振幅=${maxAmplitude}, 阈值=${threshold}, 有声音=${hasSound}`,
-          );
+          log.debug('startCaptureWithAudioTee', `AudioTee 音频数据分析: 长度=${audioData.length}bytes, 最大振幅=${maxAmplitude}, 阈值=${threshold}, 有声音=${hasSound}`);
 
           // 只有包含实际声音时才发送回调
           if (hasSound && this.onDataCallback) {
-            logger.debug('AudioTee 发送音频数据到回调');
+            log.debug('startCaptureWithAudioTee', 'AudioTee 发送音频数据到回调');
             this.onDataCallback(audioData);
             // 收到有效音频，重置静音计数
             this.silentChunkCount = 0;
@@ -217,9 +208,7 @@ export class SystemAudioCapture {
           } else {
             // 连续静音计数
             this.silentChunkCount++;
-            logger.debug(
-              `AudioTee 跳过静音数据: 最大振幅=${maxAmplitude} < 阈值=${threshold}, 连续静音块=${this.silentChunkCount}`,
-            );
+            log.debug('startCaptureWithAudioTee', `AudioTee 跳过静音数据: 最大振幅=${maxAmplitude} < 阈值=${threshold}, 连续静音块=${this.silentChunkCount}`);
           }
         }
       });
@@ -230,18 +219,18 @@ export class SystemAudioCapture {
       // 监听开始事件
       this.audioTeeCapture.on('start', () => {
         this.isCapturing = true;
-        logger.info('AudioTee 开始语音');
+        log.info('startCaptureWithAudioTee', 'AudioTee 开始语音');
       });
 
       // 监听停止事件
       this.audioTeeCapture.on('stop', () => {
         this.isCapturing = false;
-        logger.info('AudioTee 停止录制');
+        log.info('startCaptureWithAudioTee', 'AudioTee 停止录制');
       });
 
       // 监听错误
       this.audioTeeCapture.on('error', (error: Error) => {
-        logger.error({ err: error }, 'AudioTee 系统音频捕获错误:');
+        log.error('startCaptureWithAudioTee', 'AudioTee 系统音频捕获错误', {}, error);
         this.isCapturing = false;
 
         // 检查是否是权限错误
@@ -261,26 +250,23 @@ export class SystemAudioCapture {
 
       // 监听日志
       this.audioTeeCapture.on('log', (level: string, message: any) => {
-        logger.debug(`AudioTee [${level}]: ${message.message}`);
+        log.debug('startCaptureWithAudioTee', `AudioTee [${level}]: ${message.message}`);
       });
 
-      logger.debug(
-        '调用 AudioTee start，配置:',
-        JSON.stringify({
-          sampleRate: this.options.sampleRate,
-          chunkDurationMs: 200,
-          mute: false,
-        }),
-      );
+      log.debug('startCaptureWithAudioTee', '调用 AudioTee start，配置', {
+        sampleRate: this.options.sampleRate,
+        chunkDurationMs: 200,
+        mute: false,
+      });
 
       // 启动 AudioTee 音频捕获
-      logger.debug('即将调用 AudioTee start()');
+      log.debug('startCaptureWithAudioTee', '即将调用 AudioTee start()');
       await this.audioTeeCapture.start();
-      logger.debug('AudioTee start() 调用完成');
+      log.debug('startCaptureWithAudioTee', 'AudioTee start() 调用完成');
 
-      logger.info('AudioTee 系统音频捕获已启动');
+      log.info('startCaptureWithAudioTee', 'AudioTee 系统音频捕获已启动');
     } catch (error) {
-      logger.error({ err: error }, '启动 AudioTee 系统音频捕获失败:');
+      log.error('startCaptureWithAudioTee', '启动 AudioTee 系统音频捕获失败', {}, error);
       this.isCapturing = false;
       throw error;
     }
@@ -314,14 +300,11 @@ export class SystemAudioCapture {
           ? 'AudioTee 持续 10 秒未收到有效音频数据，音频源可能已停止'
           : 'AudioTee 启动后 10 秒内未收到任何有效音频数据，可能是系统音频权限未授权或 audiotee 进程无法获取音频';
 
-        logger.error(
-          {
-            silentChunkCount: this.silentChunkCount,
-            hasReceivedAudio: this.hasReceivedAudio,
-            isCapturing: this.isCapturing,
-          },
-          errorMsg,
-        );
+        log.error('startSilenceCheckTimer', errorMsg, {
+          silentChunkCount: this.silentChunkCount,
+          hasReceivedAudio: this.hasReceivedAudio,
+          isCapturing: this.isCapturing,
+        });
 
         // 触发错误回调
         if (this.onErrorCallback) {
@@ -333,18 +316,15 @@ export class SystemAudioCapture {
         this.silentChunkCount = 0;
       } else if (this.silentChunkCount > 0) {
         // 有静音但还没达到阈值，记录警告
-        logger.warn(
-          {
-            silentChunkCount: this.silentChunkCount,
-            hasReceivedAudio: this.hasReceivedAudio,
-            secondsOfSilence: (this.silentChunkCount * 200) / 1000,
-          },
-          `AudioTee 检测到连续静音: ${(this.silentChunkCount * 200) / 1000} 秒`,
-        );
+        log.warn('startSilenceCheckTimer', `AudioTee 检测到连续静音: ${(this.silentChunkCount * 200) / 1000} 秒`, {
+          silentChunkCount: this.silentChunkCount,
+          hasReceivedAudio: this.hasReceivedAudio,
+          secondsOfSilence: (this.silentChunkCount * 200) / 1000,
+        });
       }
     }, SILENCE_CHECK_INTERVAL);
 
-    logger.info('静音检测定时器已启动');
+    log.info('startSilenceCheckTimer', '静音检测定时器已启动');
   }
 
   /**
@@ -354,7 +334,7 @@ export class SystemAudioCapture {
     if (this.silenceCheckTimer) {
       clearInterval(this.silenceCheckTimer);
       this.silenceCheckTimer = null;
-      logger.debug('静音检测定时器已停止');
+      log.debug('stopSilenceCheckTimer', '静音检测定时器已停止');
     }
   }
 
@@ -363,20 +343,20 @@ export class SystemAudioCapture {
    */
   public stopCapture(): void {
     if (!this.isCapturing) {
-      logger.warn('系统音频扬声器捕获未在进行中');
+      log.warn('stopCapture', '系统音频扬声器捕获未在进行中');
       return;
     }
 
-    logger.info('停止系统音频扬声器捕获...');
+    log.info('stopCapture', '停止系统音频扬声器捕获...');
 
     // 停止静音检测定时器
     this.stopSilenceCheckTimer();
 
     // 停止 AudioTee 捕获
     if (this.audioTeeCapture) {
-      logger.info('停止 AudioTee 捕获...');
+      log.info('stopCapture', '停止 AudioTee 捕获...');
       this.audioTeeCapture.stop().catch((error: Error) => {
-        logger.error({ err: error }, '停止 AudioTee 失败:');
+        log.error('stopCapture', '停止 AudioTee 失败', {}, error);
       });
       this.audioTeeCapture = null;
     }
@@ -385,7 +365,7 @@ export class SystemAudioCapture {
     this.silentChunkCount = 0;
     this.hasReceivedAudio = false;
     this.isCapturing = false;
-    logger.info('系统音频扬声器捕获已停止');
+    log.info('stopCapture', '系统音频扬声器捕获已停止');
   }
 
   /**
@@ -427,7 +407,7 @@ export class SystemAudioCapture {
         ];
       }
     } catch (error) {
-      logger.error({ err: error }, '获取音频设备列表失败:');
+      log.error('getAudioDevices', '获取音频设备列表失败', {}, error);
       return [
         { id: 'default', name: '默认音频输出设备' },
         { id: 'builtin-speaker', name: '内建扬声器' },
