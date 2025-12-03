@@ -18,6 +18,10 @@ export function up(db: any): void {
 
     -- 修改 interview_reviews 表的 score_id 字段为 interview_id
     ALTER TABLE interview_reviews RENAME COLUMN score_id TO interview_id;
+
+    -- 在 interview_reviews 表中新增时间相关字段
+    ALTER TABLE interview_reviews ADD COLUMN end_at INTEGER;
+    ALTER TABLE interview_reviews ADD COLUMN duration INTEGER DEFAULT 0;
   `);
 }
 
