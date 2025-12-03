@@ -6,6 +6,7 @@ import { createLogger } from '../../utils/logger.js';
 
 const log = createLogger('DockerServiceManager');
 import { getDockerEnv } from '../utils/dockerPath.js';
+import { getDataDir } from '../utils/paths.js';
 
 /**
  * Docker 服务管理器
@@ -14,9 +15,21 @@ import { getDockerEnv } from '../utils/dockerPath.js';
 export class DockerServiceManager {
   private static readonly CONTAINER_PREFIX = 'cuemate';
   private static readonly PROJECT_NAME = 'cuemate';
-  private static readonly VERSION = process.env.VERSION || 'v0.1.0';
   private static readonly REGISTRY =
     process.env.REGISTRY || 'registry.cn-beijing.aliyuncs.com/cuemate';
+
+  /**
+   * 获取当前应用版本
+   * 优先使用环境变量，否则从 app.getVersion() 获取
+   */
+  private static getVersion(): string {
+    if (process.env.VERSION) {
+      return process.env.VERSION;
+    }
+    // app.getVersion() 返回 "0.1.1"，需要加上 "v" 前缀
+    const appVersion = app.getVersion();
+    return appVersion.startsWith('v') ? appVersion : `v${appVersion}`;
+  }
 
   /**
    * 获取 docker-compose 文件所在目录
@@ -167,6 +180,64 @@ export class DockerServiceManager {
   }
 
   /**
+   * 获取现有容器的镜像版本
+   * 通过检查容器的镜像标签来获取版本
+   */
+  private static getContainerImageVersion(): string | null {
+    try {
+      // 检查 cuemate-web-api 容器的镜像版本作为参考
+      const command = `docker inspect --format='{{.Config.Image}}' cuemate-web-api`;
+      const output = execSync(command, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: getDockerEnv()
+      }).trim();
+
+      if (!output) {
+        return null;
+      }
+
+      // 镜像格式: registry.cn-beijing.aliyuncs.com/cuemate/cuemate-web-api:v0.1.0
+      // 提取版本号
+      const versionMatch = output.match(/:([^:]+)$/);
+      if (versionMatch) {
+        return versionMatch[1];
+      }
+      return null;
+    } catch (error: any) {
+      log.debug('getContainerImageVersion', '获取容器镜像版本失败', {
+        stderr: error.stderr?.toString()
+      });
+      return null;
+    }
+  }
+
+  /**
+   * 删除所有 CueMate 容器（用于版本升级时重建）
+   */
+  private static removeContainers(dockerComposeDir: string, composeEnv: Record<string, string>): void {
+    try {
+      log.info('removeContainers', '正在删除旧版本容器...');
+      const command = `docker compose -p ${this.PROJECT_NAME} -f docker-compose.yml down`;
+
+      execSync(command, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: dockerComposeDir,
+        env: composeEnv
+      });
+
+      log.info('removeContainers', '旧版本容器删除成功');
+    } catch (error: any) {
+      log.error('removeContainers', '删除容器失败', {
+        stderr: error.stderr?.toString(),
+        stdout: error.stdout?.toString()
+      }, error);
+      throw error;
+    }
+  }
+
+  /**
    * 启动 Docker 服务
    */
   public static async start(): Promise<void> {
@@ -186,13 +257,10 @@ export class DockerServiceManager {
       const dockerComposeDir = this.getDockerComposeDir();
       log.info('start', '使用 docker-compose 目录', { dockerComposeDir });
 
-      // 检查容器是否存在
-      const containersExist = this.areContainersExist();
-
       // 使用统一的数据目录
-      const { getDataDir } = await import('../utils/paths.js');
       const dataDir = getDataDir();
-      const envVars = `VERSION=${this.VERSION} REGISTRY=${this.REGISTRY} DATA_DIR="${dataDir}"`;
+      const currentVersion = this.getVersion();
+      const envVars = `VERSION=${currentVersion} REGISTRY=${this.REGISTRY} DATA_DIR="${dataDir}"`;
 
       // 验证目录存在
       if (!fs.existsSync(dockerComposeDir)) {
@@ -202,13 +270,30 @@ export class DockerServiceManager {
       // 构建环境变量（合并 Docker PATH 和 compose 变量）
       const composeEnv = {
         ...getDockerEnv(),
-        VERSION: this.VERSION,
+        VERSION: currentVersion,
         REGISTRY: this.REGISTRY,
         DATA_DIR: dataDir
       };
 
+      // 检查容器是否存在
+      let containersExist = this.areContainersExist();
+
+      // 如果容器存在，检查版本是否匹配
       if (containersExist) {
-        // 容器已存在但未运行，使用 docker compose start
+        const containerVersion = this.getContainerImageVersion();
+        if (containerVersion && containerVersion !== currentVersion) {
+          // 版本不匹配，需要删除旧容器重建
+          log.info('start', '检测到版本变化，需要重建容器', {
+            containerVersion,
+            currentVersion
+          });
+          this.removeContainers(dockerComposeDir, composeEnv);
+          containersExist = false; // 容器已删除，标记为不存在
+        }
+      }
+
+      if (containersExist) {
+        // 容器已存在且版本匹配，使用 docker compose start
         log.info('start', 'Docker 容器已存在，正在启动...', { dockerComposeDir, envVars, composeEnv });
         const command = `docker compose -p ${this.PROJECT_NAME} -f docker-compose.yml start`;
         log.debug('start', 'Docker: 执行启动命令', { command, cwd: dockerComposeDir });
@@ -232,7 +317,7 @@ export class DockerServiceManager {
           throw error;
         }
       } else {
-        // 容器不存在，使用 docker compose up -d
+        // 容器不存在或已被删除（版本升级），使用 docker compose up -d
         log.info('start', 'Docker 容器不存在，正在创建并启动...', { dockerComposeDir, envVars, composeEnv });
         const command = `docker compose -p ${this.PROJECT_NAME} -f docker-compose.yml up -d`;
         log.debug('start', 'Docker: 执行创建命令', { command, cwd: dockerComposeDir });
@@ -289,7 +374,7 @@ export class DockerServiceManager {
       // 构建环境变量（合并 Docker PATH 和 compose 变量）
       const composeEnv = {
         ...getDockerEnv(),
-        VERSION: this.VERSION,
+        VERSION: this.getVersion(),
         REGISTRY: this.REGISTRY
       };
 
