@@ -8,6 +8,7 @@ import { message } from '../../components/Message';
 import PageLoading from '../../components/PageLoading';
 import { useLoading } from '../../hooks/useLoading';
 import { useQuestionImport } from '../../hooks/useQuestionImport';
+import { getWebSocketBridge } from '../../utils/websocketBridge';
 import BatchImportDrawer from '../PresetQuestionsList/BatchImportDrawer';
 import UpdateConfirmModal from './UpdateConfirmModal';
 import UpdateProgressModal, { type UpdateStatus } from './UpdateProgressModal';
@@ -35,6 +36,7 @@ export default function License() {
   const [updateProgress, setUpdateProgress] = useState(0);
   const [updateCurrentStep, setUpdateCurrentStep] = useState<string>('');
   const [updateError, setUpdateError] = useState<string>('');
+  const [updateLogs, setUpdateLogs] = useState<string>('');
 
   // 导入题库弹框状态
   const [importDrawerOpen, setImportDrawerOpen] = useState(false);
@@ -210,14 +212,25 @@ export default function License() {
     // 关闭确认对话框
     setShowUpdateConfirm(false);
 
+    // 关闭所有版本相关抽屉
+    handleCloseAllVersionDrawers();
+
     // 显示进度对话框
     setShowUpdateProgress(true);
     setUpdateStatus('downloading');
     setUpdateProgress(0);
     setUpdateError('');
+    setUpdateLogs('');
+
+    // 添加日志的辅助函数
+    const appendLog = (message: string) => {
+      const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+      setUpdateLogs(prev => prev + `[${timestamp}] ${message}\n`);
+    };
+
+    appendLog(`开始更新到版本 ${updateTargetVersion.version}`);
 
     // 通过 WebSocket 发送更新请求
-    const { getWebSocketBridge } = require('../../utils/websocketBridge');
     const bridge = getWebSocketBridge();
 
     // 发送更新请求
@@ -227,15 +240,35 @@ export default function License() {
     bridge.onUpdateProgress((data: any) => {
       if (data.status) {
         setUpdateStatus(data.status);
+        // 根据状态添加日志
+        const statusMessages: Record<string, string> = {
+          'downloading': '正在下载更新包...',
+          'extracting': '正在解压更新包...',
+          'installing': '正在替换应用文件...',
+          'pulling-images': '正在拉取 Docker 镜像...',
+          'ready': '更新准备完成，即将重启...',
+          'restarting': '正在重启应用...',
+          'completed': '更新完成！',
+          'error': '更新失败',
+        };
+        if (statusMessages[data.status]) {
+          appendLog(statusMessages[data.status]);
+        }
       }
       if (data.progress !== undefined) {
         setUpdateProgress(data.progress);
       }
       if (data.currentStep) {
         setUpdateCurrentStep(data.currentStep);
+        appendLog(data.currentStep);
+      }
+      if (data.log) {
+        // 如果服务端发送了日志消息，直接追加
+        appendLog(data.log);
       }
       if (data.error) {
         setUpdateError(data.error);
+        appendLog(`错误: ${data.error}`);
       }
     });
   };
@@ -530,6 +563,7 @@ export default function License() {
         open={versionListOpen}
         versions={versions}
         loading={loadingVersions}
+        currentVersion={currentVersion}
         onClose={handleCloseAllVersionDrawers}
         onSelectVersion={handleSelectVersion}
       />
@@ -571,7 +605,9 @@ export default function License() {
         progress={updateProgress}
         currentStep={updateCurrentStep}
         error={updateError}
+        logs={updateLogs}
         onRetry={handleRetryUpdate}
+        onClose={() => setShowUpdateProgress(false)}
       />
     </div>
   );

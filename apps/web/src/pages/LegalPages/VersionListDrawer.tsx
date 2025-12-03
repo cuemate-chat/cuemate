@@ -8,6 +8,7 @@ interface VersionListDrawerProps {
   open: boolean;
   versions: VersionInfo[];
   loading: boolean;
+  currentVersion: string;
   onClose: () => void;
   onSelectVersion: (version: VersionInfo) => void;
 }
@@ -16,6 +17,7 @@ export default function VersionListDrawer({
   open,
   versions,
   loading,
+  currentVersion,
   onClose,
   onSelectVersion,
 }: VersionListDrawerProps) {
@@ -57,13 +59,19 @@ export default function VersionListDrawer({
   return (
     <DrawerProvider open={open} onClose={onClose} width="65%">
       <DrawerHeader>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-            <ClockIcon className="w-5 h-5 text-white" />
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <ClockIcon className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">版本历史</h2>
+              <p className="text-xs text-slate-600 dark:text-slate-300">共 {versions.length} 个版本</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">版本历史</h2>
-            <p className="text-xs text-slate-600 dark:text-slate-300">共 {versions.length} 个版本</p>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 rounded-lg">
+            <span className="text-xs text-slate-500 dark:text-slate-400">当前版本</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{currentVersion}</span>
           </div>
         </div>
       </DrawerHeader>

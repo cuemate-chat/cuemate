@@ -2,6 +2,7 @@ import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-
 import { ClockIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { Modal, Progress } from 'antd';
 import { useEffect, useState } from 'react';
+import LogViewer from '../../components/LogViewer';
 
 export type UpdateStatus =
   | 'idle'
@@ -27,7 +28,9 @@ interface UpdateProgressModalProps {
   progress: number;
   currentStep?: string;
   error?: string;
+  logs?: string;
   onRetry?: () => void;
+  onClose?: () => void;
 }
 
 export default function UpdateProgressModal({
@@ -37,7 +40,9 @@ export default function UpdateProgressModal({
   progress,
   currentStep,
   error,
+  logs = '',
   onRetry,
+  onClose,
 }: UpdateProgressModalProps) {
   const [countdown, setCountdown] = useState(3);
 
@@ -52,7 +57,7 @@ export default function UpdateProgressModal({
     return undefined;
   }, [status, countdown]);
 
-  // 定义更新步骤
+  // 定义更新步骤（先拉取镜像，后替换应用，确保版本一致性）
   const steps: UpdateStep[] = [
     {
       key: 'downloading',
@@ -65,19 +70,24 @@ export default function UpdateProgressModal({
       status: getStepStatus('extracting'),
     },
     {
+      key: 'pulling-images',
+      label: '拉取 Docker 镜像',
+      status: getStepStatus('pulling-images'),
+    },
+    {
       key: 'installing',
       label: '替换应用文件',
       status: getStepStatus('installing'),
     },
     {
-      key: 'pulling-images',
-      label: '拉取 Docker 镜像',
-      status: getStepStatus('pulling-images'),
+      key: 'ready',
+      label: '准备重启',
+      status: getStepStatus('ready'),
     },
   ];
 
   function getStepStatus(stepKey: string): 'pending' | 'processing' | 'completed' | 'error' {
-    const stepOrder = ['downloading', 'extracting', 'installing', 'pulling-images'];
+    const stepOrder = ['downloading', 'extracting', 'pulling-images', 'installing', 'ready'];
     const currentIndex = stepOrder.indexOf(status);
     const stepIndex = stepOrder.indexOf(stepKey);
 
@@ -113,6 +123,7 @@ export default function UpdateProgressModal({
       <Modal
         title="更新失败"
         open={open}
+        onCancel={onClose}
         footer={onRetry ? [
           <button
             key="retry"
@@ -122,19 +133,37 @@ export default function UpdateProgressModal({
             重试
           </button>
         ] : null}
-        closable={false}
+        closable={true}
         maskClosable={false}
+        width="70%"
       >
-        <div className="py-6 text-center">
-          <CloseCircleOutlined className="text-6xl text-red-500 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-            更新过程中发生错误
-          </h3>
-          {error && (
-            <p className="text-sm text-slate-600 dark:text-slate-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3 mt-4">
-              {error}
-            </p>
-          )}
+        <div className="py-4 space-y-6">
+          <div className="text-center">
+            <CloseCircleOutlined className="text-6xl text-red-500 mb-4" />
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+              更新过程中发生错误
+            </h3>
+            {error && (
+              <p className="text-sm text-slate-600 dark:text-slate-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3 mt-4">
+                {error}
+              </p>
+            )}
+          </div>
+
+          {/* 实时日志输出 */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              实时日志
+            </h4>
+            <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+              <LogViewer
+                title="更新日志"
+                logs={logs || '等待更新开始...'}
+                loading={false}
+                height={200}
+              />
+            </div>
+          </div>
         </div>
       </Modal>
     );
@@ -198,7 +227,7 @@ export default function UpdateProgressModal({
       footer={null}
       closable={false}
       maskClosable={false}
-      width={600}
+      width="70%"
     >
       <div className="py-4 space-y-6">
         {/* 总体进度 */}
@@ -278,6 +307,21 @@ export default function UpdateProgressModal({
                 )}
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* 实时日志输出 */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            实时日志
+          </h4>
+          <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+            <LogViewer
+              title="更新日志"
+              logs={logs || '等待更新开始...'}
+              loading={false}
+              height={200}
+            />
           </div>
         </div>
 

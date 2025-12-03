@@ -84,13 +84,14 @@ class WebSocketBridge {
   public send(message: any): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       try {
+        console.log('[WebSocketBridge] 发送消息:', message.type, message);
         this.ws.send(JSON.stringify(message));
-      } catch {
-        // 消息发送失败，忽略
+      } catch (error) {
+        console.error('[WebSocketBridge] 发送消息失败:', error);
       }
     } else {
       // 连接未准备好，将消息加入队列
-      console.warn('WebSocket 未连接，消息加入队列:', message);
+      console.warn('[WebSocketBridge] WebSocket 未连接，消息加入队列:', message);
       this.messageQueue.push(message);
     }
   }

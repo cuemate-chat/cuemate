@@ -1,12 +1,14 @@
-import Editor from '@monaco-editor/react';
+import Editor, { type OnMount } from '@monaco-editor/react';
 import { Spin } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
+import type * as monaco from 'monaco-editor';
 
 interface LogViewerProps {
   title?: string;
   logs: string;
   loading?: boolean;
   height?: number;
+  autoScroll?: boolean;
 }
 
 // 清理日志中的控制字符（无正则实现，规避 no-control-regex）
@@ -28,16 +30,35 @@ const LogViewer: React.FC<LogViewerProps> = ({
   title = '日志查看器',
   logs,
   loading = false,
-  height = 600
+  height = 600,
+  autoScroll = true,
 }) => {
-  const [editorKey, setEditorKey] = useState(0);
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const cleanedLogs = cleanLogs(logs);
   const editorHeight = height - 40; // 减去标题栏高度
 
-  // 当 logs 变化时强制重新渲染 Monaco Editor
+  // 当 logs 变化时滚动到底部
   useEffect(() => {
-    setEditorKey(prev => prev + 1);
-  }, [logs]);
+    if (editorRef.current && autoScroll) {
+      const model = editorRef.current.getModel();
+      if (model) {
+        const lineCount = model.getLineCount();
+        editorRef.current.revealLine(lineCount);
+      }
+    }
+  }, [logs, autoScroll]);
+
+  const handleEditorMount: OnMount = (editor) => {
+    editorRef.current = editor;
+    // 初始化时滚动到底部
+    if (autoScroll) {
+      const model = editor.getModel();
+      if (model) {
+        const lineCount = model.getLineCount();
+        editor.revealLine(lineCount);
+      }
+    }
+  };
 
   return (
     <div style={{ height: `${height}px` }}>
@@ -48,11 +69,11 @@ const LogViewer: React.FC<LogViewerProps> = ({
           </div>
           <div style={{ height: `${editorHeight}px` }}>
             <Editor
-              key={editorKey}
               height="100%"
               language="plaintext"
               theme="vs-dark"
               value={cleanedLogs || '暂无日志'}
+              onMount={handleEditorMount}
               options={{
                 readOnly: true,
                 minimap: { enabled: false },
