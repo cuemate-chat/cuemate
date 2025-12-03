@@ -1549,28 +1549,6 @@ export function setupIPC(windowManager: WindowManager): void {
 
   // ============= 托盘菜单相关 IPC 处理器 =============
 
-  // 获取用户统计数据
-  ipcMain.handle('get-user-stats', async () => {
-    try {
-      // TODO: 从数据库或本地存储获取真实的用户统计数据
-      // 这里返回模拟数据
-      return {
-        success: true,
-        data: {
-          totalTrainings: 0,
-          totalMinutes: 0,
-          averageScore: 0,
-        },
-      };
-    } catch (error) {
-      log.error('get-user-stats', '获取用户统计数据失败', {}, error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
-  });
-
   // 显示应用
   ipcMain.handle('show-app', async () => {
     try {

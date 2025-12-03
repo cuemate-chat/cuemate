@@ -10,11 +10,6 @@ const trayMenuAPI = {
   // 获取用户数据（包含 token）
   getUserData: () => ipcRenderer.invoke('get-user-data'),
 
-  // 获取用户统计数据
-  getUserStats: async () => {
-    return await ipcRenderer.invoke('get-user-stats');
-  },
-
   // 获取应用状态
   getAppState: async () => {
     return await ipcRenderer.invoke('get-app-state');
