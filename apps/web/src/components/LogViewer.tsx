@@ -1,7 +1,6 @@
 import Editor, { type OnMount } from '@monaco-editor/react';
 import { Spin } from 'antd';
 import React, { useEffect, useRef } from 'react';
-import type * as monaco from 'monaco-editor';
 
 interface LogViewerProps {
   title?: string;
@@ -33,7 +32,7 @@ const LogViewer: React.FC<LogViewerProps> = ({
   height = 600,
   autoScroll = true,
 }) => {
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
   const cleanedLogs = cleanLogs(logs);
   const editorHeight = height - 40; // 减去标题栏高度
 
