@@ -940,6 +940,12 @@ export function MockInterviewEntryBody({
               throw new Error('Review ID not found');
             }
 
+            // 计算问题结束时间和持续时长
+            const endAt = Date.now();
+            const duration = questionState.startedAt
+              ? Math.round((endAt - questionState.startedAt) / 1000)
+              : 0;
+
             // 【保存】更新数据库
             await mockInterviewService.updateReview(questionState.reviewId, {
               question_id: questionData.questionId,
@@ -954,6 +960,8 @@ export function MockInterviewEntryBody({
               assessment: analysis.assessment,
               other_id: questionData.otherId,
               other_content: questionData.otherContent,
+              end_at: endAt,
+              duration,
             });
 
             // 保存到向量数据库
