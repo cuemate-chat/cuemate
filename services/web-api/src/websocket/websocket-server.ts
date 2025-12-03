@@ -14,6 +14,7 @@ interface WebSocketMessage {
   progress?: number;
   currentStep?: string;
   error?: string;
+  log?: string;
 }
 
 interface RegisteredClient {
@@ -395,6 +396,7 @@ export class CueMateWebSocketServer {
             progress: message.progress,
             currentStep: message.currentStep,
             error: message.error,
+            log: message.log,
           }),
         );
         logger.debug({ status: message.status, clientId: client.id }, 'WebSocket: 已转发 UPDATE_PROGRESS 到 web');
