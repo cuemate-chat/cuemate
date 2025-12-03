@@ -75,6 +75,15 @@ async function start() {
   const db = await initSqlite(process.env.SQLITE_PATH || CONTAINER_SQLITE_PATH);
   app.decorate('db', db as any);
 
+  // 同步应用版本到数据库
+  const appVersion = process.env.VERSION || 'v0.1.0';
+  try {
+    db.prepare('UPDATE users SET version = ?').run(appVersion);
+    app.log.info({ version: appVersion }, '已同步应用版本到数据库');
+  } catch (error: any) {
+    app.log.warn({ err: error, version: appVersion }, '同步应用版本失败');
+  }
+
   // 初始化操作记录器
   const operationLogger = new OperationLogger(db);
   app.decorate('operationLogger', operationLogger);
