@@ -55,6 +55,7 @@ export interface QuestionState {
   question: string;
   referenceAnswer?: string;
   userAnswer?: string;
+  startedAt?: number; // 问题开始时间（毫秒）
 }
 
 // 面试数据状态
@@ -129,6 +130,7 @@ export class InterviewDataService {
         sequence,
         phase: 'question_generated',
         question: existing.question,
+        startedAt: Date.now(),
       };
       this.dataState.questions.set(sequence, questionState);
       this.dataState.currentSequence = sequence;
@@ -153,6 +155,7 @@ export class InterviewDataService {
       sequence,
       phase: 'question_generated',
       question: askedQuestion,
+      startedAt: Date.now(),
     };
 
     this.dataState.questions.set(sequence, questionState);

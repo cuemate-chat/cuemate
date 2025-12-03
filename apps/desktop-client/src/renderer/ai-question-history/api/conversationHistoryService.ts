@@ -65,6 +65,8 @@ export interface InterviewReview {
   other_id?: string;
   other_content?: string;
   created_at: number;
+  end_at?: number;
+  duration?: number;
 }
 
 export class ConversationHistoryService {

@@ -14,6 +14,8 @@ export interface InterviewReview {
   note_type: string;
   content: string;
   created_at: number;
+  end_at?: number;
+  duration?: number;
   question_id?: string;
   question?: string;
   answer?: string;
@@ -64,6 +66,8 @@ export interface UpdateReviewData {
   reference_answer?: string;
   other_id?: string;
   other_content?: string;
+  end_at?: number;
+  duration?: number;
 }
 
 // 面试题接口
@@ -185,6 +189,8 @@ export class InterviewService {
       if (data.reference_answer !== undefined) updateData.referenceAnswer = data.reference_answer;
       if (data.other_id !== undefined) updateData.otherId = data.other_id;
       if (data.other_content !== undefined) updateData.otherContent = data.other_content;
+      if (data.end_at !== undefined) updateData.endAt = data.end_at;
+      if (data.duration !== undefined) updateData.duration = data.duration;
 
       const response = await fetch(`${this.baseURL}/interview-reviews/${reviewId}`, {
         method: 'PUT',
