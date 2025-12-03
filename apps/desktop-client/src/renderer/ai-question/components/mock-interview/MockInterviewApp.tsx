@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
-import { logger } from '../../../../utils/rendererLogger.js';
+import { createLogger } from '../../../../utils/rendererLogger.js';
 import { useVoiceState } from '../../../../utils/voiceState';
+
+const log = createLogger('MockInterviewApp');
 import { subscribeMockInterview } from '../../../utils/mockInterviewManager';
 import { setMockInterviewState, useMockInterviewState } from '../../../utils/mockInterviewState';
 import { interviewService } from '../../../interviewer/api/interviewService';
@@ -34,7 +36,7 @@ export function MockInterviewApp() {
   // 关键原则：永远不主动清理数据，数据只在用户开始新面试时才清理
   useEffect(() => {
     if (interviewId && interviewId !== previousInterviewId.current) {
-      console.debug('[MockInterviewApp] interviewId 变化:', previousInterviewId.current, '->', interviewId);
+      log.debug('useEffect', 'interviewId 变化', { from: previousInterviewId.current, to: interviewId });
       // 不清理任何状态，保持当前数据
       // 数据清理只在 startMockInterview() 中进行
       previousInterviewId.current = interviewId;
@@ -58,7 +60,7 @@ export function MockInterviewApp() {
             }
           }
         } catch (error) {
-          console.error('[MockInterviewApp] 加载已完成面试数据失败:', error);
+          log.error('loadCompletedInterviewData', '加载已完成面试数据失败', undefined, error);
         }
       }
     };
@@ -104,7 +106,7 @@ export function MockInterviewApp() {
         }
       }
     } catch (error) {
-      logger.error(`加载窗口高度设置失败: ${error}`);
+      log.error('loadHeightSetting', '加载窗口高度设置失败', undefined, error);
     }
   };
 
@@ -114,7 +116,7 @@ export function MockInterviewApp() {
         await (window as any).electronAPI.hideAIQuestion();
       }
     } catch (error) {
-      logger.error(`关闭 AI 问题窗口失败: ${error}`);
+      log.error('handleClose', '关闭 AI 问题窗口失败', undefined, error);
     }
   };
 
@@ -128,7 +130,7 @@ export function MockInterviewApp() {
         await (window as any).electronAPI.setAIQuestionHeight(percentage);
       }
     } catch (error) {
-      logger.error(`设置窗口高度失败: ${error}`);
+      log.error('handleHeightChange', '设置窗口高度失败', undefined, error);
     }
   };
 

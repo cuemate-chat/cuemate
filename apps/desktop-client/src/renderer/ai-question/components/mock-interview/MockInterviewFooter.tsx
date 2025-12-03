@@ -1,8 +1,10 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { CornerDownLeft } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { logger } from '../../../../utils/rendererLogger.js';
+import { createLogger } from '../../../../utils/rendererLogger.js';
 import { startMicrophoneRecognition } from '../../../../utils/audioRecognition';
+
+const log = createLogger('MockInterviewFooter');
 import {
   destroyMicrophone,
   getMicrophoneController,
@@ -75,7 +77,7 @@ export function MockInterviewFooter({
     const initCoordinator = async () => {
       // 检查是否已经初始化
       if (getVoiceCoordinator('mock-interview')) {
-        console.debug('[MockInterviewFooter] VoiceCoordinator 已存在，跳过初始化');
+        log.debug('initCoordinator', 'VoiceCoordinator 已存在，跳过初始化');
         return;
       }
 
@@ -99,7 +101,7 @@ export function MockInterviewFooter({
           // 使用 ref 获取最新值，避免闭包陷阱
           if (isAutoModeRef.current) {
             // 自动模式下,静音 5 秒后自动触发回答完成
-            console.debug('[MockInterviewFooter] 自动模式检测到用户说话结束，触发回答完成');
+            log.debug('userFinishedSpeaking', '自动模式检测到用户说话结束，触发回答完成');
             onResponseCompleteRef.current();
             // 停止监听,保留 speechText 供状态机使用
             setMockInterviewState({ isListening: false });
@@ -110,7 +112,7 @@ export function MockInterviewFooter({
         initVoiceCoordinator('mock-interview', coordinator);
 
       } catch (error) {
-        logger.error(`Failed to initialize VoiceCoordinator: ${error}`);
+        log.error('initCoordinator', 'VoiceCoordinator 初始化失败', undefined, error);
       }
     };
 
@@ -161,7 +163,7 @@ export function MockInterviewFooter({
           await startMicrophone('mock-interview', controller);
 
         } catch (error) {
-          logger.error(`启动语音识别失败: ${error}`);
+          log.error('startRecognition', '启动语音识别失败', undefined, error);
           setMockInterviewState({ isListening: false });
         }
       } else if (!isListening && getMicrophoneController('mock-interview')) {

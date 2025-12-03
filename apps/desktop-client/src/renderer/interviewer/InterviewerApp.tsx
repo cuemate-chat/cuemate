@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { logger } from '../../utils/rendererLogger.js';
+import { createLogger } from '../../utils/rendererLogger.js';
 import { currentInterview } from '../utils/currentInterview';
+
+const log = createLogger('InterviewerApp');
 import { getVoiceState, setVoiceState } from '../../utils/voiceState';
 import { InterviewerWindowBody } from './components/InterviewerWindowBody';
 import { InterviewerWindowFooter } from './components/InterviewerWindowFooter';
@@ -16,7 +18,7 @@ export function InterviewerApp() {
     try {
       const api: any = (window as any).electronAPI;
       if (!api?.on || !api?.off) {
-        console.warn('electronAPI.on/off 不可用');
+        log.warn('useEffect', 'electronAPI.on/off 不可用');
         return;
       }
 
@@ -40,7 +42,7 @@ export function InterviewerApp() {
         api.off('mode-change', handleModeChange);
       };
     } catch (error) {
-      logger.error(`监听模式切换事件失败: ${error}`);
+      log.error('useEffect', '监听模式切换事件失败', undefined, error);
     }
   }, []);
 
@@ -84,7 +86,7 @@ export function InterviewerApp() {
         }
       }
     } catch (error) {
-      logger.error(`进入模式失败: ${error}`);
+      log.error('handleSelectCard', '进入模式失败', undefined, error);
     }
   };
 

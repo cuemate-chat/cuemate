@@ -3,7 +3,9 @@
  * 处理面试相关的 API 调用
  */
 
-import { logger } from '../../../utils/rendererLogger.js';
+import { createLogger } from '../../../utils/rendererLogger.js';
+
+const log = createLogger('InterviewService');
 
 export type InterviewStatus =
   | 'idle'
@@ -135,7 +137,7 @@ export class InterviewService {
         this.token = result.userData.token;
       }
     } catch (error) {
-      logger.error(`初始化面试服务认证失败: ${error}`);
+      await log.error('initAuth', '初始化面试服务认证失败', {}, error);
     }
   }
 
@@ -161,8 +163,12 @@ export class InterviewService {
   async getInterview(interviewId: string): Promise<InterviewDetailResponse | null> {
     await this.ensureAuth();
 
+    const url = `${this.baseURL}/interviews/${interviewId}`;
+
     try {
-      const response = await fetch(`${this.baseURL}/interviews/${interviewId}`, {
+      await log.http.request('getInterview', url, 'GET');
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: this.getHeaders(),
       });
@@ -171,13 +177,16 @@ export class InterviewService {
         if (response.status === 404) {
           return null;
         }
+        const errorText = await response.text();
+        await log.http.error('getInterview', url, new Error(`HTTP ${response.status}`), { interviewId }, errorText);
         throw new Error(`获取面试详情失败: ${response.status}`);
       }
 
       const result = await response.json();
+      await log.http.response('getInterview', url, response.status, result);
       return result;
     } catch (error) {
-      logger.error(`获取面试详情失败: ${error}`);
+      await log.http.error('getInterview', url, error, { interviewId });
       return null;
     }
   }
@@ -188,21 +197,28 @@ export class InterviewService {
   async createInterview(data: InterviewData): Promise<CreateInterviewResponse> {
     await this.ensureAuth();
 
+    const url = `${this.baseURL}/interviews`;
+
     try {
-      const response = await fetch(`${this.baseURL}/interviews`, {
+      await log.http.request('createInterview', url, 'POST', data);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        await log.http.error('createInterview', url, new Error(`HTTP ${response.status}`), data, errorText);
         throw new Error(`创建面试失败: ${response.status}`);
       }
 
       const result = await response.json();
+      await log.http.response('createInterview', url, response.status, result);
       return result;
     } catch (error) {
-      logger.error(`创建面试失败: ${error}`);
+      await log.http.error('createInterview', url, error, data);
       throw error;
     }
   }
@@ -213,18 +229,26 @@ export class InterviewService {
   async updateInterview(interviewId: string, data: UpdateInterviewData): Promise<void> {
     await this.ensureAuth();
 
+    const url = `${this.baseURL}/interviews/${interviewId}`;
+
     try {
-      const response = await fetch(`${this.baseURL}/interviews/${interviewId}`, {
+      await log.http.request('updateInterview', url, 'PUT', data);
+
+      const response = await fetch(url, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        await log.http.error('updateInterview', url, new Error(`HTTP ${response.status}`), data, errorText);
         throw new Error(`更新面试失败: ${response.status}`);
       }
+
+      await log.http.response('updateInterview', url, response.status);
     } catch (error) {
-      logger.error(`更新面试失败: ${error}`);
+      await log.http.error('updateInterview', url, error, data);
       throw error;
     }
   }
@@ -235,18 +259,26 @@ export class InterviewService {
   async endInterview(interviewId: string): Promise<void> {
     await this.ensureAuth();
 
+    const url = `${this.baseURL}/interviews/${interviewId}/end`;
+
     try {
-      const response = await fetch(`${this.baseURL}/interviews/${interviewId}/end`, {
+      await log.http.request('endInterview', url, 'POST', { interviewId });
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({}),
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        await log.http.error('endInterview', url, new Error(`HTTP ${response.status}`), { interviewId }, errorText);
         throw new Error(`结束面试失败: ${response.status}`);
       }
+
+      await log.http.response('endInterview', url, response.status);
     } catch (error) {
-      logger.error(`结束面试失败: ${error}`);
+      await log.http.error('endInterview', url, error, { interviewId });
       throw error;
     }
   }
@@ -271,18 +303,26 @@ export class InterviewService {
   }): Promise<void> {
     await this.ensureAuth();
 
+    const url = `${this.baseURL}/interview-scores`;
+
     try {
-      const response = await fetch(`${this.baseURL}/interview-scores`, {
+      await log.http.request('saveInterviewScore', url, 'POST', data);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        await log.http.error('saveInterviewScore', url, new Error(`HTTP ${response.status}`), data, errorText);
         throw new Error(`保存面试评分失败: ${response.status}`);
       }
+
+      await log.http.response('saveInterviewScore', url, response.status);
     } catch (error) {
-      logger.error(`保存面试评分失败: ${error}`);
+      await log.http.error('saveInterviewScore', url, error, data);
       throw error;
     }
   }
@@ -308,18 +348,26 @@ export class InterviewService {
   }): Promise<void> {
     await this.ensureAuth();
 
+    const url = `${this.baseURL}/interview-insights`;
+
     try {
-      const response = await fetch(`${this.baseURL}/interview-insights`, {
+      await log.http.request('saveInterviewInsight', url, 'POST', data);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        await log.http.error('saveInterviewInsight', url, new Error(`HTTP ${response.status}`), data, errorText);
         throw new Error(`保存面试洞察失败: ${response.status}`);
       }
+
+      await log.http.response('saveInterviewInsight', url, response.status);
     } catch (error) {
-      logger.error(`保存面试洞察失败: ${error}`);
+      await log.http.error('saveInterviewInsight', url, error, data);
       throw error;
     }
   }

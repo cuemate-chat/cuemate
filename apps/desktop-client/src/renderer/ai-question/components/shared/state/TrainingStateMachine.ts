@@ -1,4 +1,6 @@
-import { logger } from '../../../../../utils/rendererLogger.js';
+import { createLogger } from '../../../../../utils/rendererLogger.js';
+
+const log = createLogger('TrainingStateMachine');
 
 export enum TrainingState {
   IDLE = 'idle', // 空闲状态
@@ -133,7 +135,7 @@ export class TrainingStateMachine {
     const nextState = transitions[event.type];
 
     if (!nextState) {
-      console.warn(`Invalid transition: ${event.type} from state ${this.currentState}`);
+      log.warn('send', `无效状态转换: ${event.type} 从 ${this.currentState}`);
       return false;
     }
 
@@ -233,7 +235,7 @@ export class TrainingStateMachine {
       try {
         callback(this.currentState, this.context);
       } catch (error) {
-        logger.error(`State change callback error: ${error}`);
+        log.error('notifyStateChange', '状态变化回调错误', undefined, error);
       }
     });
   }

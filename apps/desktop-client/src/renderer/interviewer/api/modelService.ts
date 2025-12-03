@@ -3,7 +3,9 @@
  * 处理大模型相关的 API 调用
  */
 
-import { logger } from '../../../utils/rendererLogger.js';
+import { createLogger } from '../../../utils/rendererLogger.js';
+
+const log = createLogger('ModelService');
 
 export interface Model {
   id: string;
@@ -67,27 +69,33 @@ export class ModelService {
     page?: number;
     limit?: number;
   }): Promise<{ list: Model[]; total: number }> {
+    const queryParams = new URLSearchParams();
+    if (params?.type) queryParams.set('type', params.type);
+    if (params?.page) queryParams.set('page', params.page.toString());
+    if (params?.limit) queryParams.set('limit', params.limit.toString());
+
+    const url = `${this.baseURL}/models${queryParams.toString() ? `?${queryParams}` : ''}`;
+
     try {
       const headers = await this.getHeaders();
-      const queryParams = new URLSearchParams();
-      if (params?.type) queryParams.set('type', params.type);
-      if (params?.page) queryParams.set('page', params.page.toString());
-      if (params?.limit) queryParams.set('limit', params.limit.toString());
+      await log.http.request('getModels', url, 'GET', params);
 
-      const url = `${this.baseURL}/models${queryParams.toString() ? `?${queryParams}` : ''}`;
       const response = await fetch(url, {
         method: 'GET',
         headers,
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        await log.http.error('getModels', url, new Error(`HTTP ${response.status}`), params, errorText);
         throw new Error(`获取模型列表失败: ${response.status}`);
       }
 
       const data = await response.json();
+      await log.http.response('getModels', url, response.status, data);
       return data;
     } catch (error) {
-      logger.error(`获取模型列表失败: ${error}`);
+      await log.http.error('getModels', url, error, params);
       return { list: [], total: 0 };
     }
   }
@@ -103,7 +111,7 @@ export class ModelService {
         value: model.id,
       }));
     } catch (error) {
-      logger.error(`获取模型选项失败: ${error}`);
+      await log.error('getModelOptions', '获取模型选项失败', { type }, error);
       return [];
     }
   }
@@ -112,21 +120,28 @@ export class ModelService {
    * 获取单个模型详情
    */
   async getModel(id: string): Promise<Model | null> {
+    const url = `${this.baseURL}/models/${id}`;
+
     try {
       const headers = await this.getHeaders();
-      const response = await fetch(`${this.baseURL}/models/${id}`, {
+      await log.http.request('getModel', url, 'GET', { id });
+
+      const response = await fetch(url, {
         method: 'GET',
         headers,
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        await log.http.error('getModel', url, new Error(`HTTP ${response.status}`), { id }, errorText);
         throw new Error(`获取模型详情失败: ${response.status}`);
       }
 
       const data = await response.json();
+      await log.http.response('getModel', url, response.status, data);
       return data.model;
     } catch (error) {
-      logger.error(`获取模型详情失败: ${error}`);
+      await log.http.error('getModel', url, error, { id });
       return null;
     }
   }
@@ -135,21 +150,28 @@ export class ModelService {
    * 获取模型参数
    */
   async getModelParams(id: string): Promise<ModelParam[]> {
+    const url = `${this.baseURL}/models/${id}`;
+
     try {
       const headers = await this.getHeaders();
-      const response = await fetch(`${this.baseURL}/models/${id}`, {
+      await log.http.request('getModelParams', url, 'GET', { id });
+
+      const response = await fetch(url, {
         method: 'GET',
         headers,
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        await log.http.error('getModelParams', url, new Error(`HTTP ${response.status}`), { id }, errorText);
         throw new Error(`获取模型参数失败: ${response.status}`);
       }
 
       const data = await response.json();
+      await log.http.response('getModelParams', url, response.status, data);
       return data.params || [];
     } catch (error) {
-      logger.error(`获取模型参数失败: ${error}`);
+      await log.http.error('getModelParams', url, error, { id });
       return [];
     }
   }

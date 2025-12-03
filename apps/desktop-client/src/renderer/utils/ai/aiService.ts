@@ -3,7 +3,9 @@
  * 基于 web 版本的 LLM Router 调用逻辑适配到 desktop
  */
 
-import { logger } from '../../../utils/rendererLogger.js';
+import { createLogger } from '../../../utils/rendererLogger.js';
+
+const log = createLogger('AIService');
 
 export interface ModelConfig {
   provider: string;
@@ -67,7 +69,7 @@ class AIService {
 
       return null;
     } catch (error) {
-      logger.error(`获取用户数据失败: ${error}`);
+      await log.error('getUserData', '获取用户数据失败', {}, error);
       return null;
     }
   }
@@ -93,26 +95,33 @@ class AIService {
         value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
       })) || [];
 
-    const response = await fetch(`${this.config.llmRouterUrl}/completion`, {
+    const url = `${this.config.llmRouterUrl}/completion`;
+    const requestBody = {
+      provider: model.provider,
+      model: model.model_name,
+      credentials: finalCredentials,
+      model_params: finalModelParams,
+      messages: messages,
+    };
+
+    await log.http.request('callAI', url, 'POST', requestBody);
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        provider: model.provider,
-        model: model.model_name,
-        credentials: finalCredentials,
-        model_params: finalModelParams,
-        messages: messages,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
+      await log.http.error('callAI', url, new Error(`HTTP ${response.status}`), requestBody, errorText);
       throw new Error(`AI 调用失败: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
+    await log.http.response('callAI', url, response.status, result);
     return result.content || '抱歉，AI 没有返回内容';
   }
 
@@ -138,7 +147,7 @@ class AIService {
       }
 
       // 无法解析,打印错误日志但返回空对象,不中断流程
-      logger.error(`AI 返回的不是有效的 JSON 格式,将返回空对象。原始内容: ${content}`);
+      await log.error('callAIForJson', 'AI返回的不是有效的JSON格式', { llmResponse: content });
       return {};
     }
   }
@@ -164,23 +173,29 @@ class AIService {
         value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
       })) || [];
 
+    const url = `${this.config.llmRouterUrl}/completion/stream`;
+    const requestBody = {
+      provider: model.provider,
+      model: model.model_name,
+      credentials: finalCredentials,
+      model_params: finalModelParams,
+      messages: messages,
+    };
+
     try {
-      const response = await fetch(`${this.config.llmRouterUrl}/completion/stream`, {
+      await log.http.request('callAIStream', url, 'POST', requestBody);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          provider: model.provider,
-          model: model.model_name,
-          credentials: finalCredentials,
-          model_params: finalModelParams,
-          messages: messages,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
+        await log.http.error('callAIStream', url, new Error(`HTTP ${response.status}`), requestBody, errorText);
         onChunk({
           content: '',
           finished: true,
@@ -214,6 +229,7 @@ class AIService {
         await this.simulateStreamOutput(content, onChunk, usage);
       }
     } catch (error) {
+      await log.http.error('callAIStream', url, error, requestBody);
       onChunk({
         content: '',
         finished: true,
@@ -242,23 +258,29 @@ class AIService {
         value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
       })) || [];
 
+    const url = `${this.config.llmRouterUrl}/completion/stream`;
+    const requestBody = {
+      provider: customModel.provider,
+      model: customModel.model_name,
+      credentials: finalCredentials,
+      model_params: finalModelParams,
+      messages: messages,
+    };
+
     try {
-      const response = await fetch(`${this.config.llmRouterUrl}/completion/stream`, {
+      await log.http.request('callAIStreamWithCustomModel', url, 'POST', requestBody);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          provider: customModel.provider,
-          model: customModel.model_name,
-          credentials: finalCredentials,
-          model_params: finalModelParams,
-          messages: messages,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
+        await log.http.error('callAIStreamWithCustomModel', url, new Error(`HTTP ${response.status}`), requestBody, errorText);
         onChunk({
           content: '',
           finished: true,
@@ -287,6 +309,7 @@ class AIService {
         await this.simulateStreamOutput(content, onChunk, usage);
       }
     } catch (error) {
+      await log.http.error('callAIStreamWithCustomModel', url, error, requestBody);
       onChunk({
         content: '',
         finished: true,
@@ -359,7 +382,7 @@ class AIService {
                 onChunk({ content, finished: false });
               }
             } catch (e) {
-              console.warn('解析 SSE 数据失败:', data);
+              log.warn('callAIStreamWithCustomModel', '解析 SSE 数据失败', { data });
             }
           }
         }

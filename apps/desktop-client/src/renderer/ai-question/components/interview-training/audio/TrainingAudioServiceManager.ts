@@ -4,9 +4,11 @@
  * 不包含 TTS 功能（因为面试训练不需要 AI 语音输出）
  */
 
-import { logger } from '../../../../../utils/rendererLogger.js';
+import { createLogger } from '../../../../../utils/rendererLogger.js';
 import { ErrorSeverity, ErrorType } from '../../shared/error/ErrorHandler';
 import { VoiceCoordinator, VoiceState } from '../../shared/voice/VoiceCoordinator';
+
+const log = createLogger('TrainingAudioServiceManager');
 
 export interface ASRConfig {
   serverUrl: string;
@@ -108,7 +110,7 @@ export class TrainingAudioServiceManager extends EventTarget {
 
       this.dispatchEvent(new CustomEvent('serviceInitialized'));
     } catch (error) {
-      logger.error(`面试训练音频服务初始化失败: ${error}`);
+      log.error('initialize', '面试训练音频服务初始化失败', undefined, error);
       this.dispatchEvent(
         new CustomEvent('serviceError', {
           detail: {
@@ -126,7 +128,7 @@ export class TrainingAudioServiceManager extends EventTarget {
     try {
       // 这里应该调用系统音频捕获 API
       // 目前使用模拟实现
-      console.debug('初始化系统音频捕获...');
+      log.debug('initializeSystemAudioCapture', '初始化系统音频捕获...');
 
       // 模拟系统音频流
       // 实际实现中，这里应该调用 AudioTee 或其他系统音频捕获工具
@@ -140,9 +142,9 @@ export class TrainingAudioServiceManager extends EventTarget {
 
       this.systemAudioStream = audioContext.createMediaStreamDestination().stream;
 
-      console.debug('系统音频捕获初始化完成');
+      log.debug('initializeSystemAudioCapture', '系统音频捕获初始化完成');
     } catch (error) {
-      logger.error(`系统音频捕获初始化失败: ${error}`);
+      log.error('initializeSystemAudioCapture', '系统音频捕获初始化失败', undefined, error);
       throw error;
     }
   }
@@ -181,10 +183,10 @@ export class TrainingAudioServiceManager extends EventTarget {
         }, 100);
       }
 
-      console.debug('系统音频监听已启动');
+      log.debug('startSystemAudioListening', '系统音频监听已启动');
       this.dispatchEvent(new CustomEvent('systemAudioListeningStarted'));
     } catch (error) {
-      logger.error(`启动系统音频监听失败: ${error}`);
+      log.error('startSystemAudioListening', '启动系统音频监听失败', undefined, error);
       this._isSystemAudioListening = false;
       this.dispatchEvent(
         new CustomEvent('serviceError', {
@@ -203,7 +205,7 @@ export class TrainingAudioServiceManager extends EventTarget {
     this._isSystemAudioListening = false;
     this._systemAudioLevel = 0;
 
-    console.debug('系统音频监听已停止');
+    log.debug('stopSystemAudioListening', '系统音频监听已停止');
     this.dispatchEvent(new CustomEvent('systemAudioListeningStopped'));
   }
 
@@ -213,7 +215,7 @@ export class TrainingAudioServiceManager extends EventTarget {
     }
 
     if (this._isRecording) {
-      console.warn('录音已在进行中');
+      log.warn('startRecording', '录音已在进行中');
       return;
     }
 
@@ -222,10 +224,10 @@ export class TrainingAudioServiceManager extends EventTarget {
       await this.voiceCoordinator.startASRListening();
       this._isRecording = true;
 
-      console.debug('用户录音已启动');
+      log.debug('startRecording', '用户录音已启动');
       this.dispatchEvent(new CustomEvent('recordingStarted'));
     } catch (error) {
-      logger.error(`启动录音失败: ${error}`);
+      log.error('startRecording', '启动录音失败', undefined, error);
       this.dispatchEvent(
         new CustomEvent('serviceError', {
           detail: {
@@ -241,7 +243,7 @@ export class TrainingAudioServiceManager extends EventTarget {
 
   async stopRecording(): Promise<void> {
     if (!this._isRecording) {
-      console.warn('没有正在进行的录音');
+      log.warn('stopRecording', '没有正在进行的录音');
       return;
     }
 
@@ -250,10 +252,10 @@ export class TrainingAudioServiceManager extends EventTarget {
       this.voiceCoordinator.stopASRListening();
       this._isRecording = false;
 
-      console.debug('用户录音已停止');
+      log.debug('stopRecording', '用户录音已停止');
       this.dispatchEvent(new CustomEvent('recordingStopped'));
     } catch (error) {
-      logger.error(`停止录音失败: ${error}`);
+      log.error('stopRecording', '停止录音失败', undefined, error);
       this.dispatchEvent(
         new CustomEvent('serviceError', {
           detail: {
@@ -284,7 +286,7 @@ export class TrainingAudioServiceManager extends EventTarget {
       // 模拟网络延迟
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      console.debug('面试官语音识别结果:', randomResponse);
+      log.debug('recognizeInterviewerSpeech', '面试官语音识别结果', { text: randomResponse });
 
       this.dispatchEvent(
         new CustomEvent('interviewerSpeechRecognized', {
@@ -294,7 +296,7 @@ export class TrainingAudioServiceManager extends EventTarget {
 
       return randomResponse;
     } catch (error) {
-      logger.error(`面试官语音识别失败: ${error}`);
+      log.error('recognizeInterviewerSpeech', '面试官语音识别失败', undefined, error);
       this.dispatchEvent(
         new CustomEvent('serviceError', {
           detail: {
@@ -360,7 +362,7 @@ export class TrainingAudioServiceManager extends EventTarget {
     if (this._isInitialized && newConfig.enableSystemAudioCapture !== undefined) {
       if (newConfig.enableSystemAudioCapture) {
         this.initializeSystemAudioCapture().catch((error) =>
-          logger.error(`系统音频捕获初始化失败: ${error}`),
+          log.error('updateSystemAudioConfig', '系统音频捕获初始化失败', undefined, error),
         );
       } else {
         this.stopSystemAudioListening();
@@ -373,7 +375,7 @@ export class TrainingAudioServiceManager extends EventTarget {
     this.stopSystemAudioListening();
 
     if (this._isRecording) {
-      this.stopRecording().catch((error) => logger.error(`停止录音失败: ${error}`));
+      this.stopRecording().catch((error) => log.error('destroy', '停止录音失败', undefined, error));
     }
 
     if (this.voiceCoordinator) {
@@ -391,6 +393,6 @@ export class TrainingAudioServiceManager extends EventTarget {
     }
 
     this._isInitialized = false;
-    console.debug('面试训练音频服务已销毁');
+    log.debug('destroy', '面试训练音频服务已销毁');
   }
 }

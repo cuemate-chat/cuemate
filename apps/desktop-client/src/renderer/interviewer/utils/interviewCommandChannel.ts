@@ -3,6 +3,10 @@
  * 用于 control-bar 与面试窗口之间的跨窗口通信
  */
 
+import { createLogger } from '../../../utils/rendererLogger.js';
+
+const log = createLogger('InterviewCommandChannel');
+
 export type InterviewCommandType = 'pause' | 'resume' | 'stop';
 
 export interface InterviewCommand {
@@ -34,13 +38,13 @@ export function sendInterviewCommand(
     timestamp: Date.now(),
   };
 
-  console.debug(`[InterviewCommandChannel] 发送命令: ${type} for ${mode}`);
+  log.debug('sendInterviewCommand', '发送命令', { type, mode });
 
   // 广播到其他窗口
   try {
     channel?.postMessage(command);
   } catch (e) {
-    console.error('[InterviewCommandChannel] 广播失败:', e);
+    log.error('sendInterviewCommand', '广播失败', undefined, e);
   }
 
   // 通知同窗口监听器
@@ -64,7 +68,7 @@ export function onInterviewCommand(
   // 监听跨窗口消息
   const handleMessage = (event: MessageEvent<InterviewCommand>) => {
     if (event.data && event.data.type && event.data.mode) {
-      console.debug(`[InterviewCommandChannel] 收到命令: ${event.data.type} for ${event.data.mode}`);
+      log.debug('handleMessage', '收到命令', { type: event.data.type, mode: event.data.mode });
       callback(event.data);
     }
   };

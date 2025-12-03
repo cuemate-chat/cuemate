@@ -3,7 +3,9 @@
  * 处理面试流程中的所有数据操作（支持模拟面试和面试训练）
  */
 
-import { logger } from '../../../../../utils/rendererLogger.js';
+import { createLogger } from '../../../../../utils/rendererLogger.js';
+
+const log = createLogger('InterviewService');
 
 // 面试问答记录接口
 export interface InterviewReview {
@@ -114,7 +116,7 @@ export class InterviewService {
       const result = await response.json();
       return result.items || [];
     } catch (error) {
-      logger.error(`获取题库失败: ${error}`);
+      log.error('getQuestionBank', '获取题库失败', undefined, error);
       throw error;
     }
   }
@@ -157,7 +159,7 @@ export class InterviewService {
       const result = await response.json();
       return { id: result.id };
     } catch (error) {
-      logger.error(`创建问答记录失败: ${error}`);
+      log.error('createReview', '创建问答记录失败', undefined, error);
       throw error;
     }
   }
@@ -194,7 +196,7 @@ export class InterviewService {
         throw new Error(`更新问答记录失败: ${response.status}`);
       }
     } catch (error) {
-      logger.error(`更新问答记录失败: ${error}`);
+      log.error('updateReview', '更新问答记录失败', undefined, error);
       throw error;
     }
   }
@@ -220,7 +222,7 @@ export class InterviewService {
       const result = await response.json();
       return result.items || [];
     } catch (error) {
-      logger.error(`获取问答记录失败: ${error}`);
+      log.error('getInterviewReviews', '获取问答记录失败', undefined, error);
       throw error;
     }
   }
@@ -260,14 +262,14 @@ export class InterviewService {
       });
 
       if (!response.ok) {
-        console.warn('查询面试相关集合失败');
+        log.warn('findSimilarQuestion', '查询面试相关集合失败');
         return {};
       }
 
       const data = await response.json();
 
       if (!data.success) {
-        console.warn('查询失败:', data.error);
+        log.warn('findSimilarQuestion', '查询失败', { error: data.error });
         return {};
       }
 
@@ -302,7 +304,7 @@ export class InterviewService {
 
       return result;
     } catch (error) {
-      console.warn('RAG 服务不可用:', error);
+      log.warn('findSimilarQuestionInAllJobs', 'RAG 服务不可用', undefined, error?.toString());
       return {};
     }
   }
@@ -336,14 +338,14 @@ export class InterviewService {
       });
 
       if (!response.ok) {
-        console.warn('查询 ChromaDB 失败');
+        log.warn('findSimilarQuestionInAllJobs', '查询 ChromaDB 失败');
         return {};
       }
 
       const data = await response.json();
 
       if (!data.success || !data.match) {
-        console.debug('[InterviewService] 未找到匹配结果');
+        log.debug('findSimilarQuestionInAllJobs', '未找到匹配结果');
         return {};
       }
 
@@ -358,7 +360,7 @@ export class InterviewService {
         otherContent: match.otherContent || '',
       };
 
-      console.debug('[InterviewService] 查询所有 ChromaDB 集合结果', {
+      log.debug('findSimilarQuestionInAllJobs', '查询所有 ChromaDB 集合结果', {
         hasQuestion: !!result.questionId,
         hasOtherContent: !!result.otherContent,
         similarity: result.similarity,
@@ -366,7 +368,7 @@ export class InterviewService {
 
       return result;
     } catch (error) {
-      console.warn('RAG 服务不可用:', error);
+      log.warn('findSimilarQuestionInAllJobs', 'RAG 服务不可用', undefined, error?.toString());
       return {};
     }
   }
@@ -405,14 +407,14 @@ export class InterviewService {
       });
 
       if (!response.ok) {
-        logger.error(`保存 AI 向量记录失败: ${response.status}`);
+        log.error('saveAIVectorRecord', '保存 AI 向量记录失败', { status: response.status });
         return false;
       }
 
       const result = await response.json();
       return result.success || false;
     } catch (error) {
-      logger.error(`保存 AI 向量记录失败: ${error}`);
+      log.error('saveAIVectorRecord', '保存 AI 向量记录失败', undefined, error);
       return false;
     }
   }

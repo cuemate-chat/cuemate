@@ -3,8 +3,10 @@
  * 处理面试（模拟面试和面试训练）结束后的 AI 分析、评分和报告生成
  */
 
-import { logger } from '../../../../../utils/rendererLogger.js';
+import { createLogger } from '../../../../../utils/rendererLogger.js';
 import { ModelParam, modelService } from '../../../../interviewer/api/modelService.js';
+
+const log = createLogger('InterviewAnalysisService');
 import { promptService } from '../../../../prompts/promptService.js';
 import { ensureString } from '../../../../utils/stringUtils';
 import { InterviewInsight, InterviewScore } from '../data/InterviewDataService';
@@ -97,7 +99,7 @@ export class InterviewAnalysisService {
         this.token = result.userData.token;
       }
     } catch (error: unknown) {
-      logger.error(`初始化面试训练分析服务认证失败: ${error}`);
+      await log.error('initAuth', '初始化面试训练分析服务认证失败', {}, error);
     }
   }
 
@@ -121,7 +123,7 @@ export class InterviewAnalysisService {
    * 执行完整的面试分析
    */
   async analyzeInterview(request: AnalysisRequest): Promise<AnalysisResult> {
-    console.debug('开始分析面试数据:', request.interviewId);
+    log.debug('analyzeInterview', '开始分析面试数据', { interviewId: request.interviewId });
 
     try {
       // 1. 准备分析数据
@@ -133,10 +135,10 @@ export class InterviewAnalysisService {
       // 3. 处理和格式化结果
       const formattedResult = this.formatAnalysisResult(aiAnalysis, request);
 
-      console.debug('面试分析完成');
+      log.debug('analyzeInterview', '面试分析完成');
       return formattedResult;
     } catch (error: unknown) {
-      logger.error(`面试分析失败: ${error}`);
+      await log.error('analyzeInterview', '面试分析失败', { interviewId: request.interviewId }, error);
       throw new Error(`面试分析失败: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -202,7 +204,7 @@ export class InterviewAnalysisService {
         modelParams,
       };
     } catch (error) {
-      logger.error(`获取默认模型配置失败: ${error}`);
+      await log.error('getDefaultModelConfig', '获取默认模型配置失败', {}, error);
       throw new Error('获取模型配置失败，请先在设置中配置 LLM 模型');
     }
   }
@@ -219,39 +221,47 @@ export class InterviewAnalysisService {
     try {
       systemPrompt = await promptService.getPromptContent('AIQuestionAnalysisSystemPrompt');
     } catch (error) {
-      logger.error(`Failed to fetch AIQuestionAnalysisSystemPrompt, using fallback: ${error}`);
+      await log.error('performAIAnalysis', 'Failed to fetch AIQuestionAnalysisSystemPrompt', {}, error);
     }
 
     // 获取用户的模型配置
     const { modelName, modelParams } = await this.getDefaultModelConfig();
 
+    const url = `${this.llmRouterURL}/chat/completions`;
+    const requestBody = {
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt,
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      model: modelName,
+      ...modelParams,
+    };
+
     try {
-      const response = await fetch(`${this.llmRouterURL}/chat/completions`, {
+      await log.http.request('performAIAnalysis', url, 'POST', requestBody);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: systemPrompt,
-            },
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          model: modelName,
-          ...modelParams,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        await log.http.error('performAIAnalysis', url, new Error(`HTTP ${response.status}`), requestBody, errorText);
         throw new Error(`AI 分析请求失败: ${response.status}`);
       }
 
       const result = await response.json();
+      await log.http.response('performAIAnalysis', url, response.status, result);
       const content = result.choices?.[0]?.message?.content;
 
       if (!content) {
@@ -262,11 +272,12 @@ export class InterviewAnalysisService {
       try {
         return JSON.parse(content);
       } catch (parseError) {
+        await log.error('performAIAnalysis', 'JSON解析失败', { llmResponse: content }, parseError);
         // 如果不是 JSON 格式，尝试从文本中提取信息
         return this.parseTextAnalysis(content);
       }
     } catch (error) {
-      logger.error(`AI 分析调用失败: ${error}`);
+      await log.http.error('performAIAnalysis', url, error, requestBody);
       throw error;
     }
   }
@@ -297,7 +308,7 @@ export class InterviewAnalysisService {
         qaText,
       });
     } catch (error) {
-      logger.error(`Failed to build analysis prompt from promptService: ${error}`);
+      await log.error('buildAnalysisPrompt', 'Failed to build from promptService', {}, error);
       // 如果 promptService 失败，使用 fallback
       return this.buildFallbackAnalysisPrompt(analysisData, qaText);
     }
@@ -478,7 +489,7 @@ ${qaText}
         : [],
     };
 
-    console.debug('分析结果格式化完成:', {
+    log.debug('formatAnalysisResult', '分析结果格式化完成', {
       overallScore: result.overallScore,
       qaCount: result.qaAnalysis.length,
     });
@@ -513,20 +524,24 @@ ${qaText}
         radar_clarity: analysisResult.radarScores.clarity,
       };
 
-      const scoreResponse = await fetch(`${this.baseURL}/interview-scores`, {
+      const scoreUrl = `${this.baseURL}/interview-scores`;
+      const scoreRequestBody = { ...scoreData, created_at: Date.now() };
+      await log.http.request('saveAnalysisToDatabase', scoreUrl, 'POST', scoreRequestBody);
+
+      const scoreResponse = await fetch(scoreUrl, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({
-          ...scoreData,
-          created_at: Date.now(),
-        }),
+        body: JSON.stringify(scoreRequestBody),
       });
 
       if (!scoreResponse.ok) {
+        const errorText = await scoreResponse.text();
+        await log.http.error('saveAnalysisToDatabase', scoreUrl, new Error(`HTTP ${scoreResponse.status}`), scoreRequestBody, errorText);
         throw new Error(`创建面试分数记录失败: ${scoreResponse.status}`);
       }
 
       const scoreResult = await scoreResponse.json();
+      await log.http.response('saveAnalysisToDatabase', scoreUrl, scoreResponse.status, scoreResult);
       const scoreId = scoreResult.id;
 
       // 2. 创建面试洞察记录
@@ -547,27 +562,31 @@ ${qaText}
         strategy_keep_logical: analysisResult.insights.strategies.keepLogical,
       };
 
-      const insightResponse = await fetch(`${this.baseURL}/interview-insights`, {
+      const insightUrl = `${this.baseURL}/interview-insights`;
+      const insightRequestBody = { ...insightData, created_at: Date.now() };
+      await log.http.request('saveAnalysisToDatabase', insightUrl, 'POST', insightRequestBody);
+
+      const insightResponse = await fetch(insightUrl, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({
-          ...insightData,
-          created_at: Date.now(),
-        }),
+        body: JSON.stringify(insightRequestBody),
       });
 
       if (!insightResponse.ok) {
+        const errorText = await insightResponse.text();
+        await log.http.error('saveAnalysisToDatabase', insightUrl, new Error(`HTTP ${insightResponse.status}`), insightRequestBody, errorText);
         throw new Error(`创建面试洞察记录失败: ${insightResponse.status}`);
       }
 
       const insightResult = await insightResponse.json();
+      await log.http.response('saveAnalysisToDatabase', insightUrl, insightResponse.status, insightResult);
       const insightId = insightResult.id;
 
-      console.debug('分析结果已保存到数据库:', { scoreId, insightId });
+      log.debug('saveAnalysisToDatabase', '分析结果已保存到数据库', { scoreId, insightId });
 
       return { scoreId, insightId };
     } catch (error) {
-      logger.error(`保存分析结果失败: ${error}`);
+      await log.error('saveAnalysisToDatabase', '保存分析结果失败', { interviewId }, error);
       throw error;
     }
   }
@@ -599,25 +618,30 @@ ${qaText}
           created_at: Date.now(),
         };
 
-        const response = await fetch(`${this.baseURL}/interview-reviews`, {
+        const url = `${this.baseURL}/interview-reviews`;
+        await log.http.request('saveQAAnalysisToDatabase', url, 'POST', reviewData);
+
+        const response = await fetch(url, {
           method: 'POST',
           headers: this.getHeaders(),
           body: JSON.stringify(reviewData),
         });
 
         if (!response.ok) {
-          logger.error(`创建问答记录失败: ${response.status}`);
+          const errorText = await response.text();
+          await log.http.error('saveQAAnalysisToDatabase', url, new Error(`HTTP ${response.status}`), reviewData, errorText);
           continue;
         }
 
         const result = await response.json();
+        await log.http.response('saveQAAnalysisToDatabase', url, response.status, result);
         reviewIds.push(result.id);
       }
 
-      console.debug(`保存了${reviewIds.length}条问答分析记录`);
+      log.debug('saveQAAnalysisToDatabase', `保存了${reviewIds.length}条问答分析记录`);
       return reviewIds;
     } catch (error) {
-      logger.error(`保存问答分析失败: ${error}`);
+      await log.error('saveQAAnalysisToDatabase', '保存问答分析失败', { interviewId }, error);
       throw error;
     }
   }
@@ -632,7 +656,7 @@ ${qaText}
     reviewIds: string[];
   }> {
     try {
-      console.debug('开始完整的面试分析流程');
+      log.debug('analyzeAndSave', '开始完整的面试分析流程');
 
       // 1. 执行 AI 分析
       const analysis = await this.analyzeInterview(request);
@@ -649,7 +673,7 @@ ${qaText}
         analysis.qaAnalysis,
       );
 
-      console.debug('面试分析和保存流程完成');
+      log.debug('analyzeAndSave', '面试分析和保存流程完成');
 
       return {
         analysis,
@@ -658,7 +682,7 @@ ${qaText}
         reviewIds,
       };
     } catch (error) {
-      logger.error(`面试分析和保存流程失败: ${error}`);
+      await log.error('analyzeAndSave', '面试分析和保存流程失败', { interviewId: request.interviewId }, error);
       throw error;
     }
   }

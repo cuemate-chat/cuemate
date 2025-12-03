@@ -2,8 +2,11 @@
 // 面试互斥保护工具，确保全局同一时间只能有一个正在进行的面试
 // 核心原则：从 voiceState 获取 interviewId，从数据库获取详细信息
 
+import { createLogger } from '../../utils/rendererLogger.js';
 import { getVoiceState } from '../../utils/voiceState';
 import { interviewService } from '../interviewer/api/interviewService';
+
+const log = createLogger('InterviewGuard');
 
 export type InterviewType = 'mock-interview' | 'interview-training';
 
@@ -83,7 +86,7 @@ export async function getOngoingInterviewAsync(): Promise<OngoingInterviewInfo |
       status: interview.status,
     };
   } catch (error) {
-    console.error('[InterviewGuard] 获取进行中面试信息失败:', error);
+    log.error('getOngoingInterviewAsync', '获取进行中面试信息失败', undefined, error);
     return null;
   }
 }

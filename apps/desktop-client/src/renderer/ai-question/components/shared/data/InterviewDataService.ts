@@ -3,7 +3,10 @@
  * 负责面试过程中的所有数据库操作和状态同步
  */
 
+import { createLogger } from '../../../../../utils/rendererLogger.js';
 import { CreateReviewData, interviewService } from '../services/InterviewService';
+
+const log = createLogger('InterviewDataService');
 
 // 面试分数接口
 export interface InterviewScore {
@@ -101,7 +104,7 @@ export class InterviewDataService {
       }
       return null;
     } catch (error) {
-      console.warn(`[InterviewDataService] 查询已存在 review 失败: ${error}`);
+      log.warn('findExistingReviewBySequence', '查询已存在 review 失败', undefined, error?.toString());
       return null;
     }
   }
@@ -130,7 +133,7 @@ export class InterviewDataService {
       this.dataState.questions.set(sequence, questionState);
       this.dataState.currentSequence = sequence;
 
-      console.debug(`[InterviewDataService] 跳过创建，使用已存在的 review: ${existing.reviewId}`);
+      log.debug('createQuestionRecord', '跳过创建，使用已存在的 review', { reviewId: existing.reviewId });
       return existing.reviewId;
     }
 
@@ -171,7 +174,7 @@ export class InterviewDataService {
       questionState.phase = 'completed';
     }
 
-    console.debug(`Marked question ${sequence} as completed`);
+    log.debug('markQuestionComplete', '标记问题完成', { sequence });
   }
 
   /**

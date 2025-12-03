@@ -3,7 +3,9 @@
  * 从数据库获取 prompt 模板并渲染
  */
 
-import { logger } from '../../utils/rendererLogger.js';
+import { createLogger } from '../../utils/rendererLogger.js';
+
+const log = createLogger('PromptService');
 
 interface Prompt {
   id: string;
@@ -30,15 +32,22 @@ class PromptService {
    * 从数据库获取 prompt 完整数据(包含 extra 配置)
    */
   private async fetchPromptWithConfig(id: string): Promise<Prompt> {
+    const url = `${this.baseUrl}/prompts/${id}`;
+
     try {
-      const response = await fetch(`${this.baseUrl}/prompts/${id}`);
+      await log.http.request('fetchPromptWithConfig', url, 'GET', { id });
+
+      const response = await fetch(url);
       if (!response.ok) {
+        const errorText = await response.text();
+        await log.http.error('fetchPromptWithConfig', url, new Error(`HTTP ${response.status}`), { id }, errorText);
         throw new Error(`Failed to fetch prompt: ${response.statusText}`);
       }
       const data = await response.json();
+      await log.http.response('fetchPromptWithConfig', url, response.status, data);
       return data.prompt;
     } catch (error) {
-      logger.error(`Failed to fetch prompt ${id}: ${error}`);
+      await log.http.error('fetchPromptWithConfig', url, error, { id });
       throw error;
     }
   }
@@ -55,7 +64,7 @@ class PromptService {
       const func = new Function(...varNames, `return \`${template}\`;`);
       return func(...varValues);
     } catch (error) {
-      logger.error(`Failed to render template: ${error}`);
+      log.error('renderTemplate', 'Failed to render template', { template: template.substring(0, 200) }, error);
       return template;
     }
   }
@@ -78,7 +87,7 @@ class PromptService {
         totalQuestions = config.totalQuestions || 10;
       }
     } catch (error) {
-      logger.error(`Failed to parse prompt extra config: ${error}`);
+      log.error('buildInitPrompt', 'Failed to parse extra config', { extra: promptData.extra }, error);
     }
 
     // 渲染模板,包含 totalQuestions 作为变量 8
@@ -113,7 +122,7 @@ class PromptService {
         maxWords = config.maxWords || 2000;
       }
     } catch (error) {
-      logger.error(`Failed to parse AnswerPrompt extra config: ${error}`);
+      log.error('buildAnswerPrompt', 'Failed to parse extra config', { extra: promptData.extra }, error);
     }
 
     return this.renderTemplate(promptData.content, {
@@ -152,7 +161,7 @@ class PromptService {
         endStageStart = config.endStageStart || 9;
       }
     } catch (error) {
-      logger.error(`Failed to parse QuestionPrompt extra config: ${error}`);
+      log.error('buildQuestionPrompt', 'Failed to parse extra config', { extra: promptData.extra }, error);
     }
 
     return this.renderTemplate(promptData.content, {
@@ -197,7 +206,7 @@ class PromptService {
         expressionWeight = config.expressionWeight || 20;
       }
     } catch (error) {
-      logger.error(`Failed to parse AnalysisPrompt extra config: ${error}`);
+      log.error('buildAnalysisPrompt', 'Failed to parse extra config', { extra: promptData.extra }, error);
     }
 
     return this.renderTemplate(promptData.content, {
@@ -248,7 +257,7 @@ class PromptService {
         suggestionsMax = config.suggestionsMax || 5;
       }
     } catch (error) {
-      logger.error(`Failed to parse ScorePrompt extra config: ${error}`);
+      log.error('buildScorePrompt', 'Failed to parse extra config', { extra: promptData.extra }, error);
     }
 
     return this.renderTemplate(promptData.content, {
@@ -289,7 +298,7 @@ class PromptService {
         summaryMaxWords = config.summaryMaxWords || 100;
       }
     } catch (error) {
-      logger.error(`Failed to parse InsightPrompt extra config: ${error}`);
+      log.error('buildInsightPrompt', 'Failed to parse extra config', { extra: promptData.extra }, error);
     }
 
     return this.renderTemplate(promptData.content, {
@@ -354,7 +363,7 @@ class PromptService {
         qaFeedbackWords = config.qaFeedbackWords || 80;
       }
     } catch (error) {
-      logger.error(`Failed to parse AIQuestionAnalysisPrompt extra config: ${error}`);
+      log.error('buildAIQuestionAnalysisPrompt', 'Failed to parse extra config', { extra: promptData.extra }, error);
     }
 
     return this.renderTemplate(promptData.content, {

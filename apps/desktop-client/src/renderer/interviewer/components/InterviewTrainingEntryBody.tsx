@@ -89,7 +89,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { ChevronDown, CornerDownLeft, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { startSpeakerRecognition } from '../../../utils/audioRecognition';
-import { logger } from '../../../utils/rendererLogger.js';
+import { createLogger, logger } from '../../../utils/rendererLogger.js';
 import { getTimerState, setTimerState } from '../../../utils/timerState';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { interviewDataService } from '../../ai-question/components/shared/data/InterviewDataService';
@@ -152,6 +152,12 @@ interface CurrentQuestionData {
   otherId?: string;
   otherContent?: string;
 }
+
+// ============================================================================
+// Logger
+// ============================================================================
+
+const log = createLogger('InterviewTrainingEntryBody');
 
 // ============================================================================
 // 主组件
@@ -802,7 +808,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         }
       });
     } catch (error) {
-      console.error(`[ERROR] generateAnswerInBackground 失败:`, error);
+      log.error('generateAnswerInBackground', 'generateAnswerInBackground 失败', undefined, error);
       // 显示错误消息给用户
       const errorMsg = `AI 参考答案生成失败: ${error instanceof Error ? error.message : '未知错误'}`;
       setInterviewTrainingState({ aiMessage: errorMsg });
@@ -890,7 +896,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           duration: getTimerState().duration || 0,
         });
       } catch (error) {
-        console.error('[InterviewTraining] 保存 interviewState/duration 到数据库失败:', error);
+        log.error('handleStateChange', '保存 interviewState/duration 到数据库失败', undefined, error);
       }
     }
 
@@ -1125,7 +1131,10 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
             getTrainingStateMachine()?.send({ type: 'ANALYSIS_COMPLETE' });
           } catch (parseError) {
-            await logger.error(`[第七步] 分析结果解析失败: ${parseError}`);
+            await log.error('handleAIAnalyzing', 'JSON解析失败', {
+              questionIndex: context.currentQuestionIndex,
+              llmResponse: analysisResult,
+            }, parseError, '第七步');
             getTrainingStateMachine()?.send({ type: 'ANALYSIS_ERROR', payload: { error: '分析结果解析失败' } });
           }
         } else {
@@ -1292,6 +1301,13 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         await logger.error(`[错误处理] 更新面试训练错误状态失败: ${error}`);
       }
     }
+
+    // 同步更新 voiceState 到错误状态，让控制栏等其他窗口能感知到错误
+    setVoiceState({
+      mode: 'interview-training',
+      subState: 'interview-training-error',
+      interviewId: interviewId
+    });
 
     // 【重要】错误状态不清理 interview_id，让用户可以查看错误信息
   };

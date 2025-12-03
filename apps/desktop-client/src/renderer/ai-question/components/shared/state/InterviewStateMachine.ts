@@ -1,4 +1,6 @@
-import { logger } from '../../../../../utils/rendererLogger.js';
+import { createLogger } from '../../../../../utils/rendererLogger.js';
+
+const log = createLogger('InterviewStateMachine');
 
 export enum InterviewState {
   IDLE = 'idle', // 空闲状态
@@ -143,10 +145,10 @@ export class InterviewStateMachine {
     const transitions = stateTransitions[this.currentState];
     const nextState = transitions[event.type];
 
-    console.debug(`[InterviewStateMachine] ${this.currentState} + ${event.type} -> ${nextState || 'INVALID'}`);
+    log.debug('send', `${this.currentState} + ${event.type} -> ${nextState || 'INVALID'}`);
 
     if (!nextState) {
-      console.error(`[ERROR] 无效状态转换: ${event.type} 从 ${this.currentState}`);
+      log.error('send', `无效状态转换: ${event.type} 从 ${this.currentState}`);
       return false;
     }
 
@@ -264,7 +266,7 @@ export class InterviewStateMachine {
       try {
         callback(this.currentState, this.context);
       } catch (error) {
-        logger.error(`State change callback error: ${error}`);
+        log.error('notifyStateChange', '状态变化回调错误', undefined, error);
       }
     });
   }
@@ -347,7 +349,7 @@ export class InterviewStateMachine {
    * 恢复状态（从持久化数据恢复）
    */
   restoreState(state: InterviewState, context: Partial<InterviewContext>): void {
-    console.debug('[InterviewStateMachine] 恢复状态:', state);
+    log.debug('restoreState', '恢复状态', { state });
 
     // 更新 context
     if (context.jobPosition !== undefined) {

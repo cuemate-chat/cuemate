@@ -94,7 +94,7 @@
 
 import { ChevronDown, Pause, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { logger } from '../../../utils/rendererLogger.js';
+import { createLogger, logger } from '../../../utils/rendererLogger.js';
 import { getTimerState, setTimerState } from '../../../utils/timerState';
 import { setVoiceState, useVoiceState } from '../../../utils/voiceState';
 import { interviewDataService } from '../../ai-question/components/shared/data/InterviewDataService';
@@ -156,6 +156,12 @@ interface CurrentQuestionData {
   otherId?: string;
   otherContent?: string;
 }
+
+// ============================================================================
+// Logger
+// ============================================================================
+
+const log = createLogger('MockInterviewEntryBody');
 
 // ============================================================================
 // 主组件
@@ -395,7 +401,7 @@ export function MockInterviewEntryBody({
       // 只处理模拟面试的命令
       if (cmd.mode !== 'mock-interview') return;
 
-      console.debug(`[MockInterviewEntryBody] 收到控制命令: ${cmd.type}`);
+      log.debug('onInterviewCommand', '收到控制命令', { type: cmd.type });
 
       switch (cmd.type) {
         case 'pause':
@@ -580,7 +586,7 @@ export function MockInterviewEntryBody({
       setErrorMessage('');
       setTimestamp(Date.now());
     } catch (error) {
-      console.error(`[ERROR] TTS 播放失败:`, error);
+      log.error('playTTS', 'TTS 播放失败', undefined, error);
       await logger.error(`[TTS] 语音播放失败: ${error}`);
       setCurrentLine('');
       setErrorMessage(`语音播放失败: ${text}`);
@@ -590,7 +596,7 @@ export function MockInterviewEntryBody({
       const machine = getMockInterviewStateMachine();
       if (machine) {
         const currentState = machine.getState();
-        console.error(`[ERROR] TTS 错误时状态: ${currentState}, 发送 SPEAKING_ERROR`);
+        log.error('playTTS', 'TTS 错误时状态，发送 SPEAKING_ERROR', { currentState });
         if (currentState === InterviewState.AI_SPEAKING) {
           machine.send({ type: 'SPEAKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
         }
@@ -644,7 +650,7 @@ export function MockInterviewEntryBody({
    * 处理状态机状态变化
    */
   const handleStateChange = async (state: InterviewState, context: any) => {
-    console.debug(`[MockInterview] 状态变化: ${state}, questionIndex=${context.currentQuestionIndex}`);
+    log.debug('handleStateChange', '状态变化', { state, questionIndex: context.currentQuestionIndex });
 
     setMockInterviewState({ interviewState: state });
 
@@ -656,7 +662,7 @@ export function MockInterviewEntryBody({
           duration: getTimerState().duration || 0,
         });
       } catch (error) {
-        console.error('[MockInterview] 保存 interviewState/duration 到数据库失败:', error);
+        log.error('handleStateChange', '保存 interviewState/duration 到数据库失败', undefined, error);
       }
     }
 
@@ -699,7 +705,7 @@ export function MockInterviewEntryBody({
           break;
       }
     } catch (error) {
-      console.error(`[ERROR] handleStateChange 错误 (state=${state}):`, error);
+      log.error('handleStateChange', 'handleStateChange 错误', { state }, error);
       await logger.error(`[状态处理] 错误: ${error}`);
       setErrorMessage(`状态处理错误: ${error instanceof Error ? error.message : '未知错误'}`);
       setCurrentLine('');
@@ -740,7 +746,7 @@ export function MockInterviewEntryBody({
         }
       });
     } catch (error) {
-      console.error(`[ERROR] handleInitializing 错误:`, error);
+      log.error('handleInitializing', 'handleInitializing 错误', undefined, error);
       getMockInterviewStateMachine()?.send({ type: 'INIT_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
   };
@@ -773,7 +779,7 @@ export function MockInterviewEntryBody({
 
       await aiService.callAIStreamWithCustomModel(optimizedMessages, modelConfig, modelParams, (chunk) => {
         if (chunk.error) {
-          console.error(`[ERROR] AI 生成问题错误:`, chunk.error);
+          log.error('handleAIThinking', 'AI 生成问题错误', { error: chunk.error });
           getMockInterviewStateMachine()?.send({ type: 'THINKING_ERROR', payload: { error: chunk.error } });
           return;
         }
@@ -786,7 +792,7 @@ export function MockInterviewEntryBody({
         }
       });
     } catch (error) {
-      console.error(`[ERROR] handleAIThinking 错误:`, error);
+      log.error('handleAIThinking', 'handleAIThinking 错误', undefined, error);
       getMockInterviewStateMachine()?.send({ type: 'THINKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     }
   };
@@ -797,7 +803,7 @@ export function MockInterviewEntryBody({
   const handleAISpeaking = async (context: any) => {
     // 防重入检查：同一个问题不重复播放
     if (isSpeakingRef.current && lastSpeakingQuestionIndex.current === context.currentQuestionIndex) {
-      console.debug(`[MockInterview] TTS 跳过：已在播放中 (index=${context.currentQuestionIndex})`);
+      log.debug('handleAISpeaking', 'TTS 跳过：已在播放中', { index: context.currentQuestionIndex });
       return;
     }
 
@@ -828,7 +834,7 @@ export function MockInterviewEntryBody({
 
       getMockInterviewStateMachine()?.send({ type: 'SPEAKING_COMPLETE' });
     } catch (error) {
-      console.error(`[ERROR] handleAISpeaking 错误:`, error);
+      log.error('handleAISpeaking', 'handleAISpeaking 错误', undefined, error);
       getMockInterviewStateMachine()?.send({ type: 'SPEAKING_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
     } finally {
       // 清除防重入标志
@@ -978,7 +984,10 @@ export function MockInterviewEntryBody({
 
             getMockInterviewStateMachine()?.send({ type: 'ANALYSIS_COMPLETE' });
           } catch (parseError) {
-            await logger.error(`[第八步] 分析结果解析失败: ${parseError}`);
+            await log.error('handleAIAnalyzing', 'JSON解析失败', {
+              questionIndex: context.currentQuestionIndex,
+              llmResponse: analysisResult,
+            }, parseError, '第八步');
             getMockInterviewStateMachine()?.send({ type: 'ANALYSIS_ERROR', payload: { error: '分析结果解析失败' } });
           }
         } else {
@@ -1049,7 +1058,7 @@ export function MockInterviewEntryBody({
 
       await aiService.callAIStreamWithCustomModel(optimizedMessages, modelConfig, modelParams, async (chunk) => {
         if (chunk.error) {
-          console.error(`[ERROR] 生成答案错误:`, chunk.error);
+          log.error('generateAnswerInBackground', '生成答案错误', { error: chunk.error });
           getMockInterviewStateMachine()?.send({ type: 'GENERATION_ERROR', payload: { error: chunk.error } });
           return;
         }
@@ -1082,7 +1091,7 @@ export function MockInterviewEntryBody({
         }
       });
     } catch (error) {
-      console.error(`[ERROR] generateAnswerInBackground 失败:`, error);
+      log.error('generateAnswerInBackground', 'generateAnswerInBackground 失败', undefined, error);
       // 显示错误消息给用户（因为当前状态是 AI_SPEAKING，GENERATION_ERROR 事件无法处理）
       const errorMsg = `AI 参考答案生成失败: ${error instanceof Error ? error.message : '未知错误'}`;
       onAnswerGenerated?.(errorMsg);
@@ -1203,6 +1212,13 @@ export function MockInterviewEntryBody({
         await logger.error(`[错误处理] 更新面试错误状态失败: ${error}`);
       }
     }
+
+    // 同步更新 voiceState 到错误状态，让控制栏等其他窗口能感知到错误
+    setVoiceState({
+      mode: 'mock-interview',
+      subState: 'mock-interview-error',
+      interviewId: interviewId
+    });
   };
 
   // ===========================================================================

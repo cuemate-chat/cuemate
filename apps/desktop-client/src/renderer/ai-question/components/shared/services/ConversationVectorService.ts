@@ -3,7 +3,9 @@
  * 负责将对话历史存储到 ChromaDB，并提供语义检索功能
  */
 
-import { logger } from '../../../../../utils/rendererLogger.js';
+import { createLogger } from '../../../../../utils/rendererLogger.js';
+
+const log = createLogger('ConversationVectorService');
 
 interface ConversationDocument {
   id?: string;  // 唯一标识符，用于幂等性保护（upsert）
@@ -69,13 +71,13 @@ export class ConversationVectorService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`[ConversationVector] 存储失败: ${errorText}`);
+        log.error('storeConversation', '存储失败', { errorText });
         return false;
       }
 
       return true;
     } catch (error) {
-      logger.error(`[ConversationVector] 存储异常: ${error}`);
+      log.error('storeConversation', '存储异常', undefined, error);
       return false;
     }
   }
@@ -122,13 +124,13 @@ export class ConversationVectorService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`[ConversationVector] 批量存储失败: ${errorText}`);
+        log.error('batchStoreConversations', '批量存储失败', { errorText });
         return false;
       }
 
       return true;
     } catch (error) {
-      logger.error(`[ConversationVector] 批量存储异常: ${error}`);
+      log.error('batchStoreConversations', '批量存储异常', undefined, error);
       return false;
     }
   }
@@ -160,7 +162,7 @@ export class ConversationVectorService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`[ConversationVector] 检索失败: ${errorText}`);
+        log.error('retrieveRelevantConversations', '检索失败', { errorText });
         return [];
       }
 
@@ -176,7 +178,7 @@ export class ConversationVectorService {
 
       return conversations;
     } catch (error) {
-      logger.error(`[ConversationVector] 检索异常: ${error}`);
+      log.error('retrieveRelevantConversations', '检索异常', undefined, error);
       return [];
     }
   }
@@ -237,11 +239,11 @@ export class ConversationVectorService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`[ConversationVector] 存储简历/JD失败: ${errorText}`);
+        log.error('storeResumeAndJD', '存储简历/JD失败', { errorText });
         return false;
       }
 
-      console.debug('[ConversationVector] 简历/JD存储成功', {
+      log.debug('storeResumeAndJD', '简历/JD存储成功', {
         interviewId,
         resumeChunks: resumeChunks.length,
         jdChunks: jdChunks.length,
@@ -249,7 +251,7 @@ export class ConversationVectorService {
 
       return true;
     } catch (error) {
-      logger.error(`[ConversationVector] 存储简历/JD异常: ${error}`);
+      log.error('storeResumeAndJD', '存储简历/JD异常', undefined, error);
       return false;
     }
   }
@@ -286,14 +288,14 @@ export class ConversationVectorService {
 
       const chunks = results.map((result: any) => result.content || '');
 
-      console.debug('[ConversationVector] 检索简历/JD片段成功', {
+      log.debug('retrieveRelevantResumeJD', '检索简历/JD片段成功', {
         interviewId,
         foundCount: chunks.length,
       });
 
       return chunks;
     } catch (error) {
-      logger.error(`[ConversationVector] 检索简历/JD片段异常: ${error}`);
+      log.error('retrieveRelevantResumeJD', '检索简历/JD片段异常', undefined, error);
       return [];
     }
   }
@@ -340,10 +342,10 @@ export class ConversationVectorService {
         method: 'DELETE',
       });
 
-      console.debug('[ConversationVector] 删除面试数据成功', { interviewId });
+      log.debug('deleteInterviewData', '删除面试数据成功', { interviewId });
       return true;
     } catch (error) {
-      logger.error(`[ConversationVector] 删除面试数据异常: ${error}`);
+      log.error('deleteInterviewData', '删除面试数据异常', undefined, error);
       return false;
     }
   }

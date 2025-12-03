@@ -3,9 +3,11 @@
  * 负责协调 AI 问答窗口和控制栏窗口之间的数据同步
  */
 
+import { createLogger } from '../../../../../utils/rendererLogger.js';
 import { InterviewState } from '../../shared/state/InterviewStateMachine';
 import { VoiceState } from '../../shared/voice/VoiceCoordinator';
-import { logger } from '../../../../../utils/rendererLogger.js';
+
+const log = createLogger('InterviewIPCService');
 
 // IPC 通信事件类型
 export enum InterviewIPCEvents {
@@ -114,7 +116,7 @@ export class InterviewIPCService {
   constructor() {
     this.electronAPI = (window as any).electronAPI?.interview;
     if (!this.electronAPI) {
-      console.warn('Electron Interview API not available, IPC service will be disabled');
+      log.warn('constructor', 'Electron Interview API 不可用，IPC 服务将被禁用');
       return;
     }
     this.initialize();
@@ -135,9 +137,9 @@ export class InterviewIPCService {
       this.electronAPI.registerWindow?.();
 
       this.isInitialized = true;
-      console.debug('Interview IPC Service initialized successfully');
+      log.debug('initialize', 'Interview IPC Service 初始化成功');
     } catch (error) {
-      logger.error(`Failed to initialize Interview IPC Service: ${error}`);
+      log.error('initialize', 'Interview IPC Service 初始化失败', undefined, error);
     }
   }
 
@@ -148,7 +150,7 @@ export class InterviewIPCService {
         try {
           listener(data);
         } catch (error) {
-          logger.error(`Error in IPC event listener for ${event}: ${error}`);
+          log.error('handleIncomingEvent', `IPC 事件监听器错误 (${event})`, undefined, error);
         }
       });
     }
@@ -175,14 +177,14 @@ export class InterviewIPCService {
   // 发送事件到主进程或其他窗口
   private emit(event: InterviewIPCEvents, data?: any): void {
     if (!this.isInitialized || !this.electronAPI?.sendInterviewEvent) {
-      console.warn(`Cannot send IPC event ${event}: service not initialized`);
+      log.warn('emit', `无法发送 IPC 事件 ${event}: 服务未初始化`);
       return;
     }
 
     try {
       this.electronAPI.sendInterviewEvent(event, data);
     } catch (error) {
-      logger.error(`Failed to send IPC event ${event}: ${error}`);
+      log.error('emit', `发送 IPC 事件失败 (${event})`, undefined, error);
     }
   }
 
@@ -303,7 +305,7 @@ export class InterviewIPCService {
         this.requestCurrentState();
       });
     } catch (error) {
-      logger.error(`IPC ping failed: ${error}`);
+      log.error('ping', 'IPC ping 失败', undefined, error);
       return false;
     }
   }
@@ -314,7 +316,7 @@ export class InterviewIPCService {
     this.electronAPI?.unregisterWindow?.();
     this.clearAllListeners();
     this.isInitialized = false;
-    console.debug('Interview IPC Service destroyed');
+    log.debug('destroy', 'Interview IPC Service 已销毁');
   }
 }
 

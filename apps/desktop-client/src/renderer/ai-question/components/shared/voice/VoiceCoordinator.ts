@@ -1,4 +1,6 @@
-import { logger } from '../../../../../utils/rendererLogger.js';
+import { createLogger } from '../../../../../utils/rendererLogger.js';
+
+const log = createLogger('VoiceCoordinator');
 
 export interface VoiceCoordinatorConfig {
   silenceThreshold: number; // 静音阈值 (毫秒)
@@ -73,7 +75,7 @@ export class VoiceCoordinator extends EventTarget {
 
       this.dispatchEvent(new CustomEvent('initialized'));
     } catch (error) {
-      logger.error(`Failed to initialize VoiceCoordinator: ${error}`);
+      log.error('initialize', 'VoiceCoordinator 初始化失败', undefined, error);
       this.dispatchEvent(new CustomEvent('error', { detail: error }));
       throw error;
     }
@@ -82,7 +84,7 @@ export class VoiceCoordinator extends EventTarget {
   // 开始 TTS 播放
   startTTS(): void {
     if (this.currentState === VoiceState.TTS_PLAYING) {
-      console.warn('TTS is already playing');
+      log.warn('startTTS', 'TTS 已经在播放中');
       return;
     }
 
@@ -96,7 +98,7 @@ export class VoiceCoordinator extends EventTarget {
   // TTS 播放完成
   onTTSComplete(): void {
     if (this.currentState !== VoiceState.TTS_PLAYING) {
-      console.warn('TTS complete but not in TTS_PLAYING state');
+      log.warn('onTTSComplete', 'TTS 完成但不在 TTS_PLAYING 状态');
       return;
     }
 
@@ -115,7 +117,7 @@ export class VoiceCoordinator extends EventTarget {
   // 开始 ASR 监听
   startASRListening(): void {
     if (this.currentState === VoiceState.ASR_LISTENING) {
-      console.warn('ASR is already listening');
+      log.warn('startASRListening', 'ASR 已经在监听中');
       return;
     }
 
@@ -138,7 +140,7 @@ export class VoiceCoordinator extends EventTarget {
 
       this.dispatchEvent(new CustomEvent('asrStopped'));
       this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
-      console.debug('ASR listening stopped');
+      log.debug('stopASRListening', 'ASR 监听已停止');
     }
   }
 
@@ -160,7 +162,7 @@ export class VoiceCoordinator extends EventTarget {
     this.clearAutoEndTimer();
 
     this.dispatchEvent(new CustomEvent('stateChanged', { detail: this.currentState }));
-    console.debug('VoiceCoordinator reset to idle');
+    log.debug('reset', 'VoiceCoordinator 重置到空闲状态');
   }
 
   // 开始音频级别监测
@@ -237,7 +239,7 @@ export class VoiceCoordinator extends EventTarget {
       if (this.currentState === VoiceState.ASR_LISTENING) {
         // 监听超时，没有检测到用户说话
         this.dispatchEvent(new CustomEvent('listeningTimeout'));
-        console.debug('ASR listening timeout');
+        log.debug('startAutoEndTimer', 'ASR 监听超时');
       }
     }, this.config.autoEndTimeout);
   }
