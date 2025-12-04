@@ -177,16 +177,17 @@ export function registerReviewRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'interviews.create', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
+        // hook 已将 camelCase 转换为 snake_case
         const body = z
           .object({
-            jobId: z.string().min(1),
-            jobTitle: z.string().optional(),
-            jobContent: z.string().optional(),
-            questionCount: z.number().optional(),
-            resumesId: z.string().optional(),
-            resumesTitle: z.string().optional(),
-            resumesContent: z.string().optional(),
-            interviewType: z.enum(['mock', 'training']).default('mock'),
+            job_id: z.string().min(1),
+            job_title: z.string().optional(),
+            job_content: z.string().optional(),
+            question_count: z.number().optional(),
+            resumes_id: z.string().optional(),
+            resumes_title: z.string().optional(),
+            resumes_content: z.string().optional(),
+            interview_type: z.enum(['mock', 'training']).default('mock'),
             status: z.enum([
               'idle',
               'mock-interview-recording',
@@ -206,8 +207,8 @@ export function registerReviewRoutes(app: FastifyInstance) {
             locale: z.string().optional(),
             timezone: z.string().optional(),
             theme: z.string().optional(),
-            selectedModelId: z.string().optional(),
-            interviewState: z.string().optional(),
+            selected_model_id: z.string().optional(),
+            interview_state: z.string().optional(),
           })
           .parse((req as any).body || {});
 
@@ -219,16 +220,16 @@ export function registerReviewRoutes(app: FastifyInstance) {
         let locale = body.locale;
         let timezone = body.timezone;
         let theme = body.theme;
-        let selectedModelId = body.selectedModelId;
+        let selected_model_id = body.selected_model_id;
 
-        if (!locale || !timezone || !theme || !selectedModelId) {
+        if (!locale || !timezone || !theme || !selected_model_id) {
           const userRow = (app as any).db
             .prepare('SELECT selected_model_id, locale, theme, timezone FROM users WHERE id=?')
             .get(payload.uid);
           locale = locale || userRow?.locale || 'zh-CN';
           timezone = timezone || userRow?.timezone || 'Asia/Shanghai';
           theme = theme || userRow?.theme || 'system';
-          selectedModelId = selectedModelId || userRow?.selected_model_id || null;
+          selected_model_id = selected_model_id || userRow?.selected_model_id || null;
         }
 
         (app as any).db
@@ -242,33 +243,33 @@ export function registerReviewRoutes(app: FastifyInstance) {
           )
           .run(
             id,
-            body.jobId,
+            body.job_id,
             payload.uid,
             theme,
             now,
-            selectedModelId,
+            selected_model_id,
             locale,
             timezone,
-            body.jobTitle || null,
-            body.jobContent || null,
+            body.job_title || null,
+            body.job_content || null,
             0, // question_count 初始化为 0,update 时自动统计
-            body.resumesId || null,
-            body.resumesTitle || null,
-            body.resumesContent || null,
+            body.resumes_id || null,
+            body.resumes_title || null,
+            body.resumes_content || null,
             0, // duration 初始化为 0
-            body.interviewType,
+            body.interview_type,
             body.status || 'active',
             body.message || null,
-            body.interviewState || 'idle',
+            body.interview_state || 'idle',
           );
 
         // 记录操作日志
         await logOperation(app, req, {
           ...OPERATION_MAPPING.REVIEW,
           resourceId: id,
-          resourceName: `面试复盘: ${body.jobId}`,
+          resourceName: `面试复盘: ${body.job_id}`,
           operation: OperationType.CREATE,
-          message: `创建面试复盘: ${body.jobId}`,
+          message: `创建面试复盘: ${body.job_id}`,
           status: 'success',
           userId: payload.uid,
         });
