@@ -1,5 +1,11 @@
 // 使用包名导入；tsconfig.paths 已指向源码目录（仅供类型解析），运行时由构建或容器解析
-import { CONTAINER_IMAGES_DIR, CONTAINER_PDF_DIR, CONTAINER_SQLITE_PATH } from '@cuemate/config';
+import {
+  CONTAINER_IMAGES_DIR,
+  CONTAINER_PDF_DIR,
+  CONTAINER_SQLITE_PATH,
+  toCamelCase,
+  toSnakeCase,
+} from '@cuemate/config';
 import { initSqlite } from '@cuemate/data-sqlite';
 import { fastifyLoggingHooks, printBanner, printSuccessInfo } from '@cuemate/logger';
 import cors from '@fastify/cors';
@@ -101,6 +107,33 @@ async function start() {
   app.addHook('onRequest', hooks.onRequest as any);
   app.addHook('onResponse', hooks.onResponse as any);
   hooks.setErrorHandler(app as any);
+
+  // 请求转换：camelCase → snake_case（前端发送 camelCase，后端使用 snake_case）
+  app.addHook('preHandler', async (request: any) => {
+    // 转换请求体
+    if (request.body && typeof request.body === 'object') {
+      request.body = toSnakeCase(request.body);
+    }
+    // 转换查询参数
+    if (request.query && typeof request.query === 'object') {
+      request.query = toSnakeCase(request.query);
+    }
+  });
+
+  // 响应体转换：snake_case → camelCase（后端返回 snake_case，前端期望 camelCase）
+  app.addHook('onSend', async (_request: any, _reply: any, payload: any) => {
+    if (typeof payload === 'string') {
+      try {
+        const parsed = JSON.parse(payload);
+        const transformed = toCamelCase(parsed);
+        return JSON.stringify(transformed);
+      } catch {
+        // 非 JSON 响应，直接返回
+        return payload;
+      }
+    }
+    return payload;
+  });
 
   // 路由
   registerAuthRoutes(app as any);
