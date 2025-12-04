@@ -74,13 +74,13 @@ export function registerAuthRoutes(app: FastifyInstance) {
       id: row.id,
       email: row.email,
       name: row.name,
-      created_at: row.created_at,
+      createdAt: row.created_at,
       theme: row.theme ?? 'system',
       locale: row.locale ?? 'zh-CN',
       timezone: row.timezone ?? 'Asia/Shanghai',
-      selected_model_id: row.selected_model_id ?? null,
-      floating_window_visible: row.floating_window_visible ?? 1,
-      floating_window_height: row.floating_window_height ?? 75,
+      selectedModelId: row.selected_model_id ?? null,
+      floatingWindowVisible: row.floating_window_visible ?? 1,
+      floatingWindowHeight: row.floating_window_height ?? 75,
       version: row.version ?? 'v0.1.0',
       model: selectedModel,
       modelParams: modelParams,
@@ -144,7 +144,17 @@ export function registerAuthRoutes(app: FastifyInstance) {
         }
 
         const user = {
-          ...row,
+          id: row.id,
+          email: row.email,
+          name: row.name,
+          createdAt: row.created_at,
+          theme: row.theme ?? 'system',
+          locale: row.locale ?? 'zh-CN',
+          timezone: row.timezone ?? 'Asia/Shanghai',
+          selectedModelId: row.selected_model_id ?? null,
+          floatingWindowVisible: row.floating_window_visible ?? 1,
+          floatingWindowHeight: row.floating_window_height ?? 75,
+          version: row.version ?? 'v0.1.0',
           model: selectedModel,
           modelParams: modelParams,
         };
@@ -192,7 +202,17 @@ export function registerAuthRoutes(app: FastifyInstance) {
           }
 
           const user = {
-            ...loggedInUser,
+            id: loggedInUser.id,
+            email: loggedInUser.email,
+            name: loggedInUser.name,
+            createdAt: loggedInUser.created_at,
+            theme: loggedInUser.theme ?? 'system',
+            locale: loggedInUser.locale ?? 'zh-CN',
+            timezone: loggedInUser.timezone ?? 'Asia/Shanghai',
+            selectedModelId: loggedInUser.selected_model_id ?? null,
+            floatingWindowVisible: loggedInUser.floating_window_visible ?? 1,
+            floatingWindowHeight: loggedInUser.floating_window_height ?? 75,
+            version: loggedInUser.version ?? 'v0.1.0',
             model: selectedModel,
             modelParams: modelParams,
           };
@@ -249,17 +269,17 @@ export function registerAuthRoutes(app: FastifyInstance) {
           args.push(body.timezone);
         }
 
-        if (typeof body.selected_model_id === 'string') {
+        if (typeof body.selectedModelId === 'string') {
           fields.push('selected_model_id=?');
-          args.push(body.selected_model_id);
+          args.push(body.selectedModelId);
         }
-        if (typeof body.floating_window_visible === 'number') {
+        if (typeof body.floatingWindowVisible === 'number') {
           fields.push('floating_window_visible=?');
-          args.push(body.floating_window_visible);
+          args.push(body.floatingWindowVisible);
         }
-        if (typeof body.floating_window_height === 'number') {
+        if (typeof body.floatingWindowHeight === 'number') {
           fields.push('floating_window_height=?');
-          args.push(body.floating_window_height);
+          args.push(body.floatingWindowHeight);
         }
         if (fields.length === 0) return { success: true };
         args.push(payload.uid);
@@ -287,7 +307,17 @@ export function registerAuthRoutes(app: FastifyInstance) {
         }
 
         const user = {
-          ...row,
+          id: row.id,
+          email: row.email,
+          name: row.name,
+          createdAt: row.created_at,
+          theme: row.theme ?? 'system',
+          locale: row.locale ?? 'zh-CN',
+          timezone: row.timezone ?? 'Asia/Shanghai',
+          selectedModelId: row.selected_model_id ?? null,
+          floatingWindowVisible: row.floating_window_visible ?? 1,
+          floatingWindowHeight: row.floating_window_height ?? 75,
+          version: row.version ?? 'v0.1.0',
           model: selectedModel,
           modelParams: modelParams,
         };
