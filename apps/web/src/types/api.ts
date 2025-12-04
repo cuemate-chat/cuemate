@@ -26,29 +26,29 @@ export interface Model {
   provider: string;
   type: string;
   scope: string;
-  model_name: string;
+  modelName: string;
   icon?: string;
   version?: string;
   credentials?: string; // JSON 字符串，包含凭据信息
   status?: string; // 连通状态：ok/fail/null
-  created_by?: string;
-  is_enabled: number;
-  created_at: number;
-  updated_at?: number;
+  createdBy?: string;
+  isEnabled: number;
+  createdAt: number;
+  updatedAt?: number;
 }
 
 export interface ModelParam {
   id: string;
-  model_id: string;
+  modelId: string;
   label?: string;
-  param_key: string;
-  ui_type: string;
+  paramKey: string;
+  uiType: string;
   value?: string;
-  default_value?: string;
+  defaultValue?: string;
   required: number;
   extra?: any;
-  created_at: number;
-  updated_at?: number;
+  createdAt: number;
+  updatedAt?: number;
 }
 
 // 用户相关类型
@@ -56,17 +56,17 @@ export interface User {
   id: string;
   email?: string;
   name?: string;
-  created_at: number;
+  createdAt: number;
   theme?: string;
   locale?: string;
   timezone?: string;
-  selected_model_id?: string;
-  is_logged_in?: number;
-  floating_window_visible?: number;
-  floating_window_height?: number;
+  selectedModelId?: string;
+  isLoggedIn?: number;
+  floatingWindowVisible?: number;
+  floatingWindowHeight?: number;
   version?: string;
   model?: Model | null;
-  model_params?: ModelParam[];
+  modelParams?: ModelParam[];
 }
 
 export interface LoginRequest {
@@ -85,9 +85,9 @@ export interface UpdateUserRequest {
   theme?: string;
   locale?: string;
   timezone?: string;
-  selected_model_id?: string;
-  floating_window_visible?: number;
-  floating_window_height?: number;
+  selectedModelId?: string;
+  floatingWindowVisible?: number;
+  floatingWindowHeight?: number;
 }
 
 export interface ChangePasswordRequest {
@@ -102,8 +102,8 @@ export interface Job {
   description?: string;
   requirements?: string;
   status: 'active' | 'inactive' | 'archived';
-  createdAt: string;
-  updatedAt: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface JobSummary {
@@ -120,22 +120,22 @@ export interface CreateJobRequest {
 // 面试相关类型
 export interface Interview {
   id: string;
-  job_id: string;
-  user_id: string;
+  jobId: string;
+  userId: string;
   theme: string;
-  started_at: number;
-  ended_at?: number | null;
-  selected_model_id?: string | null;
+  startedAt: number;
+  endedAt?: number | null;
+  selectedModelId?: string | null;
   locale: string;
   timezone: string;
-  job_title?: string | null;
-  job_content?: string | null;
-  question_count: number;
-  resumes_id?: string | null;
-  resumes_title?: string | null;
-  resumes_content?: string | null;
+  jobTitle?: string | null;
+  jobContent?: string | null;
+  questionCount: number;
+  resumesId?: string | null;
+  resumesTitle?: string | null;
+  resumesContent?: string | null;
   duration: number;
-  interview_type: 'mock' | 'training';
+  interviewType: 'mock' | 'training';
   status:
     | 'idle'
     | 'mock-interview-recording'
@@ -151,7 +151,7 @@ export interface Interview {
     | 'interview-training-error'
     | 'interview-training-expired';
   message?: string | null;
-  vector_status: number;
+  vectorStatus: number;
 }
 
 export interface Question {
