@@ -32,8 +32,8 @@ export class BedrockProvider extends BaseLLMProvider {
     }
 
     const temperature =
-      config.model_params.find((p) => p.param_key === 'temperature')?.value || 0.7;
-    const maxTokens = config.model_params.find((p) => p.param_key === 'max_tokens')?.value || 8192;
+      config.modelParams.find((p) => p.paramKey === 'temperature')?.value || 0.7;
+    const maxTokens = config.modelParams.find((p) => p.paramKey === 'max_tokens')?.value || 8192;
 
     const client = this.createClient(apiKey, region);
     const startTime = Date.now();
@@ -96,8 +96,8 @@ export class BedrockProvider extends BaseLLMProvider {
     }
 
     const temperature =
-      config.model_params.find((p) => p.param_key === 'temperature')?.value || 0.7;
-    const maxTokens = config.model_params.find((p) => p.param_key === 'max_tokens')?.value || 8192;
+      config.modelParams.find((p) => p.paramKey === 'temperature')?.value || 0.7;
+    const maxTokens = config.modelParams.find((p) => p.paramKey === 'max_tokens')?.value || 8192;
 
     const client = this.createClient(apiKey, region);
 

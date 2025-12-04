@@ -17,8 +17,8 @@ export class RegoloProvider extends BaseLLMProvider {
       throw new Error('Regolo API key is required');
     }
 
-    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
-    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 8192;
+    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
+    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 8192;
 
     const client = new OpenAI({
       apiKey: apiKey,
@@ -66,8 +66,8 @@ export class RegoloProvider extends BaseLLMProvider {
       throw new Error('Regolo API key is required');
     }
 
-    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
-    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 8192;
+    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
+    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 8192;
 
     const client = new OpenAI({
       apiKey: apiKey,

@@ -19,14 +19,14 @@ export class VolcEngineProvider extends BaseLLMProvider {
     }
 
     // 从 model_params 中解析参数
-    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
-    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
+    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
+    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 2000;
 
     // 解析其他动态参数，火山引擎可能有特定的参数
     const additionalParams: any = {};
-    config.model_params.forEach(param => {
-      if (!['temperature', 'max_tokens'].includes(param.param_key)) {
-        additionalParams[param.param_key] = param.value;
+    config.modelParams.forEach(param => {
+      if (!['temperature', 'max_tokens'].includes(param.paramKey)) {
+        additionalParams[param.paramKey] = param.value;
       }
     });
 
@@ -89,13 +89,13 @@ export class VolcEngineProvider extends BaseLLMProvider {
       throw new Error('VolcEngine API key is required');
     }
 
-    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
-    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
+    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
+    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 2000;
 
     const additionalParams: any = {};
-    config.model_params.forEach(param => {
-      if (!['temperature', 'max_tokens'].includes(param.param_key)) {
-        additionalParams[param.param_key] = param.value;
+    config.modelParams.forEach(param => {
+      if (!['temperature', 'max_tokens'].includes(param.paramKey)) {
+        additionalParams[param.paramKey] = param.value;
       }
     });
 

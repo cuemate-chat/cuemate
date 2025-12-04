@@ -18,8 +18,8 @@ export interface RuntimeConfig {
   provider: string;
   model: string;
   credentials: Record<string, any>; // JSON 格式的凭证，每个 provider 自己解析
-  model_params: Array<{           // 模型参数数组，每个 provider 自己解析需要的
-    param_key: string;
+  modelParams: Array<{           // 模型参数数组，每个 provider 自己解析需要的
+    paramKey: string;
     value: any;
   }>;
 }

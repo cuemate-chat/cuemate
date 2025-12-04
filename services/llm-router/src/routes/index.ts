@@ -38,7 +38,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         provider?: string;
         model?: string;
         credentials?: Record<string, any>;
-        model_params?: Array<{ param_key: string; value: any }>;
+        modelParams?: Array<{ paramKey: string; value: any }>;
       };
 
       if (!body.provider || !body.model) {
@@ -50,11 +50,11 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         provider: body.provider,
         model: body.model,
         credentials: body.credentials || {},
-        model_params: body.model_params || [],
+        modelParams: body.modelParams || [],
       };
 
       // 从请求体中移除配置字段，保留消息内容
-      const { provider, model, credentials, model_params, ...cleanedBody } = body;
+      const { provider, model, credentials, modelParams, ...cleanedBody } = body;
       const response = await llmManager.complete(cleanedBody, runtimeConfig);
       return response;
     } catch (error) {
@@ -73,7 +73,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         provider?: string;
         model?: string;
         credentials?: Record<string, any>;
-        model_params?: Array<{ param_key: string; value: any }>;
+        modelParams?: Array<{ paramKey: string; value: any }>;
       };
 
       if (!body.provider || !body.model) {
@@ -85,7 +85,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         provider: body.provider,
         model: body.model,
         credentials: body.credentials || {},
-        model_params: body.model_params || [],
+        modelParams: body.modelParams || [],
       };
 
       reply.raw.writeHead(200, {
@@ -94,7 +94,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         Connection: 'keep-alive',
       });
 
-      const { provider, model, credentials, model_params, ...cleanedBody } = body;
+      const { provider, model, credentials, modelParams, ...cleanedBody } = body;
 
       try {
         const stream = await llmManager.stream(cleanedBody, runtimeConfig);
@@ -151,10 +151,10 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       const defaultConfig: RuntimeConfig = {
         provider: 'openai',
         model: 'gpt-3.5-turbo',
-        credentials: { api_key: '', base_url: '' },
-        model_params: [
-          { param_key: 'temperature', value: 0.3 },
-          { param_key: 'max_tokens', value: 200 },
+        credentials: { apiKey: '', baseUrl: '' },
+        modelParams: [
+          { paramKey: 'temperature', value: 0.3 },
+          { paramKey: 'maxTokens', value: 200 },
         ],
       };
       const response = await llmManager.complete(outlineRequest, defaultConfig);
@@ -203,18 +203,17 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
     try {
       const body = (request.body as any) || {};
       const providerId: string = body.provider || body.id || 'custom';
-      const model = body.model_name || body.model;
+      const model = body.modelName || body.model;
 
       // 动态提取凭证字段和运行参数
-      // hook 已将 camelCase 转换为 snake_case
-      const allParams = body.all_params || {};
+      const allParams = body.allParams || {};
       const config: any = { model };
 
       // 动态传递所有凭证字段，不假设固定的字段名
       // 每个 provider 的 credentialFields 都不同，需要传递所有字段
       Object.keys(body).forEach((key) => {
         // 跳过非凭证字段
-        if (!['provider', 'id', 'model_name', 'model', 'mode', 'all_params'].includes(key)) {
+        if (!['provider', 'id', 'modelName', 'model', 'mode', 'allParams'].includes(key)) {
           config[key] = body[key];
         }
       });
@@ -222,7 +221,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       // 调试日志：显示映射后的配置
       log.info('probe', 'Field mapping result', {
         originalFields: Object.keys(body).filter(
-          (key) => !['provider', 'id', 'model_name', 'model', 'mode', 'all_params'].includes(key),
+          (key) => !['provider', 'id', 'modelName', 'model', 'mode', 'allParams'].includes(key),
         ),
         mappedConfig: config,
       });
@@ -327,7 +326,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
           provider: providerId,
           model: model,
           credentials: config,
-          model_params: [],
+          modelParams: [],
         };
         chatOk = await provider.healthCheck(runtimeConfig);
       } catch (error) {

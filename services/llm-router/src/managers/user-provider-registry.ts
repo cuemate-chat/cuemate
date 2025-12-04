@@ -63,11 +63,11 @@ export class UserProviderRegistry {
       model?: {
         provider?: string;
         credentials?: any;
-        base_url?: string;
-        api_key?: string;
-        model_name: string;
+        baseUrl?: string;
+        apiKey?: string;
+        modelName: string;
       };
-      params?: Array<{ param_key: string; value?: string }>;
+      params?: Array<{ paramKey: string; value?: string }>;
     }
     const data = (await res.json().catch(() => undefined)) as UserModelResponse | undefined;
     if (!data?.model) return undefined;
