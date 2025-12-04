@@ -12,17 +12,18 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
         // JWT 验证，确保用户已登录
         await (req as any).jwtVerify();
 
+        // hook 已将 camelCase 转换为 snake_case
         const query = (req as any).query || {};
         const {
           page = 1,
-          pageSize = 20,
+          page_size = 20,
           menu,
           type,
           operation,
           status,
-          userId,
-          startTime,
-          endTime,
+          user_id,
+          start_time,
+          end_time,
           keyword,
         } = query;
 
@@ -50,19 +51,19 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
           args.push(status);
         }
 
-        if (userId) {
+        if (user_id) {
           sql += ' AND user_id=?';
-          args.push(userId);
+          args.push(user_id);
         }
 
-        if (startTime) {
+        if (start_time) {
           sql += ' AND time>=?';
-          args.push(Number(startTime));
+          args.push(Number(start_time));
         }
 
-        if (endTime) {
+        if (end_time) {
           sql += ' AND time<=?';
-          args.push(Number(endTime));
+          args.push(Number(end_time));
         }
 
         if (keyword) {
@@ -78,7 +79,7 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
 
         // 分页查询
         sql += ' ORDER BY time DESC LIMIT ? OFFSET ?';
-        args.push(Number(pageSize), (Number(page) - 1) * Number(pageSize));
+        args.push(Number(page_size), (Number(page) - 1) * Number(page_size));
 
         const list = (app as any).db.prepare(sql).all(...args);
 
@@ -86,9 +87,9 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
           list,
           pagination: {
             page: Number(page),
-            pageSize: Number(pageSize),
+            page_size: Number(page_size),
             total,
-            totalPages: Math.ceil(total / Number(pageSize)),
+            total_pages: Math.ceil(total / Number(page_size)),
           },
         };
       } catch (err) {
@@ -156,15 +157,16 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
           return reply.code(404).send({ error: '用户不存在' });
         }
 
+        // hook 已将 camelCase 转换为 snake_case
         const schema = z.object({
           ids: z.array(z.number()).optional(),
-          beforeTime: z.number().optional(), // 删除指定时间之前的记录
+          before_time: z.number().optional(), // 删除指定时间之前的记录
           conditions: z
             .object({
               menu: z.string().optional(),
               type: z.string().optional(),
               status: z.string().optional(),
-              userId: z.string().optional(),
+              user_id: z.string().optional(),
             })
             .optional(),
         });
@@ -180,11 +182,11 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
             .prepare(`DELETE FROM operation_logs WHERE id IN (${placeholders})`)
             .run(...body.ids);
           deletedCount = result.changes;
-        } else if (body.beforeTime) {
+        } else if (body.before_time) {
           // 删除指定时间之前的记录
           const result = (app as any).db
             .prepare('DELETE FROM operation_logs WHERE time < ?')
-            .run(body.beforeTime);
+            .run(body.before_time);
           deletedCount = result.changes;
         } else if (body.conditions) {
           // 按条件删除
@@ -206,9 +208,9 @@ export function registerOperationLogRoutes(app: FastifyInstance) {
             args.push(body.conditions.status);
           }
 
-          if (body.conditions.userId) {
+          if (body.conditions.user_id) {
             sql += ' AND user_id=?';
-            args.push(body.conditions.userId);
+            args.push(body.conditions.user_id);
           }
 
           if (args.length > 0) {
