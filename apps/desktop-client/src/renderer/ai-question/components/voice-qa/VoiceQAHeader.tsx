@@ -55,7 +55,7 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
           const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
           const res = await electronAPI?.asrConfig?.get?.();
           const cfg = res?.config;
-          const defaultMic = cfg?.microphone_device_id;
+          const defaultMic = cfg?.microphoneDeviceId;
           if (defaultMic && mics.find(m => m.deviceId === defaultMic)) {
             setSelectedMic(defaultMic);
           } else if (mics.length > 0 && !selectedMic) {
@@ -69,8 +69,8 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
     try {
       const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
       const off = electronAPI?.asrConfig?.onChanged?.((cfg: any) => {
-        if (cfg?.microphone_device_id && micDevices.some(d => d.deviceId === cfg.microphone_device_id)) {
-          setSelectedMic(cfg.microphone_device_id);
+        if (cfg?.microphoneDeviceId && micDevices.some(d => d.deviceId === cfg.microphoneDeviceId)) {
+          setSelectedMic(cfg.microphoneDeviceId);
         }
       });
       return () => { try { off?.(); } catch {} };
@@ -100,8 +100,8 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
                   const name = selected?.label || '默认麦克风';
                   const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
                   await electronAPI?.asrConfig?.updateDevices?.({
-                    microphone_device_id: value,
-                    microphone_device_name: name,
+                    microphoneDeviceId: value,
+                    microphoneDeviceName: name,
                   });
                 } catch {}
               }}
@@ -157,7 +157,7 @@ export function VoiceQAHeader({ isLoading, onClose, onOpenHistory, heightPercent
                   // 同步更新数据库中的用户设置
                   try {
                     await userSettingsService.updateSettings({
-                      floating_window_height: newHeight
+                      floatingWindowHeight: newHeight
                     });
                   } catch (error) {
                     logger.error(`更新窗口高度设置失败: ${error}`);

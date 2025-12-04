@@ -67,7 +67,7 @@ export function VoiceQAFooter({
         try {
           const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
           const res = await electronAPI?.asrConfig?.get?.();
-          micDeviceId = res?.config?.microphone_device_id || undefined;
+          micDeviceId = res?.config?.microphoneDeviceId || undefined;
         } catch {}
 
         // 传入当前 input 的内容，确保不会被清空

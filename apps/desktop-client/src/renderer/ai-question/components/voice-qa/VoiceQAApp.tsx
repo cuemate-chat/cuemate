@@ -133,7 +133,7 @@ export function VoiceQAApp() {
         // 恢复消息
         const restoredMessages = latestConversation.messages.map(msg => ({
           id: msg.id.toString(),
-          type: msg.message_type === 'user' ? 'user' as const : 'ai' as const,
+          type: msg.messageType === 'user' ? 'user' as const : 'ai' as const,
           content: msg.content
         }));
         setMessages(restoredMessages);
@@ -259,7 +259,7 @@ export function VoiceQAApp() {
       const userData = userDataResult?.success ? userDataResult.userData : null;
 
       let modelToUse = userData?.model;
-      let modelParams = userData?.model_params || [];
+      let modelParams = userData?.modelParams || [];
 
       // 如果用户选择了自定义模型，尝试获取该模型
       if (selectedModelId && selectedModelId !== userData?.model?.id) {
@@ -278,7 +278,7 @@ export function VoiceQAApp() {
       // 准备模型配置
       const modelConfig = {
         provider: modelToUse.provider,
-        model_name: modelToUse.model_name,
+        modelName: modelToUse.modelName,
         credentials: modelToUse.credentials || '{}',
       };
 
@@ -336,17 +336,17 @@ export function VoiceQAApp() {
               if (ragQuestionId || ragOtherId) {
                 await interviewService.saveAIVectorRecord({
                   id: crypto.randomUUID(),
-                  interview_id: conversationId.toString(),
-                  note_type: 'voice_qa',
+                  interviewId: conversationId.toString(),
+                  noteType: 'voice_qa',
                   content: '',
-                  question_id: ragQuestionId,
+                  questionId: ragQuestionId,
                   question: ragQuestion,
                   answer: ragAnswer,
-                  asked_question: currentQuestion,
-                  reference_answer: aiResponseContent,
-                  other_id: ragOtherId,
-                  other_content: ragOtherContent,
-                  created_at: Date.now(),
+                  askedQuestion: currentQuestion,
+                  referenceAnswer: aiResponseContent,
+                  otherId: ragOtherId,
+                  otherContent: ragOtherContent,
+                  createdAt: Date.now(),
                 });
               }
             }

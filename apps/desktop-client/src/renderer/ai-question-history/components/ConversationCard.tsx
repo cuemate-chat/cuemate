@@ -149,16 +149,16 @@ export function ConversationCard({
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <span className="conversation-model">
-                大模型：{conversation.model_provider} · {conversation.model_name}
+                大模型：{conversation.modelProvider} · {conversation.modelName}
               </span>
             </Tooltip.Trigger>
             <Tooltip.Portal>
               <Tooltip.Content className="radix-tooltip-content">
-                模型标题: {conversation.model_title}<br/>
-                模型提供商: {conversation.model_provider}<br/>
-                模型名称: {conversation.model_name}<br/>
-                模型类型: {conversation.model_type}<br/>
-                {conversation.model_version && `模型版本: ${conversation.model_version}`}
+                模型标题: {conversation.modelTitle}<br/>
+                模型提供商: {conversation.modelProvider}<br/>
+                模型名称: {conversation.modelName}<br/>
+                模型类型: {conversation.modelType}<br/>
+                {conversation.modelVersion && `模型版本: ${conversation.modelVersion}`}
                 <Tooltip.Arrow className="radix-tooltip-arrow" />
               </Tooltip.Content>
             </Tooltip.Portal>
@@ -189,12 +189,12 @@ export function ConversationCard({
             <Tooltip.Trigger asChild>
               <div className="conversation-stat">
                 <Hash size={12} />
-                <span>共 {conversation.message_count} 条对话</span>
+                <span>共 {conversation.messageCount} 条对话</span>
               </div>
             </Tooltip.Trigger>
             <Tooltip.Portal>
               <Tooltip.Content className="radix-tooltip-content">
-                总消息数: {conversation.message_count} 条（用户和 AI 各 {conversation.message_count/2} 条）
+                总消息数: {conversation.messageCount} 条（用户和 AI 各 {conversation.messageCount/2} 条）
                 <Tooltip.Arrow className="radix-tooltip-arrow" />
               </Tooltip.Content>
             </Tooltip.Portal>
@@ -202,12 +202,12 @@ export function ConversationCard({
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <div className="conversation-stat">
-                <span>Token: {conversation.token_used}</span>
+                <span>Token: {conversation.tokenUsed}</span>
               </div>
             </Tooltip.Trigger>
             <Tooltip.Portal>
               <Tooltip.Content className="radix-tooltip-content">
-                消耗 Token 数量: {conversation.token_used}
+                消耗 Token 数量: {conversation.tokenUsed}
                 <Tooltip.Arrow className="radix-tooltip-arrow" />
               </Tooltip.Content>
             </Tooltip.Portal>
@@ -217,12 +217,12 @@ export function ConversationCard({
           <Tooltip.Trigger asChild>
             <div className="conversation-time">
               <Clock size={12} />
-              <span>{conversationHistoryService.formatTime(conversation.created_at)}</span>
+              <span>{conversationHistoryService.formatTime(conversation.createdAt)}</span>
             </div>
           </Tooltip.Trigger>
           <Tooltip.Portal>
             <Tooltip.Content className="radix-tooltip-content">
-              创建时间: {conversationHistoryService.formatTime(conversation.created_at)}
+              创建时间: {conversationHistoryService.formatTime(conversation.createdAt)}
               <Tooltip.Arrow className="radix-tooltip-arrow" />
             </Tooltip.Content>
           </Tooltip.Portal>

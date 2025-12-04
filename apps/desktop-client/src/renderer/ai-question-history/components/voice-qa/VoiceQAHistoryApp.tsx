@@ -61,10 +61,10 @@ export function VoiceQAHistoryApp() {
       setTotalItems(items.length);
     } else {
       // 有搜索词，过滤数据
-      const filtered = items.filter(item => 
+      const filtered = items.filter(item =>
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.model_provider.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.model_name.toLowerCase().includes(searchTerm.toLowerCase())
+        item.modelProvider.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.modelName.toLowerCase().includes(searchTerm.toLowerCase())
       );
       
       // 应用分页到过滤后的数据
@@ -117,7 +117,7 @@ export function VoiceQAHistoryApp() {
       if ((window as any).electronHistoryAPI?.loadConversation) {
         const messages = detail.messages.map(msg => ({
           id: msg.id.toString(),
-          type: msg.message_type === 'user' ? 'user' as const : 'ai' as const,
+          type: msg.messageType === 'user' ? 'user' as const : 'ai' as const,
           content: msg.content
         }));
         

@@ -32,9 +32,9 @@ export function InterviewTrainingHistoryApp() {
       const filtered = allReviews.filter(review => {
         const searchTerm = searchValue.toLowerCase();
         return (
-          (review.asked_question?.toLowerCase().includes(searchTerm)) ||
-          (review.candidate_answer?.toLowerCase().includes(searchTerm)) ||
-          (review.reference_answer?.toLowerCase().includes(searchTerm))
+          (review.askedQuestion?.toLowerCase().includes(searchTerm)) ||
+          (review.candidateAnswer?.toLowerCase().includes(searchTerm)) ||
+          (review.referenceAnswer?.toLowerCase().includes(searchTerm))
         );
       });
       setFilteredReviews(filtered);

@@ -34,9 +34,9 @@ export function MockInterviewHistoryBody({
     channel.postMessage({
       type: 'LOAD_HISTORY_REVIEW',
       data: {
-        askedQuestion: review.asked_question,
-        aiMessage: review.reference_answer,
-        candidateAnswer: review.candidate_answer,
+        askedQuestion: review.askedQuestion,
+        aiMessage: review.referenceAnswer,
+        candidateAnswer: review.candidateAnswer,
       }
     });
     channel.close();
@@ -162,7 +162,7 @@ export function MockInterviewHistoryBody({
                   <div className="section-header">
                     <span className="review-label interviewer-label">面试官问题:</span>
                     <div className="time-with-tooltip">
-                      <span className="created-time">{new Date(review.created_at).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</span>
+                      <span className="created-time">{new Date(review.createdAt).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</span>
                       <Tooltip.Root>
                         <Tooltip.Trigger asChild>
                           <Info size={14} className="tooltip-icon" />
@@ -171,15 +171,15 @@ export function MockInterviewHistoryBody({
                           <div className="tooltip-content">
                             <div className="tooltip-section">
                               <strong className="interviewer-label">面试官问题:</strong>
-                              <p>{review.asked_question}</p>
+                              <p>{review.askedQuestion}</p>
                             </div>
                             <div className="tooltip-section">
                               <strong className="ai-label">AI 回答:</strong>
-                              <p>{review.reference_answer}</p>
+                              <p>{review.referenceAnswer}</p>
                             </div>
                             <div className="tooltip-section">
                               <strong className="candidate-label">我的回答:</strong>
-                              <p>{review.candidate_answer}</p>
+                              <p>{review.candidateAnswer}</p>
                             </div>
                           </div>
                           <Tooltip.Arrow className="radix-tooltip-arrow" />
@@ -188,7 +188,7 @@ export function MockInterviewHistoryBody({
                     </div>
                   </div>
                   <div className="review-content">
-                    {truncateText(review.asked_question)}
+                    {truncateText(review.askedQuestion)}
                   </div>
                 </div>
 
@@ -196,7 +196,7 @@ export function MockInterviewHistoryBody({
                 <div className="review-section ai-section">
                   <div className="review-label ai-label">AI 回答:</div>
                   <div className="review-content">
-                    {truncateText(review.reference_answer)}
+                    {truncateText(review.referenceAnswer)}
                   </div>
                 </div>
 
@@ -204,7 +204,7 @@ export function MockInterviewHistoryBody({
                 <div className="review-section candidate-section">
                   <div className="review-label candidate-label">我的回答:</div>
                   <div className="review-content">
-                    {truncateText(review.candidate_answer)}
+                    {truncateText(review.candidateAnswer)}
                   </div>
                 </div>
               </div>
