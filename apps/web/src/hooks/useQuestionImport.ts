@@ -10,7 +10,7 @@ interface ImportResult {
 
 interface UseQuestionImportOptions {
   overwrite?: boolean;
-  is_builtin?: boolean; // 是否为内置题库（从 License 页面导入为 true）
+  isBuiltin?: boolean; // 是否为内置题库（从 License 页面导入为 true）
   onSuccess?: (result: ImportResult) => void;
   onError?: (error: Error) => void;
 }
@@ -24,8 +24,8 @@ export function useQuestionImport(options?: UseQuestionImportOptions) {
   const parseFileContent = (
     fileContent: string,
     fileName: string,
-  ): Array<{ question: string; answer: string; tag_name?: string | null }> => {
-    let questions: Array<{ question: string; answer: string; tag_name?: string | null }> = [];
+  ): Array<{ question: string; answer: string; tagName?: string | null }> => {
+    let questions: Array<{ question: string; answer: string; tagName?: string | null }> = [];
 
     if (fileName.endsWith('.json')) {
       // JSON 格式解析
@@ -35,7 +35,7 @@ export function useQuestionImport(options?: UseQuestionImportOptions) {
           .map((item: any) => ({
             question: String(item.question || '').trim(),
             answer: String(item.answer || '').trim(),
-            tag_name: item.tag_name || null,
+            tagName: item.tagName || item.tag_name || null,
           }))
           .filter((item) => item.question && item.answer);
       }
@@ -53,7 +53,7 @@ export function useQuestionImport(options?: UseQuestionImportOptions) {
           questions.push({
             question: columns[0],
             answer: columns[1],
-            tag_name: columns[2] || null,
+            tagName: columns[2] || null,
           });
         }
       }
@@ -90,7 +90,7 @@ export function useQuestionImport(options?: UseQuestionImportOptions) {
       const result = await batchImportPresetQuestions({
         questions,
         overwrite: options?.overwrite ?? false,
-        is_builtin: options?.is_builtin ?? false,
+        isBuiltin: options?.isBuiltin ?? false,
       });
 
       // 显示成功消息

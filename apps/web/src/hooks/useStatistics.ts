@@ -2,20 +2,20 @@ import { useEffect, useState } from 'react';
 
 // 统计数据类型定义
 export interface StatisticsData {
-  offers_count: string;
-  mock_interviews: string;
-  companies_joined: string;
-  success_rate: string;
-  practice_hours: string;
+  offersCount: string;
+  mockInterviews: string;
+  companiesJoined: string;
+  successRate: string;
+  practiceHours: string;
 }
 
 // 默认数据（兜底）
 const DEFAULT_STATISTICS: StatisticsData = {
-  offers_count: '100',
-  mock_interviews: '860',
-  companies_joined: '75',
-  success_rate: '85%',
-  practice_hours: '2000',
+  offersCount: '100',
+  mockInterviews: '860',
+  companiesJoined: '75',
+  successRate: '85%',
+  practiceHours: '2000',
 };
 
 // LocalStorage 键名
@@ -79,12 +79,13 @@ async function fetchStatistics(): Promise<StatisticsData | null> {
         statsMap[stat.key] = stat.value;
       });
 
+      // 外部 API 返回 snake_case 键名，转换为 camelCase
       return {
-        offers_count: statsMap.offers_count || DEFAULT_STATISTICS.offers_count,
-        mock_interviews: statsMap.mock_interviews || DEFAULT_STATISTICS.mock_interviews,
-        companies_joined: statsMap.companies_joined || DEFAULT_STATISTICS.companies_joined,
-        success_rate: statsMap.success_rate || DEFAULT_STATISTICS.success_rate,
-        practice_hours: statsMap.practice_hours || DEFAULT_STATISTICS.practice_hours,
+        offersCount: statsMap.offers_count || DEFAULT_STATISTICS.offersCount,
+        mockInterviews: statsMap.mock_interviews || DEFAULT_STATISTICS.mockInterviews,
+        companiesJoined: statsMap.companies_joined || DEFAULT_STATISTICS.companiesJoined,
+        successRate: statsMap.success_rate || DEFAULT_STATISTICS.successRate,
+        practiceHours: statsMap.practice_hours || DEFAULT_STATISTICS.practiceHours,
       };
     }
 
