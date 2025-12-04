@@ -68,7 +68,7 @@ export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightP
     >
       <div className="ai-header-left">
         <img src={CueMateLogo} alt="CueMate" className="ai-logo" />
-        <div className="ai-title">
+        <div className="ai-title" style={{ color: interviewState === 'ERROR' ? '#ef4444' : undefined }}>
           模拟面试 - {interviewState ? formatState(interviewState) : (isLoading ? 'LOADING' : 'IDLE')}
         </div>
         {isLoading && <LoadingDots />}

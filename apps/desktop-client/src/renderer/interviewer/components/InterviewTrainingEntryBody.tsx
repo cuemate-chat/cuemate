@@ -242,9 +242,43 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           return;
         }
 
-        // 先从数据库获取训练状态
-        const validationResult = await validateTrainingWithDatabase();
-        if (validationResult.status !== 'valid') {
+        // 先从数据库获取训练数据
+        const { found, interviewId, interview } = await validateTrainingWithDatabase();
+
+        if (!found || !interviewId || !interview) {
+          return;
+        }
+
+        // 获取数据库中的状态
+        const dbStatus = interview.status as string;
+        const dbInterviewState = interview.interviewState as string;
+
+        // 检查是否已结束（completed/error/expired）
+        const isEnded = dbStatus === 'interview-training-completed' ||
+                        dbStatus === 'interview-training-error' ||
+                        dbStatus === 'interview-training-expired';
+
+        if (isEnded) {
+          // 已结束的训练：直接使用数据库状态设置 voiceState
+          setVoiceState({
+            mode: 'interview-training',
+            subState: dbStatus as any,
+            interviewId,
+          });
+          // 设置跨窗口状态，让 header 显示正确的状态
+          setInterviewTrainingState({ interviewState: dbInterviewState });
+          // 从数据库获取最后一个问题显示
+          try {
+            const result = await interviewService.getInterview(interviewId);
+            if (result?.questions && result.questions.length > 0) {
+              const lastQuestion = result.questions[result.questions.length - 1];
+              setCurrentLine(lastQuestion.askedQuestion || lastQuestion.question || '面试训练已完成');
+            } else {
+              setCurrentLine('面试训练已完成');
+            }
+          } catch {
+            setCurrentLine('面试训练已完成');
+          }
           return;
         }
 
@@ -269,7 +303,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         currentInterview.set(context.interviewId);
 
         // 【恢复】voiceState（从数据库状态判断是否暂停）
-        const isPaused = validationResult.dbStatus === 'interview-training-paused';
+        const isPaused = dbStatus === 'interview-training-paused';
         const isRecording = currentState !== TrainingState.COMPLETED &&
                           currentState !== TrainingState.ERROR &&
                           currentState !== TrainingState.IDLE;
@@ -372,7 +406,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         jobId: selectedPosition.id,
         jobTitle: selectedPosition.title,
         jobContent: selectedPosition.description,
-        questionCount: selectedPosition.question_count || 10,
+        questionCount: selectedPosition.questionCount || 10,
         resumesId: selectedPosition.resumeId,
         resumesTitle: selectedPosition.resumeTitle,
         resumesContent: selectedPosition.resumeContent,
@@ -580,7 +614,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           },
           questionsBank: [],
           currentQuestionIndex: 0,
-          totalQuestions: selectedPosition?.question_count || 10,
+          totalQuestions: selectedPosition?.questionCount || 10,
           currentQuestion: interviewerQuestion,
         };
 
@@ -656,7 +690,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           },
           questionsBank: [],
           currentQuestionIndex: 0,
-          totalQuestions: selectedPosition?.question_count || 10,
+          totalQuestions: selectedPosition?.questionCount || 10,
           currentQuestion: question,
         };
 
@@ -679,9 +713,9 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
       // 【保存】创建新的 review 记录
       const newReview = await mockInterviewService.createReview({
-        interview_id: interviewId,
+        interviewId: interviewId,
         content: question,
-        asked_question: question,
+        askedQuestion: question,
       });
 
       setInterviewTrainingState({
@@ -759,7 +793,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
       const modelConfig: ModelConfig = {
         provider: selectedModel.provider,
-        model_name: selectedModel.model_name,
+        modelName: selectedModel.modelName,
         credentials: selectedModel.credentials || '{}',
       };
 
@@ -1033,7 +1067,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
       const modelConfig: ModelConfig = {
         provider: selectedModel.provider,
-        model_name: selectedModel.model_name,
+        modelName: selectedModel.modelName,
         credentials: selectedModel.credentials || '{}',
       };
 
@@ -1078,7 +1112,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
               pros: ensureStr(rawAnalysis.pros),
               cons: ensureStr(rawAnalysis.cons),
               suggestions: ensureStr(rawAnalysis.suggestions),
-              key_points: ensureStr(rawAnalysis.key_points),
+              keyPoints: ensureStr(rawAnalysis.key_points),
               assessment: ensureStr(rawAnalysis.assessment),
             };
 
@@ -1095,19 +1129,19 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
             // 【保存】更新数据库
             await mockInterviewService.updateReview(questionState.reviewId, {
-              question_id: questionData.questionId,
+              questionId: questionData.questionId,
               question: questionData.question,
               answer: questionData.answer,
-              reference_answer: questionData.referenceAnswer || '',
-              candidate_answer: candidateAnswer,
+              referenceAnswer: questionData.referenceAnswer || '',
+              candidateAnswer: candidateAnswer,
               pros: analysis.pros,
               cons: analysis.cons,
               suggestions: analysis.suggestions,
-              key_points: analysis.key_points,
+              keyPoints: analysis.keyPoints,
               assessment: analysis.assessment,
-              other_id: questionData.otherId,
-              other_content: questionData.otherContent,
-              end_at: endAt,
+              otherId: questionData.otherId,
+              otherContent: questionData.otherContent,
+              endAt: endAt,
               duration,
             });
 
@@ -1115,23 +1149,23 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
             if (questionData.questionId || questionData.otherId) {
               await mockInterviewService.saveAIVectorRecord({
                 id: questionState.reviewId,
-                interview_id: interviewDataService.getInterviewDataState()?.interviewId || '',
-                note_type: 'training',
+                interviewId: interviewDataService.getInterviewDataState()?.interviewId || '',
+                noteType: 'training',
                 content: '',
-                question_id: questionData.questionId,
+                questionId: questionData.questionId,
                 question: questionData.question,
                 answer: questionData.answer,
-                asked_question: context.currentQuestion,
-                candidate_answer: candidateAnswer,
+                askedQuestion: context.currentQuestion,
+                candidateAnswer: candidateAnswer,
                 pros: analysis.pros || '',
                 cons: analysis.cons || '',
                 suggestions: analysis.suggestions || '',
-                key_points: analysis.key_points || '',
+                keyPoints: analysis.keyPoints || '',
                 assessment: analysis.assessment || '',
-                reference_answer: questionData.referenceAnswer || '',
-                other_id: questionData.otherId,
-                other_content: questionData.otherContent,
-                created_at: Date.now(),
+                referenceAnswer: questionData.referenceAnswer || '',
+                otherId: questionData.otherId,
+                otherContent: questionData.otherContent,
+                createdAt: Date.now(),
               });
             }
 
@@ -1372,7 +1406,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       }
 
       await mockInterviewService.updateReview(reviewId, {
-        candidate_answer: candidateAnswer,
+        candidateAnswer: candidateAnswer,
       });
 
       const reviews = await mockInterviewService.getInterviewReviews(currentInterview.get() || '');
@@ -1496,7 +1530,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       // 构造模型配置，使用组件状态中的 selectedModel
       const modelConfig = selectedModel ? {
         provider: selectedModel.provider,
-        model_name: selectedModel.model_name,
+        modelName: selectedModel.modelName,
         credentials: selectedModel.credentials || '{}',
       } : undefined;
 

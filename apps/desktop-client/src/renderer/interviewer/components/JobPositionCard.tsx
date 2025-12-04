@@ -54,8 +54,8 @@ export function JobPositionCard({ selectedJobId, onPositionSelect, onModelSelect
           let defaultModel = modelResult.list[0]; // 备选第一个
 
           // 查找用户保存的模型
-          if (userData?.selected_model_id) {
-            const userSavedModel = modelResult.list.find((m: Model) => m.id === userData.selected_model_id);
+          if (userData?.selectedModelId) {
+            const userSavedModel = modelResult.list.find((m: Model) => m.id === userData.selectedModelId);
             if (userSavedModel) {
               defaultModel = userSavedModel;
             }
@@ -185,7 +185,7 @@ export function JobPositionCard({ selectedJobId, onPositionSelect, onModelSelect
           ) : (
             models.map(model => (
               <option key={model.id} value={model.id}>
-                {model.name} ({model.model_name})
+                {model.name} ({model.modelName})
               </option>
             ))
           )}
@@ -257,13 +257,13 @@ export function JobPositionCard({ selectedJobId, onPositionSelect, onModelSelect
 
           <div className="detail-row">
             <span className="detail-label">创建时间:</span>
-            <span className="detail-value">{new Date(selectedPosition.created_at).toLocaleString()}</span>
+            <span className="detail-value">{new Date(selectedPosition.createdAt).toLocaleString()}</span>
           </div>
 
-          {selectedPosition.question_count !== undefined && (
+          {selectedPosition.questionCount !== undefined && (
             <div className="detail-row">
               <span className="detail-label">面试押题:</span>
-              <span className="detail-value">{selectedPosition.question_count}</span>
+              <span className="detail-value">{selectedPosition.questionCount}</span>
             </div>
           )}
 

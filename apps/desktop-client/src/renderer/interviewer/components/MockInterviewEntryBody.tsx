@@ -258,33 +258,43 @@ export function MockInterviewEntryBody({
           return;
         }
 
-        // 先从数据库获取面试状态
-        const validationResult = await validateWithDatabase();
+        // 从数据库获取面试数据
+        const { found, interviewId, interview } = await validateWithDatabase();
 
-        // 已完成的面试也需要显示数据（不是恢复状态机，而是显示已完成状态）
-        if (validationResult.status === 'completed' && validationResult.interviewId) {
-          // 设置 voiceState 为已完成状态
+        if (!found || !interviewId || !interview) {
+          return;
+        }
+
+        // 直接使用数据库的 status 和 interviewState 字段
+        const dbStatus = interview.status as string;
+        const dbInterviewState = interview.interviewState as string;
+
+        // 判断面试是否已结束（completed/error/expired）
+        const isEnded = dbStatus === 'mock-interview-completed' ||
+                        dbStatus === 'mock-interview-error' ||
+                        dbStatus === 'mock-interview-expired';
+
+        if (isEnded) {
+          // 已结束的面试：设置 voiceState 和跨窗口状态
           setVoiceState({
             mode: 'mock-interview',
-            subState: 'mock-interview-completed',
-            interviewId: validationResult.interviewId,
+            subState: dbStatus as any,
+            interviewId,
           });
+          setMockInterviewState({ interviewState: dbInterviewState });
+
           // 从数据库获取最后一个问题显示
           try {
-            const result = await interviewService.getInterview(validationResult.interviewId);
+            const result = await interviewService.getInterview(interviewId);
             if (result?.questions && result.questions.length > 0) {
               const lastQuestion = result.questions[result.questions.length - 1];
-              setCurrentLine(lastQuestion.asked_question || lastQuestion.question || '面试已完成');
+              setCurrentLine(lastQuestion.askedQuestion || lastQuestion.question || '面试已完成');
             } else {
               setCurrentLine('面试已完成');
             }
           } catch {
             setCurrentLine('面试已完成');
           }
-          return;
-        }
-
-        if (validationResult.status !== 'valid') {
           return;
         }
 
@@ -310,7 +320,7 @@ export function MockInterviewEntryBody({
         currentInterview.set(context.interviewId);
 
         // 【恢复】voiceState（从数据库状态判断是否暂停）
-        const isPaused = validationResult.dbStatus === 'mock-interview-paused';
+        const isPaused = dbStatus === 'mock-interview-paused';
         const isRecording = currentState !== InterviewState.COMPLETED &&
                           currentState !== InterviewState.ERROR &&
                           currentState !== InterviewState.IDLE;
@@ -466,7 +476,7 @@ export function MockInterviewEntryBody({
         jobId: selectedPosition.id,
         jobTitle: selectedPosition.title,
         jobContent: selectedPosition.description,
-        questionCount: selectedPosition.question_count || 10,
+        questionCount: selectedPosition.questionCount || 10,
         resumesId: selectedPosition.resumeId,
         resumesTitle: selectedPosition.resumeTitle,
         resumesContent: selectedPosition.resumeContent,
@@ -768,7 +778,7 @@ export function MockInterviewEntryBody({
 
       const modelConfig: ModelConfig = {
         provider: selectedModel.provider,
-        model_name: selectedModel.model_name,
+        modelName: selectedModel.modelName,
         credentials: selectedModel.credentials || '{}',
       };
 
@@ -886,7 +896,7 @@ export function MockInterviewEntryBody({
 
       const modelConfig: ModelConfig = {
         provider: selectedModel.provider,
-        model_name: selectedModel.model_name,
+        modelName: selectedModel.modelName,
         credentials: selectedModel.credentials || '{}',
       };
 
@@ -931,7 +941,7 @@ export function MockInterviewEntryBody({
               pros: ensureStr(rawAnalysis.pros),
               cons: ensureStr(rawAnalysis.cons),
               suggestions: ensureStr(rawAnalysis.suggestions),
-              key_points: ensureStr(rawAnalysis.key_points),
+              keyPoints: ensureStr(rawAnalysis.key_points),
               assessment: ensureStr(rawAnalysis.assessment),
             };
 
@@ -948,19 +958,19 @@ export function MockInterviewEntryBody({
 
             // 【保存】更新数据库
             await mockInterviewService.updateReview(questionState.reviewId, {
-              question_id: questionData.questionId,
+              questionId: questionData.questionId,
               question: questionData.question,
               answer: questionData.answer,
-              reference_answer: questionData.referenceAnswer || '',
-              candidate_answer: candidateAnswer,
+              referenceAnswer: questionData.referenceAnswer || '',
+              candidateAnswer: candidateAnswer,
               pros: analysis.pros,
               cons: analysis.cons,
               suggestions: analysis.suggestions,
-              key_points: analysis.key_points,
+              keyPoints: analysis.keyPoints,
               assessment: analysis.assessment,
-              other_id: questionData.otherId,
-              other_content: questionData.otherContent,
-              end_at: endAt,
+              otherId: questionData.otherId,
+              otherContent: questionData.otherContent,
+              endAt: endAt,
               duration,
             });
 
@@ -968,23 +978,23 @@ export function MockInterviewEntryBody({
             if (questionData.questionId || questionData.otherId) {
               await mockInterviewService.saveAIVectorRecord({
                 id: questionState.reviewId,
-                interview_id: interviewDataService.getInterviewDataState()?.interviewId || '',
-                note_type: 'mock',
+                interviewId: interviewDataService.getInterviewDataState()?.interviewId || '',
+                noteType: 'mock',
                 content: '',
-                question_id: questionData.questionId,
+                questionId: questionData.questionId,
                 question: questionData.question,
                 answer: questionData.answer,
-                asked_question: context.currentQuestion,
-                candidate_answer: candidateAnswer,
+                askedQuestion: context.currentQuestion,
+                candidateAnswer: candidateAnswer,
                 pros: analysis.pros || '',
                 cons: analysis.cons || '',
                 suggestions: analysis.suggestions || '',
-                key_points: analysis.key_points || '',
+                keyPoints: analysis.keyPoints || '',
                 assessment: analysis.assessment || '',
-                reference_answer: questionData.referenceAnswer || '',
-                other_id: questionData.otherId,
-                other_content: questionData.otherContent,
-                created_at: Date.now(),
+                referenceAnswer: questionData.referenceAnswer || '',
+                otherId: questionData.otherId,
+                otherContent: questionData.otherContent,
+                createdAt: Date.now(),
               });
             }
 
@@ -1055,7 +1065,7 @@ export function MockInterviewEntryBody({
 
       const modelConfig: ModelConfig = {
         provider: selectedModel.provider,
-        model_name: selectedModel.model_name,
+        modelName: selectedModel.modelName,
         credentials: selectedModel.credentials || '{}',
       };
 
@@ -1313,7 +1323,7 @@ export function MockInterviewEntryBody({
       // 构造模型配置，使用组件状态中的 selectedModel
       const modelConfig = selectedModel ? {
         provider: selectedModel.provider,
-        model_name: selectedModel.model_name,
+        modelName: selectedModel.modelName,
         credentials: selectedModel.credentials || '{}',
       } : undefined;
 

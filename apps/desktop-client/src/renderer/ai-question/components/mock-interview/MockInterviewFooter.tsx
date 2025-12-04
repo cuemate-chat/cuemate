@@ -138,7 +138,7 @@ export function MockInterviewFooter({
           // 获取麦克风设备 ID
           const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
           const res = await api?.asrConfig?.get?.();
-          const micDeviceId = res?.config?.microphone_device_id;
+          const micDeviceId = res?.config?.microphoneDeviceId;
 
           // 启动 VoiceCoordinator 音量检测
           const coordinator = getVoiceCoordinator('mock-interview');

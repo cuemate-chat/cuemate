@@ -94,8 +94,8 @@ export function VoiceTestBody() {
           const res = await electronAPI?.asrConfig?.get?.();
           const cfg = res?.config;
           if (cfg) {
-            defaultMic = cfg.microphone_device_id;
-            defaultSpeaker = cfg.speaker_device_id;
+            defaultMic = cfg.microphoneDeviceId;
+            defaultSpeaker = cfg.speakerDeviceId;
           }
         } catch {}
 
@@ -116,11 +116,11 @@ export function VoiceTestBody() {
     try {
       const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
       const off = electronAPI?.asrConfig?.onChanged?.((cfg: any) => {
-        if (cfg?.microphone_device_id && micDevices.some(d => d.deviceId === cfg.microphone_device_id)) {
-          setSelectedMic(cfg.microphone_device_id);
+        if (cfg?.microphoneDeviceId && micDevices.some(d => d.deviceId === cfg.microphoneDeviceId)) {
+          setSelectedMic(cfg.microphoneDeviceId);
         }
-        if (cfg?.speaker_device_id && speakerDevices.some(d => d.deviceId === cfg.speaker_device_id)) {
-          setSelectedSpeaker(cfg.speaker_device_id);
+        if (cfg?.speakerDeviceId && speakerDevices.some(d => d.deviceId === cfg.speakerDeviceId)) {
+          setSelectedSpeaker(cfg.speakerDeviceId);
         }
       });
       return () => {

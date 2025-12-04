@@ -49,7 +49,7 @@ export function InterviewerWindowBody({ selectedCard, onSelectCard, selectedJobI
       try {
         const electronAPI: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
         const res = await electronAPI?.asrConfig?.get?.();
-        micDeviceId = res?.config?.microphone_device_id || undefined;
+        micDeviceId = res?.config?.microphoneDeviceId || undefined;
       } catch {}
       // 传入共享状态中的文本，确保和右侧窗口同步
       await startVoiceQA(micDeviceId, qa.confirmedText);

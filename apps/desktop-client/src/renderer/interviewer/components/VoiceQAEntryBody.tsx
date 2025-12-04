@@ -39,8 +39,8 @@ export function VoiceQAEntryBody({ question, onVoiceToggle, onModelSelect, onLan
           let defaultModel = modelResult.list[0]; // 备选第一个
 
           // 查找用户保存的模型
-          if (userData?.selected_model_id) {
-            const userSavedModel = modelResult.list.find((m: Model) => m.id === userData.selected_model_id);
+          if (userData?.selectedModelId) {
+            const userSavedModel = modelResult.list.find((m: Model) => m.id === userData.selectedModelId);
             if (userSavedModel) {
               defaultModel = userSavedModel;
             }
@@ -87,7 +87,7 @@ export function VoiceQAEntryBody({ question, onVoiceToggle, onModelSelect, onLan
             ) : (
               models.map(model => (
                 <option key={model.id} value={model.id}>
-                  {model.name} ({model.model_name})
+                  {model.name} ({model.modelName})
                 </option>
               ))
             )}

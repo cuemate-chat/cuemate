@@ -47,24 +47,26 @@ export function MockInterviewApp() {
   // 这样即使发生错误，用户也能看到之前的数据
   const aiMessage = mockInterviewState.aiMessage;
 
-  // 面试完成时从数据库加载最后一个问题的 AI 参考答案
+  // 面试完成或错误时从数据库加载最后一个问题的 AI 回答
   useEffect(() => {
-    const loadCompletedInterviewData = async () => {
-      if (voiceState.subState === 'mock-interview-completed' && interviewId && !aiMessage) {
+    const loadInterviewData = async () => {
+      const isCompleted = voiceState.subState === 'mock-interview-completed';
+      const isError = voiceState.subState === 'mock-interview-error';
+
+      if ((isCompleted || isError) && interviewId && !aiMessage) {
         try {
           const result = await interviewService.getInterview(interviewId);
           if (result?.questions && result.questions.length > 0) {
             const lastQuestion = result.questions[result.questions.length - 1];
-            if (lastQuestion.reference_answer) {
-              setMockInterviewState({ aiMessage: lastQuestion.reference_answer });
-            }
+            // 直接设置最后一条 AI 回答，有值显示值，空就显示空
+            setMockInterviewState({ aiMessage: lastQuestion.referenceAnswer || '' });
           }
         } catch (error) {
-          log.error('loadCompletedInterviewData', '加载已完成面试数据失败', undefined, error);
+          log.error('loadInterviewData', '加载面试数据失败', undefined, error);
         }
       }
     };
-    loadCompletedInterviewData();
+    loadInterviewData();
   }, [voiceState.subState, interviewId, aiMessage]);
   const speechText = mockInterviewState.speechText;
   const candidateAnswer = mockInterviewState.candidateAnswer;

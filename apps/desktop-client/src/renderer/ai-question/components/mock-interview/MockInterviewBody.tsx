@@ -17,18 +17,30 @@ export function MockInterviewBody({ aiMessage, candidateAnswer, isLoading }: Win
   const [historyAiMessage, setHistoryAiMessage] = useState<string>('');
   const [historyCandidateAnswer, setHistoryCandidateAnswer] = useState<string>('');
   const [isShowingHistory, setIsShowingHistory] = useState(false);
-  const [isHoveringMessage, setIsHoveringMessage] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
+  const [isHoveringQuestion, setIsHoveringQuestion] = useState(false);
+  const [isHoveringAi, setIsHoveringAi] = useState(false);
+  const [isHoveringMyAnswer, setIsHoveringMyAnswer] = useState(false);
+  const [isCopiedQuestion, setIsCopiedQuestion] = useState(false);
+  const [isCopiedAi, setIsCopiedAi] = useState(false);
+  const [isCopiedMyAnswer, setIsCopiedMyAnswer] = useState(false);
 
   // 复制文本内容
-  const handleCopyContent = (content: string) => {
+  const handleCopyContent = (content: string, type: 'question' | 'ai' | 'myAnswer') => {
     try {
       logger.info(`复制内容: ${content.substring(0, 50)}...`);
       // 使用 Electron 原生剪贴板 API
       (window as any).electronAPI?.clipboard?.writeText(content);
       logger.info('复制成功');
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
+      if (type === 'question') {
+        setIsCopiedQuestion(true);
+        setTimeout(() => setIsCopiedQuestion(false), 2000);
+      } else if (type === 'ai') {
+        setIsCopiedAi(true);
+        setTimeout(() => setIsCopiedAi(false), 2000);
+      } else {
+        setIsCopiedMyAnswer(true);
+        setTimeout(() => setIsCopiedMyAnswer(false), 2000);
+      }
     } catch (error) {
       logger.error(`复制失败: ${error}`);
     }
@@ -99,7 +111,9 @@ export function MockInterviewBody({ aiMessage, candidateAnswer, isLoading }: Win
             {historyAskedQuestion && (
               <div
                 className="ai-message ai-message-interviewer animate__animated animate__fadeInUp"
-                style={{ width: '90%', alignSelf: 'flex-start' }}
+                style={{ width: '90%', alignSelf: 'flex-start', position: 'relative' }}
+                onMouseEnter={() => setIsHoveringQuestion(true)}
+                onMouseLeave={() => setIsHoveringQuestion(false)}
               >
                 <div className="ai-message-label">面试官问题</div>
                 <div className="ai-message-content">
@@ -109,6 +123,17 @@ export function MockInterviewBody({ aiMessage, candidateAnswer, isLoading }: Win
                     </div>
                   ))}
                 </div>
+                {/* 复制按钮 */}
+                {isHoveringQuestion && (
+                  <button
+                    className="message-copy-btn"
+                    onClick={() => handleCopyContent(historyAskedQuestion, 'question')}
+                    title={isCopiedQuestion ? '已复制' : '复制内容'}
+                    style={isCopiedQuestion ? { background: 'rgba(34, 197, 94, 0.8)' } : undefined}
+                  >
+                    {isCopiedQuestion ? <Check size={12} /> : <Copy size={12} />}
+                  </button>
+                )}
               </div>
             )}
 
@@ -117,8 +142,8 @@ export function MockInterviewBody({ aiMessage, candidateAnswer, isLoading }: Win
               <div
                 className="ai-message ai-message-history-ai animate__animated animate__fadeInUp"
                 style={{ width: '90%', alignSelf: 'flex-end', position: 'relative' }}
-                onMouseEnter={() => setIsHoveringMessage(true)}
-                onMouseLeave={() => setIsHoveringMessage(false)}
+                onMouseEnter={() => setIsHoveringAi(true)}
+                onMouseLeave={() => setIsHoveringAi(false)}
               >
                 <div className="ai-message-label">AI 回答</div>
                 <div className="ai-message-content">
@@ -129,14 +154,14 @@ export function MockInterviewBody({ aiMessage, candidateAnswer, isLoading }: Win
                   ))}
                 </div>
                 {/* 复制按钮 */}
-                {isHoveringMessage && (
+                {isHoveringAi && (
                   <button
                     className="message-copy-btn"
-                    onClick={() => handleCopyContent(historyAiMessage)}
-                    title={isCopied ? '已复制' : '复制内容'}
-                    style={isCopied ? { background: 'rgba(34, 197, 94, 0.8)' } : undefined}
+                    onClick={() => handleCopyContent(historyAiMessage, 'ai')}
+                    title={isCopiedAi ? '已复制' : '复制内容'}
+                    style={isCopiedAi ? { background: 'rgba(34, 197, 94, 0.8)' } : undefined}
                   >
-                    {isCopied ? <Check size={12} /> : <Copy size={12} />}
+                    {isCopiedAi ? <Check size={12} /> : <Copy size={12} />}
                   </button>
                 )}
               </div>
@@ -146,7 +171,9 @@ export function MockInterviewBody({ aiMessage, candidateAnswer, isLoading }: Win
             {historyCandidateAnswer && (
               <div
                 className="ai-message ai-message-user animate__animated animate__fadeInUp"
-                style={{ width: '90%', alignSelf: 'flex-end' }}
+                style={{ width: '90%', alignSelf: 'flex-end', position: 'relative' }}
+                onMouseEnter={() => setIsHoveringMyAnswer(true)}
+                onMouseLeave={() => setIsHoveringMyAnswer(false)}
               >
                 <div className="ai-message-label">我的回答</div>
                 <div className="ai-message-content">
@@ -156,6 +183,17 @@ export function MockInterviewBody({ aiMessage, candidateAnswer, isLoading }: Win
                     </div>
                   ))}
                 </div>
+                {/* 复制按钮 */}
+                {isHoveringMyAnswer && (
+                  <button
+                    className="message-copy-btn"
+                    onClick={() => handleCopyContent(historyCandidateAnswer, 'myAnswer')}
+                    title={isCopiedMyAnswer ? '已复制' : '复制内容'}
+                    style={isCopiedMyAnswer ? { background: 'rgba(34, 197, 94, 0.8)' } : undefined}
+                  >
+                    {isCopiedMyAnswer ? <Check size={12} /> : <Copy size={12} />}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -167,8 +205,8 @@ export function MockInterviewBody({ aiMessage, candidateAnswer, isLoading }: Win
               <div
                 className="ai-message ai-message-ai ai-message-reference animate__animated animate__fadeInUp"
                 style={{ position: 'relative' }}
-                onMouseEnter={() => setIsHoveringMessage(true)}
-                onMouseLeave={() => setIsHoveringMessage(false)}
+                onMouseEnter={() => setIsHoveringAi(true)}
+                onMouseLeave={() => setIsHoveringAi(false)}
               >
                 <div className="ai-message-content">
                   {displayAiMessage.split('\n').map((line, index) => (
@@ -178,14 +216,14 @@ export function MockInterviewBody({ aiMessage, candidateAnswer, isLoading }: Win
                   ))}
                 </div>
                 {/* 复制按钮 - 鼠标悬浮时显示 */}
-                {isHoveringMessage && (
+                {isHoveringAi && (
                   <button
                     className="message-copy-btn"
-                    onClick={() => handleCopyContent(displayAiMessage)}
-                    title={isCopied ? '已复制' : '复制内容'}
-                    style={isCopied ? { background: 'rgba(34, 197, 94, 0.8)' } : undefined}
+                    onClick={() => handleCopyContent(displayAiMessage, 'ai')}
+                    title={isCopiedAi ? '已复制' : '复制内容'}
+                    style={isCopiedAi ? { background: 'rgba(34, 197, 94, 0.8)' } : undefined}
                   >
-                    {isCopied ? <Check size={12} /> : <Copy size={12} />}
+                    {isCopiedAi ? <Check size={12} /> : <Copy size={12} />}
                   </button>
                 )}
               </div>

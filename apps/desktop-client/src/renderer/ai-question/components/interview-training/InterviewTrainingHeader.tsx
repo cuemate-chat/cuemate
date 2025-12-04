@@ -68,7 +68,7 @@ export function InterviewTrainingHeader({ isLoading, onClose, onOpenHistory, hei
     >
       <div className="ai-header-left">
         <img src={CueMateLogo} alt="CueMate" className="ai-logo" />
-        <div className="ai-title">
+        <div className="ai-title" style={{ color: interviewState === 'ERROR' ? '#ef4444' : undefined }}>
           面试训练 - {interviewState ? formatState(interviewState) : (isLoading ? 'LOADING' : 'IDLE')}
         </div>
         {isLoading && <LoadingDots />}

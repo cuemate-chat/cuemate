@@ -1,6 +1,6 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion } from 'framer-motion';
-import { CheckCircle, Loader2, Mic, Pause } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2, Mic, Pause } from 'lucide-react';
 import { useVoiceState } from '../../../utils/voiceState';
 import { useMockInterviewState } from '../../utils/mockInterviewState';
 import { useInterviewTrainingState } from '../../utils/interviewTrainingState';
@@ -117,6 +117,7 @@ export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
           let statusText = '暂未开始';
           let tooltipText = '点击按钮开始语音识别';
           let IconComponent = Mic;
+          let isError = false;
 
           switch (globalState.subState) {
             case 'voice-mic-end':
@@ -164,6 +165,18 @@ export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
               tooltipText = '面试训练已过期（超过24小时）';
               IconComponent = CheckCircle;
               break;
+            case 'mock-interview-error':
+              statusText = '模拟面试出错';
+              tooltipText = '模拟面试发生错误';
+              IconComponent = AlertCircle;
+              isError = true;
+              break;
+            case 'interview-training-error':
+              statusText = '面试训练出错';
+              tooltipText = '面试训练发生错误';
+              IconComponent = AlertCircle;
+              isError = true;
+              break;
             case 'idle':
             default:
               statusText = '暂未开始';
@@ -189,7 +202,7 @@ export function InterviewerWindowFooter({}: InterviewerWindowFooterProps) {
                       alignItems: 'center',
                       textAlign: 'center',
                       gap: '4px',
-                      color: 'white',
+                      color: isError ? '#ef4444' : 'white',
                       fontSize: '12px'
                     }}>
                       <IconComponent size={16} />
