@@ -10,7 +10,7 @@ export class OpenAIProvider extends BaseLLMProvider {
   }
 
   async complete(request: CompletionRequest, config: RuntimeConfig): Promise<CompletionResponse> {
-    // 从 credentials 和 model_params 中解析 OpenAI 需要的参数
+    // 从 credentials 和 modelParams 中解析 OpenAI 需要的参数
     const apiKey = config.credentials.api_key;
     const baseUrl = config.credentials.base_url;
     
@@ -18,7 +18,7 @@ export class OpenAIProvider extends BaseLLMProvider {
       throw new Error('OpenAI API key is required');
     }
 
-    // 从 model_params 中解析参数
+    // 从 modelParams 中解析参数
     const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
     const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 2000;
 
@@ -62,7 +62,7 @@ export class OpenAIProvider extends BaseLLMProvider {
   }
 
   async *stream(request: CompletionRequest, config: RuntimeConfig): AsyncGenerator<string> {
-    // 从 credentials 和 model_params 中解析参数
+    // 从 credentials 和 modelParams 中解析参数
     const apiKey = config.credentials.api_key;
     const baseUrl = config.credentials.base_url;
     

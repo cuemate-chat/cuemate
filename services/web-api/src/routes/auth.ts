@@ -83,7 +83,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
       floating_window_height: row.floating_window_height ?? 75,
       version: row.version ?? 'v0.1.0',
       model: selectedModel,
-      model_params: modelParams,
+      modelParams: modelParams,
     };
 
     // 记录登录成功
@@ -146,7 +146,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
         const user = {
           ...row,
           model: selectedModel,
-          model_params: modelParams,
+          modelParams: modelParams,
         };
 
         return { user };
@@ -194,7 +194,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
           const user = {
             ...loggedInUser,
             model: selectedModel,
-            model_params: modelParams,
+            modelParams: modelParams,
           };
 
           app.log.info(
@@ -289,7 +289,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
         const user = {
           ...row,
           model: selectedModel,
-          model_params: modelParams,
+          modelParams: modelParams,
         };
 
         // 记录用户设置更新

@@ -24,7 +24,7 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
       throw new Error('Azure OpenAI requires deployment_name in credentials');
     }
 
-    // 从 model_params 中解析参数
+    // 从 modelParams 中解析参数
     const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
     const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 2000;
 
