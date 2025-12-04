@@ -13,13 +13,13 @@ export interface Model {
   provider: string;
   type: string;
   scope: string;
-  model_name: string;
+  modelName: string;
   icon?: string;
   version?: string;
-  created_by?: string;
-  is_enabled: number;
-  created_at: number;
-  updated_at?: number;
+  createdBy?: string;
+  isEnabled: number;
+  createdAt: number;
+  updatedAt?: number;
   credentials?: string;
   status?: string;
 }
@@ -31,12 +31,12 @@ export interface ModelOption {
 
 export interface ModelParam {
   id: string;
-  model_id: string;
+  modelId: string;
   label: string;
-  param_key: string;
-  ui_type: string;
+  paramKey: string;
+  uiType: string;
   value: string | number;
-  default_value: string | number;
+  defaultValue: string | number;
   required?: number;
   extra?: string;
 }
@@ -107,7 +107,7 @@ export class ModelService {
     try {
       const result = await this.getModels({ type });
       return (result.list || []).map((model: Model) => ({
-        label: `${model.name} (${model.model_name})`,
+        label: `${model.name} (${model.modelName})`,
         value: model.id,
       }));
     } catch (error) {

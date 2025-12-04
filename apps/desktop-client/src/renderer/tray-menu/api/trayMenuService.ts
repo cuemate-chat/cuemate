@@ -48,10 +48,10 @@ interface Model {
   id: string;
   name: string;
   provider: string;
-  model_name: string;
+  modelName: string;
   icon?: string;
   type: string;
-  is_enabled: number;
+  isEnabled: number;
 }
 
 /**
@@ -60,7 +60,7 @@ interface Model {
 interface UserSettings {
   theme?: string;
   locale?: string;
-  selected_model_id?: string;
+  selectedModelId?: string;
 }
 
 /**
@@ -179,13 +179,13 @@ export async function getUserSettings(): Promise<UserSettings> {
       return {
         theme: result.user.theme || 'light',
         locale: result.user.locale || 'zh-CN',
-        selected_model_id: result.user.selected_model_id || '',
+        selectedModelId: result.user.selectedModelId || '',
       };
     }
-    return { theme: 'light', locale: 'zh-CN', selected_model_id: '' };
+    return { theme: 'light', locale: 'zh-CN', selectedModelId: '' };
   } catch (error) {
     logger.error(`获取用户设置失败: ${error}`);
-    return { theme: 'light', locale: 'zh-CN', selected_model_id: '' };
+    return { theme: 'light', locale: 'zh-CN', selectedModelId: '' };
   }
 }
 

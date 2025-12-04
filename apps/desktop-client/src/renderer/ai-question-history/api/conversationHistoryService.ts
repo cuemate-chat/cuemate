@@ -7,19 +7,19 @@ import { logger } from '../../../utils/rendererLogger.js';
 export interface ConversationHistoryItem {
   id: number;
   title: string;
-  model_id: string;
-  model_title: string;
-  model_provider: string;
-  model_name: string;
-  model_type: string;
-  model_icon: string;
-  model_version: string;
-  model_credentials: string;
-  message_count: number;
-  token_used: number;
+  modelId: string;
+  modelTitle: string;
+  modelProvider: string;
+  modelName: string;
+  modelType: string;
+  modelIcon: string;
+  modelVersion: string;
+  modelCredentials: string;
+  messageCount: number;
+  tokenUsed: number;
   status: 'active' | 'completed' | 'error';
-  created_at: number;
-  updated_at: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface ConversationHistoryResponse {
@@ -29,16 +29,16 @@ export interface ConversationHistoryResponse {
 
 export interface MessageDetail {
   id: number;
-  conversation_id: number;
-  message_type: 'user' | 'assistant' | 'system';
+  conversationId: number;
+  messageType: 'user' | 'assistant' | 'system';
   content: string;
-  content_format: 'text' | 'markdown' | 'json';
-  sequence_number: number;
-  token_count: number;
-  response_time_ms?: number;
-  error_message?: string;
+  contentFormat: 'text' | 'markdown' | 'json';
+  sequenceNumber: number;
+  tokenCount: number;
+  responseTimeMs?: number;
+  errorMessage?: string;
   metadata?: Record<string, any>;
-  created_at: number;
+  createdAt: number;
 }
 
 export interface ConversationDetailResponse {
@@ -48,24 +48,24 @@ export interface ConversationDetailResponse {
 
 export interface InterviewReview {
   id: string;
-  interview_id: string;
-  note_type: 'mock' | 'training';
+  interviewId: string;
+  noteType: 'mock' | 'training';
   content: string;
-  question_id?: string;
+  questionId?: string;
   question?: string;
   answer?: string;
-  asked_question?: string;
-  candidate_answer?: string;
+  askedQuestion?: string;
+  candidateAnswer?: string;
   pros?: string;
   cons?: string;
   suggestions?: string;
-  key_points?: string;
+  keyPoints?: string;
   assessment?: string;
-  reference_answer?: string;
-  other_id?: string;
-  other_content?: string;
-  created_at: number;
-  end_at?: number;
+  referenceAnswer?: string;
+  otherId?: string;
+  otherContent?: string;
+  createdAt: number;
+  endAt?: number;
   duration?: number;
 }
 
@@ -239,7 +239,7 @@ export class ConversationHistoryService {
     await this.ensureAuth();
 
     try {
-      const response = await fetch(`${this.baseURL}/interview-reviews?interview_id=${interviewId}`, {
+      const response = await fetch(`${this.baseURL}/interview-reviews?interviewId=${interviewId}`, {
         method: 'GET',
         headers: this.getHeaders(),
       });

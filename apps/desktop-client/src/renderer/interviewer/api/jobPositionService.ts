@@ -7,16 +7,16 @@ import { logger } from '../../../utils/rendererLogger.js';
 
 export interface JobPosition {
   id: string;
-  user_id: string;
+  userId: string;
   title: string;
   description?: string;
   status: string;
-  created_at: number;
-  vector_status: number;
+  createdAt: number;
+  vectorStatus: number;
   resumeId?: string;
   resumeTitle?: string;
   resumeContent?: string;
-  question_count?: number;
+  questionCount?: number;
 }
 
 export class JobPositionService {

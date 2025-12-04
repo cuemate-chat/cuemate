@@ -11,9 +11,9 @@ export interface UserSettings {
   theme?: string;
   locale?: string;
   timezone?: string;
-  selected_model_id?: string;
-  floating_window_visible?: number;
-  floating_window_height?: number;
+  selectedModelId?: string;
+  floatingWindowVisible?: number;
+  floatingWindowHeight?: number;
   version?: string;
 }
 
@@ -21,14 +21,14 @@ export interface UserInfo {
   id: string;
   email?: string;
   name?: string;
-  created_at: number;
+  createdAt: number;
   theme?: string;
   locale?: string;
   timezone?: string;
-  selected_model_id?: string;
-  is_logged_in?: number;
-  floating_window_visible?: number;
-  floating_window_height?: number;
+  selectedModelId?: string;
+  isLoggedIn?: number;
+  floatingWindowVisible?: number;
+  floatingWindowHeight?: number;
   version?: string;
 }
 

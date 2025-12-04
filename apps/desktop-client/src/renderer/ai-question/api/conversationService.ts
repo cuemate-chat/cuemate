@@ -8,34 +8,34 @@ import { estimateTokens } from '../../utils/ai/calculateTokens';
 interface ConversationData {
   id: number;
   title: string;
-  model_id: string;
-  model_title: string;
-  model_provider: string;
-  model_name: string;
-  model_type: string;
-  model_icon: string;
-  model_version: string;
-  model_credentials: string;
-  model_config?: Record<string, any>;
-  message_count: number;
-  token_used: number;
+  modelId: string;
+  modelTitle: string;
+  modelProvider: string;
+  modelName: string;
+  modelType: string;
+  modelIcon: string;
+  modelVersion: string;
+  modelCredentials: string;
+  modelConfig?: Record<string, any>;
+  messageCount: number;
+  tokenUsed: number;
   status: 'active' | 'completed' | 'error';
-  created_at: number;
-  updated_at: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 interface MessageData {
   id: number;
-  conversation_id: number;
-  message_type: 'user' | 'assistant' | 'system';
+  conversationId: number;
+  messageType: 'user' | 'assistant' | 'system';
   content: string;
-  content_format: 'text' | 'markdown' | 'json';
-  sequence_number: number;
-  token_count: number;
-  response_time_ms?: number;
-  error_message?: string;
+  contentFormat: 'text' | 'markdown' | 'json';
+  sequenceNumber: number;
+  tokenCount: number;
+  responseTimeMs?: number;
+  errorMessage?: string;
   metadata?: Record<string, any>;
-  created_at: number;
+  createdAt: number;
 }
 
 interface ConversationWithMessages {
@@ -144,13 +144,13 @@ export class ConversationService {
       return null;
     }
 
-    // 处理 model_params 数组转换为对象
+    // 处理 modelParams 数组转换为对象
     let modelConfig = {};
-    if (this.userData.model_params && Array.isArray(this.userData.model_params)) {
-      // 将 model_params 数组转换为 key-value 对象
-      modelConfig = this.userData.model_params.reduce((config: any, param: any) => {
-        if (param.param_key && param.value !== undefined) {
-          config[param.param_key] = param.value;
+    if (this.userData.modelParams && Array.isArray(this.userData.modelParams)) {
+      // 将 modelParams 数组转换为 key-value 对象
+      modelConfig = this.userData.modelParams.reduce((config: any, param: any) => {
+        if (param.paramKey && param.value !== undefined) {
+          config[param.paramKey] = param.value;
         }
         return config;
       }, {});
@@ -158,17 +158,17 @@ export class ConversationService {
 
     const requestData = {
       title: title.length > 255 ? title.substring(0, 255) : title,
-      model_id: this.userData.user.model.id,
-      model_title: this.userData.user.model.name,
-      model_provider: this.userData.user.model.provider || 'openai',
-      model_name: this.userData.user.model.model_name || 'gpt-3.5-turbo',
-      model_type: this.userData.user.model.type || 'llm',
-      model_icon: this.userData.user.model.icon || '',
-      model_version: this.userData.user.model.version || '',
-      model_credentials: this.userData.user.model.credentials
+      modelId: this.userData.user.model.id,
+      modelTitle: this.userData.user.model.name,
+      modelProvider: this.userData.user.model.provider || 'openai',
+      modelName: this.userData.user.model.modelName || 'gpt-3.5-turbo',
+      modelType: this.userData.user.model.type || 'llm',
+      modelIcon: this.userData.user.model.icon || '',
+      modelVersion: this.userData.user.model.version || '',
+      modelCredentials: this.userData.user.model.credentials
         ? JSON.stringify(this.userData.user.model.credentials)
         : '',
-      model_config: modelConfig,
+      modelConfig: modelConfig,
     };
 
     try {
@@ -217,15 +217,15 @@ export class ConversationService {
       }
 
       const requestBody = {
-        conversation_id: conversationId,
-        message_type: messageType,
+        conversationId: conversationId,
+        messageType: messageType,
         content,
-        content_format: 'text',
-        sequence_number: sequenceNumber,
-        token_count: finalTokenCount,
-        token_source: tokenSource,
-        response_time_ms: responseTimeMs,
-        error_message: errorMessage,
+        contentFormat: 'text',
+        sequenceNumber: sequenceNumber,
+        tokenCount: finalTokenCount,
+        tokenSource: tokenSource,
+        responseTimeMs: responseTimeMs,
+        errorMessage: errorMessage,
       };
 
       const response = await fetch(`${this.baseURL}/ai/messages`, {
@@ -252,12 +252,12 @@ export class ConversationService {
   async batchSaveMessages(
     conversationId: number,
     messages: Array<{
-      message_type: 'user' | 'assistant';
+      messageType: 'user' | 'assistant';
       content: string;
-      sequence_number: number;
-      token_count?: number;
-      response_time_ms?: number;
-      error_message?: string;
+      sequenceNumber: number;
+      tokenCount?: number;
+      responseTimeMs?: number;
+      errorMessage?: string;
     }>,
   ): Promise<boolean> {
     await this.ensureAuth();
@@ -296,7 +296,7 @@ export class ConversationService {
     try {
       const updateData: any = { status };
       if (tokenUsed !== undefined) {
-        updateData.token_used = tokenUsed;
+        updateData.tokenUsed = tokenUsed;
       }
 
       const response = await fetch(`${this.baseURL}/ai/conversations/${conversationId}`, {

@@ -61,21 +61,21 @@ export interface UpdateInterviewData {
 // 面试详情返回类型
 export interface InterviewDetail {
   id: string;
-  job_id: string;
-  started_at: number;
-  ended_at?: number;
-  selected_model_id?: string;
-  job_title: string;
-  job_content: string;
-  question_count: number;
-  resumes_id?: string;
-  resumes_title?: string;
-  resumes_content?: string;
+  jobId: string;
+  startedAt: number;
+  endedAt?: number;
+  selectedModelId?: string;
+  jobTitle: string;
+  jobContent: string;
+  questionCount: number;
+  resumesId?: string;
+  resumesTitle?: string;
+  resumesContent?: string;
   duration?: number;
-  interview_type: 'mock' | 'training';
+  interviewType: 'mock' | 'training';
   status: InterviewStatus;
   message?: string;
-  interview_state?: string;
+  interviewState?: string;
   locale?: string;
   timezone?: string;
   theme?: string;
@@ -83,33 +83,33 @@ export interface InterviewDetail {
 
 export interface InterviewQuestion {
   id: string;
-  question_id?: string;
+  questionId?: string;
   question?: string;
   answer?: string;
-  asked_question?: string;
-  candidate_answer?: string;
-  key_points?: string;
+  askedQuestion?: string;
+  candidateAnswer?: string;
+  keyPoints?: string;
   assessment?: string;
-  reference_answer?: string;
+  referenceAnswer?: string;
   pros?: string;
   cons?: string;
   suggestions?: string;
-  created_at: number;
+  createdAt: number;
 }
 
 export interface InterviewSummary {
-  total_score?: number;
-  duration_sec?: number;
-  num_questions?: number;
-  overall_summary?: string;
+  totalScore?: number;
+  durationSec?: number;
+  numQuestions?: number;
+  overallSummary?: string;
   pros?: string;
   cons?: string;
   suggestions?: string;
-  radar_interactivity?: number;
-  radar_confidence?: number;
-  radar_professionalism?: number;
-  radar_relevance?: number;
-  radar_clarity?: number;
+  radarInteractivity?: number;
+  radarConfidence?: number;
+  radarProfessionalism?: number;
+  radarRelevance?: number;
+  radarClarity?: number;
 }
 
 export interface InterviewDetailResponse {
