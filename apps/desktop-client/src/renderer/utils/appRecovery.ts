@@ -52,8 +52,22 @@ async function runRecoveryInternal(): Promise<void> {
       validateTrainingWithDatabase(),
     ]);
 
+    // 判断模拟面试状态
+    const mockStatus = mockResult.interview?.status as string | undefined;
+    const mockIsValid = mockResult.found && mockResult.interview &&
+      mockStatus !== 'mock-interview-completed' &&
+      mockStatus !== 'mock-interview-error' &&
+      mockStatus !== 'mock-interview-expired';
+
+    // 判断面试训练状态
+    const trainingStatus = trainingResult.interview?.status as string | undefined;
+    const trainingIsValid = trainingResult.found && trainingResult.interview &&
+      trainingStatus !== 'interview-training-completed' &&
+      trainingStatus !== 'interview-training-error' &&
+      trainingStatus !== 'interview-training-expired';
+
     // Handle mock interview recovery
-    if (mockResult.status === 'valid' && mockResult.interviewId) {
+    if (mockIsValid && mockResult.interviewId) {
       const interviewId = mockResult.interviewId;
       logger.info(`[appRecovery] Recovering mock interview: interviewId=${interviewId}`);
 
@@ -79,7 +93,7 @@ async function runRecoveryInternal(): Promise<void> {
     }
 
     // Handle interview training recovery
-    if (trainingResult.status === 'valid' && trainingResult.interviewId) {
+    if (trainingIsValid && trainingResult.interviewId) {
       const interviewId = trainingResult.interviewId;
       logger.info(`[appRecovery] Recovering interview training: interviewId=${interviewId}`);
 
@@ -104,18 +118,13 @@ async function runRecoveryInternal(): Promise<void> {
       return;
     }
 
-    // 如果有任何一个是 completed 状态，保留数据不清除
-    if (mockResult.status === 'completed' || trainingResult.status === 'completed') {
+    // 如果有任何一个找到了记录（无论什么状态），保留数据不清除
+    if (mockResult.found || trainingResult.found) {
       return;
     }
 
-    // 只有当两个都返回无效状态（not_found/expired）时才清除
-    const mockInvalid = mockResult.status === 'not_found' || mockResult.status === 'expired';
-    const trainingInvalid =
-      trainingResult.status === 'not_found' || trainingResult.status === 'expired';
-    if (mockInvalid && trainingInvalid) {
-      clearVoiceState();
-    }
+    // 只有当两个都没找到记录时才清除
+    clearVoiceState();
   } catch (error) {
     logger.error(`[appRecovery] Recovery failed: ${error}`);
   }

@@ -183,7 +183,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
       // 系统状态更新成功后，同步更新数据库中的用户设置
       try {
         await userSettingsService.updateSettings({
-          floating_window_visible: next ? 0 : 1  // 逻辑反转：穿透模式存 0，交互模式存 1
+          floatingWindowVisible: next ? 0 : 1  // 逻辑反转：穿透模式存 0，交互模式存 1
         });
       } catch (error) {
         logger.error(`更新穿透性设置失败: ${error}`);
@@ -216,8 +216,8 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
       try {
         // 优先从数据库读取用户设置
         const user = await userSettingsService.getCurrentUser();
-        if (user && typeof user.floating_window_visible === 'number') {
-          const dbClickThrough = user.floating_window_visible === 0; // 逻辑反转：0 表示穿透模式
+        if (user && typeof user.floatingWindowVisible === 'number') {
+          const dbClickThrough = user.floatingWindowVisible === 0; // 逻辑反转：0 表示穿透模式
           setIsClickThrough(dbClickThrough);
 
           // 同步系统状态与数据库状态

@@ -75,7 +75,7 @@ export function TrayMenuApp() {
     // 获取用户设置
     const settings = await getUserSettings();
     setCurrentLocale(settings.locale || 'zh-CN');
-    setCurrentModelId(settings.selected_model_id || '');
+    setCurrentModelId(settings.selectedModelId || '');
 
     // 获取模型列表
     const models = await getModelList();
@@ -285,7 +285,7 @@ export function TrayMenuApp() {
                               />
                             )}
                             <span className="model-name">
-                              {model?.name} ({model?.model_name})
+                              {model?.name} ({model?.modelName})
                             </span>
                           </>
                         );
@@ -307,7 +307,7 @@ export function TrayMenuApp() {
                           onClick={async () => {
                             setCurrentModelId(model.id);
                             setModelDropdownOpen(false);
-                            await updateUserSettings({ selected_model_id: model.id });
+                            await updateUserSettings({ selectedModelId: model.id });
                           }}
                         >
                           {icon && (
@@ -318,7 +318,7 @@ export function TrayMenuApp() {
                             />
                           )}
                           <span className="model-name">
-                            {model.name} ({model.model_name})
+                            {model.name} ({model.modelName})
                           </span>
                         </div>
                       );

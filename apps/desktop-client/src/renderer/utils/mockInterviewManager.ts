@@ -124,20 +124,14 @@ export async function handleExpiredInterview(interviewId: string): Promise<void>
 }
 
 /**
- * 与数据库校验面试状态
+ * 获取数据库中的面试数据
  * 从 voiceState 获取 interviewId，然后查询数据库
- * @returns 返回校验后的状态：
- *   - 'valid': 面试未完成，可以恢复
- *   - 'completed': 面试已完成
- *   - 'not_found': 面试记录不存在
- *   - 'no_interview_id': voiceState 中没有 interviewId
- *   - 'expired': 面试已过期
+ * @returns 直接返回数据库数据，不做任何转换
  */
 export async function validateWithDatabase(): Promise<{
-  status: 'valid' | 'completed' | 'not_found' | 'no_interview_id' | 'expired';
+  found: boolean;
   interviewId?: string;
-  dbData?: any;
-  dbStatus?: string;
+  interview?: any;
 }> {
   try {
     // 从 voiceState 获取 interviewId
@@ -145,45 +139,39 @@ export async function validateWithDatabase(): Promise<{
     const interviewId = voiceState.interviewId;
 
     if (!interviewId) {
-      return { status: 'no_interview_id' };
+      return { found: false };
     }
 
     // 查询数据库中的面试状态
     const result = await interviewService.getInterview(interviewId);
 
-    // 面试记录不存在（可能已被删除）
+    // 面试记录不存在
     if (!result || !result.interview) {
-      logger.info(`[MockInterviewManager] 面试记录不存在: ${interviewId}`);
-      return { status: 'not_found', interviewId };
+      return { found: false, interviewId };
     }
 
-    const dbStatus = result.interview.status;
-    const startedAt = result.interview.started_at;
+    // 只有模拟面试类型才处理
+    if (result.interview.interviewType !== 'mock') {
+      return { found: false, interviewId };
+    }
 
     // 检查是否过期（24小时）
+    const startedAt = result.interview.startedAt;
     if (startedAt) {
       const age = Date.now() - startedAt;
       if (age > MAX_AGE) {
         await handleExpiredInterview(interviewId);
-        return { status: 'expired', interviewId, dbStatus };
+        // 重新查询获取更新后的数据
+        const updatedResult = await interviewService.getInterview(interviewId);
+        return { found: true, interviewId, interview: updatedResult?.interview };
       }
     }
 
-    // 检查数据库中的状态是否已完成或出错
-    if (dbStatus === 'mock-interview-completed' || dbStatus === 'mock-interview-expired' || dbStatus === 'mock-interview-error') {
-      return { status: 'completed', interviewId, dbData: result.interview, dbStatus };
-    }
-
-    // 只有模拟面试类型才返回 valid
-    if (result.interview.interview_type !== 'mock') {
-      return { status: 'not_found', interviewId };
-    }
-
-    // 面试仍在进行中
-    return { status: 'valid', interviewId, dbData: result.interview, dbStatus };
+    // 直接返回数据库数据
+    return { found: true, interviewId, interview: result.interview };
   } catch (error) {
-    logger.error(`[MockInterviewManager] 数据库校验失败: ${error}`);
-    return { status: 'no_interview_id' };
+    logger.error(`[MockInterviewManager] 数据库查询失败: ${error}`);
+    return { found: false };
   }
 }
 
@@ -221,8 +209,8 @@ export async function restoreMockInterview(): Promise<InterviewStateMachine | nu
     const interview = result.interview;
 
     // 只恢复模拟面试类型
-    if (interview.interview_type !== 'mock') {
-      logger.info(`[MockInterviewManager] 不是模拟面试类型: ${interview.interview_type}`);
+    if (interview.interviewType !== 'mock') {
+      logger.info(`[MockInterviewManager] 不是模拟面试类型: ${interview.interviewType}`);
       return null;
     }
 
@@ -238,24 +226,24 @@ export async function restoreMockInterview(): Promise<InterviewStateMachine | nu
     const context: Partial<InterviewContext> = {
       interviewId: interview.id,
       jobPosition: {
-        id: interview.job_id,
-        title: interview.job_title,
-        description: interview.job_content,
-        resumeId: interview.resumes_id,
-        resumeTitle: interview.resumes_title,
-        resumeContent: interview.resumes_content,
+        id: interview.jobId,
+        title: interview.jobTitle,
+        description: interview.jobContent,
+        resumeId: interview.resumesId,
+        resumeTitle: interview.resumesTitle,
+        resumeContent: interview.resumesContent,
       },
       resume: {
-        resumeTitle: interview.resumes_title,
-        resumeContent: interview.resumes_content,
+        resumeTitle: interview.resumesTitle,
+        resumeContent: interview.resumesContent,
       },
-      totalQuestions: interview.question_count,
+      totalQuestions: interview.questionCount,
       duration: interview.duration || 0,
       // 面试配置
-      selectedModelId: interview.selected_model_id,
+      selectedModelId: interview.selectedModelId,
       status: interview.status,
-      interviewState: interview.interview_state,
-      interviewType: interview.interview_type,
+      interviewState: interview.interviewState,
+      interviewType: interview.interviewType,
       locale: interview.locale,
       timezone: interview.timezone,
       theme: interview.theme,
@@ -264,9 +252,9 @@ export async function restoreMockInterview(): Promise<InterviewStateMachine | nu
       currentQuestionIndex: result.questions?.length || 0,
       questionsBank: result.questions || [],
       conversationHistory: result.questions?.map((q) => ({
-        question: q.asked_question || q.question,
-        answer: q.candidate_answer,
-        referenceAnswer: q.reference_answer,
+        question: q.askedQuestion || q.question,
+        answer: q.candidateAnswer,
+        referenceAnswer: q.referenceAnswer,
         assessment: q.assessment,
       })) || [],
     };
@@ -274,9 +262,9 @@ export async function restoreMockInterview(): Promise<InterviewStateMachine | nu
     // 创建状态机
     const machine = startMockInterview(context);
 
-    // 恢复状态（从数据库的 interview_state 字段）
-    if (interview.interview_state) {
-      const state = interview.interview_state as InterviewState;
+    // 恢复状态（从数据库的 interviewState 字段）
+    if (interview.interviewState) {
+      const state = interview.interviewState as InterviewState;
       machine.restoreState(state, context);
     }
 

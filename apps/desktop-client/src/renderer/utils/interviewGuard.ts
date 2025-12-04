@@ -82,7 +82,7 @@ export async function getOngoingInterviewAsync(): Promise<OngoingInterviewInfo |
       type,
       interviewId: interview.id,
       currentQuestionIndex: dbResult.questions?.length || 0,
-      jobPositionTitle: interview.job_title,
+      jobPositionTitle: interview.jobTitle,
       status: interview.status,
     };
   } catch (error) {

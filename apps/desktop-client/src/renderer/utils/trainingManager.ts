@@ -144,20 +144,14 @@ export async function handleExpiredTraining(interviewId: string): Promise<void> 
 }
 
 /**
- * 与数据库校验训练状态
+ * 获取数据库中的训练数据
  * 从 voiceState 获取 interviewId，然后查询数据库
- * @returns 返回校验后的状态：
- *   - 'valid': 训练未完成，可以恢复
- *   - 'completed': 训练已完成
- *   - 'not_found': 训练记录不存在
- *   - 'no_interview_id': voiceState 中没有 interviewId
- *   - 'expired': 训练已过期
+ * @returns 直接返回数据库数据，不做任何转换
  */
 export async function validateTrainingWithDatabase(): Promise<{
-  status: 'valid' | 'completed' | 'not_found' | 'no_interview_id' | 'expired';
+  found: boolean;
   interviewId?: string;
-  dbData?: any;
-  dbStatus?: string;
+  interview?: any;
 }> {
   try {
     // 从 voiceState 获取 interviewId
@@ -165,45 +159,39 @@ export async function validateTrainingWithDatabase(): Promise<{
     const interviewId = voiceState.interviewId;
 
     if (!interviewId) {
-      return { status: 'no_interview_id' };
+      return { found: false };
     }
 
     // 查询数据库中的训练状态
     const result = await interviewService.getInterview(interviewId);
 
-    // 训练记录不存在（可能已被删除）
+    // 训练记录不存在
     if (!result || !result.interview) {
-      logger.info(`[TrainingManager] 训练记录不存在: ${interviewId}`);
-      return { status: 'not_found', interviewId };
+      return { found: false, interviewId };
     }
 
-    const dbStatus = result.interview.status;
-    const startedAt = result.interview.started_at;
+    // 只有训练类型才处理
+    if (result.interview.interviewType !== 'training') {
+      return { found: false, interviewId };
+    }
 
     // 检查是否过期（24小时）
+    const startedAt = result.interview.startedAt;
     if (startedAt) {
       const age = Date.now() - startedAt;
       if (age > MAX_AGE) {
         await handleExpiredTraining(interviewId);
-        return { status: 'expired', interviewId, dbStatus };
+        // 重新查询获取更新后的数据
+        const updatedResult = await interviewService.getInterview(interviewId);
+        return { found: true, interviewId, interview: updatedResult?.interview };
       }
     }
 
-    // 检查数据库中的状态是否已完成或出错
-    if (dbStatus === 'interview-training-completed' || dbStatus === 'interview-training-expired' || dbStatus === 'interview-training-error') {
-      return { status: 'completed', interviewId, dbData: result.interview, dbStatus };
-    }
-
-    // 只有训练类型才返回 valid
-    if (result.interview.interview_type !== 'training') {
-      return { status: 'not_found', interviewId };
-    }
-
-    // 训练仍在进行中
-    return { status: 'valid', interviewId, dbData: result.interview, dbStatus };
+    // 直接返回数据库数据
+    return { found: true, interviewId, interview: result.interview };
   } catch (error) {
-    logger.error(`[TrainingManager] 数据库校验失败: ${error}`);
-    return { status: 'no_interview_id' };
+    logger.error(`[TrainingManager] 数据库查询失败: ${error}`);
+    return { found: false };
   }
 }
 
@@ -241,8 +229,8 @@ export async function restoreInterviewTraining(): Promise<TrainingStateMachine |
     const interview = result.interview;
 
     // 只恢复训练类型
-    if (interview.interview_type !== 'training') {
-      logger.info(`[TrainingManager] 不是训练类型: ${interview.interview_type}`);
+    if (interview.interviewType !== 'training') {
+      logger.info(`[TrainingManager] 不是训练类型: ${interview.interviewType}`);
       return null;
     }
 
@@ -258,24 +246,24 @@ export async function restoreInterviewTraining(): Promise<TrainingStateMachine |
     const context: Partial<TrainingContext> = {
       interviewId: interview.id,
       jobPosition: {
-        id: interview.job_id,
-        title: interview.job_title,
-        description: interview.job_content,
-        resumeId: interview.resumes_id,
-        resumeTitle: interview.resumes_title,
-        resumeContent: interview.resumes_content,
+        id: interview.jobId,
+        title: interview.jobTitle,
+        description: interview.jobContent,
+        resumeId: interview.resumesId,
+        resumeTitle: interview.resumesTitle,
+        resumeContent: interview.resumesContent,
       },
       resume: {
-        resumeTitle: interview.resumes_title,
-        resumeContent: interview.resumes_content,
+        resumeTitle: interview.resumesTitle,
+        resumeContent: interview.resumesContent,
       },
-      totalQuestions: interview.question_count,
+      totalQuestions: interview.questionCount,
       duration: interview.duration || 0,
       // 训练配置
-      selectedModelId: interview.selected_model_id,
+      selectedModelId: interview.selectedModelId,
       status: interview.status,
-      interviewState: interview.interview_state,
-      interviewType: interview.interview_type,
+      interviewState: interview.interviewState,
+      interviewType: interview.interviewType,
       locale: interview.locale,
       timezone: interview.timezone,
       theme: interview.theme,
@@ -284,9 +272,9 @@ export async function restoreInterviewTraining(): Promise<TrainingStateMachine |
       currentQuestionIndex: result.questions?.length || 0,
       questionsBank: result.questions || [],
       conversationHistory: result.questions?.map((q) => ({
-        question: q.asked_question || q.question,
-        answer: q.candidate_answer,
-        referenceAnswer: q.reference_answer,
+        question: q.askedQuestion || q.question,
+        answer: q.candidateAnswer,
+        referenceAnswer: q.referenceAnswer,
         assessment: q.assessment,
       })) || [],
     };
@@ -294,9 +282,9 @@ export async function restoreInterviewTraining(): Promise<TrainingStateMachine |
     // 创建状态机
     const machine = startInterviewTraining(context);
 
-    // 恢复状态（从数据库的 interview_state 字段）
-    if (interview.interview_state) {
-      const state = interview.interview_state as TrainingState;
+    // 恢复状态（从数据库的 interviewState 字段）
+    if (interview.interviewState) {
+      const state = interview.interviewState as TrainingState;
       machine.restoreState(state, context);
     }
 
