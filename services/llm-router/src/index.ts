@@ -1,3 +1,4 @@
+import { toCamelCase, toSnakeCase } from '@cuemate/config';
 import { fastifyLoggingHooks, printBanner, printSuccessInfo } from '@cuemate/logger';
 import cors from '@fastify/cors';
 import Fastify from 'fastify';
@@ -26,6 +27,33 @@ async function buildServer() {
   fastify.addHook('onRequest', hooks.onRequest as any);
   fastify.addHook('onResponse', hooks.onResponse as any);
   hooks.setErrorHandler(fastify as any);
+
+  // 请求转换：camelCase → snake_case（前端发送 camelCase，后端使用 snake_case）
+  fastify.addHook('preHandler', async (request: any) => {
+    // 转换请求体
+    if (request.body && typeof request.body === 'object') {
+      request.body = toSnakeCase(request.body);
+    }
+    // 转换查询参数
+    if (request.query && typeof request.query === 'object') {
+      request.query = toSnakeCase(request.query);
+    }
+  });
+
+  // 响应体转换：snake_case → camelCase（后端返回 snake_case，前端期望 camelCase）
+  fastify.addHook('onSend', async (_request: any, _reply: any, payload: any) => {
+    if (typeof payload === 'string') {
+      try {
+        const parsed = JSON.parse(payload);
+        const transformed = toCamelCase(parsed);
+        return JSON.stringify(transformed);
+      } catch {
+        // 非 JSON 响应，直接返回
+        return payload;
+      }
+    }
+    return payload;
+  });
 
   // 初始化 LLM 管理器（现在自动注册 providers）
   const llmManager = new LLMManager(config);
