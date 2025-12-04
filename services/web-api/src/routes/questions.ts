@@ -117,12 +117,13 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'interview-questions.create', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
+        // hook 已将 camelCase 转换为 snake_case
         const body = z
           .object({
-            jobId: z.string().min(1),
+            job_id: z.string().min(1),
             title: z.string().min(1).max(200),
             description: z.string().max(1000).optional().default(''),
-            tagId: z.string().optional(),
+            tag_id: z.string().optional(),
           })
           .parse((req as any).body || {});
 
@@ -133,16 +134,16 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           .prepare(
             'INSERT INTO interview_questions (id, job_id, question, answer, created_at, tag_id, vector_status) VALUES (?, ?, ?, ?, ?, ?, 0)',
           )
-          .run(qid, body.jobId, body.title, body.description || '', now, body.tagId || null);
+          .run(qid, body.job_id, body.title, body.description || '', now, body.tag_id || null);
 
         // 同步到向量库
         try {
           // 获取标签名称
           let tagName = null;
-          if (body.tagId) {
+          if (body.tag_id) {
             const tagRow = (app as any).db
               .prepare('SELECT name FROM tags WHERE id = ?')
-              .get(body.tagId);
+              .get(body.tag_id);
             tagName = tagRow?.name || null;
           }
 
@@ -154,8 +155,8 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
                 id: qid,
                 title: body.title,
                 description: body.description || '',
-                job_id: body.jobId,
-                tag_id: body.tagId || null,
+                job_id: body.job_id,
+                tag_id: body.tag_id || null,
                 tag_name: tagName,
                 user_id: payload.uid,
                 created_at: now,
@@ -186,8 +187,8 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         try {
           const questionCount = (app as any).db
             .prepare('SELECT COUNT(*) as count FROM interview_questions WHERE job_id = ?')
-            .get(body.jobId)?.count || 1;
-          notifyQuestionCreated((app as any).db, payload.uid, qid, body.title, body.jobId, questionCount);
+            .get(body.job_id)?.count || 1;
+          notifyQuestionCreated((app as any).db, payload.uid, qid, body.title, body.job_id, questionCount);
         } catch (notifyError) {
           app.log.error({ err: notifyError }, '发送押题创建通知失败');
         }
@@ -205,23 +206,24 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'interview-questions.sync-stats', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
-        const { jobId } = (req as any).query as { jobId?: string };
-        if (!jobId) return reply.code(400).send({ error: '缺少 jobId' });
+        // hook 已将 camelCase 转换为 snake_case
+        const { job_id } = (req as any).query as { job_id?: string };
+        if (!job_id) return reply.code(400).send({ error: '缺少 jobId' });
 
         // 校验归属
         const owned = (app as any).db
           .prepare('SELECT id FROM jobs WHERE id=? AND user_id=?')
-          .get(jobId, payload.uid);
+          .get(job_id, payload.uid);
         if (!owned) return reply.code(404).send({ error: '岗位不存在或无权限' });
 
         const total = (app as any).db
           .prepare('SELECT COUNT(1) AS c FROM interview_questions WHERE job_id=?')
-          .get(jobId)?.c as number;
+          .get(job_id)?.c as number;
         const synced = (app as any).db
           .prepare(
             'SELECT COUNT(1) AS c FROM interview_questions WHERE job_id=? AND vector_status=1',
           )
-          .get(jobId)?.c as number;
+          .get(job_id)?.c as number;
         const unsynced = Math.max(0, (total || 0) - (synced || 0));
         return { total: total || 0, synced: synced || 0, unsynced };
       } catch (err: any) {
@@ -236,16 +238,17 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'interview-questions.sync-batch', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
+        // hook 已将 camelCase 转换为 snake_case
         const body = z
           .object({
-            jobId: z.string().min(1),
+            job_id: z.string().min(1),
           })
           .parse((req as any).body || {});
 
         // 校验归属
         const owned = (app as any).db
           .prepare('SELECT id FROM jobs WHERE id=? AND user_id=?')
-          .get(body.jobId, payload.uid);
+          .get(body.job_id, payload.uid);
         if (!owned) return reply.code(404).send({ error: '岗位不存在或无权限' });
 
         const rows: Array<{
@@ -263,7 +266,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
               WHERE q.job_id = ?
               ORDER BY q.created_at ASC`,
           )
-          .all(body.jobId);
+          .all(body.job_id);
 
         let success = 0;
         let failed = 0;
@@ -287,7 +290,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
                     id: r.id,
                     title: r.question,
                     description: r.answer || '',
-                    job_id: body.jobId,
+                    job_id: body.job_id,
                     tag_id: r.tag_id,
                     tag_name: r.tag_name,
                     user_id: payload.uid,
@@ -309,7 +312,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         // 额外清理：向量库存在但数据库不存在的残留
         let deletedExtras = 0;
         try {
-          const filterParam = encodeURIComponent(JSON.stringify({ jobId: body.jobId }));
+          const filterParam = encodeURIComponent(JSON.stringify({ jobId: body.job_id }));
           const listResp = await fetch(
             getRagServiceUrl(
               SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.SEARCH_QUESTIONS +
@@ -351,7 +354,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
         // 记录操作日志
         await logOperation(app, req, {
           ...OPERATION_MAPPING.QUESTION,
-          resourceId: body.jobId,
+          resourceId: body.job_id,
           resourceName: `批量同步${rows.length}个面试题`,
           operation: OperationType.UPDATE,
           message: `批量同步面试题到向量库: ${success}/${rows.length} 个成功`,
@@ -371,23 +374,24 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'interview-questions.list', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
+        // hook 已将 camelCase 转换为 snake_case
         const schema = z.object({
-          jobId: z.string().min(1),
+          job_id: z.string().min(1),
           page: z.coerce.number().min(1).default(1),
-          pageSize: z.coerce.number().min(1).max(100).default(6),
+          page_size: z.coerce.number().min(1).max(100).default(6),
           day: z.string().optional(),
           title: z.string().optional(),
           description: z.string().optional(),
-          tagId: z.string().optional(),
+          tag_id: z.string().optional(),
         });
-        const { jobId, page, pageSize, day, title, description, tagId } = schema.parse(
+        const { job_id, page, page_size, day, title, description, tag_id } = schema.parse(
           (req as any).query || {},
         );
-        const offset = (page - 1) * pageSize;
+        const offset = (page - 1) * page_size;
 
         // 构造 where 子句
         const where: string[] = ['j.user_id = ?', 'q.job_id = ?'];
-        const args: any[] = [payload.uid, jobId];
+        const args: any[] = [payload.uid, job_id];
         if (day) {
           // 传入格式 yyyy-mm-dd，计算当天 00:00:00~23:59:59
           const start = new Date(day + 'T00:00:00').getTime();
@@ -403,9 +407,9 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           where.push('q.answer LIKE ?');
           args.push(`%${description}%`);
         }
-        if (tagId) {
+        if (tag_id) {
           where.push('q.tag_id = ?');
-          args.push(tagId);
+          args.push(tag_id);
         }
 
         const totalRow = (app as any).db
@@ -434,7 +438,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
             ORDER BY q.created_at DESC
             LIMIT ? OFFSET ?`,
           )
-          .all(...args, pageSize, offset);
+          .all(...args, page_size, offset);
         return { items: rows, total };
       } catch (err) {
         return reply.code(401).send(buildPrefixedError('分页查询失败', err, 401));
@@ -476,11 +480,12 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
       try {
         const payload = await (req as any).jwtVerify();
         const id = (req as any).params?.id as string;
+        // hook 已将 camelCase 转换为 snake_case
         const body = z
           .object({
             title: z.string().min(1).max(200),
             description: z.string().min(1).max(5000),
-            tagId: z.string().nullable().optional(),
+            tag_id: z.string().nullable().optional(),
           })
           .parse((req as any).body || {});
         // 校验归属并获取 job_id
@@ -494,7 +499,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
           .prepare(
             'UPDATE interview_questions SET question=?, answer=?, tag_id=?, vector_status=0 WHERE id=?',
           )
-          .run(body.title, body.description, body.tagId ?? null, id);
+          .run(body.title, body.description, body.tag_id ?? null, id);
         try {
           // 先删除旧的向量数据
           await fetch(
@@ -506,10 +511,10 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
 
           // 获取标签名称
           let tagName = null;
-          if (body.tagId) {
+          if (body.tag_id) {
             const tagRow = (app as any).db
               .prepare('SELECT name FROM tags WHERE id = ?')
-              .get(body.tagId);
+              .get(body.tag_id);
             tagName = tagRow?.name || null;
           }
 
@@ -523,7 +528,7 @@ export function registerInterviewQuestionRoutes(app: FastifyInstance) {
                 title: body.title,
                 description: body.description,
                 job_id: own.job_id, // 需要获取 job_id
-                tag_id: body.tagId || null,
+                tag_id: body.tag_id || null,
                 tag_name: tagName,
                 user_id: payload.uid,
                 created_at: Date.now(),
