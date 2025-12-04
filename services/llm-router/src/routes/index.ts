@@ -206,14 +206,15 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       const model = body.model_name || body.model;
 
       // 动态提取凭证字段和运行参数
-      const allParams = body.allParams || {};
+      // hook 已将 camelCase 转换为 snake_case
+      const allParams = body.all_params || {};
       const config: any = { model };
 
       // 动态传递所有凭证字段，不假设固定的字段名
       // 每个 provider 的 credentialFields 都不同，需要传递所有字段
       Object.keys(body).forEach((key) => {
         // 跳过非凭证字段
-        if (!['provider', 'id', 'model_name', 'model', 'mode', 'allParams'].includes(key)) {
+        if (!['provider', 'id', 'model_name', 'model', 'mode', 'all_params'].includes(key)) {
           config[key] = body[key];
         }
       });
@@ -221,7 +222,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       // 调试日志：显示映射后的配置
       log.info('probe', 'Field mapping result', {
         originalFields: Object.keys(body).filter(
-          (key) => !['provider', 'id', 'model_name', 'model', 'mode', 'allParams'].includes(key),
+          (key) => !['provider', 'id', 'model_name', 'model', 'mode', 'all_params'].includes(key),
         ),
         mappedConfig: config,
       });
