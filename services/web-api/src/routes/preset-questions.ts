@@ -13,9 +13,10 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'preset-questions.list', async (req, reply) => {
       try {
         await (req as any).jwtVerify();
+        // hook 已将 camelCase 转换为 snake_case
         const schema = z.object({
           page: z.coerce.number().min(1).default(1),
-          pageSize: z.coerce.number().min(1).max(100).default(8),
+          page_size: z.coerce.number().min(1).max(100).default(8),
           keyword: z.string().optional(),
           tag_id: z.string().optional(),
           is_builtin: z.coerce.boolean().optional(),
@@ -24,10 +25,10 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
           answer: z.string().optional(), // 按答案过滤
         });
 
-        const { page, pageSize, keyword, tag_id, is_builtin, day, question, answer } = schema.parse(
+        const { page, page_size, keyword, tag_id, is_builtin, day, question, answer } = schema.parse(
           (req as any).query || {},
         );
-        const offset = (page - 1) * pageSize;
+        const offset = (page - 1) * page_size;
 
         // 构造 where 条件
         const where: string[] = [];
@@ -96,7 +97,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
              ORDER BY p.created_at DESC
              LIMIT ? OFFSET ?`,
           )
-          .all(...args, pageSize, offset);
+          .all(...args, page_size, offset);
 
         // 处理 synced_jobs 字段（JSON 字符串转数组）
         const items = rows.map((row: any) => ({
@@ -105,7 +106,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
           synced_jobs: row.synced_jobs ? JSON.parse(row.synced_jobs) : [],
         }));
 
-        return { items, total, page, pageSize };
+        return { items, total, page, page_size };
       } catch (err) {
         return reply.code(401).send(buildPrefixedError('获取预置题库列表失败', err, 401));
       }
@@ -369,17 +370,18 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'preset-questions.batch-sync', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
+        // hook 已将 camelCase 转换为 snake_case
         const body = z
           .object({
-            presetQuestionIds: z.array(z.string()).min(1).max(100),
-            jobId: z.string().min(1),
+            preset_question_ids: z.array(z.string()).min(1).max(100),
+            job_id: z.string().min(1),
           })
           .parse((req as any).body || {});
 
         // 校验岗位归属
         const job = (app as any).db
           .prepare('SELECT id FROM jobs WHERE id = ? AND user_id = ?')
-          .get(body.jobId, payload.uid);
+          .get(body.job_id, payload.uid);
 
         if (!job) {
           return reply.code(404).send({ error: '岗位不存在或无权限' });
@@ -388,14 +390,14 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
         // 获取预置题目
         const presetQuestions = (app as any).db
           .prepare(
-            `SELECT * FROM preset_questions WHERE id IN (${body.presetQuestionIds.map(() => '?').join(',')})`,
+            `SELECT * FROM preset_questions WHERE id IN (${body.preset_question_ids.map(() => '?').join(',')})`,
           )
-          .all(...body.presetQuestionIds);
+          .all(...body.preset_question_ids);
 
         // 获取已存在的面试题目（避免重复）
         const existingQuestions = (app as any).db
           .prepare('SELECT question FROM interview_questions WHERE job_id = ?')
-          .all(body.jobId)
+          .all(body.job_id)
           .map((row: any) => row.question);
 
         const existingSet = new Set(existingQuestions);
@@ -420,12 +422,12 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
               .prepare(
                 'INSERT INTO interview_questions (id, job_id, question, answer, created_at, tag_id, vector_status) VALUES (?, ?, ?, ?, ?, ?, 0)',
               )
-              .run(questionId, body.jobId, preset.question, preset.answer, now, preset.tag_id);
+              .run(questionId, body.job_id, preset.question, preset.answer, now, preset.tag_id);
 
             // 更新预置题目的同步状态
             const syncedJobs = preset.synced_jobs ? JSON.parse(preset.synced_jobs) : [];
-            if (!syncedJobs.includes(body.jobId)) {
-              syncedJobs.push(body.jobId);
+            if (!syncedJobs.includes(body.job_id)) {
+              syncedJobs.push(body.job_id);
               (app as any).db
                 .prepare('UPDATE preset_questions SET synced_jobs = ? WHERE id = ?')
                 .run(JSON.stringify(syncedJobs), preset.id);
@@ -452,7 +454,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
                       id: questionId,
                       title: preset.question,
                       description: preset.answer,
-                      job_id: body.jobId,
+                      job_id: body.job_id,
                       tag_id: preset.tag_id,
                       tag_name: tagName,
                       user_id: payload.uid,
@@ -480,10 +482,10 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
         // 记录操作日志
         await logOperation(app, req, {
           ...OPERATION_MAPPING.PRESET_QUESTION,
-          resourceId: body.jobId,
-          resourceName: `批量同步${body.presetQuestionIds.length}个预置题目`,
+          resourceId: body.job_id,
+          resourceName: `批量同步${body.preset_question_ids.length}个预置题目`,
           operation: OperationType.CREATE,
-          message: `批量同步预置题目到面试题库: ${syncedCount}/${body.presetQuestionIds.length} 个成功`,
+          message: `批量同步预置题目到面试题库: ${syncedCount}/${body.preset_question_ids.length} 个成功`,
           status: 'success',
           userId: payload.uid
         });
@@ -501,12 +503,13 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'preset-questions.count-by-tags', async (req, reply) => {
       try {
         await (req as any).jwtVerify();
+        // hook 已将 camelCase 转换为 snake_case
         const schema = z.object({
-          tagIds: z.string().min(1), // 逗号分隔的标签 ID
+          tag_ids: z.string().min(1), // 逗号分隔的标签 ID
         });
 
-        const { tagIds } = schema.parse((req as any).query || {});
-        const tagIdList = tagIds.split(',').filter(id => id.trim());
+        const { tag_ids } = schema.parse((req as any).query || {});
+        const tagIdList = tag_ids.split(',').filter(id => id.trim());
 
         if (tagIdList.length === 0) {
           return { count: 0 };
@@ -533,33 +536,34 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'preset-questions.batch-sync-by-tags', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
+        // hook 已将 camelCase 转换为 snake_case
         const body = z
           .object({
-            tagIds: z.array(z.string()).min(1).max(50),
-            jobIds: z.array(z.string()).min(1).max(50),
+            tag_ids: z.array(z.string()).min(1).max(50),
+            job_ids: z.array(z.string()).min(1).max(50),
           })
           .parse((req as any).body || {});
 
         // 校验所有岗位归属
-        const jobPlaceholders = body.jobIds.map(() => '?').join(',');
+        const jobPlaceholders = body.job_ids.map(() => '?').join(',');
         const validJobs = (app as any).db
           .prepare(`SELECT id FROM jobs WHERE id IN (${jobPlaceholders}) AND user_id = ?`)
-          .all(...body.jobIds, payload.uid);
+          .all(...body.job_ids, payload.uid);
 
-        if (validJobs.length !== body.jobIds.length) {
+        if (validJobs.length !== body.job_ids.length) {
           return reply.code(403).send({ error: '部分岗位不存在或无权限' });
         }
 
         // 获取匹配标签的预置题目
-        const tagPlaceholders = body.tagIds.map(() => '?').join(',');
+        const tagPlaceholders = body.tag_ids.map(() => '?').join(',');
         const presetQuestions = (app as any).db
           .prepare(
             `SELECT * FROM preset_questions WHERE tag_id IN (${tagPlaceholders})`,
           )
-          .all(...body.tagIds);
+          .all(...body.tag_ids);
 
         if (presetQuestions.length === 0) {
-          return { success: true, totalQuestions: 0, totalJobs: body.jobIds.length, syncedCount: 0, skippedCount: 0 };
+          return { success: true, totalQuestions: 0, totalJobs: body.job_ids.length, syncedCount: 0, skippedCount: 0 };
         }
 
         const { randomUUID } = await import('crypto');
@@ -567,7 +571,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
         let skippedCount = 0;
 
         // 遍历每个岗位进行同步
-        for (const jobId of body.jobIds) {
+        for (const jobId of body.job_ids) {
           // 获取该岗位已存在的面试题目（避免重复）
           const existingQuestions = (app as any).db
             .prepare('SELECT question FROM interview_questions WHERE job_id = ?')
@@ -656,8 +660,8 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
         // 记录操作日志
         await logOperation(app, req, {
           ...OPERATION_MAPPING.PRESET_QUESTION,
-          resourceId: `batch_sync_tags_${body.tagIds.length}_jobs_${body.jobIds.length}`,
-          resourceName: `按标签批量同步${presetQuestions.length}个题目到${body.jobIds.length}个岗位`,
+          resourceId: `batch_sync_tags_${body.tag_ids.length}_jobs_${body.job_ids.length}`,
+          resourceName: `按标签批量同步${presetQuestions.length}个题目到${body.job_ids.length}个岗位`,
           operation: OperationType.CREATE,
           message: `按标签批量同步: ${syncedCount} 条新增, ${skippedCount} 条跳过`,
           status: 'success',
@@ -667,7 +671,7 @@ export function registerPresetQuestionRoutes(app: FastifyInstance) {
         return {
           success: true,
           totalQuestions: presetQuestions.length,
-          totalJobs: body.jobIds.length,
+          totalJobs: body.job_ids.length,
           syncedCount,
           skippedCount
         };
