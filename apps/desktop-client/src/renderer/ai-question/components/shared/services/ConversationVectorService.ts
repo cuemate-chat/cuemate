@@ -12,7 +12,7 @@ interface ConversationDocument {
   content: string;
   metadata: {
     type: string;
-    interview_id: string;
+    interviewId: string;
     sequence: number;
     question: string;
     answer: string;
@@ -49,7 +49,7 @@ export class ConversationVectorService {
         content,
         metadata: {
           type: 'conversation',
-          interview_id: interviewId,
+          interviewId: interviewId,
           sequence,
           question,
           answer,
@@ -103,7 +103,7 @@ export class ConversationVectorService {
         content: `问题: ${conv.question}\n回答: ${conv.answer}`,
         metadata: {
           type: 'conversation',
-          interview_id: interviewId,
+          interviewId: interviewId,
           sequence: conv.sequence,
           question: conv.question,
           answer: conv.answer,
@@ -208,8 +208,8 @@ export class ConversationVectorService {
           content: chunk,
           metadata: {
             type: 'resume_chunk',
-            interview_id: interviewId,
-            chunk_index: index,
+            interviewId: interviewId,
+            chunkIndex: index,
           },
         });
       });
@@ -220,8 +220,8 @@ export class ConversationVectorService {
           content: chunk,
           metadata: {
             type: 'jd_chunk',
-            interview_id: interviewId,
-            chunk_index: index,
+            interviewId: interviewId,
+            chunkIndex: index,
           },
         });
       });

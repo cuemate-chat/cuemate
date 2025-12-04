@@ -9,18 +9,18 @@ const log = createLogger('AIService');
 
 export interface ModelConfig {
   provider: string;
-  model_name: string;
+  modelName: string;
   credentials: string; // JSON 字符串
 }
 
 export interface ModelParam {
-  param_key: string;
+  paramKey: string;
   value: string | number;
 }
 
 export interface UserData {
   model: ModelConfig;
-  model_params: ModelParam[];
+  modelParams: ModelParam[];
 }
 
 export interface ChatMessage {
@@ -83,24 +83,24 @@ class AIService {
       throw new Error('请先在设置中配置大模型');
     }
 
-    const { model, model_params } = userData;
+    const { model, modelParams } = userData;
 
     // 构建 credentials
     const finalCredentials = model.credentials ? JSON.parse(model.credentials) : {};
 
-    // 处理 model_params
+    // 处理 modelParams
     const finalModelParams =
-      model_params?.map((param) => ({
-        param_key: param.param_key,
+      modelParams?.map((param: ModelParam) => ({
+        paramKey: param.paramKey,
         value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
       })) || [];
 
     const url = `${this.config.llmRouterUrl}/completion`;
     const requestBody = {
       provider: model.provider,
-      model: model.model_name,
+      model: model.modelName,
       credentials: finalCredentials,
-      model_params: finalModelParams,
+      modelParams: finalModelParams,
       messages: messages,
     };
 
@@ -165,20 +165,20 @@ class AIService {
       throw new Error('请先在设置中配置大模型');
     }
 
-    const { model, model_params } = userData;
+    const { model, modelParams } = userData;
     const finalCredentials = model.credentials ? JSON.parse(model.credentials) : {};
     const finalModelParams =
-      model_params?.map((param) => ({
-        param_key: param.param_key,
+      modelParams?.map((param: ModelParam) => ({
+        paramKey: param.paramKey,
         value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
       })) || [];
 
     const url = `${this.config.llmRouterUrl}/completion/stream`;
     const requestBody = {
       provider: model.provider,
-      model: model.model_name,
+      model: model.modelName,
       credentials: finalCredentials,
-      model_params: finalModelParams,
+      modelParams: finalModelParams,
       messages: messages,
     };
 
@@ -253,17 +253,17 @@ class AIService {
   ): Promise<void> {
     const finalCredentials = customModel.credentials ? JSON.parse(customModel.credentials) : {};
     const finalModelParams =
-      customModelParams?.map((param) => ({
-        param_key: param.param_key,
+      customModelParams?.map((param: ModelParam) => ({
+        paramKey: param.paramKey,
         value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
       })) || [];
 
     const url = `${this.config.llmRouterUrl}/completion/stream`;
     const requestBody = {
       provider: customModel.provider,
-      model: customModel.model_name,
+      model: customModel.modelName,
       credentials: finalCredentials,
-      model_params: finalModelParams,
+      modelParams: finalModelParams,
       messages: messages,
     };
 

@@ -10,75 +10,75 @@ const log = createLogger('InterviewService');
 // 面试问答记录接口
 export interface InterviewReview {
   id?: string;
-  interview_id: string;
-  note_type: string;
+  interviewId: string;
+  noteType: string;
   content: string;
-  created_at: number;
-  end_at?: number;
+  createdAt: number;
+  endAt?: number;
   duration?: number;
-  question_id?: string;
+  questionId?: string;
   question?: string;
   answer?: string;
-  asked_question?: string;
-  candidate_answer?: string;
+  askedQuestion?: string;
+  candidateAnswer?: string;
   pros?: string;
   cons?: string;
   suggestions?: string;
-  key_points?: string;
+  keyPoints?: string;
   assessment?: string;
-  reference_answer?: string;
-  other_id?: string;
-  other_content?: string;
+  referenceAnswer?: string;
+  otherId?: string;
+  otherContent?: string;
 }
 
 // 创建问答记录的数据
 export interface CreateReviewData {
-  interview_id: string;
-  note_type?: string;
+  interviewId: string;
+  noteType?: string;
   content: string;
-  question_id?: string;
+  questionId?: string;
   question?: string;
   answer?: string;
-  asked_question?: string;
-  candidate_answer?: string;
+  askedQuestion?: string;
+  candidateAnswer?: string;
   pros?: string;
   cons?: string;
   suggestions?: string;
-  key_points?: string;
+  keyPoints?: string;
   assessment?: string;
-  reference_answer?: string;
-  other_id?: string;
-  other_content?: string;
+  referenceAnswer?: string;
+  otherId?: string;
+  otherContent?: string;
 }
 
 // 更新问答记录的数据
 export interface UpdateReviewData {
   content?: string;
-  question_id?: string;
+  questionId?: string;
   question?: string;
   answer?: string;
-  candidate_answer?: string;
+  candidateAnswer?: string;
   pros?: string;
   cons?: string;
   suggestions?: string;
-  key_points?: string;
+  keyPoints?: string;
   assessment?: string;
-  reference_answer?: string;
-  other_id?: string;
-  other_content?: string;
-  end_at?: number;
+  referenceAnswer?: string;
+  otherId?: string;
+  otherContent?: string;
+  endAt?: number;
   duration?: number;
 }
 
 // 面试题接口
 export interface InterviewQuestion {
   id: string;
-  job_id: string;
+  jobId: string;
   question: string;
   answer?: string;
-  created_at: number;
-  tag_id?: string;
-  vector_status: number;
+  createdAt: number;
+  tagId?: string;
+  vectorStatus: number;
 }
 
 export class InterviewService {
@@ -131,23 +131,24 @@ export class InterviewService {
   async createReview(data: CreateReviewData): Promise<{ id: string }> {
     try {
       const headers = await this.getHeaders();
+      // 发送 camelCase 字段，后端会自动转换为 snake_case
       const reviewData = {
-        interviewId: data.interview_id,
-        noteType: data.note_type || 'interview_qa',
+        interviewId: data.interviewId,
+        noteType: data.noteType || 'interview_qa',
         content: data.content,
-        questionId: data.question_id,
+        questionId: data.questionId,
         question: data.question,
         answer: data.answer,
-        askedQuestion: data.asked_question,
-        candidateAnswer: data.candidate_answer,
+        askedQuestion: data.askedQuestion,
+        candidateAnswer: data.candidateAnswer,
         pros: data.pros,
         cons: data.cons,
         suggestions: data.suggestions,
-        keyPoints: data.key_points,
+        keyPoints: data.keyPoints,
         assessment: data.assessment,
-        referenceAnswer: data.reference_answer,
-        otherId: data.other_id,
-        otherContent: data.other_content,
+        referenceAnswer: data.referenceAnswer,
+        otherId: data.otherId,
+        otherContent: data.otherContent,
       };
 
       const response = await fetch(`${this.baseURL}/interview-reviews`, {
@@ -174,22 +175,23 @@ export class InterviewService {
   async updateReview(reviewId: string, data: UpdateReviewData): Promise<void> {
     try {
       const headers = await this.getHeaders();
+      // 发送 camelCase 字段，后端会自动转换为 snake_case
       const updateData: any = {};
 
       if (data.content !== undefined) updateData.content = data.content;
-      if (data.question_id !== undefined) updateData.questionId = data.question_id;
+      if (data.questionId !== undefined) updateData.questionId = data.questionId;
       if (data.question !== undefined) updateData.question = data.question;
       if (data.answer !== undefined) updateData.answer = data.answer;
-      if (data.candidate_answer !== undefined) updateData.candidateAnswer = data.candidate_answer;
+      if (data.candidateAnswer !== undefined) updateData.candidateAnswer = data.candidateAnswer;
       if (data.pros !== undefined) updateData.pros = data.pros;
       if (data.cons !== undefined) updateData.cons = data.cons;
       if (data.suggestions !== undefined) updateData.suggestions = data.suggestions;
-      if (data.key_points !== undefined) updateData.keyPoints = data.key_points;
+      if (data.keyPoints !== undefined) updateData.keyPoints = data.keyPoints;
       if (data.assessment !== undefined) updateData.assessment = data.assessment;
-      if (data.reference_answer !== undefined) updateData.referenceAnswer = data.reference_answer;
-      if (data.other_id !== undefined) updateData.otherId = data.other_id;
-      if (data.other_content !== undefined) updateData.otherContent = data.other_content;
-      if (data.end_at !== undefined) updateData.endAt = data.end_at;
+      if (data.referenceAnswer !== undefined) updateData.referenceAnswer = data.referenceAnswer;
+      if (data.otherId !== undefined) updateData.otherId = data.otherId;
+      if (data.otherContent !== undefined) updateData.otherContent = data.otherContent;
+      if (data.endAt !== undefined) updateData.endAt = data.endAt;
       if (data.duration !== undefined) updateData.duration = data.duration;
 
       const response = await fetch(`${this.baseURL}/interview-reviews/${reviewId}`, {
@@ -214,7 +216,7 @@ export class InterviewService {
     try {
       const headers = await this.getHeaders();
       const response = await fetch(
-        `${this.baseURL}/interview-reviews?interview_id=${interviewId}`,
+        `${this.baseURL}/interview-reviews?interviewId=${interviewId}`,
         {
           method: 'GET',
           headers,
@@ -226,6 +228,7 @@ export class InterviewService {
       }
 
       const result = await response.json();
+      // 后端已自动转换为 camelCase，直接返回
       return result.items || [];
     } catch (error) {
       log.error('getInterviewReviews', '获取问答记录失败', undefined, error);
@@ -385,23 +388,23 @@ export class InterviewService {
    */
   async saveAIVectorRecord(data: {
     id: string;
-    interview_id: string;
-    note_type: string;
+    interviewId: string;
+    noteType: string;
     content: string;
-    question_id?: string;
+    questionId?: string;
     question?: string;
     answer?: string;
-    asked_question?: string;
-    candidate_answer?: string;
+    askedQuestion?: string;
+    candidateAnswer?: string;
     pros?: string;
     cons?: string;
     suggestions?: string;
-    key_points?: string;
+    keyPoints?: string;
     assessment?: string;
-    reference_answer?: string;
-    other_id?: string;
-    other_content?: string;
-    created_at: number;
+    referenceAnswer?: string;
+    otherId?: string;
+    otherContent?: string;
+    createdAt: number;
   }): Promise<boolean> {
     try {
       const response = await fetch(`${this.ragServiceURL}/ai-vector-records`, {

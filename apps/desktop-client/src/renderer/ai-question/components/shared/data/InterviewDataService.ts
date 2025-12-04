@@ -11,40 +11,40 @@ const log = createLogger('InterviewDataService');
 // 面试分数接口
 export interface InterviewScore {
   id?: string;
-  interview_id: string;
-  total_score: number;
-  duration_sec: number;
-  num_questions: number;
-  overall_summary?: string;
-  created_at: number;
+  interviewId: string;
+  totalScore: number;
+  durationSec: number;
+  numQuestions: number;
+  overallSummary?: string;
+  createdAt: number;
   pros?: string;
   cons?: string;
   suggestions?: string;
-  radar_interactivity?: number;
-  radar_confidence?: number;
-  radar_professionalism?: number;
-  radar_relevance?: number;
-  radar_clarity?: number;
+  radarInteractivity?: number;
+  radarConfidence?: number;
+  radarProfessionalism?: number;
+  radarRelevance?: number;
+  radarClarity?: number;
 }
 
 // 面试洞察接口
 export interface InterviewInsight {
   id?: string;
-  interview_id: string;
-  interviewer_score?: number;
-  interviewer_summary?: string;
-  interviewer_role?: string;
-  interviewer_mbti?: string;
-  interviewer_personality?: string;
-  interviewer_preference?: string;
-  candidate_summary?: string;
-  candidate_mbti?: string;
-  candidate_personality?: string;
-  candidate_job_preference?: string;
-  strategy_prepare_details?: string;
-  strategy_business_understanding?: string;
-  strategy_keep_logical?: string;
-  created_at: number;
+  interviewId: string;
+  interviewerScore?: number;
+  interviewerSummary?: string;
+  interviewerRole?: string;
+  interviewerMbti?: string;
+  interviewerPersonality?: string;
+  interviewerPreference?: string;
+  candidateSummary?: string;
+  candidateMbti?: string;
+  candidatePersonality?: string;
+  candidateJobPreference?: string;
+  strategyPrepareDetails?: string;
+  strategyBusinessUnderstanding?: string;
+  strategyKeepLogical?: string;
+  createdAt: number;
 }
 
 // 面试问答状态追踪（仅用于前端状态管理）
@@ -94,13 +94,13 @@ export class InterviewDataService {
     try {
       const reviews = await interviewService.getInterviewReviews(interviewId);
       // 按创建时间排序，sequence 对应创建顺序（第 0 个问题是第一个创建的 review）
-      const sortedReviews = reviews.sort((a, b) => a.created_at - b.created_at);
+      const sortedReviews = reviews.sort((a, b) => a.createdAt - b.createdAt);
 
       if (sequence < sortedReviews.length) {
         const review = sortedReviews[sequence];
         return {
           reviewId: review.id || '',
-          question: review.asked_question || review.content || '',
+          question: review.askedQuestion || review.content || '',
         };
       }
       return null;
@@ -140,10 +140,10 @@ export class InterviewDataService {
     }
 
     const reviewData: CreateReviewData = {
-      interview_id: this.dataState.interviewId,
-      note_type: 'interview_qa',
+      interviewId: this.dataState.interviewId,
+      noteType: 'interview_qa',
       content: askedQuestion,
-      asked_question: askedQuestion,
+      askedQuestion: askedQuestion,
     };
 
     const result = await interviewService.createReview(reviewData);

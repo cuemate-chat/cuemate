@@ -77,8 +77,8 @@ export async function getDefaultDevices(): Promise<DefaultDevices> {
 
     if (cfg) {
       return {
-        microphoneId: cfg.microphone_device_id,
-        speakerId: cfg.speaker_device_id
+        microphoneId: cfg.microphoneDeviceId,
+        speakerId: cfg.speakerDeviceId
       };
     }
 
@@ -95,8 +95,8 @@ export async function saveMicrophoneDevice(deviceId: string, deviceName: string)
   try {
     const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
     await api?.asrConfig?.updateDevices?.({
-      microphone_device_id: deviceId,
-      microphone_device_name: deviceName,
+      microphoneDeviceId: deviceId,
+      microphoneDeviceName: deviceName,
     });
   } catch (error) {
     await logger.error(`[音频设备] 保存麦克风配置失败: ${error}`);
@@ -110,8 +110,8 @@ export async function saveSpeakerDevice(deviceId: string, deviceName: string): P
   try {
     const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
     await api?.asrConfig?.updateDevices?.({
-      speaker_device_id: deviceId,
-      speaker_device_name: deviceName,
+      speakerDeviceId: deviceId,
+      speakerDeviceName: deviceName,
     });
   } catch (error) {
     await logger.error(`[音频设备] 保存扬声器配置失败: ${error}`);

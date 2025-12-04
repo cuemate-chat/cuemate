@@ -188,7 +188,7 @@ export class InterviewAnalysisService {
       }
 
       // 使用第一个启用的模型
-      const enabledModel = models.find((m) => m.is_enabled === 1) || models[0];
+      const enabledModel = models.find((m) => m.isEnabled === 1) || models[0];
 
       // 获取模型参数
       const params: ModelParam[] = await modelService.getModelParams(enabledModel.id);
@@ -196,11 +196,11 @@ export class InterviewAnalysisService {
       // 将参数数组转换为对象
       const modelParams: Record<string, any> = {};
       for (const param of params) {
-        modelParams[param.param_key] = param.value ?? param.default_value;
+        modelParams[param.paramKey] = param.value ?? param.defaultValue;
       }
 
       return {
-        modelName: enabledModel.model_name,
+        modelName: enabledModel.modelName,
         modelParams,
       };
     } catch (error) {
@@ -508,24 +508,40 @@ ${qaText}
 
     try {
       // 1. 创建面试分数记录
-      const scoreData: Omit<InterviewScore, 'id' | 'created_at'> = {
-        interview_id: interviewId,
-        total_score: analysisResult.overallScore,
-        duration_sec: 0, // 这里需要从外部传入
-        num_questions: analysisResult.qaAnalysis.length,
-        overall_summary: analysisResult.summary,
+      const scoreData: Omit<InterviewScore, 'id' | 'createdAt'> = {
+        interviewId: interviewId,
+        totalScore: analysisResult.overallScore,
+        durationSec: 0, // 这里需要从外部传入
+        numQuestions: analysisResult.qaAnalysis.length,
+        overallSummary: analysisResult.summary,
         pros: analysisResult.pros,
         cons: analysisResult.cons,
         suggestions: analysisResult.suggestions,
-        radar_interactivity: analysisResult.radarScores.interactivity,
-        radar_confidence: analysisResult.radarScores.confidence,
-        radar_professionalism: analysisResult.radarScores.professionalism,
-        radar_relevance: analysisResult.radarScores.relevance,
-        radar_clarity: analysisResult.radarScores.clarity,
+        radarInteractivity: analysisResult.radarScores.interactivity,
+        radarConfidence: analysisResult.radarScores.confidence,
+        radarProfessionalism: analysisResult.radarScores.professionalism,
+        radarRelevance: analysisResult.radarScores.relevance,
+        radarClarity: analysisResult.radarScores.clarity,
       };
 
       const scoreUrl = `${this.baseURL}/interview-scores`;
-      const scoreRequestBody = { ...scoreData, created_at: Date.now() };
+      // 发送 camelCase 字段，后端会自动转换为 snake_case
+      const scoreRequestBody = {
+        interviewId: scoreData.interviewId,
+        totalScore: scoreData.totalScore,
+        durationSec: scoreData.durationSec,
+        numQuestions: scoreData.numQuestions,
+        overallSummary: scoreData.overallSummary,
+        pros: scoreData.pros,
+        cons: scoreData.cons,
+        suggestions: scoreData.suggestions,
+        radarInteractivity: scoreData.radarInteractivity,
+        radarConfidence: scoreData.radarConfidence,
+        radarProfessionalism: scoreData.radarProfessionalism,
+        radarRelevance: scoreData.radarRelevance,
+        radarClarity: scoreData.radarClarity,
+        createdAt: Date.now(),
+      };
       await log.http.request('saveAnalysisToDatabase', scoreUrl, 'POST', scoreRequestBody);
 
       const scoreResponse = await fetch(scoreUrl, {
@@ -545,25 +561,42 @@ ${qaText}
       const scoreId = scoreResult.id;
 
       // 2. 创建面试洞察记录
-      const insightData: Omit<InterviewInsight, 'id' | 'created_at'> = {
-        interview_id: interviewId,
-        interviewer_score: analysisResult.insights.interviewerAnalysis.score,
-        interviewer_summary: analysisResult.insights.interviewerAnalysis.summary,
-        interviewer_role: analysisResult.insights.interviewerAnalysis.role,
-        interviewer_mbti: analysisResult.insights.interviewerAnalysis.mbti,
-        interviewer_personality: analysisResult.insights.interviewerAnalysis.personality,
-        interviewer_preference: analysisResult.insights.interviewerAnalysis.preference,
-        candidate_summary: analysisResult.insights.candidateAnalysis.summary,
-        candidate_mbti: analysisResult.insights.candidateAnalysis.mbti,
-        candidate_personality: analysisResult.insights.candidateAnalysis.personality,
-        candidate_job_preference: analysisResult.insights.candidateAnalysis.jobPreference,
-        strategy_prepare_details: analysisResult.insights.strategies.prepareDetails,
-        strategy_business_understanding: analysisResult.insights.strategies.businessUnderstanding,
-        strategy_keep_logical: analysisResult.insights.strategies.keepLogical,
+      const insightData: Omit<InterviewInsight, 'id' | 'createdAt'> = {
+        interviewId: interviewId,
+        interviewerScore: analysisResult.insights.interviewerAnalysis.score,
+        interviewerSummary: analysisResult.insights.interviewerAnalysis.summary,
+        interviewerRole: analysisResult.insights.interviewerAnalysis.role,
+        interviewerMbti: analysisResult.insights.interviewerAnalysis.mbti,
+        interviewerPersonality: analysisResult.insights.interviewerAnalysis.personality,
+        interviewerPreference: analysisResult.insights.interviewerAnalysis.preference,
+        candidateSummary: analysisResult.insights.candidateAnalysis.summary,
+        candidateMbti: analysisResult.insights.candidateAnalysis.mbti,
+        candidatePersonality: analysisResult.insights.candidateAnalysis.personality,
+        candidateJobPreference: analysisResult.insights.candidateAnalysis.jobPreference,
+        strategyPrepareDetails: analysisResult.insights.strategies.prepareDetails,
+        strategyBusinessUnderstanding: analysisResult.insights.strategies.businessUnderstanding,
+        strategyKeepLogical: analysisResult.insights.strategies.keepLogical,
       };
 
       const insightUrl = `${this.baseURL}/interview-insights`;
-      const insightRequestBody = { ...insightData, created_at: Date.now() };
+      // 发送 camelCase 字段，后端会自动转换为 snake_case
+      const insightRequestBody = {
+        interviewId: insightData.interviewId,
+        interviewerScore: insightData.interviewerScore,
+        interviewerSummary: insightData.interviewerSummary,
+        interviewerRole: insightData.interviewerRole,
+        interviewerMbti: insightData.interviewerMbti,
+        interviewerPersonality: insightData.interviewerPersonality,
+        interviewerPreference: insightData.interviewerPreference,
+        candidateSummary: insightData.candidateSummary,
+        candidateMbti: insightData.candidateMbti,
+        candidatePersonality: insightData.candidatePersonality,
+        candidateJobPreference: insightData.candidateJobPreference,
+        strategyPrepareDetails: insightData.strategyPrepareDetails,
+        strategyBusinessUnderstanding: insightData.strategyBusinessUnderstanding,
+        strategyKeepLogical: insightData.strategyKeepLogical,
+        createdAt: Date.now(),
+      };
       await log.http.request('saveAnalysisToDatabase', insightUrl, 'POST', insightRequestBody);
 
       const insightResponse = await fetch(insightUrl, {
@@ -605,17 +638,17 @@ ${qaText}
     try {
       for (const qa of qaAnalysis) {
         const reviewData = {
-          interview_id: interviewId,
-          note_type: 'interview_training_qa',
+          interviewId: interviewId,
+          noteType: 'interview_training_qa',
           content: qa.question,
-          asked_question: qa.question,
-          candidate_answer: qa.answer,
+          askedQuestion: qa.question,
+          candidateAnswer: qa.answer,
           assessment: qa.feedback,
-          key_points: qa.keyPoints.join('; '),
+          keyPoints: qa.keyPoints.join('; '),
           suggestions: qa.improvements.join('; '),
           pros: qa.score >= 7 ? '回答质量良好' : '',
           cons: qa.score < 7 ? '回答需要改进' : '',
-          created_at: Date.now(),
+          createdAt: Date.now(),
         };
 
         const url = `${this.baseURL}/interview-reviews`;

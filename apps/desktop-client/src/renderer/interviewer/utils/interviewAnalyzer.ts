@@ -28,22 +28,22 @@ export interface AnalysisResult {
   pros: string;
   cons: string;
   suggestions: string;
-  key_points: string;
+  keyPoints: string;
   assessment: string;
 }
 
 export interface ReviewData {
   id?: string;
-  asked_question?: string;
+  askedQuestion?: string;
   question?: string;
-  candidate_answer?: string;
-  reference_answer?: string;
-  other_id?: string;
-  other_content?: string;
+  candidateAnswer?: string;
+  referenceAnswer?: string;
+  otherId?: string;
+  otherContent?: string;
   pros?: string;
   cons?: string;
   suggestions?: string;
-  key_points?: string;
+  keyPoints?: string;
   assessment?: string;
 }
 
@@ -73,9 +73,9 @@ export async function analyzeReview(params: AnalyzeReviewParams): Promise<Analys
   const { review, modelConfig, modelParams, onError } = params;
 
   try {
-    const askedQuestion = review.asked_question || review.question || '';
-    const candidateAnswer = review.candidate_answer || '';
-    const referenceAnswer = review.reference_answer || '';
+    const askedQuestion = review.askedQuestion || review.question || '';
+    const candidateAnswer = review.candidateAnswer || '';
+    const referenceAnswer = review.referenceAnswer || '';
 
     if (!askedQuestion || !candidateAnswer || !review.id) {
       return null;
@@ -115,7 +115,7 @@ export async function analyzeReview(params: AnalyzeReviewParams): Promise<Analys
       pros: ensureString(rawAnalysis.pros),
       cons: ensureString(rawAnalysis.cons),
       suggestions: ensureString(rawAnalysis.suggestions),
-      key_points: ensureString(rawAnalysis.key_points),
+      keyPoints: ensureString(rawAnalysis.keyPoints),
       assessment: ensureString(rawAnalysis.assessment),
     };
 
@@ -124,10 +124,10 @@ export async function analyzeReview(params: AnalyzeReviewParams): Promise<Analys
       pros: analysis.pros,
       cons: analysis.cons,
       suggestions: analysis.suggestions,
-      key_points: analysis.key_points,
+      keyPoints: analysis.keyPoints,
       assessment: analysis.assessment,
-      other_id: review.other_id,
-      other_content: review.other_content,
+      otherId: review.otherId,
+      otherContent: review.otherContent,
     });
 
     return analysis;
@@ -169,7 +169,7 @@ export async function batchAnalyzeReviews(params: BatchAnalyzeParams): Promise<{
       // 从 userData 获取模型配置（兜底逻辑）
       const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
       const userDataResult = await api?.getUserData?.();
-      const selectedModelData = userDataResult?.success ? userDataResult.userData?.selected_model : null;
+      const selectedModelData = userDataResult?.success ? userDataResult.userData?.selectedModel : null;
 
       if (!selectedModelData) {
         throw new Error('未选择模型');
@@ -177,11 +177,11 @@ export async function batchAnalyzeReviews(params: BatchAnalyzeParams): Promise<{
 
       modelConfig = {
         provider: selectedModelData.provider,
-        model_name: selectedModelData.model_name,
+        modelName: selectedModelData.modelName,
         credentials: selectedModelData.credentials || '{}',
       };
 
-      modelParams = userDataResult?.success ? (userDataResult.userData?.model_params || []) : [];
+      modelParams = userDataResult?.success ? (userDataResult.userData?.modelParams || []) : [];
     }
 
     // 获取所有回答记录
@@ -195,13 +195,13 @@ export async function batchAnalyzeReviews(params: BatchAnalyzeParams): Promise<{
     const needsAnalysis: ReviewData[] = [];
 
     for (const review of reviews) {
-      if (!review.candidate_answer) {
+      if (!review.candidateAnswer) {
         result.skipped++;
         continue;
       }
 
       const hasAnalysis = review.pros && review.cons && review.suggestions &&
-                         review.key_points && review.assessment;
+                         review.keyPoints && review.assessment;
 
       if (!hasAnalysis) {
         needsAnalysis.push(review);
@@ -249,12 +249,12 @@ export async function batchAnalyzeReviews(params: BatchAnalyzeParams): Promise<{
  * 检查回答是否需要分析
  */
 export function needsAnalysis(review: ReviewData): boolean {
-  if (!review.candidate_answer) {
+  if (!review.candidateAnswer) {
     return false;
   }
 
   const hasAnalysis = review.pros && review.cons && review.suggestions &&
-                     review.key_points && review.assessment;
+                     review.keyPoints && review.assessment;
 
   return !hasAnalysis;
 }
@@ -269,7 +269,7 @@ export async function getCurrentModelConfig(): Promise<{
   try {
     const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
     const userDataResult = await api?.getUserData?.();
-    const selectedModelData = userDataResult?.success ? userDataResult.userData?.selected_model : null;
+    const selectedModelData = userDataResult?.success ? userDataResult.userData?.selectedModel : null;
 
     if (!selectedModelData) {
       return null;
@@ -278,10 +278,10 @@ export async function getCurrentModelConfig(): Promise<{
     return {
       modelConfig: {
         provider: selectedModelData.provider,
-        model_name: selectedModelData.model_name,
+        modelName: selectedModelData.modelName,
         credentials: selectedModelData.credentials || '{}',
       },
-      modelParams: userDataResult?.success ? (userDataResult.userData?.model_params || []) : []
+      modelParams: userDataResult?.success ? (userDataResult.userData?.modelParams || []) : []
     };
   } catch {
     return null;

@@ -43,9 +43,6 @@ export interface ScoreData {
   radarRelevance?: number;
   radarClarity?: number;
   overallSummary?: string;
-  // 兼容旧的 snake_case 格式
-  total_score?: number;
-  num_questions?: number;
   radar?: {
     interactivity: number;
     confidence: number;
@@ -53,7 +50,6 @@ export interface ScoreData {
     relevance: number;
     clarity: number;
   };
-  overall_summary?: string;
   // 通用字段
   pros: string;
   cons: string;
@@ -73,12 +69,12 @@ export interface InsightData {
     summary: string;
     mbti: string;
     personality: string;
-    job_preference: string;
+    jobPreference: string;
   };
   strategy: {
-    prepare_details: string;
-    business_understanding: string;
-    keep_logical: string;
+    prepareDetails: string;
+    businessUnderstanding: string;
+    keepLogical: string;
   };
 }
 
@@ -118,10 +114,10 @@ export async function generateInterviewReport(params: ReportGeneratorParams): Pr
     // 注意：LLM 返回的字段名是 totalScore/radarInteractivity 等格式
     await interviewService.saveInterviewScore({
       interviewId,
-      totalScore: scoreData.totalScore || scoreData.total_score || 0,
+      totalScore: scoreData.totalScore || scoreData.totalScore || 0,
       durationSec,
-      numQuestions: scoreData.numQuestions || scoreData.num_questions || reviews.length,
-      overallSummary: ensureString(scoreData.overallSummary || scoreData.overall_summary) || '',
+      numQuestions: scoreData.numQuestions || scoreData.numQuestions || reviews.length,
+      overallSummary: ensureString(scoreData.overallSummary || scoreData.overallSummary) || '',
       pros: ensureString(scoreData.pros) || '',
       cons: ensureString(scoreData.cons) || '',
       suggestions: ensureString(scoreData.suggestions) || '',
@@ -144,10 +140,10 @@ export async function generateInterviewReport(params: ReportGeneratorParams): Pr
       candidateSummary: ensureString(insightData.candidate?.summary) || '',
       candidateMbti: ensureString(insightData.candidate?.mbti) || '',
       candidatePersonality: ensureString(insightData.candidate?.personality) || '',
-      candidateJobPreference: ensureString(insightData.candidate?.job_preference) || '',
-      strategyPrepareDetails: ensureString(insightData.strategy?.prepare_details) || '',
-      strategyBusinessUnderstanding: ensureString(insightData.strategy?.business_understanding) || '',
-      strategyKeepLogical: ensureString(insightData.strategy?.keep_logical) || '',
+      candidateJobPreference: ensureString(insightData.candidate?.jobPreference) || '',
+      strategyPrepareDetails: ensureString(insightData.strategy?.prepareDetails) || '',
+      strategyBusinessUnderstanding: ensureString(insightData.strategy?.businessUnderstanding) || '',
+      strategyKeepLogical: ensureString(insightData.strategy?.keepLogical) || '',
     });
 
     onProgress?.('面试报告生成完成');
@@ -168,11 +164,11 @@ function buildSummaryData(reviews: any[]) {
     totalQuestions: reviews.length,
     questions: reviews.map((r, i) => ({
       index: i + 1,
-      question: r.asked_question?.substring(0, 100),
+      question: r.askedQuestion?.substring(0, 100),
       pros: r.pros || '无',
       cons: r.cons || '无',
       suggestions: r.suggestions || '无',
-      keyPoints: r.key_points || '无',
+      keyPoints: r.keyPoints || '无',
       assessment: r.assessment || '无'
     }))
   };
@@ -219,8 +215,8 @@ async function generateInsightReport(
     if (error?.message?.includes('maximum context length') || error?.message?.includes('tokens')) {
       return {
         interviewer: { score: 0, summary: '', role: '', mbti: '', personality: '', preference: '' },
-        candidate: { summary: '', mbti: '', personality: '', job_preference: '' },
-        strategy: { prepare_details: '', business_understanding: '', keep_logical: '' }
+        candidate: { summary: '', mbti: '', personality: '', jobPreference: '' },
+        strategy: { prepareDetails: '', businessUnderstanding: '', keepLogical: '' }
       };
     }
     throw error;
@@ -247,7 +243,7 @@ async function processBatchScore(
       totalQuestions: batch.length,
       questions: batch.map((r, i) => ({
         index: i + 1,
-        question: r.asked_question?.substring(0, 100),
+        question: r.askedQuestion?.substring(0, 100),
         pros: r.pros || '无',
         cons: r.cons || '无',
         suggestions: r.suggestions || '无',
@@ -269,14 +265,14 @@ async function processBatchScore(
   // 合并结果（使用 ensureString 处理可能的数组格式）
   // 注意：LLM 返回的字段名是 totalScore/radarInteractivity 等格式
   return {
-    totalScore: Math.round(batchResults.reduce((sum, r) => sum + (r.totalScore || r.total_score || 0), 0) / batchResults.length),
+    totalScore: Math.round(batchResults.reduce((sum, r) => sum + (r.totalScore || r.totalScore || 0), 0) / batchResults.length),
     numQuestions: reviews.length,
     radarInteractivity: Math.round(batchResults.reduce((sum, r) => sum + (r.radarInteractivity || r.radar?.interactivity || 0), 0) / batchResults.length),
     radarConfidence: Math.round(batchResults.reduce((sum, r) => sum + (r.radarConfidence || r.radar?.confidence || 0), 0) / batchResults.length),
     radarProfessionalism: Math.round(batchResults.reduce((sum, r) => sum + (r.radarProfessionalism || r.radar?.professionalism || 0), 0) / batchResults.length),
     radarRelevance: Math.round(batchResults.reduce((sum, r) => sum + (r.radarRelevance || r.radar?.relevance || 0), 0) / batchResults.length),
     radarClarity: Math.round(batchResults.reduce((sum, r) => sum + (r.radarClarity || r.radar?.clarity || 0), 0) / batchResults.length),
-    overallSummary: batchResults.map(r => ensureString(r.overallSummary || r.overall_summary)).join(' '),
+    overallSummary: batchResults.map(r => ensureString(r.overallSummary || r.overallSummary)).join(' '),
     pros: batchResults.map(r => ensureString(r.pros)).join('\n'),
     cons: batchResults.map(r => ensureString(r.cons)).join('\n'),
     suggestions: batchResults.map(r => ensureString(r.suggestions)).join('\n'),
