@@ -223,8 +223,8 @@ export class PiperTTS {
 
     try {
       const cfg = (global as any).asrConfigCache;
-      if (cfg?.piper_default_language === 'en-US') return 'en-US';
-      if (cfg?.piper_default_language === 'zh-CN') return 'zh-CN';
+      if (cfg?.piperDefaultLanguage === 'en-US') return 'en-US';
+      if (cfg?.piperDefaultLanguage === 'zh-CN') return 'zh-CN';
     } catch {}
 
     try {

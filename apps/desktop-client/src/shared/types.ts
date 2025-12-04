@@ -155,10 +155,10 @@ export interface ElectronAPI {
   asrConfig?: {
     get: () => Promise<{ success: boolean; config?: any; error?: string }>;
     updateDevices: (partial: {
-      microphone_device_id?: string;
-      microphone_device_name?: string;
-      speaker_device_id?: string;
-      speaker_device_name?: string;
+      microphoneDeviceId?: string;
+      microphoneDeviceName?: string;
+      speakerDeviceId?: string;
+      speakerDeviceName?: string;
     }) => Promise<{ success: boolean; config?: any; error?: string }>;
     onChanged: (callback: (config: any) => void) => () => void;
   };

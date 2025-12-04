@@ -1007,10 +1007,10 @@ export function setupIPC(windowManager: WindowManager): void {
     async (
       _event,
       partial: {
-        microphone_device_id?: string;
-        microphone_device_name?: string;
-        speaker_device_id?: string;
-        speaker_device_name?: string;
+        microphoneDeviceId?: string;
+        microphoneDeviceName?: string;
+        speakerDeviceId?: string;
+        speakerDeviceName?: string;
       },
     ) => {
       try {
@@ -1075,7 +1075,7 @@ export function setupIPC(windowManager: WindowManager): void {
           user: cachedUserData,
           token: cachedToken,
           model: cachedUserData.model,
-          model_params: cachedUserData.model_params,
+          modelParams: cachedUserData.modelParams,
         },
       };
     } else {

@@ -86,8 +86,8 @@ export async function startMicrophoneRecognition(
           (window as any).electronInterviewerAPI || (window as any).electronAPI;
         const res = await electronAPI?.asrConfig?.get?.();
         const cfg = res?.config;
-        if (cfg?.microphone_device_id) {
-          resolvedDeviceId = cfg.microphone_device_id;
+        if (cfg?.microphoneDeviceId) {
+          resolvedDeviceId = cfg.microphoneDeviceId;
         }
       } catch {}
     }
@@ -271,8 +271,8 @@ export async function startSpeakerRecognition(
           (window as any).electronInterviewerAPI || (window as any).electronAPI;
         const res = await electronAPI?.asrConfig?.get?.();
         const cfg = res?.config;
-        if (cfg?.speaker_device_id) {
-          resolvedDeviceId = cfg.speaker_device_id;
+        if (cfg?.speakerDeviceId) {
+          resolvedDeviceId = cfg.speakerDeviceId;
         }
       } catch {}
     }
