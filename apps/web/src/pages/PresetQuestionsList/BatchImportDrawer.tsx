@@ -22,7 +22,7 @@ export default function BatchImportDrawer({
   // 使用导入 Hook
   const { importing, importFile } = useQuestionImport({
     overwrite: importOverwrite,
-    is_builtin: isBuiltin,
+    isBuiltin: isBuiltin,
     onSuccess: () => {
       setImportOverwrite(false);
       onSuccess();

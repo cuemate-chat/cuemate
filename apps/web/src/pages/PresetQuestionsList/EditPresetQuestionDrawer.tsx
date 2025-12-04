@@ -61,7 +61,7 @@ export default function EditPresetQuestionDrawer({
     if (item) {
       setEditQuestion(item.question);
       setEditAnswer(item.answer);
-      setEditTagId(item.tag_id || undefined);
+      setEditTagId(item.tagId || undefined);
     }
   }, [item]);
 
@@ -73,13 +73,13 @@ export default function EditPresetQuestionDrawer({
 
   const onSaveEdit = async () => {
     if (!item) return;
-    
+
     setLoading(true);
     try {
       await updatePresetQuestion(item.id, {
         question: editQuestion,
         answer: editAnswer,
-        tag_id: editTagId || null,
+        tagId: editTagId || null,
       });
       globalMessage.success('保存成功');
       onSuccess();

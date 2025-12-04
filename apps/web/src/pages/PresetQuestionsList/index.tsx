@@ -81,8 +81,8 @@ export default function PresetQuestionsList() {
       const data = await listPresetQuestions({
         page: curPage,
         pageSize,
-        tag_id: filterTagId,
-        is_builtin: filterBuiltin,
+        tagId: filterTagId,
+        isBuiltin: filterBuiltin,
         day: filterDay,
         question: filterQuestion.trim() || undefined,
         answer: filterAnswer.trim() || undefined,
@@ -148,7 +148,7 @@ export default function PresetQuestionsList() {
 
   // 删除单个题目
   const onDeleteItem = async (item: PresetQuestion) => {
-    const tagName = item.tag_id ? tags.find(t => t.id === item.tag_id)?.name : undefined;
+    const tagName = item.tagId ? tags.find(t => t.id === item.tagId)?.name : undefined;
     Modal.confirm({
       title: '确认删除题目',
       content: (
@@ -428,15 +428,15 @@ export default function PresetQuestionsList() {
                         {item.question}
                       </div>
                       <div className="shrink-0 flex flex-col items-end gap-1">
-                        {tags.find(t => t.id === item.tag_id) && (
+                        {tags.find(t => t.id === item.tagId) && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full shadow-sm">
-                            {tags.find(t => t.id === item.tag_id)?.name}
+                            {tags.find(t => t.id === item.tagId)?.name}
                           </span>
                         )}
                         <span
-                          className={`px-2 py-0.5 rounded text-[11px] ${item.is_builtin ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}
+                          className={`px-2 py-0.5 rounded text-[11px] ${item.isBuiltin ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}
                         >
-                          {item.is_builtin ? '内置' : '自定义'}
+                          {item.isBuiltin ? '内置' : '自定义'}
                         </span>
                       </div>
                     </div>
@@ -450,17 +450,17 @@ export default function PresetQuestionsList() {
                     </div>
 
                     {/* 同步状态（如果有的话，放在时间上方） */}
-                    {item.synced_jobs.length > 0 && (
+                    {item.syncedJobs.length > 0 && (
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         <button
-                          onClick={() => showSyncJobsDetail(item.synced_jobs, item.question)}
+                          onClick={() => showSyncJobsDetail(item.syncedJobs, item.question)}
                           className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors duration-200"
                         >
-                          已同步到 {item.synced_jobs.length} 个岗位
+                          已同步到 {item.syncedJobs.length} 个岗位
                         </button>
                       </div>
                     )}
-                    {item.synced_jobs.length == 0 && (
+                    {item.syncedJobs.length == 0 && (
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         暂未同步到岗位
                       </div>
@@ -468,7 +468,7 @@ export default function PresetQuestionsList() {
 
                     {/* 时间和操作按钮 */}
                     <div className="mt-3 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
-                      <span>{dayjs(item.created_at).format('YYYY-MM-DD HH:mm')}</span>
+                      <span>{dayjs(item.createdAt).format('YYYY-MM-DD HH:mm')}</span>
                       <div className="space-x-2">
                         <Button size="small" onClick={() => openEditDrawer(item)}>
                           编辑

@@ -1067,7 +1067,7 @@ export default function VectorKnowledge() {
                         详情
                       </button>
                       <button
-                        onClick={() => handleDeleteAIVectorRecord(record.id, record.metadata.asked_question || '未命名问题')}
+                        onClick={() => handleDeleteAIVectorRecord(record.id, record.metadata.askedQuestion || '未命名问题')}
                         className="px-3 py-1 text-xs bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/70"
                       >
                         删除
@@ -1078,9 +1078,9 @@ export default function VectorKnowledge() {
                       <div className="flex items-center gap-3 mb-2">
                         {/* 类型标签 */}
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300">
-                          {record.metadata.note_type === 'mock'
+                          {record.metadata.noteType === 'mock'
                             ? '模拟面试'
-                            : record.metadata.note_type === 'training'
+                            : record.metadata.noteType === 'training'
                             ? '面试训练'
                             : 'AI 提问'}
                         </span>
@@ -1103,32 +1103,32 @@ export default function VectorKnowledge() {
                       </div>
 
                       {/* 问题 */}
-                      {record.metadata.asked_question && (
+                      {record.metadata.askedQuestion && (
                         <div className="mb-2">
                           <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            {record.metadata.asked_question}
+                            {record.metadata.askedQuestion}
                           </span>
                         </div>
                       )}
 
                       {/* 回答摘要 */}
-                      {record.metadata.candidate_answer && (
+                      {record.metadata.candidateAnswer && (
                         <div className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-2">
-                          {record.metadata.candidate_answer}
+                          {record.metadata.candidateAnswer}
                         </div>
                       )}
 
                       {/* 底部信息 */}
                       <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-3">
                         <span className="flex-shrink-0">
-                          时间: {formatDate(record.metadata.created_at)}
+                          时间: {formatDate(record.metadata.createdAt)}
                         </span>
                         {record.metadata.answer && (
                           <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-200 flex-shrink-0">
                             使用了押题答案
                           </span>
                         )}
-                        {record.metadata.other_content && (
+                        {record.metadata.otherContent && (
                           <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-full border border-green-200 flex-shrink-0">
                             使用了其他文件
                           </span>

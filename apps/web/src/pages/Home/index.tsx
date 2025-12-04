@@ -150,9 +150,9 @@ export default function Home() {
                     <div className="mx-auto mb-2 sm:mb-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg">
                       <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <div className="text-blue-600 dark:text-blue-400 text-xl sm:text-2xl font-bold mb-1">{statistics.offers_count}+</div>
+                    <div className="text-blue-600 dark:text-blue-400 text-xl sm:text-2xl font-bold mb-1">{statistics.offersCount}+</div>
                     <div className="text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm">收到的 Offer 数量</div>
-                    <div className="text-slate-500 dark:text-slate-300 text-xs mt-1">平均成功率 {statistics.success_rate}</div>
+                    <div className="text-slate-500 dark:text-slate-300 text-xs mt-1">平均成功率 {statistics.successRate}</div>
                   </div>
                 </div>
 
@@ -162,9 +162,9 @@ export default function Home() {
                     <div className="mx-auto mb-2 sm:mb-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white shadow-lg">
                       <ChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <div className="text-green-600 dark:text-green-400 text-xl sm:text-2xl font-bold mb-1">{statistics.mock_interviews}+</div>
+                    <div className="text-green-600 dark:text-green-400 text-xl sm:text-2xl font-bold mb-1">{statistics.mockInterviews}+</div>
                     <div className="text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm">通过的模拟次数</div>
-                    <div className="text-slate-500 dark:text-slate-300 text-xs mt-1">累计练习时长 {statistics.practice_hours}+ 小时</div>
+                    <div className="text-slate-500 dark:text-slate-300 text-xs mt-1">累计练习时长 {statistics.practiceHours}+ 小时</div>
                   </div>
                 </div>
 
@@ -174,7 +174,7 @@ export default function Home() {
                     <div className="mx-auto mb-2 sm:mb-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
                       <BuildingOffice2Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <div className="text-purple-600 dark:text-purple-400 text-xl sm:text-2xl font-bold mb-1">{statistics.companies_joined}+</div>
+                    <div className="text-purple-600 dark:text-purple-400 text-xl sm:text-2xl font-bold mb-1">{statistics.companiesJoined}+</div>
                     <div className="text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm">成功入职的公司数量</div>
                     <div className="text-slate-500 dark:text-slate-300 text-xs mt-1">涵盖各行业、各岗位</div>
                   </div>

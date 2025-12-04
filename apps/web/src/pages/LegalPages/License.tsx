@@ -47,7 +47,7 @@ export default function License() {
   // 使用题库导入 Hook（用于自动导入预置题库）
   const { importing: autoImporting, importFile: autoImportFile } = useQuestionImport({
     overwrite: false, // 不覆盖已存在的题目
-    is_builtin: true, // 标记为内置题库
+    isBuiltin: true, // 标记为内置题库
     onSuccess: (result) => {
       message.success(`预置题库导入成功！新增 ${result.importedCount} 个题目`);
     },

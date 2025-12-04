@@ -9,30 +9,30 @@ import { webSocketService } from '../../services/webSocketService';
 // 默认配置值
 const DEFAULT_CONFIG = {
   name: 'ASR-Gateway',
-  funasr_host: 'localhost',
-  funasr_port: 10095,
-  funasr_chunk_interval: 5,
-  funasr_chunk_size_start: 5,
-  funasr_chunk_size_middle: 10,
-  funasr_chunk_size_end: 5,
-  funasr_mode: 'online' as const,
-  funasr_sample_rate: 16000,
-  audiotee_sample_rate: 16000 as const,
-  audiotee_chunk_duration: 0.2,
-  audiotee_include_processes: '[]',
-  audiotee_exclude_processes: '[]',
-  audiotee_mute_processes: false,
-  piper_default_language: 'zh-CN' as const,
-  piper_speech_speed: 1.0,
-  piper_python_path: 'python3',
-  microphone_device_id: '',
-  microphone_device_name: '默认麦克风',
-  speaker_device_id: '',
-  speaker_device_name: '默认扬声器',
-  test_duration_seconds: 60,
-  recognition_timeout_seconds: 15,
-  min_recognition_length: 5,
-  max_recognition_length: 30,
+  funasrHost: 'localhost',
+  funasrPort: 10095,
+  funasrChunkInterval: 5,
+  funasrChunkSizeStart: 5,
+  funasrChunkSizeMiddle: 10,
+  funasrChunkSizeEnd: 5,
+  funasrMode: 'online' as const,
+  funasrSampleRate: 16000,
+  audioteeSampleRate: 16000 as const,
+  audioteeChunkDuration: 0.2,
+  audioteeIncludeProcesses: '[]',
+  audioteeExcludeProcesses: '[]',
+  audioteeMuteProcesses: false,
+  piperDefaultLanguage: 'zh-CN' as const,
+  piperSpeechSpeed: 1.0,
+  piperPythonPath: 'python3',
+  microphoneDeviceId: '',
+  microphoneDeviceName: '默认麦克风',
+  speakerDeviceId: '',
+  speakerDeviceName: '默认扬声器',
+  testDurationSeconds: 60,
+  recognitionTimeoutSeconds: 15,
+  minRecognitionLength: 5,
+  maxRecognitionLength: 30,
 };
 
 export default function AsrSettings() {
@@ -137,12 +137,12 @@ export default function AsrSettings() {
         form.setFieldsValue({
           ...data.config,
           // 处理 JSON 字符串字段
-          audiotee_include_processes: data.config.audiotee_include_processes || '[]',
-          audiotee_exclude_processes: data.config.audiotee_exclude_processes || '[]',
+          audioteeIncludeProcesses: data.config.audioteeIncludeProcesses || '[]',
+          audioteeExcludeProcesses: data.config.audioteeExcludeProcesses || '[]',
         });
       }
     } catch {
-      
+
     } finally {
       await endLoading();
     }
@@ -156,7 +156,7 @@ export default function AsrSettings() {
       message.success(data.message || '配置已保存');
       setConfig(data.config);
     } catch {
-      
+
     } finally {
       await endSaving();
     }
@@ -197,7 +197,7 @@ export default function AsrSettings() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
-                        name="microphone_device_id"
+                        name="microphoneDeviceId"
                         label={<span className="dark:text-slate-300">麦克风音源</span>}
                         rules={[{ required: true, message: '请选择麦克风设备' }]}
                       >
@@ -211,14 +211,14 @@ export default function AsrSettings() {
                           onChange={(value) => {
                             const selectedDevice = availableMicDevices.find(d => d.deviceId === value);
                             if (selectedDevice) {
-                              form.setFieldValue('microphone_device_name', selectedDevice.label);
+                              form.setFieldValue('microphoneDeviceName', selectedDevice.label);
                             }
                           }}
                         />
                       </Form.Item>
 
                       <Form.Item
-                        name="microphone_device_name"
+                        name="microphoneDeviceName"
                         label={<span className="dark:text-slate-300">麦克风设备名称</span>}
                       >
                         <Input placeholder="默认麦克风" disabled />
@@ -227,7 +227,7 @@ export default function AsrSettings() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
-                        name="speaker_device_id"
+                        name="speakerDeviceId"
                         label={<span className="dark:text-slate-300">扬声器音源</span>}
                         rules={[{ required: true, message: '请选择扬声器设备' }]}
                       >
@@ -241,14 +241,14 @@ export default function AsrSettings() {
                           onChange={(value) => {
                             const selectedDevice = availableSpeakerDevices.find(d => d.deviceId === value);
                             if (selectedDevice) {
-                              form.setFieldValue('speaker_device_name', selectedDevice.label);
+                              form.setFieldValue('speakerDeviceName', selectedDevice.label);
                             }
                           }}
                         />
                       </Form.Item>
 
                       <Form.Item
-                        name="speaker_device_name"
+                        name="speakerDeviceName"
                         label={<span className="dark:text-slate-300">扬声器设备名称</span>}
                       >
                         <Input placeholder="默认扬声器" disabled />
@@ -272,7 +272,7 @@ export default function AsrSettings() {
                       </Form.Item>
 
                       <Form.Item
-                        name="funasr_host"
+                        name="funasrHost"
                         label={<span className="dark:text-slate-300">FunASR 主机地址</span>}
                         rules={[{ required: true, message: '请输入主机地址' }]}
                       >
@@ -282,7 +282,7 @@ export default function AsrSettings() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
-                        name="funasr_port"
+                        name="funasrPort"
                         label={<span className="dark:text-slate-300">FunASR 端口</span>}
                         rules={[{ required: true, message: '请输入端口' }]}
                       >
@@ -295,7 +295,7 @@ export default function AsrSettings() {
                       </Form.Item>
 
                       <Form.Item
-                        name="funasr_mode"
+                        name="funasrMode"
                         label={<span className="dark:text-slate-300">识别模式</span>}
                         rules={[{ required: true, message: '请选择识别模式' }]}
                       >
@@ -309,7 +309,7 @@ export default function AsrSettings() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
-                        name="funasr_sample_rate"
+                        name="funasrSampleRate"
                         label={<span className="dark:text-slate-300">采样率 (Hz)</span>}
                         rules={[{ required: true, message: '请输入采样率' }]}
                       >
@@ -323,7 +323,7 @@ export default function AsrSettings() {
                       </Form.Item>
 
                       <Form.Item
-                        name="funasr_chunk_interval"
+                        name="funasrChunkInterval"
                         label={<span className="dark:text-slate-300">音频块间隔</span>}
                       >
                         <InputNumber
@@ -337,7 +337,7 @@ export default function AsrSettings() {
 
                     <div className="grid grid-cols-3 gap-4">
                       <Form.Item
-                        name="funasr_chunk_size_start"
+                        name="funasrChunkSizeStart"
                         label={<span className="dark:text-slate-300">起始块大小</span>}
                       >
                         <InputNumber
@@ -349,7 +349,7 @@ export default function AsrSettings() {
                       </Form.Item>
 
                       <Form.Item
-                        name="funasr_chunk_size_middle"
+                        name="funasrChunkSizeMiddle"
                         label={<span className="dark:text-slate-300">中间块大小</span>}
                       >
                         <InputNumber
@@ -361,7 +361,7 @@ export default function AsrSettings() {
                       </Form.Item>
 
                       <Form.Item
-                        name="funasr_chunk_size_end"
+                        name="funasrChunkSizeEnd"
                         label={<span className="dark:text-slate-300">结束块大小</span>}
                       >
                         <InputNumber
@@ -382,7 +382,7 @@ export default function AsrSettings() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
-                        name="audiotee_sample_rate"
+                        name="audioteeSampleRate"
                         label={<span className="dark:text-slate-300">AudioTee 采样率</span>}
                         rules={[{ required: true, message: '请选择采样率' }]}
                       >
@@ -398,7 +398,7 @@ export default function AsrSettings() {
                       </Form.Item>
 
                       <Form.Item
-                        name="audiotee_chunk_duration"
+                        name="audioteeChunkDuration"
                         label={<span className="dark:text-slate-300">音频块时长 (秒)</span>}
                       >
                         <InputNumber
@@ -413,7 +413,7 @@ export default function AsrSettings() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
-                        name="audiotee_include_processes"
+                        name="audioteeIncludeProcesses"
                         label={<span className="dark:text-slate-300">包含进程列表 (JSON)</span>}
                       >
                         <Input.TextArea
@@ -423,7 +423,7 @@ export default function AsrSettings() {
                       </Form.Item>
 
                       <Form.Item
-                        name="audiotee_exclude_processes"
+                        name="audioteeExcludeProcesses"
                         label={<span className="dark:text-slate-300">排除进程列表 (JSON)</span>}
                       >
                         <Input.TextArea
@@ -435,7 +435,7 @@ export default function AsrSettings() {
 
                     <div className="grid grid-cols-1 gap-4">
                       <Form.Item
-                        name="audiotee_mute_processes"
+                        name="audioteeMuteProcesses"
                         valuePropName="checked"
                         label={<span className="dark:text-slate-300">静音被捕获的进程</span>}
                       >
@@ -452,7 +452,7 @@ export default function AsrSettings() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
-                        name="piper_default_language"
+                        name="piperDefaultLanguage"
                         label={<span className="dark:text-slate-300">默认语言</span>}
                         rules={[{ required: true, message: '请选择默认语言' }]}
                       >
@@ -463,7 +463,7 @@ export default function AsrSettings() {
                       </Form.Item>
 
                       <Form.Item
-                        name="piper_speech_speed"
+                        name="piperSpeechSpeed"
                         label={<span className="dark:text-slate-300">语音速度</span>}
                       >
                         <InputNumber
@@ -478,7 +478,7 @@ export default function AsrSettings() {
 
                     <div className="grid grid-cols-1 gap-4">
                       <Form.Item
-                        name="piper_python_path"
+                        name="piperPythonPath"
                         label={<span className="dark:text-slate-300">Python 可执行文件路径</span>}
                       >
                         <Input placeholder="python3" />
@@ -494,7 +494,7 @@ export default function AsrSettings() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
-                        name="test_duration_seconds"
+                        name="testDurationSeconds"
                         label={<span className="dark:text-slate-300">测试持续时间 (秒)</span>}
                       >
                         <InputNumber
@@ -506,7 +506,7 @@ export default function AsrSettings() {
                       </Form.Item>
 
                       <Form.Item
-                        name="recognition_timeout_seconds"
+                        name="recognitionTimeoutSeconds"
                         label={<span className="dark:text-slate-300">识别超时时间 (秒)</span>}
                       >
                         <InputNumber
@@ -520,7 +520,7 @@ export default function AsrSettings() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
-                        name="min_recognition_length"
+                        name="minRecognitionLength"
                         label={<span className="dark:text-slate-300">最小识别长度</span>}
                       >
                         <InputNumber
@@ -532,7 +532,7 @@ export default function AsrSettings() {
                       </Form.Item>
 
                       <Form.Item
-                        name="max_recognition_length"
+                        name="maxRecognitionLength"
                         label={<span className="dark:text-slate-300">最大识别长度</span>}
                       >
                         <InputNumber

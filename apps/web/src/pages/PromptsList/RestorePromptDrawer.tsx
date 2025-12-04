@@ -20,11 +20,11 @@ export default function RestorePromptDrawer({
   const [restoring, setRestoring] = useState(false);
 
   const handleRestoreToHistory = async () => {
-    if (!prompt || !prompt.history_pre) return;
+    if (!prompt || !prompt.historyPre) return;
 
     setRestoring(true);
     try {
-      await updatePrompt(prompt.id, { content: prompt.history_pre });
+      await updatePrompt(prompt.id, { content: prompt.historyPre });
       message.success('已恢复到上一版本');
       onRestore();
     } catch (err: any) {
@@ -39,7 +39,7 @@ export default function RestorePromptDrawer({
 
     setRestoring(true);
     try {
-      await updatePrompt(prompt.id, { content: prompt.default_content });
+      await updatePrompt(prompt.id, { content: prompt.defaultContent });
       message.success('已恢复到默认值');
       onRestore();
     } catch (err: any) {
@@ -74,10 +74,10 @@ export default function RestorePromptDrawer({
             <div className="text-sm font-medium text-slate-700 dark:text-white mb-2">
               上一版本内容
             </div>
-            {prompt.history_pre ? (
+            {prompt.historyPre ? (
               <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
                 <pre className="text-xs text-amber-900 dark:text-white whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
-                  {prompt.history_pre}
+                  {prompt.historyPre}
                 </pre>
               </div>
             ) : (
@@ -94,7 +94,7 @@ export default function RestorePromptDrawer({
             </div>
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
               <pre className="text-xs text-blue-900 dark:text-white whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
-                {prompt.default_content}
+                {prompt.defaultContent}
               </pre>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function RestorePromptDrawer({
           </Button>
           <Button
             onClick={handleRestoreToHistory}
-            disabled={!prompt.history_pre}
+            disabled={!prompt.historyPre}
             loading={restoring}
             size="large"
             className="bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300"

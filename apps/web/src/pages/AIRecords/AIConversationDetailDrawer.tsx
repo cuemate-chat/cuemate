@@ -142,26 +142,26 @@ export default function AIConversationDetailDrawer({
                 </div>
                 <div className="flex items-center py-2 border-b border-gray-100 dark:border-slate-700">
                   <span className="w-28 text-sm font-medium text-gray-900 dark:text-slate-100 flex-shrink-0">模型</span>
-                  <span className="text-sm text-gray-700 dark:text-slate-200">{conversation.model_provider} · {conversation.model_name}</span>
+                  <span className="text-sm text-gray-700 dark:text-slate-200">{conversation.modelProvider} · {conversation.modelName}</span>
                 </div>
                 <div className="flex items-center py-2 border-b border-gray-100 dark:border-slate-700">
                   <span className="w-28 text-sm font-medium text-gray-900 dark:text-slate-100 flex-shrink-0">消息数量</span>
-                  <span className="text-sm text-gray-700 dark:text-slate-200">{conversation.message_count} 条</span>
+                  <span className="text-sm text-gray-700 dark:text-slate-200">{conversation.messageCount} 条</span>
                 </div>
                 <div className="flex items-center py-2 border-b border-gray-100 dark:border-slate-700">
                   <span className="w-28 text-sm font-medium text-gray-900 dark:text-slate-100 flex-shrink-0">Token 使用</span>
-                  <span className="text-sm text-gray-700 dark:text-slate-200">{conversation.token_used} tokens</span>
+                  <span className="text-sm text-gray-700 dark:text-slate-200">{conversation.tokenUsed} tokens</span>
                 </div>
                 <div className="flex items-center py-2 border-b border-gray-100 dark:border-slate-700">
                   <span className="w-28 text-sm font-medium text-gray-900 dark:text-slate-100 flex-shrink-0">创建时间</span>
                   <span className="text-sm text-gray-700 dark:text-slate-200">
-                    {new Date(conversation.created_at * 1000).toLocaleString('zh-CN')}
+                    {new Date(conversation.createdAt * 1000).toLocaleString('zh-CN')}
                   </span>
                 </div>
                 <div className="flex items-center py-2 border-b border-gray-100 dark:border-slate-700">
                   <span className="w-28 text-sm font-medium text-gray-900 dark:text-slate-100 flex-shrink-0">更新时间</span>
                   <span className="text-sm text-gray-700 dark:text-slate-200">
-                    {new Date(conversation.updated_at * 1000).toLocaleString('zh-CN')}
+                    {new Date(conversation.updatedAt * 1000).toLocaleString('zh-CN')}
                   </span>
                 </div>
               </div>
@@ -185,7 +185,7 @@ export default function AIConversationDetailDrawer({
                     <div key={msg.id} className="flex gap-4">
                       {/* 消息头像 */}
                       <div className="flex-shrink-0">
-                        {msg.message_type === 'user' ? (
+                        {msg.messageType === 'user' ? (
                           <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
                             <UserIcon className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                           </div>
@@ -200,32 +200,32 @@ export default function AIConversationDetailDrawer({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm font-medium text-gray-900 dark:text-slate-100">
-                            {msg.message_type === 'user' ? '用户' : 'AI 助手'}
+                            {msg.messageType === 'user' ? '用户' : 'AI 助手'}
                           </span>
                           <span className="text-xs text-gray-500 dark:text-slate-200">
-                            {new Date(msg.created_at * 1000).toLocaleString('zh-CN')}
+                            {new Date(msg.createdAt * 1000).toLocaleString('zh-CN')}
                           </span>
-                          {msg.message_type === 'assistant' && msg.response_time_ms && (
+                          {msg.messageType === 'assistant' && msg.responseTimeMs && (
                             <span className="text-xs text-gray-500 dark:text-slate-200">
-                              响应时间: {formatResponseTime(msg.response_time_ms)}
+                              响应时间: {formatResponseTime(msg.responseTimeMs)}
                             </span>
                           )}
                         </div>
 
                         <div className={`text-sm p-3 rounded-lg ${
-                          msg.message_type === 'user'
+                          msg.messageType === 'user'
                             ? 'bg-blue-50 dark:bg-blue-900/20 dark:bg-blue-900/30 border-l-4 border-blue-400 dark:border-blue-500'
                             : 'bg-gray-50 dark:bg-gray-800 dark:bg-slate-700 border-l-4 border-green-400 dark:border-green-500'
                         }`}>
-                          {renderMessageContent(msg.content, msg.content_format)}
+                          {renderMessageContent(msg.content, msg.contentFormat)}
                         </div>
 
                         {/* 消息元信息 */}
                         <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-slate-200">
-                          <span>序号: {msg.sequence_number}</span>
-                          <span>Token: {msg.token_count}</span>
-                          {msg.error_message && (
-                            <span className="text-red-500 dark:text-red-400 dark:text-red-400">错误: {msg.error_message}</span>
+                          <span>序号: {msg.sequenceNumber}</span>
+                          <span>Token: {msg.tokenCount}</span>
+                          {msg.errorMessage && (
+                            <span className="text-red-500 dark:text-red-400 dark:text-red-400">错误: {msg.errorMessage}</span>
                           )}
                         </div>
                       </div>

@@ -66,7 +66,7 @@ export default function CreatePresetQuestionDrawer({
       await createPresetQuestion({
         question: newQuestion,
         answer: newAnswer,
-        tag_id: newTagId || null,
+        tagId: newTagId || null,
       });
       globalMessage.success('创建成功');
       // 清空表单

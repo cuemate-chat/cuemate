@@ -9,7 +9,7 @@ import PaginationBar from '../../components/PaginationBar';
 interface TagManagerDrawerProps {
   open: boolean;
   onClose: () => void;
-  tags: Array<{ id: string; name: string; created_at?: number }>;
+  tags: Array<{ id: string; name: string; createdAt?: number }>;
   onRefreshTags: () => Promise<void>;
 }
 
@@ -29,7 +29,7 @@ const TagManagerDrawer: React.FC<TagManagerDrawerProps> = ({
 
   const filtered = tags
     .filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
   // 分页处理
   const total = filtered.length;
@@ -75,7 +75,7 @@ const TagManagerDrawer: React.FC<TagManagerDrawerProps> = ({
     },
     {
       title: '创建时间',
-      dataIndex: 'created_at',
+      dataIndex: 'createdAt',
       width: 220,
       render: (v: number) => (v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-'),
     },

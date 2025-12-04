@@ -45,7 +45,7 @@ export default function ModelEditDrawer({
   const handleJumpToDoc = (e: React.MouseEvent) => {
     e.preventDefault();
     const provider = findProvider(form.provider);
-    const jumpLink = provider?.jump_link;
+    const jumpLink = provider?.jumpLink;
     if (!jumpLink) return;
 
     Modal.confirm({
@@ -123,25 +123,25 @@ export default function ModelEditDrawer({
       }
 
       // 更新参数
-      if (form.model_name) {
-        const preset = getDefaultParamsByProvider(form.provider, form.model_name);
+      if (form.modelName) {
+        const preset = getDefaultParamsByProvider(form.provider, form.modelName);
         if (preset && preset.length > 0) {
           setForm((f: any) => ({ ...f, params: preset }));
         }
       }
     }
-  }, [form.provider, form.model_name]);
+  }, [form.provider, form.modelName]);
 
   // 测试连接功能
   const handleTestConnection = async () => {
-    if (!form.provider || !form.model_name) {
+    if (!form.provider || !form.modelName) {
       message.warning('请先选择供应商和基础模型');
       return;
     }
 
     // 验证必填的凭证字段
     const provider = findProvider(form.provider);
-    const credentialFields = provider?.credentialFieldsPerModel?.[form.model_name]
+    const credentialFields = provider?.credentialFieldsPerModel?.[form.modelName]
       || provider?.credentialFieldsPerModel?.default
       || provider?.credentialFields
       || [];
@@ -172,7 +172,7 @@ export default function ModelEditDrawer({
       // 使用表单中的值直接测试
       const result: any = await testModelConfig({
         provider: form.provider,
-        model_name: form.model_name,
+        modelName: form.modelName,
         credentials,
         params: form.params || [],
       });
@@ -203,14 +203,14 @@ export default function ModelEditDrawer({
       message.warning('请选择供应商');
       return;
     }
-    if (!form.model_name) {
+    if (!form.modelName) {
       message.warning('请选择基础模型');
       return;
     }
 
     // 验证必填的凭证字段
     const provider = findProvider(form.provider);
-    const credentialFields = provider?.credentialFieldsPerModel?.[form.model_name]
+    const credentialFields = provider?.credentialFieldsPerModel?.[form.modelName]
       || provider?.credentialFieldsPerModel?.default
       || provider?.credentialFields
       || [];
@@ -296,7 +296,7 @@ export default function ModelEditDrawer({
                         <div className="text-slate-700 dark:text-slate-200">
                           模型名称<span className="text-red-500"> *</span>
                         </div>
-                        {findProvider(form.provider)?.jump_link && (
+                        {findProvider(form.provider)?.jumpLink && (
                           <button
                             onClick={handleJumpToDoc}
                             className="text-xs text-blue-500 hover:text-blue-600 hover:underline"
@@ -401,11 +401,11 @@ export default function ModelEditDrawer({
                       </div>
                       <Select
                         mode="tags"
-                        value={form.model_name ? [form.model_name] : []}
+                        value={form.modelName ? [form.modelName] : []}
                         onChange={(vals) =>
                           setForm((f: any) => ({
                             ...f,
-                            model_name: (vals as string[])[(vals as string[]).length - 1] || '',
+                            modelName: (vals as string[])[(vals as string[]).length - 1] || '',
                           }))
                         }
                         options={(findProvider(form.provider)?.baseModels || []).map((m) => ({
@@ -418,7 +418,7 @@ export default function ModelEditDrawer({
                       />
                     </div>
                     {/* 凭证：选择基础模型后显示，纵向排列 */}
-                    {!!form.model_name && (
+                    {!!form.modelName && (
                       <div className="w-full">
                         <div className="mb-1 text-slate-700 dark:text-slate-200">
                           凭证<span className="text-red-500"> *</span>
@@ -426,7 +426,7 @@ export default function ModelEditDrawer({
                         <div className="space-y-2">
                           {(
                             findProvider(form.provider)?.credentialFieldsPerModel?.[
-                              form.model_name
+                              form.modelName
                             ] ||
                             findProvider(form.provider)?.credentialFieldsPerModel?.default ||
                             findProvider(form.provider)?.credentialFields ||
@@ -525,9 +525,9 @@ export default function ModelEditDrawer({
                           </div>
                           <div className="col-span-3">
                             <Input
-                              value={p.param_key}
+                              value={p.paramKey}
                               onChange={(e) =>
-                                updateParam(setForm, idx, { param_key: e.target.value })
+                                updateParam(setForm, idx, { paramKey: e.target.value })
                               }
                               placeholder="temperature / max_tokens"
                             />
@@ -535,8 +535,8 @@ export default function ModelEditDrawer({
                           <div className="col-span-2">
                             <Select
                               style={{ width: '100%' }}
-                              value={p.ui_type || 'input'}
-                              onChange={(v: string) => updateParam(setForm, idx, { ui_type: v })}
+                              value={p.uiType || 'input'}
+                              onChange={(v: string) => updateParam(setForm, idx, { uiType: v })}
                               options={[
                                 { value: 'input', label: '输入框' },
                                 { value: 'slider', label: '滑块' },
@@ -619,7 +619,7 @@ function updateParam(setForm: any, i: number, delta: any) {
 function addParamRow(setForm: any) {
   setForm((f: any) => {
     const params = [...(f.params || [])];
-    params.push({ label: '', param_key: '', ui_type: 'input', value: '', required: false });
+    params.push({ label: '', paramKey: '', uiType: 'input', value: '', required: false });
     return { ...f, params };
   });
 }
@@ -640,8 +640,8 @@ function getDefaultParamsByProvider(pid?: string, modelName?: string) {
     const model = m.baseModels.find((bm) =>
       typeof bm === 'string' ? bm === modelName : bm.name === modelName
     );
-    if (model && typeof model !== 'string' && model.default_params) {
-      return model.default_params;
+    if (model && typeof model !== 'string' && model.defaultParams) {
+      return model.defaultParams;
     }
   }
 

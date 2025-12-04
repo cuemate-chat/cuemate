@@ -22,7 +22,7 @@ import TagManagerDrawer from './TagManagerDrawer';
 
 export default function QuestionsList() {
   const [searchParams] = useSearchParams();
-  const [jobs, setJobs] = useState<Array<{ id: string; title: string; question_count?: number }>>([]);
+  const [jobs, setJobs] = useState<Array<{ id: string; title: string; questionCount?: number }>>([]);
   const [jobId, setJobId] = useState<string | undefined>(undefined);
   const { loading, withLoading } = useLoading();
   const { loading: operationLoading, start: startOperation, end: endOperation } = useLoading();
@@ -102,10 +102,10 @@ export default function QuestionsList() {
   // 刷新岗位列表
   const refreshJobs = async () => {
     const data = await listJobs();
-    const js = (data.items || []).map((j: any) => ({ 
-      id: j.id, 
+    const js = (data.items || []).map((j: any) => ({
+      id: j.id,
       title: j.title,
-      question_count: j.question_count || 0
+      questionCount: j.questionCount || 0
     }));
     setJobs(js);
     return js;
@@ -147,7 +147,7 @@ export default function QuestionsList() {
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs"><DocumentIcon className="w-3 h-3" /></span>
-              <span>押题数量：<strong>{currentJob.question_count || 0}</strong> 条</span>
+              <span>押题数量：<strong>{currentJob.questionCount || 0}</strong> 条</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs"><DocumentIcon className="w-3 h-3" /></span>
@@ -306,7 +306,7 @@ export default function QuestionsList() {
               </div>
               {/* 押题数量标识 */}
               <div className={`absolute right-3 top-1/2 -translate-y-1/2 min-w-[20px] h-5 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200 ${
-                (it.question_count || 0) > 0
+                (it.questionCount || 0) > 0
                   ? jobId === it.id
                     ? 'bg-orange-500 text-white'
                     : 'bg-orange-400 text-white group-hover:bg-orange-500'
@@ -314,7 +314,7 @@ export default function QuestionsList() {
                     ? 'bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
                     : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 group-hover:bg-slate-300 dark:group-hover:bg-slate-600'
               }`}>
-                {it.question_count || 0}
+                {it.questionCount || 0}
               </div>
             </button>
           ))}
@@ -425,9 +425,9 @@ export default function QuestionsList() {
                           </span>
                         )}
                         <span
-                          className={`px-2 py-0.5 rounded text-[11px] ${it.vector_status ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}
+                          className={`px-2 py-0.5 rounded text-[11px] ${it.vectorStatus ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}
                         >
-                          {it.vector_status ? '已同步' : '未同步'}
+                          {it.vectorStatus ? '已同步' : '未同步'}
                         </span>
                       </div>
                     </div>
@@ -440,7 +440,7 @@ export default function QuestionsList() {
                       {it.description}
                     </div>
                     <div className="mt-3 flex items-center justify-between text-xs text-slate-400 dark:text-slate-300">
-                      <span className="flex-1 mr-2 truncate">{dayjs(it.created_at).format('YYYY-MM-DD HH:mm')}</span>
+                      <span className="flex-1 mr-2 truncate">{dayjs(it.createdAt).format('YYYY-MM-DD HH:mm')}</span>
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => openDetailDrawer(it)}

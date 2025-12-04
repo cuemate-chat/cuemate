@@ -62,7 +62,7 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
   };
 
   const getDocumentName = (doc: VectorDocument): string => {
-    if (doc.metadata.asked_question) return doc.metadata.asked_question;
+    if (doc.metadata.askedQuestion) return doc.metadata.askedQuestion;
     if (doc.metadata.title) return doc.metadata.title;
     if (doc.metadata.type === 'jobs') return '岗位名称';
     if (doc.metadata.type === 'resumes') return '简历名称';
@@ -71,9 +71,9 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
   };
 
   const isAIVectorRecord = (doc: VectorDocument): boolean => {
-    return doc.metadata.note_type === 'mock' ||
-           doc.metadata.note_type === 'training' ||
-           doc.metadata.note_type === 'voice_qa';
+    return doc.metadata.noteType === 'mock' ||
+           doc.metadata.noteType === 'training' ||
+           doc.metadata.noteType === 'voice_qa';
   };
 
   if (!document) {
@@ -100,7 +100,7 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
               {getDocumentName(document)}
             </h3>
             <div className="text-sm text-[#3b82f6]/80">
-              {isAIVectorRecord(document) ? getNoteTypeDisplayName(document.metadata.note_type || '') : '完整内容查看'}
+              {isAIVectorRecord(document) ? getNoteTypeDisplayName(document.metadata.noteType || '') : '完整内容查看'}
             </div>
           </div>
         </div>
@@ -116,13 +116,13 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
                 <div>
                   <span className="font-medium text-purple-700">类型:</span>
                   <span className="ml-2 text-purple-900">
-                    {getNoteTypeDisplayName(document.metadata.note_type || '')}
+                    {getNoteTypeDisplayName(document.metadata.noteType || '')}
                   </span>
                 </div>
                 <div>
                   <span className="font-medium text-purple-700">创建时间:</span>
                   <span className="ml-2 text-purple-900">
-                    {formatDate(document.metadata.created_at)}
+                    {formatDate(document.metadata.createdAt)}
                   </span>
                 </div>
                 <div className="flex items-center min-w-0">
@@ -133,29 +133,29 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
             </div>
 
             {/* 问题与回答 */}
-            {document.metadata.asked_question && (
+            {document.metadata.askedQuestion && (
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200">
                 <div className="font-medium text-blue-700 dark:text-blue-300 mb-2">提问问题</div>
                 <div className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                  {document.metadata.asked_question}
+                  {document.metadata.askedQuestion}
                 </div>
               </div>
             )}
 
-            {document.metadata.candidate_answer && (
+            {document.metadata.candidateAnswer && (
               <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200">
                 <div className="font-medium text-green-700 dark:text-green-300 mb-2">候选人回答</div>
                 <div className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                  {document.metadata.candidate_answer}
+                  {document.metadata.candidateAnswer}
                 </div>
               </div>
             )}
 
-            {document.metadata.reference_answer && (
+            {document.metadata.referenceAnswer && (
               <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4 border border-indigo-200">
                 <div className="font-medium text-indigo-700 dark:text-indigo-300 mb-2">AI 参考答案</div>
                 <div className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                  {document.metadata.reference_answer}
+                  {document.metadata.referenceAnswer}
                 </div>
               </div>
             )}
@@ -164,9 +164,9 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
             {(document.metadata.question || document.metadata.answer) && (
               <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200">
                 <div className="font-medium text-yellow-700 dark:text-yellow-300 mb-3">押题内容</div>
-                {document.metadata.question_id && (
+                {document.metadata.questionId && (
                   <div className="mb-2 text-xs text-gray-600">
-                    <span className="font-medium">押题 ID:</span> {document.metadata.question_id}
+                    <span className="font-medium">押题 ID:</span> {document.metadata.questionId}
                   </div>
                 )}
                 {document.metadata.question && (
@@ -189,22 +189,22 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
             )}
 
             {/* 其他文件内容 */}
-            {document.metadata.other_content && (
+            {document.metadata.otherContent && (
               <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-4 border border-teal-200">
                 <div className="font-medium text-teal-700 dark:text-teal-300 mb-2">其他文件内容</div>
-                {document.metadata.other_id && (
+                {document.metadata.otherId && (
                   <div className="mb-2 text-xs text-gray-600">
-                    <span className="font-medium">文件 ID:</span> {document.metadata.other_id}
+                    <span className="font-medium">文件 ID:</span> {document.metadata.otherId}
                   </div>
                 )}
                 <div className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap max-h-[200px] overflow-y-auto">
-                  {document.metadata.other_content}
+                  {document.metadata.otherContent}
                 </div>
               </div>
             )}
 
             {/* 分析结果（仅 mock/training） */}
-            {(document.metadata.pros || document.metadata.cons || document.metadata.suggestions || document.metadata.key_points || document.metadata.assessment) && (
+            {(document.metadata.pros || document.metadata.cons || document.metadata.suggestions || document.metadata.keyPoints || document.metadata.assessment) && (
               <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200">
                 <div className="font-medium text-orange-700 dark:text-orange-300 mb-3">AI 分析结果</div>
                 <div className="space-y-3">
@@ -240,11 +240,11 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
                       </div>
                     </div>
                   )}
-                  {document.metadata.key_points && (
+                  {document.metadata.keyPoints && (
                     <div>
                       <div className="text-sm font-medium text-purple-700 dark:text-purple-300 mb-1">考察点:</div>
                       <div className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                        {document.metadata.key_points}
+                        {document.metadata.keyPoints}
                       </div>
                     </div>
                   )}
@@ -256,18 +256,18 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200">
               <div className="font-medium text-gray-700 dark:text-gray-300 mb-3">关联 ID</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-600 dark:text-gray-400">
-                {document.metadata.resource_id && (
+                {document.metadata.resourceId && (
                   <div>
                     <span className="font-medium">资源 ID:</span>
-                    <span className="ml-2 font-mono">{document.metadata.resource_id}</span>
+                    <span className="ml-2 font-mono">{document.metadata.resourceId}</span>
                   </div>
                 )}
-                {document.metadata.interview_id && (
+                {document.metadata.interviewId && (
                   <div>
                     <span className="font-medium">
-                      {document.metadata.note_type === 'voice_qa' ? '对话 ID:' : '面试 ID:'}
+                      {document.metadata.noteType === 'voice_qa' ? '对话 ID:' : '面试 ID:'}
                     </span>
-                    <span className="ml-2 font-mono">{document.metadata.interview_id}</span>
+                    <span className="ml-2 font-mono">{document.metadata.interviewId}</span>
                   </div>
                 )}
               </div>
@@ -294,7 +294,7 @@ const FullContentDrawer: React.FC<FullContentDrawerProps> = ({
                 <div>
                   <span className="font-medium text-blue-700 dark:text-blue-300">创建时间:</span>
                   <span className="ml-2 text-blue-900">
-                    {formatDate(document.metadata.createdAt || document.metadata.timestamp || document.metadata.created_at)}
+                    {formatDate(document.metadata.createdAt || document.metadata.timestamp)}
                   </span>
                 </div>
               </div>

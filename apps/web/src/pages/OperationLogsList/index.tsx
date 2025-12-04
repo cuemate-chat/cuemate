@@ -116,7 +116,7 @@ export default function OperationLogsList() {
             </span>
           </div>
           <div className="text-sm text-slate-500 dark:text-slate-200 mt-1">
-            {record.message || record.resource_name}
+            {record.message || record.resourceName}
           </div>
         </div>
       ),
@@ -127,8 +127,8 @@ export default function OperationLogsList() {
       width: '10%',
       render: (record: OperationLog) => (
         <div>
-          <div className="text-sm text-slate-900 dark:text-slate-100">{record.user_name || '未知用户'}</div>
-          <div className="text-sm text-slate-500 dark:text-slate-200">{record.user_id}</div>
+          <div className="text-sm text-slate-900 dark:text-slate-100">{record.userName || '未知用户'}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-200">{record.userId}</div>
         </div>
       ),
     },
@@ -147,7 +147,7 @@ export default function OperationLogsList() {
       key: 'source_ip',
       width: '12%',
       render: (record: OperationLog) => (
-        <div className="text-sm text-slate-900 dark:text-slate-100">{record.source_ip}</div>
+        <div className="text-sm text-slate-900 dark:text-slate-100">{record.sourceIp}</div>
       ),
     },
     {

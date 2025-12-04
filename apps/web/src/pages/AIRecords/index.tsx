@@ -40,7 +40,7 @@ export default function AIRecordsList() {
   // 筛选条件
   const [filters, setFilters] = useState({
     status: '',
-    model_id: '',
+    modelId: '',
     keyword: '',
   });
 
@@ -79,7 +79,7 @@ export default function AIRecordsList() {
       width: '30%',
       render: (record: AIConversation) => {
         // 获取 provider 的图标内容用于显示
-        const provider = findProvider(record.model_provider);
+        const provider = findProvider(record.modelProvider);
         const iconContent = provider?.icon;
         const iconSrc = iconContent ? `data:image/svg+xml;utf8,${encodeURIComponent(iconContent)}` : null;
 
@@ -96,25 +96,25 @@ export default function AIRecordsList() {
                 {iconSrc && (
                   <img
                     src={iconSrc}
-                    alt={record.model_provider}
+                    alt={record.modelProvider}
                     className="w-4 h-4 rounded flex-shrink-0"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                     }}
                   />
                 )}
-                <span className="font-medium">{record.model_title}</span>
+                <span className="font-medium">{record.modelTitle}</span>
                 <span>·</span>
-                <span>{record.model_name}</span>
+                <span>{record.modelName}</span>
                 <span>·</span>
-                <span>{record.model_provider}</span>
+                <span>{record.modelProvider}</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <span>类型: {record.model_type}</span>
-                {record.model_version && (
+                <span>类型: {record.modelType}</span>
+                {record.modelVersion && (
                   <>
                     <span>·</span>
-                    <span>版本: {record.model_version}</span>
+                    <span>版本: {record.modelVersion}</span>
                   </>
                 )}
               </div>
@@ -130,31 +130,31 @@ export default function AIRecordsList() {
       render: (record: AIConversation) => (
         <div className="flex flex-col">
           <div className="text-sm text-gray-900 dark:text-slate-100">
-            {record.message_count} 条对话
+            {record.messageCount} 条对话
           </div>
           <div className="text-sm text-gray-500 dark:text-slate-200">
-            {record.token_used} tokens
+            {record.tokenUsed} tokens
           </div>
         </div>
       ),
     },
     {
       title: '创建时间',
-      key: 'created_at',
+      key: 'createdAt',
       width: '15%',
       render: (record: AIConversation) => (
         <div className="text-sm text-gray-900 dark:text-slate-100">
-          {dayjs(record.created_at * 1000).format('YYYY-MM-DD HH:mm:ss')}
+          {dayjs(record.createdAt * 1000).format('YYYY-MM-DD HH:mm:ss')}
         </div>
       ),
     },
     {
       title: '更新时间',
-      key: 'updated_at',
+      key: 'updatedAt',
       width: '15%',
       render: (record: AIConversation) => (
         <div className="text-sm text-gray-900 dark:text-slate-100">
-          {dayjs(record.updated_at * 1000).format('YYYY-MM-DD HH:mm:ss')}
+          {dayjs(record.updatedAt * 1000).format('YYYY-MM-DD HH:mm:ss')}
         </div>
       ),
     },
@@ -245,7 +245,7 @@ export default function AIRecordsList() {
 
   useEffect(() => {
     loadAIConversations();
-  }, [page, pageSize, filters.status, filters.model_id, filters.keyword]);
+  }, [page, pageSize, filters.status, filters.modelId, filters.keyword]);
 
   useEffect(() => {
     loadStats();
@@ -288,7 +288,7 @@ export default function AIRecordsList() {
   const handleReset = () => {
     setFilters({
       status: '',
-      model_id: '',
+      modelId: '',
       keyword: '',
     });
     setPage(1);
@@ -473,8 +473,8 @@ export default function AIRecordsList() {
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">模型供应商</label>
             <Select
-              value={filters.model_id}
-              onChange={(value) => setFilters(prev => ({ ...prev, model_id: value }))}
+              value={filters.modelId}
+              onChange={(value) => setFilters(prev => ({ ...prev, modelId: value }))}
               className="w-full"
               style={{ height: 42 }}
               placeholder="选择模型"

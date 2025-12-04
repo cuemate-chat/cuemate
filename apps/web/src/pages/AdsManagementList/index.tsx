@@ -65,7 +65,7 @@ export default function AdsManagementList() {
         limit,
         search: search || undefined,
         status: status || undefined,
-        block_config_id: block || undefined,
+        blockConfigId: block || undefined,
       });
       setAds(data.ads);
       setTotalCount(data.pagination.total);
@@ -120,7 +120,7 @@ export default function AdsManagementList() {
             即将跳转到以下链接：
           </div>
           <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded border dark:border-slate-600 text-sm break-all dark:text-slate-100">
-            {ad.link_url}
+            {ad.linkUrl}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
             链接将在新窗口中打开
@@ -130,7 +130,7 @@ export default function AdsManagementList() {
       okText: '确认跳转',
       cancelText: '取消',
       onOk: () => {
-        window.open(ad.link_url, '_blank', 'noopener,noreferrer');
+        window.open(ad.linkUrl, '_blank', 'noopener,noreferrer');
       }
     });
   };
@@ -245,7 +245,7 @@ export default function AdsManagementList() {
                 }
                 options={allBlocks.map((block: BlockConfig) => ({
                   value: block.id,
-                  label: `${block.block_id} (${block.width}x${block.height} - ¥${block.price})`,
+                  label: `${block.blockId} (${block.width}x${block.height} - ¥${block.price})`,
                   key: block.id
                 }))}
               />
@@ -372,14 +372,14 @@ export default function AdsManagementList() {
                               onClick={() => handlePreviewLink(ad)} 
                               className="hover:underline text-left break-all"
                             >
-                              {ad.link_url}
+                              {ad.linkUrl}
                             </button>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
                         <div className="text-xs text-slate-500 dark:text-slate-400">块 ID</div>
-                        <div className="font-medium text-blue-600">{ad.block_id || 'N/A'}</div>
+                        <div className="font-medium text-blue-600">{ad.blockId || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
                         <div>({ad.x || 0}, {ad.y || 0})</div>
@@ -400,7 +400,7 @@ export default function AdsManagementList() {
                         {formatPrice(ad.price)}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
-                        {formatDate(ad.expires_at)}
+                        {formatDate(ad.expiresAt)}
                       </td>
                       <td className="px-6 py-4 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">

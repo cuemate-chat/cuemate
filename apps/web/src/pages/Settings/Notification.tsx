@@ -109,11 +109,11 @@ export default function NotificationPage() {
 
       // Tab 筛选
       if (activeTab === 'unread') {
-        params.is_read = false;
+        params.isRead = false;
       } else if (activeTab === 'read') {
-        params.is_read = true;
+        params.isRead = true;
       } else if (activeTab === 'starred') {
-        params.is_starred = true;
+        params.isStarred = true;
       }
 
       // 分类筛选
@@ -133,8 +133,8 @@ export default function NotificationPage() {
 
       // 时间段筛选
       if (dateRange && dateRange[0] && dateRange[1]) {
-        params.start_date = dateRange[0].valueOf();
-        params.end_date = dateRange[1].valueOf();
+        params.startDate = dateRange[0].valueOf();
+        params.endDate = dateRange[1].valueOf();
       }
 
       // 获取分页数据和统计信息
@@ -163,13 +163,13 @@ export default function NotificationPage() {
 
   // 标记为已读
   const handleMarkAsRead = async (notification: Notification) => {
-    if (notification.is_read) return;
+    if (notification.isRead) return;
 
     startOperation();
     const success = await markNotificationAsRead(notification.id);
     if (success) {
       setNotifications((prev) =>
-        prev.map((n) => (n.id === notification.id ? { ...n, is_read: 1, read_at: Date.now() } : n)),
+        prev.map((n) => (n.id === notification.id ? { ...n, isRead: 1, readAt: Date.now() } : n)),
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     }
@@ -184,7 +184,7 @@ export default function NotificationPage() {
     startOperation();
     const success = await markAllNotificationsAsRead();
     if (success) {
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: 1, read_at: Date.now() })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: 1, readAt: Date.now() })));
       setUnreadCount(0);
       message.success('已标记全部为已读');
     } else {
@@ -197,13 +197,13 @@ export default function NotificationPage() {
   const handleToggleStar = async (notification: Notification, e: React.MouseEvent) => {
     e.stopPropagation();
     startOperation();
-    const newStarred = !notification.is_starred;
+    const newStarred = !notification.isStarred;
     const success = await toggleNotificationStar(notification.id, newStarred);
     if (success) {
       setNotifications((prev) =>
         prev.map((n) =>
           n.id === notification.id
-            ? { ...n, is_starred: newStarred ? 1 : 0, starred_at: newStarred ? Date.now() : undefined }
+            ? { ...n, isStarred: newStarred ? 1 : 0, starredAt: newStarred ? Date.now() : undefined }
             : n,
         ),
       );
@@ -225,7 +225,7 @@ export default function NotificationPage() {
         const success = await deleteNotification(notification.id);
         if (success) {
           setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
-          if (notification.is_read === 0) {
+          if (notification.isRead === 0) {
             setUnreadCount((prev) => Math.max(0, prev - 1));
           }
           message.success('通知已删除');
@@ -240,8 +240,8 @@ export default function NotificationPage() {
   // 点击通知卡片
   const handleNotificationClick = async (notification: Notification) => {
     await handleMarkAsRead(notification);
-    if (notification.action_url) {
-      navigate(notification.action_url);
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
     }
   };
 
@@ -521,7 +521,7 @@ export default function NotificationPage() {
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
                   className={`p-5 cursor-pointer transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-700 ${
-                    notification.is_read === 0 ? 'bg-blue-50/30 dark:bg-blue-900/20' : ''
+                    notification.isRead === 0 ? 'bg-blue-50/30 dark:bg-blue-900/20' : ''
                   }`}
                 >
                   <div className="flex items-start gap-4">
@@ -536,11 +536,11 @@ export default function NotificationPage() {
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3
-                            className={`text-base font-semibold ${notification.is_read === 0 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-200'}`}
+                            className={`text-base font-semibold ${notification.isRead === 0 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-200'}`}
                           >
                             {serialNumber}. {notification.title}
                           </h3>
-                          {notification.is_read === 0 ? (
+                          {notification.isRead === 0 ? (
                             <span className="inline-flex items-center px-2 py-0.5 bg-red-500 text-white text-xs font-medium rounded-full">
                               未读
                             </span>
@@ -549,7 +549,7 @@ export default function NotificationPage() {
                               已读
                             </span>
                           )}
-                          {notification.is_starred === 1 && (
+                          {notification.isStarred === 1 && (
                             <span className="inline-flex items-center px-2 py-0.5 bg-yellow-500 text-white text-xs font-medium rounded-full">
                               星标
                             </span>
@@ -560,7 +560,7 @@ export default function NotificationPage() {
                             onClick={(e) => handleToggleStar(notification, e)}
                             className="flex-shrink-0 text-slate-400 dark:text-slate-300 hover:text-yellow-500 transition-colors"
                           >
-                            {notification.is_starred ? (
+                            {notification.isStarred ? (
                               <StarSolid className="w-5 h-5 text-yellow-500" />
                             ) : (
                               <StarOutline className="w-5 h-5" />
@@ -591,11 +591,11 @@ export default function NotificationPage() {
                           <span className={`${priorityInfo.color} font-medium`}>
                             {priorityInfo.label}
                           </span>
-                          <span className="text-slate-500 dark:text-slate-300">{formatTime(notification.created_at)}</span>
+                          <span className="text-slate-500 dark:text-slate-300">{formatTime(notification.createdAt)}</span>
                         </div>
-                        {notification.action_text && (
+                        {notification.actionText && (
                           <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                            {notification.action_text} →
+                            {notification.actionText} →
                           </span>
                         )}
                       </div>

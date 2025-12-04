@@ -134,7 +134,7 @@ export default function JobsList() {
       setItems((prev) =>
         prev.map((it) =>
           it.id === selectedId
-            ? { ...it, title, description, resumeContent, resumeFilePath, vector_status: 1 }
+            ? { ...it, title, description, resumeContent, resumeFilePath, vectorStatus: 1 }
             : it,
         ),
       );
@@ -354,7 +354,7 @@ export default function JobsList() {
               </div>
               {/* 状态指示器 */}
               <div className={`absolute right-3 top-3 w-2 h-2 rounded-full transition-all duration-200 ${
-                item.vector_status ? 'bg-green-400 shadow-green-400/50 shadow-sm' : 'bg-amber-400 shadow-amber-400/50 shadow-sm'
+                item.vectorStatus ? 'bg-green-400 shadow-green-400/50 shadow-sm' : 'bg-amber-400 shadow-amber-400/50 shadow-sm'
               }`}></div>
             </button>
           ))}
@@ -456,7 +456,7 @@ export default function JobsList() {
             {/* 状态提示行 */}
             {selectedId && (
               <div className="flex items-start gap-2 text-xs">
-                {items.find((i) => i.id === selectedId)?.vector_status ? (
+                {items.find((i) => i.id === selectedId)?.vectorStatus ? (
                   <>
                     <CheckCircleIcon className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
                     <span className="text-green-600 dark:text-green-400 font-medium">

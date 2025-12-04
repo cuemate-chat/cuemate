@@ -152,7 +152,7 @@ export default function ModelsList() {
     // 进入编辑。如果当前用户未绑定模型，则默认绑定一次（后端 /models/select 需要登录态）。
     try {
       const me = (JSON.parse(localStorage.getItem('auth_user') || 'null') || {}) as any;
-      if (!me?.selected_model_id) {
+      if (!me?.selectedModelId) {
         try {
           await selectUserModel(m.id);
         } catch {
@@ -190,7 +190,7 @@ export default function ModelsList() {
             <div className="space-y-1">
               <div><span className="font-medium">模型名称：</span>{model.name}</div>
               <div><span className="font-medium">供应商：</span>{providerCn}</div>
-              <div><span className="font-medium">基础模型：</span>{model.model_name}</div>
+              <div><span className="font-medium">基础模型：</span>{model.modelName}</div>
             </div>
           </div>
         </div>
@@ -264,7 +264,7 @@ export default function ModelsList() {
       // 组装 credentials：根据 provider 定义的字段收集
       const provider = findProvider(formData.provider);
       const fields =
-        provider?.credentialFieldsPerModel?.[formData.model_name] ||
+        provider?.credentialFieldsPerModel?.[formData.modelName] ||
         provider?.credentialFieldsPerModel?.default ||
         provider?.credentialFields ||
         [];
@@ -278,8 +278,8 @@ export default function ModelsList() {
           credentials[f.key] = f.defaultValue;
         }
       });
-      // 获取 provider 的 icon_url 路径，用于存储到数据库
-      const providerIconUrl = provider?.icon_url ?? null;
+      // 获取 provider 的 iconUrl 路径，用于存储到数据库
+      const providerIconUrl = provider?.iconUrl ?? null;
 
       const payload: any = {
         ...formData,
@@ -296,7 +296,7 @@ export default function ModelsList() {
 
       // 同步更新 localStorage 中的用户数据
       const currentUser = storage.getUser();
-      if (currentUser && currentUser.selected_model_id === formData.id) {
+      if (currentUser && currentUser.selectedModelId === formData.id) {
         // 如果保存的是当前用户选中的模型，则更新 localStorage
         const updatedUser = {
           ...currentUser,
@@ -304,9 +304,9 @@ export default function ModelsList() {
             ...updatedModel,
             credentials: JSON.stringify(credentials), // 确保 credentials 是 JSON 字符串
           },
-          model_params: (formData.params || []).map((p: any) => ({
+          modelParams: (formData.params || []).map((p: any) => ({
             ...p,
-            model_id: formData.id,
+            modelId: formData.id,
             required: !!p.required,
           })),
         };
@@ -417,7 +417,7 @@ export default function ModelsList() {
             {list.map((m, idx) => {
               const providerCn = findProvider(m.provider)?.name || m.provider;
               const typeCn = m.type === 'llm' ? '大语言模型' : m.type || '-';
-              const creatorCn = m.created_by === 'admin' ? '管理员' : m.created_by || '-';
+              const creatorCn = m.createdBy === 'admin' ? '管理员' : m.createdBy || '-';
               return (
                 <div
                   key={m.id}
@@ -511,7 +511,7 @@ export default function ModelsList() {
                     </div>
                     <div className="flex items-baseline gap-1 min-w-0">
                       <span className="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">基础模型：</span>
-                      <span className="text-slate-800 dark:text-slate-200 truncate">{m.model_name}</span>
+                      <span className="text-slate-800 dark:text-slate-200 truncate">{m.modelName}</span>
                     </div>
                     <div className="flex items-baseline gap-1 min-w-0">
                       <span className="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">版本号：</span>
@@ -524,7 +524,7 @@ export default function ModelsList() {
                     <div className="flex items-baseline gap-1 min-w-0">
                       <span className="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">创建时间：</span>
                       <span className="text-slate-800 dark:text-slate-200 whitespace-nowrap">
-                        {m.created_at ? new Date(m.created_at).toLocaleString() : '-'}
+                        {m.createdAt ? new Date(m.createdAt).toLocaleString() : '-'}
                       </span>
                     </div>
                   </div>

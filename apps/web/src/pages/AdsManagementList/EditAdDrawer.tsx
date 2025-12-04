@@ -17,11 +17,11 @@ import { WEB_API_BASE } from '../../config';
 interface FormData {
   title: string;
   description: string;
-  link_url: string;
-  block_config_id: string;
-  contact_info: string;
+  linkUrl: string;
+  blockConfigId: string;
+  contactInfo: string;
   notes: string;
-  expires_at: string;
+  expiresAt: string;
 }
 
 interface EditAdDrawerProps {
@@ -40,11 +40,11 @@ export default function EditAdDrawer({
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
-    link_url: '',
-    block_config_id: '',
-    contact_info: '',
+    linkUrl: '',
+    blockConfigId: '',
+    contactInfo: '',
     notes: '',
-    expires_at: '',
+    expiresAt: '',
   });
   
   // 图片上传相关状态
@@ -64,36 +64,36 @@ export default function EditAdDrawer({
       setLoadingBlocks(true);
       getAvailableBlocks(ad.id).then((data) => {
         setAvailableBlocks(data.availableBlocks);
-        
-        // 根据广告的 block_id 找到对应的 block_config_id
+
+        // 根据广告的 blockId 找到对应的 blockConfigId
         let blockConfigId = '';
-        if (ad.block_id) {
-          const matchingBlock = data.availableBlocks.find(block => block.block_id === ad.block_id);
+        if (ad.blockId) {
+          const matchingBlock = data.availableBlocks.find(block => block.blockId === ad.blockId);
           if (matchingBlock) {
             blockConfigId = matchingBlock.id;
           }
         }
-        
+
         setFormData({
           title: ad.title,
           description: ad.description,
-          link_url: ad.link_url,
-          block_config_id: blockConfigId,
-          contact_info: ad.contact_info || '',
+          linkUrl: ad.linkUrl,
+          blockConfigId: blockConfigId,
+          contactInfo: ad.contactInfo || '',
           notes: ad.notes || '',
-          expires_at: new Date(ad.expires_at).toISOString().split('T')[0],
+          expiresAt: new Date(ad.expiresAt).toISOString().split('T')[0],
         });
       }).catch(() => {
-        
-        // 仍然设置基本数据，但 block_config_id 为空
+
+        // 仍然设置基本数据，但 blockConfigId 为空
         setFormData({
           title: ad.title,
           description: ad.description,
-          link_url: ad.link_url,
-          block_config_id: '',
-          contact_info: ad.contact_info || '',
+          linkUrl: ad.linkUrl,
+          blockConfigId: '',
+          contactInfo: ad.contactInfo || '',
           notes: ad.notes || '',
-          expires_at: new Date(ad.expires_at).toISOString().split('T')[0],
+          expiresAt: new Date(ad.expiresAt).toISOString().split('T')[0],
         });
       }).finally(() => {
         setLoadingBlocks(false);
@@ -101,8 +101,8 @@ export default function EditAdDrawer({
       
       // 清除图片状态，显示当前图片信息
       handleImageRemove();
-      if (ad.image_path) {
-        setImagePreview(ad.image_path);
+      if (ad.imagePath) {
+        setImagePreview(ad.imagePath);
       }
     }
   }, [ad]);
@@ -182,23 +182,23 @@ export default function EditAdDrawer({
       message.error('请输入广告描述');
       return;
     }
-    if (!formData.link_url.trim()) {
+    if (!formData.linkUrl.trim()) {
       message.error('请输入跳转链接');
       return;
     }
-    if (!formData.block_config_id.trim()) {
+    if (!formData.blockConfigId.trim()) {
       message.error('请选择广告位块');
       return;
     }
-    if (!formData.contact_info.trim()) {
+    if (!formData.contactInfo.trim()) {
       message.error('请输入联系方式');
       return;
     }
 
     // 检查块是否可用
     const result = await checkBlock({
-      block_config_id: formData.block_config_id,
-      exclude_id: ad.id
+      blockConfigId: formData.blockConfigId,
+      excludeId: ad.id
     });
     const available = result.available;
 
@@ -210,7 +210,7 @@ export default function EditAdDrawer({
     setSubmitting(true);
     try {
       // 如果选择了新图片，先上传
-      let imagePath = ad.image_path || '';
+      let imagePath = ad.imagePath || '';
       if (selectedFile) {
         imagePath = await handleImageUpload();
         if (!imagePath && selectedFile) {
@@ -222,12 +222,12 @@ export default function EditAdDrawer({
       const payload: CreatePixelAdRequest = {
         title: formData.title,
         description: formData.description,
-        link_url: formData.link_url,
-        block_config_id: formData.block_config_id,
-        contact_info: formData.contact_info,
+        linkUrl: formData.linkUrl,
+        blockConfigId: formData.blockConfigId,
+        contactInfo: formData.contactInfo,
         notes: formData.notes,
-        expires_at: new Date(formData.expires_at).getTime(),
-        image_path: imagePath,
+        expiresAt: new Date(formData.expiresAt).getTime(),
+        imagePath: imagePath,
       };
 
       await updatePixelAd(ad.id, payload);
@@ -287,8 +287,8 @@ export default function EditAdDrawer({
               </label>
               <input
                 type="url"
-                value={formData.link_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, link_url: e.target.value }))}
+                value={formData.linkUrl}
+                onChange={(e) => setFormData(prev => ({ ...prev, linkUrl: e.target.value }))}
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="https://example.com"
                 required
@@ -302,9 +302,9 @@ export default function EditAdDrawer({
               <Select
                 showSearch
                 placeholder="选择可用的广告块"
-                value={formData.block_config_id || undefined}
+                value={formData.blockConfigId || undefined}
                 onChange={(value) => {
-                  setFormData(prev => ({ ...prev, block_config_id: value }));
+                  setFormData(prev => ({ ...prev, blockConfigId: value }));
                 }}
                 style={{ width: '100%' }}
                 loading={loadingBlocks}
@@ -314,7 +314,7 @@ export default function EditAdDrawer({
                 }
                 options={availableBlocks.map((block: BlockConfig) => ({
                   value: block.id,
-                  label: `${block.block_id} (${block.width}x${block.height} - ¥${block.price})`,
+                  label: `${block.blockId} (${block.width}x${block.height} - ¥${block.price})`,
                   key: block.id
                 }))}
                 listHeight={200}
@@ -330,12 +330,12 @@ export default function EditAdDrawer({
                 块信息
               </label>
               <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm text-slate-700 dark:text-slate-200">
-                {formData.block_config_id ? (
+                {formData.blockConfigId ? (
                   (() => {
-                    const selectedBlock = availableBlocks.find((b: BlockConfig) => b.id === formData.block_config_id);
+                    const selectedBlock = availableBlocks.find((b: BlockConfig) => b.id === formData.blockConfigId);
                     return selectedBlock ? (
                       <div>
-                        <div>块 ID: <span className="font-medium text-blue-600 dark:text-blue-400">{selectedBlock.block_id}</span></div>
+                        <div>块 ID: <span className="font-medium text-blue-600 dark:text-blue-400">{selectedBlock.blockId}</span></div>
                         <div>位置: ({selectedBlock.x}, {selectedBlock.y})</div>
                         <div>尺寸: {selectedBlock.width} × {selectedBlock.height}</div>
                         <div>类型: {selectedBlock.type === 'square' ? '正方形' : selectedBlock.type === 'horizontal' ? '横长方形' : '竖长方形'}</div>
@@ -407,8 +407,8 @@ export default function EditAdDrawer({
               </label>
               <input
                 type="text"
-                value={formData.contact_info}
-                onChange={(e) => setFormData(prev => ({ ...prev, contact_info: e.target.value }))}
+                value={formData.contactInfo}
+                onChange={(e) => setFormData(prev => ({ ...prev, contactInfo: e.target.value }))}
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="输入联系方式（电话、微信、QQ、邮箱等）"
                 required
@@ -421,8 +421,8 @@ export default function EditAdDrawer({
               </label>
               <input
                 type="date"
-                value={formData.expires_at}
-                onChange={(e) => setFormData(prev => ({ ...prev, expires_at: e.target.value }))}
+                value={formData.expiresAt}
+                onChange={(e) => setFormData(prev => ({ ...prev, expiresAt: e.target.value }))}
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />

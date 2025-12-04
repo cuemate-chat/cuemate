@@ -121,7 +121,7 @@ export default function VersionListDrawer({
                       </div>
                       <div className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
                         <ClockIcon className="w-4 h-4" />
-                        <span>{formatDate(version.create_time)}</span>
+                        <span>{formatDate(version.createTime)}</span>
                       </div>
                     </div>
 

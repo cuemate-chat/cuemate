@@ -6,7 +6,7 @@ import { message } from '../../components/Message';
 
 interface AdBlock {
   id: string;
-  block_id: string;
+  blockId: string;
   x: number;
   y: number;
   width: number;
@@ -92,7 +92,7 @@ export default function MockUploadDrawer({
       <DrawerHeader>
         <div className="flex items-center gap-2">
           <PhotoIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          <span>模拟上传到块 {selectedBlock?.block_id}</span>
+          <span>模拟上传到块 {selectedBlock?.blockId}</span>
         </div>
       </DrawerHeader>
       

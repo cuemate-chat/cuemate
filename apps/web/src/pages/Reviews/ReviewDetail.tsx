@@ -41,11 +41,11 @@ export default function ReviewDetail() {
   const radarData = useMemo(() => {
     const s = data.summary || {};
     return [
-      { item: '互动性', score: s.radar_interactivity || 0 },
-      { item: '自信度', score: s.radar_confidence || 0 },
-      { item: '专业性', score: s.radar_professionalism || 0 },
-      { item: '回答相关性', score: s.radar_relevance || 0 },
-      { item: '表达流程性', score: s.radar_clarity || 0 },
+      { item: '互动性', score: s.radarInteractivity || 0 },
+      { item: '自信度', score: s.radarConfidence || 0 },
+      { item: '专业性', score: s.radarProfessionalism || 0 },
+      { item: '回答相关性', score: s.radarRelevance || 0 },
+      { item: '表达流程性', score: s.radarClarity || 0 },
     ];
   }, [data]);
   return (
@@ -76,7 +76,7 @@ export default function ReviewDetail() {
 function SummaryTab({ data, radarData }: any) {
   const s = data.summary;
   if (!s) return <Empty description="暂无概要数据" />;
-  const totalSec = Number(s.duration_sec) || 0;
+  const totalSec = Number(s.durationSec) || 0;
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const sec = totalSec % 60;
@@ -137,7 +137,7 @@ function SummaryTab({ data, radarData }: any) {
             <div className="flex items-end gap-1">
               <div className="text-slate-500 text-sm">综合评分: </div>
               <div className="text-5xl font-extrabold text-blue-600 drop-shadow-sm">
-                {s.total_score ?? '--'}
+                {s.totalScore ?? '--'}
               </div>
               <div className="text-lg text-blue-500 mb-1">分</div>
             </div>
@@ -149,10 +149,10 @@ function SummaryTab({ data, radarData }: any) {
                 </span>
               ))}{' '}
               ・ 面试问题:
-              <span className="mx-1 text-blue-600 font-semibold"> {s.num_questions}</span> 个
+              <span className="mx-1 text-blue-600 font-semibold"> {s.numQuestions}</span> 个
             </div>
             <div className="mt-4 max-w-[92%] text-slate-800 leading-7 font-semibold">
-              {s.overall_summary}
+              {s.overallSummary}
             </div>
           </div>
         </Card>
@@ -239,14 +239,14 @@ function QATab({ data }: any) {
                   : `${q.duration}秒`}
               </span>
             )}
-            <span>{dayjs(q.created_at).format('YYYY-MM-DD HH:mm')}</span>
+            <span>{dayjs(q.createdAt).format('YYYY-MM-DD HH:mm')}</span>
           </div>
           <div className="pl-4 md:pl-6">
             {/* 问题标题行 */}
             <div className="flex items-start gap-2">
               <QuestionCircleFilled style={{ color: '#fa8c16' }} className="mt-0.5" />
               <div className="text-slate-900 font-medium">
-                问：“{q.asked_question || q.question}”
+                问："{q.askedQuestion || q.question}"
               </div>
             </div>
 
@@ -254,7 +254,7 @@ function QATab({ data }: any) {
             <div className="mt-3 flex items-start gap-2">
               <InfoCircleFilled style={{ color: '#52c41a' }} className="mt-0.5" />
               <div className="flex-1 text-slate-700">
-                答：“{q.candidate_answer || q.answer || '—'}”
+                答："{q.candidateAnswer || q.answer || '—'}"
               </div>
             </div>
 
@@ -270,7 +270,7 @@ function QATab({ data }: any) {
                 >
                   考察点
                 </div>
-                <div className="mt-2 text-slate-800 whitespace-pre-line">{q.key_points || '—'}</div>
+                <div className="mt-2 text-slate-800 whitespace-pre-line">{q.keyPoints || '—'}</div>
               </div>
               <div
                 className="rounded-md border p-3"
@@ -298,7 +298,7 @@ function QATab({ data }: any) {
                 参考回答
               </div>
               <div className="mt-2 text-slate-800 whitespace-pre-line">
-                {q.reference_answer || '—'}
+                {q.referenceAnswer || '—'}
               </div>
             </div>
 
@@ -365,11 +365,11 @@ function InsightTab({ data }: any) {
                   data={[
                     {
                       name: 'filled',
-                      value: Math.max(0, Math.min(100, Number(ins.interviewer_score) || 0)),
+                      value: Math.max(0, Math.min(100, Number(ins.interviewerScore) || 0)),
                     },
                     {
                       name: 'empty',
-                      value: 100 - Math.max(0, Math.min(100, Number(ins.interviewer_score) || 0)),
+                      value: 100 - Math.max(0, Math.min(100, Number(ins.interviewerScore) || 0)),
                     },
                   ]}
                   startAngle={90}
@@ -386,7 +386,7 @@ function InsightTab({ data }: any) {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="text-4xl font-extrabold text-blue-600">
-                {Math.max(0, Math.min(100, Number(ins.interviewer_score) || 0))}
+                {Math.max(0, Math.min(100, Number(ins.interviewerScore) || 0))}
               </div>
               <div className="text-slate-500 text-sm mt-1">契合度(%)</div>
             </div>
@@ -395,7 +395,7 @@ function InsightTab({ data }: any) {
         <Card className="md:col-span-2 border-blue-100" style={{ backgroundColor: '#F5FAFF' }}>
           <div className="h-[220px] flex items-center justify-center text-center">
             <div className="max-w-[92%] text-slate-800 leading-7 font-semibold">
-              “{ins.interviewer_summary || '—'}”
+              “{ins.interviewerSummary || '—'}”
             </div>
           </div>
         </Card>
@@ -418,7 +418,7 @@ function InsightTab({ data }: any) {
             <div className="inline-block text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">
               面试官角色
             </div>
-            <div className="mt-2 text-slate-800">{ins.interviewer_role || '—'}</div>
+            <div className="mt-2 text-slate-800">{ins.interviewerRole || '—'}</div>
           </div>
           <div
             className="rounded-md border p-3"
@@ -427,7 +427,7 @@ function InsightTab({ data }: any) {
             <div className="inline-block text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">
               MBTI 类型
             </div>
-            <div className="mt-2 text-slate-800">{ins.interviewer_mbti || '—'}</div>
+            <div className="mt-2 text-slate-800">{ins.interviewerMbti || '—'}</div>
           </div>
           <div
             className="rounded-md border p-3"
@@ -437,7 +437,7 @@ function InsightTab({ data }: any) {
               个人特质
             </div>
             <div className="mt-2 text-slate-800 whitespace-pre-line">
-              {ins.interviewer_personality || '—'}
+              {ins.interviewerPersonality || '—'}
             </div>
           </div>
           <div
@@ -448,7 +448,7 @@ function InsightTab({ data }: any) {
               对候选人的偏好
             </div>
             <div className="mt-2 text-slate-800 whitespace-pre-line">
-              {ins.interviewer_preference || '—'}
+              {ins.interviewerPreference || '—'}
             </div>
           </div>
         </div>
@@ -472,7 +472,7 @@ function InsightTab({ data }: any) {
             <div className="inline-block text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">
               MBTI 类型
             </div>
-            <div className="mt-2 text-slate-800">{ins.candidate_mbti || '—'}</div>
+            <div className="mt-2 text-slate-800">{ins.candidateMbti || '—'}</div>
           </div>
           <div
             className="rounded-md border p-3"
@@ -482,7 +482,7 @@ function InsightTab({ data }: any) {
               个人特质
             </div>
             <div className="mt-2 text-slate-800 whitespace-pre-line">
-              {ins.candidate_personality || '—'}
+              {ins.candidatePersonality || '—'}
             </div>
           </div>
           <div
@@ -493,7 +493,7 @@ function InsightTab({ data }: any) {
               求职偏好
             </div>
             <div className="mt-2 text-slate-800 whitespace-pre-line">
-              {ins.candidate_job_preference || '—'}
+              {ins.candidateJobPreference || '—'}
             </div>
           </div>
         </div>
@@ -517,7 +517,7 @@ function InsightTab({ data }: any) {
               提前准备技术细节
             </div>
             <div className="mt-2 text-slate-800 whitespace-pre-line">
-              {ins.strategy_prepare_details || '—'}
+              {ins.strategyPrepareDetails || '—'}
             </div>
           </div>
           <div
@@ -528,7 +528,7 @@ function InsightTab({ data }: any) {
               展示对业务的理解
             </div>
             <div className="mt-2 text-slate-800 whitespace-pre-line">
-              {ins.strategy_business_understanding || '—'}
+              {ins.strategyBusinessUnderstanding || '—'}
             </div>
           </div>
           <div
@@ -539,7 +539,7 @@ function InsightTab({ data }: any) {
               保持逻辑清晰
             </div>
             <div className="mt-2 text-slate-800 whitespace-pre-line">
-              {ins.strategy_keep_logical || '—'}
+              {ins.strategyKeepLogical || '—'}
             </div>
           </div>
         </div>

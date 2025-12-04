@@ -86,7 +86,7 @@ export default function Settings() {
       try {
         const res: any = await listModels({ type: 'llm' });
         const opts = (res.list || []).map((m: any) => ({
-          label: `${m.name} (${m.model_name})`,
+          label: `${m.name} (${m.modelName})`,
           value: m.id,
           provider: m.provider, // 保存 provider 信息用于显示图标
         }));
@@ -226,8 +226,8 @@ export default function Settings() {
             <div className="md:col-span-2">
               <div className="w-full">
                 <AntSelect
-                  value={form.selected_model_id}
-                  onChange={(v) => setForm((f) => ({ ...f, selected_model_id: v }))}
+                  value={form.selectedModelId}
+                  onChange={(v) => setForm((f) => ({ ...f, selectedModelId: v }))}
                   options={modelOptions}
                   className="w-full"
                   popupMatchSelectWidth
@@ -311,14 +311,14 @@ export default function Settings() {
             <div className="md:col-span-2">
               <div className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 overflow-hidden bg-white dark:bg-slate-700 shadow-sm">
                 <button
-                  className={`px-4 py-2 text-sm ${form.floating_window_visible === 1 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
-                  onClick={() => setForm((f) => ({ ...f, floating_window_visible: 1 }))}
+                  className={`px-4 py-2 text-sm ${form.floatingWindowVisible === 1 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
+                  onClick={() => setForm((f) => ({ ...f, floatingWindowVisible: 1 }))}
                 >
                   交互模式
                 </button>
                 <button
-                  className={`px-4 py-2 text-sm border-l border-slate-300 dark:border-slate-600 ${form.floating_window_visible === 0 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
-                  onClick={() => setForm((f) => ({ ...f, floating_window_visible: 0 }))}
+                  className={`px-4 py-2 text-sm border-l border-slate-300 dark:border-slate-600 ${form.floatingWindowVisible === 0 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
+                  onClick={() => setForm((f) => ({ ...f, floatingWindowVisible: 0 }))}
                 >
                   穿透模式
                 </button>
@@ -336,8 +336,8 @@ export default function Settings() {
             <div className="md:col-span-2">
               <div className="w-full">
                 <AntSelect
-                  value={form.floating_window_height}
-                  onChange={(v) => setForm((f) => ({ ...f, floating_window_height: v }))}
+                  value={form.floatingWindowHeight}
+                  onChange={(v) => setForm((f) => ({ ...f, floatingWindowHeight: v }))}
                   options={[
                     { value: 50, label: '50%' },
                     { value: 75, label: '75%' },
@@ -399,7 +399,7 @@ export default function Settings() {
             <div className="text-slate-800 dark:text-slate-200 font-medium">创建时间</div>
             <div className="md:col-span-2">
               <input
-                value={form.created_at ? new Date(form.created_at).toLocaleString() : ''}
+                value={form.createdAt ? new Date(form.createdAt).toLocaleString() : ''}
                 disabled
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
               />
@@ -430,7 +430,7 @@ export default function Settings() {
                   try {
                     const res: any = await listModels({ type: 'llm' });
                     const opts = (res.list || []).map((m: any) => ({
-                      label: `${m.name} (${m.model_name})`,
+                      label: `${m.name} (${m.modelName})`,
                       value: m.id,
                       provider: m.provider, // 保存 provider 信息用于显示图标
                     }));
@@ -457,9 +457,9 @@ export default function Settings() {
                 theme: form.theme,
                 locale: form.locale,
                 timezone: form.timezone,
-                selected_model_id: form.selected_model_id,
-                floating_window_visible: form.floating_window_visible,
-                floating_window_height: form.floating_window_height,
+                selectedModelId: form.selectedModelId,
+                floatingWindowVisible: form.floatingWindowVisible,
+                floatingWindowHeight: form.floatingWindowHeight,
               };
 
               // 直接复用 onSave 逻辑

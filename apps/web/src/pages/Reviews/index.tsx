@@ -92,10 +92,10 @@ export default function Reviews() {
                 <div className="absolute right-4 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-600" />
                 <div className={`absolute right-4 top-5 w-3 h-3 rounded-full transform translate-x-1/2 ${isSelected ? 'bg-orange-500 ring-4 ring-orange-200 dark:ring-orange-900/50' : 'bg-blue-500 dark:bg-blue-400'}`} />
                 <div className="text-[20px] text-slate-500 dark:text-slate-400 leading-4 mt-1">
-                  {dayjs(it.started_at).format('YYYY-MM-DD')}
+                  {dayjs(it.startedAt).format('YYYY-MM-DD')}
                 </div>
                 <div className="text-[14px] text-slate-400 dark:text-slate-500 mt-1">
-                  {dayjs(it.started_at).format('HH:mm')}
+                  {dayjs(it.startedAt).format('HH:mm')}
                 </div>
               </div>
               {/* 右列：岗位 + 总结 + 建议/弱点 */}
@@ -109,17 +109,17 @@ export default function Reviews() {
                   </div>
                   {/* 右上角标签区域 */}
                   <div className="absolute right-3 top-2 flex items-center gap-2">
-                    {it.model_name && (
+                    {it.modelName && (
                       <Tag color="purple" className="!m-0 flex items-center gap-1">
                         {(() => {
-                          const icon = it.model_provider ? findProvider(it.model_provider)?.icon : null;
+                          const icon = it.modelProvider ? findProvider(it.modelProvider)?.icon : null;
                           if (icon) {
                             const src = `data:image/svg+xml;utf8,${encodeURIComponent(icon)}`;
                             return <img src={src} alt="" className="w-4 h-4" />;
                           }
                           return null;
                         })()}
-                        {it.model_name}
+                        {it.modelName}
                       </Tag>
                     )}
                     {it.duration > 0 && (
@@ -127,14 +127,14 @@ export default function Reviews() {
                         时长: {Math.floor(it.duration / 60)}分{it.duration % 60}秒
                       </Tag>
                     )}
-                    {it.question_count > 0 && (
+                    {it.questionCount > 0 && (
                       <Tag color="cyan" className="!m-0">
-                        题目数: {it.question_count}
+                        题目数: {it.questionCount}
                       </Tag>
                     )}
-                    {it.interview_type && (
+                    {it.interviewType && (
                       <Tag color="geekblue" className="!m-0">
-                        {it.interview_type === 'mock' ? '模拟面试' : '面试训练'}
+                        {it.interviewType === 'mock' ? '模拟面试' : '面试训练'}
                       </Tag>
                     )}
                     {it.status && (
@@ -174,8 +174,8 @@ export default function Reviews() {
                         })()}
                       </Tag>
                     )}
-                    {/* 面试进行中时显示 interview_state */}
-                    {it.interview_state && !it.status?.includes('completed') && !it.status?.includes('error') && !it.status?.includes('expired') && (
+                    {/* 面试进行中时显示 interviewState */}
+                    {it.interviewState && !it.status?.includes('completed') && !it.status?.includes('error') && !it.status?.includes('expired') && (
                       <Tag color="processing" className="!m-0">
                         {(() => {
                           const stateMap: Record<string, string> = {
@@ -194,11 +194,11 @@ export default function Reviews() {
                             'error': '错误',
                             'listening_interviewer': '监听面试官',
                           };
-                          return stateMap[it.interview_state] || it.interview_state;
+                          return stateMap[it.interviewState] || it.interviewState;
                         })()}
                       </Tag>
                     )}
-                    <Badge count={it.advantages_total || 0} overflowCount={99}>
+                    <Badge count={it.advantagesTotal || 0} overflowCount={99}>
                       <span className="inline-flex items-center h-6 px-2 text-[11px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded-full shadow-sm">
                         优缺点
                       </span>
@@ -206,8 +206,8 @@ export default function Reviews() {
                   </div>
 
                   <div className="pl-4">
-                    <div className="text-slate-900 dark:text-slate-100 font-semibold">{it.job_title}</div>
-                    {it.job_content && (
+                    <div className="text-slate-900 dark:text-slate-100 font-semibold">{it.jobTitle}</div>
+                    {it.jobContent && (
                       <div
                         className={`mt-1 text-xs text-slate-500 dark:text-slate-400 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 whitespace-pre-line ${expandedJobContent.has(it.id) ? '' : 'line-clamp-3'}`}
                         onClick={() => {
@@ -220,17 +220,17 @@ export default function Reviews() {
                           setExpandedJobContent(newSet);
                         }}
                       >
-                        {it.job_content}
+                        {it.jobContent}
                       </div>
                     )}
                     <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                      {it.resumes_title && (
+                      {it.resumesTitle && (
                         <Tag color="purple" className="!m-0">
-                          简历: {it.resumes_title}
+                          简历: {it.resumesTitle}
                         </Tag>
                       )}
                     </div>
-                    {it.resumes_content && (
+                    {it.resumesContent && (
                       <div
                         className={`mt-1 text-xs text-slate-400 dark:text-slate-500 italic cursor-pointer hover:text-slate-600 dark:hover:text-slate-400 whitespace-pre-line ${expandedResumes.has(it.id) ? '' : 'line-clamp-3'}`}
                         onClick={() => {
@@ -243,12 +243,12 @@ export default function Reviews() {
                           setExpandedResumes(newSet);
                         }}
                       >
-                        {it.resumes_content}
+                        {it.resumesContent}
                       </div>
                     )}
-                    {it.overall_summary && (
+                    {it.overallSummary && (
                       <div className="mt-2 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line line-clamp-2">
-                        {it.overall_summary}
+                        {it.overallSummary}
                       </div>
                     )}
                     {it.message && (
@@ -263,7 +263,7 @@ export default function Reviews() {
                           className="!m-0 !px-3 !py-1 font-medium flex-1 min-w-0 overflow-hidden"
                         >
                           <div className="truncate">
-                            {it.advantage_content || it.overall_suggestions || (() => {
+                            {it.advantageContent || it.overallSuggestions || (() => {
                               if (it.status?.includes('error')) return '因发生错误，未生成建议';
                               if (it.status?.includes('expired')) return '面试已过期，未生成建议';
                               if (it.status?.includes('recording') || it.status?.includes('paused')) return '面试进行中，稍后生成';
@@ -276,7 +276,7 @@ export default function Reviews() {
                           className="!m-0 !px-3 !py-1 font-medium flex-1 min-w-0 overflow-hidden"
                         >
                           <div className="truncate">
-                            {it.disadvantage_content || it.overall_cons || (() => {
+                            {it.disadvantageContent || it.overallCons || (() => {
                               if (it.status?.includes('error')) return '因发生错误，未生成分析';
                               if (it.status?.includes('expired')) return '面试已过期，未生成分析';
                               if (it.status?.includes('recording') || it.status?.includes('paused')) return '面试进行中，稍后生成';

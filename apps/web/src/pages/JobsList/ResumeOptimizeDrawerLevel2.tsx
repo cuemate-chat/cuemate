@@ -32,8 +32,8 @@ const ResumeOptimizeDrawerLevel2: React.FC<ResumeOptimizeDrawerLevel2Props> = ({
   onCloseAll,
 }) => {
   const [viewMode, setViewMode] = useState<'diff' | 'edit'>('diff');
-  const [tempOriginalResume, setTempOriginalResume] = useState(optimization.original_resume);
-  const [tempOptimizedResume, setTempOptimizedResume] = useState(optimization.optimized_resume || '');
+  const [tempOriginalResume, setTempOriginalResume] = useState(optimization.originalResume);
+  const [tempOptimizedResume, setTempOptimizedResume] = useState(optimization.optimizedResume || '');
   const { loading: optimizeLoading, start: startOptimize, end: endOptimize } = useLoading();
 
   // 检测深色模式

@@ -40,7 +40,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
     if (current) {
       setEditTitle(current.title || '');
       setEditDesc(current.description || '');
-      setEditTagId(current.tag_id || undefined);
+      setEditTagId(current.tagId || undefined);
     }
   }, [current]);
 
@@ -91,9 +91,9 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
         {current && (
           <div className="space-y-4 h-[70vh] flex flex-col">
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              创建时间：{dayjs(current.created_at).format('YYYY-MM-DD HH:mm')}{' '}
+              创建时间：{dayjs(current.createdAt).format('YYYY-MM-DD HH:mm')}{' '}
               <span className="ml-3 text-red-500 dark:text-red-400">
-                {current.vector_status ? '已同步到向量库' : '未同步到向量库，保存后自动同步'}
+                {current.vectorStatus ? '已同步到向量库' : '未同步到向量库，保存后自动同步'}
               </span>
             </div>
 

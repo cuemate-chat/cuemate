@@ -170,14 +170,14 @@ export default function ResumeOptimizationListDrawer({
                       {/* 标题行 */}
                       <div className="flex items-center gap-3 mb-3">
                         {getStatusTag(optimization.status)}
-                        {optimization.model_name && (
+                        {optimization.modelName && (
                           <span className="text-xs text-slate-500 dark:text-slate-400">
-                            模型: {optimization.model_name}
+                            模型: {optimization.modelName}
                           </span>
                         )}
-                        {optimization.optimization_count > 0 && (
+                        {optimization.optimizationCount > 0 && (
                           <span className="text-xs text-amber-600 dark:text-amber-400">
-                            已优化 {optimization.optimization_count} 次
+                            已优化 {optimization.optimizationCount} 次
                           </span>
                         )}
                       </div>
@@ -187,16 +187,16 @@ export default function ResumeOptimizationListDrawer({
                         <div className="flex items-center gap-2">
                           <span className="text-slate-600 dark:text-slate-400">优化前:</span>
                           <span className="font-medium text-slate-900 dark:text-slate-100">
-                            {optimization.original_word_count} 字
+                            {optimization.originalWordCount} 字
                           </span>
                         </div>
-                        {optimization.optimized_word_count > 0 && (
+                        {optimization.optimizedWordCount > 0 && (
                           <>
                             <span className="text-slate-400">→</span>
                             <div className="flex items-center gap-2">
                               <span className="text-slate-600 dark:text-slate-400">优化后:</span>
                               <span className="font-medium text-green-600 dark:text-green-400">
-                                {optimization.optimized_word_count} 字
+                                {optimization.optimizedWordCount} 字
                               </span>
                             </div>
                           </>
@@ -211,9 +211,9 @@ export default function ResumeOptimizationListDrawer({
                       )}
 
                       {/* 错误信息 */}
-                      {optimization.error_message && (
+                      {optimization.errorMessage && (
                         <div className="text-xs text-red-600 dark:text-red-400 mt-2">
-                          错误: {optimization.error_message}
+                          错误: {optimization.errorMessage}
                         </div>
                       )}
                     </div>
@@ -221,7 +221,7 @@ export default function ResumeOptimizationListDrawer({
                     {/* 右侧时间 */}
                     <div className="flex-shrink-0 text-right">
                       <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {formatDate(optimization.created_at)}
+                        {formatDate(optimization.createdAt)}
                       </div>
                     </div>
                   </div>
