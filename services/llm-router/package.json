@@ -15,6 +15,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
     "@aws-sdk/client-bedrock-runtime": "^3.700.0",
+    "@cuemate/config": "workspace:*",
     "@cuemate/logger": "workspace:*",
     "@fastify/cors": "^8.5.0",
     "@fastify/env": "^4.3.0",
