@@ -13,12 +13,13 @@ import { OperationType } from '../utils/operation-logger.js';
 import { deleteNotificationsByResourceId, notifyJobCreated } from '../utils/notification-helper.js';
 
 export function registerJobRoutes(app: FastifyInstance) {
+  // hook 已将 camelCase 转换为 snake_case
   const createSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().min(1).max(5000),
-    resumeTitle: z.string().max(200).optional(),
-    resumeContent: z.string().min(1).max(20000),
-    resumeFilePath: z.string().nullish(),
+    resume_title: z.string().max(200).optional(),
+    resume_content: z.string().min(1).max(20000),
+    resume_file_path: z.string().nullish(),
   });
   const updateSchema = createSchema;
 
@@ -49,9 +50,9 @@ export function registerJobRoutes(app: FastifyInstance) {
             resumeId,
             payload.uid,
             jobId,
-            body.resumeTitle || `${body.title}-简历`,
-            body.resumeContent,
-            body.resumeFilePath || null,
+            body.resume_title || `${body.title}-简历`,
+            body.resume_content,
+            body.resume_file_path || null,
             now,
           );
 
@@ -77,9 +78,9 @@ export function registerJobRoutes(app: FastifyInstance) {
                 },
                 resume: {
                   id: resumeId,
-                  title: body.resumeTitle || `${body.title}-简历`,
-                  content: body.resumeContent,
-                  file_path: body.resumeFilePath,
+                  title: body.resume_title || `${body.title}-简历`,
+                  content: body.resume_content,
+                  file_path: body.resume_file_path,
                   job_id: jobId,
                   user_id: payload.uid,
                   created_at: now,
@@ -203,19 +204,19 @@ export function registerJobRoutes(app: FastifyInstance) {
         .prepare('SELECT id FROM resumes WHERE job_id=? AND user_id=?')
         .get(id, payload.uid);
       if (r) {
-        // 只有当 resumeFilePath 有值时才更新 file_path,避免覆盖原有值
-        if (body.resumeFilePath !== undefined && body.resumeFilePath !== null) {
+        // 只有当 resume_file_path 有值时才更新 file_path,避免覆盖原有值
+        if (body.resume_file_path !== undefined && body.resume_file_path !== null) {
           app.db
             .prepare(
               'UPDATE resumes SET title=?, content=?, file_path=?, vector_status=0 WHERE id=? AND user_id=?',
             )
-            .run(body.resumeTitle || `${body.title}-简历`, body.resumeContent, body.resumeFilePath, r.id, payload.uid);
+            .run(body.resume_title || `${body.title}-简历`, body.resume_content, body.resume_file_path, r.id, payload.uid);
         } else {
           app.db
             .prepare(
               'UPDATE resumes SET title=?, content=?, vector_status=0 WHERE id=? AND user_id=?',
             )
-            .run(body.resumeTitle || `${body.title}-简历`, body.resumeContent, r.id, payload.uid);
+            .run(body.resume_title || `${body.title}-简历`, body.resume_content, r.id, payload.uid);
         }
       } else {
         const resumeId = randomUUID();
@@ -228,9 +229,9 @@ export function registerJobRoutes(app: FastifyInstance) {
             resumeId,
             payload.uid,
             id,
-            body.resumeTitle || `${body.title}-简历`,
-            body.resumeContent,
-            body.resumeFilePath || null,
+            body.resume_title || `${body.title}-简历`,
+            body.resume_content,
+            body.resume_file_path || null,
             now,
           );
       }
@@ -1022,11 +1023,12 @@ export function registerJobRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'jobs.optimize-resume', async (req: any, reply: any) => {
       try {
         const payload = await req.jwtVerify();
+        // hook 已将 camelCase 转换为 snake_case
         const body = z
           .object({
-            jobId: z.string(),
-            resumeContent: z.string().min(1),
-            jobDescription: z.string().min(1),
+            job_id: z.string(),
+            resume_content: z.string().min(1),
+            job_description: z.string().min(1),
           })
           .parse(req.body);
 
@@ -1086,9 +1088,9 @@ export function registerJobRoutes(app: FastifyInstance) {
         };
 
         const optimizePrompt = renderTemplate(promptRow.content, {
-          jobDescription: body.jobDescription,
-          resumeContent: body.resumeContent,
-          resumeLength: body.resumeContent.length,
+          jobDescription: body.job_description,
+          resumeContent: body.resume_content,
+          resumeLength: body.resume_content.length,
         });
 
         // 直接调用对应的 API（与模型测试使用相同配置）
@@ -1158,7 +1160,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         }
 
         // 验证优化后简历的长度
-        const originalLength = body.resumeContent.length;
+        const originalLength = body.resume_content.length;
         const optimizedLength = (result.optimizedResume || content).length;
         const minRequiredLength = Math.floor(originalLength * 0.8); // 至少 80%的长度
 
