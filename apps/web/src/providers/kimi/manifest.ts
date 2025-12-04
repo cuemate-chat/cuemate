@@ -7,19 +7,19 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  icon_url: 'assets/llm/kimi_icon_svg',
-  jump_link: 'https://cuemate.chat/guide/models/providers/kimi.html',
+  iconUrl: 'assets/llm/kimi_icon_svg',
+  jumpLink: 'https://cuemate.chat/guide/models/providers/kimi.html',
   modelNamePlaceholder: '如 moonshot-v1-128k / moonshot-v1-32k / moonshot-v1-8k',
   baseModels: [
     {
       name: 'moonshot-v1-128k',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.3',
-          default_value: '0.3',
+          defaultValue: '0.3',
           extra: {
             min: 0,
             max: 1,
@@ -28,10 +28,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '32768',
-          default_value: '32768',
+          defaultValue: '32768',
           extra: {
             min: 256,
             max: 65536,
@@ -42,13 +42,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'moonshot-v1-32k',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.3',
-          default_value: '0.3',
+          defaultValue: '0.3',
           extra: {
             min: 0,
             max: 1,
@@ -57,10 +57,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '16384',
-          default_value: '16384',
+          defaultValue: '16384',
           extra: {
             min: 256,
             max: 16384,
@@ -71,13 +71,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'moonshot-v1-8k',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.3',
-          default_value: '0.3',
+          defaultValue: '0.3',
           extra: {
             min: 0,
             max: 1,
@@ -86,10 +86,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 256,
             max: 4096,

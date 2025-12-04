@@ -7,19 +7,19 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  icon_url: 'assets/llm/sensenova_icon_svg',
-  jump_link: 'https://cuemate.chat/guide/models/providers/sensenova.html',
+  iconUrl: 'assets/llm/sensenova_icon_svg',
+  jumpLink: 'https://cuemate.chat/guide/models/providers/sensenova.html',
   modelNamePlaceholder: '如 SenseNova-V6-5-Omni, Qwen2-5-Coder, SenseChat-5 等',
   baseModels: [
     {
       name: 'SenseNova-V6-5-Omni',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -28,10 +28,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -42,13 +42,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'Qwen2-5-Coder',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -57,10 +57,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -71,13 +71,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'Qwen3-Coder',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -86,10 +86,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -100,13 +100,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'Kimi-K2',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -115,10 +115,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -129,13 +129,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'DeepSeek-V3-1',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -144,10 +144,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -158,13 +158,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseNova-V6-5-Turbo',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -173,10 +173,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '16384',
-          default_value: '16384',
+          defaultValue: '16384',
           extra: {
             min: 256,
             max: 16384,
@@ -187,13 +187,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseNova-V6-5-Pro',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -202,10 +202,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '16384',
-          default_value: '16384',
+          defaultValue: '16384',
           extra: {
             min: 256,
             max: 16384,
@@ -216,13 +216,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'Qwen3-32B',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -231,10 +231,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -245,13 +245,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'Qwen3-235B',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -260,10 +260,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -274,13 +274,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseNova-V6-Reasoner',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -289,10 +289,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -303,13 +303,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseNova-V6-Turbo',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -318,10 +318,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -332,13 +332,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'Qwen2-7B',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -347,10 +347,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -361,13 +361,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'Qwen2-72B',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -376,10 +376,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -390,13 +390,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseChat-Vision',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -405,10 +405,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 256,
             max: 4096,
@@ -419,13 +419,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseChat-Character-Pro',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -434,10 +434,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 256,
             max: 4096,
@@ -448,13 +448,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseChat-5-Cantonese',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -463,10 +463,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -477,13 +477,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseChat-5',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -492,10 +492,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -506,13 +506,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseChat-Character',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -521,10 +521,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 256,
             max: 4096,
@@ -535,13 +535,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseChat-128K',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -550,10 +550,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -564,13 +564,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseChat-Turbo',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -579,10 +579,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 256,
             max: 4096,
@@ -593,13 +593,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseChat',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -608,10 +608,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 256,
             max: 4096,
@@ -622,13 +622,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'SenseChat-32K',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -637,10 +637,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,

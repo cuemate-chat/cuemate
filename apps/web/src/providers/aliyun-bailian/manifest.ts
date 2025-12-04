@@ -7,19 +7,19 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  icon_url: 'assets/llm/aliyun_bai_lian_icon_svg',
-  jump_link: 'https://cuemate.chat/guide/models/providers/aliyun-bailian.html',
+  iconUrl: 'assets/llm/aliyun_bai_lian_icon_svg',
+  jumpLink: 'https://cuemate.chat/guide/models/providers/aliyun-bailian.html',
   modelNamePlaceholder: '如 qwen3-max / qwen-plus / qwen-flash',
   baseModels: [
     {
       name: 'qwen3-max',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -28,10 +28,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '65536',
-          default_value: '65536',
+          defaultValue: '65536',
           extra: {
             min: 256,
             max: 65536,
@@ -42,13 +42,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen-plus',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -57,10 +57,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '32768',
-          default_value: '32768',
+          defaultValue: '32768',
           extra: {
             min: 256,
             max: 32768,
@@ -71,13 +71,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen-flash',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -86,10 +86,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '16384',
-          default_value: '16384',
+          defaultValue: '16384',
           extra: {
             min: 256,
             max: 16384,
@@ -100,13 +100,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen-max',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -115,10 +115,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -129,13 +129,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen-turbo',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -144,10 +144,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -158,13 +158,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen3-235b-a22b',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -173,10 +173,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -187,13 +187,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen3-32b',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -202,10 +202,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -216,13 +216,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen3-30b-a3b',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -231,10 +231,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -245,13 +245,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen3-14b',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -260,10 +260,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -274,13 +274,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen3-8b',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -289,10 +289,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -303,13 +303,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen3-4b',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -318,10 +318,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -332,13 +332,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen3-1.7b',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -347,10 +347,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -361,13 +361,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'qwen3-0.6b',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -376,10 +376,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,

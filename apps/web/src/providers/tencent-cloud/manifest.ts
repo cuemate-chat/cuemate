@@ -7,19 +7,19 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  icon_url: 'assets/llm/tencent_cloud_icon_svg',
-  jump_link: 'https://cuemate.chat/guide/models/providers/tencent-cloud.html',
+  iconUrl: 'assets/llm/tencent_cloud_icon_svg',
+  jumpLink: 'https://cuemate.chat/guide/models/providers/tencent-cloud.html',
   modelNamePlaceholder: '如 deepseek-v3.1 / deepseek-r1-0528 / deepseek-v3-0324',
   baseModels: [
     {
       name: 'deepseek-v3.1',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -28,10 +28,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '32000',
-          default_value: '32000',
+          defaultValue: '32000',
           extra: {
             min: 256,
             max: 32000,
@@ -42,13 +42,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'deepseek-v3.1-terminus',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -57,10 +57,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '32000',
-          default_value: '32000',
+          defaultValue: '32000',
           extra: {
             min: 256,
             max: 32000,
@@ -71,13 +71,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'deepseek-v3.2-exp',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -86,10 +86,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '64000',
-          default_value: '64000',
+          defaultValue: '64000',
           extra: {
             min: 256,
             max: 64000,
@@ -100,13 +100,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'deepseek-r1-0528',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -115,10 +115,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '16000',
-          default_value: '16000',
+          defaultValue: '16000',
           extra: {
             min: 256,
             max: 16000,
@@ -129,13 +129,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'deepseek-r1',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -144,10 +144,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '16000',
-          default_value: '16000',
+          defaultValue: '16000',
           extra: {
             min: 256,
             max: 16000,
@@ -158,13 +158,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'deepseek-v3-0324',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -173,10 +173,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '16000',
-          default_value: '16000',
+          defaultValue: '16000',
           extra: {
             min: 256,
             max: 16000,
@@ -187,13 +187,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'deepseek-v3',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -202,10 +202,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '16000',
-          default_value: '16000',
+          defaultValue: '16000',
           extra: {
             min: 256,
             max: 16000,

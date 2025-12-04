@@ -7,19 +7,19 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  icon_url: 'assets/llm/zhipuai_icon_svg',
-  jump_link: 'https://cuemate.chat/guide/models/providers/zhipu.html',
+  iconUrl: 'assets/llm/zhipuai_icon_svg',
+  jumpLink: 'https://cuemate.chat/guide/models/providers/zhipu.html',
   modelNamePlaceholder: '如 glm-4 / glm-4v / glm-3-turbo',
   baseModels: [
   {
     name: "glm-4-plus",
-    default_params: [
+    defaultParams: [
       {
         label: "温度",
-        param_key: "temperature",
-        ui_type: "slider",
+        paramKey: "temperature",
+        uiType: "slider",
         value: "0.95",
-        default_value: "0.95",
+        defaultValue: "0.95",
         extra: {
           min: 0,
           max: 1,
@@ -28,10 +28,10 @@ const manifest: ProviderManifest = {
       },
       {
         label: "输出最大 tokens",
-        param_key: "max_tokens",
-        ui_type: "slider",
+        paramKey: "max_tokens",
+        uiType: "slider",
         value: "8192",
-        default_value: "8192",
+        defaultValue: "8192",
         extra: {
           min: 256,
           max: 8192,
@@ -42,13 +42,13 @@ const manifest: ProviderManifest = {
   },
   {
     name: "glm-4-long",
-    default_params: [
+    defaultParams: [
       {
         label: "温度",
-        param_key: "temperature",
-        ui_type: "slider",
+        paramKey: "temperature",
+        uiType: "slider",
         value: "0.95",
-        default_value: "0.95",
+        defaultValue: "0.95",
         extra: {
           min: 0,
           max: 1,
@@ -57,10 +57,10 @@ const manifest: ProviderManifest = {
       },
       {
         label: "输出最大 tokens",
-        param_key: "max_tokens",
-        ui_type: "slider",
+        paramKey: "max_tokens",
+        uiType: "slider",
         value: "8192",
-        default_value: "8192",
+        defaultValue: "8192",
         extra: {
           min: 256,
           max: 8192,
@@ -71,13 +71,13 @@ const manifest: ProviderManifest = {
   },
   {
     name: "glm-4-air",
-    default_params: [
+    defaultParams: [
       {
         label: "温度",
-        param_key: "temperature",
-        ui_type: "slider",
+        paramKey: "temperature",
+        uiType: "slider",
         value: "0.95",
-        default_value: "0.95",
+        defaultValue: "0.95",
         extra: {
           min: 0,
           max: 1,
@@ -86,10 +86,10 @@ const manifest: ProviderManifest = {
       },
       {
         label: "输出最大 tokens",
-        param_key: "max_tokens",
-        ui_type: "slider",
+        paramKey: "max_tokens",
+        uiType: "slider",
         value: "8192",
-        default_value: "8192",
+        defaultValue: "8192",
         extra: {
           min: 256,
           max: 8192,
@@ -100,13 +100,13 @@ const manifest: ProviderManifest = {
   },
   {
     name: "glm-4-airx",
-    default_params: [
+    defaultParams: [
       {
         label: "温度",
-        param_key: "temperature",
-        ui_type: "slider",
+        paramKey: "temperature",
+        uiType: "slider",
         value: "0.95",
-        default_value: "0.95",
+        defaultValue: "0.95",
         extra: {
           min: 0,
           max: 1,
@@ -115,10 +115,10 @@ const manifest: ProviderManifest = {
       },
       {
         label: "输出最大 tokens",
-        param_key: "max_tokens",
-        ui_type: "slider",
+        paramKey: "max_tokens",
+        uiType: "slider",
         value: "8192",
-        default_value: "8192",
+        defaultValue: "8192",
         extra: {
           min: 256,
           max: 8192,
@@ -129,13 +129,13 @@ const manifest: ProviderManifest = {
   },
   {
     name: "glm-4-flash",
-    default_params: [
+    defaultParams: [
       {
         label: "温度",
-        param_key: "temperature",
-        ui_type: "slider",
+        paramKey: "temperature",
+        uiType: "slider",
         value: "0.95",
-        default_value: "0.95",
+        defaultValue: "0.95",
         extra: {
           min: 0,
           max: 1,
@@ -144,10 +144,10 @@ const manifest: ProviderManifest = {
       },
       {
         label: "输出最大 tokens",
-        param_key: "max_tokens",
-        ui_type: "slider",
+        paramKey: "max_tokens",
+        uiType: "slider",
         value: "8192",
-        default_value: "8192",
+        defaultValue: "8192",
         extra: {
           min: 256,
           max: 8192,
@@ -158,13 +158,13 @@ const manifest: ProviderManifest = {
   },
   {
     name: "glm-4",
-    default_params: [
+    defaultParams: [
       {
         label: "温度",
-        param_key: "temperature",
-        ui_type: "slider",
+        paramKey: "temperature",
+        uiType: "slider",
         value: "0.95",
-        default_value: "0.95",
+        defaultValue: "0.95",
         extra: {
           min: 0,
           max: 1,
@@ -173,10 +173,10 @@ const manifest: ProviderManifest = {
       },
       {
         label: "输出最大 tokens",
-        param_key: "max_tokens",
-        ui_type: "slider",
+        paramKey: "max_tokens",
+        uiType: "slider",
         value: "8192",
-        default_value: "8192",
+        defaultValue: "8192",
         extra: {
           min: 256,
           max: 8192,
@@ -187,13 +187,13 @@ const manifest: ProviderManifest = {
   },
   {
     name: "glm-4v",
-    default_params: [
+    defaultParams: [
       {
         label: "温度",
-        param_key: "temperature",
-        ui_type: "slider",
+        paramKey: "temperature",
+        uiType: "slider",
         value: "0.95",
-        default_value: "0.95",
+        defaultValue: "0.95",
         extra: {
           min: 0,
           max: 1,
@@ -202,10 +202,10 @@ const manifest: ProviderManifest = {
       },
       {
         label: "输出最大 tokens",
-        param_key: "max_tokens",
-        ui_type: "slider",
+        paramKey: "max_tokens",
+        uiType: "slider",
         value: "8192",
-        default_value: "8192",
+        defaultValue: "8192",
         extra: {
           min: 256,
           max: 8192,
@@ -216,13 +216,13 @@ const manifest: ProviderManifest = {
   },
   {
     name: "glm-4v-plus",
-    default_params: [
+    defaultParams: [
       {
         label: "温度",
-        param_key: "temperature",
-        ui_type: "slider",
+        paramKey: "temperature",
+        uiType: "slider",
         value: "0.95",
-        default_value: "0.95",
+        defaultValue: "0.95",
         extra: {
           min: 0,
           max: 1,
@@ -231,10 +231,10 @@ const manifest: ProviderManifest = {
       },
       {
         label: "输出最大 tokens",
-        param_key: "max_tokens",
-        ui_type: "slider",
+        paramKey: "max_tokens",
+        uiType: "slider",
         value: "8192",
-        default_value: "8192",
+        defaultValue: "8192",
         extra: {
           min: 256,
           max: 8192,
@@ -245,13 +245,13 @@ const manifest: ProviderManifest = {
   },
   {
     name: "glm-3-turbo",
-    default_params: [
+    defaultParams: [
       {
         label: "温度",
-        param_key: "temperature",
-        ui_type: "slider",
+        paramKey: "temperature",
+        uiType: "slider",
         value: "0.95",
-        default_value: "0.95",
+        defaultValue: "0.95",
         extra: {
           min: 0,
           max: 1,
@@ -260,10 +260,10 @@ const manifest: ProviderManifest = {
       },
       {
         label: "输出最大 tokens",
-        param_key: "max_tokens",
-        ui_type: "slider",
+        paramKey: "max_tokens",
+        uiType: "slider",
         value: "4096",
-        default_value: "4096",
+        defaultValue: "4096",
         extra: {
           min: 256,
           max: 4096,

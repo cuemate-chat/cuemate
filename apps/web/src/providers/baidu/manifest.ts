@@ -7,20 +7,20 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  icon_url: 'assets/llm/baidu_icon_svg',
-  jump_link: 'https://cuemate.chat/guide/models/providers/baidu.html',
+  iconUrl: 'assets/llm/baidu_icon_svg',
+  jumpLink: 'https://cuemate.chat/guide/models/providers/baidu.html',
   modelNamePlaceholder: '如 ERNIE-4.5-Turbo, DeepSeek-V3, Kimi-K2-Instruct 等',
   baseModels: [
     // ERNIE 系列（百度自家模型）
     {
       name: "ERNIE-4.5-Turbo",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.95",
-          default_value: "0.95",
+          defaultValue: "0.95",
           extra: {
             min: 0,
             max: 1,
@@ -29,10 +29,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "8192",
-          default_value: "8192",
+          defaultValue: "8192",
           extra: {
             min: 2,
             max: 8192,
@@ -43,13 +43,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: "ERNIE-4.5",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.95",
-          default_value: "0.95",
+          defaultValue: "0.95",
           extra: {
             min: 0,
             max: 1,
@@ -58,10 +58,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "8192",
-          default_value: "8192",
+          defaultValue: "8192",
           extra: {
             min: 2,
             max: 8192,
@@ -72,13 +72,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: "ERNIE-Speed-AppBuilder",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.95",
-          default_value: "0.95",
+          defaultValue: "0.95",
           extra: {
             min: 0,
             max: 1,
@@ -87,10 +87,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "4096",
-          default_value: "4096",
+          defaultValue: "4096",
           extra: {
             min: 2,
             max: 4096,
@@ -102,13 +102,13 @@ const manifest: ProviderManifest = {
     // DeepSeek 系列（深度求索）
     {
       name: "DeepSeek-V3",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "1",
-          default_value: "1",
+          defaultValue: "1",
           extra: {
             min: 0,
             max: 2,
@@ -117,10 +117,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "8192",
-          default_value: "8192",
+          defaultValue: "8192",
           extra: {
             min: 1,
             max: 8192,
@@ -131,13 +131,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: "DeepSeek-V3.2",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "1",
-          default_value: "1",
+          defaultValue: "1",
           extra: {
             min: 0,
             max: 2,
@@ -146,10 +146,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "8192",
-          default_value: "8192",
+          defaultValue: "8192",
           extra: {
             min: 1,
             max: 8192,
@@ -160,13 +160,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: "DeepSeek-V3.2-Think",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "1",
-          default_value: "1",
+          defaultValue: "1",
           extra: {
             min: 0,
             max: 2,
@@ -175,10 +175,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "8000",
-          default_value: "8000",
+          defaultValue: "8000",
           extra: {
             min: 1,
             max: 8000,
@@ -189,13 +189,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: "DeepSeek-V3.1-Think",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "1",
-          default_value: "1",
+          defaultValue: "1",
           extra: {
             min: 0,
             max: 2,
@@ -204,10 +204,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "8000",
-          default_value: "8000",
+          defaultValue: "8000",
           extra: {
             min: 1,
             max: 8000,
@@ -219,13 +219,13 @@ const manifest: ProviderManifest = {
     // Kimi 系列（月之暗面）
     {
       name: "Kimi-K2-Instruct",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.3",
-          default_value: "0.3",
+          defaultValue: "0.3",
           extra: {
             min: 0,
             max: 1,
@@ -234,10 +234,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "4096",
-          default_value: "4096",
+          defaultValue: "4096",
           extra: {
             min: 1,
             max: 4096,
@@ -249,13 +249,13 @@ const manifest: ProviderManifest = {
     // Llama 系列（Meta）
     {
       name: "Llama-3.3-70B-Instruct",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.7",
-          default_value: "0.7",
+          defaultValue: "0.7",
           extra: {
             min: 0,
             max: 2,
@@ -264,10 +264,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "4096",
-          default_value: "4096",
+          defaultValue: "4096",
           extra: {
             min: 1,
             max: 4096,
@@ -278,13 +278,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: "Llama-3.1-405B-Instruct",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.7",
-          default_value: "0.7",
+          defaultValue: "0.7",
           extra: {
             min: 0,
             max: 2,
@@ -293,10 +293,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "4096",
-          default_value: "4096",
+          defaultValue: "4096",
           extra: {
             min: 1,
             max: 4096,
@@ -308,13 +308,13 @@ const manifest: ProviderManifest = {
     // Qwen 系列（通义实验室/阿里）
     {
       name: "Qwen2.5-72B-Instruct",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.7",
-          default_value: "0.7",
+          defaultValue: "0.7",
           extra: {
             min: 0,
             max: 2,
@@ -323,10 +323,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "6144",
-          default_value: "6144",
+          defaultValue: "6144",
           extra: {
             min: 1,
             max: 6144,
@@ -337,13 +337,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: "Qwen2.5-7B-Instruct",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.7",
-          default_value: "0.7",
+          defaultValue: "0.7",
           extra: {
             min: 0,
             max: 2,
@@ -352,10 +352,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "6144",
-          default_value: "6144",
+          defaultValue: "6144",
           extra: {
             min: 1,
             max: 6144,
@@ -367,13 +367,13 @@ const manifest: ProviderManifest = {
     // GLM 系列（智谱 AI）
     {
       name: "GLM-4-Plus",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.95",
-          default_value: "0.95",
+          defaultValue: "0.95",
           extra: {
             min: 0,
             max: 1,
@@ -382,10 +382,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "4095",
-          default_value: "4095",
+          defaultValue: "4095",
           extra: {
             min: 1,
             max: 4095,
@@ -396,13 +396,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: "GLM-4-Flash",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.95",
-          default_value: "0.95",
+          defaultValue: "0.95",
           extra: {
             min: 0,
             max: 1,
@@ -411,10 +411,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "4095",
-          default_value: "4095",
+          defaultValue: "4095",
           extra: {
             min: 1,
             max: 4095,
@@ -426,13 +426,13 @@ const manifest: ProviderManifest = {
     // Yi 系列（零一万物）
     {
       name: "Yi-Lightning",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.3",
-          default_value: "0.3",
+          defaultValue: "0.3",
           extra: {
             min: 0,
             max: 1.5,
@@ -441,10 +441,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "4096",
-          default_value: "4096",
+          defaultValue: "4096",
           extra: {
             min: 1,
             max: 4096,

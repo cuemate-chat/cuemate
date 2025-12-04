@@ -7,19 +7,19 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  icon_url: 'assets/llm/tencent_icon_svg',
-  jump_link: 'https://cuemate.chat/guide/models/providers/tencent.html',
+  iconUrl: 'assets/llm/tencent_icon_svg',
+  jumpLink: 'https://cuemate.chat/guide/models/providers/tencent.html',
   modelNamePlaceholder: '如 hunyuan-turbos-latest / hunyuan-t1-latest / hunyuan-lite',
   baseModels: [
     {
       name: 'hunyuan-t1-latest',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -28,10 +28,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '64000',
-          default_value: '64000',
+          defaultValue: '64000',
           extra: {
             min: 100,
             max: 64000,
@@ -42,13 +42,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'hunyuan-turbos-latest',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -57,10 +57,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '16000',
-          default_value: '16000',
+          defaultValue: '16000',
           extra: {
             min: 100,
             max: 16000,
@@ -71,13 +71,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'hunyuan-a13b',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -86,10 +86,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '32000',
-          default_value: '32000',
+          defaultValue: '32000',
           extra: {
             min: 100,
             max: 32000,
@@ -100,13 +100,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'hunyuan-standard-256K',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -115,10 +115,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '6000',
-          default_value: '6000',
+          defaultValue: '6000',
           extra: {
             min: 100,
             max: 6000,
@@ -129,13 +129,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'hunyuan-standard',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -144,10 +144,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '2000',
-          default_value: '2000',
+          defaultValue: '2000',
           extra: {
             min: 100,
             max: 2000,
@@ -158,13 +158,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'hunyuan-large',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -173,10 +173,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4000',
-          default_value: '4000',
+          defaultValue: '4000',
           extra: {
             min: 100,
             max: 4000,
@@ -187,13 +187,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'hunyuan-lite',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -202,10 +202,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '6000',
-          default_value: '6000',
+          defaultValue: '6000',
           extra: {
             min: 100,
             max: 6000,
@@ -216,13 +216,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'hunyuan-functioncall',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -231,10 +231,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 100,
             max: 4096,
@@ -245,13 +245,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'hunyuan-code',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -260,10 +260,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 100,
             max: 4096,

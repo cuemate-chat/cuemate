@@ -7,19 +7,19 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  icon_url: 'assets/llm/xf_icon_svg',
-  jump_link: 'https://cuemate.chat/guide/models/providers/xf.html',
+  iconUrl: 'assets/llm/xf_icon_svg',
+  jumpLink: 'https://cuemate.chat/guide/models/providers/xf.html',
   modelNamePlaceholder: '如 x1 / 4.0Ultra / max-32k / generalv3.5',
   baseModels: [
     {
       name: 'x1',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.5',
-          default_value: '0.5',
+          defaultValue: '0.5',
           extra: {
             min: 0,
             max: 1,
@@ -28,10 +28,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '32768',
-          default_value: '32768',
+          defaultValue: '32768',
           extra: {
             min: 512,
             max: 32768,
@@ -42,13 +42,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'X1-Preview',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.5',
-          default_value: '0.5',
+          defaultValue: '0.5',
           extra: {
             min: 0,
             max: 1,
@@ -57,10 +57,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '65535',
-          default_value: '65535',
+          defaultValue: '65535',
           extra: {
             min: 512,
             max: 65535,
@@ -71,13 +71,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: '4.0Ultra',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.5',
-          default_value: '0.5',
+          defaultValue: '0.5',
           extra: {
             min: 0,
             max: 1,
@@ -86,10 +86,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '32768',
-          default_value: '32768',
+          defaultValue: '32768',
           extra: {
             min: 512,
             max: 32768,
@@ -100,13 +100,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'max-32k',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.5',
-          default_value: '0.5',
+          defaultValue: '0.5',
           extra: {
             min: 0,
             max: 1,
@@ -115,10 +115,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '32768',
-          default_value: '32768',
+          defaultValue: '32768',
           extra: {
             min: 512,
             max: 32768,
@@ -129,13 +129,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'generalv3.5',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.5',
-          default_value: '0.5',
+          defaultValue: '0.5',
           extra: {
             min: 0,
             max: 1,
@@ -144,10 +144,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 512,
             max: 8192,
@@ -158,13 +158,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'pro-128k',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.5',
-          default_value: '0.5',
+          defaultValue: '0.5',
           extra: {
             min: 0,
             max: 1,
@@ -173,10 +173,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '131072',
-          default_value: '131072',
+          defaultValue: '131072',
           extra: {
             min: 512,
             max: 131072,
@@ -187,13 +187,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'generalv3',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.5',
-          default_value: '0.5',
+          defaultValue: '0.5',
           extra: {
             min: 0,
             max: 1,
@@ -202,10 +202,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 512,
             max: 8192,
@@ -216,13 +216,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'lite',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.5',
-          default_value: '0.5',
+          defaultValue: '0.5',
           extra: {
             min: 0,
             max: 1,
@@ -231,10 +231,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 512,
             max: 4096,

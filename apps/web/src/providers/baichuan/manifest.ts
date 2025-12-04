@@ -7,19 +7,19 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  icon_url: 'assets/llm/baichuan_icon_svg',
-  jump_link: 'https://cuemate.chat/guide/models/providers/baichuan.html',
+  iconUrl: 'assets/llm/baichuan_icon_svg',
+  jumpLink: 'https://cuemate.chat/guide/models/providers/baichuan.html',
   modelNamePlaceholder: '如 Baichuan4, Baichuan3-Turbo, Baichuan3-Turbo-128k 等',
   baseModels: [
     {
       name: "Baichuan4",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.7",
-          default_value: "0.7",
+          defaultValue: "0.7",
           extra: {
             min: 0,
             max: 1,
@@ -28,10 +28,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "8192",
-          default_value: "8192",
+          defaultValue: "8192",
           extra: {
             min: 256,
             max: 8192,
@@ -42,13 +42,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: "Baichuan3-Turbo",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.7",
-          default_value: "0.7",
+          defaultValue: "0.7",
           extra: {
             min: 0,
             max: 1,
@@ -57,10 +57,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "8192",
-          default_value: "8192",
+          defaultValue: "8192",
           extra: {
             min: 256,
             max: 8192,
@@ -71,13 +71,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: "Baichuan3-Turbo-128k",
-      default_params: [
+      defaultParams: [
         {
           label: "温度",
-          param_key: "temperature",
-          ui_type: "slider",
+          paramKey: "temperature",
+          uiType: "slider",
           value: "0.7",
-          default_value: "0.7",
+          defaultValue: "0.7",
           extra: {
             min: 0,
             max: 1,
@@ -86,10 +86,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: "输出最大 tokens",
-          param_key: "max_tokens",
-          ui_type: "slider",
+          paramKey: "max_tokens",
+          uiType: "slider",
           value: "4096",
-          default_value: "4096",
+          defaultValue: "4096",
           extra: {
             min: 256,
             max: 4096,

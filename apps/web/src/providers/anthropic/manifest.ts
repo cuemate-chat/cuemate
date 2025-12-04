@@ -7,19 +7,19 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  icon_url: 'assets/llm/anthropic_icon_svg',
-  jump_link: 'https://cuemate.chat/guide/models/providers/anthropic.html',
+  iconUrl: 'assets/llm/anthropic_icon_svg',
+  jumpLink: 'https://cuemate.chat/guide/models/providers/anthropic.html',
   modelNamePlaceholder: '如 claude-sonnet-4-5-20250929 / claude-sonnet-4-20250514 / claude-3-5-sonnet-20241022',
   baseModels: [
     {
       name: 'claude-sonnet-4-5',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -28,10 +28,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '64000',
-          default_value: '64000',
+          defaultValue: '64000',
           extra: {
             min: 256,
             max: 64000,
@@ -42,13 +42,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'claude-haiku-4-5',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -57,10 +57,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '64000',
-          default_value: '64000',
+          defaultValue: '64000',
           extra: {
             min: 256,
             max: 64000,
@@ -71,13 +71,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'claude-opus-4-1',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -86,10 +86,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '32000',
-          default_value: '32000',
+          defaultValue: '32000',
           extra: {
             min: 256,
             max: 32000,
@@ -100,13 +100,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'claude-sonnet-4-20250514',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -115,10 +115,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '64000',
-          default_value: '64000',
+          defaultValue: '64000',
           extra: {
             min: 256,
             max: 64000,
@@ -129,13 +129,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'claude-3-7-sonnet',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -144,10 +144,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '64000',
-          default_value: '64000',
+          defaultValue: '64000',
           extra: {
             min: 256,
             max: 64000,
@@ -158,13 +158,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'claude-3-5-sonnet-20241022',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -173,10 +173,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -187,13 +187,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'claude-3-5-sonnet-20240620',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -202,10 +202,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -216,13 +216,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'claude-3-5-haiku-20241022',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -231,10 +231,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -245,13 +245,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'claude-3-opus-20240229',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -260,10 +260,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 256,
             max: 4096,
@@ -274,13 +274,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'claude-3-sonnet-20240229',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -289,10 +289,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 256,
             max: 4096,
@@ -303,13 +303,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'claude-3-haiku-20240307',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -318,10 +318,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '4096',
-          default_value: '4096',
+          defaultValue: '4096',
           extra: {
             min: 256,
             max: 4096,

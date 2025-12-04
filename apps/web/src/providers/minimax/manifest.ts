@@ -7,19 +7,19 @@ const manifest: ProviderManifest = {
   scope: 'public',
   kind: 'llm',
   icon: Icon,
-  icon_url: 'assets/llm/minimax_icon_svg',
-  jump_link: 'https://cuemate.chat/guide/models/providers/minimax.html',
+  iconUrl: 'assets/llm/minimax_icon_svg',
+  jumpLink: 'https://cuemate.chat/guide/models/providers/minimax.html',
   modelNamePlaceholder: '如 MiniMax-M2, abab6.5s-chat, abab6.5t-chat 等',
   baseModels: [
     {
       name: 'MiniMax-M2',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -28,10 +28,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '16384',
-          default_value: '16384',
+          defaultValue: '16384',
           extra: {
             min: 256,
             max: 16384,
@@ -42,13 +42,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'abab6.5s-chat',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -57,10 +57,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '16384',
-          default_value: '16384',
+          defaultValue: '16384',
           extra: {
             min: 256,
             max: 16384,
@@ -71,13 +71,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'abab6.5t-chat',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -86,10 +86,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
@@ -100,13 +100,13 @@ const manifest: ProviderManifest = {
     },
     {
       name: 'abab6.5g-chat',
-      default_params: [
+      defaultParams: [
         {
           label: '温度',
-          param_key: 'temperature',
-          ui_type: 'slider',
+          paramKey: 'temperature',
+          uiType: 'slider',
           value: '0.7',
-          default_value: '0.7',
+          defaultValue: '0.7',
           extra: {
             min: 0,
             max: 1,
@@ -115,10 +115,10 @@ const manifest: ProviderManifest = {
         },
         {
           label: '输出最大 tokens',
-          param_key: 'max_tokens',
-          ui_type: 'slider',
+          paramKey: 'max_tokens',
+          uiType: 'slider',
           value: '8192',
-          default_value: '8192',
+          defaultValue: '8192',
           extra: {
             min: 256,
             max: 8192,
