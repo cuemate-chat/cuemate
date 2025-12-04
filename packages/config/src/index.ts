@@ -71,3 +71,76 @@ export const CONTAINER_MODELS_DIR = `${CONTAINER_BASE_DIR}/models`;
  * 容器内 FastEmbed 模型缓存目录
  */
 export const CONTAINER_FASTEMBED_DIR = `${CONTAINER_MODELS_DIR}/fastembed`;
+
+// ============================================================
+// 数据转换工具函数
+// 用于在 snake_case (数据库/后端) 和 camelCase (前端) 之间转换
+// ============================================================
+
+/**
+ * 将 snake_case 字符串转换为 camelCase
+ * @example snakeToCamel('user_id') // 'userId'
+ * @example snakeToCamel('created_at') // 'createdAt'
+ */
+export function snakeToCamel(str: string): string {
+  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+/**
+ * 将 camelCase 字符串转换为 snake_case
+ * @example camelToSnake('userId') // 'user_id'
+ * @example camelToSnake('createdAt') // 'created_at'
+ */
+export function camelToSnake(str: string): string {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
+/**
+ * 递归将对象的所有 key 从 snake_case 转换为 camelCase
+ * 用于将数据库返回的数据转换为前端期望的格式
+ */
+export function toCamelCase<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => toCamelCase(item)) as T;
+  }
+
+  if (typeof obj === 'object' && obj !== null) {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const camelKey = snakeToCamel(key);
+      result[camelKey] = toCamelCase(value);
+    }
+    return result as T;
+  }
+
+  return obj;
+}
+
+/**
+ * 递归将对象的所有 key 从 camelCase 转换为 snake_case
+ * 用于将前端传入的数据转换为数据库期望的格式
+ */
+export function toSnakeCase<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => toSnakeCase(item)) as T;
+  }
+
+  if (typeof obj === 'object' && obj !== null) {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const snakeKey = camelToSnake(key);
+      result[snakeKey] = toSnakeCase(value);
+    }
+    return result as T;
+  }
+
+  return obj;
+}
