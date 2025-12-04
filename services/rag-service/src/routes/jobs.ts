@@ -63,19 +63,20 @@ export async function createJobRoutes(
 
   // 搜索相关的岗位和简历信息
   app.get('/jobs/search', async (req) => {
-    const { query, userId, topK, jobTitle } = (req as any).query as {
+    // hook 已将 camelCase 转换为 snake_case
+    const { query, user_id, top_k, job_title } = (req as any).query as {
       query: string;
-      userId?: string;
-      topK?: string;
-      jobTitle?: string;
+      user_id?: string;
+      top_k?: string;
+      job_title?: string;
     };
 
     try {
       const results = await jobResumeService.searchJobResume(
         query,
-        userId,
-        topK ? parseInt(topK) : 10,
-        jobTitle,
+        user_id,
+        top_k ? parseInt(top_k) : 10,
+        job_title,
       );
       return { success: true, results, total: results.length };
     } catch (error) {
@@ -86,21 +87,22 @@ export async function createJobRoutes(
 
   // 搜索简历信息
   app.get('/resumes/search', async (req) => {
-    const { query, userId, topK, jobTitle, tagId } = (req as any).query as {
+    // hook 已将 camelCase 转换为 snake_case
+    const { query, user_id, top_k, job_title, tag_id } = (req as any).query as {
       query: string;
-      userId?: string;
-      topK?: string;
-      jobTitle?: string;
-      tagId?: string;
+      user_id?: string;
+      top_k?: string;
+      job_title?: string;
+      tag_id?: string;
     };
 
     try {
       const results = await jobResumeService.searchResumes(
         query,
-        userId,
-        topK ? parseInt(topK) : 10,
-        jobTitle,
-        tagId,
+        user_id,
+        top_k ? parseInt(top_k) : 10,
+        job_title,
+        tag_id,
       );
       return { success: true, results, total: results.length };
     } catch (error) {
