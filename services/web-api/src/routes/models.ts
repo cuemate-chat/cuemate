@@ -326,17 +326,18 @@ export function registerModelRoutes(app: FastifyInstance) {
   app.get(
     '/internal/models/by-user',
     withErrorLogging(app.log as any, 'models.by-user', async (req, reply) => {
+      // hook 已将 camelCase 转换为 snake_case
       const query = (req as any).query || {};
-      const userId = query.userId as string;
+      const user_id = query.user_id as string;
       const serviceKey = (req as any).headers['x-service-key'] as string | undefined;
       const INTERNAL_SERVICE_KEY = 'internal-service-key-2025';
       if (serviceKey !== INTERNAL_SERVICE_KEY) {
         return reply.code(401).send({ error: 'unauthorized' });
       }
-      if (!userId) return reply.code(400).send({ error: 'userId required' });
+      if (!user_id) return reply.code(400).send({ error: 'userId required' });
       const u = (app as any).db
         .prepare('SELECT selected_model_id FROM users WHERE id=?')
-        .get(userId);
+        .get(user_id);
       if (!u?.selected_model_id) return { model: null };
       const model = (app as any).db
         .prepare('SELECT * FROM models WHERE id=?')
