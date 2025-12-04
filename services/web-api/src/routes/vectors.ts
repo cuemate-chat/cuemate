@@ -21,32 +21,33 @@ export function registerVectorRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'vectors.sync-status', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
-        const { jobId } = (req as any).query as { jobId?: string };
+        // hook 已将 camelCase 转换为 snake_case
+        const { job_id } = (req as any).query as { job_id?: string };
 
-        if (jobId) {
+        if (job_id) {
           // 按岗位统计
           const owned = (app as any).db
             .prepare('SELECT id FROM jobs WHERE id=? AND user_id=?')
-            .get(jobId, payload.uid);
+            .get(job_id, payload.uid);
           if (!owned) return reply.code(404).send({ error: '岗位不存在或无权限' });
 
           const jobRow = (app as any).db
             .prepare('SELECT vector_status FROM jobs WHERE id=?')
-            .get(jobId) as { vector_status?: number } | undefined;
+            .get(job_id) as { vector_status?: number } | undefined;
           const resumeRow = (app as any).db
             .prepare(
               'SELECT vector_status FROM resumes WHERE job_id=? ORDER BY created_at DESC LIMIT 1',
             )
-            .get(jobId) as { vector_status?: number } | undefined;
+            .get(job_id) as { vector_status?: number } | undefined;
 
           const totalQ = (app as any).db
             .prepare('SELECT COUNT(1) AS c FROM interview_questions WHERE job_id=?')
-            .get(jobId)?.c as number;
+            .get(job_id)?.c as number;
           const syncedQ = (app as any).db
             .prepare(
               'SELECT COUNT(1) AS c FROM interview_questions WHERE job_id=? AND vector_status=1',
             )
-            .get(jobId)?.c as number;
+            .get(job_id)?.c as number;
 
           return {
             job: { synced: !!jobRow?.vector_status },
@@ -126,10 +127,11 @@ export function registerVectorRoutes(app: FastifyInstance) {
       }
 
       // 解析请求体
+      // hook 已将 camelCase 转换为 snake_case
       let body;
       try {
-        body = z.object({ 
-          jobId: z.preprocess(
+        body = z.object({
+          job_id: z.preprocess(
             (val) => (val === '' ? undefined : val),
             z.string().min(1).optional()
           )
@@ -326,13 +328,13 @@ export function registerVectorRoutes(app: FastifyInstance) {
           return { success, failed, deletedExtras };
         };
 
-        const jobs: any[] = body.jobId
+        const jobs: any[] = body.job_id
           ? [
               (app as any).db
                 .prepare(
                   'SELECT id, title, description, created_at FROM jobs WHERE id=? AND user_id=?',
                 )
-                .get(body.jobId, payload.uid),
+                .get(body.job_id, payload.uid),
             ].filter(Boolean)
           : (app as any).db
               .prepare('SELECT id, title, description, created_at FROM jobs WHERE user_id=?')
@@ -353,8 +355,8 @@ export function registerVectorRoutes(app: FastifyInstance) {
         // 记录操作日志
         await logOperation(app, req, {
           ...OPERATION_MAPPING.VECTOR,
-          resourceId: body.jobId || 'all',
-          resourceName: body.jobId ? `岗位向量同步: ${body.jobId}` : '一键全量向量同步',
+          resourceId: body.job_id || 'all',
+          resourceName: body.job_id ? `岗位向量同步: ${body.job_id}` : '一键全量向量同步',
           operation: OperationType.UPDATE,
           message: `一键同步向量数据: ${jobs.length}个岗位, ${totalSuccess}个题目成功`,
           status: 'success',
@@ -363,8 +365,8 @@ export function registerVectorRoutes(app: FastifyInstance) {
 
         // 发送知识库同步通知
         try {
-          const sourceName = body.jobId
-            ? `岗位: ${jobs[0]?.title || body.jobId}`
+          const sourceName = body.job_id
+            ? `岗位: ${jobs[0]?.title || body.job_id}`
             : '所有岗位';
           const totalSize = (jobs.length * 10 + totalSuccess) * 1024; // 粗略估计大小
           // 总数量 = 岗位数 + 简历数 + 押题成功数 (每个岗位对应一个简历)

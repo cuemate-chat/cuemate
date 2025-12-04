@@ -47,9 +47,10 @@ export function registerLogRoutes(app: FastifyInstance) {
         .regex(/^\d{4}-\d{2}-\d{2}$/)
         .optional(),
       page: z.coerce.number().min(1).default(1),
-      pageSize: z.coerce.number().min(1).max(100).default(10),
+      page_size: z.coerce.number().min(1).max(100).default(10),
     });
-    const { level, service, date, page, pageSize } = schema.parse((req as any).query || {});
+    // hook 已将 camelCase 转换为 snake_case
+    const { level, service, date, page, page_size } = schema.parse((req as any).query || {});
 
     // 组装候选文件
     const candidates: Array<{
@@ -121,7 +122,7 @@ export function registerLogRoutes(app: FastifyInstance) {
       return aServiceOrder - bServiceOrder;
     });
 
-    const ps = clampPageSize(pageSize);
+    const ps = clampPageSize(page_size);
     const start = (page - 1) * ps;
     const pageItems = candidates.slice(start, start + ps);
 
