@@ -25,17 +25,17 @@ export async function optimizeResumeWithLLM(
     throw new Error('请先在设置中配置大模型');
   }
 
-  const { model, model_params } = userData;
+  const { model, modelParams: userModelParams } = userData;
 
   // 构建参数对象
-  const modelParams: Record<string, any> = {};
-  model_params?.forEach((param: any) => {
+  const modelParamsObj: Record<string, any> = {};
+  userModelParams?.forEach((param: any) => {
     const value = param.value;
     // 尝试将字符串转换为数字（对于 temperature、max_tokens 等）
     if (!isNaN(Number(value))) {
-      modelParams[param.param_key] = Number(value);
+      modelParamsObj[param.paramKey] = Number(value);
     } else {
-      modelParams[param.param_key] = value;
+      modelParamsObj[param.paramKey] = value;
     }
   });
 
@@ -87,10 +87,10 @@ export async function optimizeResumeWithLLM(
   // 构建 credentials 对象，从 model.credentials 中解析
   const finalCredentials = model.credentials ? JSON.parse(model.credentials) : {};
 
-  // 直接传递用户配置的 model_params 数组
+  // 直接传递用户配置的 modelParams 数组
   const finalModelParams =
-    model_params?.map((param: any) => ({
-      param_key: param.param_key,
+    userModelParams?.map((param: any) => ({
+      paramKey: param.paramKey,
       value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
     })) || [];
 
@@ -102,9 +102,9 @@ export async function optimizeResumeWithLLM(
     },
     body: JSON.stringify({
       provider: model.provider,
-      model: model.model_name,
+      model: model.modelName,
       credentials: finalCredentials,
-      model_params: finalModelParams,
+      modelParams: finalModelParams,
       messages: [
         {
           role: 'user',

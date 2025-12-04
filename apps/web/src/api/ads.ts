@@ -3,27 +3,27 @@ import { http } from './http';
 
 export interface BlockConfig {
   id: string;
-  block_id: string;
+  blockId: string;
   x: number;
   y: number;
   width: number;
   height: number;
   type: 'square' | 'horizontal' | 'vertical';
   size: string;
-  price_id: string;
+  priceId: string;
   price: number;
-  created_at: number;
-  updated_at: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface PixelAd {
   id: string;
   title: string;
   description: string;
-  link_url: string;
-  image_path: string;
-  block_config_id?: string; // 块配置 ID，用于编辑时的回显
-  block_id?: string; // 从 block_configs 表获取的 block_id
+  linkUrl: string;
+  imagePath: string;
+  blockConfigId?: string; // 块配置 ID，用于编辑时的回显
+  blockId?: string; // 从 block_configs 表获取的 block_id
   x?: number; // 从 block_configs 表获取的位置信息
   y?: number;
   width?: number; // 从 block_configs 表获取的尺寸信息
@@ -31,23 +31,23 @@ export interface PixelAd {
   type?: string; // 从 block_configs 表获取的类型信息
   price?: number; // 从 base_prices 表获取的价格信息
   status: 'active' | 'inactive' | 'expired';
-  contact_info?: string;
+  contactInfo?: string;
   notes?: string;
-  user_id: string;
-  created_at: number;
-  updated_at?: number;
-  expires_at: number;
+  userId: string;
+  createdAt: number;
+  updatedAt?: number;
+  expiresAt: number;
 }
 
 export interface CreatePixelAdRequest {
   title: string;
   description: string;
-  link_url: string;
-  image_path: string;
-  block_config_id: string; // 块配置 ID
-  contact_info: string;
+  linkUrl: string;
+  imagePath: string;
+  blockConfigId: string; // 块配置 ID
+  contactInfo: string;
   notes: string;
-  expires_at: number;
+  expiresAt: number;
 }
 
 export interface UpdatePixelAdRequest extends Partial<CreatePixelAdRequest> {}
@@ -62,8 +62,8 @@ export interface PaginatedAdsPixelResponse {
 }
 
 export interface CheckBlockRequest {
-  block_config_id: string;
-  exclude_id?: string;
+  blockConfigId: string;
+  excludeId?: string;
 }
 
 export interface CheckBlockResponse {
@@ -74,8 +74,8 @@ export interface CheckBlockResponse {
 export interface BasePrice {
   id: string;
   price: number;
-  created_at: number;
-  updated_at: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 // 获取广告列表
@@ -84,14 +84,14 @@ export async function listAdsPixel(params: {
   limit?: number;
   search?: string;
   status?: string;
-  block_config_id?: string;
+  blockConfigId?: string;
 }): Promise<PaginatedAdsPixelResponse> {
   const queryParams = new URLSearchParams();
   if (params.page) queryParams.append('page', params.page.toString());
   if (params.limit) queryParams.append('limit', params.limit.toString());
   if (params.search) queryParams.append('search', params.search);
   if (params.status) queryParams.append('status', params.status);
-  if (params.block_config_id) queryParams.append('block_config_id', params.block_config_id);
+  if (params.blockConfigId) queryParams.append('block_config_id', params.blockConfigId);
 
   const url = queryParams.toString() ? `/pixel-ads?${queryParams}` : '/pixel-ads';
   return await http.get<PaginatedAdsPixelResponse>(url);

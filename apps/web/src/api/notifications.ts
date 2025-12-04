@@ -4,7 +4,7 @@ import { http } from './http';
 // 通知类型定义
 export interface Notification {
   id: number;
-  user_id: number;
+  userId: number;
   title: string;
   content: string;
   summary?: string;
@@ -21,17 +21,17 @@ export interface Notification {
     | 'task_failed';
   category: 'job' | 'question' | 'interview' | 'knowledge' | 'model' | 'license' | 'ad' | 'system';
   priority: 'low' | 'normal' | 'high' | 'urgent';
-  is_read: number; // 0: 未读, 1: 已读
-  is_starred: number; // 0: 未标星, 1: 已标星
-  resource_type?: string;
-  resource_id?: string;
-  action_url?: string;
-  action_text?: string;
+  isRead: number; // 0: 未读, 1: 已读
+  isStarred: number; // 0: 未标星, 1: 已标星
+  resourceType?: string;
+  resourceId?: string;
+  actionUrl?: string;
+  actionText?: string;
   metadata?: string;
-  expire_at?: number;
-  created_at: number;
-  read_at?: number;
-  starred_at?: number;
+  expireAt?: number;
+  createdAt: number;
+  readAt?: number;
+  starredAt?: number;
 }
 
 // 获取通知列表
@@ -39,11 +39,11 @@ export async function fetchNotifications(params?: {
   type?: string;
   category?: string;
   priority?: string;
-  is_read?: boolean;
-  is_starred?: boolean;
+  isRead?: boolean;
+  isStarred?: boolean;
   keyword?: string;
-  start_date?: number;
-  end_date?: number;
+  startDate?: number;
+  endDate?: number;
   limit?: number;
   offset?: number;
 }): Promise<{
@@ -63,11 +63,11 @@ export async function fetchNotifications(params?: {
     if (params?.type) queryParams.type = params.type;
     if (params?.category) queryParams.category = params.category;
     if (params?.priority) queryParams.priority = params.priority;
-    if (params?.is_read !== undefined) queryParams.is_read = params.is_read;
-    if (params?.is_starred !== undefined) queryParams.is_starred = params.is_starred;
+    if (params?.isRead !== undefined) queryParams.is_read = params.isRead;
+    if (params?.isStarred !== undefined) queryParams.is_starred = params.isStarred;
     if (params?.keyword) queryParams.keyword = params.keyword;
-    if (params?.start_date) queryParams.start_date = params.start_date;
-    if (params?.end_date) queryParams.end_date = params.end_date;
+    if (params?.startDate) queryParams.start_date = params.startDate;
+    if (params?.endDate) queryParams.end_date = params.endDate;
     if (params?.limit) queryParams.limit = params.limit;
     if (params?.offset) queryParams.offset = params.offset;
 

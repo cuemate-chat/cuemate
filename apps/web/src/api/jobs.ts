@@ -9,12 +9,12 @@ export interface CreateJobPayload extends CreateJobRequest {
 }
 
 export interface JobWithResume extends Job {
-  created_at: number; // 兼容现有页面的字段名
+  createdAt: number;
   resumeId?: string;
   resumeTitle?: string;
   resumeContent?: string;
   resumeFilePath?: string;
-  vector_status?: number;
+  vectorStatus?: number;
 }
 
 export async function createJob(
@@ -67,19 +67,19 @@ export async function extractResumeText(file: File, jobId?: string): Promise<{ t
 // 简历优化相关接口
 export interface ResumeOptimization {
   id: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
-  original_resume: string;
-  original_word_count: number;
-  optimized_resume: string | null;
-  optimized_word_count: number;
-  model_id: string | null;
-  model_name: string | null;
+  originalResume: string;
+  originalWordCount: number;
+  optimizedResume: string | null;
+  optimizedWordCount: number;
+  modelId: string | null;
+  modelName: string | null;
   suggestion: string | null;
-  optimization_count: number;
-  error_message: string | null;
-  job_id?: string;
+  optimizationCount: number;
+  errorMessage: string | null;
+  jobId?: string;
 }
 
 export interface CreateResumeOptimizationPayload {

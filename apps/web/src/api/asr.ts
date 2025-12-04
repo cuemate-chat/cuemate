@@ -7,41 +7,41 @@ export interface AsrConfig {
   name: string;
 
   // FunASR WebSocket 配置
-  funasr_host: string;
-  funasr_port: number;
-  funasr_chunk_interval: number;
-  funasr_chunk_size_start: number;
-  funasr_chunk_size_middle: number;
-  funasr_chunk_size_end: number;
-  funasr_mode: 'online' | 'offline' | '2pass';
-  funasr_sample_rate: number;
+  funasrHost: string;
+  funasrPort: number;
+  funasrChunkInterval: number;
+  funasrChunkSizeStart: number;
+  funasrChunkSizeMiddle: number;
+  funasrChunkSizeEnd: number;
+  funasrMode: 'online' | 'offline' | '2pass';
+  funasrSampleRate: number;
 
   // AudioTee 配置
-  audiotee_sample_rate: 8000 | 16000 | 22050 | 24000 | 32000 | 44100 | 48000;
-  audiotee_chunk_duration: number;
-  audiotee_include_processes: string;
-  audiotee_exclude_processes: string;
-  audiotee_mute_processes: boolean;
+  audioteeSampleRate: 8000 | 16000 | 22050 | 24000 | 32000 | 44100 | 48000;
+  audioteeChunkDuration: number;
+  audioteeIncludeProcesses: string;
+  audioteeExcludeProcesses: string;
+  audioteeMuteProcesses: boolean;
 
   // PiperTTS 配置
-  piper_default_language: 'zh-CN' | 'en-US';
-  piper_speech_speed: number;
-  piper_python_path: string;
+  piperDefaultLanguage: 'zh-CN' | 'en-US';
+  piperSpeechSpeed: number;
+  piperPythonPath: string;
 
   // 设备持久化配置
-  microphone_device_id: string;
-  microphone_device_name: string;
-  speaker_device_id: string;
-  speaker_device_name: string;
+  microphoneDeviceId: string;
+  microphoneDeviceName: string;
+  speakerDeviceId: string;
+  speakerDeviceName: string;
 
   // 测试配置
-  test_duration_seconds: number;
-  recognition_timeout_seconds: number;
-  min_recognition_length: number;
-  max_recognition_length: number;
+  testDurationSeconds: number;
+  recognitionTimeoutSeconds: number;
+  minRecognitionLength: number;
+  maxRecognitionLength: number;
 
-  created_at: number;
-  updated_at: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface AsrService {

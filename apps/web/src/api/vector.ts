@@ -29,23 +29,21 @@ export interface VectorDocument {
     relatedResumes?: number;
     relatedQuestions?: number;
     // AI 向量记录字段
-    note_type?: string;
-    interview_id?: string;
-    resource_id?: string;
-    question_id?: string;
+    noteType?: string;
+    interviewId?: string;
+    resourceId?: string;
     question?: string;
     answer?: string;
-    asked_question?: string;
-    candidate_answer?: string;
+    askedQuestion?: string;
+    candidateAnswer?: string;
     pros?: string;
     cons?: string;
     suggestions?: string;
-    key_points?: string;
+    keyPoints?: string;
     assessment?: string;
-    reference_answer?: string;
-    other_id?: string;
-    other_content?: string;
-    created_at?: number;
+    referenceAnswer?: string;
+    otherId?: string;
+    otherContent?: string;
   };
   score: number;
 }
@@ -448,14 +446,14 @@ export const deleteOtherFile = async (docId: string): Promise<{ success: boolean
 // 获取 AI 向量记录列表
 export const listAIVectorRecords = async (params?: {
   query?: string;
-  note_type?: string;
+  noteType?: string;
   createdFrom?: number;
   createdTo?: number;
 }): Promise<SearchResponse> => {
   try {
     let url = `${RAG_SERVICE_URL}/search/ai-vector-records?k=1000`;
     if (params?.query) url += `&query=${encodeURIComponent(params.query)}`;
-    if (params?.note_type) url += `&note_type=${params.note_type}`;
+    if (params?.noteType) url += `&note_type=${params.noteType}`;
     if (params?.createdFrom) url += `&createdFrom=${params.createdFrom}`;
     if (params?.createdTo) url += `&createdTo=${params.createdTo}`;
 

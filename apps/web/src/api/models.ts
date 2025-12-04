@@ -25,8 +25,8 @@ export function deleteModel(id: string) {
   return http.delete(`/models/${id}`);
 }
 
-export function selectUserModel(model_id: string) {
-  return http.post('/models/select', { model_id });
+export function selectUserModel(modelId: string) {
+  return http.post('/models/select', { modelId });
 }
 
 export function testModelConnectivity(id: string) {
@@ -35,7 +35,7 @@ export function testModelConnectivity(id: string) {
 
 export function testModelConfig(config: {
   provider: string;
-  model_name: string;
+  modelName: string;
   credentials: Record<string, any>;
   params?: any[];
 }) {

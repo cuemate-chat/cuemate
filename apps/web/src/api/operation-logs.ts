@@ -6,21 +6,21 @@ export interface OperationLog {
   id: number;
   menu: string;
   type: string;
-  resource_id: string;
-  resource_name: string;
+  resourceId: string;
+  resourceName: string;
   operation: string;
   time: number;
   message: string;
-  source_ip: string;
-  user_id: string;
-  user_name: string;
-  request_method: string;
-  request_url: string;
-  user_agent: string;
+  sourceIp: string;
+  userId: string;
+  userName: string;
+  requestMethod: string;
+  requestUrl: string;
+  userAgent: string;
   status: 'success' | 'failed';
-  error_message: string;
-  created_at: number;
-  updated_at: number;
+  errorMessage: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 // 分页响应类型
@@ -40,7 +40,7 @@ export interface OperationStats {
   operationStats: Array<{ operation: string; count: number }>;
   statusStats: Array<{ status: string; count: number }>;
   dailyStats: Array<{ date: string; count: number }>;
-  userStats: Array<{ user_id: string; user_name: string; count: number }>;
+  userStats: Array<{ userId: string; userName: string; count: number }>;
   interviewCount: number;
   todayTotal: number;
   todaySuccess: number;

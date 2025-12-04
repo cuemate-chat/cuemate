@@ -5,9 +5,9 @@ import { http } from './http';
 export interface VersionInfo {
   name: string;
   version: string;
-  build_id?: string;
-  create_time: string;
-  update_type?: string;
+  buildId?: string;
+  createTime: string;
+  updateType?: string;
   platforms?: string[];
   dependencies?: Record<string, string>;
   desc: string[];
@@ -22,7 +22,7 @@ export interface VersionInfo {
     file: string;
     sha256: string;
   }>;
-  changelog_url?: string;
+  changelogUrl?: string;
 }
 
 // 获取版本列表

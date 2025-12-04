@@ -4,7 +4,7 @@ export interface IQItem {
   id: string;
   title: string;
   description: string;
-  created_at: number;
+  createdAt: number;
 }
 
 export async function listInterviewQuestions(

@@ -4,34 +4,34 @@ import { http } from './http';
 export interface AIConversation {
   id: number;
   title: string;
-  model_id: string;
-  model_title: string;
-  model_provider: string;
-  model_name: string;
-  model_type: string;
-  model_icon: string;
-  model_version: string;
-  model_credentials: string;
-  message_count: number;
-  token_used: number;
+  modelId: string;
+  modelTitle: string;
+  modelProvider: string;
+  modelName: string;
+  modelType: string;
+  modelIcon: string;
+  modelVersion: string;
+  modelCredentials: string;
+  messageCount: number;
+  tokenUsed: number;
   status: 'active' | 'completed' | 'error';
-  created_at: number;
-  updated_at: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 // AI 消息接口类型定义
 export interface AIMessage {
   id: number;
-  conversation_id: number;
-  message_type: 'user' | 'assistant' | 'system';
+  conversationId: number;
+  messageType: 'user' | 'assistant' | 'system';
   content: string;
-  content_format: 'text' | 'markdown' | 'json';
-  sequence_number: number;
-  token_count: number;
-  response_time_ms?: number;
-  error_message?: string;
+  contentFormat: 'text' | 'markdown' | 'json';
+  sequenceNumber: number;
+  tokenCount: number;
+  responseTimeMs?: number;
+  errorMessage?: string;
   metadata?: Record<string, any>;
-  created_at: number;
+  createdAt: number;
 }
 
 // API 响应类型
@@ -62,7 +62,7 @@ export interface AIConversationParams {
   page?: number;
   pageSize?: number;
   status?: string;
-  model_id?: string;
+  modelId?: string;
   keyword?: string;
   startTime?: number;
   endTime?: number;
@@ -77,7 +77,7 @@ export const fetchAIConversations = async (
   if (params.page !== undefined) queryParams.set('page', params.page.toString());
   if (params.pageSize !== undefined) queryParams.set('limit', params.pageSize.toString());
   if (params.status) queryParams.set('status', params.status);
-  if (params.model_id) queryParams.set('model_id', params.model_id);
+  if (params.modelId) queryParams.set('model_id', params.modelId);
   if (params.keyword) queryParams.set('search', params.keyword);
   if (params.startTime) queryParams.set('start_time', params.startTime.toString());
   if (params.endTime) queryParams.set('end_time', params.endTime.toString());

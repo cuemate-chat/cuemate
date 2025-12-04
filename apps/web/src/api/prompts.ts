@@ -6,11 +6,11 @@ export interface Prompt {
   description: string;
   variables: string;
   source: 'desktop' | 'web';
-  default_content: string;
-  history_pre: string | null;
+  defaultContent: string;
+  historyPre: string | null;
   extra: string | null;
-  created_at: number;
-  updated_at: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface ListPromptsParams {

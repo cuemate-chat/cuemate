@@ -2,32 +2,32 @@ import { http } from './http';
 
 export interface InterviewListItem {
   id: string;
-  started_at: number;
-  ended_at: number | null;
-  selected_model_id?: string | null;
-  model_name?: string | null;
-  model_provider?: string | null;
-  model_icon?: string | null;
-  job_title: string;
-  job_content?: string | null;
-  question_count: number;
-  resumes_id?: string | null;
-  resumes_title?: string | null;
-  resumes_content?: string | null;
+  startedAt: number;
+  endedAt: number | null;
+  selectedModelId?: string | null;
+  modelName?: string | null;
+  modelProvider?: string | null;
+  modelIcon?: string | null;
+  jobTitle: string;
+  jobContent?: string | null;
+  questionCount: number;
+  resumesId?: string | null;
+  resumesTitle?: string | null;
+  resumesContent?: string | null;
   duration: number;
-  interview_type: 'mock' | 'training';
+  interviewType: 'mock' | 'training';
   status: 'idle' | 'mock-interview-recording' | 'mock-interview-paused' | 'mock-interview-completed' | 'mock-interview-playing' | 'mock-interview-error' | 'mock-interview-expired' | 'interview-training-recording' | 'interview-training-paused' | 'interview-training-completed' | 'interview-training-playing' | 'interview-training-error' | 'interview-training-expired';
   message?: string | null;
-  interview_state?: string | null;
-  original_job_title?: string;
-  total_score?: number;
-  overall_summary?: string;
-  overall_pros?: string;
-  overall_cons?: string;
-  overall_suggestions?: string;
-  advantage_content?: string;
-  disadvantage_content?: string;
-  advantages_total?: number;
+  interviewState?: string | null;
+  originalJobTitle?: string;
+  totalScore?: number;
+  overallSummary?: string;
+  overallPros?: string;
+  overallCons?: string;
+  overallSuggestions?: string;
+  advantageContent?: string;
+  disadvantageContent?: string;
+  advantagesTotal?: number;
 }
 
 export async function listInterviews(

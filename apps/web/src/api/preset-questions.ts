@@ -4,19 +4,19 @@ export interface PresetQuestion {
   id: string;
   question: string;
   answer: string;
-  tag_id?: string | null;
-  is_builtin: boolean;
-  synced_jobs: string[]; // 已同步的岗位 ID 列表
-  created_at: number;
-  updated_at?: number;
+  tagId?: string | null;
+  isBuiltin: boolean;
+  syncedJobs: string[]; // 已同步的岗位 ID 列表
+  createdAt: number;
+  updatedAt?: number;
 }
 
 export interface PresetQuestionListParams {
   page?: number;
   pageSize?: number;
   keyword?: string;
-  tag_id?: string;
-  is_builtin?: boolean;
+  tagId?: string;
+  isBuiltin?: boolean;
   day?: string; // 按日期过滤：yyyy-mm-dd
   question?: string; // 按问题过滤
   answer?: string; // 按答案过滤
@@ -37,8 +37,8 @@ export async function listPresetQuestions(
   if (params?.page) searchParams.set('page', String(params.page));
   if (params?.pageSize) searchParams.set('pageSize', String(params.pageSize));
   if (params?.keyword) searchParams.set('keyword', params.keyword);
-  if (params?.tag_id) searchParams.set('tag_id', params.tag_id);
-  if (params?.is_builtin !== undefined) searchParams.set('is_builtin', String(params.is_builtin));
+  if (params?.tagId) searchParams.set('tagId', params.tagId);
+  if (params?.isBuiltin !== undefined) searchParams.set('isBuiltin', String(params.isBuiltin));
   if (params?.day) searchParams.set('day', params.day);
   if (params?.question) searchParams.set('question', params.question);
   if (params?.answer) searchParams.set('answer', params.answer);
@@ -58,7 +58,7 @@ export async function getPresetQuestion(id: string): Promise<{ item: PresetQuest
 export async function createPresetQuestion(payload: {
   question: string;
   answer: string;
-  tag_id?: string | null;
+  tagId?: string | null;
 }): Promise<{ id: string }> {
   return await http.post<{ id: string }>('/preset-questions', payload);
 }
@@ -69,7 +69,7 @@ export async function updatePresetQuestion(
   payload: {
     question?: string;
     answer?: string;
-    tag_id?: string | null;
+    tagId?: string | null;
   },
 ): Promise<{ success: boolean }> {
   return await http.put<{ success: boolean }>(`/preset-questions/${id}`, payload);
@@ -110,10 +110,10 @@ export async function batchImportPresetQuestions(payload: {
   questions: Array<{
     question: string;
     answer: string;
-    tag_name?: string | null;
+    tagName?: string | null;
   }>;
   overwrite?: boolean;
-  is_builtin?: boolean; // 是否为内置题库（从 License 页面导入为 true）
+  isBuiltin?: boolean; // 是否为内置题库（从 License 页面导入为 true）
 }): Promise<{
   success: boolean;
   importedCount: number;
