@@ -77,10 +77,10 @@ export const fetchAIConversations = async (
   if (params.page !== undefined) queryParams.set('page', params.page.toString());
   if (params.pageSize !== undefined) queryParams.set('limit', params.pageSize.toString());
   if (params.status) queryParams.set('status', params.status);
-  if (params.modelId) queryParams.set('model_id', params.modelId);
+  if (params.modelId) queryParams.set('modelId', params.modelId);
   if (params.keyword) queryParams.set('search', params.keyword);
-  if (params.startTime) queryParams.set('start_time', params.startTime.toString());
-  if (params.endTime) queryParams.set('end_time', params.endTime.toString());
+  if (params.startTime) queryParams.set('startTime', params.startTime.toString());
+  if (params.endTime) queryParams.set('endTime', params.endTime.toString());
 
   const response = await http.get(`/ai/conversations?${queryParams.toString()}`);
   return response;
@@ -110,7 +110,7 @@ export const batchDeleteAIConversations = async (
   conversationIds: number[],
 ): Promise<{ deletedCount: number }> => {
   const response = await http.post('/ai/conversations/batch-delete', {
-    conversation_ids: conversationIds,
+    conversationIds: conversationIds,
   });
   return response;
 };
@@ -120,7 +120,7 @@ export const deleteAIConversationsBefore = async (
   beforeTime: number,
 ): Promise<{ deletedCount: number }> => {
   const response = await http.post('/ai/conversations/delete-before', {
-    before_time: beforeTime,
+    beforeTime: beforeTime,
   });
   return response;
 };

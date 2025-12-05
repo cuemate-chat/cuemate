@@ -91,7 +91,7 @@ export async function listAdsPixel(params: {
   if (params.limit) queryParams.append('limit', params.limit.toString());
   if (params.search) queryParams.append('search', params.search);
   if (params.status) queryParams.append('status', params.status);
-  if (params.blockConfigId) queryParams.append('block_config_id', params.blockConfigId);
+  if (params.blockConfigId) queryParams.append('blockConfigId', params.blockConfigId);
 
   const url = queryParams.toString() ? `/pixel-ads?${queryParams}` : '/pixel-ads';
   return await http.get<PaginatedAdsPixelResponse>(url);
@@ -150,7 +150,7 @@ export async function getAvailableBlocks(
   excludeAdId?: string,
 ): Promise<{ availableBlocks: BlockConfig[] }> {
   const url = excludeAdId
-    ? `/block-configs/available?exclude_ad_id=${excludeAdId}`
+    ? `/block-configs/available?excludeAdId=${excludeAdId}`
     : '/block-configs/available';
   return await http.get<{ availableBlocks: BlockConfig[] }>(url);
 }

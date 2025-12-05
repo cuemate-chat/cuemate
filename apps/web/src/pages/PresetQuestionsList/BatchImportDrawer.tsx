@@ -60,8 +60,8 @@ export default function BatchImportDrawer({
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded mb-4 font-mono">
               问题,答案,标签 ID<br/>
-              "什么是微服务？","微服务是...","tag_001"<br/>
-              "Redis 的使用场景","Redis 主要用于...","tag_002"
+              "什么是微服务？","微服务是...","微服务"<br/>
+              "Redis 的使用场景","Redis 主要用于...","Redis"
             </div>
             
             <div className="text-sm text-slate-600 dark:text-slate-300 mb-4">
@@ -69,8 +69,8 @@ export default function BatchImportDrawer({
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded mb-6 font-mono">
               [<br/>
-              &nbsp;&nbsp;{"{"}"question": "什么是微服务？", "answer": "微服务是...", "tag_id": "tag_001"{"}"}<br/>
-              &nbsp;&nbsp;{"{"}"question": "Redis 的使用场景", "answer": "Redis 主要用于...", "tag_id": null{"}"}<br/>
+              &nbsp;&nbsp;{"{"}"question": "什么是微服务？", "answer": "微服务是...", "tagName": "微服务"{"}"}<br/>
+              &nbsp;&nbsp;{"{"}"question": "Redis 的使用场景", "answer": "Redis 主要用于...", "tagName": null{"}"}<br/>
               ]
             </div>
 

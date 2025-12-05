@@ -453,7 +453,7 @@ export const listAIVectorRecords = async (params?: {
   try {
     let url = `${RAG_SERVICE_URL}/search/ai-vector-records?k=1000`;
     if (params?.query) url += `&query=${encodeURIComponent(params.query)}`;
-    if (params?.noteType) url += `&note_type=${params.noteType}`;
+    if (params?.noteType) url += `&noteType=${params.noteType}`;
     if (params?.createdFrom) url += `&createdFrom=${params.createdFrom}`;
     if (params?.createdTo) url += `&createdTo=${params.createdTo}`;
 
