@@ -14,6 +14,27 @@ export function fastifyLoggingHooks() {
         'request',
       );
     },
+    // 记录请求体（POST/PUT/PATCH 请求）
+    preHandler: async (req: any) => {
+      const rid: any = (req as any).id || (req as any).requestContext?.id || undefined;
+      const raw: any = (req as any).raw || req;
+      const method = raw.method || (req as any).method;
+      if (['POST', 'PUT', 'PATCH'].includes(method?.toUpperCase())) {
+        const body = (req as any).body;
+        if (body) {
+          const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
+          (req as any).log.info(
+            {
+              rid,
+              method,
+              url: raw.url || (req as any).url,
+              body: bodyStr,
+            },
+            'request body',
+          );
+        }
+      }
+    },
     onResponse: async (req: any, reply: any) => {
       const rid: any = (req as any).id || (req as any).requestContext?.id || undefined;
       (reply as any).log.info({ rid, statusCode: (reply as any).statusCode }, 'response');
