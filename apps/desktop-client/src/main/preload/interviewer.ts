@@ -36,11 +36,20 @@ const interviewerAPI = {
   // === 用户数据 API ===
   getUserData: () => ipcRenderer.invoke('get-user-data'),
 
-  // === interviewId 持久化 API ===
-  interviewId: {
-    get: () => ipcRenderer.invoke('interview-id-get'),
-    set: (interviewId: string | null) => ipcRenderer.invoke('interview-id-set', interviewId),
-    clear: () => ipcRenderer.invoke('interview-id-clear'),
+  // === 面试 ID 持久化 API（用于恢复面试）===
+  // 获取所有面试 ID { mockInterviewId, trainingInterviewId }
+  resumingInterviewIds: {
+    get: () => ipcRenderer.invoke('resuming-interview-ids-get'),
+  },
+  // 模拟面试 ID
+  mockInterviewId: {
+    set: (mockInterviewId: string) => ipcRenderer.invoke('mock-interview-id-set', mockInterviewId),
+    clear: () => ipcRenderer.invoke('mock-interview-id-clear'),
+  },
+  // 面试训练 ID
+  trainingInterviewId: {
+    set: (trainingInterviewId: string) => ipcRenderer.invoke('training-interview-id-set', trainingInterviewId),
+    clear: () => ipcRenderer.invoke('training-interview-id-clear'),
   },
 
   // === 开发工具 API ===

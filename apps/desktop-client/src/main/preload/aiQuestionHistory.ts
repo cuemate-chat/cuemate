@@ -9,11 +9,17 @@ const api = {
   getUserData: () => ipcRenderer.invoke('get-user-data'),
   loadConversation: (data: any) => ipcRenderer.invoke('load-conversation', data),
 
-  // === interviewId 持久化 API ===
-  interviewId: {
-    get: () => ipcRenderer.invoke('interview-id-get'),
-    set: (interviewId: string | null) => ipcRenderer.invoke('interview-id-set', interviewId),
-    clear: () => ipcRenderer.invoke('interview-id-clear'),
+  // === 面试 ID 持久化 API（用于恢复面试）===
+  resumingInterviewIds: {
+    get: () => ipcRenderer.invoke('resuming-interview-ids-get'),
+  },
+  mockInterviewId: {
+    set: (mockInterviewId: string) => ipcRenderer.invoke('mock-interview-id-set', mockInterviewId),
+    clear: () => ipcRenderer.invoke('mock-interview-id-clear'),
+  },
+  trainingInterviewId: {
+    set: (trainingInterviewId: string) => ipcRenderer.invoke('training-interview-id-set', trainingInterviewId),
+    clear: () => ipcRenderer.invoke('training-interview-id-clear'),
   },
 
   // === 模式切换 API ===

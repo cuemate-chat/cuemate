@@ -8,7 +8,17 @@ const log = createLogger('IPCHandlers');
 import { SystemAudioCapture } from '../audio/SystemAudioCapture.js';
 import { DockerServiceManager } from '../services/DockerServiceManager.js';
 import { ensureDockActiveAndIcon } from '../utils/dock.js';
-import { type AppSettings, loadSettings, saveSettings, loadInterviewId, saveInterviewId, clearInterviewId } from '../utils/settings.js';
+import {
+  type AppSettings,
+  loadSettings,
+  saveSettings,
+  loadResumingInterviewIds,
+  saveMockInterviewId,
+  saveTrainingInterviewId,
+  clearMockInterviewId,
+  clearTrainingInterviewId,
+  clearAllInterviewIds,
+} from '../utils/settings.js';
 import { WindowManager } from '../windows/WindowManager.js';
 import { registerASRWebSocketHandlers } from './asrWebSocketHandlers.js';
 
@@ -286,35 +296,69 @@ export function setupIPC(windowManager: WindowManager): void {
     }
   });
 
-  // === interviewId 持久化相关 IPC ===
-  ipcMain.handle('interview-id-get', async () => {
+  // === 面试 ID 持久化相关 IPC ===
+  // 获取所有面试 ID
+  ipcMain.handle('resuming-interview-ids-get', async () => {
     try {
-      const interviewId = loadInterviewId();
-      return { success: true, interviewId };
+      const ids = loadResumingInterviewIds();
+      return { success: true, ...ids };
     } catch (error) {
-      log.error('interview-id-get', '获取 interviewId 失败', {}, error);
-      return { success: false, interviewId: null };
+      log.error('resuming-interview-ids-get', '获取面试 ID 失败', {}, error);
+      return { success: false, mockInterviewId: '', trainingInterviewId: '' };
     }
   });
-  ipcMain.handle('interview-id-set', async (_event, interviewId: string | null) => {
+
+  // 保存模拟面试 ID
+  ipcMain.handle('mock-interview-id-set', async (_event, mockInterviewId: string) => {
     try {
-      if (interviewId) {
-        saveInterviewId(interviewId);
-      } else {
-        clearInterviewId();
-      }
+      saveMockInterviewId(mockInterviewId || '');
       return { success: true };
     } catch (error) {
-      log.error('interview-id-set', '保存 interviewId 失败', {}, error);
+      log.error('mock-interview-id-set', '保存模拟面试 ID 失败', {}, error);
       return { success: false };
     }
   });
-  ipcMain.handle('interview-id-clear', async () => {
+
+  // 保存面试训练 ID
+  ipcMain.handle('training-interview-id-set', async (_event, trainingInterviewId: string) => {
     try {
-      clearInterviewId();
+      saveTrainingInterviewId(trainingInterviewId || '');
       return { success: true };
     } catch (error) {
-      log.error('interview-id-clear', '清除 interviewId 失败', {}, error);
+      log.error('training-interview-id-set', '保存面试训练 ID 失败', {}, error);
+      return { success: false };
+    }
+  });
+
+  // 清除模拟面试 ID
+  ipcMain.handle('mock-interview-id-clear', async () => {
+    try {
+      clearMockInterviewId();
+      return { success: true };
+    } catch (error) {
+      log.error('mock-interview-id-clear', '清除模拟面试 ID 失败', {}, error);
+      return { success: false };
+    }
+  });
+
+  // 清除面试训练 ID
+  ipcMain.handle('training-interview-id-clear', async () => {
+    try {
+      clearTrainingInterviewId();
+      return { success: true };
+    } catch (error) {
+      log.error('training-interview-id-clear', '清除面试训练 ID 失败', {}, error);
+      return { success: false };
+    }
+  });
+
+  // 清除所有面试 ID
+  ipcMain.handle('all-interview-ids-clear', async () => {
+    try {
+      clearAllInterviewIds();
+      return { success: true };
+    } catch (error) {
+      log.error('all-interview-ids-clear', '清除所有面试 ID 失败', {}, error);
       return { success: false };
     }
   });
