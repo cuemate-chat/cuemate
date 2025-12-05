@@ -87,6 +87,11 @@ export function InterviewTrainingFooter({
       }
 
       try {
+        // 获取用户选择的麦克风设备 ID
+        const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+        const res = await api?.asrConfig?.get?.();
+        const micDeviceId = res?.config?.microphoneDeviceId;
+
         const coordinator = new VoiceCoordinator({
           silenceThreshold: 5000,
           volumeThreshold: 0.01,
@@ -94,7 +99,7 @@ export function InterviewTrainingFooter({
           autoEndTimeout: 5000,
         });
 
-        await coordinator.initialize();
+        await coordinator.initialize(micDeviceId);
 
         // 监听用户开始说话
         coordinator.addEventListener('userStartedSpeaking', (() => {

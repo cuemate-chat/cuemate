@@ -45,15 +45,23 @@ export class VoiceCoordinator extends EventTarget {
   }
 
   // 初始化音频系统
-  async initialize(): Promise<void> {
+  async initialize(deviceId?: string): Promise<void> {
     try {
-      // 获取麦克风权限
+      // 获取麦克风权限，支持指定设备 ID
+      const audioConstraints: MediaTrackConstraints = {
+        echoCancellation: true, // 启用回声消除
+        noiseSuppression: true, // 启用噪音抑制
+        autoGainControl: true, // 启用自动增益控制
+      };
+
+      // 如果指定了设备 ID，使用指定设备
+      if (deviceId) {
+        audioConstraints.deviceId = { exact: deviceId };
+        log.debug('initialize', `使用指定麦克风设备: ${deviceId}`);
+      }
+
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true, // 启用回声消除
-          noiseSuppression: true, // 启用噪音抑制
-          autoGainControl: true, // 启用自动增益控制
-        },
+        audio: audioConstraints,
       });
 
       // 创建音频上下文

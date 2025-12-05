@@ -69,6 +69,9 @@ export function JobPositionCard({ selectedJobId, onPositionSelect, onModelSelect
         const savedState = getInterviewTrainingState();
         const savedMode = savedState.isAutoMode ? 'auto' : 'manual';
         setInterviewMode(savedMode);
+        // 同步 isAutoMode 到面试训练和模拟面试状态（供 Footer 组件使用）
+        setInterviewTrainingState({ isAutoMode: savedState.isAutoMode });
+        setMockInterviewState({ isAutoMode: savedState.isAutoMode });
         onModeSelect?.(savedState.isAutoMode);
       } catch (error) {
         logger.error(`加载数据失败: ${error}`);
