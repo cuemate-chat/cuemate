@@ -9,6 +9,7 @@ export interface MockInterviewState {
   isListening: boolean;        // 麦克风录音中（运行时）
   isAutoMode: boolean;         // 自动/手动模式（运行时）
   interviewState?: string;     // 面试状态（从数据库获取）
+  message?: string;            // 状态消息（错误原因、停止原因等）
   updatedAt: number;
 }
 
@@ -36,6 +37,7 @@ function getDefaultState(): MockInterviewState {
     isListening: false,
     isAutoMode: false,
     interviewState: undefined,
+    message: undefined,
     updatedAt: Date.now(),
   };
 }
@@ -53,6 +55,7 @@ export function setMockInterviewState(next: Partial<MockInterviewState>): MockIn
     isListening: next.isListening ?? currentState.isListening,
     isAutoMode: next.isAutoMode ?? currentState.isAutoMode,
     interviewState: next.interviewState ?? currentState.interviewState,
+    message: next.message ?? currentState.message,
     updatedAt: Date.now(),
   };
 

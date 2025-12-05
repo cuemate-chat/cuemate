@@ -17,6 +17,7 @@ export interface InterviewTrainingState {
   isAutoMode: boolean;                  // 自动/手动模式（运行时）
   currentPhase?: TrainingPhase;         // 当前阶段（运行时）
   interviewState?: string;              // 面试状态（从数据库获取）
+  message?: string;                     // 状态消息（错误原因、停止原因等）
   lastInterviewerSpeechTime: number;    // 面试官最后说话时间（运行时）
   currentRoundReviewId: string | null;  // 当前轮次评审 ID（运行时）
   updatedAt: number;
@@ -48,6 +49,7 @@ function getDefaultState(): InterviewTrainingState {
     isAutoMode: false,
     currentPhase: undefined,
     interviewState: undefined,
+    message: undefined,
     lastInterviewerSpeechTime: 0,
     currentRoundReviewId: null,
     updatedAt: Date.now(),
@@ -69,6 +71,7 @@ export function setInterviewTrainingState(next: Partial<InterviewTrainingState>)
     isAutoMode: next.isAutoMode ?? currentState.isAutoMode,
     currentPhase: next.currentPhase ?? currentState.currentPhase,
     interviewState: next.interviewState ?? currentState.interviewState,
+    message: next.message ?? currentState.message,
     lastInterviewerSpeechTime: next.lastInterviewerSpeechTime ?? currentState.lastInterviewerSpeechTime,
     currentRoundReviewId: next.currentRoundReviewId ?? currentState.currentRoundReviewId,
     updatedAt: Date.now(),
