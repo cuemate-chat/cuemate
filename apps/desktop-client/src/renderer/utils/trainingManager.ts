@@ -12,6 +12,23 @@ import { interviewService } from '../interviewer/api/interviewService';
 const MAX_AGE = 24 * 60 * 60 * 1000; // 24小时
 
 /**
+ * 从持久化文件获取面试训练 ID
+ */
+export async function getResumingTrainingInterviewId(): Promise<string | null> {
+  try {
+    const api: any = (window as any).electronInterviewerAPI || (window as any).electronAPI;
+    const result = await api?.resumingInterviewIds?.get?.();
+    if (result?.success && result.trainingInterviewId) {
+      return result.trainingInterviewId;
+    }
+    return null;
+  } catch (error) {
+    logger.error(`[TrainingManager] 获取持久化训练 ID 失败: ${error}`);
+    return null;
+  }
+}
+
+/**
  * 全局状态机实例
  */
 let globalStateMachine: TrainingStateMachine | null = null;
@@ -145,18 +162,22 @@ export async function handleExpiredTraining(interviewId: string): Promise<void> 
 
 /**
  * 获取数据库中的训练数据
- * 从 voiceState 获取 interviewId，然后查询数据库
+ * @param externalInterviewId 外部传入的面试 ID（可选，如果不传则从 voiceState 获取）
  * @returns 直接返回数据库数据，不做任何转换
  */
-export async function validateTrainingWithDatabase(): Promise<{
+export async function validateTrainingWithDatabase(externalInterviewId?: string): Promise<{
   found: boolean;
   interviewId?: string;
   interview?: any;
+  error?: boolean; // 标记是否是查询错误（区分"找不到"和"查询失败"）
 }> {
   try {
-    // 从 voiceState 获取 interviewId
-    const voiceState = getVoiceState();
-    const interviewId = voiceState.interviewId;
+    // 优先使用外部传入的 ID，否则从 voiceState 获取
+    let interviewId = externalInterviewId;
+    if (!interviewId) {
+      const voiceState = getVoiceState();
+      interviewId = voiceState.interviewId;
+    }
 
     if (!interviewId) {
       return { found: false };
@@ -191,7 +212,8 @@ export async function validateTrainingWithDatabase(): Promise<{
     return { found: true, interviewId, interview: result.interview };
   } catch (error) {
     logger.error(`[TrainingManager] 数据库查询失败: ${error}`);
-    return { found: false };
+    // 返回 error: true 表示查询失败（非"找不到"），调用方不应该清空 interviewId
+    return { found: false, error: true };
   }
 }
 
@@ -206,12 +228,20 @@ export function hasRecoverableTraining(): boolean {
 
 /**
  * 从数据库恢复面试训练
- * 使用 voiceState 中的 interviewId 查询数据库获取完整数据
+ * @param externalInterviewId 外部传入的面试 ID（可选，如果不传则从 voiceState 获取）
+ * @param skipStatusCheck 是否跳过状态检查（默认 false，传 true 时无论面试状态如何都恢复数据）
  */
-export async function restoreInterviewTraining(): Promise<TrainingStateMachine | null> {
+export async function restoreInterviewTraining(
+  externalInterviewId?: string,
+  skipStatusCheck: boolean = false
+): Promise<TrainingStateMachine | null> {
   try {
-    const voiceState = getVoiceState();
-    const interviewId = voiceState.interviewId;
+    // 优先使用外部传入的 ID，否则从 voiceState 获取
+    let interviewId = externalInterviewId;
+    if (!interviewId) {
+      const voiceState = getVoiceState();
+      interviewId = voiceState.interviewId;
+    }
 
     if (!interviewId) {
       logger.info('[TrainingManager] 没有可恢复的训练 ID');
@@ -234,12 +264,14 @@ export async function restoreInterviewTraining(): Promise<TrainingStateMachine |
       return null;
     }
 
-    // 检查状态是否可恢复
-    if (interview.status === 'interview-training-completed' ||
-        interview.status === 'interview-training-expired' ||
-        interview.status === 'interview-training-error') {
-      logger.info(`[TrainingManager] 训练已结束，状态: ${interview.status}`);
-      return null;
+    // 检查状态是否可恢复（如果 skipStatusCheck 为 true 则跳过此检查）
+    if (!skipStatusCheck) {
+      if (interview.status === 'interview-training-completed' ||
+          interview.status === 'interview-training-expired' ||
+          interview.status === 'interview-training-error') {
+        logger.info(`[TrainingManager] 训练已结束，状态: ${interview.status}`);
+        return null;
+      }
     }
 
     // 从数据库数据构建 context
@@ -268,6 +300,10 @@ export async function restoreInterviewTraining(): Promise<TrainingStateMachine |
       timezone: interview.timezone,
       theme: interview.theme,
       message: interview.message,
+      // 新增字段：设备和模式配置
+      answerMode: interview.answerMode,
+      microphoneDeviceId: interview.microphoneDeviceId,
+      speakerDeviceId: interview.speakerDeviceId,
       // 恢复问题历史
       currentQuestionIndex: result.questions?.length || 0,
       questionsBank: result.questions || [],
