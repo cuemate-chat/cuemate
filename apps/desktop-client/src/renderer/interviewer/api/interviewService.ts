@@ -38,6 +38,9 @@ export interface InterviewData {
   theme?: string;
   selectedModelId?: string;
   interviewState?: string;
+  answerMode?: 'manual' | 'auto';
+  microphoneDeviceId?: string;
+  speakerDeviceId?: string;
 }
 
 export interface CreateInterviewResponse {
@@ -56,6 +59,9 @@ export interface UpdateInterviewData {
   status?: InterviewStatus;
   message?: string;
   interviewState?: string;
+  answerMode?: 'manual' | 'auto';
+  microphoneDeviceId?: string;
+  speakerDeviceId?: string;
 }
 
 // 面试详情返回类型
@@ -79,6 +85,9 @@ export interface InterviewDetail {
   locale?: string;
   timezone?: string;
   theme?: string;
+  answerMode?: 'manual' | 'auto';
+  microphoneDeviceId?: string;
+  speakerDeviceId?: string;
 }
 
 export interface InterviewQuestion {

@@ -39,6 +39,10 @@ export interface TrainingContext {
   theme?: string;
   message?: string;
   duration?: number; // 面试时长（秒），恢复时用于继续计时
+  // 设备和模式配置（恢复时使用）
+  answerMode?: 'manual' | 'auto';
+  microphoneDeviceId?: string;
+  speakerDeviceId?: string;
 }
 
 export interface TrainingEvent {
