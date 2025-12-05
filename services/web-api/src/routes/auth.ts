@@ -358,15 +358,15 @@ export function registerAuthRoutes(app: FastifyInstance) {
     withErrorLogging(app.log as any, 'auth.change-password', async (req, reply) => {
       try {
         const payload = await (req as any).jwtVerify();
-        const schema = z.object({ oldPassword: z.string().min(6), newPassword: z.string().min(6) });
+        const schema = z.object({ old_password: z.string().min(6), new_password: z.string().min(6) });
         const body = schema.parse(req.body);
         const row = (app as any).db
           .prepare('SELECT password_hash FROM users WHERE id = ?')
           .get(payload.uid);
         if (!row) return reply.code(404).send({ error: '用户不存在' });
-        const ok = await bcrypt.compare(body.oldPassword, row.password_hash);
+        const ok = await bcrypt.compare(body.old_password, row.password_hash);
         if (!ok) return reply.code(400).send({ error: '原密码不正确' });
-        const newHash = await bcrypt.hash(body.newPassword, 10);
+        const newHash = await bcrypt.hash(body.new_password, 10);
         (app as any).db
           .prepare('UPDATE users SET password_hash=? WHERE id=?')
           .run(newHash, payload.uid);

@@ -105,16 +105,15 @@ async function start() {
   // 全局日志钩子
   const hooks = fastifyLoggingHooks();
   app.addHook('onRequest', hooks.onRequest as any);
+  app.addHook('preHandler', hooks.preHandler as any);
   app.addHook('onResponse', hooks.onResponse as any);
   hooks.setErrorHandler(app as any);
 
   // 请求转换：camelCase → snake_case（前端发送 camelCase，后端使用 snake_case）
   app.addHook('preHandler', async (request: any) => {
-    // 转换请求体
     if (request.body && typeof request.body === 'object') {
       request.body = toSnakeCase(request.body);
     }
-    // 转换查询参数
     if (request.query && typeof request.query === 'object') {
       request.query = toSnakeCase(request.query);
     }

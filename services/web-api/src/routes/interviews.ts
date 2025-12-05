@@ -34,26 +34,26 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         const payload = await (req as any).jwtVerify();
         const body = z
           .object({
-            interviewId: z.string().min(1),
-            totalScore: z.number().min(0).max(100),
-            durationSec: z.number().min(0),
-            numQuestions: z.number().min(0),
-            overallSummary: z.string().optional(),
+            interview_id: z.string().min(1),
+            total_score: z.number().min(0).max(100),
+            duration_sec: z.number().min(0),
+            num_questions: z.number().min(0),
+            overall_summary: z.string().optional(),
             pros: z.string().optional(),
             cons: z.string().optional(),
             suggestions: z.string().optional(),
-            radarInteractivity: z.number().min(0).max(100).default(0),
-            radarConfidence: z.number().min(0).max(100).default(0),
-            radarProfessionalism: z.number().min(0).max(100).default(0),
-            radarRelevance: z.number().min(0).max(100).default(0),
-            radarClarity: z.number().min(0).max(100).default(0),
+            radar_interactivity: z.number().min(0).max(100).default(0),
+            radar_confidence: z.number().min(0).max(100).default(0),
+            radar_professionalism: z.number().min(0).max(100).default(0),
+            radar_relevance: z.number().min(0).max(100).default(0),
+            radar_clarity: z.number().min(0).max(100).default(0),
           })
           .parse((req as any).body || {});
 
         // 验证面试是否存在且属于当前用户
         const interview = (app as any).db
           .prepare('SELECT id FROM interviews WHERE id=? AND user_id=?')
-          .get(body.interviewId, payload.uid);
+          .get(body.interview_id, payload.uid);
         if (!interview) return reply.code(404).send({ error: '面试不存在或无权限' });
 
         const { randomUUID } = await import('crypto');
@@ -71,19 +71,19 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           )
           .run(
             id,
-            body.interviewId,
-            body.totalScore,
-            body.durationSec,
-            body.numQuestions,
-            body.overallSummary || null,
+            body.interview_id,
+            body.total_score,
+            body.duration_sec,
+            body.num_questions,
+            body.overall_summary || null,
             body.pros || null,
             body.cons || null,
             body.suggestions || null,
-            body.radarInteractivity,
-            body.radarConfidence,
-            body.radarProfessionalism,
-            body.radarRelevance,
-            body.radarClarity,
+            body.radar_interactivity,
+            body.radar_confidence,
+            body.radar_professionalism,
+            body.radar_relevance,
+            body.radar_clarity,
             now,
           );
 
@@ -91,9 +91,9 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         await logOperation(app, req, {
           ...OPERATION_MAPPING.REVIEW,
           resourceId: id,
-          resourceName: `面试评分: ${body.interviewId}`,
+          resourceName: `面试评分: ${body.interview_id}`,
           operation: OperationType.CREATE,
-          message: `创建面试评分: ${body.interviewId}`,
+          message: `创建面试评分: ${body.interview_id}`,
           status: 'success',
           userId: payload.uid,
         });
@@ -103,13 +103,13 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           // 获取面试信息（岗位名称、面试时间、时长）
           const interviewInfo = (app as any).db
             .prepare('SELECT job_title, started_at, duration FROM interviews WHERE id = ?')
-            .get(body.interviewId);
+            .get(body.interview_id);
 
           if (interviewInfo) {
             notifyInterviewReportReady(
               (app as any).db,
               payload.uid,
-              body.interviewId,
+              body.interview_id,
               interviewInfo.job_title || '未命名岗位',
               interviewInfo.started_at,
               interviewInfo.duration
@@ -136,18 +136,18 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         const id = (req as any).params?.id as string;
         const body = z
           .object({
-            totalScore: z.number().min(0).max(100).optional(),
-            durationSec: z.number().min(0).optional(),
-            numQuestions: z.number().min(0).optional(),
-            overallSummary: z.string().optional(),
+            total_score: z.number().min(0).max(100).optional(),
+            duration_sec: z.number().min(0).optional(),
+            num_questions: z.number().min(0).optional(),
+            overall_summary: z.string().optional(),
             pros: z.string().optional(),
             cons: z.string().optional(),
             suggestions: z.string().optional(),
-            radarInteractivity: z.number().min(0).max(100).optional(),
-            radarConfidence: z.number().min(0).max(100).optional(),
-            radarProfessionalism: z.number().min(0).max(100).optional(),
-            radarRelevance: z.number().min(0).max(100).optional(),
-            radarClarity: z.number().min(0).max(100).optional(),
+            radar_interactivity: z.number().min(0).max(100).optional(),
+            radar_confidence: z.number().min(0).max(100).optional(),
+            radar_professionalism: z.number().min(0).max(100).optional(),
+            radar_relevance: z.number().min(0).max(100).optional(),
+            radar_clarity: z.number().min(0).max(100).optional(),
           })
           .parse((req as any).body || {});
 
@@ -167,21 +167,21 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         const updateFields = [];
         const updateValues = [];
 
-        if (body.totalScore !== undefined) {
+        if (body.total_score !== undefined) {
           updateFields.push('total_score = ?');
-          updateValues.push(body.totalScore);
+          updateValues.push(body.total_score);
         }
-        if (body.durationSec !== undefined) {
+        if (body.duration_sec !== undefined) {
           updateFields.push('duration_sec = ?');
-          updateValues.push(body.durationSec);
+          updateValues.push(body.duration_sec);
         }
-        if (body.numQuestions !== undefined) {
+        if (body.num_questions !== undefined) {
           updateFields.push('num_questions = ?');
-          updateValues.push(body.numQuestions);
+          updateValues.push(body.num_questions);
         }
-        if (body.overallSummary !== undefined) {
+        if (body.overall_summary !== undefined) {
           updateFields.push('overall_summary = ?');
-          updateValues.push(body.overallSummary);
+          updateValues.push(body.overall_summary);
         }
         if (body.pros !== undefined) {
           updateFields.push('pros = ?');
@@ -195,25 +195,25 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           updateFields.push('suggestions = ?');
           updateValues.push(body.suggestions);
         }
-        if (body.radarInteractivity !== undefined) {
+        if (body.radar_interactivity !== undefined) {
           updateFields.push('radar_interactivity = ?');
-          updateValues.push(body.radarInteractivity);
+          updateValues.push(body.radar_interactivity);
         }
-        if (body.radarConfidence !== undefined) {
+        if (body.radar_confidence !== undefined) {
           updateFields.push('radar_confidence = ?');
-          updateValues.push(body.radarConfidence);
+          updateValues.push(body.radar_confidence);
         }
-        if (body.radarProfessionalism !== undefined) {
+        if (body.radar_professionalism !== undefined) {
           updateFields.push('radar_professionalism = ?');
-          updateValues.push(body.radarProfessionalism);
+          updateValues.push(body.radar_professionalism);
         }
-        if (body.radarRelevance !== undefined) {
+        if (body.radar_relevance !== undefined) {
           updateFields.push('radar_relevance = ?');
-          updateValues.push(body.radarRelevance);
+          updateValues.push(body.radar_relevance);
         }
-        if (body.radarClarity !== undefined) {
+        if (body.radar_clarity !== undefined) {
           updateFields.push('radar_clarity = ?');
-          updateValues.push(body.radarClarity);
+          updateValues.push(body.radar_clarity);
         }
 
         if (updateFields.length > 0) {
@@ -271,23 +271,23 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         const payload = await (req as any).jwtVerify();
         const body = z
           .object({
-            interviewId: z.string().min(1),
-            noteType: z.string().default('question'),
+            interview_id: z.string().min(1),
+            note_type: z.string().default('question'),
             content: z.string().min(1),
-            questionId: z.string().optional(),
+            question_id: z.string().optional(),
             question: z.string().optional(),
             answer: z.string().optional(),
-            askedQuestion: z.string().optional(),
-            candidateAnswer: z.string().optional(),
+            asked_question: z.string().optional(),
+            candidate_answer: z.string().optional(),
             pros: z.string().optional(),
             cons: z.string().optional(),
             suggestions: z.string().optional(),
-            keyPoints: z.string().optional(),
+            key_points: z.string().optional(),
             assessment: z.string().optional(),
-            referenceAnswer: z.string().optional(),
-            otherId: z.string().optional(),
-            otherContent: z.string().optional(),
-            endAt: z.number().optional(),
+            reference_answer: z.string().optional(),
+            other_id: z.string().optional(),
+            other_content: z.string().optional(),
+            end_at: z.number().optional(),
             duration: z.number().optional(),
           })
           .parse((req as any).body || {});
@@ -295,7 +295,7 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         // 验证面试是否存在且属于当前用户
         const interview = (app as any).db
           .prepare('SELECT id FROM interviews WHERE id=? AND user_id=?')
-          .get(body.interviewId, payload.uid);
+          .get(body.interview_id, payload.uid);
         if (!interview) return reply.code(404).send({ error: '面试不存在或无权限' });
 
         const { randomUUID } = await import('crypto');
@@ -312,24 +312,24 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           )
           .run(
             id,
-            body.interviewId,
-            body.noteType,
+            body.interview_id,
+            body.note_type,
             body.content,
-            body.questionId || null,
+            body.question_id || null,
             body.question || null,
             body.answer || null,
-            body.askedQuestion || null,
-            body.candidateAnswer || null,
+            body.asked_question || null,
+            body.candidate_answer || null,
             body.pros || null,
             body.cons || null,
             body.suggestions || null,
-            body.keyPoints || null,
+            body.key_points || null,
             body.assessment || null,
-            body.referenceAnswer || null,
-            body.otherId || null,
-            body.otherContent || null,
+            body.reference_answer || null,
+            body.other_id || null,
+            body.other_content || null,
             now,
-            body.endAt || null,
+            body.end_at || null,
             body.duration || null,
           );
 
@@ -337,9 +337,9 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         await logOperation(app, req, {
           ...OPERATION_MAPPING.REVIEW,
           resourceId: id,
-          resourceName: `面试复盘条目: ${body.interviewId}`,
+          resourceName: `面试复盘条目: ${body.interview_id}`,
           operation: OperationType.CREATE,
-          message: `创建面试复盘条目: ${body.interviewId}`,
+          message: `创建面试复盘条目: ${body.interview_id}`,
           status: 'success',
           userId: payload.uid,
         });
@@ -431,22 +431,22 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         const id = (req as any).params?.id as string;
         const body = z
           .object({
-            noteType: z.string().optional(),
+            note_type: z.string().optional(),
             content: z.string().optional(),
-            questionId: z.string().optional(),
+            question_id: z.string().optional(),
             question: z.string().optional(),
             answer: z.string().optional(),
-            askedQuestion: z.string().optional(),
-            candidateAnswer: z.string().optional(),
+            asked_question: z.string().optional(),
+            candidate_answer: z.string().optional(),
             pros: z.string().optional(),
             cons: z.string().optional(),
             suggestions: z.string().optional(),
-            keyPoints: z.string().optional(),
+            key_points: z.string().optional(),
             assessment: z.string().optional(),
-            referenceAnswer: z.string().optional(),
-            otherId: z.string().optional(),
-            otherContent: z.string().optional(),
-            endAt: z.number().optional(),
+            reference_answer: z.string().optional(),
+            other_id: z.string().optional(),
+            other_content: z.string().optional(),
+            end_at: z.number().optional(),
             duration: z.number().optional(),
           })
           .parse((req as any).body || {});
@@ -467,17 +467,17 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         const updateFields = [];
         const updateValues = [];
 
-        if (body.noteType !== undefined) {
+        if (body.note_type !== undefined) {
           updateFields.push('note_type = ?');
-          updateValues.push(body.noteType);
+          updateValues.push(body.note_type);
         }
         if (body.content !== undefined) {
           updateFields.push('content = ?');
           updateValues.push(body.content);
         }
-        if (body.questionId !== undefined) {
+        if (body.question_id !== undefined) {
           updateFields.push('question_id = ?');
-          updateValues.push(body.questionId);
+          updateValues.push(body.question_id);
         }
         if (body.question !== undefined) {
           updateFields.push('question = ?');
@@ -487,13 +487,13 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           updateFields.push('answer = ?');
           updateValues.push(body.answer);
         }
-        if (body.askedQuestion !== undefined) {
+        if (body.asked_question !== undefined) {
           updateFields.push('asked_question = ?');
-          updateValues.push(body.askedQuestion);
+          updateValues.push(body.asked_question);
         }
-        if (body.candidateAnswer !== undefined) {
+        if (body.candidate_answer !== undefined) {
           updateFields.push('candidate_answer = ?');
-          updateValues.push(body.candidateAnswer);
+          updateValues.push(body.candidate_answer);
         }
         if (body.pros !== undefined) {
           updateFields.push('pros = ?');
@@ -507,29 +507,29 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           updateFields.push('suggestions = ?');
           updateValues.push(body.suggestions);
         }
-        if (body.keyPoints !== undefined) {
+        if (body.key_points !== undefined) {
           updateFields.push('key_points = ?');
-          updateValues.push(body.keyPoints);
+          updateValues.push(body.key_points);
         }
         if (body.assessment !== undefined) {
           updateFields.push('assessment = ?');
           updateValues.push(body.assessment);
         }
-        if (body.referenceAnswer !== undefined) {
+        if (body.reference_answer !== undefined) {
           updateFields.push('reference_answer = ?');
-          updateValues.push(body.referenceAnswer);
+          updateValues.push(body.reference_answer);
         }
-        if (body.otherId !== undefined) {
+        if (body.other_id !== undefined) {
           updateFields.push('other_id = ?');
-          updateValues.push(body.otherId);
+          updateValues.push(body.other_id);
         }
-        if (body.otherContent !== undefined) {
+        if (body.other_content !== undefined) {
           updateFields.push('other_content = ?');
-          updateValues.push(body.otherContent);
+          updateValues.push(body.other_content);
         }
-        if (body.endAt !== undefined) {
+        if (body.end_at !== undefined) {
           updateFields.push('end_at = ?');
-          updateValues.push(body.endAt);
+          updateValues.push(body.end_at);
         }
         if (body.duration !== undefined) {
           updateFields.push('duration = ?');
@@ -589,27 +589,27 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         const payload = await (req as any).jwtVerify();
         const body = z
           .object({
-            interviewId: z.string().min(1),
-            interviewerScore: z.number().min(0).max(100).optional(),
-            interviewerSummary: z.string().optional(),
-            interviewerRole: z.string().optional(),
-            interviewerMbti: z.string().optional(),
-            interviewerPersonality: z.string().optional(),
-            interviewerPreference: z.string().optional(),
-            candidateSummary: z.string().optional(),
-            candidateMbti: z.string().optional(),
-            candidatePersonality: z.string().optional(),
-            candidateJobPreference: z.string().optional(),
-            strategyPrepareDetails: z.string().optional(),
-            strategyBusinessUnderstanding: z.string().optional(),
-            strategyKeepLogical: z.string().optional(),
+            interview_id: z.string().min(1),
+            interviewer_score: z.number().min(0).max(100).optional(),
+            interviewer_summary: z.string().optional(),
+            interviewer_role: z.string().optional(),
+            interviewer_mbti: z.string().optional(),
+            interviewer_personality: z.string().optional(),
+            interviewer_preference: z.string().optional(),
+            candidate_summary: z.string().optional(),
+            candidate_mbti: z.string().optional(),
+            candidate_personality: z.string().optional(),
+            candidate_job_preference: z.string().optional(),
+            strategy_prepare_details: z.string().optional(),
+            strategy_business_understanding: z.string().optional(),
+            strategy_keep_logical: z.string().optional(),
           })
           .parse((req as any).body || {});
 
         // 验证面试是否存在且属于当前用户
         const interview = (app as any).db
           .prepare('SELECT id FROM interviews WHERE id=? AND user_id=?')
-          .get(body.interviewId, payload.uid);
+          .get(body.interview_id, payload.uid);
         if (!interview) return reply.code(404).send({ error: '面试不存在或无权限' });
 
         const { randomUUID } = await import('crypto');
@@ -629,20 +629,20 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           )
           .run(
             id,
-            body.interviewId,
-            body.interviewerScore || null,
-            body.interviewerSummary || null,
-            body.interviewerRole || null,
-            body.interviewerMbti || null,
-            body.interviewerPersonality || null,
-            body.interviewerPreference || null,
-            body.candidateSummary || null,
-            body.candidateMbti || null,
-            body.candidatePersonality || null,
-            body.candidateJobPreference || null,
-            body.strategyPrepareDetails || null,
-            body.strategyBusinessUnderstanding || null,
-            body.strategyKeepLogical || null,
+            body.interview_id,
+            body.interviewer_score || null,
+            body.interviewer_summary || null,
+            body.interviewer_role || null,
+            body.interviewer_mbti || null,
+            body.interviewer_personality || null,
+            body.interviewer_preference || null,
+            body.candidate_summary || null,
+            body.candidate_mbti || null,
+            body.candidate_personality || null,
+            body.candidate_job_preference || null,
+            body.strategy_prepare_details || null,
+            body.strategy_business_understanding || null,
+            body.strategy_keep_logical || null,
             now,
           );
 
@@ -650,9 +650,9 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         await logOperation(app, req, {
           ...OPERATION_MAPPING.REVIEW,
           resourceId: id,
-          resourceName: `面试剖析: ${body.interviewId}`,
+          resourceName: `面试剖析: ${body.interview_id}`,
           operation: OperationType.CREATE,
-          message: `创建面试剖析: ${body.interviewId}`,
+          message: `创建面试剖析: ${body.interview_id}`,
           status: 'success',
           userId: payload.uid,
         });
@@ -674,19 +674,19 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         const id = (req as any).params?.id as string;
         const body = z
           .object({
-            interviewerScore: z.number().min(0).max(100).optional(),
-            interviewerSummary: z.string().optional(),
-            interviewerRole: z.string().optional(),
-            interviewerMbti: z.string().optional(),
-            interviewerPersonality: z.string().optional(),
-            interviewerPreference: z.string().optional(),
-            candidateSummary: z.string().optional(),
-            candidateMbti: z.string().optional(),
-            candidatePersonality: z.string().optional(),
-            candidateJobPreference: z.string().optional(),
-            strategyPrepareDetails: z.string().optional(),
-            strategyBusinessUnderstanding: z.string().optional(),
-            strategyKeepLogical: z.string().optional(),
+            interviewer_score: z.number().min(0).max(100).optional(),
+            interviewer_summary: z.string().optional(),
+            interviewer_role: z.string().optional(),
+            interviewer_mbti: z.string().optional(),
+            interviewer_personality: z.string().optional(),
+            interviewer_preference: z.string().optional(),
+            candidate_summary: z.string().optional(),
+            candidate_mbti: z.string().optional(),
+            candidate_personality: z.string().optional(),
+            candidate_job_preference: z.string().optional(),
+            strategy_prepare_details: z.string().optional(),
+            strategy_business_understanding: z.string().optional(),
+            strategy_keep_logical: z.string().optional(),
           })
           .parse((req as any).body || {});
 
@@ -706,57 +706,57 @@ export function registerInterviewRoutes(app: FastifyInstance) {
         const updateFields = [];
         const updateValues = [];
 
-        if (body.interviewerScore !== undefined) {
+        if (body.interviewer_score !== undefined) {
           updateFields.push('interviewer_score = ?');
-          updateValues.push(body.interviewerScore);
+          updateValues.push(body.interviewer_score);
         }
-        if (body.interviewerSummary !== undefined) {
+        if (body.interviewer_summary !== undefined) {
           updateFields.push('interviewer_summary = ?');
-          updateValues.push(body.interviewerSummary);
+          updateValues.push(body.interviewer_summary);
         }
-        if (body.interviewerRole !== undefined) {
+        if (body.interviewer_role !== undefined) {
           updateFields.push('interviewer_role = ?');
-          updateValues.push(body.interviewerRole);
+          updateValues.push(body.interviewer_role);
         }
-        if (body.interviewerMbti !== undefined) {
+        if (body.interviewer_mbti !== undefined) {
           updateFields.push('interviewer_mbti = ?');
-          updateValues.push(body.interviewerMbti);
+          updateValues.push(body.interviewer_mbti);
         }
-        if (body.interviewerPersonality !== undefined) {
+        if (body.interviewer_personality !== undefined) {
           updateFields.push('interviewer_personality = ?');
-          updateValues.push(body.interviewerPersonality);
+          updateValues.push(body.interviewer_personality);
         }
-        if (body.interviewerPreference !== undefined) {
+        if (body.interviewer_preference !== undefined) {
           updateFields.push('interviewer_preference = ?');
-          updateValues.push(body.interviewerPreference);
+          updateValues.push(body.interviewer_preference);
         }
-        if (body.candidateSummary !== undefined) {
+        if (body.candidate_summary !== undefined) {
           updateFields.push('candidate_summary = ?');
-          updateValues.push(body.candidateSummary);
+          updateValues.push(body.candidate_summary);
         }
-        if (body.candidateMbti !== undefined) {
+        if (body.candidate_mbti !== undefined) {
           updateFields.push('candidate_mbti = ?');
-          updateValues.push(body.candidateMbti);
+          updateValues.push(body.candidate_mbti);
         }
-        if (body.candidatePersonality !== undefined) {
+        if (body.candidate_personality !== undefined) {
           updateFields.push('candidate_personality = ?');
-          updateValues.push(body.candidatePersonality);
+          updateValues.push(body.candidate_personality);
         }
-        if (body.candidateJobPreference !== undefined) {
+        if (body.candidate_job_preference !== undefined) {
           updateFields.push('candidate_job_preference = ?');
-          updateValues.push(body.candidateJobPreference);
+          updateValues.push(body.candidate_job_preference);
         }
-        if (body.strategyPrepareDetails !== undefined) {
+        if (body.strategy_prepare_details !== undefined) {
           updateFields.push('strategy_prepare_details = ?');
-          updateValues.push(body.strategyPrepareDetails);
+          updateValues.push(body.strategy_prepare_details);
         }
-        if (body.strategyBusinessUnderstanding !== undefined) {
+        if (body.strategy_business_understanding !== undefined) {
           updateFields.push('strategy_business_understanding = ?');
-          updateValues.push(body.strategyBusinessUnderstanding);
+          updateValues.push(body.strategy_business_understanding);
         }
-        if (body.strategyKeepLogical !== undefined) {
+        if (body.strategy_keep_logical !== undefined) {
           updateFields.push('strategy_keep_logical = ?');
-          updateValues.push(body.strategyKeepLogical);
+          updateValues.push(body.strategy_keep_logical);
         }
 
         if (updateFields.length > 0) {

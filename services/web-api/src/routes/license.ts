@@ -243,7 +243,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
 
   // 上传和验证 License (文本方式，保持兼容性)
   const uploadLicenseSchema = z.object({
-    licenseKey: z.string().min(1, 'License Key 不能为空'),
+    license_key: z.string().min(1, 'License Key 不能为空'),
   });
 
   app.post(
@@ -254,7 +254,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
         const body = uploadLicenseSchema.parse(req.body);
 
         // 验证 License
-        const validationResult = validateLicenseKey(body.licenseKey);
+        const validationResult = validateLicenseKey(body.license_key);
 
         if (validationResult.status === LicenseStatus.Fail) {
           return reply.code(400).send({ error: validationResult.message || 'License 验证失败' });
@@ -290,7 +290,7 @@ export function registerLicenseRoutes(app: FastifyInstance) {
             license.count,
             payload.uid,
             'active',
-            body.licenseKey,
+            body.license_key,
             license.licenseVersion,
             now,
             now,

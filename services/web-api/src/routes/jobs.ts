@@ -855,13 +855,13 @@ export function registerJobRoutes(app: FastifyInstance) {
       const payload = await req.jwtVerify();
       const jobId = (req.params as any)?.jobId as string;
       const body = z.object({
-        originalResume: z.string().min(1),
-        optimizedResume: z.string().optional(),
+        original_resume: z.string().min(1),
+        optimized_resume: z.string().optional(),
         suggestion: z.string().optional(),
-        modelId: z.string().optional(),
-        modelName: z.string().optional(),
+        model_id: z.string().optional(),
+        model_name: z.string().optional(),
         status: z.enum(['pending', 'processing', 'completed', 'failed']).default('pending'),
-        errorMessage: z.string().optional(),
+        error_message: z.string().optional(),
       }).parse(req.body);
 
       // 检查岗位是否存在且属于当前用户
@@ -874,8 +874,8 @@ export function registerJobRoutes(app: FastifyInstance) {
       }
 
       const optimizationId = randomUUID();
-      const originalWordCount = body.originalResume.length;
-      const optimizedWordCount = body.optimizedResume?.length || 0;
+      const originalWordCount = body.original_resume.length;
+      const optimizedWordCount = body.optimized_resume?.length || 0;
 
       // 插入简历优化记录
       app.db
@@ -891,14 +891,14 @@ export function registerJobRoutes(app: FastifyInstance) {
           payload.uid,
           jobId,
           body.status,
-          body.originalResume,
+          body.original_resume,
           originalWordCount,
-          body.optimizedResume || null,
+          body.optimized_resume || null,
           optimizedWordCount,
-          body.modelId || null,
-          body.modelName || null,
+          body.model_id || null,
+          body.model_name || null,
           body.suggestion || null,
-          body.errorMessage || null
+          body.error_message || null
         );
 
       return {
@@ -920,10 +920,10 @@ export function registerJobRoutes(app: FastifyInstance) {
       const payload = await req.jwtVerify();
       const id = (req.params as any)?.id as string;
       const body = z.object({
-        optimizedResume: z.string().optional(),
+        optimized_resume: z.string().optional(),
         suggestion: z.string().optional(),
         status: z.enum(['pending', 'processing', 'completed', 'failed']).optional(),
-        errorMessage: z.string().optional(),
+        error_message: z.string().optional(),
       }).parse(req.body);
 
       // 检查记录是否存在且属于当前用户
@@ -935,7 +935,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: '简历优化记录不存在' });
       }
 
-      const optimizedWordCount = body.optimizedResume?.length || 0;
+      const optimizedWordCount = body.optimized_resume?.length || 0;
       const newOptimizationCount = existing.optimization_count + 1;
 
       // 更新简历优化记录
@@ -952,11 +952,11 @@ export function registerJobRoutes(app: FastifyInstance) {
            WHERE id = ? AND user_id = ?`
         )
         .run(
-          body.optimizedResume || null,
+          body.optimized_resume || null,
           optimizedWordCount,
           body.suggestion || null,
           body.status || null,
-          body.errorMessage || null,
+          body.error_message || null,
           newOptimizationCount,
           id,
           payload.uid

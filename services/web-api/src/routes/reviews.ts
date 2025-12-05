@@ -303,14 +303,14 @@ export function registerReviewRoutes(app: FastifyInstance) {
         const id = (req as any).params?.id as string;
         const body = z
           .object({
-            jobTitle: z.string().optional(),
-            jobContent: z.string().optional(),
-            questionCount: z.number().optional(),
-            resumesId: z.string().optional(),
-            resumesTitle: z.string().optional(),
-            resumesContent: z.string().optional(),
+            job_title: z.string().optional(),
+            job_content: z.string().optional(),
+            question_count: z.number().optional(),
+            resumes_id: z.string().optional(),
+            resumes_title: z.string().optional(),
+            resumes_content: z.string().optional(),
             duration: z.number().optional(),
-            interviewType: z.enum(['mock', 'training']).optional(),
+            interview_type: z.enum(['mock', 'training']).optional(),
             status: z
               .enum([
                 'idle',
@@ -329,10 +329,10 @@ export function registerReviewRoutes(app: FastifyInstance) {
               ])
               .optional(),
             message: z.string().optional(),
-            interviewState: z.string().optional(),
-            answerMode: z.enum(['manual', 'auto']).optional(),
-            microphoneDeviceId: z.string().optional(),
-            speakerDeviceId: z.string().optional(),
+            interview_state: z.string().optional(),
+            answer_mode: z.enum(['manual', 'auto']).optional(),
+            microphone_device_id: z.string().optional(),
+            speaker_device_id: z.string().optional(),
           })
           .parse((req as any).body || {});
 
@@ -345,37 +345,37 @@ export function registerReviewRoutes(app: FastifyInstance) {
         const updateFields = [];
         const updateValues = [];
 
-        if (body.jobTitle !== undefined) {
+        if (body.job_title !== undefined) {
           updateFields.push('job_title = ?');
-          updateValues.push(body.jobTitle);
+          updateValues.push(body.job_title);
         }
-        if (body.jobContent !== undefined) {
+        if (body.job_content !== undefined) {
           updateFields.push('job_content = ?');
-          updateValues.push(body.jobContent);
+          updateValues.push(body.job_content);
         }
-        if (body.questionCount !== undefined) {
+        if (body.question_count !== undefined) {
           updateFields.push('question_count = ?');
-          updateValues.push(body.questionCount);
+          updateValues.push(body.question_count);
         }
-        if (body.resumesId !== undefined) {
+        if (body.resumes_id !== undefined) {
           updateFields.push('resumes_id = ?');
-          updateValues.push(body.resumesId);
+          updateValues.push(body.resumes_id);
         }
-        if (body.resumesTitle !== undefined) {
+        if (body.resumes_title !== undefined) {
           updateFields.push('resumes_title = ?');
-          updateValues.push(body.resumesTitle);
+          updateValues.push(body.resumes_title);
         }
-        if (body.resumesContent !== undefined) {
+        if (body.resumes_content !== undefined) {
           updateFields.push('resumes_content = ?');
-          updateValues.push(body.resumesContent);
+          updateValues.push(body.resumes_content);
         }
         if (body.duration !== undefined) {
           updateFields.push('duration = ?');
           updateValues.push(body.duration);
         }
-        if (body.interviewType !== undefined) {
+        if (body.interview_type !== undefined) {
           updateFields.push('interview_type = ?');
-          updateValues.push(body.interviewType);
+          updateValues.push(body.interview_type);
         }
         if (body.status !== undefined) {
           updateFields.push('status = ?');
@@ -385,21 +385,21 @@ export function registerReviewRoutes(app: FastifyInstance) {
           updateFields.push('message = ?');
           updateValues.push(body.message);
         }
-        if (body.interviewState !== undefined) {
+        if (body.interview_state !== undefined) {
           updateFields.push('interview_state = ?');
-          updateValues.push(body.interviewState);
+          updateValues.push(body.interview_state);
         }
-        if (body.answerMode !== undefined) {
+        if (body.answer_mode !== undefined) {
           updateFields.push('answer_mode = ?');
-          updateValues.push(body.answerMode);
+          updateValues.push(body.answer_mode);
         }
-        if (body.microphoneDeviceId !== undefined) {
+        if (body.microphone_device_id !== undefined) {
           updateFields.push('microphone_device_id = ?');
-          updateValues.push(body.microphoneDeviceId);
+          updateValues.push(body.microphone_device_id);
         }
-        if (body.speakerDeviceId !== undefined) {
+        if (body.speaker_device_id !== undefined) {
           updateFields.push('speaker_device_id = ?');
-          updateValues.push(body.speakerDeviceId);
+          updateValues.push(body.speaker_device_id);
         }
 
         // 如果状态变更为 completed,自动设置 ended_at 为当前时间
