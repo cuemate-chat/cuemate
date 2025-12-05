@@ -74,16 +74,16 @@ export function registerAuthRoutes(app: FastifyInstance) {
       id: row.id,
       email: row.email,
       name: row.name,
-      createdAt: row.created_at,
+      created_at: row.created_at,
       theme: row.theme ?? 'system',
       locale: row.locale ?? 'zh-CN',
       timezone: row.timezone ?? 'Asia/Shanghai',
-      selectedModelId: row.selected_model_id ?? null,
-      floatingWindowVisible: row.floating_window_visible ?? 1,
-      floatingWindowHeight: row.floating_window_height ?? 75,
+      selected_model_id: row.selected_model_id ?? null,
+      floating_window_visible: row.floating_window_visible ?? 1,
+      floating_window_height: row.floating_window_height ?? 75,
       version: row.version ?? 'v0.1.0',
       model: selectedModel,
-      modelParams: modelParams,
+      model_params: modelParams,
     };
 
     // 记录登录成功
@@ -147,16 +147,16 @@ export function registerAuthRoutes(app: FastifyInstance) {
           id: row.id,
           email: row.email,
           name: row.name,
-          createdAt: row.created_at,
+          created_at: row.created_at,
           theme: row.theme ?? 'system',
           locale: row.locale ?? 'zh-CN',
           timezone: row.timezone ?? 'Asia/Shanghai',
-          selectedModelId: row.selected_model_id ?? null,
-          floatingWindowVisible: row.floating_window_visible ?? 1,
-          floatingWindowHeight: row.floating_window_height ?? 75,
+          selected_model_id: row.selected_model_id ?? null,
+          floating_window_visible: row.floating_window_visible ?? 1,
+          floating_window_height: row.floating_window_height ?? 75,
           version: row.version ?? 'v0.1.0',
           model: selectedModel,
-          modelParams: modelParams,
+          model_params: modelParams,
         };
 
         return { user };
@@ -205,16 +205,16 @@ export function registerAuthRoutes(app: FastifyInstance) {
             id: loggedInUser.id,
             email: loggedInUser.email,
             name: loggedInUser.name,
-            createdAt: loggedInUser.created_at,
+            created_at: loggedInUser.created_at,
             theme: loggedInUser.theme ?? 'system',
             locale: loggedInUser.locale ?? 'zh-CN',
             timezone: loggedInUser.timezone ?? 'Asia/Shanghai',
-            selectedModelId: loggedInUser.selected_model_id ?? null,
-            floatingWindowVisible: loggedInUser.floating_window_visible ?? 1,
-            floatingWindowHeight: loggedInUser.floating_window_height ?? 75,
+            selected_model_id: loggedInUser.selected_model_id ?? null,
+            floating_window_visible: loggedInUser.floating_window_visible ?? 1,
+            floating_window_height: loggedInUser.floating_window_height ?? 75,
             version: loggedInUser.version ?? 'v0.1.0',
             model: selectedModel,
-            modelParams: modelParams,
+            model_params: modelParams,
           };
 
           app.log.info(
@@ -222,14 +222,14 @@ export function registerAuthRoutes(app: FastifyInstance) {
             '检查到已登录用户',
           );
           return {
-            isLoggedIn: true,
+            is_logged_in: true,
             user: user,
             token: token,
           };
         } else {
           app.log.info('检查到没有已登录用户');
           return {
-            isLoggedIn: false,
+            is_logged_in: false,
           };
         }
       } catch (err) {
@@ -269,17 +269,17 @@ export function registerAuthRoutes(app: FastifyInstance) {
           args.push(body.timezone);
         }
 
-        if (typeof body.selectedModelId === 'string') {
+        if (typeof body.selected_model_id === 'string') {
           fields.push('selected_model_id=?');
-          args.push(body.selectedModelId);
+          args.push(body.selected_model_id);
         }
-        if (typeof body.floatingWindowVisible === 'number') {
+        if (typeof body.floating_window_visible === 'number') {
           fields.push('floating_window_visible=?');
-          args.push(body.floatingWindowVisible);
+          args.push(body.floating_window_visible);
         }
-        if (typeof body.floatingWindowHeight === 'number') {
+        if (typeof body.floating_window_height === 'number') {
           fields.push('floating_window_height=?');
-          args.push(body.floatingWindowHeight);
+          args.push(body.floating_window_height);
         }
         if (fields.length === 0) return { success: true };
         args.push(payload.uid);
@@ -310,16 +310,16 @@ export function registerAuthRoutes(app: FastifyInstance) {
           id: row.id,
           email: row.email,
           name: row.name,
-          createdAt: row.created_at,
+          created_at: row.created_at,
           theme: row.theme ?? 'system',
           locale: row.locale ?? 'zh-CN',
           timezone: row.timezone ?? 'Asia/Shanghai',
-          selectedModelId: row.selected_model_id ?? null,
-          floatingWindowVisible: row.floating_window_visible ?? 1,
-          floatingWindowHeight: row.floating_window_height ?? 75,
+          selected_model_id: row.selected_model_id ?? null,
+          floating_window_visible: row.floating_window_visible ?? 1,
+          floating_window_height: row.floating_window_height ?? 75,
           version: row.version ?? 'v0.1.0',
           model: selectedModel,
-          modelParams: modelParams,
+          model_params: modelParams,
         };
 
         // 记录用户设置更新
