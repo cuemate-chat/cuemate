@@ -300,6 +300,14 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
             aiMessage: lastQuestion.referenceAnswer || '',
             candidateAnswer: lastQuestion.candidateAnswer || '',
             interviewerQuestion: lastQuestion.askedQuestion || lastQuestion.question || '',
+            message: interview.message || undefined,
+            isLoading: false,
+          });
+        } else {
+          // 没有问题数据时，只同步状态和消息
+          setInterviewTrainingState({
+            interviewState: interview.interviewState,
+            message: interview.message || undefined,
             isLoading: false,
           });
         }

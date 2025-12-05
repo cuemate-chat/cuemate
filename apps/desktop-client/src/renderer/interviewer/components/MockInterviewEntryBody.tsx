@@ -318,6 +318,14 @@ export function MockInterviewEntryBody({
             interviewState: interview.interviewState,
             aiMessage: lastQuestion.referenceAnswer || '',
             candidateAnswer: lastQuestion.candidateAnswer || '',
+            message: interview.message || undefined,
+            isLoading: false,
+          });
+        } else {
+          // 没有问题数据时，只同步状态和消息
+          setMockInterviewState({
+            interviewState: interview.interviewState,
+            message: interview.message || undefined,
             isLoading: false,
           });
         }
