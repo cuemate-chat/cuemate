@@ -312,6 +312,11 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           });
         }
 
+        // 【恢复】如果是错误状态，显示错误信息
+        if (dbStatus === 'interview-training-error' && interview.message) {
+          setErrorMessage(interview.message);
+        }
+
         // 【恢复】计时器
         setTimerState({
           duration: interview.duration || 0,
@@ -733,19 +738,22 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         }
       }
 
-      // 【保存】创建新的 review 记录
-      const newReview = await mockInterviewService.createReview({
-        interviewId: interviewId,
-        content: question,
-        askedQuestion: question,
-      });
+      // 【保存】创建新的 review 记录（使用幂等保护）
+      const machine = getTrainingStateMachine();
+      const currentIndex = machine?.getContext().currentQuestionIndex || 0;
+      const existingQuestion = interviewDataService.getQuestionState(currentIndex);
+      let reviewId: string;
+      if (existingQuestion && existingQuestion.reviewId) {
+        reviewId = existingQuestion.reviewId;
+      } else {
+        reviewId = await interviewDataService.createQuestionRecord(currentIndex, question);
+      }
 
       setInterviewTrainingState({
-        currentRoundReviewId: newReview.id,
+        currentRoundReviewId: reviewId,
       });
 
       // 【第四步】生成 AI 答案
-      const machine = getTrainingStateMachine();
       if (machine) {
         await generateAnswerInBackground(machine.getContext());
         machine.send({ type: 'ANSWER_GENERATED' });

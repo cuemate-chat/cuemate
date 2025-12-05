@@ -5,6 +5,7 @@
 
 import { createLogger } from '../../../../../utils/rendererLogger.js';
 import { CreateReviewData, interviewService } from '../services/InterviewService';
+import { getMockInterviewState } from '../../../../utils/mockInterviewState';
 
 const log = createLogger('InterviewDataService');
 
@@ -76,6 +77,7 @@ export class InterviewDataService {
    * 初始化面试数据状态
    */
   initializeInterview(interviewId: string, totalQuestions: number): void {
+    log.debug('initializeInterview', '初始化面试数据', { interviewId, totalQuestions });
     this.dataState = {
       interviewId,
       questions: new Map(),
@@ -117,12 +119,31 @@ export class InterviewDataService {
    * 幂等性保护：先查询数据库检查是否已存在，避免重复创建
    */
   async createQuestionRecord(sequence: number, askedQuestion: string): Promise<string> {
-    if (!this.dataState) {
-      throw new Error('Interview data state not initialized');
+    log.debug('createQuestionRecord', '开始创建问题记录', {
+      sequence,
+      hasDataState: !!this.dataState,
+      dataStateInterviewId: this.dataState?.interviewId,
+    });
+
+    // 跨窗口同步：如果 dataState 未初始化，从跨窗口状态获取 interviewId 并初始化
+    if (!this.dataState || !this.dataState.interviewId) {
+      const mockState = getMockInterviewState();
+      log.debug('createQuestionRecord', '尝试从跨窗口状态获取 interviewId', {
+        mockStateInterviewId: mockState.interviewId,
+      });
+      if (mockState.interviewId) {
+        log.debug('createQuestionRecord', '从跨窗口状态获取 interviewId', { interviewId: mockState.interviewId });
+        this.initializeInterview(mockState.interviewId, 10);
+      } else {
+        throw new Error('Interview data state not initialized and no interviewId in cross-window state');
+      }
     }
 
+    // 此时 dataState 一定存在
+    const dataState = this.dataState!;
+
     // 幂等性检查：先查数据库，看该 sequence 是否已有记录
-    const existing = await this.findExistingReviewBySequence(this.dataState.interviewId, sequence);
+    const existing = await this.findExistingReviewBySequence(dataState.interviewId, sequence);
     if (existing && existing.reviewId) {
       // 已存在，更新本地状态并返回现有 ID
       const questionState: QuestionState = {
@@ -132,15 +153,15 @@ export class InterviewDataService {
         question: existing.question,
         startedAt: Date.now(),
       };
-      this.dataState.questions.set(sequence, questionState);
-      this.dataState.currentSequence = sequence;
+      dataState.questions.set(sequence, questionState);
+      dataState.currentSequence = sequence;
 
       log.debug('createQuestionRecord', '跳过创建，使用已存在的 review', { reviewId: existing.reviewId });
       return existing.reviewId;
     }
 
     const reviewData: CreateReviewData = {
-      interviewId: this.dataState.interviewId,
+      interviewId: dataState.interviewId,
       noteType: 'interview_qa',
       content: askedQuestion,
       askedQuestion: askedQuestion,
@@ -158,8 +179,8 @@ export class InterviewDataService {
       startedAt: Date.now(),
     };
 
-    this.dataState.questions.set(sequence, questionState);
-    this.dataState.currentSequence = sequence;
+    dataState.questions.set(sequence, questionState);
+    dataState.currentSequence = sequence;
 
     return reviewId;
   }

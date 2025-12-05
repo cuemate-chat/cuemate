@@ -330,6 +330,11 @@ export function MockInterviewEntryBody({
           });
         }
 
+        // 【恢复】如果是错误状态，显示错误信息
+        if (dbStatus === 'mock-interview-error' && interview.message) {
+          setErrorMessage(interview.message);
+        }
+
         // 【恢复】计时器
         setTimerState({
           duration: interview.duration || 0,
@@ -364,8 +369,9 @@ export function MockInterviewEntryBody({
             context.totalQuestions
           );
 
-          // 更新跨窗口状态
+          // 更新跨窗口状态（包含 interviewId 用于跨窗口同步）
           setMockInterviewState({
+            interviewId: context.interviewId,
             interviewState: currentState,
             aiMessage: context.currentAnswer || '',
             isListening: currentState === InterviewState.USER_LISTENING,
@@ -520,8 +526,9 @@ export function MockInterviewEntryBody({
         await logger.error(`保存模拟面试 ID 到文件失败: ${e}`);
       }
 
-      // 【保存】初始化跨窗口状态
+      // 【保存】初始化跨窗口状态（包含 interviewId 用于跨窗口同步）
       setMockInterviewState({
+        interviewId: response.id,
         aiMessage: '',
         speechText: '',
         candidateAnswer: '',
@@ -1243,6 +1250,12 @@ export function MockInterviewEntryBody({
     setCurrentLine('');
 
     const interviewId = currentInterview.get();
+
+    // 同步错误信息到跨窗口状态
+    setMockInterviewState({
+      interviewState: InterviewState.ERROR,
+      message: `错误: ${errorMsg}`,
+    });
 
     if (interviewId) {
       try {

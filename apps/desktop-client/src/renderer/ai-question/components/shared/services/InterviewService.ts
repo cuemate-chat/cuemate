@@ -4,6 +4,7 @@
  */
 
 import { createLogger } from '../../../../../utils/rendererLogger.js';
+import { httpGet, httpPost, httpPut } from '../../../../utils/httpClient.js';
 
 const log = createLogger('InterviewService');
 
@@ -94,7 +95,7 @@ export class InterviewService {
     throw new Error('用户未登录或 token 获取失败');
   }
 
-  private async getHeaders() {
+  private async getAuthHeaders(): Promise<Record<string, string>> {
     const token = await this.getToken();
     return {
       'Content-Type': 'application/json',
@@ -107,18 +108,17 @@ export class InterviewService {
    */
   async getQuestionBank(jobId: string): Promise<InterviewQuestion[]> {
     try {
-      const headers = await this.getHeaders();
-      const response = await fetch(`${this.baseURL}/interview-questions?jobId=${jobId}`, {
-        method: 'GET',
-        headers,
-      });
+      const headers = await this.getAuthHeaders();
+      const response = await httpGet<{ items: InterviewQuestion[] }>(
+        `${this.baseURL}/interview-questions?jobId=${jobId}`,
+        headers
+      );
 
       if (!response.ok) {
         throw new Error(`获取题库失败: ${response.status}`);
       }
 
-      const result = await response.json();
-      return result.items || [];
+      return response.data.items || [];
     } catch (error) {
       log.error('getQuestionBank', '获取题库失败', undefined, error);
       throw error;
@@ -130,8 +130,7 @@ export class InterviewService {
    */
   async createReview(data: CreateReviewData): Promise<{ id: string }> {
     try {
-      const headers = await this.getHeaders();
-      // 发送 camelCase 字段，后端会自动转换为 snake_case
+      const headers = await this.getAuthHeaders();
       const reviewData = {
         interviewId: data.interviewId,
         noteType: data.noteType || 'interview_qa',
@@ -151,18 +150,17 @@ export class InterviewService {
         otherContent: data.otherContent,
       };
 
-      const response = await fetch(`${this.baseURL}/interview-reviews`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(reviewData),
-      });
+      const response = await httpPost<{ id: string }>(
+        `${this.baseURL}/interview-reviews`,
+        reviewData,
+        headers
+      );
 
       if (!response.ok) {
         throw new Error(`创建问答记录失败: ${response.status}`);
       }
 
-      const result = await response.json();
-      return { id: result.id };
+      return { id: response.data.id };
     } catch (error) {
       log.error('createReview', '创建问答记录失败', undefined, error);
       throw error;
@@ -174,8 +172,7 @@ export class InterviewService {
    */
   async updateReview(reviewId: string, data: UpdateReviewData): Promise<void> {
     try {
-      const headers = await this.getHeaders();
-      // 发送 camelCase 字段，后端会自动转换为 snake_case
+      const headers = await this.getAuthHeaders();
       const updateData: any = {};
 
       if (data.content !== undefined) updateData.content = data.content;
@@ -194,11 +191,11 @@ export class InterviewService {
       if (data.endAt !== undefined) updateData.endAt = data.endAt;
       if (data.duration !== undefined) updateData.duration = data.duration;
 
-      const response = await fetch(`${this.baseURL}/interview-reviews/${reviewId}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(updateData),
-      });
+      const response = await httpPut(
+        `${this.baseURL}/interview-reviews/${reviewId}`,
+        updateData,
+        headers
+      );
 
       if (!response.ok) {
         throw new Error(`更新问答记录失败: ${response.status}`);
@@ -214,22 +211,17 @@ export class InterviewService {
    */
   async getInterviewReviews(interviewId: string): Promise<InterviewReview[]> {
     try {
-      const headers = await this.getHeaders();
-      const response = await fetch(
+      const headers = await this.getAuthHeaders();
+      const response = await httpGet<{ items: InterviewReview[] }>(
         `${this.baseURL}/interview-reviews?interviewId=${interviewId}`,
-        {
-          method: 'GET',
-          headers,
-        },
+        headers
       );
 
       if (!response.ok) {
         throw new Error(`获取问答记录失败: ${response.status}`);
       }
 
-      const result = await response.json();
-      // 后端已自动转换为 camelCase，直接返回
-      return result.items || [];
+      return response.data.items || [];
     } catch (error) {
       log.error('getInterviewReviews', '获取问答记录失败', undefined, error);
       throw error;
@@ -257,25 +249,17 @@ export class InterviewService {
     otherContent?: string;
   }> {
     try {
-      // 调用新接口，一次性查询所有集合
-      const response = await fetch(`${this.ragServiceURL}/similarity/questions/interview`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: question,
-          jobId,
-          threshold,
-        }),
-      });
+      const response = await httpPost<any>(
+        `${this.ragServiceURL}/similarity/questions/interview`,
+        { query: question, jobId, threshold }
+      );
 
       if (!response.ok) {
         log.warn('findSimilarQuestion', '查询面试相关集合失败');
         return {};
       }
 
-      const data = await response.json();
+      const data = response.data;
 
       if (!data.success) {
         log.warn('findSimilarQuestion', '查询失败', { error: data.error });
@@ -313,7 +297,7 @@ export class InterviewService {
 
       return result;
     } catch (error) {
-      log.warn('findSimilarQuestionInAllJobs', 'RAG 服务不可用', undefined, error?.toString());
+      log.warn('findSimilarQuestion', 'RAG 服务不可用', undefined, error?.toString());
       return {};
     }
   }
@@ -334,24 +318,17 @@ export class InterviewService {
     otherContent?: string;
   }> {
     try {
-      // 调用统一接口，查询所有 ChromaDB 集合（岗位信息、简历信息、面试押题、其他文件）
-      const response = await fetch(`${this.ragServiceURL}/similarity/questions/all`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: question,
-          threshold,
-        }),
-      });
+      const response = await httpPost<any>(
+        `${this.ragServiceURL}/similarity/questions/all`,
+        { query: question, threshold }
+      );
 
       if (!response.ok) {
         log.warn('findSimilarQuestionInAllJobs', '查询 ChromaDB 失败');
         return {};
       }
 
-      const data = await response.json();
+      const data = response.data;
 
       if (!data.success || !data.match) {
         log.debug('findSimilarQuestionInAllJobs', '未找到匹配结果');
@@ -407,21 +384,17 @@ export class InterviewService {
     createdAt: number;
   }): Promise<boolean> {
     try {
-      const response = await fetch(`${this.ragServiceURL}/ai-vector-records`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await httpPost<{ success: boolean }>(
+        `${this.ragServiceURL}/ai-vector-records`,
+        data
+      );
 
       if (!response.ok) {
         log.error('saveAIVectorRecord', '保存 AI 向量记录失败', { status: response.status });
         return false;
       }
 
-      const result = await response.json();
-      return result.success || false;
+      return response.data.success || false;
     } catch (error) {
       log.error('saveAIVectorRecord', '保存 AI 向量记录失败', undefined, error);
       return false;

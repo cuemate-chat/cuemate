@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 // 跨窗口共享的模拟面试状态（只用于运行时同步，不存 localStorage）
 export interface MockInterviewState {
+  interviewId?: string;        // 面试 ID（跨窗口同步）
   aiMessage: string;           // AI 参考答案（从数据库获取）
   speechText: string;          // 实时语音转文字（运行时）
   candidateAnswer: string;     // 用户回答（从数据库获取）
@@ -30,6 +31,7 @@ const listeners = new Set<(s: MockInterviewState) => void>();
 
 function getDefaultState(): MockInterviewState {
   return {
+    interviewId: undefined,
     aiMessage: '',
     speechText: '',
     candidateAnswer: '',
@@ -48,6 +50,7 @@ export function getMockInterviewState(): MockInterviewState {
 
 export function setMockInterviewState(next: Partial<MockInterviewState>): MockInterviewState {
   currentState = {
+    interviewId: next.interviewId ?? currentState.interviewId,
     aiMessage: next.aiMessage ?? currentState.aiMessage,
     speechText: next.speechText ?? currentState.speechText,
     candidateAnswer: next.candidateAnswer ?? currentState.candidateAnswer,
