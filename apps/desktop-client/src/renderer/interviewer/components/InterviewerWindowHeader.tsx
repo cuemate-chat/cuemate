@@ -32,11 +32,13 @@ export function InterviewerWindowHeader({
       globalState.subState === 'mock-interview-playing' ||
       globalState.subState === 'mock-interview-completed' ||
       globalState.subState === 'mock-interview-expired' ||
+      globalState.subState === 'mock-interview-error' ||
       globalState.subState === 'interview-training-recording' ||
       globalState.subState === 'interview-training-paused' ||
       globalState.subState === 'interview-training-playing' ||
       globalState.subState === 'interview-training-completed' ||
-      globalState.subState === 'interview-training-expired'
+      globalState.subState === 'interview-training-expired' ||
+      globalState.subState === 'interview-training-error'
     );
     const shouldRunTimer = isInterviewMode && (
       globalState.subState === 'mock-interview-recording' ||
@@ -46,13 +48,15 @@ export function InterviewerWindowHeader({
     );
 
     if (shouldShowTimer) {
-      // 只在 recording/playing 状态下初始化计时器,completed/paused 状态保持现有值
-      if (!hasStarted && shouldRunTimer) {
+      // 恢复面试时（包括 completed/error/expired 状态），需要设置 hasStarted 以显示计时器
+      if (!hasStarted) {
         setHasStarted(true);
         // 恢复面试时使用 timerState.duration 作为起始时间，否则从 0 开始
         const initialDuration = getTimerState().duration || 0;
         setDuration(initialDuration);
-        setTimerState({ isRunning: true, duration: initialDuration });
+        if (shouldRunTimer) {
+          setTimerState({ isRunning: true, duration: initialDuration });
+        }
       }
 
       if (shouldRunTimer) {

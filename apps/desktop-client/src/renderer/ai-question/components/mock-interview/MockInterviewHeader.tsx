@@ -45,7 +45,6 @@ export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightP
 
   // 从 timerState 获取计时器数据 - 只用于显示，不做计时逻辑
   const timerDuration = timerState.duration || 0;
-  const timerStarted = timerState.isRunning || false;
 
   // 格式化时间显示 (时:分:秒) - 复制自 InterviewerWindowHeader
   const formatDuration = (seconds: number) => {
@@ -68,11 +67,16 @@ export function MockInterviewHeader({ isLoading, onClose, onOpenHistory, heightP
     >
       <div className="ai-header-left">
         <img src={CueMateLogo} alt="CueMate" className="ai-logo" />
-        <div className="ai-title" style={{ color: interviewState === 'ERROR' ? '#ef4444' : undefined }}>
+        <div className="ai-title" style={{
+          color: (globalState.subState === 'mock-interview-error' ||
+                  globalState.subState === 'mock-interview-expired' ||
+                  interviewState?.toLowerCase() === 'error')
+            ? '#ef4444' : undefined
+        }}>
           模拟面试 - {interviewState ? formatState(interviewState) : (isLoading ? 'LOADING' : 'IDLE')}
         </div>
         {isLoading && <LoadingDots />}
-        {(timerStarted && globalState.subState !== 'idle' && (globalState.mode === 'mock-interview' || globalState.mode === 'interview-training')) && (
+        {(timerDuration > 0 && globalState.subState !== 'idle' && (globalState.mode === 'mock-interview' || globalState.mode === 'interview-training')) && (
           <div className="interviewer-timer">
             <span className="timer-display">{formatDuration(timerDuration)}</span>
           </div>
