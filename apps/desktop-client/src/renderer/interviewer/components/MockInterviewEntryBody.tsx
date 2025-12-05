@@ -112,11 +112,10 @@ import {
 } from '../../utils/interviewGuard';
 import {
   getMockInterviewStateMachine,
-  hasRecoverableInterview,
+  getResumingMockInterviewId,
   restoreMockInterview,
   startMockInterview,
   stopMockInterview,
-  validateWithDatabase,
 } from '../../utils/mockInterviewManager';
 import { setMockInterviewState, useMockInterviewState } from '../../utils/mockInterviewState';
 import { interviewService } from '../api/interviewService';
@@ -248,127 +247,137 @@ export function MockInterviewEntryBody({
   }, []);
 
   /**
-   * 【第一步-B】检查并恢复未完成的面试
+   * 【第一步-B】检查并恢复面试数据
+   * 用户点击"模拟面试"进入此组件时触发
+   * 从持久化文件读取 mockInterviewId，查询数据库恢复所有数据
    */
   useEffect(() => {
-    const checkAndRecoverInterview = async () => {
+    const recoverInterview = async () => {
       try {
-        // 检查是否有可恢复的面试（从 voiceState 检查）
-        if (!hasRecoverableInterview()) {
+        // 从持久化文件获取 mockInterviewId
+        const mockInterviewId = await getResumingMockInterviewId();
+        if (!mockInterviewId) {
           return;
         }
 
-        // 从数据库获取面试数据
-        const { found, interviewId, interview } = await validateWithDatabase();
-
-        if (!found || !interviewId || !interview) {
+        // 查询数据库获取面试数据
+        const result = await interviewService.getInterview(mockInterviewId);
+        if (!result || !result.interview) {
           return;
         }
 
-        // 直接使用数据库的 status 和 interviewState 字段
+        const interview = result.interview;
+
+        // 只处理模拟面试类型
+        if (interview.interviewType !== 'mock') {
+          return;
+        }
+
         const dbStatus = interview.status as string;
-        const dbInterviewState = interview.interviewState as string;
 
-        // 判断面试是否已结束（completed/error/expired）
+        // 【恢复】设置 voiceState
+        setVoiceState({
+          mode: 'mock-interview',
+          subState: dbStatus as any,
+          interviewId: mockInterviewId,
+        });
+
+        // 【恢复】设置 currentInterview
+        currentInterview.set(mockInterviewId);
+
+        // 【恢复】岗位信息
+        if (interview.jobTitle) {
+          setSelectedPosition({
+            id: interview.jobId,
+            title: interview.jobTitle,
+            description: interview.jobContent,
+            resumeId: interview.resumesId,
+            resumeTitle: interview.resumesTitle,
+            resumeContent: interview.resumesContent,
+            // 恢复时这些字段不重要，使用默认值
+            userId: '',
+            status: 'active',
+            createdAt: 0,
+            vectorStatus: 0,
+          });
+        }
+
+        // 【恢复】设备配置
+        if (interview.microphoneDeviceId) {
+          setSelectedMic(interview.microphoneDeviceId);
+        }
+        if (interview.speakerDeviceId) {
+          setSelectedSpeaker(interview.speakerDeviceId);
+        }
+
+        // 【恢复】问题数据，同步给其他窗口
+        if (result.questions && result.questions.length > 0) {
+          const lastQuestion = result.questions[result.questions.length - 1];
+          setCurrentLine(lastQuestion.askedQuestion || lastQuestion.question || '');
+          setMockInterviewState({
+            interviewState: interview.interviewState,
+            aiMessage: lastQuestion.referenceAnswer || '',
+            candidateAnswer: lastQuestion.candidateAnswer || '',
+            isLoading: false,
+          });
+        }
+
+        // 【恢复】计时器
+        setTimerState({
+          duration: interview.duration || 0,
+          isRunning: dbStatus === 'mock-interview-recording' || dbStatus === 'mock-interview-playing',
+        });
+
+        // 【恢复】如果面试未结束，恢复状态机以继续面试流程
         const isEnded = dbStatus === 'mock-interview-completed' ||
                         dbStatus === 'mock-interview-error' ||
                         dbStatus === 'mock-interview-expired';
 
-        if (isEnded) {
-          // 已结束的面试：设置 voiceState 和跨窗口状态
-          setVoiceState({
-            mode: 'mock-interview',
-            subState: dbStatus as any,
-            interviewId,
-          });
-          setMockInterviewState({ interviewState: dbInterviewState });
-
-          // 从数据库获取最后一个问题显示
-          try {
-            const result = await interviewService.getInterview(interviewId);
-            if (result?.questions && result.questions.length > 0) {
-              const lastQuestion = result.questions[result.questions.length - 1];
-              setCurrentLine(lastQuestion.askedQuestion || lastQuestion.question || '面试已完成');
-            } else {
-              setCurrentLine('面试已完成');
-            }
-          } catch {
-            setCurrentLine('面试已完成');
+        if (!isEnded) {
+          const machine = await restoreMockInterview(mockInterviewId);
+          if (!machine) {
+            await logger.error('[恢复面试] 恢复状态机失败');
+            return;
           }
-          return;
-        }
 
-        // 【恢复】状态机（100% 从数据库获取数据）
-        const machine = await restoreMockInterview();
-        if (!machine) {
-          await logger.error('[第一步-B] 恢复状态机失败');
-          return;
-        }
+          const context = machine.getContext();
+          const currentState = machine.getState();
 
-        // 从状态机获取恢复后的数据（100% 来自数据库）
-        const context = machine.getContext();
-        const currentState = machine.getState();
+          // 监听状态机变化
+          machine.onStateChange(async (state, ctx) => {
+            setInterviewState(state);
+            onStateChange?.(state);
+            await handleStateChange(state, ctx);
+          });
 
-        // 【恢复】监听状态机变化
-        machine.onStateChange(async (state, ctx) => {
-          setInterviewState(state);
-          onStateChange?.(state);
-          await handleStateChange(state, ctx);
-        });
+          // 恢复数据服务
+          interviewDataService.initializeInterview(
+            context.interviewId,
+            context.totalQuestions
+          );
 
-        // 【恢复】currentInterview（绝对不能丢失！）
-        currentInterview.set(context.interviewId);
+          // 更新跨窗口状态
+          setMockInterviewState({
+            interviewState: currentState,
+            aiMessage: context.currentAnswer || '',
+            isListening: currentState === InterviewState.USER_LISTENING,
+          });
 
-        // 【恢复】voiceState（从数据库状态判断是否暂停）
-        const isPaused = dbStatus === 'mock-interview-paused';
-        const isRecording = currentState !== InterviewState.COMPLETED &&
-                          currentState !== InterviewState.ERROR &&
-                          currentState !== InterviewState.IDLE;
-        const subState = isPaused ? 'mock-interview-paused' : (isRecording ? 'mock-interview-recording' : 'idle');
-
-        setVoiceState({
-          mode: 'mock-interview',
-          subState: subState,
-          interviewId: context.interviewId,
-        });
-        // 恢复计时器时长
-        setTimerState({ duration: context.duration || 0, isRunning: !isPaused });
-
-        // 【恢复】岗位信息
-        if (context.jobPosition) {
-          setSelectedPosition(context.jobPosition);
-        }
-
-        // 【恢复】数据服务
-        interviewDataService.initializeInterview(
-          context.interviewId,
-          context.totalQuestions
-        );
-
-        // 【恢复】跨窗口状态
-        setMockInterviewState({
-          interviewState: currentState,
-          aiMessage: context.currentAnswer || '',
-          speechText: '',
-          candidateAnswer: '',
-          isLoading: false,
-          isListening: currentState === InterviewState.USER_LISTENING,
-        });
-
-        // 【恢复】显示当前问题
-        if (context.currentQuestion) {
-          setCurrentLine(context.currentQuestion);
-        } else {
-          setCurrentLine(`面试已恢复，当前第 ${context.currentQuestionIndex + 1} 题`);
+          // 更新显示
+          if (context.currentQuestion) {
+            setCurrentLine(context.currentQuestion);
+          } else {
+            setCurrentLine(`面试已恢复，当前第 ${context.currentQuestionIndex + 1} 题`);
+          }
         }
 
       } catch (error) {
-        await logger.error(`[第一步-B] 恢复面试失败: ${error}`);
+        await logger.error(`[恢复面试] 失败: ${error}`);
       }
     };
 
-    // 延迟执行恢复检查，确保组件完全挂载
-    const timer = setTimeout(checkAndRecoverInterview, 200);
+    // 延迟执行，确保组件完全挂载
+    const timer = setTimeout(recoverInterview, 200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -495,6 +504,13 @@ export function MockInterviewEntryBody({
       // 【保存】设置 interview_id
       currentInterview.clear();
       currentInterview.set(response.id);
+
+      // 【持久化】保存模拟面试 ID 到文件（用于恢复）
+      try {
+        await api?.mockInterviewId?.set?.(response.id);
+      } catch (e) {
+        await logger.error(`保存模拟面试 ID 到文件失败: ${e}`);
+      }
 
       // 【保存】初始化跨窗口状态
       setMockInterviewState({

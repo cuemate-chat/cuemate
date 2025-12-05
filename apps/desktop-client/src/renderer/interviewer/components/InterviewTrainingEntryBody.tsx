@@ -107,14 +107,13 @@ import {
 } from '../../utils/interviewGuard';
 import { setInterviewTrainingState, useInterviewTrainingState } from '../../utils/interviewTrainingState';
 import {
+  getResumingTrainingInterviewId,
   getSpeakerController,
   getTrainingStateMachine,
-  hasRecoverableTraining,
   restoreInterviewTraining,
   setSpeakerController,
   startInterviewTraining,
   stopInterviewTraining,
-  validateTrainingWithDatabase,
 } from '../../utils/trainingManager';
 import { interviewService } from '../api/interviewService';
 import { JobPosition } from '../api/jobPositionService';
@@ -229,131 +228,139 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   }, []);
 
   /**
-   * 【第一步-B】检查并恢复未完成的面试训练
-   * - 页面刷新后自动恢复
-   * - 恢复状态机、UI状态、计时器等所有数据
-   * - 【重要】这是防止数据丢失的关键机制
+   * 【第一步-B】检查并恢复面试训练数据
+   * 用户点击"面试训练"进入此组件时触发
+   * 从持久化文件读取 trainingInterviewId，查询数据库恢复所有数据
    */
   useEffect(() => {
-    const checkAndRecoverTraining = async () => {
+    const recoverTraining = async () => {
       try {
-        // 检查是否有可恢复的训练（从 voiceState 检查）
-        if (!hasRecoverableTraining()) {
+        // 从持久化文件获取 trainingInterviewId
+        const trainingInterviewId = await getResumingTrainingInterviewId();
+        if (!trainingInterviewId) {
           return;
         }
 
-        // 先从数据库获取训练数据
-        const { found, interviewId, interview } = await validateTrainingWithDatabase();
-
-        if (!found || !interviewId || !interview) {
+        // 查询数据库获取训练数据
+        const result = await interviewService.getInterview(trainingInterviewId);
+        if (!result || !result.interview) {
           return;
         }
 
-        // 获取数据库中的状态
+        const interview = result.interview;
+
+        // 只处理训练类型
+        if (interview.interviewType !== 'training') {
+          return;
+        }
+
         const dbStatus = interview.status as string;
-        const dbInterviewState = interview.interviewState as string;
 
-        // 检查是否已结束（completed/error/expired）
+        // 【恢复】设置 voiceState
+        setVoiceState({
+          mode: 'interview-training',
+          subState: dbStatus as any,
+          interviewId: trainingInterviewId,
+        });
+
+        // 【恢复】设置 currentInterview
+        currentInterview.set(trainingInterviewId);
+
+        // 【恢复】岗位信息
+        if (interview.jobTitle) {
+          setSelectedPosition({
+            id: interview.jobId,
+            title: interview.jobTitle,
+            description: interview.jobContent,
+            resumeId: interview.resumesId,
+            resumeTitle: interview.resumesTitle,
+            resumeContent: interview.resumesContent,
+            // 恢复时这些字段不重要，使用默认值
+            userId: '',
+            status: 'active',
+            createdAt: 0,
+            vectorStatus: 0,
+          });
+        }
+
+        // 【恢复】设备配置
+        if (interview.microphoneDeviceId) {
+          setSelectedMic(interview.microphoneDeviceId);
+        }
+        if (interview.speakerDeviceId) {
+          setSelectedSpeaker(interview.speakerDeviceId);
+        }
+
+        // 【恢复】问题数据，同步给其他窗口
+        if (result.questions && result.questions.length > 0) {
+          const lastQuestion = result.questions[result.questions.length - 1];
+          setCurrentLine(lastQuestion.askedQuestion || lastQuestion.question || '');
+          setInterviewTrainingState({
+            interviewState: interview.interviewState,
+            aiMessage: lastQuestion.referenceAnswer || '',
+            candidateAnswer: lastQuestion.candidateAnswer || '',
+            interviewerQuestion: lastQuestion.askedQuestion || lastQuestion.question || '',
+            isLoading: false,
+          });
+        }
+
+        // 【恢复】计时器
+        setTimerState({
+          duration: interview.duration || 0,
+          isRunning: dbStatus === 'interview-training-recording' || dbStatus === 'interview-training-playing',
+        });
+
+        // 【恢复】如果训练未结束，恢复状态机以继续训练流程
         const isEnded = dbStatus === 'interview-training-completed' ||
                         dbStatus === 'interview-training-error' ||
                         dbStatus === 'interview-training-expired';
 
-        if (isEnded) {
-          // 已结束的训练：直接使用数据库状态设置 voiceState
-          setVoiceState({
-            mode: 'interview-training',
-            subState: dbStatus as any,
-            interviewId,
-          });
-          // 设置跨窗口状态，让 header 显示正确的状态
-          setInterviewTrainingState({ interviewState: dbInterviewState });
-          // 从数据库获取最后一个问题显示
-          try {
-            const result = await interviewService.getInterview(interviewId);
-            if (result?.questions && result.questions.length > 0) {
-              const lastQuestion = result.questions[result.questions.length - 1];
-              setCurrentLine(lastQuestion.askedQuestion || lastQuestion.question || '面试训练已完成');
-            } else {
-              setCurrentLine('面试训练已完成');
-            }
-          } catch {
-            setCurrentLine('面试训练已完成');
+        if (!isEnded) {
+          const machine = await restoreInterviewTraining(trainingInterviewId);
+          if (!machine) {
+            await logger.error('[恢复训练] 恢复状态机失败');
+            return;
           }
-          return;
-        }
 
-        // 【恢复】状态机（100% 从数据库获取数据）
-        const machine = await restoreInterviewTraining();
-        if (!machine) {
-          await logger.error('[第一步-B] 恢复状态机失败');
-          return;
-        }
+          const context = machine.getContext();
+          const currentState = machine.getState();
 
-        // 从状态机获取恢复后的数据（100% 来自数据库）
-        const context = machine.getContext();
-        const currentState = machine.getState();
+          // 监听状态机变化
+          machine.onStateChange(async (state, ctx) => {
+            setInterviewState(state);
+            await handleStateChange(state, ctx);
+          });
 
-        // 【恢复】监听状态机变化
-        machine.onStateChange(async (state, ctx) => {
-          setInterviewState(state);
-          await handleStateChange(state, ctx);
-        });
+          // 恢复数据服务
+          interviewDataService.initializeInterview(
+            context.interviewId,
+            context.totalQuestions
+          );
 
-        // 【恢复】currentInterview（绝对不能丢失！）
-        currentInterview.set(context.interviewId);
+          // 更新跨窗口状态
+          setInterviewTrainingState({
+            interviewState: currentState,
+            aiMessage: context.referenceAnswer || '',
+            interviewerQuestion: context.currentQuestion || '',
+            isListening: currentState === TrainingState.USER_LISTENING,
+            currentPhase: currentState === TrainingState.LISTENING_INTERVIEWER ? 'listening-interviewer' : undefined,
+          });
 
-        // 【恢复】voiceState（从数据库状态判断是否暂停）
-        const isPaused = dbStatus === 'interview-training-paused';
-        const isRecording = currentState !== TrainingState.COMPLETED &&
-                          currentState !== TrainingState.ERROR &&
-                          currentState !== TrainingState.IDLE;
-        const subState = isPaused ? 'interview-training-paused' : (isRecording ? 'interview-training-recording' : 'idle');
-
-        setVoiceState({
-          mode: 'interview-training',
-          subState: subState,
-          interviewId: context.interviewId,
-        });
-        // 恢复计时器时长
-        setTimerState({ duration: context.duration || 0, isRunning: !isPaused });
-
-        // 【恢复】岗位信息
-        if (context.jobPosition) {
-          setSelectedPosition(context.jobPosition);
-        }
-
-        // 【恢复】数据服务
-        interviewDataService.initializeInterview(
-          context.interviewId,
-          context.totalQuestions
-        );
-
-        // 【恢复】跨窗口状态（AI参考答案、面试官问题等）
-        setInterviewTrainingState({
-          interviewState: currentState,
-          aiMessage: context.referenceAnswer || '',
-          speechText: '',
-          candidateAnswer: '',
-          interviewerQuestion: context.currentQuestion || '',
-          isLoading: false,
-          isListening: currentState === TrainingState.USER_LISTENING,
-          currentPhase: currentState === TrainingState.LISTENING_INTERVIEWER ? 'listening-interviewer' : undefined,
-        });
-
-        // 【恢复】显示当前问题
-        if (context.currentQuestion) {
-          setCurrentLine(context.currentQuestion);
-        } else {
-          setCurrentLine(`训练已恢复，当前第 ${context.currentQuestionIndex + 1} 题`);
+          // 更新显示
+          if (context.currentQuestion) {
+            setCurrentLine(context.currentQuestion);
+          } else {
+            setCurrentLine(`训练已恢复，当前第 ${context.currentQuestionIndex + 1} 题`);
+          }
         }
 
       } catch (error) {
-        await logger.error(`[第一步-B] 恢复训练失败: ${error}`);
+        await logger.error(`[恢复训练] 失败: ${error}`);
       }
     };
 
-    // 延迟 200ms 执行，确保组件完全加载
-    const timer = setTimeout(checkAndRecoverTraining, 200);
+    // 延迟执行，确保组件完全加载
+    const timer = setTimeout(recoverTraining, 200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -425,6 +432,13 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       // 【保存】设置 interview_id（这是最关键的数据，绝对不能丢失！）
       currentInterview.clear();
       currentInterview.set(response.id);
+
+      // 【持久化】保存面试训练 ID 到文件（用于恢复）
+      try {
+        await api?.trainingInterviewId?.set?.(response.id);
+      } catch (e) {
+        await logger.error(`保存面试训练 ID 到文件失败: ${e}`);
+      }
 
       // 【保存】初始化跨窗口状态
       setInterviewTrainingState({
