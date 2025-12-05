@@ -44,10 +44,14 @@ export function InterviewTrainingApp() {
 
   // 数据由 interviewer 窗口统一从数据库加载，通过 BroadcastChannel 同步过来
   const aiMessage = trainingState.aiMessage;
+  const message = trainingState.message;
   const speechText = trainingState.speechText;
   const candidateAnswer = trainingState.candidateAnswer;
   const isLoading = trainingState.isLoading;
   const interviewState = trainingState.interviewState;
+
+  // 只有 error 状态才显示红色（expired 和 completed 不显示红色）
+  const isError = voiceState.subState === 'interview-training-error';
 
   // 组件初始化时加载高度设置和监听外部事件
   useEffect(() => {
@@ -146,6 +150,8 @@ export function InterviewTrainingApp() {
           aiMessage={aiMessage}
           candidateAnswer={candidateAnswer}
           isLoading={isLoading}
+          message={message}
+          isError={isError}
         />
 
         {/* Footer - 语音识别区域 */}

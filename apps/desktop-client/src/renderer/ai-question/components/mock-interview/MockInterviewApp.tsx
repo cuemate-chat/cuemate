@@ -45,11 +45,15 @@ export function MockInterviewApp() {
   // 始终显示内存中的数据，不因 interviewId 为空而隐藏
   // 这样即使发生错误，用户也能看到之前的数据
   const aiMessage = mockInterviewState.aiMessage;
+  const message = mockInterviewState.message;
 
   const speechText = mockInterviewState.speechText;
   const candidateAnswer = mockInterviewState.candidateAnswer;
   const isLoading = mockInterviewState.isLoading;
   const interviewState = mockInterviewState.interviewState;
+
+  // 只有 error 状态才显示红色（expired 和 completed 不显示红色）
+  const isError = voiceState.subState === 'mock-interview-error';
 
   // 组件初始化时加载高度设置和监听外部事件
   useEffect(() => {
@@ -148,6 +152,8 @@ export function MockInterviewApp() {
           aiMessage={aiMessage}
           candidateAnswer={candidateAnswer}
           isLoading={isLoading}
+          message={message}
+          isError={isError}
         />
 
         {/* Footer - 语音识别区域 */}

@@ -8,9 +8,11 @@ interface WindowBodyProps {
   aiMessage?: string; // AI 参考答案
   candidateAnswer?: string; // 用户回答
   isLoading: boolean;
+  message?: string; // 状态消息（错误原因、停止原因等）
+  isError?: boolean; // 是否是错误状态（只有 error 才显示红色）
 }
 
-export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }: WindowBodyProps) {
+export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading, message, isError }: WindowBodyProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [historyAskedQuestion, setHistoryAskedQuestion] = useState<string>('');
   const [historyAiMessage, setHistoryAiMessage] = useState<string>('');
@@ -98,9 +100,9 @@ export function InterviewTrainingBody({ aiMessage, candidateAnswer, isLoading }:
                 <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <div className="ai-empty-title">等待训练开始</div>
-            <div className="ai-empty-description">
-              AI 分析结果和您的回答将在这里显示
+            <div className="ai-empty-title">{message ? '训练已结束' : '等待训练开始'}</div>
+            <div className="ai-empty-description" style={isError ? { color: '#ef4444' } : undefined}>
+              {message || 'AI 分析结果和您的回答将在这里显示'}
             </div>
           </div>
         ) : isShowingHistory ? (
