@@ -6,7 +6,6 @@ import { useVoiceState } from '../../../../utils/voiceState';
 const log = createLogger('InterviewTrainingApp');
 import { setInterviewTrainingState, useInterviewTrainingState } from '../../../utils/interviewTrainingState';
 import { subscribeInterviewTraining } from '../../../utils/trainingManager';
-import { interviewService } from '../../../interviewer/api/interviewService';
 import { InterviewTrainingBody } from './InterviewTrainingBody';
 import { InterviewTrainingFooter } from './InterviewTrainingFooter';
 import { InterviewTrainingHeader } from './InterviewTrainingHeader';
@@ -43,35 +42,12 @@ export function InterviewTrainingApp() {
     }
   }, [interviewId]);
 
-  // 始终显示 localStorage 中的数据，不因 interviewId 为空而隐藏
-  // 这样即使发生错误，用户也能看到之前的数据
+  // 数据由 interviewer 窗口统一从数据库加载，通过 BroadcastChannel 同步过来
   const aiMessage = trainingState.aiMessage;
   const speechText = trainingState.speechText;
   const candidateAnswer = trainingState.candidateAnswer;
   const isLoading = trainingState.isLoading;
   const interviewState = trainingState.interviewState;
-
-  // 训练完成或错误时从数据库加载最后一个问题的 AI 回答
-  useEffect(() => {
-    const loadInterviewData = async () => {
-      const isCompleted = voiceState.subState === 'interview-training-completed';
-      const isError = voiceState.subState === 'interview-training-error';
-
-      if ((isCompleted || isError) && interviewId && !aiMessage) {
-        try {
-          const result = await interviewService.getInterview(interviewId);
-          if (result?.questions && result.questions.length > 0) {
-            const lastQuestion = result.questions[result.questions.length - 1];
-            // 直接设置最后一条 AI 回答，有值显示值，空就显示空
-            setInterviewTrainingState({ aiMessage: lastQuestion.referenceAnswer || '' });
-          }
-        } catch (error) {
-          log.error('loadInterviewData', '加载训练数据失败', undefined, error);
-        }
-      }
-    };
-    loadInterviewData();
-  }, [voiceState.subState, interviewId, aiMessage]);
 
   // 组件初始化时加载高度设置和监听外部事件
   useEffect(() => {

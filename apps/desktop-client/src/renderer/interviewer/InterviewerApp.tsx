@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createLogger } from '../../utils/rendererLogger.js';
-import { currentInterview } from '../utils/currentInterview';
 
 const log = createLogger('InterviewerApp');
-import { getVoiceState, setVoiceState } from '../../utils/voiceState';
 import { InterviewerWindowBody } from './components/InterviewerWindowBody';
 import { InterviewerWindowFooter } from './components/InterviewerWindowFooter';
 import { InterviewerWindowHeader } from './components/InterviewerWindowHeader';
@@ -91,23 +89,9 @@ export function InterviewerApp() {
   };
 
   const handleBack = async () => {
-    // 返回上一页时不关闭右侧窗口，只是重置当前选择的 section
+    // 返回上一页时只重置当前选择的 section（UI 导航状态）
+    // 不清理 interviewId，因为返回按钮只是导航操作，不应该影响面试数据
     setCurrentSectionTitle(null);
-
-    // 只有在没有进行中的面试时才清除状态
-    const voiceState = getVoiceState();
-    if (voiceState.subState !== 'mock-interview-recording' &&
-        voiceState.subState !== 'mock-interview-paused' &&
-        voiceState.subState !== 'interview-training-recording' &&
-        voiceState.subState !== 'interview-training-paused') {
-      // 清除状态并清除 interviewId
-      setVoiceState({
-        mode: 'none',
-        subState: 'idle',
-        interviewId: undefined
-      });
-      currentInterview.clear(); // 清理 localStorage 中的 interviewId
-    }
   };
 
   return (

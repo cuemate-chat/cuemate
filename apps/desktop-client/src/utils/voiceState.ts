@@ -72,11 +72,13 @@ export async function initVoiceState(): Promise<VoiceState> {
 
   try {
     const api = getElectronAPI();
-    if (api?.interviewId?.get) {
-      const result = await api.interviewId.get();
-      // IPC 返回的是 { success: boolean, interviewId: string | null }
-      if (result?.success && result.interviewId) {
-        memoryState.interviewId = result.interviewId;
+    if (api?.resumingInterviewIds?.get) {
+      const result = await api.resumingInterviewIds.get();
+      // IPC 返回 { success, mockInterviewId, trainingInterviewId }
+      // 这里只是初始化内存状态，不决定使用哪个 ID
+      // 具体使用哪个 ID 由恢复逻辑决定
+      if (result?.success) {
+        // 暂时不设置 memoryState.interviewId，等恢复逻辑决定
       }
     }
   } catch {
