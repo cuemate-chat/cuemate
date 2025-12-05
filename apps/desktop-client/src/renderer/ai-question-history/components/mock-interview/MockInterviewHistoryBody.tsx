@@ -23,8 +23,6 @@ export function MockInterviewHistoryBody({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
   const isFirstLoadRef = useRef(true);
-  // 保存最后一个有效的 interviewId，用于刷新时使用
-  const lastValidInterviewIdRef = useRef<string | undefined>(undefined);
 
   // 处理点击历史记录卡片
   const handleReviewClick = (review: InterviewReview) => {
@@ -59,31 +57,24 @@ export function MockInterviewHistoryBody({
 
   // 加载模拟面试记录
   useEffect(() => {
-    // 更新最后有效的 interviewId
-    if (interviewId) {
-      lastValidInterviewIdRef.current = interviewId;
+    // 当 interviewId 为 undefined 时，清空数据（用户退出了面试页面）
+    if (!interviewId) {
+      setReviews([]);
+      onDataLoaded?.([]);
+      return;
     }
 
-    // 使用有效的 interviewId（当前的或缓存的）
-    const effectiveInterviewId = interviewId || lastValidInterviewIdRef.current;
-
     const loadReviews = async (showLoading = false) => {
-      // 如果没有有效的 interviewId，不执行加载，也不清空现有数据
-      if (!effectiveInterviewId) {
-        return;
-      }
-
       if (showLoading) {
         setIsLoading(true);
       }
       try {
-        const data = await conversationHistoryService.getInterviewReviews(effectiveInterviewId);
+        const data = await conversationHistoryService.getInterviewReviews(interviewId);
         setReviews(data);
         // 通知父组件原始数据
         onDataLoaded?.(data);
       } catch (error) {
         logger.error(`加载模拟面试记录失败: ${error}`);
-        // 加载失败时也不清空现有数据
       } finally {
         if (showLoading) {
           setIsLoading(false);
