@@ -152,6 +152,9 @@ export interface Interview {
     | 'interview-training-expired';
   message?: string | null;
   vectorStatus: number;
+  answerMode?: 'manual' | 'auto' | null;
+  microphoneDeviceId?: string | null;
+  speakerDeviceId?: string | null;
 }
 
 export interface Question {

@@ -137,6 +137,11 @@ export default function Reviews() {
                         {it.interviewType === 'mock' ? '模拟面试' : '面试训练'}
                       </Tag>
                     )}
+                    {it.answerMode && (
+                      <Tag color={it.answerMode === 'auto' ? 'lime' : 'gold'} className="!m-0">
+                        {it.answerMode === 'auto' ? '自动' : '手动'}
+                      </Tag>
+                    )}
                     {it.status && (
                       <Tag
                         color={

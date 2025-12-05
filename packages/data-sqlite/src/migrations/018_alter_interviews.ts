@@ -16,6 +16,11 @@ export function up(db: any): void {
     ALTER TABLE interviews ADD COLUMN message TEXT;
     ALTER TABLE interviews ADD COLUMN interview_state TEXT DEFAULT 'idle';
 
+    -- 新增设备和模式相关字段
+    ALTER TABLE interviews ADD COLUMN answer_mode TEXT DEFAULT 'manual' CHECK(answer_mode IN ('manual','auto'));
+    ALTER TABLE interviews ADD COLUMN microphone_device_id TEXT;
+    ALTER TABLE interviews ADD COLUMN speaker_device_id TEXT;
+
     -- 修改 interview_reviews 表的 score_id 字段为 interview_id
     ALTER TABLE interview_reviews RENAME COLUMN score_id TO interview_id;
 

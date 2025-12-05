@@ -2,9 +2,9 @@ import { withErrorLogging } from '@cuemate/logger';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { deleteNotificationsByResourceId } from '../utils/notification-helper.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
-import { deleteNotificationsByResourceId } from '../utils/notification-helper.js';
 
 export function registerReviewRoutes(app: FastifyInstance) {
   // =================== interviews 表 ===================
@@ -62,6 +62,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
                   i.locale,
                   i.timezone,
                   i.theme,
+                  i.answer_mode,
+                  i.microphone_device_id,
+                  i.speaker_device_id,
                   j.title AS original_job_title,
                   s.total_score,
                   s.overall_summary,
@@ -102,7 +105,8 @@ export function registerReviewRoutes(app: FastifyInstance) {
             `SELECT id, job_id, started_at, ended_at, selected_model_id,
                     job_title, job_content, question_count, resumes_id,
                     resumes_title, resumes_content, duration, interview_type,
-                    status, message, interview_state
+                    status, message, interview_state, answer_mode,
+                    microphone_device_id, speaker_device_id
              FROM interviews WHERE id=? AND user_id=?`,
           )
           .get(id, payload.uid);
@@ -188,27 +192,32 @@ export function registerReviewRoutes(app: FastifyInstance) {
             resumes_title: z.string().optional(),
             resumes_content: z.string().optional(),
             interview_type: z.enum(['mock', 'training']).default('mock'),
-            status: z.enum([
-              'idle',
-              'mock-interview-recording',
-              'mock-interview-paused',
-              'mock-interview-completed',
-              'mock-interview-playing',
-              'mock-interview-error',
-              'mock-interview-expired',
-              'interview-training-recording',
-              'interview-training-paused',
-              'interview-training-completed',
-              'interview-training-playing',
-              'interview-training-error',
-              'interview-training-expired'
-            ]).optional(),
+            status: z
+              .enum([
+                'idle',
+                'mock-interview-recording',
+                'mock-interview-paused',
+                'mock-interview-completed',
+                'mock-interview-playing',
+                'mock-interview-error',
+                'mock-interview-expired',
+                'interview-training-recording',
+                'interview-training-paused',
+                'interview-training-completed',
+                'interview-training-playing',
+                'interview-training-error',
+                'interview-training-expired',
+              ])
+              .optional(),
             message: z.string().optional(),
             locale: z.string().optional(),
             timezone: z.string().optional(),
             theme: z.string().optional(),
             selected_model_id: z.string().optional(),
             interview_state: z.string().optional(),
+            answer_mode: z.enum(['manual', 'auto']).optional(),
+            microphone_device_id: z.string().optional(),
+            speaker_device_id: z.string().optional(),
           })
           .parse((req as any).body || {});
 
@@ -238,8 +247,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
               id, job_id, user_id, theme, started_at,
               selected_model_id, locale, timezone, job_title, job_content,
               question_count, resumes_id, resumes_title, resumes_content,
-              duration, interview_type, status, message, interview_state
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              duration, interview_type, status, message, interview_state,
+              answer_mode, microphone_device_id, speaker_device_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .run(
             id,
@@ -261,6 +271,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
             body.status || 'active',
             body.message || null,
             body.interview_state || 'idle',
+            body.answer_mode || 'manual',
+            body.microphone_device_id || null,
+            body.speaker_device_id || null,
           );
 
         // 记录操作日志
@@ -298,23 +311,28 @@ export function registerReviewRoutes(app: FastifyInstance) {
             resumesContent: z.string().optional(),
             duration: z.number().optional(),
             interviewType: z.enum(['mock', 'training']).optional(),
-            status: z.enum([
-              'idle',
-              'mock-interview-recording',
-              'mock-interview-paused',
-              'mock-interview-completed',
-              'mock-interview-playing',
-              'mock-interview-error',
-              'mock-interview-expired',
-              'interview-training-recording',
-              'interview-training-paused',
-              'interview-training-completed',
-              'interview-training-playing',
-              'interview-training-error',
-              'interview-training-expired'
-            ]).optional(),
+            status: z
+              .enum([
+                'idle',
+                'mock-interview-recording',
+                'mock-interview-paused',
+                'mock-interview-completed',
+                'mock-interview-playing',
+                'mock-interview-error',
+                'mock-interview-expired',
+                'interview-training-recording',
+                'interview-training-paused',
+                'interview-training-completed',
+                'interview-training-playing',
+                'interview-training-error',
+                'interview-training-expired',
+              ])
+              .optional(),
             message: z.string().optional(),
             interviewState: z.string().optional(),
+            answerMode: z.enum(['manual', 'auto']).optional(),
+            microphoneDeviceId: z.string().optional(),
+            speakerDeviceId: z.string().optional(),
           })
           .parse((req as any).body || {});
 
@@ -371,9 +389,24 @@ export function registerReviewRoutes(app: FastifyInstance) {
           updateFields.push('interview_state = ?');
           updateValues.push(body.interviewState);
         }
+        if (body.answerMode !== undefined) {
+          updateFields.push('answer_mode = ?');
+          updateValues.push(body.answerMode);
+        }
+        if (body.microphoneDeviceId !== undefined) {
+          updateFields.push('microphone_device_id = ?');
+          updateValues.push(body.microphoneDeviceId);
+        }
+        if (body.speakerDeviceId !== undefined) {
+          updateFields.push('speaker_device_id = ?');
+          updateValues.push(body.speakerDeviceId);
+        }
 
         // 如果状态变更为 completed,自动设置 ended_at 为当前时间
-        if (body.status === 'mock-interview-completed' || body.status === 'interview-training-completed') {
+        if (
+          body.status === 'mock-interview-completed' ||
+          body.status === 'interview-training-completed'
+        ) {
           updateFields.push('ended_at = ?');
           updateValues.push(Date.now());
         }
