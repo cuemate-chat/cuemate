@@ -64,6 +64,11 @@ export function MockInterviewFooter({
   const interviewState = mockInterviewState.interviewState;
   // 是否正在提交/分析中
   const isSubmitting = interviewState === 'ai_analyzing';
+  // 面试是否已结束（completed/error/expired 等非进行中状态）
+  const isEnded = interviewState === 'completed' || interviewState === 'error' ||
+                  !interviewState || interviewState === 'idle';
+  // 最后一次用户回答
+  const candidateAnswer = mockInterviewState.candidateAnswer;
 
   // 【关键修复】只有当状态机真正进入 USER_LISTENING 或 USER_SPEAKING 状态时，才启动录音
   // 这样可以避免状态更新的时序竞争导致在 AI_SPEAKING 阶段就开始录音
@@ -195,7 +200,11 @@ export function MockInterviewFooter({
           ref={speechRef}
           className={`speech-text${isSubmitting ? ' submitting' : ''}`}
         >
-          {isSubmitting ? '已提交本次回答，面试官分析中...' : (speechText || '等待语音输入...')}
+          {isSubmitting
+            ? '已提交本次回答，面试官分析中...'
+            : isEnded
+              ? (candidateAnswer || '')
+              : (speechText || '...等待语音输入')}
         </span>
       </div>
 
