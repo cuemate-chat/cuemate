@@ -295,24 +295,32 @@ export class SystemAudioCapture {
 
       // 检查是否持续静音
       if (this.silentChunkCount >= MAX_SILENT_CHUNKS) {
-        // 持续 10 秒没有收到有效音频数据
-        const errorMsg = this.hasReceivedAudio
-          ? 'AudioTee 持续 10 秒未收到有效音频数据，音频源可能已停止'
-          : 'AudioTee 启动后 10 秒内未收到任何有效音频数据，可能是系统音频权限未授权或 audiotee 进程无法获取音频';
+        if (this.hasReceivedAudio) {
+          // 已经收到过音频，后续静音是正常的（比如面试官说完话等待候选人回答）
+          // 只记录 debug 级别日志，不报错
+          log.debug('startSilenceCheckTimer', 'AudioTee 持续 10 秒未收到新音频数据（正常静音期）', {
+            silentChunkCount: this.silentChunkCount,
+            hasReceivedAudio: this.hasReceivedAudio,
+            isCapturing: this.isCapturing,
+          });
+        } else {
+          // 启动后从未收到过音频，这才是真正的问题
+          const errorMsg = 'AudioTee 启动后 10 秒内未收到任何有效音频数据，可能是系统音频权限未授权或 audiotee 进程无法获取音频';
 
-        log.error('startSilenceCheckTimer', errorMsg, {
-          silentChunkCount: this.silentChunkCount,
-          hasReceivedAudio: this.hasReceivedAudio,
-          isCapturing: this.isCapturing,
-        });
+          log.error('startSilenceCheckTimer', errorMsg, {
+            silentChunkCount: this.silentChunkCount,
+            hasReceivedAudio: this.hasReceivedAudio,
+            isCapturing: this.isCapturing,
+          });
 
-        // 触发错误回调
-        if (this.onErrorCallback) {
-          const error = new Error(errorMsg);
-          this.onErrorCallback(error);
+          // 只有真正的错误才触发回调
+          if (this.onErrorCallback) {
+            const error = new Error(errorMsg);
+            this.onErrorCallback(error);
+          }
         }
 
-        // 重置计数器，避免重复报错
+        // 重置计数器，避免重复日志
         this.silentChunkCount = 0;
       } else if (this.silentChunkCount > 0) {
         // 有静音但还没达到阈值，记录警告
