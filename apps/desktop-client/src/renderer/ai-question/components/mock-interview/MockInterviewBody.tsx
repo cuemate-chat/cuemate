@@ -8,7 +8,6 @@ interface WindowBodyProps {
   aiMessage?: string; // AI 参考答案
   candidateAnswer?: string; // 用户回答
   isLoading: boolean;
-  interviewState?: string; // 面试状态
   message?: string; // 状态消息（错误原因、停止原因等）
   isError?: boolean; // 是否是错误状态（只有 error 才显示红色）
 }
