@@ -64,9 +64,9 @@ export function InterviewTrainingFooter({
   const interviewState = trainingState.interviewState;
   // 是否正在提交/分析中
   const isSubmitting = interviewState === 'ai_analyzing';
-  // 面试是否已结束（completed/error/expired 等非进行中状态）
+  // 面试是否已结束（completed/error/expired/idle 等非进行中状态）
   const isEnded = interviewState === 'completed' || interviewState === 'error' ||
-                  !interviewState || interviewState === 'idle';
+                  interviewState === 'idle' || !interviewState;
   // 最后一次用户回答
   const candidateAnswer = trainingState.candidateAnswer;
 

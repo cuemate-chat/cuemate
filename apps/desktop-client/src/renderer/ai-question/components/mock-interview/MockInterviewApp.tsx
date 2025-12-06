@@ -52,8 +52,8 @@ export function MockInterviewApp() {
   const isLoading = mockInterviewState.isLoading;
   const interviewState = mockInterviewState.interviewState;
 
-  // 只有 error 状态才显示红色（expired 和 completed 不显示红色）
-  const isError = voiceState.subState === 'mock-interview-error';
+  // error 和 idle 状态显示红色（expired 和 completed 不显示红色）
+  const isError = voiceState.subState === 'mock-interview-error' || voiceState.subState === 'idle';
 
   // 组件初始化时加载高度设置和监听外部事件
   useEffect(() => {
