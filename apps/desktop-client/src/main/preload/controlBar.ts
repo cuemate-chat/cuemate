@@ -85,6 +85,15 @@ const controlBarAPI = {
     },
   },
 
+  // === Interviewer 窗口可见性 API ===
+  interviewerWindow: {
+    onVisibilityChanged: (callback: (isVisible: boolean) => void) => {
+      const handler = (_e: any, isVisible: boolean) => callback(isVisible);
+      ipcRenderer.on('interviewer-visibility-changed', handler);
+      return () => ipcRenderer.off('interviewer-visibility-changed', handler);
+    },
+  },
+
   // === 事件处理 API ===
   onMouseEnter: () => ipcRenderer.invoke('control-bar-mouse-enter'),
   onMouseLeave: () => ipcRenderer.invoke('control-bar-mouse-leave'),

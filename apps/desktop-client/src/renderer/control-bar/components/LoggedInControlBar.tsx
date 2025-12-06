@@ -210,6 +210,16 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
     };
   }, []);
 
+  // 监听 Interviewer 窗口可见性变化（当用户手动关闭窗口时同步状态）
+  useEffect(() => {
+    const api: any = (window as any).electronAPI;
+    if (api?.interviewerWindow?.onVisibilityChanged) {
+      return api.interviewerWindow.onVisibilityChanged((isVisible: boolean) => {
+        setIsInterviewerWindowOpen(isVisible);
+      });
+    }
+  }, []);
+
   // 初始化穿透性状态：从数据库和系统状态中读取
   useEffect(() => {
     const initializeClickThrough = async () => {

@@ -110,12 +110,25 @@ export class InterviewerWindow {
     this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     this.window.setFullScreenable(false);
     this.window.moveTop();
+    // 通知 control-bar 窗口可见性变化
+    this.notifyVisibilityChange(true);
   }
 
   public hide(): void {
     if (!this.window) return;
     if (this.window.isVisible()) {
       this.window.hide();
+      // 通知 control-bar 窗口可见性变化
+      this.notifyVisibilityChange(false);
+    }
+  }
+
+  /**
+   * 通知父窗口（control-bar）interviewer 窗口可见性变化
+   */
+  private notifyVisibilityChange(isVisible: boolean): void {
+    if (this.parentWindow && !this.parentWindow.isDestroyed()) {
+      this.parentWindow.webContents.send('interviewer-visibility-changed', isVisible);
     }
   }
 
