@@ -268,8 +268,9 @@ export async function restoreInterviewTraining(
     if (!skipStatusCheck) {
       if (interview.status === 'interview-training-completed' ||
           interview.status === 'interview-training-expired' ||
-          interview.status === 'interview-training-error') {
-        logger.info(`[TrainingManager] 训练已结束，状态: ${interview.status}`);
+          interview.status === 'interview-training-error' ||
+          interview.status === 'idle') {
+        logger.info(`[TrainingManager] 训练已结束或无效，状态: ${interview.status}`);
         return null;
       }
     }

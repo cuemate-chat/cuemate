@@ -248,8 +248,9 @@ export async function restoreMockInterview(
     if (!skipStatusCheck) {
       if (interview.status === 'mock-interview-completed' ||
           interview.status === 'mock-interview-expired' ||
-          interview.status === 'mock-interview-error') {
-        logger.info(`[MockInterviewManager] 面试已结束，状态: ${interview.status}`);
+          interview.status === 'mock-interview-error' ||
+          interview.status === 'idle') {
+        logger.info(`[MockInterviewManager] 面试已结束或无效，状态: ${interview.status}`);
         return null;
       }
     }
