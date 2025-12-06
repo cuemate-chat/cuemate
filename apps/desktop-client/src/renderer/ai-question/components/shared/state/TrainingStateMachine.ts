@@ -171,10 +171,13 @@ export class TrainingStateMachine {
     this.context = { ...this.context, ...savedContext };
   }
 
-  // 部分更新上下文
+  // 部分更新上下文（不触发回调，仅更新数据）
+  // 注意：状态变化回调只应该在 send() 导致状态转换时触发，
+  // 而不是在单纯更新上下文数据时触发。
+  // 否则会导致 handleStateChange 被重复调用，产生竞态条件。
   updateContextPartial(partial: Partial<TrainingContext>): void {
     this.context = { ...this.context, ...partial };
-    this.notifyStateChange();
+    // 不调用 notifyStateChange()，避免在 async 回调中产生竞态条件
   }
 
   // 更新上下文
@@ -307,7 +310,7 @@ export class TrainingStateMachine {
   }
 
   /**
-   * 设置状态
+   * 设置状态（会触发回调）
    */
   setState(state: TrainingState): void {
     this.currentState = state;
@@ -315,7 +318,15 @@ export class TrainingStateMachine {
   }
 
   /**
-   * 恢复状态
+   * 静默设置状态（不触发回调，用于恢复）
+   */
+  setStateSilent(state: TrainingState): void {
+    this.currentState = state;
+  }
+
+  /**
+   * 恢复状态（静默恢复，不触发回调）
+   * 恢复时不应该重新执行业务逻辑，只是恢复状态机到之前的状态
    */
   restoreState(state: TrainingState, context: Partial<TrainingContext>): void {
     if (context.jobPosition !== undefined) {
@@ -338,6 +349,7 @@ export class TrainingStateMachine {
       this.context.referenceAnswer = context.referenceAnswer;
     }
 
-    this.setState(state);
+    // 静默设置状态，不触发回调
+    this.setStateSilent(state);
   }
 }

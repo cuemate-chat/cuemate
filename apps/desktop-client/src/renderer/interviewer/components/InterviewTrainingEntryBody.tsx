@@ -194,6 +194,9 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   // 当前问题数据（临时存储，用于分析时保存）
   const currentQuestionData = useRef<CurrentQuestionData | null>(null);
 
+  // 防重入：是否正在生成答案
+  const isGeneratingAnswer = useRef<boolean>(false);
+
   // 全局状态
   const voiceState = useVoiceState();
   const trainingState = useInterviewTrainingState();
@@ -517,6 +520,19 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         await handleStateChange(state, context);
       });
 
+      // 【关键】发送 START_TRAINING 事件，将状态从 IDLE 转换到 LISTENING_INTERVIEWER
+      machine.send({
+        type: 'START_TRAINING',
+        payload: {
+          interviewId: response.id,
+          jobPosition: selectedPosition,
+          resume: {
+            resumeTitle: selectedPosition?.resumeTitle,
+            resumeContent: selectedPosition?.resumeContent,
+          }
+        }
+      });
+
       // 【第三步开始】开始监听扬声器
       await startListeningInterviewer();
 
@@ -569,7 +585,6 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         deviceId: selectedSpeaker || undefined,
         sessionId: 'interviewer-training',
         onText: (text) => {
-          logger.info(`[第三步-A] 扬声器识别 onText 回调: text="${text.substring(0, 100)}...", length=${text.length}`);
           // 实时更新面试官问题文本
           setInterviewTrainingState({
             interviewerQuestion: text,
@@ -584,12 +599,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
             interviewerQuestion: ''
           });
         },
-        onOpen: () => {
-          logger.info(`[第三步-A] 扬声器识别 WebSocket 已连接`);
-        },
-        onClose: () => {
-          logger.info(`[第三步-A] 扬声器识别 WebSocket 已关闭`);
-        },
+        onOpen: () => {},
+        onClose: () => {},
       });
 
       // 【保存】扬声器控制器到全局管理器（会触发持久化）
@@ -652,6 +663,22 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     try {
       await stopListeningInterviewer();
 
+      // 防重入：如果已经在生成答案，跳过
+      if (isGeneratingAnswer.current) {
+        return;
+      }
+
+      const machine = getTrainingStateMachine();
+      if (!machine) {
+        throw new Error('状态机不存在，请重新开始训练');
+      }
+
+      // 检查状态：只有在 LISTENING_INTERVIEWER 状态下才能提交问题
+      const currentState = machine.getState();
+      if (currentState !== TrainingState.LISTENING_INTERVIEWER) {
+        return;
+      }
+
       const interviewerQuestion = trainingState.interviewerQuestion;
 
       if (!interviewerQuestion || interviewerQuestion.length < 5) {
@@ -660,16 +687,13 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         return;
       }
 
+      // 点击"提问完毕"时清空上一轮的内容，开始生成新答案
       setInterviewTrainingState({
         currentPhase: 'ai-generating',
         isLoading: true,
+        aiMessage: '',
+        candidateAnswer: '',
       });
-
-      // 【更新】状态机（状态机已在 handleStartInterview 中创建）
-      const machine = getTrainingStateMachine();
-      if (!machine) {
-        throw new Error('状态机不存在，请重新开始训练');
-      }
 
       machine.updateContextPartial({
         currentQuestion: interviewerQuestion,
@@ -690,7 +714,14 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
    * 【第三步-E】自动模式下的问题检测处理
    */
   const handleAutoQuestionDetected = async (question: string) => {
+    // 防重入：如果已经在生成答案，跳过
+    if (isGeneratingAnswer.current) {
+      return;
+    }
+
     try {
+      isGeneratingAnswer.current = true;
+
       // 如果有上一轮的 review ID，先保存并分析上一轮
       if (trainingState.currentRoundReviewId) {
         await saveAndAnalyzePreviousRound(trainingState.currentRoundReviewId);
@@ -744,6 +775,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     } catch (error) {
       await logger.error(`[第三步-E] 自动问题检测处理失败: ${error}`);
       setErrorMessage(`自动问题检测处理失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    } finally {
+      isGeneratingAnswer.current = false;
     }
   };
 
@@ -1009,7 +1042,14 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
    * 【第四步】生成答案阶段
    */
   const handleGeneratingAnswer = async (context: any) => {
+    // 防重入：如果已经在生成答案，跳过
+    if (isGeneratingAnswer.current) {
+      return;
+    }
+
     try {
+      isGeneratingAnswer.current = true;
+
       const question = context.currentQuestion;
       if (!question) throw new Error('No question available');
 
@@ -1024,22 +1064,29 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       // 生成答案
       await generateAnswerInBackground(context);
 
-      // 发送完成事件
-      getTrainingStateMachine()?.send({ type: 'ANSWER_GENERATED' });
+      // 发送完成事件（传入 referenceAnswer，已通过 updateContextPartial 保存）
+      const machine = getTrainingStateMachine();
+      const referenceAnswer = machine?.getContext().referenceAnswer || '';
+      machine?.send({ type: 'ANSWER_GENERATED', payload: { answer: referenceAnswer } });
     } catch (error) {
+      log.error('handleGeneratingAnswer', '生成答案失败', undefined, error);
       getTrainingStateMachine()?.send({ type: 'GENERATION_ERROR', payload: { error: error instanceof Error ? error.message : String(error) } });
+    } finally {
+      isGeneratingAnswer.current = false;
     }
   };
 
   /**
    * 【第五步】用户监听阶段
+   * AI 答案生成完成，进入用户回答阶段
    */
   const handleUserListening = () => {
     setErrorMessage('');
     setInterviewTrainingState({
       isListening: true,
       speechText: '',
-      currentPhase: 'listening-candidate'
+      currentPhase: 'listening-candidate',
+      isLoading: false, // AI 答案生成完成，停止加载动画
     });
   };
 
@@ -1221,41 +1268,34 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
     interviewDataService.markQuestionComplete(context.currentQuestionIndex);
 
-    const shouldEnd = getTrainingStateMachine()?.shouldEndInterview();
+    // 面试训练不设置固定问题数量，持续进行直到用户手动停止
+    // 继续下一轮：先发送状态转换事件
+    getTrainingStateMachine()?.send({ type: 'CONTINUE_TRAINING' });
 
-    if (shouldEnd) {
-      getTrainingStateMachine()?.send({ type: 'END_TRAINING' });
+    if (!trainingState.isAutoMode) {
+      // 手动模式：重新开始监听扬声器（保留上一轮的 aiMessage 和 candidateAnswer，直到点击"提问完毕"再清空）
+      setTimeout(async () => {
+        try {
+          setInterviewTrainingState({
+            currentPhase: 'listening-interviewer',
+            interviewerQuestion: '',
+            speechText: '',
+          });
+          await startListeningInterviewer();
+          setCurrentLine('正在监听面试官下一个问题...');
+        } catch (error) {
+          await logger.error(`[第八步] 重新启动扬声器监听失败: ${error}`);
+          setErrorMessage('重新启动扬声器监听失败');
+        }
+      }, 2000);
     } else {
-      // 继续下一轮
-      if (!trainingState.isAutoMode) {
-        // 手动模式：重新开始监听扬声器
-        setTimeout(async () => {
-          try {
-            setInterviewTrainingState({
-              currentPhase: 'listening-interviewer',
-              interviewerQuestion: '',
-              aiMessage: '',
-              speechText: '',
-              candidateAnswer: ''
-            });
-            await startListeningInterviewer();
-            setCurrentLine('正在监听面试官下一个问题...');
-          } catch (error) {
-            await logger.error(`[第八步] 重新启动扬声器监听失败: ${error}`);
-            setErrorMessage('重新启动扬声器监听失败');
-          }
-        }, 2000);
-      } else {
-        // 自动模式：清理状态，扬声器持续监听
-        setInterviewTrainingState({
-          currentPhase: 'listening-interviewer',
-          aiMessage: '',
-          speechText: '',
-          candidateAnswer: '',
-          lastInterviewerSpeechTime: 0
-        });
-        setCurrentLine('正在监听面试官下一个问题...');
-      }
+      // 自动模式：清理状态，扬声器持续监听（保留上一轮的 aiMessage 和 candidateAnswer）
+      setInterviewTrainingState({
+        currentPhase: 'listening-interviewer',
+        speechText: '',
+        lastInterviewerSpeechTime: 0
+      });
+      setCurrentLine('正在监听面试官下一个问题...');
     }
   };
 

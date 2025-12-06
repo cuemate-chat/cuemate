@@ -57,7 +57,6 @@ export function InterviewTrainingFooter({
 
   // 只有存在 interviewId 才显示数据,否则显示空白
   const speechText = interviewId ? trainingState.speechText : '';
-  const isLoading = interviewId ? trainingState.isLoading : false;
   // isAutoMode 是用户偏好设置,始终显示真实值,不依赖 interviewId
   const isAutoMode = trainingState.isAutoMode;
   // 面试状态
@@ -244,7 +243,7 @@ export function InterviewTrainingFooter({
                   // 停止监听,保留 speechText 供状态机使用
                   setInterviewTrainingState({ isListening: false });
                 }}
-                disabled={isAutoMode || isLoading || !speechText || isSubmitting}
+                disabled={isAutoMode || !speechText || isSubmitting}
                 className={`response-complete-btn${isSubmitting ? ' submitting' : ''}`}
               >
                 <span className="response-text">{isSubmitting ? '提交中...' : '回答完毕'}</span>
