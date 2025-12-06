@@ -240,7 +240,6 @@ export async function startSpeakerRecognition(
   let audioContext: AudioContext | null = null;
   let speakerWorkletNode: AudioWorkletNode | null = null;
   let finalizedText = ''; // 累积已确认的文本
-  let currentSessionText = ''; // 当前识别会话的临时文本
 
   const cleanup = async () => {
     try {
@@ -354,8 +353,14 @@ export async function startSpeakerRecognition(
       }
 
       // 接收原生音频数据并转发给 WorkletNode 处理
+      let audioDataCount = 0;
       audioDataListener = (audioData: ArrayBuffer) => {
         if (speakerWorkletNode && audioData.byteLength > 0) {
+          audioDataCount++;
+          // 每 50 次记录一次日志，避免日志过多
+          if (audioDataCount % 50 === 1) {
+            logger.debug(`扬声器识别: 收到音频数据, sessionId=${sessionId}, count=${audioDataCount}, size=${audioData.byteLength}`);
+          }
           speakerWorkletNode.port.postMessage({
             type: 'nativeAudioData',
             audioData: audioData,
@@ -368,26 +373,18 @@ export async function startSpeakerRecognition(
     websocket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        logger.debug(`扬声器识别: 收到 FunASR 消息, sessionId=${sessionId}, data=${JSON.stringify(data)}`);
         // FunASR 返回格式: { mode: "online", text: "识别结果", wav_name: "speaker", is_final: false }
         if (data.text && data.text.trim()) {
           const currentRecognizedText = data.text.trim();
+          logger.info(`扬声器识别: 识别结果, sessionId=${sessionId}, text="${currentRecognizedText}", is_final=${data.is_final}`);
 
-          if (data.is_final) {
-            // 识别结果已确认，累加到 finalizedText
-            if (currentRecognizedText && !finalizedText.includes(currentRecognizedText)) {
-              finalizedText = finalizedText
-                ? `${finalizedText} ${currentRecognizedText}`
-                : currentRecognizedText;
-              currentSessionText = '';
-            }
-            onText?.(finalizedText, true);
-          } else {
-            // 临时识别结果，更新 currentSessionText
-            currentSessionText = currentRecognizedText;
-            const combinedText = finalizedText
-              ? `${finalizedText} ${currentSessionText}`
-              : currentSessionText;
-            onText?.(combinedText, false);
+          // 累积所有识别结果，避免重复添加（与麦克风识别逻辑保持一致）
+          if (currentRecognizedText && !finalizedText.includes(currentRecognizedText)) {
+            finalizedText = finalizedText
+              ? `${finalizedText} ${currentRecognizedText}`
+              : currentRecognizedText;
+            onText?.(finalizedText, data.is_final);
           }
         }
       } catch (err) {
