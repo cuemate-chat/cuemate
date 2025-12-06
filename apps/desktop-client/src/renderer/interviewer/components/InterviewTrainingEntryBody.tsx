@@ -198,6 +198,14 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   const voiceState = useVoiceState();
   const trainingState = useInterviewTrainingState();
 
+  // 实时同步扬声器识别内容到显示区域（仅在监听阶段）
+  useEffect(() => {
+    // 只在监听面试官阶段实时显示识别内容
+    if (trainingState.currentPhase === 'listening-interviewer' && trainingState.interviewerQuestion) {
+      setCurrentLine(trainingState.interviewerQuestion);
+    }
+  }, [trainingState.interviewerQuestion, trainingState.currentPhase]);
+
   // ===========================================================================
   // 第一步：初始化 - 检查恢复 & 加载设备
   // ===========================================================================
@@ -296,6 +304,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           const lastQuestion = result.questions[result.questions.length - 1];
           setCurrentLine(lastQuestion.askedQuestion || lastQuestion.question || '');
           setInterviewTrainingState({
+            interviewId: trainingInterviewId,
             interviewState: interview.interviewState,
             aiMessage: lastQuestion.referenceAnswer || '',
             candidateAnswer: lastQuestion.candidateAnswer || '',
@@ -306,6 +315,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         } else {
           // 没有问题数据时，只同步状态和消息
           setInterviewTrainingState({
+            interviewId: trainingInterviewId,
             interviewState: interview.interviewState,
             message: interview.message || undefined,
             isLoading: false,
@@ -354,6 +364,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
           // 更新跨窗口状态
           setInterviewTrainingState({
+            interviewId: trainingInterviewId,
             interviewState: currentState,
             aiMessage: context.referenceAnswer || '',
             interviewerQuestion: context.currentQuestion || '',
@@ -461,6 +472,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
       // 【保存】初始化跨窗口状态
       setInterviewTrainingState({
+        interviewId: response.id,
         aiMessage: '',
         speechText: '',
         candidateAnswer: '',
@@ -485,6 +497,24 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         interviewId: response.id,
         resume: interviewData.resumesContent || '',
         jd: interviewData.jobContent || '',
+      });
+
+      // 【初始化】状态机（必须在开始监听前创建，否则暂停按钮无法工作）
+      const initialContext = {
+        interviewId: response.id,
+        jobPosition: selectedPosition,
+        resume: {
+          resumeTitle: selectedPosition?.resumeTitle,
+          resumeContent: selectedPosition?.resumeContent,
+        },
+        questionsBank: [],
+        currentQuestionIndex: 0,
+        totalQuestions: selectedPosition?.questionCount || 10,
+      };
+      const machine = startInterviewTraining(initialContext);
+      machine.onStateChange(async (state, context) => {
+        setInterviewState(state);
+        await handleStateChange(state, context);
       });
 
       // 【第三步开始】开始监听扬声器
@@ -527,10 +557,19 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
    */
   const startListeningInterviewer = async () => {
     try {
+      await logger.info(`[第三步-A] 开始扬声器识别, deviceId=${selectedSpeaker || 'default'}`);
+
+      // 先设置 currentPhase，确保 onText 回调触发时 useEffect 能正确同步到 UI
+      setInterviewTrainingState({
+        currentPhase: 'listening-interviewer',
+        interviewerQuestion: '',
+      });
+
       const controller = await startSpeakerRecognition({
         deviceId: selectedSpeaker || undefined,
         sessionId: 'interviewer-training',
         onText: (text) => {
+          logger.info(`[第三步-A] 扬声器识别 onText 回调: text="${text.substring(0, 100)}...", length=${text.length}`);
           // 实时更新面试官问题文本
           setInterviewTrainingState({
             interviewerQuestion: text,
@@ -545,19 +584,18 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
             interviewerQuestion: ''
           });
         },
-        onOpen: () => {},
-        onClose: () => {},
+        onOpen: () => {
+          logger.info(`[第三步-A] 扬声器识别 WebSocket 已连接`);
+        },
+        onClose: () => {
+          logger.info(`[第三步-A] 扬声器识别 WebSocket 已关闭`);
+        },
       });
 
       // 【保存】扬声器控制器到全局管理器（会触发持久化）
       setSpeakerController(controller, {
         deviceId: selectedSpeaker || '',
         sessionId: 'interviewer-training',
-      });
-
-      setInterviewTrainingState({
-        currentPhase: 'listening-interviewer',
-        interviewerQuestion: '',
       });
     } catch (error) {
       await logger.error(`[第三步-A] 启动扬声器监听失败: ${error}`);
@@ -622,61 +660,25 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         return;
       }
 
-      // 【保存】当前问题到显示
-      setCurrentLine(interviewerQuestion);
-
       setInterviewTrainingState({
         currentPhase: 'ai-generating',
         isLoading: true,
       });
 
-      // 【创建/更新】状态机
-      const interviewId = currentInterview.get();
-      if (!interviewId) {
-        throw new Error('面试 ID 不存在，无法继续');
+      // 【更新】状态机（状态机已在 handleStartInterview 中创建）
+      const machine = getTrainingStateMachine();
+      if (!machine) {
+        throw new Error('状态机不存在，请重新开始训练');
       }
 
-      if (!getTrainingStateMachine()) {
-        // 首次创建状态机
-        const initialContext = {
-          interviewId: interviewId,
-          jobPosition: selectedPosition,
-          resume: {
-            resumeTitle: selectedPosition?.resumeTitle,
-            resumeContent: selectedPosition?.resumeContent,
-          },
-          questionsBank: [],
-          currentQuestionIndex: 0,
-          totalQuestions: selectedPosition?.questionCount || 10,
-          currentQuestion: interviewerQuestion,
-        };
+      machine.updateContextPartial({
+        currentQuestion: interviewerQuestion,
+      });
 
-        const machine = startInterviewTraining(initialContext);
-
-        machine.onStateChange(async (state, context) => {
-          setInterviewState(state);
-          await handleStateChange(state, context);
-        });
-
-        // 发送事件进入生成答案阶段
-        machine.send({
-          type: 'QUESTION_RECEIVED',
-          payload: { question: interviewerQuestion }
-        });
-      } else {
-        // 更新现有状态机
-        const machine = getTrainingStateMachine();
-        if (machine) {
-          machine.updateContextPartial({
-            currentQuestion: interviewerQuestion,
-          });
-
-          machine.send({
-            type: 'QUESTION_RECEIVED',
-            payload: { question: interviewerQuestion }
-          });
-        }
-      }
+      machine.send({
+        type: 'QUESTION_RECEIVED',
+        payload: { question: interviewerQuestion }
+      });
 
     } catch (error) {
       await logger.error(`[第三步-D] 处理提问完毕失败: ${error}`);
@@ -707,45 +709,19 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         isLoading: true,
       });
 
-      const interviewId = currentInterview.get();
-      if (!interviewId) {
-        throw new Error('面试 ID 不存在');
+      // 【更新】状态机（状态机已在 handleStartInterview 中创建）
+      const machine = getTrainingStateMachine();
+      if (!machine) {
+        throw new Error('状态机不存在，请重新开始训练');
       }
 
-      // 创建或更新状态机
-      if (!getTrainingStateMachine()) {
-        const initialContext = {
-          interviewId: interviewId,
-          jobPosition: selectedPosition,
-          resume: {
-            resumeTitle: selectedPosition?.resumeTitle,
-            resumeContent: selectedPosition?.resumeContent,
-          },
-          questionsBank: [],
-          currentQuestionIndex: 0,
-          totalQuestions: selectedPosition?.questionCount || 10,
-          currentQuestion: question,
-        };
-
-        const machine = startInterviewTraining(initialContext);
-
-        machine.onStateChange(async (state, context) => {
-          setInterviewState(state);
-          await handleStateChange(state, context);
-        });
-      } else {
-        const machine = getTrainingStateMachine();
-        if (machine) {
-          const context = machine.getContext();
-          machine.updateContextPartial({
-            currentQuestion: question,
-            currentQuestionIndex: context.currentQuestionIndex + 1,
-          });
-        }
-      }
+      const context = machine.getContext();
+      machine.updateContextPartial({
+        currentQuestion: question,
+        currentQuestionIndex: context.currentQuestionIndex + 1,
+      });
 
       // 【保存】创建新的 review 记录（使用幂等保护）
-      const machine = getTrainingStateMachine();
       const currentIndex = machine?.getContext().currentQuestionIndex || 0;
       const existingQuestion = interviewDataService.getQuestionState(currentIndex);
       let reviewId: string;
