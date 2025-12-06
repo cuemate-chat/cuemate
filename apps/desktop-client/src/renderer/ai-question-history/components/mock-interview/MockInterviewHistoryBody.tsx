@@ -1,7 +1,6 @@
 import * as Tooltip from '@radix-ui/react-tooltip';
 import 'animate.css/animate.min.css';
 import { useEffect, useRef, useState } from 'react';
-import { Info } from 'lucide-react';
 import { logger } from '../../../../utils/rendererLogger.js';
 import { InterviewReview, conversationHistoryService } from '../../api/conversationHistoryService';
 
@@ -111,36 +110,37 @@ export function MockInterviewHistoryBody({
   };
 
   return (
-    <div className="ai-window-body conversation-history-body" ref={containerRef}>
-      {displayReviews.length === 0 && !isLoading ? (
-        // 查询结果为空时显示空状态
-        <div className="ai-empty-state">
-          <div className="ai-empty-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+    <Tooltip.Provider delayDuration={300} skipDelayDuration={500}>
+      <div className="ai-window-body conversation-history-body" ref={containerRef}>
+        {displayReviews.length === 0 && !isLoading ? (
+          // 查询结果为空时显示空状态
+          <div className="ai-empty-state">
+            <div className="ai-empty-icon">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="ai-empty-title">
+              {!interviewId ? '当前没有进行中的面试' : '暂无面试记录'}
+            </div>
+            <div className="ai-empty-description">
+              {!interviewId
+                ? '点击面试官窗口的"开始面试"按钮开始新的模拟面试'
+                : '当前面试还没有问答记录，开始回答问题后将显示在这里'}
+            </div>
           </div>
-          <div className="ai-empty-title">
-            {!interviewId ? '当前没有进行中的面试' : '暂无面试记录'}
+        ) : isLoading ? (
+          // 加载状态
+          <div className="ai-loading-state">
+            <div className="ai-loading-spinner" />
+            <div className="ai-loading-text">加载面试记录中...</div>
           </div>
-          <div className="ai-empty-description">
-            {!interviewId
-              ? '点击面试官窗口的"开始面试"按钮开始新的模拟面试'
-              : '当前面试还没有问答记录，开始回答问题后将显示在这里'}
-          </div>
-        </div>
-      ) : isLoading ? (
-        // 加载状态
-        <div className="ai-loading-state">
-          <div className="ai-loading-spinner" />
-          <div className="ai-loading-text">加载面试记录中...</div>
-        </div>
-      ) : (
-        // 面试记录卡片列表
-        <div className="conversation-list">
-          {displayReviews.map((review, index) => (
-            <Tooltip.Provider key={review.id}>
+        ) : (
+          // 面试记录卡片列表
+          <div className="conversation-list">
+            {displayReviews.map((review, index) => (
               <div
+                key={review.id}
                 className={`interview-review-card ${selectedReviewId === review.id ? 'interview-review-card-selected' : ''}`}
                 onClick={() => handleReviewClick(review)}
                 style={{ cursor: 'pointer' }}
@@ -152,57 +152,63 @@ export function MockInterviewHistoryBody({
                 <div className="review-section interviewer-section">
                   <div className="section-header">
                     <span className="review-label interviewer-label">面试官问题:</span>
-                    <div className="time-with-tooltip">
-                      <span className="created-time">{new Date(review.createdAt).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</span>
-                      <Tooltip.Root>
-                        <Tooltip.Trigger asChild>
-                          <Info size={14} className="tooltip-icon" />
-                        </Tooltip.Trigger>
-                        <Tooltip.Content className="radix-tooltip-content max-w-lg">
-                          <div className="tooltip-content">
-                            <div className="tooltip-section">
-                              <strong className="interviewer-label">面试官问题:</strong>
-                              <p>{review.askedQuestion}</p>
-                            </div>
-                            <div className="tooltip-section">
-                              <strong className="ai-label">AI 回答:</strong>
-                              <p>{review.referenceAnswer}</p>
-                            </div>
-                            <div className="tooltip-section">
-                              <strong className="candidate-label">我的回答:</strong>
-                              <p>{review.candidateAnswer}</p>
-                            </div>
-                          </div>
-                          <Tooltip.Arrow className="radix-tooltip-arrow" />
-                        </Tooltip.Content>
-                      </Tooltip.Root>
-                    </div>
+                    <span className="created-time">{new Date(review.createdAt).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</span>
                   </div>
-                  <div className="review-content">
-                    {truncateText(review.askedQuestion)}
-                  </div>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <span className="review-content">
+                        {truncateText(review.askedQuestion)}
+                      </span>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content className="radix-tooltip-content">
+                        {review.askedQuestion || '暂无内容'}
+                        <Tooltip.Arrow className="radix-tooltip-arrow" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
                 </div>
 
                 {/* AI 回答 */}
                 <div className="review-section ai-section">
                   <div className="review-label ai-label">AI 回答:</div>
-                  <div className="review-content">
-                    {truncateText(review.referenceAnswer)}
-                  </div>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <span className="review-content">
+                        {truncateText(review.referenceAnswer)}
+                      </span>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content className="radix-tooltip-content">
+                        {review.referenceAnswer || '暂无内容'}
+                        <Tooltip.Arrow className="radix-tooltip-arrow" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
                 </div>
 
                 {/* 我的回答 */}
                 <div className="review-section candidate-section">
                   <div className="review-label candidate-label">我的回答:</div>
-                  <div className="review-content">
-                    {truncateText(review.candidateAnswer)}
-                  </div>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <span className="review-content">
+                        {truncateText(review.candidateAnswer)}
+                      </span>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content className="radix-tooltip-content">
+                        {review.candidateAnswer || '暂无内容'}
+                        <Tooltip.Arrow className="radix-tooltip-arrow" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
                 </div>
               </div>
-            </Tooltip.Provider>
-          ))}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Tooltip.Provider>
   );
 }
