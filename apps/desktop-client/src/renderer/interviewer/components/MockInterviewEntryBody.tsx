@@ -330,8 +330,8 @@ export function MockInterviewEntryBody({
           });
         }
 
-        // 【恢复】如果是错误状态，显示错误信息
-        if (dbStatus === 'mock-interview-error' && interview.message) {
+        // 【恢复】如果是错误或 idle 状态，显示错误信息
+        if ((dbStatus === 'mock-interview-error' || dbStatus === 'idle') && interview.message) {
           setErrorMessage(interview.message);
         }
 
@@ -342,9 +342,11 @@ export function MockInterviewEntryBody({
         });
 
         // 【恢复】如果面试未结束，恢复状态机以继续面试流程
+        // idle 状态表示面试创建失败或异常终止，不应该恢复
         const isEnded = dbStatus === 'mock-interview-completed' ||
                         dbStatus === 'mock-interview-error' ||
-                        dbStatus === 'mock-interview-expired';
+                        dbStatus === 'mock-interview-expired' ||
+                        dbStatus === 'idle';
 
         if (!isEnded) {
           const machine = await restoreMockInterview(mockInterviewId);
@@ -509,7 +511,11 @@ export function MockInterviewEntryBody({
         locale: selectedLanguage,
         timezone: userData?.timezone || 'Asia/Shanghai',
         theme: userData?.theme || 'system',
-        selectedModelId: selectedModel?.id
+        selectedModelId: selectedModel?.id,
+        // 新增字段：回答模式和设备配置
+        answerMode: mockInterviewState.isAutoMode ? 'auto' as const : 'manual' as const,
+        microphoneDeviceId: selectedMic || undefined,
+        speakerDeviceId: selectedSpeaker || undefined,
       };
 
       // 【创建】保存到数据库

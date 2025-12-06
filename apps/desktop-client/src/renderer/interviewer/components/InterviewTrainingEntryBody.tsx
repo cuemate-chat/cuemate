@@ -312,8 +312,8 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
           });
         }
 
-        // 【恢复】如果是错误状态，显示错误信息
-        if (dbStatus === 'interview-training-error' && interview.message) {
+        // 【恢复】如果是错误或 idle 状态，显示错误信息
+        if ((dbStatus === 'interview-training-error' || dbStatus === 'idle') && interview.message) {
           setErrorMessage(interview.message);
         }
 
@@ -324,9 +324,11 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         });
 
         // 【恢复】如果训练未结束，恢复状态机以继续训练流程
+        // idle 状态表示训练创建失败或异常终止，不应该恢复
         const isEnded = dbStatus === 'interview-training-completed' ||
                         dbStatus === 'interview-training-error' ||
-                        dbStatus === 'interview-training-expired';
+                        dbStatus === 'interview-training-expired' ||
+                        dbStatus === 'idle';
 
         if (!isEnded) {
           const machine = await restoreInterviewTraining(trainingInterviewId);
@@ -436,7 +438,11 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         locale: selectedLanguage,
         timezone: userData?.timezone || 'Asia/Shanghai',
         theme: userData?.theme || 'system',
-        selectedModelId: selectedModel?.id
+        selectedModelId: selectedModel?.id,
+        // 新增字段：回答模式和设备配置
+        answerMode: trainingState.isAutoMode ? 'auto' as const : 'manual' as const,
+        microphoneDeviceId: selectedMic || undefined,
+        speakerDeviceId: selectedSpeaker || undefined,
       };
 
       // 【创建】保存到数据库
