@@ -315,6 +315,7 @@ export function MockInterviewEntryBody({
           const lastQuestion = result.questions[result.questions.length - 1];
           setCurrentLine(lastQuestion.askedQuestion || lastQuestion.question || '');
           setMockInterviewState({
+            interviewId: mockInterviewId,
             interviewState: interview.interviewState,
             aiMessage: lastQuestion.referenceAnswer || '',
             candidateAnswer: lastQuestion.candidateAnswer || '',
@@ -324,6 +325,7 @@ export function MockInterviewEntryBody({
         } else {
           // 没有问题数据时，只同步状态和消息
           setMockInterviewState({
+            interviewId: mockInterviewId,
             interviewState: interview.interviewState,
             message: interview.message || undefined,
             isLoading: false,

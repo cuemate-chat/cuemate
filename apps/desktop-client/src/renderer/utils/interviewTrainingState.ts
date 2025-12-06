@@ -8,6 +8,7 @@ export type TrainingPhase =
 
 // 跨窗口共享的面试训练状态（只用于运行时同步，不存 localStorage）
 export interface InterviewTrainingState {
+  interviewId?: string;                 // 面试 ID（用于跨窗口同步）
   aiMessage: string;                    // AI 参考答案（从数据库获取）
   speechText: string;                   // 实时语音转文字（运行时）
   candidateAnswer: string;              // 用户回答（从数据库获取）
@@ -40,6 +41,7 @@ const listeners = new Set<(s: InterviewTrainingState) => void>();
 
 function getDefaultState(): InterviewTrainingState {
   return {
+    interviewId: undefined,
     aiMessage: '',
     speechText: '',
     candidateAnswer: '',
@@ -62,6 +64,7 @@ export function getInterviewTrainingState(): InterviewTrainingState {
 
 export function setInterviewTrainingState(next: Partial<InterviewTrainingState>): InterviewTrainingState {
   currentState = {
+    interviewId: next.interviewId ?? currentState.interviewId,
     aiMessage: next.aiMessage ?? currentState.aiMessage,
     speechText: next.speechText ?? currentState.speechText,
     candidateAnswer: next.candidateAnswer ?? currentState.candidateAnswer,
