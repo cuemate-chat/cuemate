@@ -1,0 +1,72 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: CueMate ${{ github.ref_name }}
+          body: |
+            ## CueMate ${{ github.ref_name }}
+
+            # 快速开始
+
+            仅需两步快速安装 CueMate：
+              1. 准备一台 macOS 13.0 (Ventura) 及以上版本的 Mac 电脑，至少 10GB 可用磁盘空间；
+              2. 下载对应芯片的 DMG 安装包，双击运行安装向导即可完成安装。
+
+            已安装用户可下载增量更新包进行升级：
+              - Apple Silicon：`CueMate-${{ github.ref_name }}-macos-arm64-update.tar.gz`
+              - Intel：`CueMate-${{ github.ref_name }}-macos-x64-update.tar.gz`
+
+            # 产品文档
+
+            点击 [完整文档](https://cuemate.chat) 查看安装指南、功能手册和常见问题
+
+            # 更新内容
+            
+
+            详见 [版本说明](https://cuemate.chat/guide/changelog/versions/${{ github.ref_name }})
+
+            # 安装包下载
+
+            | 芯片类型 | 安装包 |
+            |---------|-------|
+            | Apple Silicon (M1/M2/M3) | `CueMate-${{ github.ref_name }}-macos-arm64-offline.dmg` |
+            | Intel | `CueMate-${{ github.ref_name }}-macos-x64-offline.dmg` |
+
+            **方式一：百度网盘（推荐国内用户）**
+
+            下载链接：https://pan.baidu.com/s/1cKVLf2_1BnRBgEkdL35K4Q?pwd=3477 提取码：`3477`
+
+            **方式二：GitHub Release**
+
+            由于安装包体积较大（约 5GB），超过 GitHub 2GB 限制，已拆分为多个分卷上传。下载后请合并：
+            ```bash
+            # ARM64 版本
+            cat CueMate-${{ github.ref_name }}-macos-arm64-offline.dmg.part* > CueMate-${{ github.ref_name }}-macos-arm64-offline.dmg
+
+            # x64 版本
+            cat CueMate-${{ github.ref_name }}-macos-x64-offline.dmg.part* > CueMate-${{ github.ref_name }}-macos-x64-offline.dmg
+            ```
+
+            # 反馈
+
+            - GitHub Issues: https://github.com/cuemate-chat/cuemate/issues
+            - Discussions: https://github.com/cuemate-chat/cuemate/discussions
+          draft: false
+          prerelease: false
+          generate_release_notes: true

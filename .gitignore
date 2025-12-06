@@ -107,3 +107,4 @@ private/
 
 # Installer generated files (do not commit)
 apps/desktop-client/resources/
+scripts/
