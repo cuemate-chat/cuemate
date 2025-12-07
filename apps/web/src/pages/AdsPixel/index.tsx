@@ -273,20 +273,13 @@ export default function AdsPixel() {
     if (isFullscreen) {
       // 退出全屏
       if (electronAPI?.setFullscreen) {
-        // Electron 环境：先退出元素全屏，再退出窗口全屏
-        try {
-          if (document.fullscreenElement) {
-            await document.exitFullscreen();
-          }
-        } catch {
-          // 忽略
-        }
-        // 等待元素全屏退出完成
-        await new Promise(resolve => setTimeout(resolve, 100));
-        await electronAPI.setFullscreen(false);
+        // Electron 环境：CSS 模拟退出 + 窗口退出全屏
+        // Electron 中 requestFullscreen 只会让窗口全屏，无法实现元素级全屏
+        // 所以只用 CSS 模拟（isFullscreen=false 会显示工具栏）+ 窗口全屏
         setIsFullscreen(false);
+        await electronAPI.setFullscreen(false);
       } else {
-        // 浏览器环境：直接退出元素全屏
+        // 浏览器环境：使用 Web Fullscreen API
         try {
           if (document.fullscreenElement) {
             await document.exitFullscreen();
@@ -299,18 +292,12 @@ export default function AdsPixel() {
     } else {
       // 进入全屏
       if (electronAPI?.setFullscreen) {
-        // Electron 环境：先窗口全屏，再元素全屏
-        await electronAPI.setFullscreen(true);
-        // 等待窗口全屏完成
-        await new Promise(resolve => setTimeout(resolve, 100));
-        try {
-          await containerRef.current?.requestFullscreen();
-        } catch {
-          // 忽略
-        }
+        // Electron 环境：CSS 模拟全屏 + 窗口全屏
+        // isFullscreen=true 会隐藏工具栏，广告区域占满整个窗口
         setIsFullscreen(true);
+        await electronAPI.setFullscreen(true);
       } else {
-        // 浏览器环境：直接元素全屏
+        // 浏览器环境：使用 Web Fullscreen API
         try {
           await containerRef.current?.requestFullscreen();
           setIsFullscreen(true);
@@ -338,8 +325,15 @@ export default function AdsPixel() {
           toggleFullscreen();
         }
         break;
+      case 'Escape':
+        // ESC 退出全屏
+        if (isFullscreen) {
+          e.preventDefault();
+          toggleFullscreen();
+        }
+        break;
     }
-  }, []);
+  }, [isFullscreen]);
 
   useEffect(() => {
     fetchData();
@@ -368,7 +362,7 @@ export default function AdsPixel() {
   }
 
   return (
-    <div className={`h-screen flex flex-col bg-white dark:bg-slate-900 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+    <div className={`h-screen flex flex-col bg-white dark:bg-slate-900 ${isFullscreen ? 'fixed inset-0 z-[9999]' : ''}`}>
       {/* 添加炫酷的高亮动画 CSS */}
       <style>{`
         .highlight-glow {
