@@ -192,7 +192,23 @@ export async function syncAdsFromCos(app: FastifyInstance): Promise<void> {
       }
     }
 
-    app.log.info(`广告同步完成: 新增 ${inserted} 条，跳过 ${skipped} 条`);
+    // 3. 删除 JSON 中不存在但数据库中存在的广告（以 JSON 为准）
+    const jsonIds = new Set(ads.map((ad) => ad.id));
+    const dbAds = db.prepare('SELECT id FROM pixel_ads').all() as { id: string }[];
+    const toDelete = dbAds.filter((dbAd) => !jsonIds.has(dbAd.id));
+
+    let deleted = 0;
+    for (const ad of toDelete) {
+      try {
+        db.prepare('DELETE FROM pixel_ads WHERE id = ?').run(ad.id);
+        deleted++;
+        app.log.info(`删除广告: ${ad.id}`);
+      } catch (err: any) {
+        app.log.error(`删除广告失败: ${ad.id} - ${err.message}`);
+      }
+    }
+
+    app.log.info(`广告同步完成: 新增 ${inserted} 条，跳过 ${skipped} 条，删除 ${deleted} 条`);
   } catch (err: any) {
     app.log.error(`同步 COS 广告数据失败: ${err.message}`);
   }
