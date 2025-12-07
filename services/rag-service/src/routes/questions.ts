@@ -43,19 +43,19 @@ export async function createQuestionRoutes(
       const documents = chunks.map((content, index) => {
         const metadata: Record<string, any> = {
           type: 'questions',
-          questionId: question.id,
-          jobId: question.job_id,
-          userId: question.user_id,
+          question_id: question.id,
+          job_id: question.job_id,
+          user_id: question.user_id,
           title: question.title,
           description: question.description,
-          chunkIndex: index,
-          totalChunks: chunks.length,
-          createdAt: question.created_at,
+          chunk_index: index,
+          total_chunks: chunks.length,
+          created_at: question.created_at,
           source: 'interview_question',
         };
-        // 只有当 tagId 和 tagName 有值时才添加到 metadata
-        if (question.tag_id) metadata.tagId = question.tag_id;
-        if (question.tag_name) metadata.tagName = question.tag_name;
+        // 只有当 tag_id 和 tag_name 有值时才添加到 metadata
+        if (question.tag_id) metadata.tag_id = question.tag_id;
+        if (question.tag_name) metadata.tag_name = question.tag_name;
 
         return {
           id:
@@ -90,7 +90,7 @@ export async function createQuestionRoutes(
     try {
       // 删除该押题的所有向量数据
       await deps.vectorStore.deleteByFilter(
-        { questionId },
+        { question_id: questionId },
         deps.config.vectorStore.questionsCollection,
       );
 
@@ -118,11 +118,11 @@ export async function createQuestionRoutes(
     };
 
     try {
-      // 构建过滤条件（ChromaDB metadata 使用 camelCase）
+      // 构建过滤条件（ChromaDB metadata 使用 snake_case）
       const filter: Record<string, any> = {};
-      if (job_id) filter.jobId = job_id;
-      if (user_id) filter.userId = user_id;
-      if (tag_id) filter.tagId = tag_id;
+      if (job_id) filter.job_id = job_id;
+      if (user_id) filter.user_id = user_id;
+      if (tag_id) filter.tag_id = tag_id;
       if (question_title) filter.title = question_title;
 
       const k = top_k ? parseInt(top_k) : deps.config.retrieval.topK;
@@ -168,7 +168,7 @@ export async function createQuestionRoutes(
       const results = await deps.vectorStore.searchByEmbedding(
         defaultEmbedding[0],
         k,
-        { jobId },
+        { job_id: jobId },
         deps.config.vectorStore.questionsCollection,
       );
 
@@ -199,7 +199,7 @@ export async function createQuestionRoutes(
       const results = await deps.vectorStore.searchByEmbedding(
         defaultEmbedding[0],
         k,
-        { tagId },
+        { tag_id: tagId },
         deps.config.vectorStore.questionsCollection,
       );
 
@@ -243,7 +243,7 @@ export async function createQuestionRoutes(
       const searchResults = await deps.vectorStore.searchByEmbedding(
         queryEmbedding,
         topK,
-        { jobId },
+        { job_id: jobId },
         deps.config.vectorStore.questionsCollection,
         query,
       );
@@ -267,7 +267,7 @@ export async function createQuestionRoutes(
           validMatches.push({
             score: result.score,
             keywordMatchRate,
-            questionId: result.metadata?.questionId,
+            questionId: result.metadata?.question_id,
             title: result.metadata?.title,
             metadata: result.metadata,
           });
@@ -383,7 +383,7 @@ export async function createQuestionRoutes(
       // 优先找面试押题
       const questionMatch = validResults.find((r) => r.collectionType === 'questions');
       if (questionMatch) {
-        questionId = questionMatch.metadata?.questionId;
+        questionId = questionMatch.metadata?.question_id;
         question = questionMatch.metadata?.title;
         answer = questionMatch.metadata?.description || '';
       }
@@ -465,7 +465,7 @@ export async function createQuestionRoutes(
           const results = await deps.vectorStore.searchByEmbedding(
             queryEmbedding,
             1, // 每个集合只取1条
-            { jobId },
+            { job_id: jobId },
             collection.name,
             query,
           );
@@ -476,7 +476,7 @@ export async function createQuestionRoutes(
 
             if (collection.type === 'questions') {
               // 押题
-              result.questionId = topResult.metadata?.questionId;
+              result.questionId = topResult.metadata?.question_id;
               result.question = topResult.metadata?.title;
               result.answer = topResult.metadata?.description || '';
               result.questionScore = topResult.score;

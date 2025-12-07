@@ -136,8 +136,8 @@ export async function createAIVectorRecordsRoutes(
       k?: number;
       interview_id?: string;
       note_type?: string;
-      createdFrom?: number;
-      createdTo?: number;
+      created_from?: number;
+      created_to?: number;
     };
   }>('/search/ai-vector-records', async (request, reply) => {
     try {
@@ -146,8 +146,8 @@ export async function createAIVectorRecordsRoutes(
         k = 100,
         interview_id,
         note_type,
-        createdFrom,
-        createdTo,
+        created_from,
+        created_to,
       } = request.query;
 
       // 构建过滤条件
@@ -156,16 +156,16 @@ export async function createAIVectorRecordsRoutes(
       if (note_type) filter.note_type = note_type;
 
       // 时间范围筛选
-      if (createdFrom || createdTo) {
-        if (createdFrom && createdTo) {
+      if (created_from || created_to) {
+        if (created_from && created_to) {
           filter.$and = [
-            { created_at: { $gte: createdFrom } },
-            { created_at: { $lte: createdTo } },
+            { created_at: { $gte: created_from } },
+            { created_at: { $lte: created_to } },
           ];
-        } else if (createdFrom) {
-          filter.created_at = { $gte: createdFrom };
-        } else if (createdTo) {
-          filter.created_at = { $lte: createdTo };
+        } else if (created_from) {
+          filter.created_at = { $gte: created_from };
+        } else if (created_to) {
+          filter.created_at = { $lte: created_to };
         }
       }
 

@@ -57,12 +57,12 @@ export class JobResumeService {
         content,
         metadata: {
           type: 'jobs',
-          jobId: job.id,
-          userId: job.user_id,
+          job_id: job.id,
+          user_id: job.user_id,
           title: job.title,
-          chunkIndex: index,
-          totalChunks: chunks.length,
-          createdAt: job.created_at,
+          chunk_index: index,
+          total_chunks: chunks.length,
+          created_at: job.created_at,
           source: 'job_description',
         },
         embedding: embeddings[index],
@@ -103,13 +103,13 @@ export class JobResumeService {
         content,
         metadata: {
           type: 'resumes',
-          jobId: resume.job_id,
-          userId: resume.user_id,
+          job_id: resume.job_id,
+          user_id: resume.user_id,
           title: resume.title,
-          filePath: resume.file_path || '', // 如果 undefined 则赋值为空字符串
-          chunkIndex: index,
-          totalChunks: chunks.length,
-          createdAt: resume.created_at,
+          file_path: resume.file_path || '', // 如果 undefined 则赋值为空字符串
+          chunk_index: index,
+          total_chunks: chunks.length,
+          created_at: resume.created_at,
           source: 'resume_content',
         },
         embedding: embeddings[index],
@@ -146,9 +146,9 @@ export class JobResumeService {
   async deleteJobData(jobId: string): Promise<void> {
     try {
       // 删除岗位相关的所有数据
-      await this.vectorStore.deleteByFilter({ jobId }, this.config.vectorStore.jobsCollection);
-      await this.vectorStore.deleteByFilter({ jobId }, this.config.vectorStore.resumesCollection);
-      await this.vectorStore.deleteByFilter({ jobId }, this.config.vectorStore.questionsCollection);
+      await this.vectorStore.deleteByFilter({ job_id: jobId }, this.config.vectorStore.jobsCollection);
+      await this.vectorStore.deleteByFilter({ job_id: jobId }, this.config.vectorStore.resumesCollection);
+      await this.vectorStore.deleteByFilter({ job_id: jobId }, this.config.vectorStore.questionsCollection);
 
       log.info('deleteJobData', `Deleted all vector data (jobs, resumes, questions) for job ${jobId}`);
     } catch (error) {
@@ -224,7 +224,7 @@ export class JobResumeService {
         filter.title = jobTitle;
       }
       if (tagId) {
-        filter.tagId = tagId;
+        filter.tag_id = tagId;
       }
 
       // 生成查询的向量嵌入

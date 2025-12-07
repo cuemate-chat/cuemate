@@ -70,11 +70,11 @@ export async function createDocumentRoutes(
     }
   }
 
-  // 统一按创建时间逆序排序（优先 metadata.createdAt，其次 metadata.timestamp）
+  // 统一按创建时间逆序排序（优先 metadata.created_at，其次 metadata.timestamp）
   function sortByCreatedAtDesc(results: Array<{ metadata?: Record<string, any> }>) {
     return results.sort((a: any, b: any) => {
-      const ta = a?.metadata?.createdAt ?? a?.metadata?.timestamp ?? 0;
-      const tb = b?.metadata?.createdAt ?? b?.metadata?.timestamp ?? 0;
+      const ta = a?.metadata?.created_at ?? a?.metadata?.timestamp ?? 0;
+      const tb = b?.metadata?.created_at ?? b?.metadata?.timestamp ?? 0;
       const na = typeof ta === 'number' ? ta : ta ? new Date(ta).getTime() : 0;
       const nb = typeof tb === 'number' ? tb : tb ? new Date(tb).getTime() : 0;
       return nb - na;
@@ -93,8 +93,8 @@ export async function createDocumentRoutes(
       }
 
       // 第二优先级：相关度相同时按时间倒序（新的在前）
-      const ta = a?.metadata?.createdAt ?? a?.metadata?.timestamp ?? 0;
-      const tb = b?.metadata?.createdAt ?? b?.metadata?.timestamp ?? 0;
+      const ta = a?.metadata?.created_at ?? a?.metadata?.timestamp ?? 0;
+      const tb = b?.metadata?.created_at ?? b?.metadata?.timestamp ?? 0;
       const na = typeof ta === 'number' ? ta : ta ? new Date(ta).getTime() : 0;
       const nb = typeof tb === 'number' ? tb : tb ? new Date(tb).getTime() : 0;
       return nb - na;
@@ -128,9 +128,9 @@ export async function createDocumentRoutes(
         content: chunk,
         metadata: {
           ...metadata,
-          chunkIndex: index,
-          totalChunks: chunks.length,
-          processedAt: Date.now(),
+          chunk_index: index,
+          total_chunks: chunks.length,
+          processed_at: Date.now(),
         },
         embedding: embeddings[index],
       }));
@@ -182,9 +182,9 @@ export async function createDocumentRoutes(
             content: chunk,
             metadata: {
               ...doc.metadata,
-              chunkIndex: index,
-              totalChunks: chunks.length,
-              processedAt: Date.now(),
+              chunk_index: index,
+              total_chunks: chunks.length,
+              processed_at: Date.now(),
             },
             embedding: embeddings[index],
           }));
@@ -262,8 +262,8 @@ export async function createDocumentRoutes(
 
       // 只传递 ChromaDB 兼容的筛选条件
       const chromaFilter: any = {};
-      if (parsedFilter.tagId) chromaFilter.tagId = parsedFilter.tagId;
-      if (parsedFilter.jobId) chromaFilter.jobId = parsedFilter.jobId;
+      if (parsedFilter.tagId) chromaFilter.tag_id = parsedFilter.tagId;
+      if (parsedFilter.jobId) chromaFilter.job_id = parsedFilter.jobId;
       if (parsedFilter.id) chromaFilter.id = parsedFilter.id;
 
       // 如果没有搜索条件，直接获取所有文档
@@ -329,7 +329,7 @@ export async function createDocumentRoutes(
       // 如果有时间筛选，在应用层过滤
       if (parsedFilter.needsTimeFilter && (parsedFilter.timeFrom || parsedFilter.timeTo)) {
         const filtered = searchResults.filter((doc) => {
-          const docTime = doc.metadata?.createdAt || doc.metadata?.timestamp;
+          const docTime = doc.metadata?.created_at || doc.metadata?.timestamp;
           if (!docTime) return false; // 如果没有时间戳，不显示该文档
 
           const timestamp = typeof docTime === 'number' ? docTime : new Date(docTime).getTime();
@@ -390,8 +390,8 @@ export async function createDocumentRoutes(
 
       // 只传递 ChromaDB 兼容的筛选条件
       const chromaFilter: any = {};
-      if (parsedFilter.tagId) chromaFilter.tagId = parsedFilter.tagId;
-      if (parsedFilter.jobId) chromaFilter.jobId = parsedFilter.jobId;
+      if (parsedFilter.tagId) chromaFilter.tag_id = parsedFilter.tagId;
+      if (parsedFilter.jobId) chromaFilter.job_id = parsedFilter.jobId;
       if (parsedFilter.id) chromaFilter.id = parsedFilter.id;
 
       // 如果没有搜索条件，直接获取所有文档
@@ -445,7 +445,7 @@ export async function createDocumentRoutes(
       // 如果有时间筛选，在应用层过滤
       if (parsedFilter.needsTimeFilter && (parsedFilter.timeFrom || parsedFilter.timeTo)) {
         const filtered = searchResults.filter((doc) => {
-          const docTime = doc.metadata?.createdAt || doc.metadata?.timestamp;
+          const docTime = doc.metadata?.created_at || doc.metadata?.timestamp;
           if (!docTime) return false; // 如果没有时间戳，不显示该文档
 
           const timestamp = typeof docTime === 'number' ? docTime : new Date(docTime).getTime();
@@ -506,8 +506,8 @@ export async function createDocumentRoutes(
 
       // 只传递 ChromaDB 兼容的筛选条件
       const chromaFilter: any = {};
-      if (parsedFilter.tagId) chromaFilter.tagId = parsedFilter.tagId;
-      if (parsedFilter.jobId) chromaFilter.jobId = parsedFilter.jobId;
+      if (parsedFilter.tagId) chromaFilter.tag_id = parsedFilter.tagId;
+      if (parsedFilter.jobId) chromaFilter.job_id = parsedFilter.jobId;
       if (parsedFilter.id) chromaFilter.id = parsedFilter.id;
 
       // 如果没有搜索条件，直接获取所有文档
@@ -561,7 +561,7 @@ export async function createDocumentRoutes(
       // 如果有时间筛选，在应用层过滤
       if (parsedFilter.needsTimeFilter && (parsedFilter.timeFrom || parsedFilter.timeTo)) {
         const filtered = searchResults.filter((doc) => {
-          const docTime = doc.metadata?.createdAt || doc.metadata?.timestamp;
+          const docTime = doc.metadata?.created_at || doc.metadata?.timestamp;
           if (!docTime) return false; // 如果没有时间戳，不显示该文档
 
           const timestamp = typeof docTime === 'number' ? docTime : new Date(docTime).getTime();
@@ -720,14 +720,14 @@ export async function createDocumentRoutes(
       // 根据文档类型获取关联信息
       if (doc.metadata.type === 'jobs') {
         // 岗位信息：获取对应的简历和押题
-        // 使用文档元数据中的 jobId 来查找关联的简历和押题
-        const jobId = doc.metadata.jobId;
+        // 使用文档元数据中的 job_id 来查找关联的简历和押题
+        const jobId = doc.metadata.job_id;
 
         if (jobId) {
           // 获取简历信息
           const resumes = await deps.vectorStore.getAllDocuments(
             1000,
-            { jobId: jobId },
+            { job_id: jobId },
             deps.config.vectorStore.resumesCollection,
           );
           relatedData.resumes = resumes;
@@ -735,12 +735,12 @@ export async function createDocumentRoutes(
           // 获取押题信息
           const questions = await deps.vectorStore.getAllDocuments(
             1000,
-            { jobId: jobId },
+            { job_id: jobId },
             deps.config.vectorStore.questionsCollection,
           );
           relatedData.questions = questions;
         } else {
-          // 如果没有 jobId，返回空数组
+          // 如果没有 job_id，返回空数组
           relatedData.resumes = [];
           relatedData.questions = [];
         }
@@ -749,12 +749,12 @@ export async function createDocumentRoutes(
         relatedData.jobs = [doc];
       } else if (doc.metadata.type === 'resumes') {
         // 简历信息：获取对应的岗位和押题
-        if (doc.metadata.jobId) {
+        if (doc.metadata.job_id) {
           // 获取岗位信息
-          // 岗位文档的 ID 格式是 job:{jobId}，所以需要使用 jobId 来查找
+          // 岗位文档的 ID 格式是 job:{jobId}，所以需要使用 job_id 来查找
           const jobs = await deps.vectorStore.getAllDocuments(
             1000,
-            { jobId: doc.metadata.jobId },
+            { job_id: doc.metadata.job_id },
             deps.config.vectorStore.jobsCollection,
           );
           relatedData.jobs = jobs;
@@ -762,7 +762,7 @@ export async function createDocumentRoutes(
           // 获取押题信息
           const questions = await deps.vectorStore.getAllDocuments(
             1000,
-            { jobId: doc.metadata.jobId },
+            { job_id: doc.metadata.job_id },
             deps.config.vectorStore.questionsCollection,
           );
           relatedData.questions = questions;
@@ -772,12 +772,12 @@ export async function createDocumentRoutes(
         relatedData.resumes = [doc];
       } else if (doc.metadata.type === 'questions') {
         // 押题信息：获取对应的岗位和简历
-        if (doc.metadata.jobId) {
+        if (doc.metadata.job_id) {
           // 获取岗位信息
-          // 岗位文档的 ID 格式是 job:{jobId}，所以需要使用 jobId 来查找
+          // 岗位文档的 ID 格式是 job:{jobId}，所以需要使用 job_id 来查找
           const jobs = await deps.vectorStore.getAllDocuments(
             1000,
-            { jobId: doc.metadata.jobId },
+            { job_id: doc.metadata.job_id },
             deps.config.vectorStore.jobsCollection,
           );
           relatedData.jobs = jobs;
@@ -785,7 +785,7 @@ export async function createDocumentRoutes(
           // 获取简历信息
           const resumes = await deps.vectorStore.getAllDocuments(
             1000,
-            { jobId: doc.metadata.jobId },
+            { job_id: doc.metadata.job_id },
             deps.config.vectorStore.resumesCollection,
           );
           relatedData.resumes = resumes;
