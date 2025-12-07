@@ -346,13 +346,6 @@ export default function PresetQuestionsList() {
             >
               新增题目
             </Button>
-            <Button
-              icon={<ArrowPathIcon className="w-4 h-4" />}
-              onClick={handleRefresh}
-              loading={loading}
-            >
-              刷新
-            </Button>
           </div>
 
           {/* 批量操作栏 */}
@@ -391,6 +384,13 @@ export default function PresetQuestionsList() {
                 onClick={onBatchDelete}
               >
                 批量删除
+              </Button>
+              <Button
+                icon={<ArrowPathIcon className="w-4 h-4" />}
+                onClick={handleRefresh}
+                loading={loading}
+              >
+                刷新
               </Button>
             </div>
           </div>
