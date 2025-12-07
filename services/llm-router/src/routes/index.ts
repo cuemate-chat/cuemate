@@ -38,7 +38,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         provider?: string;
         model?: string;
         credentials?: Record<string, any>;
-        modelParams?: Array<{ paramKey: string; value: any }>;
+        model_params?: Array<{ param_key: string; value: any }>;
       };
 
       if (!body.provider || !body.model) {
@@ -50,12 +50,21 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         provider: body.provider,
         model: body.model,
         credentials: body.credentials || {},
-        modelParams: body.modelParams || [],
+        model_params: body.model_params || [],
       };
 
+      // 记录收到的 model_params
+      log.info('completion', 'Request params', { provider: body.provider, model: body.model, model_params: body.model_params });
+
       // 从请求体中移除配置字段，保留消息内容
-      const { provider, model, credentials, modelParams, ...cleanedBody } = body;
+      const { provider, model, credentials, model_params, ...cleanedBody } = body;
       const response = await llmManager.complete(cleanedBody, runtimeConfig);
+
+      // 检查返回内容是否包含有效 JSON，如果不包含则记录警告日志
+      if (response.content && !response.content.match(/\{[\s\S]*\}/)) {
+        log.warn('completion', 'LLM response may not contain valid JSON', { provider: body.provider, model: body.model, content: response.content });
+      }
+
       return response;
     } catch (error) {
       log.error('completion', 'Completion request failed', {}, error);
@@ -73,7 +82,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         provider?: string;
         model?: string;
         credentials?: Record<string, any>;
-        modelParams?: Array<{ paramKey: string; value: any }>;
+        model_params?: Array<{ param_key: string; value: any }>;
       };
 
       if (!body.provider || !body.model) {
@@ -85,7 +94,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         provider: body.provider,
         model: body.model,
         credentials: body.credentials || {},
-        modelParams: body.modelParams || [],
+        model_params: body.model_params || [],
       };
 
       reply.raw.writeHead(200, {
@@ -94,7 +103,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         Connection: 'keep-alive',
       });
 
-      const { provider, model, credentials, modelParams, ...cleanedBody } = body;
+      const { provider, model, credentials, model_params, ...cleanedBody } = body;
 
       try {
         const stream = await llmManager.stream(cleanedBody, runtimeConfig);
@@ -152,9 +161,9 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         provider: 'openai',
         model: 'gpt-3.5-turbo',
         credentials: { apiKey: '', baseUrl: '' },
-        modelParams: [
-          { paramKey: 'temperature', value: 0.3 },
-          { paramKey: 'max_tokens', value: 200 },
+        model_params: [
+          { param_key: 'temperature', value: 0.3 },
+          { param_key: 'max_tokens', value: 200 },
         ],
       };
       const response = await llmManager.complete(outlineRequest, defaultConfig);
@@ -326,7 +335,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
           provider: providerId,
           model: model,
           credentials: config,
-          modelParams: [],
+          model_params: [],
         };
         chatOk = await provider.healthCheck(runtimeConfig);
       } catch (error) {
