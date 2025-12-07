@@ -8,9 +8,9 @@ import path from 'path';
 import { z } from 'zod';
 import { getRagServiceUrl, SERVICE_CONFIG } from '../config/services.js';
 import { buildPrefixedError } from '../utils/error-response.js';
+import { deleteNotificationsByResourceId, notifyJobCreated } from '../utils/notification-helper.js';
 import { logOperation, OPERATION_MAPPING } from '../utils/operation-logger-helper.js';
 import { OperationType } from '../utils/operation-logger.js';
-import { deleteNotificationsByResourceId, notifyJobCreated } from '../utils/notification-helper.js';
 
 export function registerJobRoutes(app: FastifyInstance) {
   // hook 已将 camelCase 转换为 snake_case
@@ -116,7 +116,7 @@ export function registerJobRoutes(app: FastifyInstance) {
           operation: OperationType.CREATE,
           message: `创建面试任务: ${body.title}`,
           status: 'success',
-          userId: payload.uid
+          userId: payload.uid,
         });
 
         // 发送通知
@@ -210,7 +210,13 @@ export function registerJobRoutes(app: FastifyInstance) {
             .prepare(
               'UPDATE resumes SET title=?, content=?, file_path=?, vector_status=0 WHERE id=? AND user_id=?',
             )
-            .run(body.resume_title || `${body.title}-简历`, body.resume_content, body.resume_file_path, r.id, payload.uid);
+            .run(
+              body.resume_title || `${body.title}-简历`,
+              body.resume_content,
+              body.resume_file_path,
+              r.id,
+              payload.uid,
+            );
         } else {
           app.db
             .prepare(
@@ -289,7 +295,7 @@ export function registerJobRoutes(app: FastifyInstance) {
         operation: OperationType.UPDATE,
         message: `更新面试任务: ${body.title}`,
         status: 'success',
-        userId: payload.uid
+        userId: payload.uid,
       });
 
       return { success: true };
@@ -299,7 +305,10 @@ export function registerJobRoutes(app: FastifyInstance) {
       if (err.name === 'ZodError') {
         return reply.code(400).send(buildPrefixedError('请求参数错误', err, 400));
       }
-      if (err.code === 'FST_JWT_NO_AUTHORIZATION_IN_HEADER' || err.code === 'FST_JWT_AUTHORIZATION_TOKEN_EXPIRED') {
+      if (
+        err.code === 'FST_JWT_NO_AUTHORIZATION_IN_HEADER' ||
+        err.code === 'FST_JWT_AUTHORIZATION_TOKEN_EXPIRED'
+      ) {
         return reply.code(401).send(buildPrefixedError('认证失败', err, 401));
       }
       return reply.code(500).send(buildPrefixedError('更新岗位失败', err, 500));
@@ -349,7 +358,9 @@ export function registerJobRoutes(app: FastifyInstance) {
       if (!file) {
         return reply
           .code(400)
-          .send(buildPrefixedError('简历上传失败', new Error('缺少文件，请选择要上传的简历文件'), 400));
+          .send(
+            buildPrefixedError('简历上传失败', new Error('缺少文件，请选择要上传的简历文件'), 400),
+          );
       }
 
       const mimetype: string = file.mimetype || '';
@@ -362,7 +373,11 @@ export function registerJobRoutes(app: FastifyInstance) {
 
       // 保存原始文件到 /opt/cuemate/pdf 目录
       try {
-        const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '');
+        const timestamp = new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace(/[-:]/g, '')
+          .replace('T', '');
         const extension = path.extname(filename) || '.pdf';
         const nameWithoutExt = path.basename(filename, extension);
         const newFilename = `${nameWithoutExt}_${timestamp}${extension}`;
@@ -435,7 +450,13 @@ export function registerJobRoutes(app: FastifyInstance) {
           app.log.error({ err: pdfError, filename }, 'PDF 解析失败');
           return reply
             .code(422)
-            .send(buildPrefixedError('简历上传失败', new Error(`PDF 文件解析失败：${pdfError.message}`), 422));
+            .send(
+              buildPrefixedError(
+                '简历上传失败',
+                new Error(`PDF 文件解析失败：${pdfError.message}`),
+                422,
+              ),
+            );
         }
       } else if (
         mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
@@ -449,7 +470,13 @@ export function registerJobRoutes(app: FastifyInstance) {
           app.log.error({ err: docxError, filename }, 'DOCX 解析失败');
           return reply
             .code(422)
-            .send(buildPrefixedError('简历上传失败', new Error(`DOCX 文件解析失败：${docxError.message}`), 422));
+            .send(
+              buildPrefixedError(
+                '简历上传失败',
+                new Error(`DOCX 文件解析失败：${docxError.message}`),
+                422,
+              ),
+            );
         }
       } else if (mimetype === 'application/msword' || lower.endsWith('.doc')) {
         try {
@@ -472,7 +499,13 @@ export function registerJobRoutes(app: FastifyInstance) {
           app.log.error({ err: docError, filename }, 'DOC 解析失败');
           return reply
             .code(422)
-            .send(buildPrefixedError('简历上传失败', new Error(`DOC 文件解析失败：${docError.message}`), 422));
+            .send(
+              buildPrefixedError(
+                '简历上传失败',
+                new Error(`DOC 文件解析失败：${docError.message}`),
+                422,
+              ),
+            );
         }
       } else {
         return reply
@@ -480,7 +513,9 @@ export function registerJobRoutes(app: FastifyInstance) {
           .send(
             buildPrefixedError(
               '简历上传失败',
-              new Error(`不支持的文件类型：${mimetype || '未知格式'}。仅支持 PDF、DOC 和 DOCX 格式。`),
+              new Error(
+                `不支持的文件类型：${mimetype || '未知格式'}。仅支持 PDF、DOC 和 DOCX 格式。`,
+              ),
               415,
             ),
           );
@@ -498,7 +533,10 @@ export function registerJobRoutes(app: FastifyInstance) {
           );
       }
 
-      app.log.info({ jobId, savedFilePath, textLength: text.length }, '文件解析成功，开始更新数据库');
+      app.log.info(
+        { jobId, savedFilePath, textLength: text.length },
+        '文件解析成功，开始更新数据库',
+      );
 
       // 查询该岗位对应的简历记录
       const resume = app.db
@@ -523,9 +561,12 @@ export function registerJobRoutes(app: FastifyInstance) {
       // 同步到 RAG 服务
       try {
         // 先删除旧的向量数据
-        await fetch(getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_DELETE}/${jobId}`), {
-          method: 'DELETE',
-        });
+        await fetch(
+          getRagServiceUrl(`${SERVICE_CONFIG.RAG_SERVICE.ENDPOINTS.JOBS_DELETE}/${jobId}`),
+          {
+            method: 'DELETE',
+          },
+        );
 
         // 重新处理岗位和简历
         const ragResponse = await fetch(
@@ -693,7 +734,7 @@ export function registerJobRoutes(app: FastifyInstance) {
       const jobInfo = app.db
         .prepare('SELECT title FROM jobs WHERE id=? AND user_id=?')
         .get(id, payload.uid);
-      
+
       if (!jobInfo) {
         app.log.error(`Job ${id} not found for user ${payload.uid}`);
         return reply.code(404).send({ error: '岗位不存在' });
@@ -771,7 +812,7 @@ export function registerJobRoutes(app: FastifyInstance) {
           operation: OperationType.DELETE,
           message: `删除面试任务: ${jobInfo.title}`,
           status: 'success',
-          userId: payload.uid
+          userId: payload.uid,
         });
       }
 
@@ -810,7 +851,7 @@ export function registerJobRoutes(app: FastifyInstance) {
                   optimization_count, error_message
            FROM resume_optimizations
            WHERE job_id = ? AND user_id = ?
-           ORDER BY created_at DESC`
+           ORDER BY created_at DESC`,
         )
         .all(jobId, payload.uid);
 
@@ -834,7 +875,7 @@ export function registerJobRoutes(app: FastifyInstance) {
                   optimized_resume, optimized_word_count, model_id, model_name, suggestion,
                   optimization_count, error_message, job_id
            FROM resume_optimizations
-           WHERE id = ? AND user_id = ?`
+           WHERE id = ? AND user_id = ?`,
         )
         .get(id, payload.uid);
 
@@ -854,15 +895,17 @@ export function registerJobRoutes(app: FastifyInstance) {
     try {
       const payload = await req.jwtVerify();
       const jobId = (req.params as any)?.jobId as string;
-      const body = z.object({
-        original_resume: z.string().min(1),
-        optimized_resume: z.string().optional(),
-        suggestion: z.string().optional(),
-        model_id: z.string().optional(),
-        model_name: z.string().optional(),
-        status: z.enum(['pending', 'processing', 'completed', 'failed']).default('pending'),
-        error_message: z.string().optional(),
-      }).parse(req.body);
+      const body = z
+        .object({
+          original_resume: z.string().min(1),
+          optimized_resume: z.string().optional(),
+          suggestion: z.string().optional(),
+          model_id: z.string().optional(),
+          model_name: z.string().optional(),
+          status: z.enum(['pending', 'processing', 'completed', 'failed']).default('pending'),
+          error_message: z.string().optional(),
+        })
+        .parse(req.body);
 
       // 检查岗位是否存在且属于当前用户
       const job = app.db
@@ -884,7 +927,7 @@ export function registerJobRoutes(app: FastifyInstance) {
            (id, user_id, job_id, status, original_resume, original_word_count,
             optimized_resume, optimized_word_count, model_id, model_name, suggestion,
             optimization_count, error_message, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))`
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))`,
         )
         .run(
           optimizationId,
@@ -898,12 +941,12 @@ export function registerJobRoutes(app: FastifyInstance) {
           body.model_id || null,
           body.model_name || null,
           body.suggestion || null,
-          body.error_message || null
+          body.error_message || null,
         );
 
       return {
         optimizationId,
-        message: '简历优化记录创建成功'
+        message: '简历优化记录创建成功',
       };
     } catch (err: any) {
       app.log.error({ err }, '创建简历优化记录失败');
@@ -919,16 +962,20 @@ export function registerJobRoutes(app: FastifyInstance) {
     try {
       const payload = await req.jwtVerify();
       const id = (req.params as any)?.id as string;
-      const body = z.object({
-        optimized_resume: z.string().optional(),
-        suggestion: z.string().optional(),
-        status: z.enum(['pending', 'processing', 'completed', 'failed']).optional(),
-        error_message: z.string().optional(),
-      }).parse(req.body);
+      const body = z
+        .object({
+          optimized_resume: z.string().optional(),
+          suggestion: z.string().optional(),
+          status: z.enum(['pending', 'processing', 'completed', 'failed']).optional(),
+          error_message: z.string().optional(),
+        })
+        .parse(req.body);
 
       // 检查记录是否存在且属于当前用户
       const existing = app.db
-        .prepare('SELECT id, optimization_count FROM resume_optimizations WHERE id = ? AND user_id = ?')
+        .prepare(
+          'SELECT id, optimization_count FROM resume_optimizations WHERE id = ? AND user_id = ?',
+        )
         .get(id, payload.uid);
 
       if (!existing) {
@@ -949,7 +996,7 @@ export function registerJobRoutes(app: FastifyInstance) {
                error_message = COALESCE(?, error_message),
                optimization_count = ?,
                updated_at = datetime('now', 'localtime')
-           WHERE id = ? AND user_id = ?`
+           WHERE id = ? AND user_id = ?`,
         )
         .run(
           body.optimized_resume || null,
@@ -959,12 +1006,12 @@ export function registerJobRoutes(app: FastifyInstance) {
           body.error_message || null,
           newOptimizationCount,
           id,
-          payload.uid
+          payload.uid,
         );
 
       return {
         success: true,
-        message: '简历优化记录更新成功'
+        message: '简历优化记录更新成功',
       };
     } catch (err: any) {
       app.log.error({ err }, '更新简历优化记录失败');
@@ -1009,7 +1056,7 @@ export function registerJobRoutes(app: FastifyInstance) {
 
       return {
         success: true,
-        message: '简历优化记录删除成功'
+        message: '简历优化记录删除成功',
       };
     } catch (err: any) {
       app.log.error({ err }, '删除简历优化记录失败');
@@ -1037,7 +1084,9 @@ export function registerJobRoutes(app: FastifyInstance) {
           .prepare('SELECT selected_model_id FROM users WHERE id = ?')
           .get(payload.uid);
         if (!user || !user.selected_model_id) {
-          return reply.code(400).send({ error: '用户未选择大模型，请先在设置中选择一个模型' });
+          return reply
+            .code(400)
+            .send({ error: '用户未选择大模型，请先在系统设置中选择一个 LLM 大模型' });
         }
 
         // 获取模型信息
@@ -1071,7 +1120,9 @@ export function registerJobRoutes(app: FastifyInstance) {
           .get('OptimizeResumePrompt');
 
         if (!promptRow) {
-          return reply.code(500).send(buildPrefixedError('简历优化失败', new Error('优化提示词模板不存在'), 500));
+          return reply
+            .code(500)
+            .send(buildPrefixedError('简历优化失败', new Error('优化提示词模板不存在'), 500));
         }
 
         // 渲染模板变量
