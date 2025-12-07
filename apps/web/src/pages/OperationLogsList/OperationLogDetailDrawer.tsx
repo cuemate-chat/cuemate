@@ -82,7 +82,7 @@ export default function OperationLogDetailDrawer({ open, onClose, logItem }: Ope
                 <div className="flex items-center py-3 border-b border-gray-100 dark:border-slate-700">
                   <span className="w-28 text-base font-black text-gray-900 dark:text-slate-100 flex-shrink-0">操作时间</span>
                   <span className="text-sm text-gray-700 dark:text-slate-200">
-                    {new Date(logItem.time * 1000).toLocaleString('zh-CN')}
+                    {new Date(logItem.time).toLocaleString('zh-CN')}
                   </span>
                 </div>
               </div>

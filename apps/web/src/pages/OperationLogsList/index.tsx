@@ -138,7 +138,7 @@ export default function OperationLogsList() {
       width: '17%',
       render: (record: OperationLog) => (
         <div className="text-sm text-slate-900 dark:text-slate-100">
-          {dayjs(record.time * 1000).format('YYYY-MM-DD HH:mm:ss')}
+          {dayjs(record.time).format('YYYY-MM-DD HH:mm:ss')}
         </div>
       ),
     },
