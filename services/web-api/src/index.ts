@@ -33,6 +33,7 @@ import { registerReviewRoutes } from './routes/reviews.js';
 import { registerVectorRoutes } from './routes/vectors.js';
 import { registerVersionRoutes } from './routes/versions.js';
 import { registerNotificationRoutes } from './routes/notifications.js';
+import { syncAdsFromCos } from './utils/ads-sync.js';
 import { logger as serviceLogger } from './utils/logger.js';
 import { OperationLogger } from './utils/operation-logger.js';
 import { CueMateWebSocketServer } from './websocket/websocket-server.js';
@@ -100,6 +101,13 @@ async function start() {
     await validateLicenseAtStartup(db, app.log);
   } catch (error: any) {
     app.log.error({ err: error }, 'License 检查过程中发生错误');
+  }
+
+  // 启动时同步 COS 广告数据
+  try {
+    await syncAdsFromCos(app as any);
+  } catch (error: any) {
+    app.log.error(`广告同步过程中发生错误: ${error.message}`);
   }
 
   // 全局日志钩子
