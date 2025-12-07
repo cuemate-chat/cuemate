@@ -75,22 +75,22 @@ const ResumeExampleDrawer: React.FC<ResumeExampleDrawerProps> = ({
               label: '教育与工作',
               children: (
                 <div className="text-sm text-slate-700 dark:text-white space-y-3">
-                  <div>教育背景：2018.09 - 2022.06  xxx 大学  xxx 学院  xxx 专业  本科  GPA：xxx/4.0  排名：Top xx%</div>
+                  <div>教育背景：2018.09 - 2022.06  xxx 大学  xxx 学院  计算机科学与技术  本科  GPA：xxx/4.0  排名：Top xx%</div>
                   <div>
                     工作经历：
                     <div className="mt-1 pl-4 space-y-2">
                       <div>
-                        2023.07 - 至今  xxx 科技有限公司  前端工程师  地点：xxx
+                        2023.07 - 至今  xxx 科技有限公司  Java 开发工程师  地点：xxx
                         <div className="mt-1 pl-4">
-                          <div>1) 负责 xxx 后台管理系统的需求评审、技术方案与实现，提升页面性能 xx%</div>
-                          <div>2) 与后端协作完成 xxx 模块的重构，Bug 率下降 xx%</div>
+                          <div>1) 负责 xxx 订单系统的核心模块开发，优化数据库查询，接口响应时间降低 xx%</div>
+                          <div>2) 设计并实现分布式任务调度系统，支撑日均 xx 万级任务处理</div>
                         </div>
                       </div>
                       <div>
-                        2022.07 - 2023.06  xxx 信息技术有限公司  前端工程师  地点：xxx
+                        2022.07 - 2023.06  xxx 信息技术有限公司  Java 开发工程师  地点：xxx
                         <div className="mt-1 pl-4">
-                          <div>1) 参与 xxx 小程序开发，上线后 DAU 达到 xx 万</div>
-                          <div>2) 构建组件库，提高复用率与研发效率</div>
+                          <div>1) 参与 xxx 电商平台后端开发，负责商品、库存模块，支撑日活 xx 万用户</div>
+                          <div>2) 引入 Redis 缓存方案，系统 QPS 提升 xx%</div>
                         </div>
                       </div>
                     </div>
@@ -107,23 +107,23 @@ const ResumeExampleDrawer: React.FC<ResumeExampleDrawerProps> = ({
                     项目经历：
                     <div className="mt-1 pl-4 space-y-2">
                       <div>
-                        项目一：xxx 平台重构（2024.03 - 2024.08）
+                        项目一：xxx 订单中台系统（2024.03 - 2024.08）
                         <div className="mt-1 pl-4">
-                          <div>职责：登录/权限/路由/报表等核心功能的实现与优化</div>
-                          <div>结果：首屏时间降低 xx%，问题单率下降 xx%</div>
+                          <div>职责：核心订单流程设计与开发，包括下单、支付、退款等模块，使用 DDD 架构</div>
+                          <div>结果：系统吞吐量提升 xx%，订单处理延迟降低至 xx ms</div>
                         </div>
                       </div>
                       <div>
-                        项目二：xxx 小程序（2023.01 - 2023.05）
+                        项目二：xxx 数据同步平台（2023.01 - 2023.05）
                         <div className="mt-1 pl-4">
-                          <div>职责：商品列表、下单、支付等核心流程开发与联调</div>
-                          <div>结果：上线首月 GMV 达到 xxx 万</div>
+                          <div>职责：基于 Canal + Kafka 实现 MySQL 数据实时同步至 ES，支持全文检索</div>
+                          <div>结果：数据同步延迟控制在 xx 秒内，查询性能提升 xx 倍</div>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div>
-                    个人技能：精通 TypeScript、React、Vue、Ant Design、Webpack/Vite；熟悉 Node.js、Fastify、数据库基础；了解 CI/CD、Docker、性能优化。
+                    个人技能：精通 Java、Spring Boot、MyBatis、MySQL；熟悉 Redis、Kafka、Elasticsearch、微服务架构；了解 Kubernetes、CI/CD、性能调优。
                   </div>
                   <div>
                     个人评价：沟通顺畅，主动推进跨团队协作；学习能力与问题定位能力强；责任心强，能抗压。
