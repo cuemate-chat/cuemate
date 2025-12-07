@@ -89,7 +89,7 @@ export function getAppIconPath(): string {
       return join(projectRoot, 'assets', 'logo-icon.png');
     } else {
       // 生产环境：从打包的 resources 目录获取
-      return join(app.getAppPath(), 'resources', 'logo-icon.png');
+      return join(process.resourcesPath, 'resources', 'logo-icon.png');
     }
   }
   if (process.platform === 'win32') {
