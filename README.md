@@ -23,22 +23,22 @@ CueMate 是一款开源的智能语音面试助手 - AI 驱动的实时面试训
 
 <table>
   <tr>
-    <td align="center" width="25%">
+    <td align="center" valign="top" width="25%">
       <img src="https://img.icons8.com/fluency/96/speed.png" width="48" height="48" alt="实时响应" />
       <br /><b>实时响应</b>
       <br /><sub>语音识别延迟 < 200ms<br />答案生成 < 1.5 秒</sub>
     </td>
-    <td align="center" width="25%">
+    <td align="center" valign="top" width="25%">
       <img src="https://img.icons8.com/fluency/96/artificial-intelligence.png" width="48" height="48" alt="智能准确" />
       <br /><b>智能准确</b>
       <br /><sub>24+ 主流 LLM 支持<br />RAG 知识库增强</sub>
     </td>
-    <td align="center" width="25%">
+    <td align="center" valign="top" width="25%">
       <img src="https://img.icons8.com/fluency/96/easy.png" width="48" height="48" alt="易于使用" />
       <br /><b>易于使用</b>
       <br /><sub>一键安装部署<br />直观现代化界面</sub>
     </td>
-    <td align="center" width="25%">
+    <td align="center" valign="top" width="25%">
       <img src="https://img.icons8.com/fluency/96/lock-2.png" width="48" height="48" alt="隐私安全" />
       <br /><b>隐私安全</b>
       <br /><sub>本地部署运行<br />数据不外传</sub>
@@ -50,32 +50,32 @@ CueMate 是一款开源的智能语音面试助手 - AI 驱动的实时面试训
 
 <table>
   <tr>
-    <td width="50%">
-      <h3>🎯 AI 模拟面试</h3>
-      <p>AI 扮演面试官角色，根据岗位 JD 和简历智能提问。支持语音对话，模拟真实面试场景，每次回答后获得即时评估和参考答案。</p>
+    <td valign="top" width="50%">
+      <h3><img src="https://img.icons8.com/fluency/48/goal.png" width="20" height="20" style="vertical-align: text-bottom" /> AI 模拟面试</h3>
+      <p>AI 扮演面试官角色，根据岗位 JD 自动提问并评估回答，提供完整的模拟面试体验。</p>
     </td>
-    <td width="50%">
-      <h3>🎙️ 面试训练（LIVE）</h3>
-      <p>真实面试场景的实时辅助。自动识别面试官问题（支持腾讯会议、Zoom、钉钉、飞书等），几秒内给出答案建议。</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <h3>💬 语音提问</h3>
-      <p>随时向 AI 提问技术问题或面试题，支持语音和文字输入，获得专业的回答建议。</p>
-    </td>
-    <td width="50%">
-      <h3>📚 知识库增强</h3>
-      <p>上传简历、岗位描述、面试押题，优先从个人知识库检索答案，确保回答贴合真实背景。</p>
+    <td valign="top" width="50%">
+      <h3><img src="https://img.icons8.com/fluency/48/microphone.png" width="20" height="20" style="vertical-align: text-bottom" /> 面试训练</h3>
+      <p>实时识别面试官的问题，从知识库中检索相关答案，并给出专业的回答建议。</p>
     </td>
   </tr>
   <tr>
-    <td width="50%">
-      <h3>📊 面试复盘</h3>
-      <p>每次面试后生成详细报告，包含五维能力雷达图、综合评分、逐题分析、改进建议。</p>
+    <td valign="top" width="50%">
+      <h3><img src="https://img.icons8.com/fluency/48/chat.png" width="20" height="20" style="vertical-align: text-bottom" /> 语音提问</h3>
+      <p>通过文字或语音向 AI 提问技术问题或面试题，快速获取专业答案建议。</p>
     </td>
-    <td width="50%">
-      <h3>🤖 多模型支持</h3>
+    <td valign="top" width="50%">
+      <h3><img src="https://img.icons8.com/fluency/48/book.png" width="20" height="20" style="vertical-align: text-bottom" /> 知识库增强</h3>
+      <p>上传简历、岗位描述、面试押题到向量知识库，支持语义搜索，确保回答贴合真实背景。</p>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top" width="50%">
+      <h3><img src="https://img.icons8.com/fluency/48/combo-chart.png" width="20" height="20" style="vertical-align: text-bottom" /> 面试复盘</h3>
+      <p>查看历史面试记录，分析回答质量，总结经验教训。</p>
+    </td>
+    <td valign="top" width="50%">
+      <h3><img src="https://img.icons8.com/fluency/48/robot.png" width="20" height="20" style="vertical-align: text-bottom" /> 多模型支持</h3>
       <p>支持 OpenAI、Claude、Gemini、DeepSeek、Kimi、智谱、通义千问等 24+ 种大语言模型，也支持本地 Ollama。</p>
     </td>
   </tr>
@@ -85,17 +85,17 @@ CueMate 是一款开源的智能语音面试助手 - AI 驱动的实时面试训
 
 <table>
   <tr>
-    <td align="center" width="33%">
-      <h3>🎓 模拟面试训练</h3>
-      <p>AI 模拟面试官根据岗位 JD 自动提问<br />评估回答质量，给出评分和改进建议<br />针对薄弱环节反复练习</p>
+    <td align="center" valign="top" width="33%">
+      <h3><img src="https://img.icons8.com/fluency/48/graduation-cap.png" width="20" height="20" style="vertical-align: text-bottom" /> 模拟面试训练</h3>
+      <p>AI 根据岗位 JD 自动提问<br />评估回答给出改进建议<br />针对薄弱环节反复练习</p>
     </td>
-    <td align="center" width="33%">
-      <h3>📝 面试准备</h3>
-      <p>上传简历、项目文档构建知识库<br />创建和管理个性化面试题库<br />测试麦克风和扬声器设备</p>
+    <td align="center" valign="top" width="33%">
+      <h3><img src="https://img.icons8.com/fluency/48/edit-file.png" width="20" height="20" style="vertical-align: text-bottom" /> 面试准备</h3>
+      <p>上传简历项目文档建知识库<br />创建管理个性化面试题库<br />测试麦克风和扬声器设备</p>
     </td>
-    <td align="center" width="33%">
-      <h3>🚀 技能提升</h3>
-      <p>训练结构化表达（STAR 法则）<br />模拟连续快速提问增强心理承受力<br />支持英语面试练习</p>
+    <td align="center" valign="top" width="33%">
+      <h3><img src="https://img.icons8.com/fluency/48/rocket.png" width="20" height="20" style="vertical-align: text-bottom" /> 技能提升</h3>
+      <p>训练结构化表达 STAR 法则<br />模拟快速提问增强承受力<br />支持中英双语面试练习</p>
     </td>
   </tr>
 </table>
@@ -104,22 +104,22 @@ CueMate 是一款开源的智能语音面试助手 - AI 驱动的实时面试训
 
 <table>
   <tr>
-    <td align="center">
-      <img src="docs/assets/screenshots/control-bar.png" alt="悬浮控制栏" width="400" />
+    <td align="center" valign="top">
+      <img src="docs/assets/screenshots/control-bar.png" alt="悬浮控制栏" width="400" height="200" />
       <br /><sub><b>悬浮控制栏</b></sub>
     </td>
-    <td align="center">
-      <img src="docs/assets/screenshots/mock-interview-window.png" alt="AI 模拟面试" width="400" />
+    <td align="center" valign="top">
+      <img src="docs/assets/screenshots/mock-interview-window.png" alt="AI 模拟面试" width="400" height="200" />
       <br /><sub><b>AI 模拟面试</b></sub>
     </td>
   </tr>
   <tr>
-    <td align="center">
-      <img src="docs/assets/screenshots/interview-training.png" alt="面试训练" width="400" />
+    <td align="center" valign="top">
+      <img src="docs/assets/screenshots/interview-training.png" alt="面试训练" width="400" height="200" />
       <br /><sub><b>LIVE 面试训练</b></sub>
     </td>
-    <td align="center">
-      <img src="docs/assets/screenshots/interview-card.png" alt="面试复盘" width="400" />
+    <td align="center" valign="top">
+      <img src="docs/assets/screenshots/interview-card.png" alt="面试复盘" width="400" height="200" />
       <br /><sub><b>面试复盘</b></sub>
     </td>
   </tr>
@@ -129,27 +129,27 @@ CueMate 是一款开源的智能语音面试助手 - AI 驱动的实时面试训
 
 ### 系统要求
 
-| 项目 | 要求 |
-|-----|------|
-| 操作系统 | macOS 13.0 (Ventura) 及以上版本 |
-| 芯片 | Apple Silicon (M1/M2/M3) 或 Intel |
-| 内存 | 4GB RAM（推荐 8GB） |
-| 存储空间 | 至少 10GB 可用空间 |
-| 必需软件 | Docker Desktop 4.0+ |
+| 项目 | 最低配置 | 推荐配置 |
+|-----|---------|---------|
+| 操作系统 | macOS 13.0 (Ventura) | macOS 15 (Sequoia) |
+| 处理器 | Intel Core i5 双核 / Apple Silicon | Intel Core i7 四核 / M1 Pro+ |
+| 内存 | 4GB RAM | 8GB RAM |
+| 存储空间 | 10GB 可用空间 | 15GB 可用空间 |
+| 必需软件 | Docker Desktop 4.0+（安装包已内置） | - |
 
 ### 下载安装
 
 <table>
   <tr>
     <td align="center" width="50%">
-      <h3>📦 百度网盘（推荐国内用户）</h3>
+      <h3><img src="https://img.icons8.com/fluency/48/box.png" width="20" height="20" style="vertical-align: text-bottom" /> 百度网盘（推荐国内用户）</h3>
       <p>
         <a href="https://pan.baidu.com/s/1cKVLf2_1BnRBgEkdL35K4Q?pwd=3477">点击下载</a>
         <br />提取码：<code>3477</code>
       </p>
     </td>
     <td align="center" width="50%">
-      <h3>🐙 GitHub Release</h3>
+      <h3><img src="https://img.icons8.com/fluency/48/github.png" width="20" height="20" style="vertical-align: text-bottom" /> GitHub Release</h3>
       <p>
         <a href="https://github.com/cuemate-chat/cuemate/releases">前往下载</a>
         <br />适合海外用户
@@ -162,7 +162,7 @@ CueMate 是一款开源的智能语音面试助手 - AI 驱动的实时面试训
 
 1. 根据芯片类型下载对应的 DMG 安装包
 2. 双击打开 DMG 文件，按照安装向导完成安装（约 5 分钟）
-3. 使用内置账号登录（用户名：`admin`，密码：`cuemate`）
+3. 使用内置账号登录（默认用户名：`admin`，密码：`cuemate`）
 
 ## 文档
 
@@ -175,21 +175,9 @@ CueMate 是一款开源的智能语音面试助手 - AI 驱动的实时面试训
 
 ## 社区与支持
 
-- 💬 **问题反馈**：[GitHub Issues](https://github.com/cuemate-chat/cuemate/issues)
-- 💡 **功能建议**：[GitHub Discussions](https://github.com/cuemate-chat/cuemate/discussions)
+- <img src="https://img.icons8.com/fluency/48/speech-bubble.png" width="20" height="20" style="vertical-align: text-bottom" /> **问题反馈**：[GitHub Issues](https://github.com/cuemate-chat/cuemate/issues)
+- <img src="https://img.icons8.com/fluency/48/idea.png" width="20" height="20" style="vertical-align: text-bottom" /> **功能建议**：[GitHub Discussions](https://github.com/cuemate-chat/cuemate/discussions)
 
 ## 开源协议
 
 CueMate 基于 [GPL-3.0](LICENSE) 协议开源。
-
----
-
-<div align="center">
-
-**如果 CueMate 对你有帮助，请给我们一个 ⭐ Star 支持一下！**
-
-<a href="https://github.com/cuemate-chat/cuemate">
-  <img src="https://img.shields.io/github/stars/cuemate-chat/cuemate?style=social" alt="GitHub Stars" />
-</a>
-
-</div>
