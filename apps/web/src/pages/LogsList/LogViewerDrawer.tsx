@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Input } from 'antd';
 import { fetchLogContent, LogLevel } from '../../api/logs';
 import DrawerProvider, { DrawerContent, DrawerHeader } from '../../components/DrawerProvider';
 import { message } from '../../components/Message';
@@ -34,6 +35,9 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
   const [selectedLines, setSelectedLines] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
 
+  // 搜索过滤
+  const [searchQuery, setSearchQuery] = useState('');
+
   useEffect(() => {
     if (open && logItem) {
       loadLogContent();
@@ -41,8 +45,21 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
       setLogContent(null);
       setSelectedLines(new Set());
       setSelectAll(false);
+      setSearchQuery('');
     }
   }, [open, logItem]);
+
+  // 过滤后的日志行（保留原始索引）
+  const filteredLines = useMemo(() => {
+    if (!logContent) return [];
+    if (!searchQuery.trim()) {
+      return logContent.lines.map((line, index) => ({ line, originalIndex: index }));
+    }
+    const query = searchQuery.toLowerCase();
+    return logContent.lines
+      .map((line, index) => ({ line, originalIndex: index }))
+      .filter(({ line }) => line.toLowerCase().includes(query));
+  }, [logContent, searchQuery]);
 
   const loadLogContent = async () => {
     if (!logItem) return;
@@ -180,6 +197,20 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
                   全选 ({selectedLines.size}/{logContent?.lines.length || 0})
                 </span>
               </label>
+              {/* 搜索框 */}
+              <Input
+                placeholder="搜索日志内容..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                allowClear
+                style={{ width: 240 }}
+                className="h-[36px]"
+              />
+              {searchQuery && (
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  匹配 {filteredLines.length} / {logContent?.lines.length || 0} 行
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <div className="text-sm text-slate-600 dark:text-slate-300">
@@ -218,26 +249,26 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
           ) : logContent ? (
             <div className="h-full overflow-y-auto bg-slate-50 dark:bg-slate-900">
               <div className="p-4 space-y-1">
-                {logContent.lines.map((line, index) => {
-                  const isSelected = selectedLines.has(index);
+                {filteredLines.map(({ line, originalIndex }) => {
+                  const isSelected = selectedLines.has(originalIndex);
                   const isJson = line.trim().startsWith('{') || line.trim().startsWith('[');
 
                   return (
                     <div
-                      key={index}
+                      key={originalIndex}
                       className={`group relative p-3 rounded-lg border transition-all cursor-pointer ${
                         isSelected
                           ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 shadow-sm'
                           : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                       }`}
-                      onClick={() => handleLineSelect(index)}
+                      onClick={() => handleLineSelect(originalIndex)}
                     >
                       {/* 复选框 */}
                       <div className="absolute left-3 top-3">
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => handleLineSelect(index)}
+                          onChange={() => handleLineSelect(originalIndex)}
                           className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
                           onClick={(e) => e.stopPropagation()}
                         />
@@ -245,7 +276,7 @@ export default function LogViewerDrawer({ open, onClose, logItem }: LogViewerDra
 
                       {/* 行号 */}
                       <div className="absolute left-10 top-3 text-xs text-slate-400 dark:text-slate-500 font-mono">
-                        {index + 1}
+                        {originalIndex + 1}
                       </div>
 
                       {/* 日志内容 */}
