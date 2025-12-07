@@ -516,6 +516,56 @@ export function setupIPC(windowManager: WindowManager): void {
   });
 
   /**
+   * 切换主内容窗口全屏状态
+   */
+  ipcMain.handle('main-content-toggle-fullscreen', async () => {
+    try {
+      const mainContentWindow = windowManager.getMainContentWindow();
+      if (mainContentWindow) {
+        mainContentWindow.toggleFullScreen();
+        return { success: true, isFullscreen: mainContentWindow.isFullScreen() };
+      }
+      return { success: false, error: '主内容窗口未找到' };
+    } catch (error) {
+      log.error('main-content-toggle-fullscreen', '切换主内容窗口全屏失败', {}, error);
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 设置主内容窗口全屏状态
+   */
+  ipcMain.handle('main-content-set-fullscreen', async (_event, fullscreen: boolean) => {
+    try {
+      const mainContentWindow = windowManager.getMainContentWindow();
+      if (mainContentWindow) {
+        mainContentWindow.setFullScreen(fullscreen);
+        return { success: true, isFullscreen: fullscreen };
+      }
+      return { success: false, error: '主内容窗口未找到' };
+    } catch (error) {
+      log.error('main-content-set-fullscreen', '设置主内容窗口全屏失败', {}, error);
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
+   * 获取主内容窗口全屏状态
+   */
+  ipcMain.handle('main-content-is-fullscreen', async () => {
+    try {
+      const mainContentWindow = windowManager.getMainContentWindow();
+      if (mainContentWindow) {
+        return { success: true, isFullscreen: mainContentWindow.isFullScreen() };
+      }
+      return { success: false, isFullscreen: false, error: '主内容窗口未找到' };
+    } catch (error) {
+      log.error('main-content-is-fullscreen', '获取主内容窗口全屏状态失败', {}, error);
+      return { success: false, isFullscreen: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  /**
    * 显示 AI 问答窗口
    */
   ipcMain.handle('show-ai-question', async () => {

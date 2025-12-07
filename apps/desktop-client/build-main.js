@@ -108,6 +108,10 @@ async function buildPreloadScripts(watchMode = false) {
       entry: resolve(__dirname, 'src/main/preload/tray-menu.ts'),
       output: resolve(__dirname, 'dist/main/preload/tray-menu.js'),
     },
+    {
+      entry: resolve(__dirname, 'src/main/preload/mainContent.ts'),
+      output: resolve(__dirname, 'dist/main/preload/mainContent.js'),
+    },
   ];
 
   try {

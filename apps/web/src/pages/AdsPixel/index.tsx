@@ -268,24 +268,65 @@ export default function AdsPixel() {
 
   // 全屏切换
   const toggleFullscreen = async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await containerRef.current?.requestFullscreen();
-        setIsFullscreen(true);
+    const electronAPI = (window as any).electronAPI;
+
+    if (isFullscreen) {
+      // 退出全屏
+      if (electronAPI?.setFullscreen) {
+        // Electron 环境：先退出元素全屏，再退出窗口全屏
+        try {
+          if (document.fullscreenElement) {
+            await document.exitFullscreen();
+          }
+        } catch {
+          // 忽略
+        }
+        // 等待元素全屏退出完成
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await electronAPI.setFullscreen(false);
+        setIsFullscreen(false);
       } else {
-        await document.exitFullscreen();
+        // 浏览器环境：直接退出元素全屏
+        try {
+          if (document.fullscreenElement) {
+            await document.exitFullscreen();
+          }
+        } catch {
+          // 忽略
+        }
         setIsFullscreen(false);
       }
-    } catch (error) {
-      message.error('全屏功能不可用:' + error);
+    } else {
+      // 进入全屏
+      if (electronAPI?.setFullscreen) {
+        // Electron 环境：先窗口全屏，再元素全屏
+        await electronAPI.setFullscreen(true);
+        // 等待窗口全屏完成
+        await new Promise(resolve => setTimeout(resolve, 100));
+        try {
+          await containerRef.current?.requestFullscreen();
+        } catch {
+          // 忽略
+        }
+        setIsFullscreen(true);
+      } else {
+        // 浏览器环境：直接元素全屏
+        try {
+          await containerRef.current?.requestFullscreen();
+          setIsFullscreen(true);
+        } catch {
+          // CSS fallback
+          setIsFullscreen(true);
+        }
+      }
     }
   };
 
   // 监听全屏状态变化
-  const handleFullscreenChange = () => {
-    const newFullscreenState = !!document.fullscreenElement;
-    setIsFullscreen(newFullscreenState);
-  };
+  const handleFullscreenChange = useCallback(() => {
+    const isCurrentlyFullscreen = !!document.fullscreenElement;
+    setIsFullscreen(isCurrentlyFullscreen);
+  }, []);
 
   // 键盘快捷键
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -320,7 +361,7 @@ export default function AdsPixel() {
       window.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [handleKeyDown]);  // 事件监听的依赖
+  }, [handleKeyDown, handleFullscreenChange]);
 
   if (loading) {
     return <PageLoading tip="加载像素广告位中..." />;

@@ -401,6 +401,13 @@ export class WindowManager {
   }
 
   /**
+   * 获取主内容窗口实例
+   */
+  public getMainContentWindow(): MainContentWindow {
+    return this.mainContentWindow;
+  }
+
+  /**
    * 显示 AI 问答窗口
    */
   public showAIQuestion(): void {

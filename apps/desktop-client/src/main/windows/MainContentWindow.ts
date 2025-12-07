@@ -72,6 +72,7 @@ export class MainContentWindow {
         resizable: this.config.resizable,
         minimizable: this.config.minimizable,
         maximizable: this.config.maximizable,
+        fullscreenable: true, // 允许 HTML5 Fullscreen API
         closable: this.config.closable,
         focusable: this.config.focusable,
         show: false, // 创建时不显示，由 WindowManager 控制
@@ -181,6 +182,16 @@ export class MainContentWindow {
     // 页面加载完成
     this.window.webContents.on('did-finish-load', () => {});
 
+    // HTML5 全屏 API 支持 - 进入全屏
+    this.window.webContents.on('enter-html-full-screen', () => {
+      log.debug('setupEvents', 'HTML5 进入全屏');
+    });
+
+    // HTML5 全屏 API 支持 - 退出全屏
+    this.window.webContents.on('leave-html-full-screen', () => {
+      log.debug('setupEvents', 'HTML5 退出全屏');
+    });
+
     // 处理渲染进程崩溃
     this.window.webContents.on('render-process-gone', (_event, details) => {
       log.error('setupEvents', 'main-content 渲染进程崩溃', { reason: details.reason, exitCode: details.exitCode });
@@ -285,6 +296,39 @@ export class MainContentWindow {
         this.window.maximize();
       }
     }
+  }
+
+  /**
+   * 切换全屏状态
+   */
+  public toggleFullScreen(): void {
+    if (this.window && !this.window.isDestroyed()) {
+      const isFullScreen = this.window.isFullScreen();
+      this.window.setFullScreen(!isFullScreen);
+      // 通知渲染进程全屏状态变化
+      this.window.webContents.send('window-fullscreen-changed', !isFullScreen);
+    }
+  }
+
+  /**
+   * 设置全屏状态
+   */
+  public setFullScreen(fullscreen: boolean): void {
+    if (this.window && !this.window.isDestroyed()) {
+      this.window.setFullScreen(fullscreen);
+      // 通知渲染进程全屏状态变化
+      this.window.webContents.send('window-fullscreen-changed', fullscreen);
+    }
+  }
+
+  /**
+   * 获取全屏状态
+   */
+  public isFullScreen(): boolean {
+    if (this.window && !this.window.isDestroyed()) {
+      return this.window.isFullScreen();
+    }
+    return false;
   }
 
   /**

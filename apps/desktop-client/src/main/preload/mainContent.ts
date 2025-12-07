@@ -15,6 +15,7 @@ const mainContentAPI = {
       'window-moved',
       'window-maximized',
       'window-minimized',
+      'window-fullscreen-changed',
     ];
 
     if (allowedChannels.includes(channel)) {
@@ -37,6 +38,16 @@ const mainContentAPI = {
 
   // 在外部浏览器中打开链接
   openExternalUrl: (url: string) => ipcRenderer.invoke('open-external-url', url),
+
+  // === 全屏控制 API ===
+  // 切换全屏状态
+  toggleFullscreen: () => ipcRenderer.invoke('main-content-toggle-fullscreen'),
+
+  // 设置全屏状态
+  setFullscreen: (fullscreen: boolean) => ipcRenderer.invoke('main-content-set-fullscreen', fullscreen),
+
+  // 获取全屏状态
+  isFullscreen: () => ipcRenderer.invoke('main-content-is-fullscreen'),
 };
 
 // 通过 contextBridge 安全地暴露 API
