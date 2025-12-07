@@ -80,7 +80,7 @@ class AIService {
   async callAI(messages: ChatMessage[]): Promise<string> {
     const userData = await this.getUserData();
     if (!userData?.model) {
-      throw new Error('请先在设置中配置大模型');
+      throw new Error('请先在系统设置中配置 LLM 大模型供应商');
     }
 
     const { model, modelParams } = userData;
@@ -116,7 +116,13 @@ class AIService {
 
     if (!response.ok) {
       const errorText = await response.text();
-      await log.http.error('callAI', url, new Error(`HTTP ${response.status}`), requestBody, errorText);
+      await log.http.error(
+        'callAI',
+        url,
+        new Error(`HTTP ${response.status}`),
+        requestBody,
+        errorText,
+      );
       throw new Error(`AI 调用失败: ${response.status} - ${errorText}`);
     }
 
@@ -162,7 +168,7 @@ class AIService {
   ): Promise<void> {
     const userData = await this.getUserData();
     if (!userData?.model) {
-      throw new Error('请先在设置中配置大模型');
+      throw new Error('请先在系统设置中配置 LLM 大模型供应商');
     }
 
     const { model, modelParams } = userData;
@@ -195,7 +201,13 @@ class AIService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        await log.http.error('callAIStream', url, new Error(`HTTP ${response.status}`), requestBody, errorText);
+        await log.http.error(
+          'callAIStream',
+          url,
+          new Error(`HTTP ${response.status}`),
+          requestBody,
+          errorText,
+        );
         onChunk({
           content: '',
           finished: true,
@@ -280,7 +292,13 @@ class AIService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        await log.http.error('callAIStreamWithCustomModel', url, new Error(`HTTP ${response.status}`), requestBody, errorText);
+        await log.http.error(
+          'callAIStreamWithCustomModel',
+          url,
+          new Error(`HTTP ${response.status}`),
+          requestBody,
+          errorText,
+        );
         onChunk({
           content: '',
           finished: true,

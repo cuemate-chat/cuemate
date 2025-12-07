@@ -5,11 +5,11 @@
 
 import { createLogger } from '../../../../../utils/rendererLogger.js';
 import { ModelParam, modelService } from '../../../../interviewer/api/modelService.js';
-
-const log = createLogger('InterviewAnalysisService');
 import { promptService } from '../../../../prompts/promptService.js';
 import { ensureString } from '../../../../utils/stringUtils';
 import { InterviewInsight, InterviewScore } from '../data/InterviewDataService';
+
+const log = createLogger('InterviewAnalysisService');
 
 // 面试分析请求接口
 export interface AnalysisRequest {
@@ -138,7 +138,12 @@ export class InterviewAnalysisService {
       log.debug('analyzeInterview', '面试分析完成');
       return formattedResult;
     } catch (error: unknown) {
-      await log.error('analyzeInterview', '面试分析失败', { interviewId: request.interviewId }, error);
+      await log.error(
+        'analyzeInterview',
+        '面试分析失败',
+        { interviewId: request.interviewId },
+        error,
+      );
       throw new Error(`面试分析失败: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -205,7 +210,7 @@ export class InterviewAnalysisService {
       };
     } catch (error) {
       await log.error('getDefaultModelConfig', '获取默认模型配置失败', {}, error);
-      throw new Error('获取模型配置失败，请先在设置中配置 LLM 模型');
+      throw new Error('获取模型配置失败，请先在系统设置中配置 LLM 大模型供应商');
     }
   }
 
@@ -221,7 +226,12 @@ export class InterviewAnalysisService {
     try {
       systemPrompt = await promptService.getPromptContent('AIQuestionAnalysisSystemPrompt');
     } catch (error) {
-      await log.error('performAIAnalysis', 'Failed to fetch AIQuestionAnalysisSystemPrompt', {}, error);
+      await log.error(
+        'performAIAnalysis',
+        'Failed to fetch AIQuestionAnalysisSystemPrompt',
+        {},
+        error,
+      );
     }
 
     // 获取用户的模型配置
@@ -256,7 +266,13 @@ export class InterviewAnalysisService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        await log.http.error('performAIAnalysis', url, new Error(`HTTP ${response.status}`), requestBody, errorText);
+        await log.http.error(
+          'performAIAnalysis',
+          url,
+          new Error(`HTTP ${response.status}`),
+          requestBody,
+          errorText,
+        );
         throw new Error(`AI 分析请求失败: ${response.status}`);
       }
 
@@ -456,23 +472,32 @@ ${qaText}
       insights: {
         interviewerAnalysis: {
           score: Math.max(1, Math.min(10, aiAnalysis.insights?.interviewerAnalysis?.score || 7)),
-          summary: ensureString(aiAnalysis.insights?.interviewerAnalysis?.summary) || '面试官表现正常',
+          summary:
+            ensureString(aiAnalysis.insights?.interviewerAnalysis?.summary) || '面试官表现正常',
           role: ensureString(aiAnalysis.insights?.interviewerAnalysis?.role) || '技术面试官',
           mbti: ensureString(aiAnalysis.insights?.interviewerAnalysis?.mbti) || 'ESTJ',
-          personality: ensureString(aiAnalysis.insights?.interviewerAnalysis?.personality) || '专业严谨',
-          preference: ensureString(aiAnalysis.insights?.interviewerAnalysis?.preference) || '重视技术能力',
+          personality:
+            ensureString(aiAnalysis.insights?.interviewerAnalysis?.personality) || '专业严谨',
+          preference:
+            ensureString(aiAnalysis.insights?.interviewerAnalysis?.preference) || '重视技术能力',
         },
         candidateAnalysis: {
-          summary: ensureString(aiAnalysis.insights?.candidateAnalysis?.summary) || '候选人基础表现良好',
+          summary:
+            ensureString(aiAnalysis.insights?.candidateAnalysis?.summary) || '候选人基础表现良好',
           mbti: ensureString(aiAnalysis.insights?.candidateAnalysis?.mbti) || 'ISFJ',
-          personality: ensureString(aiAnalysis.insights?.candidateAnalysis?.personality) || '稳重认真',
-          jobPreference: ensureString(aiAnalysis.insights?.candidateAnalysis?.jobPreference) || '技术开发',
+          personality:
+            ensureString(aiAnalysis.insights?.candidateAnalysis?.personality) || '稳重认真',
+          jobPreference:
+            ensureString(aiAnalysis.insights?.candidateAnalysis?.jobPreference) || '技术开发',
         },
         strategies: {
-          prepareDetails: ensureString(aiAnalysis.insights?.strategies?.prepareDetails) || '深入准备技术细节',
+          prepareDetails:
+            ensureString(aiAnalysis.insights?.strategies?.prepareDetails) || '深入准备技术细节',
           businessUnderstanding:
-            ensureString(aiAnalysis.insights?.strategies?.businessUnderstanding) || '加强业务理解能力',
-          keepLogical: ensureString(aiAnalysis.insights?.strategies?.keepLogical) || '保持回答逻辑清晰',
+            ensureString(aiAnalysis.insights?.strategies?.businessUnderstanding) ||
+            '加强业务理解能力',
+          keepLogical:
+            ensureString(aiAnalysis.insights?.strategies?.keepLogical) || '保持回答逻辑清晰',
         },
       },
 
@@ -552,12 +577,23 @@ ${qaText}
 
       if (!scoreResponse.ok) {
         const errorText = await scoreResponse.text();
-        await log.http.error('saveAnalysisToDatabase', scoreUrl, new Error(`HTTP ${scoreResponse.status}`), scoreRequestBody, errorText);
+        await log.http.error(
+          'saveAnalysisToDatabase',
+          scoreUrl,
+          new Error(`HTTP ${scoreResponse.status}`),
+          scoreRequestBody,
+          errorText,
+        );
         throw new Error(`创建面试分数记录失败: ${scoreResponse.status}`);
       }
 
       const scoreResult = await scoreResponse.json();
-      await log.http.response('saveAnalysisToDatabase', scoreUrl, scoreResponse.status, scoreResult);
+      await log.http.response(
+        'saveAnalysisToDatabase',
+        scoreUrl,
+        scoreResponse.status,
+        scoreResult,
+      );
       const scoreId = scoreResult.id;
 
       // 2. 创建面试洞察记录
@@ -607,12 +643,23 @@ ${qaText}
 
       if (!insightResponse.ok) {
         const errorText = await insightResponse.text();
-        await log.http.error('saveAnalysisToDatabase', insightUrl, new Error(`HTTP ${insightResponse.status}`), insightRequestBody, errorText);
+        await log.http.error(
+          'saveAnalysisToDatabase',
+          insightUrl,
+          new Error(`HTTP ${insightResponse.status}`),
+          insightRequestBody,
+          errorText,
+        );
         throw new Error(`创建面试洞察记录失败: ${insightResponse.status}`);
       }
 
       const insightResult = await insightResponse.json();
-      await log.http.response('saveAnalysisToDatabase', insightUrl, insightResponse.status, insightResult);
+      await log.http.response(
+        'saveAnalysisToDatabase',
+        insightUrl,
+        insightResponse.status,
+        insightResult,
+      );
       const insightId = insightResult.id;
 
       log.debug('saveAnalysisToDatabase', '分析结果已保存到数据库', { scoreId, insightId });
@@ -662,7 +709,13 @@ ${qaText}
 
         if (!response.ok) {
           const errorText = await response.text();
-          await log.http.error('saveQAAnalysisToDatabase', url, new Error(`HTTP ${response.status}`), reviewData, errorText);
+          await log.http.error(
+            'saveQAAnalysisToDatabase',
+            url,
+            new Error(`HTTP ${response.status}`),
+            reviewData,
+            errorText,
+          );
           continue;
         }
 
@@ -715,7 +768,12 @@ ${qaText}
         reviewIds,
       };
     } catch (error) {
-      await log.error('analyzeAndSave', '面试分析和保存流程失败', { interviewId: request.interviewId }, error);
+      await log.error(
+        'analyzeAndSave',
+        '面试分析和保存流程失败',
+        { interviewId: request.interviewId },
+        error,
+      );
       throw error;
     }
   }
