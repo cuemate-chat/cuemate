@@ -422,6 +422,7 @@ export default function ModelsList() {
                 <div
                   key={m.id}
                   className="group border border-slate-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-800 shadow-sm relative overflow-hidden"
+                  style={{ containerType: 'inline-size' }}
                 >
                   {/* 左上角序号角标 */}
                   <div className="pointer-events-none absolute left-0 top-0">
@@ -500,7 +501,7 @@ export default function ModelsList() {
                   {/* 横线分割 */}
                   <div className="my-3 h-px bg-slate-200 dark:bg-slate-700" />
                   {/* 详情信息：每项不换行，值溢出省略（时间不省略） */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm pl-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 pl-6" style={{ fontSize: 'clamp(0.625rem, calc(0.25rem + 2.5cqw), 0.875rem)' }}>
                     <div className="flex items-baseline gap-1 min-w-0">
                       <span className="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">供应商：</span>
                       <span className="text-slate-800 dark:text-slate-200 font-medium truncate">{providerCn}</span>
@@ -524,7 +525,12 @@ export default function ModelsList() {
                     <div className="flex items-baseline gap-1 min-w-0">
                       <span className="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">创建时间：</span>
                       <span className="text-slate-800 dark:text-slate-200 whitespace-nowrap">
-                        {m.createdAt ? new Date(m.createdAt).toLocaleString() : '-'}
+                        {m.createdAt ? (
+                          <>
+                            <span>{new Date(m.createdAt).toLocaleDateString()}</span>
+                            <span className="model-card-time"> {new Date(m.createdAt).toLocaleTimeString()}</span>
+                          </>
+                        ) : '-'}
                       </span>
                     </div>
                   </div>

@@ -874,3 +874,10 @@
 .dark .ant-form-item-required::before {
   color: #ef4444 !important;
 }
+
+/* 模型卡片时间部分：容器宽度小于 400px 时隐藏 */
+@container (max-width: 400px) {
+  .model-card-time {
+    display: none;
+  }
+}
