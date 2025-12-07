@@ -99,13 +99,21 @@ const ResumeOptimizeDrawerLevel2: React.FC<ResumeOptimizeDrawerLevel2Props> = ({
     } catch (error: any) {
       globalMessage.error(error.message || '简历优化失败');
 
-      // 即使优化失败，也保存失败记录
+      // 即使优化失败，也保存失败记录，并刷新列表显示错误记录
       try {
-        await createResumeOptimization(jobId, {
+        const { optimizationId } = await createResumeOptimization(jobId, {
           originalResume: tempOptimizedResume,
           status: 'failed',
           errorMessage: error.message || '未知错误',
         });
+
+        // 从数据库查询刚保存的失败记录
+        const { optimization: failedOptimization } = await getResumeOptimization(optimizationId);
+
+        // 通知父组件刷新列表，立即显示错误记录
+        if (onOptimizationCreated) {
+          onOptimizationCreated(failedOptimization);
+        }
       } catch (dbError) {
         // 忽略数据库保存错误
       }

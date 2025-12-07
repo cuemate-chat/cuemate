@@ -13,6 +13,7 @@ interface ResumeOptimizationListDrawerProps {
   onCreateNew: () => void;
   onOptimizationCreated: (optimization: ResumeOptimization) => void;
   onApplyResume?: (content: string) => void;
+  refreshTrigger?: number;
 }
 
 export default function ResumeOptimizationListDrawer({
@@ -23,6 +24,7 @@ export default function ResumeOptimizationListDrawer({
   onCreateNew,
   onOptimizationCreated: _onOptimizationCreated,
   onApplyResume,
+  refreshTrigger,
 }: ResumeOptimizationListDrawerProps) {
   const [optimizations, setOptimizations] = useState<ResumeOptimization[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,7 +37,7 @@ export default function ResumeOptimizationListDrawer({
     if (open && jobId) {
       loadOptimizations();
     }
-  }, [open, jobId]);
+  }, [open, jobId, refreshTrigger]);
 
   const loadOptimizations = async () => {
     setLoading(true);

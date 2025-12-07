@@ -1,5 +1,5 @@
 import { config } from '../config';
-import { ensureString, cleanJsonWrapper, cleanMarkdownWrapper } from '../utils/stringUtils';
+import { cleanJsonWrapper, cleanMarkdownWrapper, ensureString } from '../utils/stringUtils';
 import { storage } from './http';
 import { getPrompt } from './prompts';
 
@@ -22,7 +22,7 @@ export async function optimizeResumeWithLLM(
   // 从 localStorage 获取用户的完整模型配置
   const userData = storage.getUser();
   if (!userData?.model) {
-    throw new Error('请先在设置中配置大模型');
+    throw new Error('请先在系统设置中配置 LLM 大模型供应商');
   }
 
   const { model, modelParams: userModelParams } = userData;
@@ -66,8 +66,8 @@ export async function optimizeResumeWithLLM(
       // 转义模板中的特殊字符，防止在 new Function 中出错
       // 注意：不能转义 $，否则模板变量 ${varName} 不会被替换
       const escapedTmpl = tmpl
-        .replace(/\\/g, '\\\\')  // 转义反斜杠
-        .replace(/`/g, '\\`');   // 转义反引号
+        .replace(/\\/g, '\\\\') // 转义反斜杠
+        .replace(/`/g, '\\`'); // 转义反引号
 
       const func = new Function(...varNames, `return \`${escapedTmpl}\`;`);
       return func(...varValues);
@@ -93,6 +93,9 @@ export async function optimizeResumeWithLLM(
       paramKey: param.paramKey,
       value: !isNaN(Number(param.value)) ? Number(param.value) : param.value,
     })) || [];
+
+  console.log('[LLM] userModelParams:', userModelParams);
+  console.log('[LLM] finalModelParams:', finalModelParams);
 
   // 直接调用 LLM Router 并传递动态 provider 参数
   const llmResponse = await fetch(`${config.LLM_ROUTER_URL}/completion`, {
@@ -134,14 +137,16 @@ export async function optimizeResumeWithLLM(
   // 提取 JSON 对象
   const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    throw new Error('AI 返回格式错误：无法找到有效的 JSON 对象');
+    throw new Error(`AI 返回格式错误：无法找到有效的 JSON 对象。原始内容: ${content}`);
   }
 
   let result;
   try {
     result = JSON.parse(jsonMatch[0]);
   } catch (e) {
-    throw new Error(`AI 返回格式错误：JSON 解析失败。原因：${e instanceof Error ? e.message : String(e)}`);
+    throw new Error(
+      `AI 返回格式错误：JSON 解析失败。原因：${e instanceof Error ? e.message : String(e)}`,
+    );
   }
 
   // 验证返回的结果格式

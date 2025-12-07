@@ -44,6 +44,7 @@ export default function JobsList() {
   const [optimizationDetailVisible, setOptimizationDetailVisible] = useState(false);
   const [uploadedResumeVisible, setUploadedResumeVisible] = useState(false);
   const [optimizationCount, setOptimizationCount] = useState<number>(0);
+  const [listRefreshTrigger, setListRefreshTrigger] = useState(0);
   // 计算中间可视区域高度：100vh - Header(56px) - Footer(48px) - Main 上下内边距(48px)
   const MAIN_HEIGHT = 'calc(100vh - 56px - 48px - 48px)';
 
@@ -256,22 +257,22 @@ export default function JobsList() {
       setSelectedOptimization(optimization);
       setOptimizationDetailVisible(true);
 
-      // 如果列表弹框打开着，关闭后重新打开以刷新列表
-      if (optimizationListVisible) {
-        setOptimizationListVisible(false);
-        setTimeout(() => setOptimizationListVisible(true), 100);
-      }
+      // 触发列表刷新
+      setListRefreshTrigger(prev => prev + 1);
 
     } catch (error: any) {
       globalMessage.error(error.message || '简历优化失败');
 
-      // 即使优化失败，也保存失败记录
+      // 即使优化失败，也保存失败记录，并立即刷新列表
       try {
         await createResumeOptimization(selectedId, {
           originalResume: resumeContent,
           status: 'failed',
           errorMessage: error.message || '未知错误',
         });
+
+        // 触发列表刷新
+        setListRefreshTrigger(prev => prev + 1);
       } catch (dbError) {
         // 忽略数据库保存错误
       }
@@ -523,6 +524,7 @@ export default function JobsList() {
             setResumeContent(content);
             setOptimizationListVisible(false);
           }}
+          refreshTrigger={listRefreshTrigger}
         />
       )}
 
