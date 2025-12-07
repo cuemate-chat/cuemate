@@ -35,7 +35,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         model: config.model,
         messages: request.messages,
         temperature: request.temperature ?? temperature,
-        max_tokens: request.maxTokens ?? maxTokens,
+        max_tokens: request.max_tokens ?? maxTokens,
         stream: false,
       });
 
@@ -84,7 +84,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         model: config.model,
         messages: request.messages,
         temperature: request.temperature ?? temperature,
-        max_tokens: request.maxTokens ?? maxTokens,
+        max_tokens: request.max_tokens ?? maxTokens,
         stream: true,
         stream_options: { include_usage: true },
       });

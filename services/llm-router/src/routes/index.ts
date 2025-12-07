@@ -144,7 +144,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
           },
         ],
         temperature: 0.3,
-        maxTokens: 200,
+        max_tokens: 200,
       };
 
       // 使用默认配置进行 outline 生成
@@ -154,7 +154,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
         credentials: { apiKey: '', baseUrl: '' },
         modelParams: [
           { paramKey: 'temperature', value: 0.3 },
-          { paramKey: 'maxTokens', value: 200 },
+          { paramKey: 'max_tokens', value: 200 },
         ],
       };
       const response = await llmManager.complete(outlineRequest, defaultConfig);
@@ -203,7 +203,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
     try {
       const body = (request.body as any) || {};
       const providerId: string = body.provider || body.id || 'custom';
-      const model = body.modelName || body.model;
+      const model = body.modelName || body.model_name || body.model;
 
       // 动态提取凭证字段和运行参数
       const allParams = body.allParams || {};
@@ -213,7 +213,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       // 每个 provider 的 credentialFields 都不同，需要传递所有字段
       Object.keys(body).forEach((key) => {
         // 跳过非凭证字段
-        if (!['provider', 'id', 'modelName', 'model', 'mode', 'allParams'].includes(key)) {
+        if (!['provider', 'id', 'modelName', 'model_name', 'model', 'mode', 'allParams'].includes(key)) {
           config[key] = body[key];
         }
       });
@@ -221,7 +221,7 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       // 调试日志：显示映射后的配置
       log.info('probe', 'Field mapping result', {
         originalFields: Object.keys(body).filter(
-          (key) => !['provider', 'id', 'modelName', 'model', 'mode', 'allParams'].includes(key),
+          (key) => !['provider', 'id', 'modelName', 'model_name', 'model', 'mode', 'allParams'].includes(key),
         ),
         mappedConfig: config,
       });

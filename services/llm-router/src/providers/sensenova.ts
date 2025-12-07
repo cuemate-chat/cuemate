@@ -33,7 +33,7 @@ export class SenseNovaProvider extends BaseLLMProvider {
           model: config.model,
           messages: request.messages,
           temperature: request.temperature ?? temperature,
-          max_new_tokens: request.maxTokens ?? maxTokens,
+          max_new_tokens: request.max_tokens ?? maxTokens,
           stream: false,
         }),
       });
@@ -90,7 +90,7 @@ export class SenseNovaProvider extends BaseLLMProvider {
           model: config.model,
           messages: request.messages,
           temperature: request.temperature ?? temperature,
-          max_new_tokens: request.maxTokens ?? maxTokens,
+          max_new_tokens: request.max_tokens ?? maxTokens,
           stream: true,
         }),
       });

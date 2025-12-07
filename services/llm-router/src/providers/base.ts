@@ -4,7 +4,7 @@ export interface CompletionRequest {
     content: string;
   }>;
   temperature?: number;
-  maxTokens?: number;
+  max_tokens?: number;
   stream?: boolean;
   responseFormat?: 'concise' | 'points' | 'detailed';
   metadata?: {

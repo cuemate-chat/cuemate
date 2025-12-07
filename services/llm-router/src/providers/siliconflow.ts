@@ -43,7 +43,7 @@ export class SiliconFlowProvider extends BaseLLMProvider {
         model: config.model,
         messages: request.messages,
         temperature: request.temperature ?? temperature,
-        max_tokens: request.maxTokens ?? maxTokens,
+        max_tokens: request.max_tokens ?? maxTokens,
         stream: false,
         ...additionalParams, // 添加其他动态参数
       };
@@ -100,7 +100,7 @@ export class SiliconFlowProvider extends BaseLLMProvider {
         model: config.model,
         messages: request.messages,
         temperature: request.temperature ?? temperature,
-        max_tokens: request.maxTokens ?? maxTokens,
+        max_tokens: request.max_tokens ?? maxTokens,
         stream: true,
         stream_options: { include_usage: true },
         ...additionalParams,

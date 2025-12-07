@@ -35,7 +35,7 @@ export class KimiProvider extends BaseLLMProvider {
         model: config.model || process.env.KIMI_MODEL || 'moonshot-v1-32k',
         messages: request.messages,
         temperature: request.temperature ?? temperature,
-        max_tokens: request.maxTokens ?? maxTokens,
+        max_tokens: request.max_tokens ?? maxTokens,
         stream: false,
       });
 
@@ -82,7 +82,7 @@ export class KimiProvider extends BaseLLMProvider {
         model: config.model || process.env.KIMI_MODEL || 'moonshot-v1-32k',
         messages: request.messages,
         temperature: request.temperature ?? temperature,
-        max_tokens: request.maxTokens ?? maxTokens,
+        max_tokens: request.max_tokens ?? maxTokens,
         stream: true,
         stream_options: { include_usage: true },
       });

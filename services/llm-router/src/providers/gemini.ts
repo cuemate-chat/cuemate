@@ -24,7 +24,7 @@ export class GeminiProvider extends BaseLLMProvider {
       model: config.model,
       generationConfig: {
         temperature: request.temperature ?? temperature,
-        maxOutputTokens: request.maxTokens ?? maxTokens,
+        maxOutputTokens: request.max_tokens ?? maxTokens,
       },
       safetySettings: [
         {
@@ -103,7 +103,7 @@ export class GeminiProvider extends BaseLLMProvider {
       model: config.model,
       generationConfig: {
         temperature: request.temperature ?? temperature,
-        maxOutputTokens: request.maxTokens ?? maxTokens,
+        maxOutputTokens: request.max_tokens ?? maxTokens,
       },
       safetySettings: [
         {

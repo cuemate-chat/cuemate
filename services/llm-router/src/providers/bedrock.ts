@@ -58,7 +58,7 @@ export class BedrockProvider extends BaseLLMProvider {
         system,
         inferenceConfig: {
           temperature: request.temperature ?? temperature,
-          maxTokens: request.maxTokens ?? maxTokens,
+          maxTokens: request.max_tokens ?? maxTokens,
         },
       });
 
@@ -120,7 +120,7 @@ export class BedrockProvider extends BaseLLMProvider {
         system,
         inferenceConfig: {
           temperature: request.temperature ?? temperature,
-          maxTokens: request.maxTokens ?? maxTokens,
+          maxTokens: request.max_tokens ?? maxTokens,
         },
       });
 

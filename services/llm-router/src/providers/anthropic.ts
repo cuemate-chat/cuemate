@@ -36,7 +36,7 @@ export class AnthropicProvider extends BaseLLMProvider {
 
       const response = await client.messages.create({
         model: config.model,
-        max_tokens: request.maxTokens ?? maxTokens,
+        max_tokens: request.max_tokens ?? maxTokens,
         temperature: request.temperature ?? temperature,
         system: systemPrompt || undefined,
         messages: userMessages.map(m => ({
@@ -89,7 +89,7 @@ export class AnthropicProvider extends BaseLLMProvider {
 
       const stream = client.messages.stream({
         model: config.model,
-        max_tokens: request.maxTokens ?? maxTokens,
+        max_tokens: request.max_tokens ?? maxTokens,
         temperature: request.temperature ?? temperature,
         system: systemPrompt || undefined,
         messages: userMessages.map(m => ({
