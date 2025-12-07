@@ -1,3 +1,4 @@
+import Papa from 'papaparse';
 import { useState } from 'react';
 import { batchImportPresetQuestions } from '../api/preset-questions';
 import { message as globalMessage } from '../components/Message';
@@ -40,21 +41,22 @@ export function useQuestionImport(options?: UseQuestionImportOptions) {
           .filter((item) => item.question && item.answer);
       }
     } else if (fileName.endsWith('.csv')) {
-      // CSV 格式解析
-      const lines = fileContent
-        .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line);
+      // 使用 PapaParse 解析 CSV,正确处理引号、逗号等特殊字符
+      const result = Papa.parse<string[]>(fileContent, {
+        skipEmptyLines: true,
+      });
 
-      // 跳过表头
-      for (let i = 1; i < lines.length; i++) {
-        const columns = lines[i].split(',').map((col) => col.trim().replace(/^"|"$/g, ''));
-        if (columns.length >= 2 && columns[0] && columns[1]) {
-          questions.push({
-            question: columns[0],
-            answer: columns[1],
-            tagName: columns[2] || null,
-          });
+      // 跳过表头,从第二行开始
+      for (let i = 1; i < result.data.length; i++) {
+        const row = result.data[i];
+        if (!row || row.length < 2) continue;
+
+        const question = (row[0] || '').trim();
+        const answer = (row[1] || '').trim();
+        const tagName = row[2] ? row[2].trim() : null;
+
+        if (question && answer) {
+          questions.push({ question, answer, tagName });
         }
       }
     }

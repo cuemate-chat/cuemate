@@ -70,7 +70,7 @@ export default function BatchImportDrawer({
             <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded mb-6 font-mono">
               [<br/>
               &nbsp;&nbsp;{"{"}"question": "什么是微服务？", "answer": "微服务是...", "tagName": "微服务"{"}"}<br/>
-              &nbsp;&nbsp;{"{"}"question": "Redis 的使用场景", "answer": "Redis 主要用于...", "tagName": null{"}"}<br/>
+              &nbsp;&nbsp;{"{"}"question": "Redis 的使用场景", "answer": "Redis 主要用于...", "tagName": "Redis"{"}"}<br/>
               ]
             </div>
 

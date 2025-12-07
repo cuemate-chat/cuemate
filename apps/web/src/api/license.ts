@@ -30,15 +30,15 @@ export async function uploadLicenseFile(file: File): Promise<{ license: LicenseI
 
 // 下载预置题库文件
 export async function downloadPresetQuestionsFile(): Promise<File> {
-  const response = await fetch(`${COS_VERSION_URL}/questions.csv`);
+  const response = await fetch(`${COS_VERSION_URL}/questions.json`);
 
   if (!response.ok) {
     throw new Error(`下载失败: ${response.status} ${response.statusText}`);
   }
 
-  const csvContent = await response.text();
-  const blob = new Blob([csvContent], { type: 'text/csv' });
-  const file = new File([blob], 'questions.csv', { type: 'text/csv' });
+  const jsonContent = await response.text();
+  const blob = new Blob([jsonContent], { type: 'application/json' });
+  const file = new File([blob], 'questions.json', { type: 'application/json' });
 
   return file;
 }

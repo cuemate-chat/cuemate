@@ -11,17 +11,19 @@
         "format": "prettier --write src"
     },
     "dependencies": {
-        "@cuemate/config": "workspace:*",
         "@ant-design/icons": "^5.3.7",
         "@ant-design/plots": "^2.6.3",
+        "@cuemate/config": "workspace:*",
         "@heroicons/react": "^2.1.5",
         "@js-preview/docx": "^1.6.4",
         "@monaco-editor/react": "^4.7.0",
+        "@types/papaparse": "^5.5.1",
         "antd": "^5.27.3",
         "antd-style": "^3.7.1",
         "clsx": "^2.1.1",
         "dayjs": "^1.11.11",
         "lucide-react": "^0.454.0",
+        "papaparse": "^5.5.3",
         "react": "^18.3.1",
         "react-diff-viewer-continued": "^3.4.0",
         "react-dom": "^18.3.1",
@@ -35,11 +37,11 @@
     },
     "devDependencies": {
         "@tailwindcss/typography": "^0.5.19",
-        "monaco-editor": "^0.52.2",
         "@types/react": "^18.3.11",
         "@types/react-dom": "^18.3.1",
         "@vitejs/plugin-react": "^4.3.4",
         "autoprefixer": "^10.4.20",
+        "monaco-editor": "^0.52.2",
         "postcss": "^8.4.41",
         "typescript": "^5.5.4",
         "vite": "^5.4.10"
