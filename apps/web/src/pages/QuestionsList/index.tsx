@@ -387,10 +387,7 @@ export default function QuestionsList() {
                 filterOption={selectFilterOption}
               />
               <Button onClick={() => setTagMgrDrawerOpen(true)}>管理标签</Button>
-              <Button onClick={handleSyncVector}>
-                同步数据到向量库
-              </Button>
-
+              <Button onClick={handleSyncVector}>同步数据到向量库</Button>
               <Button
                 type="primary"
                 disabled={!jobId}
