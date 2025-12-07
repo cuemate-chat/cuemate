@@ -19,8 +19,8 @@ export class QwenProvider extends BaseLLMProvider {
     }
 
     // 从 modelParams 中解析参数
-    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
-    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 2000;
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
 
     // 创建临时客户端
     const client = new OpenAI({
@@ -69,8 +69,8 @@ export class QwenProvider extends BaseLLMProvider {
       throw new Error('Qwen API key is required');
     }
 
-    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
-    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 2000;
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
 
     const client = new OpenAI({
       apiKey: apiKey,

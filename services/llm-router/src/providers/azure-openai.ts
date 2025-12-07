@@ -25,8 +25,8 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
     }
 
     // 从 modelParams 中解析参数
-    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
-    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 2000;
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
 
     // 创建 Azure OpenAI 客户端
     const client = new AzureOpenAI({
@@ -83,8 +83,8 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
       throw new Error('Azure OpenAI requires deployment_name in credentials');
     }
 
-    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
-    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 2000;
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 2000;
 
     const client = new AzureOpenAI({
       apiKey: apiKey,

@@ -19,9 +19,9 @@ export class OllamaProvider extends BaseLLMProvider {
     }
 
     // 从 modelParams 中解析参数
-    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.3;
-    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 1024;
-    const numPredict = config.modelParams.find(p => p.paramKey === 'num_predict')?.value; // Ollama 特有
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.3;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 1024;
+    const numPredict = config.model_params.find(p => p.param_key === 'num_predict')?.value; // Ollama 特有
 
     // 创建临时客户端（本地 Ollama 不需要 API key，云端需要）
     const client = new OpenAI({
@@ -77,9 +77,9 @@ export class OllamaProvider extends BaseLLMProvider {
       throw new Error('Ollama requires base_url in credentials');
     }
 
-    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.3;
-    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 1024;
-    const numPredict = config.modelParams.find(p => p.paramKey === 'num_predict')?.value;
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.3;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 1024;
+    const numPredict = config.model_params.find(p => p.param_key === 'num_predict')?.value;
 
     const client = new OpenAI({
       baseURL: baseUrl,

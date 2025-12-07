@@ -16,8 +16,8 @@ export class GeminiProvider extends BaseLLMProvider {
       throw new Error('Gemini API key is required');
     }
 
-    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
-    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 8192;
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 8192;
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
@@ -95,8 +95,8 @@ export class GeminiProvider extends BaseLLMProvider {
       throw new Error('Gemini API key is required');
     }
 
-    const temperature = config.modelParams.find(p => p.paramKey === 'temperature')?.value || 0.7;
-    const maxTokens = config.modelParams.find(p => p.paramKey === 'max_tokens')?.value || 8192;
+    const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
+    const maxTokens = config.model_params.find(p => p.param_key === 'max_tokens')?.value || 8192;
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
