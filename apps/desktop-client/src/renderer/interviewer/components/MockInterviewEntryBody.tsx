@@ -835,6 +835,10 @@ export function MockInterviewEntryBody({
 
         if (chunk.finished) {
           const cleanQuestion = generatedQuestion.trim().replace(/^(问题|Question)\s*[:：]?\s*/, '');
+          // 暂停状态下不转换状态
+          if (getMockInterviewStateMachine()?.getContext().isPaused) {
+            return;
+          }
           getMockInterviewStateMachine()?.send({ type: 'QUESTION_GENERATED', payload: { question: cleanQuestion } });
         } else {
           generatedQuestion += chunk.content;
@@ -878,6 +882,11 @@ export function MockInterviewEntryBody({
       // 等待两者都完成：AI 播报完毕 且 答案生成完毕，才允许用户开始录音
       // 这样可以避免麦克风录到扬声器播放的 AI 提问声音
       await Promise.all([speakPromise, answerPromise]);
+
+      // 暂停状态下不转换状态
+      if (getMockInterviewStateMachine()?.getContext().isPaused) {
+        return;
+      }
 
       onQuestionGenerated?.(question);
 
@@ -1039,6 +1048,10 @@ export function MockInterviewEntryBody({
 
             interviewDataService.markQuestionComplete(context.currentQuestionIndex);
 
+            // 暂停状态下不转换状态
+            if (getMockInterviewStateMachine()?.getContext().isPaused) {
+              return;
+            }
             getMockInterviewStateMachine()?.send({ type: 'ANALYSIS_COMPLETE' });
           } catch (parseError) {
             await log.error('handleAIAnalyzing', 'JSON解析失败', {
