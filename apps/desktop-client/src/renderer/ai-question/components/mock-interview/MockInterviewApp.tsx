@@ -55,6 +55,9 @@ export function MockInterviewApp() {
   // 只有 error 状态显示红色
   const isError = voiceState.subState === 'mock-interview-error';
 
+  // 当前状态
+  const status = voiceState.subState;
+
   // 组件初始化时加载高度设置和监听外部事件
   useEffect(() => {
     loadHeightSetting();
@@ -154,6 +157,7 @@ export function MockInterviewApp() {
           isLoading={isLoading}
           message={message}
           isError={isError}
+          status={status}
         />
 
         {/* Footer - 语音识别区域 */}
