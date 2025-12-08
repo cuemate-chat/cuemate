@@ -349,11 +349,14 @@ html, body, #root {
   border-radius: 8px;
   padding: 6px 10px;
   font-size: 12px;
-  line-height: 1.2;
+  line-height: 1.4;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
   z-index: 9999;
+  max-width: min(400px, 90vw);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .radix-tooltip-arrow {
