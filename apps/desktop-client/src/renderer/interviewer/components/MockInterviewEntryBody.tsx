@@ -377,7 +377,7 @@ export function MockInterviewEntryBody({
           setMockInterviewState({
             interviewId: context.interviewId,
             interviewState: currentState,
-            aiMessage: context.currentAnswer || '',
+            aiMessage: context.referenceAnswer || '',
             isListening: currentState === InterviewState.USER_LISTENING,
           });
 
@@ -1136,10 +1136,10 @@ export function MockInterviewEntryBody({
         if (chunk.finished) {
           referenceAnswer = referenceAnswer.trim();
 
-          // 【保存】同步更新状态机的 context.currentAnswer
+          // 【保存】同步更新状态机的 context.referenceAnswer
           const machine = getMockInterviewStateMachine();
           if (machine) {
-            machine.updateContextPartial({ currentAnswer: referenceAnswer });
+            machine.updateContextPartial({ referenceAnswer: referenceAnswer });
           }
 
           // 【保存】暂存问题数据
@@ -1309,7 +1309,20 @@ export function MockInterviewEntryBody({
     if (!interviewId) return;
 
     try {
+      const currentState = machine.getState();
+      const context = machine.getContext();
       machine.updateContextPartial({ isPaused: true });
+
+      // 如果是 USER_LISTENING 状态，保存 AI 回答到数据库
+      if (currentState === InterviewState.USER_LISTENING) {
+        const questionState = interviewDataService.getQuestionState(context.currentQuestionIndex);
+        const aiAnswer = context.referenceAnswer || '';
+        if (questionState?.reviewId && aiAnswer) {
+          await mockInterviewService.updateReview(questionState.reviewId, {
+            referenceAnswer: aiAnswer,
+          });
+        }
+      }
 
       await interviewService.updateInterview(interviewId, {
         status: 'mock-interview-paused',
@@ -1321,7 +1334,7 @@ export function MockInterviewEntryBody({
         subState: 'mock-interview-paused',
         interviewId: interviewId
       });
-      setCurrentLine('面试已暂停');
+      // 暂停时保持显示当前问题，不修改 currentLine
 
     } catch (error) {
       await logger.error(`[暂停] 暂停面试失败: ${error}`);

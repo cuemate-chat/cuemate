@@ -1508,7 +1508,20 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     if (!interviewId) return;
 
     try {
+      const currentState = machine.getState();
+      const context = machine.getContext();
       machine.updateContextPartial({ isPaused: true });
+
+      // 如果是 USER_LISTENING 状态，保存 AI 回答到数据库
+      if (currentState === TrainingState.USER_LISTENING) {
+        const questionState = interviewDataService.getQuestionState(context.currentQuestionIndex);
+        const aiAnswer = context.referenceAnswer || '';
+        if (questionState?.reviewId && aiAnswer) {
+          await mockInterviewService.updateReview(questionState.reviewId, {
+            referenceAnswer: aiAnswer,
+          });
+        }
+      }
 
       await interviewService.updateInterview(interviewId, {
         status: 'interview-training-paused',
@@ -1520,7 +1533,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         subState: 'interview-training-paused',
         interviewId: interviewId
       });
-      setCurrentLine('面试训练已暂停');
+      // 暂停时保持显示当前问题，不修改 currentLine
 
     } catch (error) {
       await logger.error(`[暂停] 暂停面试失败: ${error}`);
