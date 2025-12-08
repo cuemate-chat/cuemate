@@ -173,7 +173,7 @@ export class ControlBarWindow {
    */
   public show(): void {
     if (this.window && !this.window.isDestroyed()) {
-      this.window.show(); // 显示窗口但不争抢焦点
+      this.window.showInactive(); // 显示窗口但不争抢焦点
 
       // 确保窗口在最顶层，使用最高级别悬浮在所有应用之上（包括全屏应用）
       this.window.setAlwaysOnTop(true, 'screen-saver');
