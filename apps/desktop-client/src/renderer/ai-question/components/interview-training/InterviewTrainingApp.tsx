@@ -50,8 +50,8 @@ export function InterviewTrainingApp() {
   const isLoading = trainingState.isLoading;
   const interviewState = trainingState.interviewState;
 
-  // error 和 idle 状态显示红色（expired 和 completed 不显示红色）
-  const isError = voiceState.subState === 'interview-training-error' || voiceState.subState === 'idle';
+  // 只有 error 状态显示红色
+  const isError = voiceState.subState === 'interview-training-error';
 
   // 组件初始化时加载高度设置和监听外部事件
   useEffect(() => {
