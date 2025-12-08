@@ -26,7 +26,7 @@ export interface InterviewContext {
   currentQuestionIndex: number;
   totalQuestions: number;
   currentQuestion: string;
-  currentAnswer: string;
+  referenceAnswer: string;
   userResponse: string;
   conversationHistory: any[];
   errorMessage?: string;
@@ -126,7 +126,7 @@ export class InterviewStateMachine {
       currentQuestionIndex: 0,
       totalQuestions: 10, // 默认 10 个问题
       currentQuestion: '',
-      currentAnswer: '',
+      referenceAnswer: '',
       userResponse: '',
       conversationHistory: [],
       ...initialContext,
@@ -228,13 +228,13 @@ export class InterviewStateMachine {
         break;
 
       case 'ANSWER_GENERATED':
-        this.context.currentAnswer = payload.answer;
+        this.context.referenceAnswer = payload.answer;
         // 记录对话历史
         this.context.conversationHistory.push({
           questionIndex: this.context.currentQuestionIndex,
           question: this.context.currentQuestion,
           userResponse: this.context.userResponse,
-          referenceAnswer: this.context.currentAnswer,
+          referenceAnswer: this.context.referenceAnswer,
           timestamp: Date.now(),
         });
         break;
@@ -242,7 +242,7 @@ export class InterviewStateMachine {
       case 'CONTINUE_INTERVIEW':
         this.context.currentQuestionIndex++;
         this.context.currentQuestion = '';
-        this.context.currentAnswer = '';
+        this.context.referenceAnswer = '';
         this.context.userResponse = '';
         break;
 
@@ -286,7 +286,7 @@ export class InterviewStateMachine {
       currentQuestionIndex: 0,
       totalQuestions: 10,
       currentQuestion: '',
-      currentAnswer: '',
+      referenceAnswer: '',
       userResponse: '',
       conversationHistory: [],
     };
@@ -375,8 +375,8 @@ export class InterviewStateMachine {
     if (context.currentQuestion !== undefined) {
       this.context.currentQuestion = context.currentQuestion;
     }
-    if (context.currentAnswer !== undefined) {
-      this.context.currentAnswer = context.currentAnswer;
+    if (context.referenceAnswer !== undefined) {
+      this.context.referenceAnswer = context.referenceAnswer;
     }
 
     // 设置状态
