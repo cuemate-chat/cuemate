@@ -1544,7 +1544,12 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         subState: 'interview-training-playing',
         interviewId: interviewId
       });
-      setCurrentLine('面试训练已恢复');
+
+      // 恢复时显示当前问题，而不是"面试训练已恢复"
+      const context = machine.getContext();
+      if (context.currentQuestion) {
+        setCurrentLine(context.currentQuestion);
+      }
 
       continueFromState(currentState);
 

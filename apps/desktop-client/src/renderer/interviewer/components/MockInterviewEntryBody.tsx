@@ -1338,7 +1338,12 @@ export function MockInterviewEntryBody({
         subState: 'mock-interview-playing',
         interviewId: interviewId
       });
-      setCurrentLine('面试已恢复');
+
+      // 恢复时显示当前问题，而不是"面试已恢复"
+      const context = machine.getContext();
+      if (context.currentQuestion) {
+        setCurrentLine(context.currentQuestion);
+      }
 
       continueFromState(currentState);
 
