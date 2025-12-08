@@ -1230,6 +1230,10 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
 
             interviewDataService.markQuestionComplete(context.currentQuestionIndex);
 
+            // 暂停状态下不转换状态
+            if (getTrainingStateMachine()?.getContext().isPaused) {
+              return;
+            }
             getTrainingStateMachine()?.send({ type: 'ANALYSIS_COMPLETE' });
           } catch (parseError) {
             await log.error('handleAIAnalyzing', 'JSON解析失败', {
@@ -1267,6 +1271,11 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
     }
 
     interviewDataService.markQuestionComplete(context.currentQuestionIndex);
+
+    // 暂停状态下不转换状态
+    if (getTrainingStateMachine()?.getContext().isPaused) {
+      return;
+    }
 
     // 面试训练不设置固定问题数量，持续进行直到用户手动停止
     // 继续下一轮：先发送状态转换事件
