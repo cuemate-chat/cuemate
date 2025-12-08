@@ -23,6 +23,9 @@ export default function DockerMonitorList() {
   const [logDrawerOpen, setLogDrawerOpen] = useState(false);
   const [selectedContainer, setSelectedContainer] = useState<DockerContainer | null>(null);
 
+  // 统计卡片选中状态: 'all' | 'running' | 'stopped'
+  const [selectedCard, setSelectedCard] = useState<string>('all');
+
   // 获取容器列表
   const fetchContainers = async (showSuccessMessage: boolean = false) => {
     startLoading();
@@ -208,15 +211,32 @@ export default function DockerMonitorList() {
     return () => clearInterval(interval);
   }, []);
 
+  // 卡片点击处理 - 二次点击取消选中
+  const handleCardClick = (cardType: string) => {
+    if (selectedCard === cardType) {
+      setSelectedCard('all');
+    } else {
+      setSelectedCard(cardType);
+    }
+    setPage(1);
+  };
+
   // 统计信息
   const runningCount = containers.filter(c => c.state === 'running').length;
-  const stoppedCount = containers.filter(c => c.state === 'stopped').length;
+  const stoppedCount = containers.filter(c => c.state !== 'running').length;
   const totalCount = containers.length;
+
+  // 根据卡片选中状态过滤容器
+  const filteredContainers = selectedCard === 'all'
+    ? containers
+    : selectedCard === 'running'
+      ? containers.filter(c => c.state === 'running')
+      : containers.filter(c => c.state !== 'running');
 
   // 分页数据
   const startIndex = (page - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const paginatedContainers = containers.slice(startIndex, endIndex);
+  const paginatedContainers = filteredContainers.slice(startIndex, endIndex);
 
   // 加载时显示全屏 loading
   if (loading) {
@@ -240,7 +260,12 @@ export default function DockerMonitorList() {
       <Row gutter={16}>
         <Col xs={24} sm={8}>
           <Card
-            className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+            onClick={() => handleCardClick('all')}
+            className={`bg-white dark:bg-slate-800 cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === 'all'
+                ? 'border-2 border-blue-500 shadow-md'
+                : 'border border-slate-200 dark:border-slate-700'
+            }`}
             style={{ borderLeft: '4px solid #1890ff' }}
           >
             <div className="flex items-center justify-between">
@@ -254,7 +279,12 @@ export default function DockerMonitorList() {
         </Col>
         <Col xs={24} sm={8}>
           <Card
-            className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+            onClick={() => handleCardClick('running')}
+            className={`bg-white dark:bg-slate-800 cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === 'running'
+                ? 'border-2 border-green-500 shadow-md'
+                : 'border border-slate-200 dark:border-slate-700'
+            }`}
             style={{ borderLeft: '4px solid #52c41a' }}
           >
             <div className="flex items-center justify-between">
@@ -268,7 +298,12 @@ export default function DockerMonitorList() {
         </Col>
         <Col xs={24} sm={8}>
           <Card
-            className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+            onClick={() => handleCardClick('stopped')}
+            className={`bg-white dark:bg-slate-800 cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === 'stopped'
+                ? 'border-2 border-orange-500 shadow-md'
+                : 'border border-slate-200 dark:border-slate-700'
+            }`}
             style={{ borderLeft: '4px solid #faad14' }}
           >
             <div className="flex items-center justify-between">
@@ -312,11 +347,11 @@ export default function DockerMonitorList() {
 
       {/* 外部分页组件 */}
       <div className="flex justify-between items-center mt-3 text-sm">
-        <div className="text-slate-500 dark:text-slate-300">共 {totalCount} 条</div>
+        <div className="text-slate-500 dark:text-slate-300">共 {filteredContainers.length} 条</div>
         <PaginationBar
           page={page}
           pageSize={pageSize}
-          total={totalCount}
+          total={filteredContainers.length}
           onChange={(p: number) => setPage(p)}
           onPageSizeChange={(_: number, size: number) => {
             setPageSize(size);

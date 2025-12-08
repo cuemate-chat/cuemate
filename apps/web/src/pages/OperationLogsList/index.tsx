@@ -49,6 +49,9 @@ export default function OperationLogsList() {
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
   const [viewingLog, setViewingLog] = useState<OperationLog | null>(null);
 
+  // 统计卡片选中状态: 'all' | 'success' | 'failed'
+  const [selectedCard, setSelectedCard] = useState<string>('all');
+
   // 菜单选项 - 根据 Header.tsx 和 UserMenu.tsx 的实际菜单结构
   const menuOptions = [
     { value: '', label: '全部' },
@@ -231,6 +234,35 @@ export default function OperationLogsList() {
     loadStats();
   }, []);
 
+  // 当 status 过滤器变化时，同步卡片选中状态
+  useEffect(() => {
+    if (filters.status === 'success') {
+      setSelectedCard('success');
+    } else if (filters.status === 'failed') {
+      setSelectedCard('failed');
+    } else {
+      setSelectedCard('all');
+    }
+  }, [filters.status]);
+
+  // 卡片点击处理 - 二次点击取消选中
+  const handleCardClick = (cardType: string) => {
+    if (selectedCard === cardType) {
+      setSelectedCard('all');
+      setFilters(prev => ({ ...prev, status: '' }));
+    } else {
+      setSelectedCard(cardType);
+      if (cardType === 'success') {
+        setFilters(prev => ({ ...prev, status: 'success' }));
+      } else if (cardType === 'failed') {
+        setFilters(prev => ({ ...prev, status: 'failed' }));
+      } else {
+        setFilters(prev => ({ ...prev, status: '' }));
+      }
+    }
+    setPage(1);
+  };
+
   // 搜索操作
   const handleSearch = () => {
     setPage(1);
@@ -272,10 +304,11 @@ export default function OperationLogsList() {
     try {
       const beforeTime = dayjs().subtract(beforeDays, 'day').unix();
       const response = await batchDeleteOperationLogs({ beforeTime });
-      message.success(`删除了 ${response.deletedCount} 条记录`);
+      message.success(`删除成功，共删除 ${response.deletedCount} 条记录`);
       loadOperationLogs();
-    } catch {
-      
+      loadStats();
+    } catch (err: any) {
+      message.error(`删除失败: ${err.message || err}`);
     } finally {
       await endOperation();
     }
@@ -354,7 +387,14 @@ export default function OperationLogsList() {
       {/* 统计面板 */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
+          <div
+            onClick={() => handleCardClick('all')}
+            className={`bg-white dark:bg-slate-800 p-4 rounded-lg shadow cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === 'all'
+                ? 'border-2 border-blue-500 shadow-md'
+                : 'border border-slate-200 dark:border-slate-700'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-slate-500 dark:text-slate-200">今日操作总数</h3>
@@ -365,7 +405,14 @@ export default function OperationLogsList() {
               <ChartBarIcon className="w-8 h-8 text-blue-500 dark:text-blue-400" />
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
+          <div
+            onClick={() => handleCardClick('success')}
+            className={`bg-white dark:bg-slate-800 p-4 rounded-lg shadow cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === 'success'
+                ? 'border-2 border-green-500 shadow-md'
+                : 'border border-slate-200 dark:border-slate-700'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-slate-500 dark:text-slate-200">成功操作数</h3>
@@ -376,7 +423,14 @@ export default function OperationLogsList() {
               <CheckCircleIcon className="w-8 h-8 text-green-500 dark:text-green-400" />
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
+          <div
+            onClick={() => handleCardClick('failed')}
+            className={`bg-white dark:bg-slate-800 p-4 rounded-lg shadow cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === 'failed'
+                ? 'border-2 border-red-500 shadow-md'
+                : 'border border-slate-200 dark:border-slate-700'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-slate-500 dark:text-slate-200">失败操作数</h3>

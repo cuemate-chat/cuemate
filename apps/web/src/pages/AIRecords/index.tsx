@@ -48,6 +48,9 @@ export default function AIRecordsList() {
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
   const [viewingConversation, setViewingConversation] = useState<AIConversation | null>(null);
 
+  // 统计卡片选中状态: 'all' | 'active' | 'completed' | 'error'
+  const [selectedCard, setSelectedCard] = useState<string>('all');
+
   // 模型列表状态
   const [modelOptions, setModelOptions] = useState<Array<{label: string, value: string, icon?: string}>>([
     { label: '全部模型', value: '' }
@@ -252,6 +255,39 @@ export default function AIRecordsList() {
     loadModelOptions();
   }, []);
 
+  // 当 status 过滤器变化时，同步卡片选中状态
+  useEffect(() => {
+    if (filters.status === 'active') {
+      setSelectedCard('active');
+    } else if (filters.status === 'completed') {
+      setSelectedCard('completed');
+    } else if (filters.status === 'error') {
+      setSelectedCard('error');
+    } else {
+      setSelectedCard('all');
+    }
+  }, [filters.status]);
+
+  // 卡片点击处理 - 二次点击取消选中
+  const handleCardClick = (cardType: string) => {
+    if (selectedCard === cardType) {
+      setSelectedCard('all');
+      setFilters(prev => ({ ...prev, status: '' }));
+    } else {
+      setSelectedCard(cardType);
+      if (cardType === 'active') {
+        setFilters(prev => ({ ...prev, status: 'active' }));
+      } else if (cardType === 'completed') {
+        setFilters(prev => ({ ...prev, status: 'completed' }));
+      } else if (cardType === 'error') {
+        setFilters(prev => ({ ...prev, status: 'error' }));
+      } else {
+        setFilters(prev => ({ ...prev, status: '' }));
+      }
+    }
+    setPage(1);
+  };
+
   // 加载模型选项
   const loadModelOptions = async () => {
     try {
@@ -365,29 +401,15 @@ export default function AIRecordsList() {
       {/* 统计面板 */}
       {(
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">今天对话数</h3>
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {stats?.todayConversations || 0}
-                </p>
-              </div>
-              <CalendarDaysIcon className="w-8 h-8 text-blue-500 dark:text-blue-400" />
-            </div>
-          </div>
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">今天提问数</h3>
-                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                  {stats?.todayQuestions || 0}
-                </p>
-              </div>
-              <QuestionMarkCircleIcon className="w-8 h-8 text-indigo-500 dark:text-indigo-400" />
-            </div>
-          </div>
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
+          {/* 第一排：可点击过滤的卡片 */}
+          <div
+            onClick={() => handleCardClick('all')}
+            className={`bg-white dark:bg-slate-800 p-4 rounded-lg shadow cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === 'all'
+                ? 'border-2 border-green-500 shadow-md'
+                : 'border border-slate-200 dark:border-slate-700'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">总对话数</h3>
@@ -398,18 +420,14 @@ export default function AIRecordsList() {
               <ChatBubbleLeftRightIcon className="w-8 h-8 text-green-500 dark:text-green-400" />
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">总提问数</h3>
-                <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
-                  {stats?.totalQuestions || 0}
-                </p>
-              </div>
-              <HashtagIcon className="w-8 h-8 text-cyan-500 dark:text-cyan-400" />
-            </div>
-          </div>
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
+          <div
+            onClick={() => handleCardClick('active')}
+            className={`bg-white dark:bg-slate-800 p-4 rounded-lg shadow cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === 'active'
+                ? 'border-2 border-orange-500 shadow-md'
+                : 'border border-slate-200 dark:border-slate-700'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">进行中</h3>
@@ -420,7 +438,14 @@ export default function AIRecordsList() {
               <PlayIcon className="w-8 h-8 text-orange-500 dark:text-orange-400" />
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
+          <div
+            onClick={() => handleCardClick('completed')}
+            className={`bg-white dark:bg-slate-800 p-4 rounded-lg shadow cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === 'completed'
+                ? 'border-2 border-emerald-500 shadow-md'
+                : 'border border-slate-200 dark:border-slate-700'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">已完成</h3>
@@ -431,7 +456,14 @@ export default function AIRecordsList() {
               <CheckCircleIcon className="w-8 h-8 text-emerald-500 dark:text-emerald-400" />
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
+          <div
+            onClick={() => handleCardClick('error')}
+            className={`bg-white dark:bg-slate-800 p-4 rounded-lg shadow cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === 'error'
+                ? 'border-2 border-red-500 shadow-md'
+                : 'border border-slate-200 dark:border-slate-700'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">失败对话数</h3>
@@ -442,7 +474,41 @@ export default function AIRecordsList() {
               <XCircleIcon className="w-8 h-8 text-red-500 dark:text-red-400" />
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border dark:border-slate-700">
+          {/* 第二排：统计信息卡片（不可点击） */}
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">今天对话数</h3>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {stats?.todayConversations || 0}
+                </p>
+              </div>
+              <CalendarDaysIcon className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+            </div>
+          </div>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">今天提问数</h3>
+                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                  {stats?.todayQuestions || 0}
+                </p>
+              </div>
+              <QuestionMarkCircleIcon className="w-8 h-8 text-indigo-500 dark:text-indigo-400" />
+            </div>
+          </div>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">总提问数</h3>
+                <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
+                  {stats?.totalQuestions || 0}
+                </p>
+              </div>
+              <HashtagIcon className="w-8 h-8 text-cyan-500 dark:text-cyan-400" />
+            </div>
+          </div>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-slate-200">消耗 Token</h3>
