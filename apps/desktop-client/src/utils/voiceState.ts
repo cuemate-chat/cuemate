@@ -42,6 +42,7 @@ export interface VoiceState {
   subState: VoiceSubState;
   updatedAt: number;
   interviewId?: string; // 当前面试 ID
+  isStopping?: boolean; // 是否正在停止中
 }
 
 const CHANNEL_NAME = 'cuemate.voiceState.channel';
@@ -52,6 +53,7 @@ let memoryState: VoiceState = {
   subState: 'idle',
   updatedAt: Date.now(),
   interviewId: undefined,
+  isStopping: false,
 };
 
 // 标记是否已完成初始化
@@ -116,6 +118,7 @@ export function setVoiceState(next: Partial<VoiceState> | VoiceState): VoiceStat
     mode: next.mode ?? memoryState.mode,
     subState: next.subState ?? memoryState.subState,
     interviewId: 'interviewId' in next ? next.interviewId : memoryState.interviewId,
+    isStopping: 'isStopping' in next ? next.isStopping : memoryState.isStopping,
     updatedAt: Date.now(),
   };
 
@@ -151,6 +154,7 @@ export function clearVoiceState(): VoiceState {
     subState: 'idle',
     updatedAt: Date.now(),
     interviewId: undefined,
+    isStopping: false,
   };
 
   // 更新内存状态

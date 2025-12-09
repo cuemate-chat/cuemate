@@ -89,6 +89,9 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
   };
 
   const handlePauseClick = async () => {
+    // 如果正在停止中，禁止操作
+    if (vState.isStopping) return;
+
     // 暂停面试 - 发送命令到面试窗口
     const mode = getActiveInterviewMode();
     if (mode) {
@@ -109,6 +112,9 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
   };
 
   const handlePlayClick = async () => {
+    // 如果正在停止中，禁止操作
+    if (vState.isStopping) return;
+
     // 继续面试 - 发送命令到面试窗口
     const mode = getActiveInterviewMode();
     if (mode) {
@@ -129,6 +135,9 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
   };
 
   const handleDoneClick = async () => {
+    // 如果正在停止中，禁止操作
+    if (vState.isStopping) return;
+
     // 停止面试 - 发送命令到面试窗口
     const mode = getActiveInterviewMode();
     if (mode) {
@@ -331,13 +340,14 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
                 <motion.button
-                  className="voice-icon-btn pause-btn"
+                  className={`voice-icon-btn pause-btn${vState.isStopping ? ' disabled' : ''}`}
                   onClick={handlePauseClick}
-                  whileTap={{ scale: 0.95 }}
+                  disabled={vState.isStopping}
+                  whileTap={{ scale: vState.isStopping ? 1 : 0.95 }}
                   transition={{ duration: 0.2 }}
                 >
                   <motion.div
-                    whileHover={{ scale: 1.2 }}
+                    whileHover={{ scale: vState.isStopping ? 1 : 1.2 }}
                     transition={{ duration: 0.2 }}
                   >
                     <Pause size={16} />
@@ -346,7 +356,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
               </Tooltip.Trigger>
               <Tooltip.Portal>
                 <Tooltip.Content className="radix-tooltip-content">
-                  暂停面试
+                  {vState.isStopping ? '正在停止中...' : '暂停面试'}
                   <Tooltip.Arrow className="radix-tooltip-arrow" />
                 </Tooltip.Content>
               </Tooltip.Portal>
@@ -405,13 +415,14 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
                 <motion.button
-                  className="voice-icon-btn play-btn"
+                  className={`voice-icon-btn play-btn${vState.isStopping ? ' disabled' : ''}`}
                   onClick={handlePlayClick}
-                  whileTap={{ scale: 0.95 }}
+                  disabled={vState.isStopping}
+                  whileTap={{ scale: vState.isStopping ? 1 : 0.95 }}
                   transition={{ duration: 0.2 }}
                 >
                   <motion.div
-                    whileHover={{ scale: 1.2 }}
+                    whileHover={{ scale: vState.isStopping ? 1 : 1.2 }}
                     transition={{ duration: 0.2 }}
                   >
                     <Play size={16} />
@@ -420,7 +431,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
               </Tooltip.Trigger>
               <Tooltip.Portal>
                 <Tooltip.Content className="radix-tooltip-content">
-                  继续面试
+                  {vState.isStopping ? '正在停止中...' : '继续面试'}
                   <Tooltip.Arrow className="radix-tooltip-arrow" />
                 </Tooltip.Content>
               </Tooltip.Portal>
@@ -430,24 +441,25 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
                 <motion.button
-                  className="voice-group-btn done-btn"
+                  className={`voice-group-btn done-btn${vState.isStopping ? ' disabled' : ''}`}
                   onClick={handleDoneClick}
-                  whileTap={{ scale: 0.95 }}
+                  disabled={vState.isStopping}
+                  whileTap={{ scale: vState.isStopping ? 1 : 0.95 }}
                   transition={{ duration: 0.2 }}
                 >
                   <motion.div
-                    animate={{ scale: [1, 1.1, 1] }}
-                    whileHover={{ scale: 1.2 }}
+                    animate={{ scale: vState.isStopping ? 1 : [1, 1.1, 1] }}
+                    whileHover={{ scale: vState.isStopping ? 1 : 1.2 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <LottieAudioLines 
-                      size={20} 
+                    <LottieAudioLines
+                      size={20}
                       src="/src/assets/Equalizer.gif"
                       alt="Done"
                     />
                   </motion.div>
                   <motion.div
-                    whileHover={{ scale: 1.2 }}
+                    whileHover={{ scale: vState.isStopping ? 1 : 1.2 }}
                     transition={{ duration: 0.2 }}
                   >
                     <Square size={16} />
@@ -456,7 +468,7 @@ export function LoggedInControlBar({}: LoggedInControlBarProps) {
               </Tooltip.Trigger>
               <Tooltip.Portal>
                 <Tooltip.Content className="radix-tooltip-content">
-                  完成面试
+                  {vState.isStopping ? '正在停止中...' : '完成面试'}
                   <Tooltip.Arrow className="radix-tooltip-arrow" />
                 </Tooltip.Content>
               </Tooltip.Portal>

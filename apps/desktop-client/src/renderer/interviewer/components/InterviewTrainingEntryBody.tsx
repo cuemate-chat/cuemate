@@ -186,6 +186,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
   const [timestamp, setTimestamp] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
 
   // 选择状态
   const [selectedPosition, setSelectedPosition] = useState<JobPosition | null>(null);
@@ -727,12 +728,11 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
         return;
       }
 
-      // 点击"提问完毕"时清空上一轮的内容，开始生成新答案
+      // 点击"提问完毕"时只更新 phase 和 loading 状态
+      // 不清空 aiMessage 和 candidateAnswer，避免 UI 闪烁
       setInterviewTrainingState({
         currentPhase: 'ai-generating',
         isLoading: true,
-        aiMessage: '',
-        candidateAnswer: '',
       });
 
       machine.updateContextPartial({
@@ -1640,9 +1640,19 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
    * 【重要】这是用户主动停止，可以清理数据
    */
   const handleStopInterview = async () => {
+    // 防止重复点击
+    if (isStopping) {
+      return;
+    }
+    setIsStopping(true);
+    // 通过 voiceState 同步到其他窗口（如 control-bar）
+    setVoiceState({ isStopping: true });
+
     try {
       const interviewId = currentInterview.get();
       if (!interviewId) {
+        setIsStopping(false);
+        setVoiceState({ isStopping: false });
         return;
       }
 
@@ -1735,6 +1745,9 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
       }
 
       stopInterviewTraining();
+    } finally {
+      setIsStopping(false);
+      setVoiceState({ isStopping: false });
     }
   };
 
@@ -1869,6 +1882,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
                 <button
                   className="interview-segmented-btn interview-segmented-btn-left continue"
                   onClick={handleResumeInterview}
+                  disabled={isStopping}
                 >
                   <Play size={14} />
                   继续
@@ -1877,6 +1891,7 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
                 <button
                   className="interview-segmented-btn interview-segmented-btn-left"
                   onClick={handlePauseInterview}
+                  disabled={isStopping}
                 >
                   <Pause size={14} />
                   暂停
@@ -1886,9 +1901,10 @@ export function InterviewTrainingEntryBody({ selectedJobId, onStart }: Interview
               <button
                 className="interview-segmented-btn interview-segmented-btn-right"
                 onClick={handleStopInterview}
+                disabled={isStopping}
               >
                 <Square size={14} />
-                停止
+                {isStopping ? '停止中...' : '停止'}
               </button>
             </div>
           )}

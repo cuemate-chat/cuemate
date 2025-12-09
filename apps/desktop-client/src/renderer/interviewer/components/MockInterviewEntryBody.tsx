@@ -196,6 +196,7 @@ export function MockInterviewEntryBody({
   const [timestamp, setTimestamp] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
 
   // 选择状态
   const [selectedPosition, setSelectedPosition] = useState<JobPosition | null>(null);
@@ -1453,9 +1454,19 @@ export function MockInterviewEntryBody({
   };
 
   const handleStopInterview = async () => {
+    // 防止重复点击
+    if (isStopping) {
+      return;
+    }
+    setIsStopping(true);
+    // 通过 voiceState 同步到其他窗口（如 control-bar）
+    setVoiceState({ isStopping: true });
+
     try {
       const interviewId = currentInterview.get();
       if (!interviewId) {
+        setIsStopping(false);
+        setVoiceState({ isStopping: false });
         return;
       }
 
@@ -1539,6 +1550,9 @@ export function MockInterviewEntryBody({
       }
 
       stopMockInterview();
+    } finally {
+      setIsStopping(false);
+      setVoiceState({ isStopping: false });
     }
   };
 
@@ -1672,6 +1686,7 @@ export function MockInterviewEntryBody({
                 <button
                   className="interview-segmented-btn interview-segmented-btn-left continue"
                   onClick={handleResumeInterview}
+                  disabled={isStopping}
                 >
                   <Play size={14} />
                   继续
@@ -1680,6 +1695,7 @@ export function MockInterviewEntryBody({
                 <button
                   className="interview-segmented-btn interview-segmented-btn-left"
                   onClick={handlePauseInterview}
+                  disabled={isStopping}
                 >
                   <Pause size={14} />
                   暂停
@@ -1689,9 +1705,10 @@ export function MockInterviewEntryBody({
               <button
                 className="interview-segmented-btn interview-segmented-btn-right"
                 onClick={handleStopInterview}
+                disabled={isStopping}
               >
                 <Square size={14} />
-                停止
+                {isStopping ? '停止中...' : '停止'}
               </button>
             </div>
           )}
