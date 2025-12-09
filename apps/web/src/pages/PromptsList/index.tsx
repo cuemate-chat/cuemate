@@ -88,6 +88,9 @@ export default function PromptsList() {
       render: (variables: string) => {
         try {
           const vars = JSON.parse(variables || '[]');
+          if (vars.length === 0) {
+            return <span className="text-slate-400 dark:text-slate-500 text-xs">无变量</span>;
+          }
           return (
             <div className="flex flex-wrap gap-1">
               {vars.map((v: string, i: number) => (

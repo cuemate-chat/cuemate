@@ -1,3 +1,4 @@
+import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { Button, Input } from 'antd';
 import { useEffect, useState } from 'react';
 import ReactDiffViewer from 'react-diff-viewer-continued';
@@ -25,11 +26,39 @@ export default function EditPromptDrawer({
   const [variables, setVariables] = useState<string[]>([]);
   const [extra, setExtra] = useState('');
   const [saving, setSaving] = useState(false);
+  const [isPreview, setIsPreview] = useState(false);
+
+  // 使用平衡括号匹配提取模板变量，正确处理嵌套花括号
+  const extractTemplateVariables = (content: string): string[] => {
+    const variables: string[] = [];
+    let i = 0;
+    while (i < content.length) {
+      if (content[i] === '$' && content[i + 1] === '{') {
+        const start = i;
+        let depth = 1;
+        i += 2;
+        while (i < content.length && depth > 0) {
+          if (content[i] === '{') {
+            depth++;
+          } else if (content[i] === '}') {
+            depth--;
+          }
+          i++;
+        }
+        if (depth === 0) {
+          variables.push(content.substring(start, i));
+        }
+      } else {
+        i++;
+      }
+    }
+    return variables;
+  };
 
   useEffect(() => {
     if (prompt) {
-      // 提取变量
-      const vars = prompt.content.match(/\$\{[^}]+\}/g) || [];
+      // 使用平衡括号匹配提取变量
+      const vars = extractTemplateVariables(prompt.content);
       setVariables(vars);
 
       // 转换为可编辑格式：将变量替换为占位符
@@ -48,6 +77,20 @@ export default function EditPromptDrawer({
   const handleSave = () => {
     if (!prompt) return;
 
+    // 校验所有变量占位符是否都存在
+    const missingVars: number[] = [];
+    variables.forEach((_, i) => {
+      const placeholder = `[变量${i + 1}:不可修改]`;
+      if (!editedContent.includes(placeholder)) {
+        missingVars.push(i + 1);
+      }
+    });
+
+    if (missingVars.length > 0) {
+      message.warning(`保存失败：缺少变量占位符 [变量${missingVars.join(', 变量')}:不可修改]，请勿删除变量占位符`);
+      return;
+    }
+
     // 恢复变量：将占位符替换回原始变量
     let finalContent = editedContent;
     const vars = prompt.content.match(/\$\{[^}]+\}/g) || [];
@@ -64,6 +107,20 @@ export default function EditPromptDrawer({
     setEditedContent(displayContent);
     setExtra(prompt?.extra || '');
     message.success('已重置为初始内容');
+  };
+
+  // 获取预览内容（将占位符替换回原始变量）
+  const getPreviewContent = () => {
+    let content = editedContent;
+    variables.forEach((v, i) => {
+      content = content.replace(`[变量${i + 1}:不可修改]`, v);
+    });
+    return content;
+  };
+
+  // 切换预览/编辑模式
+  const togglePreview = () => {
+    setIsPreview(!isPreview);
   };
 
   if (!prompt) return null;
@@ -123,18 +180,36 @@ export default function EditPromptDrawer({
 
           {/* 编辑区域 */}
           <div>
-            <div className="text-sm mb-2 font-medium text-slate-700 dark:text-slate-200">
-              Prompt 内容 <span className="text-red-500">*</span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Prompt 内容 <span className="text-red-500">*</span>
+              </div>
+              <Button
+                type={isPreview ? 'primary' : 'default'}
+                size="small"
+                icon={isPreview ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                onClick={togglePreview}
+              >
+                {isPreview ? '返回编辑' : '预览'}
+              </Button>
             </div>
-            <TextArea
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              rows={20}
-              placeholder="编辑 Prompt 内容..."
-              className="font-mono"
-              maxLength={10000}
-              showCount
-            />
+            {isPreview ? (
+              <div className="border border-slate-300 dark:border-slate-600 rounded-lg p-4 bg-slate-50 dark:bg-slate-800 min-h-[480px] max-h-[600px] overflow-auto">
+                <pre className="font-mono text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
+                  {getPreviewContent()}
+                </pre>
+              </div>
+            ) : (
+              <TextArea
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                rows={20}
+                placeholder="编辑 Prompt 内容..."
+                className="font-mono"
+                maxLength={10000}
+                showCount
+              />
+            )}
           </div>
 
           {/* Extra 配置 */}
