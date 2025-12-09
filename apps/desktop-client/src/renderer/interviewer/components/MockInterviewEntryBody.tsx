@@ -147,13 +147,26 @@ interface MockInterviewEntryBodyProps {
 // 当前问题的临时数据（用于分析时保存到数据库）
 interface CurrentQuestionData {
   sequence: number;
+  id?: string;
+  interviewId?: string;
+  noteType?: string;
+  content?: string;
   questionId?: string;
   question?: string;
   answer?: string;
-  referenceAnswer?: string;
+  askedQuestion?: string;
   candidateAnswer?: string;
+  keyPoints?: string;
+  assessment?: string;
+  referenceAnswer?: string;
+  pros?: string;
+  cons?: string;
+  suggestions?: string;
   otherId?: string;
   otherContent?: string;
+  createdAt?: number;
+  endAt?: number;
+  duration?: number;
 }
 
 // ============================================================================
@@ -321,7 +334,33 @@ export function MockInterviewEntryBody({
             candidateAnswer: lastQuestion.candidateAnswer || '',
             message: interview.message || undefined,
             isLoading: false,
+            isAutoMode: interview.answerMode === 'auto',
           });
+
+          // 【恢复】当前问题数据（用于 AI 分析）
+          currentQuestionData.current = {
+            sequence: result.questions.length - 1,
+            id: lastQuestion.id,
+            interviewId: lastQuestion.interviewId,
+            noteType: lastQuestion.noteType,
+            content: lastQuestion.content,
+            questionId: lastQuestion.questionId,
+            question: lastQuestion.question,
+            answer: lastQuestion.answer,
+            askedQuestion: lastQuestion.askedQuestion,
+            candidateAnswer: lastQuestion.candidateAnswer,
+            keyPoints: lastQuestion.keyPoints,
+            assessment: lastQuestion.assessment,
+            referenceAnswer: lastQuestion.referenceAnswer,
+            pros: lastQuestion.pros,
+            cons: lastQuestion.cons,
+            suggestions: lastQuestion.suggestions,
+            otherId: lastQuestion.otherId,
+            otherContent: lastQuestion.otherContent,
+            createdAt: lastQuestion.createdAt,
+            endAt: lastQuestion.endAt,
+            duration: lastQuestion.duration,
+          };
         } else {
           // 没有问题数据时，只同步状态和消息
           setMockInterviewState({
@@ -329,6 +368,7 @@ export function MockInterviewEntryBody({
             interviewState: interview.interviewState,
             message: interview.message || undefined,
             isLoading: false,
+            isAutoMode: interview.answerMode === 'auto',
           });
         }
 
@@ -1145,12 +1185,26 @@ export function MockInterviewEntryBody({
           // 【保存】暂存问题数据
           currentQuestionData.current = {
             sequence: context.currentQuestionIndex,
+            id: undefined,
+            interviewId: undefined,
+            noteType: undefined,
+            content: undefined,
             questionId: similarQuestion?.questionId,
             question: similarQuestion?.question,
             answer: similarQuestion?.answer,
+            askedQuestion: undefined,
+            candidateAnswer: undefined,
+            keyPoints: undefined,
+            assessment: undefined,
             referenceAnswer: referenceAnswer,
+            pros: undefined,
+            cons: undefined,
+            suggestions: undefined,
             otherId: similarQuestion?.otherId,
             otherContent: similarQuestion?.otherContent,
+            createdAt: undefined,
+            endAt: undefined,
+            duration: undefined,
           };
 
           onAnswerGenerated?.(referenceAnswer);
