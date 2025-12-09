@@ -56,6 +56,15 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           .get(body.interview_id, payload.uid);
         if (!interview) return reply.code(404).send({ error: '面试不存在或无权限' });
 
+        // 检查是否已存在评分记录，如果存在则跳过插入
+        const existingScore = (app as any).db
+          .prepare('SELECT id FROM interview_scores WHERE interview_id=?')
+          .get(body.interview_id);
+        if (existingScore) {
+          // 已存在评分记录，直接返回现有 ID
+          return { id: existingScore.id, message: '评分记录已存在，跳过插入' };
+        }
+
         const { randomUUID } = await import('crypto');
         const id = randomUUID();
         const now = Date.now();
@@ -613,6 +622,15 @@ export function registerInterviewRoutes(app: FastifyInstance) {
           .prepare('SELECT id FROM interviews WHERE id=? AND user_id=?')
           .get(body.interview_id, payload.uid);
         if (!interview) return reply.code(404).send({ error: '面试不存在或无权限' });
+
+        // 检查是否已存在剖析记录，如果存在则跳过插入
+        const existingInsight = (app as any).db
+          .prepare('SELECT id FROM interview_insights WHERE interview_id=?')
+          .get(body.interview_id);
+        if (existingInsight) {
+          // 已存在剖析记录，直接返回现有 ID
+          return { id: existingInsight.id, message: '剖析记录已存在，跳过插入' };
+        }
 
         const { randomUUID } = await import('crypto');
         const id = randomUUID();
