@@ -106,6 +106,8 @@ export function InterviewTrainingFooter({
         }) as EventListener);
 
         // 监听用户说话结束(自动模式)
+        // 面试训练采用扬声器优先原则：真实面试官随时可能打断，所以静音后立即停止录音
+        // 这与模拟面试不同，模拟面试需要等待用户说够 5 个字符才提交
         coordinator.addEventListener('userFinishedSpeaking', ((_event: CustomEvent) => {
           // 使用 ref 获取最新值，避免闭包陷阱
           if (isAutoModeRef.current) {
