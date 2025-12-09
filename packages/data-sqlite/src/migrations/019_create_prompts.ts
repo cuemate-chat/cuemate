@@ -501,19 +501,24 @@ export function up(db: any): void {
    - cons: 缺点和不足(列举\${consMin}-\${consMax}条)
    - suggestions: 改进建议(列举\${suggestionsMin}-\${suggestionsMax}条具体建议)
 
-**输出格式(JSON):**
+**输出格式(JSON，注意：所有字段值必须根据实际问答内容生成，禁止照抄示例):**
 {
-  "totalScore": 85,
-  "radarInteractivity": 80,
-  "radarConfidence": 85,
-  "radarProfessionalism": 90,
-  "radarRelevance": 85,
-  "radarClarity": 80,
-  "overallSummary": "候选人整体表现...",
-  "pros": "1. 技术基础扎实...\\n2. ...",
-  "cons": "1. 某些问题回答不够深入...\\n2. ...",
-  "suggestions": "1. 建议加强...\\n2. ..."
-}',
+  "totalScore": <根据候选人整体表现评分，范围\${scoreMin}-\${scoreMax}，必须基于实际回答质量计算>,
+  "radarInteractivity": <互动性评分，范围\${scoreMin}-\${scoreMax}>,
+  "radarConfidence": <自信度评分，范围\${scoreMin}-\${scoreMax}>,
+  "radarProfessionalism": <专业性评分，范围\${scoreMin}-\${scoreMax}>,
+  "radarRelevance": <相关性评分，范围\${scoreMin}-\${scoreMax}>,
+  "radarClarity": <流畅性评分，范围\${scoreMin}-\${scoreMax}>,
+  "overallSummary": "<根据实际表现撰写总结，\${summaryMaxWords}字以内>",
+  "pros": "<根据实际表现列举\${prosMin}-\${prosMax}条优点>",
+  "cons": "<根据实际表现列举\${consMin}-\${consMax}条不足>",
+  "suggestions": "<根据实际表现给出\${suggestionsMin}-\${suggestionsMax}条改进建议>"
+}
+
+【重要提醒】
+- 上述 JSON 格式中的尖括号<>内容是说明，输出时必须替换为根据实际内容生成的具体值
+- 所有评分必须基于候选人的实际回答质量客观评估，不同面试应有不同分数
+- 优点、缺点、建议必须针对本次面试的具体内容，不要泛泛而谈',
       '面试评分生成提示词',
       '["jobTitle","resumeContent","reviewsData","scoreMin","scoreMax","summaryMaxWords","prosMin","prosMax","consMin","consMax","suggestionsMin","suggestionsMax"]',
       'desktop',
@@ -540,20 +545,25 @@ export function up(db: any): void {
    - cons: 缺点和不足(列举\${consMin}-\${consMax}条)
    - suggestions: 改进建议(列举\${suggestionsMin}-\${suggestionsMax}条具体建议)
 
-**输出格式(JSON):**
+**输出格式(JSON，注意：所有字段值必须根据实际问答内容生成，禁止照抄示例):**
 {
-  "totalScore": 85,
-  "radarInteractivity": 80,
-  "radarConfidence": 85,
-  "radarProfessionalism": 90,
-  "radarRelevance": 85,
-  "radarClarity": 80,
-  "overallSummary": "候选人整体表现...",
-  "pros": "1. 技术基础扎实...\\n2. ...",
-  "cons": "1. 某些问题回答不够深入...\\n2. ...",
-  "suggestions": "1. 建议加强...\\n2. ..."
-}',
-      '{"scoreMin": 0, "scoreMax": 100, "summaryMaxWords": 200, "prosMin": 3, "prosMax": 5, "consMin": 3, "consMax": 5, "suggestionsMin": 3, "suggestionsMax": 5}',
+  "totalScore": <根据候选人整体表现评分，范围\${scoreMin}-\${scoreMax}，必须基于实际回答质量计算>,
+  "radarInteractivity": <互动性评分，范围\${scoreMin}-\${scoreMax}>,
+  "radarConfidence": <自信度评分，范围\${scoreMin}-\${scoreMax}>,
+  "radarProfessionalism": <专业性评分，范围\${scoreMin}-\${scoreMax}>,
+  "radarRelevance": <相关性评分，范围\${scoreMin}-\${scoreMax}>,
+  "radarClarity": <流畅性评分，范围\${scoreMin}-\${scoreMax}>,
+  "overallSummary": "<根据实际表现撰写总结，\${summaryMaxWords}字以内>",
+  "pros": "<根据实际表现列举\${prosMin}-\${prosMax}条优点>",
+  "cons": "<根据实际表现列举\${consMin}-\${consMax}条不足>",
+  "suggestions": "<根据实际表现给出\${suggestionsMin}-\${suggestionsMax}条改进建议>"
+}
+
+【重要提醒】
+- 上述 JSON 格式中的尖括号<>内容是说明，输出时必须替换为根据实际内容生成的具体值
+- 所有评分必须基于候选人的实际回答质量客观评估，不同面试应有不同分数
+- 优点、缺点、建议必须针对本次面试的具体内容，不要泛泛而谈',
+      '{"scoreMin": 0, "scoreMax": 100, "summaryMaxWords": 500, "prosMin": 3, "prosMax": 5, "consMin": 3, "consMax": 5, "suggestionsMin": 3, "suggestionsMax": 5}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -593,31 +603,33 @@ export function up(db: any): void {
 - strategyKeepLogical：逻辑表达建议（如何组织回答、如何展示思维过程）
 
 【输出格式】
-请严格按以下 JSON 格式输出，不要包含其他内容：
+请严格按以下 JSON 格式输出（注意：所有字段值必须根据实际问答内容生成，禁止照抄示例）：
 {
   "interviewer": {
-    "score": 85,
-    "summary": "面试官提问专业且有深度...",
-    "role": "技术经理",
-    "mbti": "INTJ",
-    "personality": "理性、注重逻辑、追求深度",
-    "preference": "重视技术深度和项目实战经验"
+    "score": <根据面试官提问质量评分，范围\${scoreMin}-\${scoreMax}，必须基于实际问答内容计算>,
+    "summary": "<根据实际问答分析面试官风格，\${summaryMaxWords}字以内>",
+    "role": "<根据提问内容推测角色>",
+    "mbti": "<根据提问风格推测>",
+    "personality": "<根据实际表现分析性格特征>",
+    "preference": "<根据问题类型分析偏好>"
   },
   "candidate": {
-    "summary": "候选人技术基础扎实...",
-    "mbti": "ISTJ",
-    "personality": "稳重、注重细节、表达清晰",
-    "job_preference": "适合需要深度技术钻研的岗位"
+    "summary": "<根据实际回答分析候选人特征，\${summaryMaxWords}字以内>",
+    "mbti": "<根据回答风格推测>",
+    "personality": "<根据实际表现分析>",
+    "job_preference": "<根据回答内容分析职业偏好>"
   },
   "strategy": {
-    "prepare_details": "1. 深入准备技术原理...\\n2. 准备具体项目案例...",
-    "business_understanding": "1. 提前了解公司业务...\\n2. 思考技术与业务的结合点...",
-    "keep_logical": "1. 回答采用 STAR 法则...\\n2. 先给结论再展开细节..."
+    "prepare_details": "<根据本次面试特点给出具体建议>",
+    "business_understanding": "<针对性的业务理解建议>",
+    "keep_logical": "<针对性的表达建议>"
   }
 }
 
 【重要提醒】
 - 所有分析必须基于问答记录中的实际内容，不要凭空臆测
+- 上述 JSON 格式中的尖括号<>内容是说明，输出时必须替换为根据实际内容生成的具体值
+- score 必须根据面试官提问的专业度、深度、覆盖面进行客观评估，不同面试应有不同分数
 - 建议要具体、可操作，让候选人知道如何改进
 - MBTI 推测要有依据，说明是基于什么特征判断的',
       '面试洞察生成提示词',
@@ -657,34 +669,36 @@ export function up(db: any): void {
 - strategyKeepLogical：逻辑表达建议（如何组织回答、如何展示思维过程）
 
 【输出格式】
-请严格按以下 JSON 格式输出，不要包含其他内容：
+请严格按以下 JSON 格式输出（注意：所有字段值必须根据实际问答内容生成，禁止照抄示例）：
 {
   "interviewer": {
-    "score": 85,
-    "summary": "面试官提问专业且有深度...",
-    "role": "技术经理",
-    "mbti": "INTJ",
-    "personality": "理性、注重逻辑、追求深度",
-    "preference": "重视技术深度和项目实战经验"
+    "score": <根据面试官提问质量评分，范围\${scoreMin}-\${scoreMax}，必须基于实际问答内容计算>,
+    "summary": "<根据实际问答分析面试官风格，\${summaryMaxWords}字以内>",
+    "role": "<根据提问内容推测角色>",
+    "mbti": "<根据提问风格推测>",
+    "personality": "<根据实际表现分析性格特征>",
+    "preference": "<根据问题类型分析偏好>"
   },
   "candidate": {
-    "summary": "候选人技术基础扎实...",
-    "mbti": "ISTJ",
-    "personality": "稳重、注重细节、表达清晰",
-    "job_preference": "适合需要深度技术钻研的岗位"
+    "summary": "<根据实际回答分析候选人特征，\${summaryMaxWords}字以内>",
+    "mbti": "<根据回答风格推测>",
+    "personality": "<根据实际表现分析>",
+    "job_preference": "<根据回答内容分析职业偏好>"
   },
   "strategy": {
-    "prepare_details": "1. 深入准备技术原理...\\n2. 准备具体项目案例...",
-    "business_understanding": "1. 提前了解公司业务...\\n2. 思考技术与业务的结合点...",
-    "keep_logical": "1. 回答采用 STAR 法则...\\n2. 先给结论再展开细节..."
+    "prepare_details": "<根据本次面试特点给出具体建议>",
+    "business_understanding": "<针对性的业务理解建议>",
+    "keep_logical": "<针对性的表达建议>"
   }
 }
 
 【重要提醒】
 - 所有分析必须基于问答记录中的实际内容，不要凭空臆测
+- 上述 JSON 格式中的尖括号<>内容是说明，输出时必须替换为根据实际内容生成的具体值
+- score 必须根据面试官提问的专业度、深度、覆盖面进行客观评估，不同面试应有不同分数
 - 建议要具体、可操作，让候选人知道如何改进
 - MBTI 推测要有依据，说明是基于什么特征判断的',
-      '{"scoreMin": 0, "scoreMax": 100, "summaryMaxWords": 100}',
+      '{"scoreMin": 0, "scoreMax": 100, "summaryMaxWords": 500}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -831,7 +845,7 @@ export function up(db: any): void {
 5. 提供具体可行的改进建议
 6. 雷达图评分要客观公正
 7. 确保返回标准 JSON 格式',
-      '{"overallScoreMin": 1, "overallScoreMax": 100, "summaryMinWords": 150, "summaryMaxWords": 200, "prosMinWords": 100, "prosMaxWords": 150, "consMinWords": 100, "consMaxWords": 150, "suggestionsMinWords": 150, "suggestionsMaxWords": 200, "radarScoreMin": 1, "radarScoreMax": 10, "interviewerSummaryWords": 100, "candidateSummaryWords": 100, "strategyWords": 80, "qaFeedbackWords": 80}',
+      '{"overallScoreMin": 1, "overallScoreMax": 100, "summaryMinWords": 150, "summaryMaxWords": 500, "prosMinWords": 100, "prosMaxWords": 150, "consMinWords": 100, "consMaxWords": 150, "suggestionsMinWords": 150, "suggestionsMaxWords": 200, "radarScoreMin": 1, "radarScoreMax": 10, "interviewerSummaryWords": 100, "candidateSummaryWords": 100, "strategyWords": 80, "qaFeedbackWords": 80}',
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
