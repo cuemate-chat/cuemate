@@ -45,6 +45,7 @@ export function MockInterviewFooter({
   // 使用 ref 保存最新的回调和状态，避免闭包陷阱
   const isAutoModeRef = useRef(mockInterviewState.isAutoMode);
   const onResponseCompleteRef = useRef(onResponseComplete);
+  const speechTextRef = useRef(mockInterviewState.speechText);
 
   // 保持 ref 与最新值同步
   useEffect(() => {
@@ -54,6 +55,10 @@ export function MockInterviewFooter({
   useEffect(() => {
     onResponseCompleteRef.current = onResponseComplete;
   }, [onResponseComplete]);
+
+  useEffect(() => {
+    speechTextRef.current = mockInterviewState.speechText;
+  }, [mockInterviewState.speechText]);
 
   // 只有存在 interviewId 才显示数据,否则显示空白
   const speechText = interviewId ? mockInterviewState.speechText : '';
@@ -110,8 +115,20 @@ export function MockInterviewFooter({
         coordinator.addEventListener('userFinishedSpeaking', ((_event: CustomEvent) => {
           // 使用 ref 获取最新值，避免闭包陷阱
           if (isAutoModeRef.current) {
+            // 检查 speechText 长度，至少需要 5 个字符才触发提交
+            // 如果不足 5 个字符，继续监听，不停止录音
+            if (speechTextRef.current.length <= 5) {
+              log.debug('userFinishedSpeaking', '自动模式检测到静音，但文字不足5个字符，继续监听', {
+                speechTextLength: speechTextRef.current.length
+              });
+              // 重新启动 ASR 监听，继续等待用户说话
+              coordinator.startASRListening();
+              return;
+            }
             // 自动模式下,静音 5 秒后自动触发回答完成
-            log.debug('userFinishedSpeaking', '自动模式检测到用户说话结束，触发回答完成');
+            log.debug('userFinishedSpeaking', '自动模式检测到用户说话结束，触发回答完成', {
+              speechTextLength: speechTextRef.current.length
+            });
             onResponseCompleteRef.current();
             // 停止监听,保留 speechText 供状态机使用
             setMockInterviewState({ isListening: false });

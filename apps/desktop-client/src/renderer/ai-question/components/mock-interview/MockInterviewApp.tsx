@@ -130,7 +130,9 @@ export function MockInterviewApp() {
 
     // 通过 BroadcastChannel + localStorage 跨窗口传递用户回答
     // 左侧窗口会监听 candidateAnswer 变化并触发 AI 分析
-    setMockInterviewState({ candidateAnswer: speechText });
+    // 同时立即设置 interviewState 为 ai_analyzing，让 Footer 立即显示"面试官分析中"
+    // 注意：状态机的异步更新会稍后覆盖这个值，但不影响用户体验
+    setMockInterviewState({ candidateAnswer: speechText, interviewState: 'ai_analyzing' });
   };
 
   return (
