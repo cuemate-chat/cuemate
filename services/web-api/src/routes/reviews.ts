@@ -134,6 +134,9 @@ export function registerReviewRoutes(app: FastifyInstance) {
         const questions = (app as any).db
           .prepare(
             `SELECT r.id,
+                  r.interview_id,
+                  r.note_type,
+                  r.content,
                   r.question_id,
                   r.question,
                   r.answer,
@@ -145,6 +148,8 @@ export function registerReviewRoutes(app: FastifyInstance) {
                   r.pros,
                   r.cons,
                   r.suggestions,
+                  r.other_id,
+                  r.other_content,
                   r.created_at,
                   r.end_at,
                   r.duration

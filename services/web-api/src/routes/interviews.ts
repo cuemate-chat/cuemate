@@ -259,6 +259,8 @@ export function registerInterviewRoutes(app: FastifyInstance) {
   // - key_points: 这个问题的考察点
   // - assessment: 对这个问题回答的评价
   // - reference_answer: 这个问题的参考答案
+  // - other_id: 关联的其他资源 ID (可选)
+  // - other_content: 其他扩展内容 (可选)
   // - created_at: 创建时间戳 (毫秒)
   // - end_at: 问题结束时间戳 (毫秒)
   // - duration: 问题回答时长 (秒)
