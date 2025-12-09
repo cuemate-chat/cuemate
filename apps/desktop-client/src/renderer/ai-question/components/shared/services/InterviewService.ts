@@ -50,6 +50,8 @@ export interface CreateReviewData {
   referenceAnswer?: string;
   otherId?: string;
   otherContent?: string;
+  endAt?: number;
+  duration?: number;
 }
 
 // 更新问答记录的数据
@@ -58,6 +60,7 @@ export interface UpdateReviewData {
   questionId?: string;
   question?: string;
   answer?: string;
+  askedQuestion?: string;
   candidateAnswer?: string;
   pros?: string;
   cons?: string;
@@ -148,6 +151,8 @@ export class InterviewService {
         referenceAnswer: data.referenceAnswer,
         otherId: data.otherId,
         otherContent: data.otherContent,
+        endAt: data.endAt,
+        duration: data.duration,
       };
 
       const response = await httpPost<{ id: string }>(
@@ -179,6 +184,7 @@ export class InterviewService {
       if (data.questionId !== undefined) updateData.questionId = data.questionId;
       if (data.question !== undefined) updateData.question = data.question;
       if (data.answer !== undefined) updateData.answer = data.answer;
+      if (data.askedQuestion !== undefined) updateData.askedQuestion = data.askedQuestion;
       if (data.candidateAnswer !== undefined) updateData.candidateAnswer = data.candidateAnswer;
       if (data.pros !== undefined) updateData.pros = data.pros;
       if (data.cons !== undefined) updateData.cons = data.cons;

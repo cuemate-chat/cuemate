@@ -92,6 +92,9 @@ export interface InterviewDetail {
 
 export interface InterviewQuestion {
   id: string;
+  interviewId?: string;
+  noteType?: string;
+  content?: string;
   questionId?: string;
   question?: string;
   answer?: string;
@@ -103,7 +106,11 @@ export interface InterviewQuestion {
   pros?: string;
   cons?: string;
   suggestions?: string;
+  otherId?: string;
+  otherContent?: string;
   createdAt: number;
+  endAt?: number;
+  duration?: number;
 }
 
 export interface InterviewSummary {

@@ -164,7 +164,21 @@ export class InterviewDataService {
       interviewId: dataState.interviewId,
       noteType: 'interview_qa',
       content: askedQuestion,
+      questionId: undefined,
+      question: undefined,
+      answer: undefined,
       askedQuestion: askedQuestion,
+      candidateAnswer: undefined,
+      pros: undefined,
+      cons: undefined,
+      suggestions: undefined,
+      keyPoints: undefined,
+      assessment: undefined,
+      referenceAnswer: undefined,
+      otherId: undefined,
+      otherContent: undefined,
+      endAt: undefined,
+      duration: undefined,
     };
 
     const result = await interviewService.createReview(reviewData);
