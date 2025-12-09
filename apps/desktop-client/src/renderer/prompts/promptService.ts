@@ -71,11 +71,13 @@ class PromptService {
 
   /**
    * 构建面试初始化 Prompt
+   * @param previousQuestions 上一次面试问过的问题列表，用于避免重复提问
    */
   async buildInitPrompt(
     jobPosition: { title?: string; description?: string },
     resume: { resumeTitle?: string; resumeContent?: string },
     questionBank: InterviewQuestion[],
+    previousQuestions: string[] = [],
   ): Promise<{ content: string; totalQuestions: number }> {
     const promptData = await this.fetchPromptWithConfig('InitPrompt');
 
@@ -90,12 +92,13 @@ class PromptService {
       log.error('buildInitPrompt', 'Failed to parse extra config', { extra: promptData.extra }, error);
     }
 
-    // 渲染模板,包含 totalQuestions 作为变量 8
+    // 渲染模板，包含 totalQuestions 和 previousQuestions 变量
     const content = this.renderTemplate(promptData.content, {
       jobPosition,
       resume,
       questionBank,
       totalQuestions,
+      previousQuestions,
     });
 
     return { content, totalQuestions };
@@ -136,36 +139,65 @@ class PromptService {
   }
 
   /**
-   * 构建问题生成 Prompt
+   * 根据总题数动态计算各面试阶段的范围
+   * 阶段分布：自我介绍(1题) → 项目经历(20%) → 技术深入(40%) → 场景设计(20%) → 收尾(20%)
    */
-  async buildQuestionPrompt(currentQuestionIndex: number): Promise<string> {
-    const promptData = await this.fetchPromptWithConfig('QuestionPrompt');
+  private calculateStages(totalQuestions: number) {
+    // 第 1 题固定是自我介绍（index 0）
+    const remaining = Math.max(0, totalQuestions - 1);
 
-    // 从 extra 字段解析配置参数
-    let projectStageStart = 2;
-    let projectStageEnd = 3;
-    let techStageStart = 4;
-    let techStageEnd = 6;
-    let scenarioStageStart = 7;
-    let scenarioStageEnd = 8;
-    let endStageStart = 9;
-    try {
-      if (promptData.extra) {
-        const config = JSON.parse(promptData.extra);
-        projectStageStart = config.projectStageStart || 2;
-        projectStageEnd = config.projectStageEnd || 3;
-        techStageStart = config.techStageStart || 4;
-        techStageEnd = config.techStageEnd || 6;
-        scenarioStageStart = config.scenarioStageStart || 7;
-        scenarioStageEnd = config.scenarioStageEnd || 8;
-        endStageStart = config.endStageStart || 9;
-      }
-    } catch (error) {
-      log.error('buildQuestionPrompt', 'Failed to parse extra config', { extra: promptData.extra }, error);
+    if (remaining === 0) {
+      // 只有 1 题，全部都是自我介绍
+      return {
+        projectStageStart: 1,
+        projectStageEnd: 0,
+        techStageStart: 1,
+        techStageEnd: 0,
+        scenarioStageStart: 1,
+        scenarioStageEnd: 0,
+        endStageStart: 1,
+      };
     }
 
-    return this.renderTemplate(promptData.content, {
-      currentQuestionIndex,
+    // 计算各阶段题数（至少 1 题，技术深入阶段优先保证）
+    let projectCount = Math.max(1, Math.round(remaining * 0.2));
+    let techCount = Math.max(1, Math.round(remaining * 0.4));
+    let scenarioCount = Math.max(1, Math.round(remaining * 0.2));
+    let endCount = remaining - projectCount - techCount - scenarioCount;
+
+    // 如果收尾题数不足，从其他阶段调整
+    if (endCount < 1) {
+      endCount = 1;
+      const excess = projectCount + techCount + scenarioCount + endCount - remaining;
+      if (excess > 0) {
+        // 优先减少项目经历和场景设计
+        if (projectCount > 1) projectCount = Math.max(1, projectCount - Math.ceil(excess / 2));
+        if (scenarioCount > 1) scenarioCount = Math.max(1, scenarioCount - Math.floor(excess / 2));
+      }
+    }
+
+    // 计算各阶段的起止位置（0-indexed，用于 currentQuestionIndex 比较）
+    const projectStageStart = 1;
+    const projectStageEnd = projectStageStart + projectCount - 1;
+
+    const techStageStart = projectStageEnd + 1;
+    const techStageEnd = techStageStart + techCount - 1;
+
+    const scenarioStageStart = techStageEnd + 1;
+    const scenarioStageEnd = scenarioStageStart + scenarioCount - 1;
+
+    const endStageStart = scenarioStageEnd + 1;
+
+    log.debug('calculateStages', '动态计算面试阶段', {
+      totalQuestions,
+      projectCount,
+      techCount,
+      scenarioCount,
+      endCount,
+      stages: { projectStageStart, projectStageEnd, techStageStart, techStageEnd, scenarioStageStart, scenarioStageEnd, endStageStart },
+    });
+
+    return {
       projectStageStart,
       projectStageEnd,
       techStageStart,
@@ -173,6 +205,23 @@ class PromptService {
       scenarioStageStart,
       scenarioStageEnd,
       endStageStart,
+    };
+  }
+
+  /**
+   * 构建问题生成 Prompt
+   * @param currentQuestionIndex 当前问题索引（0-indexed）
+   * @param totalQuestions 总题数
+   */
+  async buildQuestionPrompt(currentQuestionIndex: number, totalQuestions: number): Promise<string> {
+    const promptData = await this.fetchPromptWithConfig('QuestionPrompt');
+
+    // 根据总题数动态计算各阶段范围
+    const stages = this.calculateStages(totalQuestions);
+
+    return this.renderTemplate(promptData.content, {
+      currentQuestionIndex,
+      ...stages,
     });
   }
 

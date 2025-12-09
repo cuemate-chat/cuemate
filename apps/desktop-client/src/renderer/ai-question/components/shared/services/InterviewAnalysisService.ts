@@ -224,11 +224,11 @@ export class InterviewAnalysisService {
     let systemPrompt =
       '你是一位资深的 HR 专家和面试分析师，具有丰富的面试评估经验。请基于提供的面试训练数据进行专业分析。';
     try {
-      systemPrompt = await promptService.getPromptContent('AIQuestionAnalysisSystemPrompt');
+      systemPrompt = await promptService.getPromptContent('AISystemPrompt');
     } catch (error) {
       await log.error(
         'performAIAnalysis',
-        'Failed to fetch AIQuestionAnalysisSystemPrompt',
+        'Failed to fetch AISystemPrompt',
         {},
         error,
       );

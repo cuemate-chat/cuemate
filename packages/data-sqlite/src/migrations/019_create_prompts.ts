@@ -34,6 +34,9 @@ export function up(db: any): void {
 【参考押题库】（生成问题时务必参考，如有相关问题优先使用）
 \${questionBank.length > 0 ? questionBank.map((q, i) => \`\${i+1}. Q: \${q.question}\\n   A: \${q.answer || ''无参考答案''}\`).join(''\\n\\n'') : ''无押题''}
 
+【上一次面试问过的问题 - 本次面试尽量避免重复】
+\${previousQuestions.length > 0 ? previousQuestions.map((q, i) => \`\${i+1}. \${q}\`).join(''\\n'') : ''无（这是第一次面试该岗位）''}
+
 【面试规则 - 务必严格遵守】
 1. 第一个问题必须是"自我介绍"，不能跳过直接问技术问题
 2. 每次只问一个问题，禁止一次问多个不相关的问题
@@ -42,15 +45,17 @@ export function up(db: any): void {
 5. 问题要有针对性，必须结合上面提供的【岗位信息】【候选人简历】【参考押题库】
 6. 保持专业和友好的语气，去除 AI 味道
 7. 总共进行\${totalQuestions}个问题的面试
+8. 除了"自我介绍"外，其他问题尽量避免与【上一次面试问过的问题】重复，换不同的角度或话题提问
 
 【重要提醒】
 - 上面传入的岗位信息、简历、押题库都是有用的数据，必须在提问时参考使用
 - 不要生成与岗位/简历无关的泛泛问题
 - 押题库中的问题如果与当前轮次匹配，应优先使用或改编
+- 避免与上一次面试问过的问题重复（自我介绍除外）
 
 请开始面试，第一个问题必须引导候选人进行自我介绍。',
       '面试初始化提示词',
-      '["jobPosition","resume","questionBank","totalQuestions"]',
+      '["jobPosition","resume","questionBank","totalQuestions","previousQuestions"]',
       'desktop',
       '你是一名专业的面试官，即将开始一场\${jobPosition.title || ''软件开发''}的面试。
 
@@ -65,6 +70,9 @@ export function up(db: any): void {
 【参考押题库】（生成问题时务必参考，如有相关问题优先使用）
 \${questionBank.length > 0 ? questionBank.map((q, i) => \`\${i+1}. Q: \${q.question}\\n   A: \${q.answer || ''无参考答案''}\`).join(''\\n\\n'') : ''无押题''}
 
+【上一次面试问过的问题 - 本次面试尽量避免重复】
+\${previousQuestions.length > 0 ? previousQuestions.map((q, i) => \`\${i+1}. \${q}\`).join(''\\n'') : ''无（这是第一次面试该岗位）''}
+
 【面试规则 - 务必严格遵守】
 1. 第一个问题必须是"自我介绍"，不能跳过直接问技术问题
 2. 每次只问一个问题，禁止一次问多个不相关的问题
@@ -73,11 +81,13 @@ export function up(db: any): void {
 5. 问题要有针对性，必须结合上面提供的【岗位信息】【候选人简历】【参考押题库】
 6. 保持专业和友好的语气，去除 AI 味道
 7. 总共进行\${totalQuestions}个问题的面试
+8. 除了"自我介绍"外，其他问题尽量避免与【上一次面试问过的问题】重复，换不同的角度或话题提问
 
 【重要提醒】
 - 上面传入的岗位信息、简历、押题库都是有用的数据，必须在提问时参考使用
 - 不要生成与岗位/简历无关的泛泛问题
 - 押题库中的问题如果与当前轮次匹配，应优先使用或改编
+- 避免与上一次面试问过的问题重复（自我介绍除外）
 
 请开始面试，第一个问题必须引导候选人进行自我介绍。',
       '{"totalQuestions": 10}',
@@ -213,15 +223,15 @@ export function up(db: any): void {
 \${currentQuestionIndex === 0 ? \`▸ 这是面试的第一轮，必须进行自我介绍引导
 ▸ 用友好的开场白欢迎候选人，然后请他/她简单介绍自己
 ▸ 示例："你好，欢迎参加今天的面试。首先请简单介绍一下自己吧，包括你的工作经历和技术背景。"
-▸ 禁止跳过自我介绍直接问技术问题\` : currentQuestionIndex <= projectStageEnd ? \`▸ 这是项目经历阶段（第\${projectStageStart}-\${projectStageEnd}轮）
+▸ 禁止跳过自我介绍直接问技术问题\` : currentQuestionIndex <= projectStageEnd ? \`▸ 当前是项目经历阶段
 ▸ 从候选人的简历或之前的回答中，挑选一个具体项目深入提问
 ▸ 重点关注：项目背景、个人职责、技术方案、遇到的挑战和解决方法
-▸ 示例："看到你简历里提到了 XX 项目，能详细说说你在里面负责什么，用了哪些技术吗？"\` : currentQuestionIndex <= techStageEnd ? \`▸ 这是技术深入阶段（第\${techStageStart}-\${techStageEnd}轮）
+▸ 示例："看到你简历里提到了 XX 项目，能详细说说你在里面负责什么，用了哪些技术吗？"\` : currentQuestionIndex <= techStageEnd ? \`▸ 当前是技术深入阶段
 ▸ 结合岗位要求和押题库，提出技术性问题
 ▸ 如果押题库中有相关问题，优先使用或改编
-▸ 可以结合候选人之前的回答进行追问\` : currentQuestionIndex <= scenarioStageEnd ? \`▸ 这是场景设计阶段（第\${scenarioStageStart}-\${scenarioStageEnd}轮）
+▸ 可以结合候选人之前的回答进行追问\` : currentQuestionIndex <= scenarioStageEnd ? \`▸ 当前是场景设计阶段
 ▸ 给出具体的业务场景或技术场景，考察解决实际问题的能力
-▸ 示例："假设你需要设计一个高并发的 XX 系统，你会怎么考虑？"\` : \`▸ 这是收尾阶段（第\${endStageStart}轮及之后）
+▸ 示例："假设你需要设计一个高并发的 XX 系统，你会怎么考虑？"\` : \`▸ 当前是收尾阶段
 ▸ 可以问开放性问题，如职业规划、对团队/公司的期望
 ▸ 或者问候选人是否有什么想了解的\`}
 
@@ -235,7 +245,7 @@ export function up(db: any): void {
 
 请生成第\${currentQuestionIndex + 1}个面试问题：',
       '生成面试问题提示词',
-      '["currentQuestionIndex","projectStageStart","projectStageEnd","techStageStart","techStageEnd","scenarioStageStart","scenarioStageEnd","endStageStart"]',
+      '["currentQuestionIndex","projectStageEnd","techStageEnd","scenarioStageEnd"]',
       'desktop',
       '你正在进行第\${currentQuestionIndex + 1}轮面试提问。
 
@@ -243,15 +253,15 @@ export function up(db: any): void {
 \${currentQuestionIndex === 0 ? \`▸ 这是面试的第一轮，必须进行自我介绍引导
 ▸ 用友好的开场白欢迎候选人，然后请他/她简单介绍自己
 ▸ 示例："你好，欢迎参加今天的面试。首先请简单介绍一下自己吧，包括你的工作经历和技术背景。"
-▸ 禁止跳过自我介绍直接问技术问题\` : currentQuestionIndex <= projectStageEnd ? \`▸ 这是项目经历阶段（第\${projectStageStart}-\${projectStageEnd}轮）
+▸ 禁止跳过自我介绍直接问技术问题\` : currentQuestionIndex <= projectStageEnd ? \`▸ 当前是项目经历阶段
 ▸ 从候选人的简历或之前的回答中，挑选一个具体项目深入提问
 ▸ 重点关注：项目背景、个人职责、技术方案、遇到的挑战和解决方法
-▸ 示例："看到你简历里提到了 XX 项目，能详细说说你在里面负责什么，用了哪些技术吗？"\` : currentQuestionIndex <= techStageEnd ? \`▸ 这是技术深入阶段（第\${techStageStart}-\${techStageEnd}轮）
+▸ 示例："看到你简历里提到了 XX 项目，能详细说说你在里面负责什么，用了哪些技术吗？"\` : currentQuestionIndex <= techStageEnd ? \`▸ 当前是技术深入阶段
 ▸ 结合岗位要求和押题库，提出技术性问题
 ▸ 如果押题库中有相关问题，优先使用或改编
-▸ 可以结合候选人之前的回答进行追问\` : currentQuestionIndex <= scenarioStageEnd ? \`▸ 这是场景设计阶段（第\${scenarioStageStart}-\${scenarioStageEnd}轮）
+▸ 可以结合候选人之前的回答进行追问\` : currentQuestionIndex <= scenarioStageEnd ? \`▸ 当前是场景设计阶段
 ▸ 给出具体的业务场景或技术场景，考察解决实际问题的能力
-▸ 示例："假设你需要设计一个高并发的 XX 系统，你会怎么考虑？"\` : \`▸ 这是收尾阶段（第\${endStageStart}轮及之后）
+▸ 示例："假设你需要设计一个高并发的 XX 系统，你会怎么考虑？"\` : \`▸ 当前是收尾阶段
 ▸ 可以问开放性问题，如职业规划、对团队/公司的期望
 ▸ 或者问候选人是否有什么想了解的\`}
 
@@ -264,7 +274,7 @@ export function up(db: any): void {
 6. 直接输出问题内容，不要包含"问题："等前缀或其他解释
 
 请生成第\${currentQuestionIndex + 1}个面试问题：',
-      '{"projectStageStart": 2, "projectStageEnd": 3, "techStageStart": 4, "techStageEnd": 6, "scenarioStageStart": 7, "scenarioStageEnd": 8, "endStageStart": 9}',
+      NULL,
       strftime('%s', 'now') * 1000,
       strftime('%s', 'now') * 1000
     ),
@@ -826,9 +836,9 @@ export function up(db: any): void {
       strftime('%s', 'now') * 1000
     ),
     (
-      'AIQuestionAnalysisSystemPrompt',
+      'AISystemPrompt',
       '你是一位资深的 HR 专家和面试分析师，具有丰富的面试评估经验。请基于提供的面试训练数据进行专业分析。',
-      'AI提问面试分析系统提示词',
+      'AI提问面试分析角色设定',
       '[]',
       'desktop',
       '你是一位资深的 HR 专家和面试分析师，具有丰富的面试评估经验。请基于提供的面试训练数据进行专业分析。',

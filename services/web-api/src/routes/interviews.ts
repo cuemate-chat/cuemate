@@ -840,4 +840,70 @@ export function registerInterviewRoutes(app: FastifyInstance) {
       }
     }),
   );
+
+  // 获取上一次面试问过的问题（用于跨面试去重）
+  app.get(
+    '/previous-interview-questions',
+    withErrorLogging(app.log as any, 'previous-interview-questions.get', async (req, reply) => {
+      try {
+        const payload = await (req as any).jwtVerify();
+        const query = z
+          .object({
+            jobId: z.string().min(1),
+            currentInterviewId: z.string().optional(),
+          })
+          .parse((req as any).query || {});
+
+        // 查找该用户该岗位上一次已完成的面试
+        // 排除当前面试（如果提供了 currentInterviewId）
+        let findLastInterviewSql = `
+          SELECT id FROM interviews
+          WHERE job_id = ? AND user_id = ? AND status = 'completed'
+        `;
+        const params: any[] = [query.jobId, payload.uid];
+
+        if (query.currentInterviewId) {
+          findLastInterviewSql += ' AND id != ?';
+          params.push(query.currentInterviewId);
+        }
+
+        findLastInterviewSql += ' ORDER BY created_at DESC LIMIT 1';
+
+        const lastInterview = (app as any).db.prepare(findLastInterviewSql).get(...params);
+
+        if (!lastInterview) {
+          // 没有找到上一次面试，返回空数组
+          return {
+            success: true,
+            questions: [],
+          };
+        }
+
+        // 获取上一次面试的所有问题
+        const reviews = (app as any).db
+          .prepare(
+            `
+            SELECT asked_question
+            FROM interview_reviews
+            WHERE interview_id = ? AND asked_question IS NOT NULL AND asked_question != ''
+            ORDER BY created_at ASC
+          `,
+          )
+          .all(lastInterview.id);
+
+        const questions = reviews.map((r: any) => r.asked_question);
+
+        return {
+          success: true,
+          questions,
+        };
+      } catch (err: any) {
+        app.log.error(
+          { err, endpoint: 'GET /previous-interview-questions' },
+          '获取上一次面试问题失败',
+        );
+        return reply.code(400).send(buildPrefixedError('获取上一次面试问题失败', err, 400));
+      }
+    }),
+  );
 }

@@ -388,6 +388,45 @@ export class InterviewService {
     }
   }
 
+  /**
+   * 获取上一次面试问过的问题（用于跨面试去重）
+   * @param jobId 岗位 ID
+   * @param currentInterviewId 当前面试 ID（可选，用于排除当前面试）
+   * @returns 上一次面试问过的问题列表
+   */
+  async getPreviousInterviewQuestions(jobId: string, currentInterviewId?: string): Promise<string[]> {
+    await this.ensureAuth();
+
+    let url = `${this.baseURL}/previous-interview-questions?jobId=${encodeURIComponent(jobId)}`;
+    if (currentInterviewId) {
+      url += `&currentInterviewId=${encodeURIComponent(currentInterviewId)}`;
+    }
+
+    try {
+      await log.http.request('getPreviousInterviewQuestions', url, 'GET', { jobId, currentInterviewId });
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        await log.http.error('getPreviousInterviewQuestions', url, new Error(`HTTP ${response.status}`), { jobId }, errorText);
+        // 失败时返回空数组，不影响正常面试流程
+        return [];
+      }
+
+      const result = await response.json();
+      await log.http.response('getPreviousInterviewQuestions', url, response.status, result);
+      return result.questions || [];
+    } catch (error) {
+      await log.http.error('getPreviousInterviewQuestions', url, error, { jobId });
+      // 失败时返回空数组，不影响正常面试流程
+      return [];
+    }
+  }
+
 }
 
 export const interviewService = new InterviewService();

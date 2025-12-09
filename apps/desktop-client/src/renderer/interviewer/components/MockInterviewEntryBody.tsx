@@ -815,10 +815,29 @@ export function MockInterviewEntryBody({
     setErrorMessage('');
 
     try {
+      // 获取上一次面试问过的问题（用于跨面试去重）
+      let previousQuestions: string[] = [];
+      if (context.jobPosition?.id) {
+        try {
+          previousQuestions = await interviewService.getPreviousInterviewQuestions(
+            context.jobPosition.id,
+            context.interviewId
+          );
+          log.debug('handleInitializing', '获取上一次面试问题', {
+            jobId: context.jobPosition.id,
+            count: previousQuestions.length,
+          });
+        } catch (error) {
+          // 获取失败不影响正常面试流程
+          log.warn('handleInitializing', '获取上一次面试问题失败，继续面试', undefined, error?.toString());
+        }
+      }
+
       const initPromptData = await promptService.buildInitPrompt(
         context.jobPosition,
         context.resume,
-        context.questionsBank
+        context.questionsBank,
+        previousQuestions
       );
 
       await contextManagementService.initialize({
@@ -852,7 +871,7 @@ export function MockInterviewEntryBody({
         throw new Error('未选择模型');
       }
 
-      const questionPrompt = await promptService.buildQuestionPrompt(context.currentQuestionIndex);
+      const questionPrompt = await promptService.buildQuestionPrompt(context.currentQuestionIndex, context.totalQuestions);
       const optimizedMessages = await contextManagementService.getOptimizedContext(questionPrompt);
 
       const modelConfig: ModelConfig = {
