@@ -39,7 +39,7 @@ jobs:
             # 更新内容
             
 
-            详见 [版本说明](https://cuemate.chat/guide/changelog/versions/${{ github.ref_name }})
+            详见 [版本说明](https://cuemate.chat/guide/changelog/versions/${{ github.ref_name }}.html)
 
             # 安装包下载
 
