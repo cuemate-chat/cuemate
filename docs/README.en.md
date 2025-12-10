@@ -22,28 +22,32 @@ CueMate is an open-source intelligent interview assistant - an AI-driven real-ti
 ## Core Advantages
 
 <table>
-  <tr>
-    <td align="center" valign="top" width="25%">
-      <img src="https://img.icons8.com/fluency/96/speed.png" width="48" height="48" alt="Real-time Response" />
-      <br /><b>Real-time Response</b>
-      <br /><sub>Voice recognition < 200ms<br />Answer generation < 1.5s</sub>
-    </td>
-    <td align="center" valign="top" width="25%">
-      <img src="https://img.icons8.com/fluency/96/artificial-intelligence.png" width="48" height="48" alt="Intelligent & Accurate" />
-      <br /><b>Intelligent & Accurate</b>
-      <br /><sub>24+ mainstream LLMs<br />RAG knowledge enhancement</sub>
-    </td>
-    <td align="center" valign="top" width="25%">
-      <img src="https://img.icons8.com/fluency/96/easy.png" width="48" height="48" alt="Easy to Use" />
-      <br /><b>Easy to Use</b>
-      <br /><sub>One-click installation<br />Modern intuitive interface</sub>
-    </td>
-    <td align="center" valign="top" width="25%">
-      <img src="https://img.icons8.com/fluency/96/lock-2.png" width="48" height="48" alt="Privacy & Security" />
-      <br /><b>Privacy & Security</b>
-      <br /><sub>Local deployment<br />Data never leaves your device</sub>
-    </td>
-  </tr>
+<tr>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/96/speed.png" width="48" height="48" alt="Real-time Response" />
+<br /><b>Real-time Response</b>
+<br /><sub>Voice recognition < 200ms<br />Answer generation < 1.5s</sub>
+<br /><img width="200" height="1" />
+</td>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/96/artificial-intelligence.png" width="48" height="48" alt="Intelligent & Accurate" />
+<br /><b>Intelligent & Accurate</b>
+<br /><sub>24+ mainstream LLMs<br />RAG knowledge enhancement</sub>
+<br /><img width="200" height="1" />
+</td>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/96/easy.png" width="48" height="48" alt="Easy to Use" />
+<br /><b>Easy to Use</b>
+<br /><sub>One-click installation<br />Modern intuitive interface</sub>
+<br /><img width="200" height="1" />
+</td>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/96/lock-2.png" width="48" height="48" alt="Privacy & Security" />
+<br /><b>Privacy & Security</b>
+<br /><sub>Local deployment<br />Data never leaves your device</sub>
+<br /><img width="200" height="1" />
+</td>
+</tr>
 </table>
 
 ## Key Features
@@ -84,20 +88,26 @@ CueMate is an open-source intelligent interview assistant - an AI-driven real-ti
 ## Use Cases
 
 <table>
-  <tr>
-    <td align="center" valign="top" width="33%">
-      <h3><img src="https://img.icons8.com/fluency/48/graduation-cap.png" width="20" height="20" style="vertical-align: text-bottom" /> Interview Training</h3>
-      <p>AI asks questions based on job JD<br />Evaluates and gives improvement tips<br />Practice weak areas repeatedly</p>
-    </td>
-    <td align="center" valign="top" width="33%">
-      <h3><img src="https://img.icons8.com/fluency/48/edit-file.png" width="20" height="20" style="vertical-align: text-bottom" /> Interview Preparation</h3>
-      <p>Upload resume and docs to knowledge base<br />Create and manage question bank<br />Test microphone and speaker devices</p>
-    </td>
-    <td align="center" valign="top" width="33%">
-      <h3><img src="https://img.icons8.com/fluency/48/rocket.png" width="20" height="20" style="vertical-align: text-bottom" /> Skill Improvement</h3>
-      <p>Train structured expression STAR<br />Rapid-fire questions build resilience<br />Support bilingual interview practice</p>
-    </td>
-  </tr>
+<tr>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/48/graduation-cap.png" width="36" height="36" alt="Mock Interview Training" />
+<br /><b>Mock Interview Training</b>
+<br /><sub>1. AI asks questions based on job JD<br />2. Evaluates and gives improvement tips<br />3. Practice weak areas repeatedly</sub>
+<br /><img width="275" height="1" />
+</td>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/48/edit-file.png" width="36" height="36" alt="Interview Preparation" />
+<br /><b>Interview Preparation</b>
+<br /><sub>1. Upload resume and docs to knowledge base<br />2. Create and manage question bank<br />3. Test microphone and speaker devices</sub>
+<br /><img width="275" height="1" />
+</td>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/48/rocket.png" width="36" height="36" alt="Skill Improvement" />
+<br /><b>Skill Improvement</b>
+<br /><sub>1. Train structured expression STAR<br />2. Rapid-fire questions build resilience<br />3. Support bilingual interview practice</sub>
+<br /><img width="275" height="1" />
+</td>
+</tr>
 </table>
 
 ## Screenshots
@@ -140,22 +150,24 @@ CueMate is an open-source intelligent interview assistant - an AI-driven real-ti
 ### Download
 
 <table>
-  <tr>
-    <td align="center" width="50%">
-      <h3><img src="https://img.icons8.com/fluency/48/box.png" width="20" height="20" style="vertical-align: text-bottom" /> Baidu Netdisk (China Users)</h3>
-      <p>
-        <a href="https://pan.baidu.com/s/1cKVLf2_1BnRBgEkdL35K4Q?pwd=3477">Download</a>
-        <br />Extraction code: <code>3477</code>
-      </p>
-    </td>
-    <td align="center" width="50%">
-      <h3><img src="https://img.icons8.com/fluency/48/github.png" width="20" height="20" style="vertical-align: text-bottom" /> GitHub Release</h3>
-      <p>
-        <a href="https://github.com/cuemate-chat/cuemate/releases">Go to Releases</a>
-        <br />Recommended for international users
-      </p>
-    </td>
-  </tr>
+<tr>
+<td align="center" valign="top">
+<h3><img src="https://img.icons8.com/fluency/48/box.png" width="20" height="20" style="vertical-align: text-bottom" /> Baidu Netdisk (China Users)</h3>
+<p>
+<a href="https://pan.baidu.com/s/1cKVLf2_1BnRBgEkdL35K4Q?pwd=3477">Download</a>
+<br />Extraction code: <code>3477</code>
+</p>
+<img width="410" height="1" />
+</td>
+<td align="center" valign="top">
+<h3><img src="https://img.icons8.com/fluency/48/github.png" width="20" height="20" style="vertical-align: text-bottom" /> GitHub Release</h3>
+<p>
+<a href="https://github.com/cuemate-chat/cuemate/releases">Go to Releases</a>
+<br />Recommended for international users
+</p>
+<img width="410" height="1" />
+</td>
+</tr>
 </table>
 
 ### Installation Steps

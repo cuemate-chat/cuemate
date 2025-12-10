@@ -22,28 +22,32 @@ CueMate 是一款开源的智能语音面试助手 - AI 驱动的实时面试训
 ## 核心优势
 
 <table>
-  <tr>
-    <td align="center" valign="top" width="25%">
-      <img src="https://img.icons8.com/fluency/96/speed.png" width="48" height="48" alt="实时响应" />
-      <br /><b>实时响应</b>
-      <br /><sub>语音识别延迟 < 200ms<br />答案生成 < 1.5 秒</sub>
-    </td>
-    <td align="center" valign="top" width="25%">
-      <img src="https://img.icons8.com/fluency/96/artificial-intelligence.png" width="48" height="48" alt="智能准确" />
-      <br /><b>智能准确</b>
-      <br /><sub>24+ 主流 LLM 支持<br />RAG 知识库增强</sub>
-    </td>
-    <td align="center" valign="top" width="25%">
-      <img src="https://img.icons8.com/fluency/96/easy.png" width="48" height="48" alt="易于使用" />
-      <br /><b>易于使用</b>
-      <br /><sub>一键安装部署<br />直观现代化界面</sub>
-    </td>
-    <td align="center" valign="top" width="25%">
-      <img src="https://img.icons8.com/fluency/96/lock-2.png" width="48" height="48" alt="隐私安全" />
-      <br /><b>隐私安全</b>
-      <br /><sub>本地部署运行<br />数据不外传</sub>
-    </td>
-  </tr>
+<tr>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/96/speed.png" width="48" height="48" alt="实时响应" />
+<br /><b>实时响应</b>
+<br /><sub>语音识别延迟 < 200ms<br />答案生成 < 1.5 秒</sub>
+<br /><img width="200" height="1" />
+</td>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/96/artificial-intelligence.png" width="48" height="48" alt="智能准确" />
+<br /><b>智能准确</b>
+<br /><sub>24+ 主流 LLM 支持<br />RAG 知识库增强</sub>
+<br /><img width="200" height="1" />
+</td>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/96/easy.png" width="48" height="48" alt="易于使用" />
+<br /><b>易于使用</b>
+<br /><sub>一键安装部署<br />直观现代化界面</sub>
+<br /><img width="200" height="1" />
+</td>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/96/lock-2.png" width="48" height="48" alt="隐私安全" />
+<br /><b>隐私安全</b>
+<br /><sub>本地部署运行<br />数据不外传</sub>
+<br /><img width="200" height="1" />
+</td>
+</tr>
 </table>
 
 ## 核心功能
@@ -84,20 +88,26 @@ CueMate 是一款开源的智能语音面试助手 - AI 驱动的实时面试训
 ## 应用场景
 
 <table>
-  <tr>
-    <td align="center" valign="top" width="33%">
-      <h3><img src="https://img.icons8.com/fluency/48/graduation-cap.png" width="20" height="20" style="vertical-align: text-bottom" /> 模拟面试训练</h3>
-      <p>AI 根据岗位 JD 自动提问<br />评估回答给出改进建议<br />针对薄弱环节反复练习</p>
-    </td>
-    <td align="center" valign="top" width="33%">
-      <h3><img src="https://img.icons8.com/fluency/48/edit-file.png" width="20" height="20" style="vertical-align: text-bottom" /> 面试准备</h3>
-      <p>上传简历项目文档建知识库<br />创建管理个性化面试题库<br />测试麦克风和扬声器设备</p>
-    </td>
-    <td align="center" valign="top" width="33%">
-      <h3><img src="https://img.icons8.com/fluency/48/rocket.png" width="20" height="20" style="vertical-align: text-bottom" /> 技能提升</h3>
-      <p>训练结构化表达 STAR 法则<br />模拟快速提问增强承受力<br />支持中英双语面试练习</p>
-    </td>
-  </tr>
+<tr>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/48/graduation-cap.png" width="36" height="36" alt="模拟面试训练" />
+<br /><b>模拟面试训练</b>
+<br /><sub>1. AI 根据岗位 JD 自动提问<br />2. 评估回答给出改进建议<br />3. 针对薄弱环节反复练习</sub>
+<br /><img width="275" height="1" />
+</td>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/48/edit-file.png" width="36" height="36" alt="面试准备" />
+<br /><b>面试准备</b>
+<br /><sub>1. 上传简历项目文档建知识库<br />2. 创建管理个性化面试题库<br />3. 测试麦克风和扬声器设备</sub>
+<br /><img width="275" height="1" />
+</td>
+<td align="center" valign="top">
+<img src="https://img.icons8.com/fluency/48/rocket.png" width="36" height="36" alt="技能提升" />
+<br /><b>技能提升</b>
+<br /><sub>1. 训练结构化表达 STAR 法则<br />2. 模拟快速提问增强承受力<br />3. 支持中英双语面试练习</sub>
+<br /><img width="275" height="1" />
+</td>
+</tr>
 </table>
 
 ## 产品截图
@@ -140,22 +150,24 @@ CueMate 是一款开源的智能语音面试助手 - AI 驱动的实时面试训
 ### 下载安装
 
 <table>
-  <tr>
-    <td align="center" width="50%">
-      <h3><img src="https://img.icons8.com/fluency/48/box.png" width="20" height="20" style="vertical-align: text-bottom" /> 百度网盘（推荐国内用户）</h3>
-      <p>
-        <a href="https://pan.baidu.com/s/1cKVLf2_1BnRBgEkdL35K4Q?pwd=3477">点击下载</a>
-        <br />提取码：<code>3477</code>
-      </p>
-    </td>
-    <td align="center" width="50%">
-      <h3><img src="https://img.icons8.com/fluency/48/github.png" width="20" height="20" style="vertical-align: text-bottom" /> GitHub Release</h3>
-      <p>
-        <a href="https://github.com/cuemate-chat/cuemate/releases">前往下载</a>
-        <br />适合海外用户
-      </p>
-    </td>
-  </tr>
+<tr>
+<td align="center" valign="top">
+<h3><img src="https://img.icons8.com/fluency/48/box.png" width="20" height="20" style="vertical-align: text-bottom" /> 百度网盘</h3>
+<p>
+<a href="https://pan.baidu.com/s/1cKVLf2_1BnRBgEkdL35K4Q?pwd=3477">点击下载</a>
+<br />提取码：<code>3477</code>
+</p>
+<img width="410" height="1" />
+</td>
+<td align="center" valign="top">
+<h3><img src="https://img.icons8.com/fluency/48/github.png" width="20" height="20" style="vertical-align: text-bottom" /> GitHub Release</h3>
+<p>
+<a href="https://github.com/cuemate-chat/cuemate/releases">前往下载</a>
+<br />适合海外用户
+</p>
+<img width="410" height="1" />
+</td>
+</tr>
 </table>
 
 ### 安装步骤
