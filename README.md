@@ -154,7 +154,7 @@ CueMate 是一款开源的智能语音面试助手 - AI 驱动的实时面试训
 <td align="center" valign="top">
 <h3><img src="https://img.icons8.com/fluency/48/box.png" width="20" height="20" style="vertical-align: text-bottom" /> 百度网盘</h3>
 <p>
-<a href="https://pan.baidu.com/s/1cKVLf2_1BnRBgEkdL35K4Q?pwd=3477">点击下载</a>
+<a href="https://pan.baidu.com/s/15jwZHy8YkDa4cEDLIYRo9Q?pwd=3477">点击下载</a>
 <br />提取码：<code>3477</code>
 </p>
 <img width="410" height="1" />

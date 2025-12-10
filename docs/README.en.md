@@ -154,7 +154,7 @@ CueMate is an open-source intelligent interview assistant - an AI-driven real-ti
 <td align="center" valign="top">
 <h3><img src="https://img.icons8.com/fluency/48/box.png" width="20" height="20" style="vertical-align: text-bottom" /> Baidu Netdisk (China Users)</h3>
 <p>
-<a href="https://pan.baidu.com/s/1cKVLf2_1BnRBgEkdL35K4Q?pwd=3477">Download</a>
+<a href="https://pan.baidu.com/s/15jwZHy8YkDa4cEDLIYRo9Q?pwd=3477">Download</a>
 <br />Extraction code: <code>3477</code>
 </p>
 <img width="410" height="1" />
