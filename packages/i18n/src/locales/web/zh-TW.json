@@ -1,0 +1,53 @@
+{
+  "commons": {
+    "save": "儲存",
+    "cancel": "取消",
+    "confirm": "確定",
+    "delete": "刪除",
+    "loading": "載入中...",
+    "saveSuccess": "儲存成功",
+    "deleteSuccess": "刪除成功"
+  },
+  "auth": {
+    "login": "登入",
+    "logout": "登出",
+    "username": "使用者名稱",
+    "password": "密碼"
+  },
+  "settings": {
+    "title": "設定",
+    "language": "語言",
+    "languageUpdated": "語言設定已更新"
+  },
+  "interviewStatus": {
+    "pending": "待開始",
+    "inProgress": "進行中",
+    "completed": "已完成",
+    "cancelled": "已取消"
+  },
+  "interviewStage": {
+    "opening": "開場介紹",
+    "selfIntroduction": "自我介紹",
+    "technical": "技術問答",
+    "behavioral": "行為面試",
+    "closing": "結束總結"
+  },
+  "difficulty": {
+    "easy": "簡單",
+    "medium": "中等",
+    "hard": "困難"
+  },
+  "error": {
+    "networkError": "網路連線失敗",
+    "sessionExpired": "登入已過期"
+  },
+  "log": {
+    "info": {
+      "serverStarted": "服務已啟動，連接埠: {port}",
+      "userLogin": "使用者登入: {username}"
+    },
+    "error": {
+      "connectionFailed": "連線失敗: {target}"
+    }
+  }
+}

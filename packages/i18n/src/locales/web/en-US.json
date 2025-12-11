@@ -1,0 +1,53 @@
+{
+  "commons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "loading": "Loading...",
+    "saveSuccess": "Saved successfully",
+    "deleteSuccess": "Deleted successfully"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageUpdated": "Language settings updated"
+  },
+  "interviewStatus": {
+    "pending": "Pending",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "interviewStage": {
+    "opening": "Opening",
+    "selfIntroduction": "Self Introduction",
+    "technical": "Technical Q&A",
+    "behavioral": "Behavioral Interview",
+    "closing": "Closing"
+  },
+  "difficulty": {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard"
+  },
+  "error": {
+    "networkError": "Network connection failed",
+    "sessionExpired": "Session expired"
+  },
+  "log": {
+    "info": {
+      "serverStarted": "Server started on port: {port}",
+      "userLogin": "User login: {username}"
+    },
+    "error": {
+      "connectionFailed": "Connection failed: {target}"
+    }
+  }
+}

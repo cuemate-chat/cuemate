@@ -1,0 +1,53 @@
+{
+  "commons": {
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确定",
+    "delete": "删除",
+    "loading": "加载中...",
+    "saveSuccess": "保存成功",
+    "deleteSuccess": "删除成功"
+  },
+  "auth": {
+    "login": "登录",
+    "logout": "退出登录",
+    "username": "用户名",
+    "password": "密码"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "languageUpdated": "语言设置已更新"
+  },
+  "interviewStatus": {
+    "pending": "待开始",
+    "inProgress": "进行中",
+    "completed": "已完成",
+    "cancelled": "已取消"
+  },
+  "interviewStage": {
+    "opening": "开场介绍",
+    "selfIntroduction": "自我介绍",
+    "technical": "技术问答",
+    "behavioral": "行为面试",
+    "closing": "结束总结"
+  },
+  "difficulty": {
+    "easy": "简单",
+    "medium": "中等",
+    "hard": "困难"
+  },
+  "error": {
+    "networkError": "网络连接失败",
+    "sessionExpired": "登录已过期"
+  },
+  "log": {
+    "info": {
+      "serverStarted": "服务已启动，端口: {port}",
+      "userLogin": "用户登录: {username}"
+    },
+    "error": {
+      "connectionFailed": "连接失败: {target}"
+    }
+  }
+}
