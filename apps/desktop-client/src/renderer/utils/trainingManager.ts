@@ -218,15 +218,6 @@ export async function validateTrainingWithDatabase(externalInterviewId?: string)
 }
 
 /**
- * 检查是否有可恢复的训练
- * 从 voiceState 检查是否有 interviewId
- */
-export function hasRecoverableTraining(): boolean {
-  const voiceState = getVoiceState();
-  return !!voiceState.interviewId;
-}
-
-/**
  * 从数据库恢复面试训练
  * @param externalInterviewId 外部传入的面试 ID（可选，如果不传则从 voiceState 获取）
  * @param skipStatusCheck 是否跳过状态检查（默认 false，传 true 时无论面试状态如何都恢复数据）
