@@ -10,12 +10,14 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/llm-router/package.json ./services/llm-router/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
 COPY packages/config/package.json ./packages/config/package.json
-RUN pnpm install --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/llm-router...
+COPY packages/i18n/package.json ./packages/i18n/package.json
+RUN pnpm install --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/i18n --filter @cuemate/logger --filter @cuemate/llm-router...
 COPY services/llm-router ./services/llm-router
 COPY packages/logger ./packages/logger
 COPY packages/config ./packages/config
+COPY packages/i18n ./packages/i18n
 COPY tsconfig.base.json ./tsconfig.base.json
-RUN pnpm -r --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/llm-router build
+RUN pnpm -r --filter @cuemate/config --filter @cuemate/i18n --filter @cuemate/logger --filter @cuemate/llm-router build
 
 FROM node:22-bookworm-slim
 WORKDIR /app
@@ -36,12 +38,14 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/llm-router/package.json ./services/llm-router/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
 COPY packages/config/package.json ./packages/config/package.json
-RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/llm-router... && \
+COPY packages/i18n/package.json ./packages/i18n/package.json
+RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/i18n --filter @cuemate/logger --filter @cuemate/llm-router... && \
     rm -rf /root/.local/share/pnpm /root/.npm /root/.cache
 
 COPY --from=builder /app/services/llm-router/dist ./services/llm-router/dist
 COPY --from=builder /app/packages/logger/dist ./packages/logger/dist
 COPY --from=builder /app/packages/config/dist ./packages/config/dist
+COPY --from=builder /app/packages/i18n/dist ./packages/i18n/dist
 
 WORKDIR /app/services/llm-router
 RUN mkdir -p /opt/cuemate/logs/info/llm-router \

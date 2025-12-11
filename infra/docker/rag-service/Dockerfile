@@ -18,14 +18,16 @@ RUN npm config set registry https://registry.npmmirror.com && \
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/rag-service/package.json ./services/rag-service/package.json
 COPY packages/config/package.json ./packages/config/package.json
+COPY packages/i18n/package.json ./packages/i18n/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
-RUN pnpm install --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/rag-service...
+RUN pnpm install --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/i18n --filter @cuemate/logger --filter @cuemate/rag-service...
 
 COPY services/rag-service ./services/rag-service
 COPY packages/config ./packages/config
+COPY packages/i18n ./packages/i18n
 COPY packages/logger ./packages/logger
 COPY tsconfig.base.json ./tsconfig.base.json
-RUN pnpm -r --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/rag-service build
+RUN pnpm -r --filter @cuemate/config --filter @cuemate/i18n --filter @cuemate/logger --filter @cuemate/rag-service build
 
 FROM --platform=linux/amd64 node:22-bookworm-slim
 WORKDIR /app
@@ -45,8 +47,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpmfile.cjs ./
 COPY services/rag-service/package.json ./services/rag-service/package.json
 COPY packages/config/package.json ./packages/config/package.json
+COPY packages/i18n/package.json ./packages/i18n/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
-RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/logger --filter @cuemate/rag-service... && \
+RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/config --filter @cuemate/i18n --filter @cuemate/logger --filter @cuemate/rag-service... && \
     find /app/node_modules/.pnpm/onnxruntime-node*/node_modules/onnxruntime-node/bin/napi-v3 \
     -type d \( -name "win32" -o -name "darwin" \) -exec rm -rf {} + 2>/dev/null || true && \
     find /app/node_modules/.pnpm/onnxruntime-node*/node_modules/onnxruntime-node/bin/napi-v3/linux/x64 \
@@ -55,6 +58,7 @@ RUN pnpm install --prod --no-frozen-lockfile --filter @cuemate/config --filter @
 
 COPY --from=builder --chown=node:node /app/services/rag-service/dist ./services/rag-service/dist
 COPY --from=builder --chown=node:node /app/packages/config/dist ./packages/config/dist
+COPY --from=builder --chown=node:node /app/packages/i18n/dist ./packages/i18n/dist
 COPY --from=builder --chown=node:node /app/packages/logger/dist ./packages/logger/dist
 
 WORKDIR /app/services/rag-service
