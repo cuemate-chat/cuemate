@@ -1,19 +1,10 @@
 {
   "error": {
-    "modelNotConfigured": "模型未配置: {model}",
-    "apiKeyInvalid": "API Key 無效",
-    "quotaExceeded": "配額已用盡",
-    "serviceUnavailable": "服務不可用"
-  },
-  "log": {
-    "info": {
-      "requestSent": "LLM 請求發送: {model}",
-      "responseReceived": "LLM 回應接收: {model}",
-      "tokenUsage": "Token 使用: 輸入 {input}, 輸出 {output}"
-    },
-    "error": {
-      "requestFailed": "LLM 請求失敗: {model}, 錯誤: {error}",
-      "timeout": "請求逾時: {model}"
-    }
+    "apiKeyRequired": "{provider} API 密鑰未配置",
+    "baseUrlRequired": "{provider} 需要配置 base_url",
+    "credentialsRequired": "{provider} 需要配置 {fields}",
+    "apiError": "{provider} API 錯誤: {status} {message}",
+    "healthCheckFailed": "{provider} 健康檢查失敗: {status} {message}",
+    "noResponseBody": "無回應內容"
   }
 }
