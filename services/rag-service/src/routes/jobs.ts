@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { Config } from '../config/index.js';
 import { JobResumeService } from '../services/job-resume-service.js';
+import { t } from '../utils/i18n.js';
 
 export async function createJobRoutes(
   app: FastifyInstance,
@@ -41,10 +42,10 @@ export async function createJobRoutes(
 
     try {
       await jobResumeService.processJobAndResume(body.job, body.resume);
-      return { success: true, message: '岗位和简历数据已成功处理并存入向量数据库' };
+      return { success: true, message: t('message.jobResumeProcessed') };
     } catch (error) {
       app.log.error({ err: error as any }, 'Failed to process job and resume');
-      return { success: false, error: '处理失败' };
+      return { success: false, error: t('error.processFailed') };
     }
   });
 
@@ -54,10 +55,10 @@ export async function createJobRoutes(
 
     try {
       await jobResumeService.deleteJobData(jobId);
-      return { success: true, message: '岗位相关数据已从向量数据库中删除' };
+      return { success: true, message: t('message.jobDataDeleted') };
     } catch (error) {
       app.log.error({ err: error as any }, 'Failed to delete job data');
-      return { success: false, error: '删除失败' };
+      return { success: false, error: t('error.deleteFailed') };
     }
   });
 
@@ -81,7 +82,7 @@ export async function createJobRoutes(
       return { success: true, results, total: results.length };
     } catch (error) {
       app.log.error({ err: error as any }, 'Search failed');
-      return { success: false, error: '搜索失败' };
+      return { success: false, error: t('error.searchFailed') };
     }
   });
 
@@ -107,7 +108,7 @@ export async function createJobRoutes(
       return { success: true, results, total: results.length };
     } catch (error) {
       app.log.error({ err: error as any }, 'Resume search failed');
-      return { success: false, error: '搜索失败' };
+      return { success: false, error: t('error.searchFailed') };
     }
   });
 }

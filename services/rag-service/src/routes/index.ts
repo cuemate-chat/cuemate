@@ -27,12 +27,12 @@ export async function createRoutes(
   await createAIVectorRecordsRoutes(app, deps);
   await createHealthRoutes(app, deps);
 
-  // 根路径信息
+  // Root path info
   app.get('/', async () => {
     return {
       service: 'CueMate RAG Service',
       version: '1.0.0',
-      description: '向量数据库和检索增强生成服务',
+      description: 'Vector database and retrieval-augmented generation service',
       endpoints: {
         documents:
           '/ingest, /ingest/batch, /delete/by-filter, /search/jobs, /search/resumes, /search/questions',
@@ -41,7 +41,7 @@ export async function createRoutes(
           '/questions/process, /questions/:questionId, /questions/search, /questions/by-job/:jobId, /questions/by-tag/:tagId',
         health: '/health, /status, /config',
       },
-      documentation: '请参考各个端点的具体实现',
+      documentation: 'Refer to the implementation of each endpoint',
     };
   });
 }

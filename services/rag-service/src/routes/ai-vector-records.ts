@@ -3,6 +3,7 @@ import type { Config } from '../config/index.js';
 import type { DocumentProcessor } from '../processors/document-processor.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import type { VectorStore } from '../stores/vector-store.js';
+import { t } from '../utils/i18n.js';
 
 // AI 向量记录结构（与 interview_reviews 表结构一致）
 interface AIVectorRecord {
@@ -54,24 +55,24 @@ export async function createAIVectorRecordsRoutes(
       if (!record.id || !record.interview_id) {
         return reply.code(400).send({
           success: false,
-          error: '缺少必要字段: id 和 interview_id',
+          error: t('error.missingFields', { fields: 'id, interview_id' }),
         });
       }
 
-      // 构建用于向量化的文本内容
+      // Build text content for vectorization
       const textParts = [];
-      if (record.asked_question) textParts.push(`问题: ${record.asked_question}`);
-      if (record.candidate_answer) textParts.push(`回答: ${record.candidate_answer}`);
-      if (record.question) textParts.push(`押题: ${record.question}`);
-      if (record.answer) textParts.push(`参考答案: ${record.answer}`);
-      if (record.other_content) textParts.push(`相关资料: ${record.other_content}`);
+      if (record.asked_question) textParts.push(`${t('label.askedQuestion')}: ${record.asked_question}`);
+      if (record.candidate_answer) textParts.push(`${t('label.candidateAnswer')}: ${record.candidate_answer}`);
+      if (record.question) textParts.push(`${t('label.prepQuestion')}: ${record.question}`);
+      if (record.answer) textParts.push(`${t('label.referenceAnswer')}: ${record.answer}`);
+      if (record.other_content) textParts.push(`${t('label.relatedMaterial')}: ${record.other_content}`);
 
       const contentText = textParts.join('\n');
 
       if (!contentText.trim()) {
         return reply.code(400).send({
           success: false,
-          error: '内容为空，无法向量化',
+          error: t('error.emptyContent'),
         });
       }
 
@@ -118,10 +119,10 @@ export async function createAIVectorRecordsRoutes(
         id: record.id,
       };
     } catch (error: any) {
-      app.log.error('保存 AI 向量记录失败:', error);
+      app.log.error({ err: error }, 'Save AI vector record failed');
       return reply.code(500).send({
         success: false,
-        error: error.message || '保存失败',
+        error: error.message || t('error.saveFailed'),
       });
     }
   });
@@ -210,10 +211,10 @@ export async function createAIVectorRecordsRoutes(
         total: results.length,
       };
     } catch (error: any) {
-      app.log.error('搜索 AI 向量记录失败:', error);
+      app.log.error({ err: error }, 'Search AI vector records failed');
       return reply.code(500).send({
         success: false,
-        error: error.message || '搜索失败',
+        error: error.message || t('error.searchFailed'),
         results: [],
         total: 0,
       });
@@ -234,13 +235,13 @@ export async function createAIVectorRecordsRoutes(
 
       return {
         success: true,
-        message: `记录 ${id} 已删除`,
+        message: t('message.aiRecordDeleted', { id }),
       };
     } catch (error: any) {
-      app.log.error('删除 AI 向量记录失败:', error);
+      app.log.error({ err: error }, 'Delete AI vector record failed');
       return reply.code(500).send({
         success: false,
-        error: error.message || '删除失败',
+        error: error.message || t('error.deleteFailed'),
       });
     }
   });

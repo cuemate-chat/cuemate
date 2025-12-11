@@ -3,6 +3,7 @@ import { Config } from '../config/index.js';
 import { DocumentProcessor } from '../processors/document-processor.js';
 import { EmbeddingService } from '../services/embedding-service.js';
 import { VectorStore } from '../stores/vector-store.js';
+import { t } from '../utils/i18n.js';
 
 export async function createQuestionRoutes(
   app: FastifyInstance,
@@ -31,8 +32,8 @@ export async function createQuestionRoutes(
     try {
       const { question } = body;
 
-      // 将面试押题信息分块
-      const questionContent = `题目：${question.title}\n\n 答案：${question.description}`;
+      // Split interview question into chunks
+      const questionContent = `${t('label.questionTitle')}：${question.title}\n\n ${t('label.questionAnswer')}：${question.description}`;
       const chunks = await deps.documentProcessor.splitText(questionContent);
 
       // 生成向量嵌入
@@ -74,12 +75,12 @@ export async function createQuestionRoutes(
       app.log.info(`Processed interview question ${question.id} into ${chunks.length} chunks`);
       return {
         success: true,
-        message: '面试押题已成功处理并存入向量数据库',
+        message: t('message.questionProcessed'),
         chunks: chunks.length,
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Failed to process interview question');
-      return { success: false, error: '处理失败' };
+      return { success: false, error: t('error.processFailed') };
     }
   });
 
@@ -97,11 +98,11 @@ export async function createQuestionRoutes(
       app.log.info(`Deleted all vector data for question ${questionId}`);
       return {
         success: true,
-        message: '面试押题数据已从向量数据库中删除',
+        message: t('message.questionDeleted'),
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Failed to delete question data');
-      return { success: false, error: '删除失败' };
+      return { success: false, error: t('error.deleteFailed') };
     }
   });
 
@@ -148,7 +149,7 @@ export async function createQuestionRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Question search failed');
-      return { success: false, error: '搜索失败' };
+      return { success: false, error: t('error.searchFailed') };
     }
   });
 
@@ -180,7 +181,7 @@ export async function createQuestionRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Failed to get questions by job');
-      return { success: false, error: '获取失败' };
+      return { success: false, error: t('error.getFailed') };
     }
   });
 
@@ -211,7 +212,7 @@ export async function createQuestionRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Failed to get questions by tag');
-      return { success: false, error: '获取失败' };
+      return { success: false, error: t('error.getFailed') };
     }
   });
 
@@ -231,7 +232,7 @@ export async function createQuestionRoutes(
       if (!query || !jobId) {
         return {
           success: false,
-          error: 'query 和 jobId 参数是必需的',
+          error: t('error.queryAndJobIdRequired'),
         };
       }
 
@@ -298,7 +299,7 @@ export async function createQuestionRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Similarity calculation failed');
-      return { success: false, error: '相似度计算失败' };
+      return { success: false, error: t('error.similarityFailed') };
     }
   });
 
@@ -318,7 +319,7 @@ export async function createQuestionRoutes(
       if (!query) {
         return {
           success: false,
-          error: 'query 参数是必需的',
+          error: t('error.queryRequired'),
         };
       }
 
@@ -355,7 +356,7 @@ export async function createQuestionRoutes(
             });
           });
         } catch (err) {
-          app.log.warn(`查询集合 ${collection.name} 失败`);
+          app.log.warn(`Query collection ${collection.name} failed`);
         }
       }
 
@@ -388,16 +389,16 @@ export async function createQuestionRoutes(
         answer = questionMatch.metadata?.description || '';
       }
 
-      // 其他内容（岗位信息、简历信息、其他文件）合并为 otherContent
+      // Merge other content (job info, resume info, other files) into otherContent
       const otherMatches = validResults.filter((r) => r.collectionType !== 'questions').slice(0, 2);
       if (otherMatches.length > 0) {
         const contents = otherMatches.map((m) => {
           const type =
             m.collectionType === 'jobs'
-              ? '岗位信息'
+              ? t('label.jobInfo')
               : m.collectionType === 'resumes'
-                ? '简历信息'
-                : '项目资料';
+                ? t('label.resumeInfo')
+                : t('label.projectMaterial');
           return `【${type}】${m.content || m.metadata?.content || ''}`;
         });
         otherContent = contents.join('\n\n');
@@ -417,8 +418,8 @@ export async function createQuestionRoutes(
         threshold,
       };
     } catch (error) {
-      app.log.error({ err: error as any }, '查询所有 ChromaDB 集合失败');
-      return { success: false, error: '查询失败' };
+      app.log.error({ err: error as any }, 'Query all ChromaDB collections failed');
+      return { success: false, error: t('error.queryFailed') };
     }
   });
 
@@ -438,7 +439,7 @@ export async function createQuestionRoutes(
       if (!query || !jobId) {
         return {
           success: false,
-          error: 'query 和 jobId 参数是必需的',
+          error: t('error.queryAndJobIdRequired'),
         };
       }
 
@@ -498,14 +499,14 @@ export async function createQuestionRoutes(
             }
           }
         } catch (err) {
-          app.log.warn(`查询集合 ${collection.name} 失败`);
+          app.log.warn(`Query collection ${collection.name} failed`);
         }
       }
 
       return result;
     } catch (error) {
-      app.log.error({ err: error as any }, '查询面试相关集合失败');
-      return { success: false, error: '查询失败' };
+      app.log.error({ err: error as any }, 'Query interview related collections failed');
+      return { success: false, error: t('error.queryFailed') };
     }
   });
 }

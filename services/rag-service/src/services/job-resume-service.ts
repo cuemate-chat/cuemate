@@ -1,6 +1,7 @@
 import { Config } from '../config/index.js';
 import { DocumentProcessor } from '../processors/document-processor.js';
 import { VectorStore } from '../stores/vector-store.js';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { EmbeddingService } from './embedding-service.js';
 
@@ -37,8 +38,8 @@ export class JobResumeService {
    */
   async processJob(job: JobData): Promise<void> {
     try {
-      // 将岗位信息分块
-      const jobContent = `岗位名称：${job.title}\n\n 岗位描述：${job.description}`;
+      // Split job info into chunks
+      const jobContent = `${t('label.jobTitle')}：${job.title}\n\n ${t('label.jobDescription')}：${job.description}`;
       const chunks = await this.documentProcessor.splitText(jobContent);
 
       // 生成向量嵌入
@@ -83,8 +84,8 @@ export class JobResumeService {
    */
   async processResume(resume: ResumeData): Promise<void> {
     try {
-      // 将简历内容分块
-      const resumeContent = `简历标题：${resume.title}\n\n 简历内容：${resume.content}`;
+      // Split resume content into chunks
+      const resumeContent = `${t('label.resumeTitle')}：${resume.title}\n\n ${t('label.resumeContent')}：${resume.content}`;
       const chunks = await this.documentProcessor.splitText(resumeContent);
 
       // 生成向量嵌入

@@ -114,13 +114,13 @@ async function start() {
 
     log.info('start', `RAG Service running at http://${host}:${port}`);
 
-    // 打印成功启动信息
+    // Print success info
     printSuccessInfo('RAG Service', port, {
-      'HTTP 地址': `http://${host}:${port}`,
-      '健康检查': `http://${host}:${port}/health`,
-      '向量存储类型': config.vectorStore.type || 'chroma',
-      '嵌入维度': config.embeddings.dimensions?.toString() || '1536',
-      'Chroma 地址': config.vectorStore.chromaPath || 'http://cuemate-chroma:8000',
+      'HTTP': `http://${host}:${port}`,
+      'Health Check': `http://${host}:${port}/health`,
+      'Vector Store': config.vectorStore.type || 'chroma',
+      'Embedding Dimensions': config.embeddings.dimensions?.toString() || '1536',
+      'Chroma URL': config.vectorStore.chromaPath || 'http://cuemate-chroma:8000',
     });
   } catch (err) {
     log.error('start', 'Failed to start server', {}, err);

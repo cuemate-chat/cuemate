@@ -18,15 +18,15 @@ export class EmbeddingService {
    */
   private async initializeFastEmbed(): Promise<void> {
     try {
-      log.info('initializeFastEmbed', '正在初始化 FastEmbed 模型（fast-bge-small-zh-v1.5）...');
+      log.info('initializeFastEmbed', 'Initializing FastEmbed model (fast-bge-small-zh-v1.5)...');
       this.fastEmbedModel = await FlagEmbedding.init({
         model: EmbeddingModel.BGESmallZH,
         cacheDir: CONTAINER_FASTEMBED_DIR,
       });
       this.useFastEmbed = true;
-      log.info('initializeFastEmbed', 'FastEmbed 模型初始化成功，将使用语义向量嵌入');
+      log.info('initializeFastEmbed', 'FastEmbed model initialized successfully, using semantic vector embedding');
     } catch (error) {
-      log.warn('initializeFastEmbed', 'FastEmbed 模型初始化失败，降级使用 Hash 算法作为兜底方案');
+      log.warn('initializeFastEmbed', 'FastEmbed model initialization failed, falling back to Hash algorithm');
       this.useFastEmbed = false;
       this.fastEmbedModel = null;
     }
@@ -53,18 +53,18 @@ export class EmbeddingService {
           allEmbeddings.push(...normalizedBatch);
         }
 
-        log.info('embed', `使用 FastEmbed 生成了 ${allEmbeddings.length} 个文本的向量嵌入`);
+        log.info('embed', `Generated embeddings for ${allEmbeddings.length} texts using FastEmbed`);
         return allEmbeddings;
       } catch (error) {
-        log.warn('embed', 'FastEmbed 向量生成失败，降级使用 Hash 算法');
-        // 标记为不可用，后续直接使用 Hash 算法
+        log.warn('embed', 'FastEmbed embedding generation failed, falling back to Hash algorithm');
+        // Mark as unavailable, use Hash algorithm for subsequent calls
         this.useFastEmbed = false;
         this.fastEmbedModel = null;
       }
     }
 
-    // 降级使用 Hash 算法（兜底方案）
-    log.info('embed', `使用 Hash 算法生成了 ${texts.length} 个文本的向量嵌入`);
+    // Fall back to Hash algorithm
+    log.info('embed', `Generated embeddings for ${texts.length} texts using Hash algorithm`);
     return this.embedWithHash(texts);
   }
 

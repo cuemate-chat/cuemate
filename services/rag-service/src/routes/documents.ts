@@ -3,6 +3,7 @@ import { Config } from '../config/index.js';
 import { DocumentProcessor } from '../processors/document-processor.js';
 import { EmbeddingService } from '../services/embedding-service.js';
 import { VectorStore } from '../stores/vector-store.js';
+import { t } from '../utils/i18n.js';
 
 export async function createDocumentRoutes(
   app: FastifyInstance,
@@ -140,13 +141,13 @@ export async function createDocumentRoutes(
 
       return {
         success: true,
-        message: '文档已成功处理并存入向量数据库',
+        message: t('message.documentProcessed'),
         chunks: chunks.length,
         collection,
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Failed to ingest document');
-      return { success: false, error: '文档处理失败' };
+      return { success: false, error: t('error.processFailed') };
     }
   });
 
@@ -208,13 +209,13 @@ export async function createDocumentRoutes(
 
       return {
         success: true,
-        message: '批量文档处理完成',
+        message: t('message.batchProcessed'),
         results,
         collection,
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Failed to process batch documents');
-      return { success: false, error: '批量处理失败' };
+      return { success: false, error: t('error.processFailed') };
     }
   });
 
@@ -232,13 +233,13 @@ export async function createDocumentRoutes(
 
       return {
         success: true,
-        message: '符合条件的文档已从向量数据库中删除',
+        message: t('message.documentDeleted'),
         filter: where,
         collection,
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Failed to delete documents by filter');
-      return { success: false, error: '删除失败' };
+      return { success: false, error: t('error.deleteFailed') };
     }
   });
 
@@ -366,7 +367,7 @@ export async function createDocumentRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Search jobs failed');
-      return reply.status(500).send({ success: false, error: '搜索 jobs 失败' });
+      return reply.status(500).send({ success: false, error: t('error.searchJobsFailed') });
     }
   });
 
@@ -482,7 +483,7 @@ export async function createDocumentRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Search resumes failed');
-      return reply.status(500).send({ success: false, error: '搜索 resumes 失败' });
+      return reply.status(500).send({ success: false, error: t('error.searchResumesFailed') });
     }
   });
 
@@ -598,7 +599,7 @@ export async function createDocumentRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Search questions failed');
-      return reply.status(500).send({ success: false, error: '搜索 questions 失败' });
+      return reply.status(500).send({ success: false, error: t('error.searchQuestionsFailed') });
     }
   });
 
@@ -676,7 +677,7 @@ export async function createDocumentRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Search other-files failed');
-      return reply.status(500).send({ success: false, error: '搜索 other-files 失败' });
+      return reply.status(500).send({ success: false, error: t('error.searchOtherFilesFailed') });
     }
   });
 
@@ -712,7 +713,7 @@ export async function createDocumentRoutes(
       }
 
       if (!doc) {
-        return { success: false, error: '文档不存在' };
+        return { success: false, error: t('error.documentNotExists') };
       }
 
       const relatedData: any = {};
@@ -803,7 +804,7 @@ export async function createDocumentRoutes(
       };
     } catch (error) {
       app.log.error({ err: error as any }, 'Failed to get related documents');
-      return { success: false, error: '获取关联信息失败' };
+      return { success: false, error: t('error.getRelatedFailed') };
     }
   });
 
@@ -848,13 +849,13 @@ export async function createDocumentRoutes(
 
       return {
         success: true,
-        message: `向量库清理完成，共删除 ${totalDeleted} 条数据`,
+        message: t('message.cleanupCompleted', { count: totalDeleted }),
         totalDeleted,
         results,
       };
     } catch (error: any) {
       app.log.error({ err: error as any }, 'Failed to clean vector database');
-      return { success: false, error: '清理向量库失败：' + error.message };
+      return { success: false, error: t('error.cleanupFailed', { message: error.message }) };
     }
   });
 }
