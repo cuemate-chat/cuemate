@@ -54,7 +54,11 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       };
 
       // 记录收到的 model_params
-      log.info('completion', 'Request params', { provider: body.provider, model: body.model, model_params: body.model_params });
+      log.info('completion', 'Request params', {
+        provider: body.provider,
+        model: body.model,
+        model_params: body.model_params,
+      });
 
       // 从请求体中移除配置字段，保留消息内容
       const { provider, model, credentials, model_params, ...cleanedBody } = body;
@@ -62,7 +66,11 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
 
       // 检查返回内容是否包含有效 JSON，如果不包含则记录警告日志
       if (response.content && !response.content.match(/\{[\s\S]*\}/)) {
-        log.warn('completion', 'LLM response may not contain valid JSON', { provider: body.provider, model: body.model, content: response.content });
+        log.warn('completion', 'LLM response may not contain valid JSON', {
+          provider: body.provider,
+          model: body.model,
+          content: response.content,
+        });
       }
 
       return response;
@@ -136,77 +144,6 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
     }
   });
 
-  // 生成要点提纲（快速响应）
-  fastify.post('/outline', async (request, reply) => {
-    try {
-      const { text, context } = request.body as { text: string; context?: string };
-
-      const outlineRequest: CompletionRequest = {
-        messages: [
-          {
-            role: 'system',
-            content: '你是一个专业的面试助手。根据问题生成 3-5 个核心要点，每个要点不超过 20 字。',
-          },
-          {
-            role: 'user',
-            content: context ? `背景：${context}\n\n 问题：${text}` : text,
-          },
-        ],
-        temperature: 0.3,
-        max_tokens: 200,
-      };
-
-      // 使用默认配置进行 outline 生成
-      const defaultConfig: RuntimeConfig = {
-        provider: 'openai',
-        model: 'gpt-3.5-turbo',
-        credentials: { apiKey: '', baseUrl: '' },
-        model_params: [
-          { param_key: 'temperature', value: 0.3 },
-          { param_key: 'max_tokens', value: 200 },
-        ],
-      };
-      const response = await llmManager.complete(outlineRequest, defaultConfig);
-
-      // 解析要点
-      const points = response.content
-        .split('\n')
-        .filter((line) => line.trim())
-        .map((line) => line.replace(/^[\d\-\*\•]\s*/, '').trim());
-
-      return {
-        points,
-        provider: response.provider,
-        latency: response.latency,
-      };
-    } catch (error) {
-      log.error('outline', 'Outline generation failed', {}, error);
-      return reply.code(500).send({ error: 'Outline generation failed' });
-    }
-  });
-
-  // 获取提供者状态
-  fastify.get('/providers/status', async () => {
-    const status = await llmManager.getProviderStatus();
-    return { providers: status };
-  });
-
-  // 预留：从 web-api 拉取当前用户绑定模型并热更新 providers（需在部署时配置后端地址与鉴权）
-  fastify.post('/providers/dynamic-sync', async () => {
-    return { ok: true };
-  });
-
-  // 健康检查所有提供者
-  fastify.post('/providers/health-check', async () => {
-    const results = await llmManager.healthCheck();
-    return {
-      results: Array.from(results.entries()).map(([id, healthy]) => ({
-        id,
-        healthy,
-      })),
-    };
-  });
-
   // 动态探测：根据传入配置构造 provider 并执行 healthCheck
   fastify.post('/providers/probe', async (request, reply) => {
     try {
@@ -222,7 +159,9 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       // 每个 provider 的 credentialFields 都不同，需要传递所有字段
       Object.keys(body).forEach((key) => {
         // 跳过非凭证字段
-        if (!['provider', 'id', 'modelName', 'model_name', 'model', 'mode', 'allParams'].includes(key)) {
+        if (
+          !['provider', 'id', 'modelName', 'model_name', 'model', 'mode', 'allParams'].includes(key)
+        ) {
           config[key] = body[key];
         }
       });
@@ -230,7 +169,10 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
       // 调试日志：显示映射后的配置
       log.info('probe', 'Field mapping result', {
         originalFields: Object.keys(body).filter(
-          (key) => !['provider', 'id', 'modelName', 'model_name', 'model', 'mode', 'allParams'].includes(key),
+          (key) =>
+            !['provider', 'id', 'modelName', 'model_name', 'model', 'mode', 'allParams'].includes(
+              key,
+            ),
         ),
         mappedConfig: config,
       });
@@ -324,7 +266,6 @@ export async function createRoutes(fastify: FastifyInstance, llmManager: LLMMana
           break;
         default:
           return reply.code(400).send({
-            ok: false,
             error: `Unknown provider: ${providerId}. Please use one of: openai, anthropic, azure-openai, ollama, deepseek, kimi, gemini, qwen, zhipu, siliconflow, tencent, volcengine, vllm, moonshot, bedrock, aliyun-bailian, tencent-cloud, xf, xinference, regolo, baidu, yi, minimax, stepfun, sensenova, baichuan`,
           });
       }

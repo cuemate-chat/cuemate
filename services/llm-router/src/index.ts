@@ -89,10 +89,10 @@ async function start() {
 
     // 打印成功启动信息
     printSuccessInfo('LLM Router', port, {
-      'HTTP 地址': `http://${host}:${port}`,
-      健康检查: `http://${host}:${port}/health`,
-      路由策略: config.routing.strategy || 'primary-fallback',
-      支持提供商:
+      'HTTP': `http://${host}:${port}`,
+      'Health Check': `http://${host}:${port}/health`,
+      'Routing Strategy': config.routing.strategy || 'primary-fallback',
+      'Providers':
         'openai, anthropic, azure-openai, moonshot, qwen, deepseek, kimi, gemini, zhipu, siliconflow, tencent, volcengine, vllm, ollama, bedrock, aliyun-bailian, tencent-cloud, xf, xinference, regolo, baidu, yi, minimax, stepfun, sensenova, baichuan',
     });
   } catch (err) {

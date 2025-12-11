@@ -33,7 +33,6 @@ import { XfProvider } from '../providers/xf.js';
 import { XinferenceProvider } from '../providers/xinference.js';
 import { ZhipuProvider } from '../providers/zhipu.js';
 import { createModuleLogger } from '../utils/logger.js';
-// import { UserProviderRegistry } from './user-provider-registry.js';
 
 const log = createModuleLogger('LLMManager');
 
@@ -46,17 +45,12 @@ export interface ProviderStatus {
   lastChecked: number;
 }
 
-// DynamicProviderConfig 已移除，现在使用 RuntimeConfig
-
 export class LLMManager extends EventEmitter {
   private providers: Map<string, BaseLLMProvider>;
   private config: Config;
-  // 保留队列以备未来限流使用
   private queue: PQueue;
   private providerStatus: Map<string, ProviderStatus>;
   private requestCount: Map<string, number>;
-  // private userRegistry: UserProviderRegistry;
-  // 已移除动态 providers 缓存，现在使用统一的注册机制
 
   constructor(config: Config) {
     super();
@@ -64,12 +58,7 @@ export class LLMManager extends EventEmitter {
     this.queue = new PQueue({ concurrency: 10 });
     this.providerStatus = new Map();
     this.requestCount = new Map();
-    // this.userRegistry = new UserProviderRegistry(config);
-
-    // 自动注册所有 providers（启动时不需要配置）
     this.providers = this.initializeAllProviders();
-
-    // 初始化提供者状态
     this.initializeProviderStatus();
   }
 
@@ -103,7 +92,9 @@ export class LLMManager extends EventEmitter {
     providers.set('sensenova', new SenseNovaProvider());
     providers.set('baichuan', new BaichuanProvider());
 
-    log.info('initializeAllProviders', `Registered ${providers.size} providers`, { providers: Array.from(providers.keys()) });
+    log.info('initializeAllProviders', `Registered ${providers.size} providers`, {
+      providers: Array.from(providers.keys()),
+    });
 
     return providers;
   }
@@ -207,15 +198,5 @@ export class LLMManager extends EventEmitter {
 
   async getProviderStatus(): Promise<ProviderStatus[]> {
     return Array.from(this.providerStatus.values());
-  }
-
-  async healthCheck(): Promise<Map<string, boolean>> {
-    const results = new Map<string, boolean>();
-
-    for (const [id] of this.providers) {
-      results.set(id, true);
-    }
-
-    return results;
   }
 }
