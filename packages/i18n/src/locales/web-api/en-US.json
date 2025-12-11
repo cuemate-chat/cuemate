@@ -1,0 +1,23 @@
+{
+  "error": {
+    "invalidCredentials": "Invalid username or password",
+    "sessionExpired": "Session expired, please login again",
+    "unauthorized": "Unauthorized access",
+    "validationFailed": "{field} validation failed",
+    "fieldRequired": "{field} is required"
+  },
+  "log": {
+    "info": {
+      "serverStarted": "Web API service started on port: {port}",
+      "databaseConnected": "Database connected successfully",
+      "userLogin": "User login: {username}"
+    },
+    "warning": {
+      "rateLimit": "Rate limit exceeded: {ip}"
+    },
+    "error": {
+      "databaseError": "Database error: {message}",
+      "unexpected": "Unexpected error: {message}"
+    }
+  }
+}

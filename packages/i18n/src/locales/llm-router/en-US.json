@@ -1,0 +1,19 @@
+{
+  "error": {
+    "modelNotConfigured": "Model not configured: {model}",
+    "apiKeyInvalid": "Invalid API Key",
+    "quotaExceeded": "Quota exceeded",
+    "serviceUnavailable": "Service unavailable"
+  },
+  "log": {
+    "info": {
+      "requestSent": "LLM request sent: {model}",
+      "responseReceived": "LLM response received: {model}",
+      "tokenUsage": "Token usage: input {input}, output {output}"
+    },
+    "error": {
+      "requestFailed": "LLM request failed: {model}, error: {error}",
+      "timeout": "Request timeout: {model}"
+    }
+  }
+}

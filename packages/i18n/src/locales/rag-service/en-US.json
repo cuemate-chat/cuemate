@@ -1,0 +1,19 @@
+{
+  "error": {
+    "documentNotFound": "Document not found: {id}",
+    "embeddingFailed": "Embedding failed",
+    "searchFailed": "Search failed",
+    "collectionNotFound": "Collection not found: {name}"
+  },
+  "log": {
+    "info": {
+      "serviceStarted": "RAG service started on port: {port}",
+      "documentIndexed": "Document indexed: {id}",
+      "searchCompleted": "Search completed, results: {count}"
+    },
+    "error": {
+      "indexFailed": "Index failed: {error}",
+      "chromaError": "ChromaDB error: {error}"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "error": {
+    "modelNotConfigured": "模型未配置: {model}",
+    "apiKeyInvalid": "API Key 無效",
+    "quotaExceeded": "配額已用盡",
+    "serviceUnavailable": "服務不可用"
+  },
+  "log": {
+    "info": {
+      "requestSent": "LLM 請求發送: {model}",
+      "responseReceived": "LLM 回應接收: {model}",
+      "tokenUsage": "Token 使用: 輸入 {input}, 輸出 {output}"
+    },
+    "error": {
+      "requestFailed": "LLM 請求失敗: {model}, 錯誤: {error}",
+      "timeout": "請求逾時: {model}"
+    }
+  }
+}

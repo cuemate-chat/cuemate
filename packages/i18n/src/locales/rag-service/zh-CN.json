@@ -1,0 +1,19 @@
+{
+  "error": {
+    "documentNotFound": "文档未找到: {id}",
+    "embeddingFailed": "向量化失败",
+    "searchFailed": "搜索失败",
+    "collectionNotFound": "集合未找到: {name}"
+  },
+  "log": {
+    "info": {
+      "serviceStarted": "RAG 服务启动，端口: {port}",
+      "documentIndexed": "文档已索引: {id}",
+      "searchCompleted": "搜索完成，结果数: {count}"
+    },
+    "error": {
+      "indexFailed": "索引失败: {error}",
+      "chromaError": "ChromaDB 错误: {error}"
+    }
+  }
+}
