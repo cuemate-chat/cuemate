@@ -300,6 +300,21 @@ importers:
         specifier: ^5.5.4
         version: 5.9.2
 
+  packages/i18n:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.16.10
+        version: 20.19.10
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      tsx:
+        specifier: ^4.19.1
+        version: 4.20.5
+      typescript:
+        specifier: ^5.5.4
+        version: 5.9.2
+
   packages/logger:
     dependencies:
       pino:
