@@ -1,19 +1,51 @@
 {
-  "error": {
-    "documentNotFound": "文档未找到: {id}",
-    "embeddingFailed": "向量化失败",
-    "searchFailed": "搜索失败",
-    "collectionNotFound": "集合未找到: {name}"
+  "message": {
+    "documentProcessed": "文档已成功处理并存入向量数据库",
+    "batchProcessed": "批量文档处理完成",
+    "documentDeleted": "符合条件的文档已从向量数据库中删除",
+    "questionProcessed": "面试押题已成功处理并存入向量数据库",
+    "questionDeleted": "面试押题数据已从向量数据库中删除",
+    "cleanupCompleted": "向量库清理完成，共删除 {count} 条数据",
+    "aiRecordDeleted": "记录 {id} 已删除",
+    "jobResumeProcessed": "岗位和简历数据已成功处理并存入向量数据库",
+    "jobDataDeleted": "岗位相关数据已从向量数据库中删除"
   },
-  "log": {
-    "info": {
-      "serviceStarted": "RAG 服务启动，端口: {port}",
-      "documentIndexed": "文档已索引: {id}",
-      "searchCompleted": "搜索完成，结果数: {count}"
-    },
-    "error": {
-      "indexFailed": "索引失败: {error}",
-      "chromaError": "ChromaDB 错误: {error}"
-    }
+  "error": {
+    "processFailed": "处理失败",
+    "deleteFailed": "删除失败",
+    "searchFailed": "搜索失败",
+    "searchJobsFailed": "搜索 jobs 失败",
+    "searchResumesFailed": "搜索 resumes 失败",
+    "searchQuestionsFailed": "搜索 questions 失败",
+    "searchOtherFilesFailed": "搜索 other-files 失败",
+    "documentNotExists": "文档不存在",
+    "getRelatedFailed": "获取关联信息失败",
+    "cleanupFailed": "清理向量库失败：{message}",
+    "getFailed": "获取失败",
+    "missingRequiredParams": "缺少必要参数：{params}",
+    "queryRequired": "query 参数是必需的",
+    "queryAndJobIdRequired": "query 和 jobId 参数是必需的",
+    "similarityFailed": "相似度计算失败",
+    "queryFailed": "查询失败",
+    "missingFields": "缺少必要字段：{fields}",
+    "emptyContent": "内容为空，无法向量化",
+    "saveFailed": "保存失败",
+    "queryCollectionFailed": "查询集合 {name} 失败"
+  },
+  "label": {
+    "jobTitle": "岗位名称",
+    "jobDescription": "岗位描述",
+    "resumeTitle": "简历标题",
+    "resumeContent": "简历内容",
+    "questionTitle": "题目",
+    "questionAnswer": "答案",
+    "askedQuestion": "问题",
+    "candidateAnswer": "回答",
+    "prepQuestion": "押题",
+    "referenceAnswer": "参考答案",
+    "relatedMaterial": "相关资料",
+    "jobInfo": "岗位信息",
+    "resumeInfo": "简历信息",
+    "projectMaterial": "项目资料"
   }
 }

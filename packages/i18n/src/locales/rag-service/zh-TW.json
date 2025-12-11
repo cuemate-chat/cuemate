@@ -1,19 +1,51 @@
 {
-  "error": {
-    "documentNotFound": "文件未找到: {id}",
-    "embeddingFailed": "向量化失敗",
-    "searchFailed": "搜尋失敗",
-    "collectionNotFound": "集合未找到: {name}"
+  "message": {
+    "documentProcessed": "文件已成功處理並存入向量資料庫",
+    "batchProcessed": "批次文件處理完成",
+    "documentDeleted": "符合條件的文件已從向量資料庫中刪除",
+    "questionProcessed": "面試押題已成功處理並存入向量資料庫",
+    "questionDeleted": "面試押題資料已從向量資料庫中刪除",
+    "cleanupCompleted": "向量庫清理完成，共刪除 {count} 筆資料",
+    "aiRecordDeleted": "記錄 {id} 已刪除",
+    "jobResumeProcessed": "職位和履歷資料已成功處理並存入向量資料庫",
+    "jobDataDeleted": "職位相關資料已從向量資料庫中刪除"
   },
-  "log": {
-    "info": {
-      "serviceStarted": "RAG 服務啟動，連接埠: {port}",
-      "documentIndexed": "文件已索引: {id}",
-      "searchCompleted": "搜尋完成，結果數: {count}"
-    },
-    "error": {
-      "indexFailed": "索引失敗: {error}",
-      "chromaError": "ChromaDB 錯誤: {error}"
-    }
+  "error": {
+    "processFailed": "處理失敗",
+    "deleteFailed": "刪除失敗",
+    "searchFailed": "搜尋失敗",
+    "searchJobsFailed": "搜尋 jobs 失敗",
+    "searchResumesFailed": "搜尋 resumes 失敗",
+    "searchQuestionsFailed": "搜尋 questions 失敗",
+    "searchOtherFilesFailed": "搜尋 other-files 失敗",
+    "documentNotExists": "文件不存在",
+    "getRelatedFailed": "取得關聯資訊失敗",
+    "cleanupFailed": "清理向量庫失敗：{message}",
+    "getFailed": "取得失敗",
+    "missingRequiredParams": "缺少必要參數：{params}",
+    "queryRequired": "query 參數是必需的",
+    "queryAndJobIdRequired": "query 和 jobId 參數是必需的",
+    "similarityFailed": "相似度計算失敗",
+    "queryFailed": "查詢失敗",
+    "missingFields": "缺少必要欄位：{fields}",
+    "emptyContent": "內容為空，無法向量化",
+    "saveFailed": "儲存失敗",
+    "queryCollectionFailed": "查詢集合 {name} 失敗"
+  },
+  "label": {
+    "jobTitle": "職位名稱",
+    "jobDescription": "職位描述",
+    "resumeTitle": "履歷標題",
+    "resumeContent": "履歷內容",
+    "questionTitle": "題目",
+    "questionAnswer": "答案",
+    "askedQuestion": "問題",
+    "candidateAnswer": "回答",
+    "prepQuestion": "押題",
+    "referenceAnswer": "參考答案",
+    "relatedMaterial": "相關資料",
+    "jobInfo": "職位資訊",
+    "resumeInfo": "履歷資訊",
+    "projectMaterial": "專案資料"
   }
 }

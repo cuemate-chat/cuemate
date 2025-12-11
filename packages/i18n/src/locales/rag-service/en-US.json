@@ -1,19 +1,51 @@
 {
-  "error": {
-    "documentNotFound": "Document not found: {id}",
-    "embeddingFailed": "Embedding failed",
-    "searchFailed": "Search failed",
-    "collectionNotFound": "Collection not found: {name}"
+  "message": {
+    "documentProcessed": "Document processed and stored in vector database",
+    "batchProcessed": "Batch document processing completed",
+    "documentDeleted": "Documents matching filter have been deleted from vector database",
+    "questionProcessed": "Interview question processed and stored in vector database",
+    "questionDeleted": "Interview question data has been deleted from vector database",
+    "cleanupCompleted": "Vector database cleanup completed, {count} records deleted",
+    "aiRecordDeleted": "Record {id} has been deleted",
+    "jobResumeProcessed": "Job and resume data processed and stored in vector database",
+    "jobDataDeleted": "Job related data has been deleted from vector database"
   },
-  "log": {
-    "info": {
-      "serviceStarted": "RAG service started on port: {port}",
-      "documentIndexed": "Document indexed: {id}",
-      "searchCompleted": "Search completed, results: {count}"
-    },
-    "error": {
-      "indexFailed": "Index failed: {error}",
-      "chromaError": "ChromaDB error: {error}"
-    }
+  "error": {
+    "processFailed": "Processing failed",
+    "deleteFailed": "Delete failed",
+    "searchFailed": "Search failed",
+    "searchJobsFailed": "Search jobs failed",
+    "searchResumesFailed": "Search resumes failed",
+    "searchQuestionsFailed": "Search questions failed",
+    "searchOtherFilesFailed": "Search other-files failed",
+    "documentNotExists": "Document does not exist",
+    "getRelatedFailed": "Failed to get related information",
+    "cleanupFailed": "Vector database cleanup failed: {message}",
+    "getFailed": "Get failed",
+    "missingRequiredParams": "Missing required parameters: {params}",
+    "queryRequired": "query parameter is required",
+    "queryAndJobIdRequired": "query and jobId parameters are required",
+    "similarityFailed": "Similarity calculation failed",
+    "queryFailed": "Query failed",
+    "missingFields": "Missing required fields: {fields}",
+    "emptyContent": "Content is empty, cannot vectorize",
+    "saveFailed": "Save failed",
+    "queryCollectionFailed": "Query collection {name} failed"
+  },
+  "label": {
+    "jobTitle": "Job Title",
+    "jobDescription": "Job Description",
+    "resumeTitle": "Resume Title",
+    "resumeContent": "Resume Content",
+    "questionTitle": "Question",
+    "questionAnswer": "Answer",
+    "askedQuestion": "Question",
+    "candidateAnswer": "Answer",
+    "prepQuestion": "Prep Question",
+    "referenceAnswer": "Reference Answer",
+    "relatedMaterial": "Related Material",
+    "jobInfo": "Job Info",
+    "resumeInfo": "Resume Info",
+    "projectMaterial": "Project Material"
   }
 }
