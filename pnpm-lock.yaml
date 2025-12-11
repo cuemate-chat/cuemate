@@ -418,6 +418,9 @@ importers:
       '@cuemate/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@cuemate/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@cuemate/logger':
         specifier: workspace:*
         version: link:../../packages/logger

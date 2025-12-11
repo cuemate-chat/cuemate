@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@cuemate/config": "workspace:*",
+    "@cuemate/i18n": "workspace:*",
     "@cuemate/logger": "workspace:*",
     "@fastify/cors": "^11.1.0",
     "@fastify/multipart": "^9.2.1",
