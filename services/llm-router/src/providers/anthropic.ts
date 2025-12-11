@@ -1,8 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('AnthropicProvider');
+const PROVIDER_NAME = 'Anthropic';
 
 export class AnthropicProvider extends BaseLLMProvider {
   constructor() {
@@ -14,7 +16,7 @@ export class AnthropicProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'https://api.anthropic.com';
 
     if (!apiKey) {
-      throw new Error('Anthropic API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
@@ -70,7 +72,7 @@ export class AnthropicProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'https://api.anthropic.com';
 
     if (!apiKey) {
-      throw new Error('Anthropic API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
@@ -126,7 +128,7 @@ export class AnthropicProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'https://api.anthropic.com';
 
     if (!apiKey) {
-      throw new Error('Anthropic API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const client = new Anthropic({

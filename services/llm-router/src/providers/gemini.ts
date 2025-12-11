@@ -1,8 +1,10 @@
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('GeminiProvider');
+const PROVIDER_NAME = 'Gemini';
 
 export class GeminiProvider extends BaseLLMProvider {
   constructor() {
@@ -13,7 +15,7 @@ export class GeminiProvider extends BaseLLMProvider {
     const apiKey = config.credentials.api_key;
 
     if (!apiKey) {
-      throw new Error('Gemini API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
@@ -92,7 +94,7 @@ export class GeminiProvider extends BaseLLMProvider {
     const apiKey = config.credentials.api_key;
 
     if (!apiKey) {
-      throw new Error('Gemini API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
@@ -172,7 +174,7 @@ export class GeminiProvider extends BaseLLMProvider {
     const apiKey = config.credentials.api_key;
 
     if (!apiKey) {
-      throw new Error('Gemini API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);

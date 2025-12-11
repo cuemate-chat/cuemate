@@ -1,7 +1,9 @@
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('SenseNovaProvider');
+const PROVIDER_NAME = 'SenseNova';
 
 export class SenseNovaProvider extends BaseLLMProvider {
   constructor() {
@@ -13,7 +15,7 @@ export class SenseNovaProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'https://api.sensenova.cn';
 
     if (!apiKey) {
-      throw new Error('SenseNova API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
@@ -40,7 +42,7 @@ export class SenseNovaProvider extends BaseLLMProvider {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`SenseNova API error: ${response.status} ${errorText}`);
+        throw new Error(t('error.apiError', { provider: PROVIDER_NAME, status: response.status, message: errorText }));
       }
 
       const result = await response.json() as any;
@@ -71,7 +73,7 @@ export class SenseNovaProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'https://api.sensenova.cn';
 
     if (!apiKey) {
-      throw new Error('SenseNova API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
@@ -97,12 +99,12 @@ export class SenseNovaProvider extends BaseLLMProvider {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`SenseNova API error: ${response.status} ${errorText}`);
+        throw new Error(t('error.apiError', { provider: PROVIDER_NAME, status: response.status, message: errorText }));
       }
 
       const reader = response.body?.getReader();
       if (!reader) {
-        throw new Error('No response body');
+        throw new Error(t('error.noResponseBody'));
       }
 
       const decoder = new TextDecoder();
@@ -155,7 +157,7 @@ export class SenseNovaProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'https://api.sensenova.cn';
 
     if (!apiKey) {
-      throw new Error('SenseNova API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const url = `${baseUrl}/v1/llm/chat-completions`;
@@ -177,7 +179,7 @@ export class SenseNovaProvider extends BaseLLMProvider {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`SenseNova health check failed: ${response.status} ${errorText}`);
+        throw new Error(t('error.healthCheckFailed', { provider: PROVIDER_NAME, status: response.status, message: errorText }));
       }
 
       return true;

@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('AliyunProvider');
+const PROVIDER_NAME = 'Aliyun';
 
 export class AliyunProvider extends BaseLLMProvider {
   constructor() {
@@ -15,7 +17,7 @@ export class AliyunProvider extends BaseLLMProvider {
       config.credentials.base_url || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
 
     if (!apiKey) {
-      throw new Error('Aliyun API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature =
@@ -69,7 +71,7 @@ export class AliyunProvider extends BaseLLMProvider {
       config.credentials.base_url || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
 
     if (!apiKey) {
-      throw new Error('Aliyun API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature =
@@ -119,7 +121,7 @@ export class AliyunProvider extends BaseLLMProvider {
       config.credentials.base_url || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
 
     if (!apiKey) {
-      throw new Error('Aliyun API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const client = new OpenAI({

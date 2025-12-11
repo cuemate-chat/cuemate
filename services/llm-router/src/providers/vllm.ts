@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('VllmProvider');
+const PROVIDER_NAME = 'vLLM';
 
 export class VllmProvider extends BaseLLMProvider {
   constructor() {
@@ -15,7 +17,7 @@ export class VllmProvider extends BaseLLMProvider {
     const apiKey = config.credentials.api_key || 'dummy'; // vLLM 通常不需要真实 API key
     
     if (!baseUrl) {
-      throw new Error('vLLM requires base_url in credentials');
+      throw new Error(t('error.baseUrlRequired', { provider: PROVIDER_NAME }));
     }
 
     // 从 modelParams 中解析参数
@@ -86,7 +88,7 @@ export class VllmProvider extends BaseLLMProvider {
     const apiKey = config.credentials.api_key || 'dummy';
     
     if (!baseUrl) {
-      throw new Error('vLLM requires base_url in credentials');
+      throw new Error(t('error.baseUrlRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
@@ -152,7 +154,7 @@ export class VllmProvider extends BaseLLMProvider {
     const apiKey = config.credentials.api_key || 'dummy';
     
     if (!baseUrl) {
-      throw new Error('vLLM requires base_url in credentials');
+      throw new Error(t('error.baseUrlRequired', { provider: PROVIDER_NAME }));
     }
 
     try {

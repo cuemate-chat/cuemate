@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('QwenProvider');
+const PROVIDER_NAME = 'Qwen';
 
 export class QwenProvider extends BaseLLMProvider {
   constructor() {
@@ -15,7 +17,7 @@ export class QwenProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
     
     if (!apiKey) {
-      throw new Error('Qwen API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     // 从 modelParams 中解析参数
@@ -66,7 +68,7 @@ export class QwenProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
     
     if (!apiKey) {
-      throw new Error('Qwen API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
@@ -114,7 +116,7 @@ export class QwenProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
     
     if (!apiKey) {
-      throw new Error('Qwen API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const client = new OpenAI({

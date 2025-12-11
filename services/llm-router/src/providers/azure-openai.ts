@@ -1,8 +1,10 @@
 import { AzureOpenAI } from 'openai';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('AzureOpenAIProvider');
+const PROVIDER_NAME = 'Azure OpenAI';
 
 export class AzureOpenAIProvider extends BaseLLMProvider {
   constructor() {
@@ -17,11 +19,11 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
     const deploymentName = config.credentials.deployment_name;
 
     if (!apiKey || !baseUrl) {
-      throw new Error('Azure OpenAI requires api_key and base_url in credentials');
+      throw new Error(t('error.credentialsRequired', { provider: PROVIDER_NAME, fields: 'api_key, base_url' }));
     }
 
     if (!deploymentName) {
-      throw new Error('Azure OpenAI requires deployment_name in credentials');
+      throw new Error(t('error.credentialsRequired', { provider: PROVIDER_NAME, fields: 'deployment_name' }));
     }
 
     // 从 modelParams 中解析参数
@@ -76,11 +78,11 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
     const deploymentName = config.credentials.deployment_name;
 
     if (!apiKey || !baseUrl) {
-      throw new Error('Azure OpenAI requires api_key and base_url in credentials');
+      throw new Error(t('error.credentialsRequired', { provider: PROVIDER_NAME, fields: 'api_key, base_url' }));
     }
 
     if (!deploymentName) {
-      throw new Error('Azure OpenAI requires deployment_name in credentials');
+      throw new Error(t('error.credentialsRequired', { provider: PROVIDER_NAME, fields: 'deployment_name' }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
@@ -132,11 +134,11 @@ export class AzureOpenAIProvider extends BaseLLMProvider {
     const deploymentName = config.credentials.deployment_name;
 
     if (!apiKey || !baseUrl) {
-      throw new Error('Azure OpenAI requires api_key and base_url in credentials');
+      throw new Error(t('error.credentialsRequired', { provider: PROVIDER_NAME, fields: 'api_key, base_url' }));
     }
 
     if (!deploymentName) {
-      throw new Error('Azure OpenAI requires deployment_name in credentials');
+      throw new Error(t('error.credentialsRequired', { provider: PROVIDER_NAME, fields: 'deployment_name' }));
     }
 
     const client = new AzureOpenAI({

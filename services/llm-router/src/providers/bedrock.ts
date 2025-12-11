@@ -3,10 +3,12 @@ import {
   ConverseCommand,
   ConverseStreamCommand,
 } from '@aws-sdk/client-bedrock-runtime';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('BedrockProvider');
+const PROVIDER_NAME = 'AWS Bedrock';
 
 export class BedrockProvider extends BaseLLMProvider {
   constructor() {
@@ -28,7 +30,7 @@ export class BedrockProvider extends BaseLLMProvider {
     const region = config.credentials.aws_region || 'us-east-1';
 
     if (!apiKey) {
-      throw new Error('AWS Bedrock API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature =
@@ -92,7 +94,7 @@ export class BedrockProvider extends BaseLLMProvider {
     const region = config.credentials.aws_region || 'us-east-1';
 
     if (!apiKey) {
-      throw new Error('AWS Bedrock API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature =
@@ -155,7 +157,7 @@ export class BedrockProvider extends BaseLLMProvider {
     const region = config.credentials.aws_region || 'us-east-1';
 
     if (!apiKey) {
-      throw new Error('AWS Bedrock API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const client = this.createClient(apiKey, region);

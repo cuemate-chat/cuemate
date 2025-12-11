@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('OllamaProvider');
+const PROVIDER_NAME = 'Ollama';
 
 export class OllamaProvider extends BaseLLMProvider {
   constructor() {
@@ -15,7 +17,7 @@ export class OllamaProvider extends BaseLLMProvider {
     const apiKey = config.credentials.api_key; // 云端 API 需要
 
     if (!baseUrl) {
-      throw new Error('Ollama requires base_url in credentials');
+      throw new Error(t('error.baseUrlRequired', { provider: PROVIDER_NAME }));
     }
 
     // 从 modelParams 中解析参数
@@ -74,7 +76,7 @@ export class OllamaProvider extends BaseLLMProvider {
     const apiKey = config.credentials.api_key;
 
     if (!baseUrl) {
-      throw new Error('Ollama requires base_url in credentials');
+      throw new Error(t('error.baseUrlRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.3;
@@ -129,7 +131,7 @@ export class OllamaProvider extends BaseLLMProvider {
     const apiKey = config.credentials.api_key;
 
     if (!baseUrl) {
-      throw new Error('Ollama requires base_url in credentials');
+      throw new Error(t('error.baseUrlRequired', { provider: PROVIDER_NAME }));
     }
 
     const client = new OpenAI({

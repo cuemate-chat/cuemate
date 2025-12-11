@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('XinferenceProvider');
+const PROVIDER_NAME = 'Xinference';
 
 export class XinferenceProvider extends BaseLLMProvider {
   constructor() {
@@ -14,7 +16,7 @@ export class XinferenceProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'http://localhost:9997/v1';
 
     if (!apiKey) {
-      throw new Error('Xinference API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
@@ -63,7 +65,7 @@ export class XinferenceProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'http://localhost:9997/v1';
 
     if (!apiKey) {
-      throw new Error('Xinference API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;
@@ -111,7 +113,7 @@ export class XinferenceProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'http://localhost:9997/v1';
 
     if (!apiKey) {
-      throw new Error('Xinference API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const client = new OpenAI({

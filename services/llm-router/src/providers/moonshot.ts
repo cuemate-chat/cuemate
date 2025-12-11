@@ -1,8 +1,10 @@
 import axios from 'axios';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('MoonshotProvider');
+const PROVIDER_NAME = 'Moonshot';
 
 export class MoonshotProvider extends BaseLLMProvider {
   constructor() {
@@ -15,7 +17,7 @@ export class MoonshotProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'https://api.moonshot.cn/v1';
     
     if (!apiKey) {
-      throw new Error('Moonshot API key not configured');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     // 从 modelParams 中解析参数
@@ -69,7 +71,7 @@ export class MoonshotProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || 'https://api.moonshot.cn/v1';
     
     if (!apiKey) {
-      throw new Error('Moonshot API key not configured');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.7;

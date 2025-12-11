@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
+import { t } from '../utils/i18n.js';
 import { createModuleLogger } from '../utils/logger.js';
 import { BaseLLMProvider, CompletionRequest, CompletionResponse, RuntimeConfig } from './base.js';
 
 const log = createModuleLogger('XfProvider');
+const PROVIDER_NAME = 'iFlytek Spark';
 
 export class XfProvider extends BaseLLMProvider {
   constructor() {
@@ -18,7 +20,7 @@ export class XfProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || defaultBaseUrl;
 
     if (!apiKey) {
-      throw new Error('讯飞星火 API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.5;
@@ -57,7 +59,7 @@ export class XfProvider extends BaseLLMProvider {
         latency,
       };
     } catch (error) {
-      log.error('complete', '讯飞星火 completion failed', {}, error);
+      log.error('complete', 'iFlytek Spark completion failed', {}, error);
       throw error;
     }
   }
@@ -71,7 +73,7 @@ export class XfProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || defaultBaseUrl;
 
     if (!apiKey) {
-      throw new Error('讯飞星火 API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const temperature = config.model_params.find(p => p.param_key === 'temperature')?.value || 0.5;
@@ -109,7 +111,7 @@ export class XfProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      log.error('stream', '讯飞星火 stream failed', {}, error);
+      log.error('stream', 'iFlytek Spark stream failed', {}, error);
       throw error;
     }
   }
@@ -123,7 +125,7 @@ export class XfProvider extends BaseLLMProvider {
     const baseUrl = config.credentials.base_url || defaultBaseUrl;
 
     if (!apiKey) {
-      throw new Error('讯飞星火 API key is required');
+      throw new Error(t('error.apiKeyRequired', { provider: PROVIDER_NAME }));
     }
 
     const client = new OpenAI({
@@ -140,7 +142,7 @@ export class XfProvider extends BaseLLMProvider {
       });
       return true;
     } catch (error) {
-      log.error('healthCheck', `讯飞星火 health check failed for model ${config.model}`, {}, error);
+      log.error('healthCheck', `iFlytek Spark health check failed for model ${config.model}`, {}, error);
       throw error;
     }
   }
