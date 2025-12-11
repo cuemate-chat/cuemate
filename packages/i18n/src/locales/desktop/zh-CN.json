@@ -1,0 +1,34 @@
+{
+  "controlBar": {
+    "startInterview": "开始面试",
+    "stopInterview": "结束面试",
+    "voiceQuestion": "语音提问"
+  },
+  "interviewStatus": {
+    "pending": "待开始",
+    "inProgress": "进行中",
+    "completed": "已完成",
+    "cancelled": "已取消"
+  },
+  "interviewStage": {
+    "opening": "开场介绍",
+    "selfIntroduction": "自我介绍",
+    "technical": "技术问答",
+    "behavioral": "行为面试",
+    "closing": "结束总结"
+  },
+  "asr": {
+    "listening": "正在听...",
+    "processing": "处理中...",
+    "recognitionFailed": "识别失败"
+  },
+  "log": {
+    "info": {
+      "asrStarted": "语音识别开始",
+      "asrCompleted": "语音识别完成"
+    },
+    "error": {
+      "asrFailed": "语音识别失败: {error}"
+    }
+  }
+}

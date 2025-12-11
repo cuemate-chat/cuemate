@@ -1,0 +1,34 @@
+{
+  "controlBar": {
+    "startInterview": "Start Interview",
+    "stopInterview": "Stop Interview",
+    "voiceQuestion": "Voice Question"
+  },
+  "interviewStatus": {
+    "pending": "Pending",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "interviewStage": {
+    "opening": "Opening",
+    "selfIntroduction": "Self Introduction",
+    "technical": "Technical Q&A",
+    "behavioral": "Behavioral Interview",
+    "closing": "Closing"
+  },
+  "asr": {
+    "listening": "Listening...",
+    "processing": "Processing...",
+    "recognitionFailed": "Recognition Failed"
+  },
+  "log": {
+    "info": {
+      "asrStarted": "ASR started",
+      "asrCompleted": "ASR completed"
+    },
+    "error": {
+      "asrFailed": "ASR failed: {error}"
+    }
+  }
+}
