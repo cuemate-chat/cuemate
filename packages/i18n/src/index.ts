@@ -27,4 +27,3 @@ export * as webLocales from './locales/web/index.js';
 export * as webApiLocales from './locales/web-api/index.js';
 export * as llmRouterLocales from './locales/llm-router/index.js';
 export * as ragServiceLocales from './locales/rag-service/index.js';
-export * as asrLocales from './locales/asr/index.js';

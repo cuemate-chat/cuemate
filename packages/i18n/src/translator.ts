@@ -9,7 +9,7 @@
 
 export type SupportedLocale = 'zh-CN' | 'zh-TW' | 'en-US';
 
-export type TranslationModule = 'desktop' | 'web' | 'web-api' | 'llm-router' | 'rag-service' | 'asr';
+export type TranslationModule = 'desktop' | 'web' | 'web-api' | 'llm-router' | 'rag-service';
 
 // 翻译资源类型定义（使用 interface 避免循环引用）
 export interface TranslationResources {
